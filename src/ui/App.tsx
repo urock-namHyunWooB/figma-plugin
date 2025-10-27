@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import MetadataSection from "./components/MetadataSection";
 import LayerInfo from "./components/LayerInfo";
 import React from "react";
+import ExtractButton from "./components/ExtractButton";
 
 interface LayerData {
   id: string;
@@ -50,6 +51,18 @@ function App() {
 
       if (msg.type === "selection-info") {
         setLayers(msg.data);
+      }
+
+      if (msg.type === "download-json") {
+        const blob = new Blob([event.data.pluginMessage.data], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "figma-data.json";
+        a.click();
+        URL.revokeObjectURL(url);
       }
     };
   }, []);
@@ -117,6 +130,9 @@ function App() {
           ))
         )}
       </div>
+
+      {/* Extract Button */}
+      <ExtractButton />
 
       {/* Close Button */}
       <button

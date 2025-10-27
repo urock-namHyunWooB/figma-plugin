@@ -1,6 +1,7 @@
 import { VariantManager } from "../managers/VariantManager";
 import { MetadataManager } from "../managers/MetadataManager";
 import { SelectionManager } from "../managers/SelectionManager";
+import { NodeInfoExtractor } from "../extractors/NodeInfoExtractor";
 
 /**
  * 메시지 핸들러 및 UI 통신 클래스
@@ -10,15 +11,18 @@ export class MessageHandler {
   private variantManager: VariantManager;
   private metadataManager: MetadataManager;
   private selectionManager: SelectionManager;
+  private nodeInfoExtractor: NodeInfoExtractor;
 
   constructor(
     variantManager: VariantManager,
     metadataManager: MetadataManager,
-    selectionManager: SelectionManager
+    selectionManager: SelectionManager,
+    nodeInfoExtractor: NodeInfoExtractor
   ) {
     this.variantManager = variantManager;
     this.metadataManager = metadataManager;
     this.selectionManager = selectionManager;
+    this.nodeInfoExtractor = nodeInfoExtractor;
   }
 
   /**
@@ -59,6 +63,10 @@ export class MessageHandler {
 
       case "set-metadata":
         await this.handleSetMetadata(msg);
+        break;
+
+      case "extract-json":
+        await this.handleExtractJson();
         break;
     }
   }
@@ -109,5 +117,19 @@ export class MessageHandler {
     } else {
       this.notify("메타데이터 설정 실패");
     }
+  }
+
+  private async handleExtractJson(): Promise<void> {
+    const selection = figma.currentPage.selection;
+    const selectionInfo = await Promise.all(
+      selection.map((node) =>
+        this.nodeInfoExtractor.extractNodeProperties(node)
+      )
+    );
+    const json = JSON.stringify(selectionInfo, null, 2);
+    figma.ui.postMessage({
+      type: "download-json",
+      data: json,
+    });
   }
 }

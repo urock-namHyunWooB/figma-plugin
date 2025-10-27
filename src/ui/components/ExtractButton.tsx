@@ -2,7 +2,14 @@ import React from "react";
 
 function ExtractButton() {
   const handleExtract = () => {
-    console.log("Extract");
+    parent.postMessage(
+      {
+        pluginMessage: {
+          type: "extract-json",
+        },
+      },
+      "*"
+    );
   };
 
   return <button onClick={handleExtract}>Extract</button>;

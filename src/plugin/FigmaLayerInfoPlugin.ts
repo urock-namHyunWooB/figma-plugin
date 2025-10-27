@@ -24,7 +24,8 @@ export class FigmaLayerInfoPlugin {
     this.messageHandler = new MessageHandler(
       this.variantManager,
       this.metadataManager,
-      this.selectionManager
+      this.selectionManager,
+      this.nodeInfoExtractor
     );
   }
 
