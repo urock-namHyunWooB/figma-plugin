@@ -2,7 +2,8 @@
   "compilerOptions": {
     "target": "es6",
     "lib": ["es6"],
-    "module": "CommonJS",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "outDir": "./dist",
     "rootDir": "./src/plugin",
     "strict": true,

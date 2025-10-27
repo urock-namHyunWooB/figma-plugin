@@ -6,8 +6,8 @@
   "main": "code.js",
   "scripts": {
     "build": "npm run build:plugin && npm run build:ui",
-    "build:plugin": "tsc -p tsconfig.json",
-    "build:ui": "vite build",
+    "build:plugin": "vite build --config vite.plugin.config.ts",
+    "build:ui": "vite build --config vite.ui.config.ts",
     "dev": "npm run build:plugin && vite build --watch",
     "lint": "eslint --ext .ts,.tsx --ignore-pattern node_modules .",
     "lint:fix": "eslint --ext .ts,.tsx --ignore-pattern node_modules --fix .",
@@ -31,51 +31,6 @@
     "typescript": "^5.3.2",
     "vite": "^7.1.12",
     "vite-plugin-singlefile": "^2.3.0"
-  },
-  "eslintConfig": {
-    "extends": [
-      "eslint:recommended",
-      "plugin:@typescript-eslint/recommended",
-      "plugin:@figma/figma-plugins/recommended"
-    ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "project": [
-        "./tsconfig.json",
-        "./tsconfig.ui.json"
-      ]
-    },
-    "root": true,
-    "ignorePatterns": [
-      "*.config.js",
-      "*.config.ts",
-      "dist/",
-      "node_modules/"
-    ],
-    "overrides": [
-      {
-        "files": [
-          "*.js",
-          "*.cjs",
-          "*.mjs"
-        ],
-        "parser": "espree",
-        "parserOptions": {
-          "ecmaVersion": 2020
-        }
-      }
-    ],
-    "rules": {
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        {
-          "argsIgnorePattern": "^_",
-          "varsIgnorePattern": "^_",
-          "caughtErrorsIgnorePattern": "^_"
-        }
-      ],
-      "@typescript-eslint/no-explicit-any": "off"
-    }
   },
   "dependencies": {
     "react": "^19.2.0",

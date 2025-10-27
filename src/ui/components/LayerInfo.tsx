@@ -1,3 +1,5 @@
+import React from "react";
+
 interface LayerInfoProps {
   layer: any;
   onVariantChange: (
@@ -64,7 +66,7 @@ export default function LayerInfo({ layer, onVariantChange }: LayerInfoProps) {
 
   // Fill (색상)
   if (layer.fills && layer.fills.length > 0) {
-    const fillsDisplay = layer.fills.map((fill: any) => {
+    const fillsDisplay = layer.fills.map((fill: any, index: number) => {
       if (fill.type === "SOLID" && fill.color) {
         const hex = `#${[fill.color.r, fill.color.g, fill.color.b]
           .map((c) => {
@@ -92,7 +94,7 @@ export default function LayerInfo({ layer, onVariantChange }: LayerInfoProps) {
 
   // Stroke (테두리)
   if (layer.strokes && layer.strokes.length > 0) {
-    const strokesDisplay = layer.strokes.map((stroke: any) => {
+    const strokesDisplay = layer.strokes.map((stroke: any, index: number) => {
       if (stroke.type === "SOLID" && stroke.color) {
         const hex = `#${[stroke.color.r, stroke.color.g, stroke.color.b]
           .map((c) => {
@@ -101,7 +103,10 @@ export default function LayerInfo({ layer, onVariantChange }: LayerInfoProps) {
           })
           .join("")}`;
         return (
-          <span key={hex} className="inline-flex items-center gap-2">
+          <span
+            key={`stroke-${index}`}
+            className="inline-flex items-center gap-2"
+          >
             <span
               className="w-4 h-4 rounded border border-gray-300"
               style={{ backgroundColor: hex }}
