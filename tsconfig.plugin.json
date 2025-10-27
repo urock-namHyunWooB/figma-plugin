@@ -3,7 +3,7 @@
     "target": "es6",
     "lib": ["es6"],
     "module": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "outDir": "./dist",
     "rootDir": "./src/plugin",
     "strict": true,
@@ -11,5 +11,5 @@
     "skipLibCheck": true
   },
   "include": ["src/plugin/**/*.ts"],
-  "exclude": ["node_modules", "dist", "src/ui"]
+  "exclude": ["dist", "src/ui"]
 }

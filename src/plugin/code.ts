@@ -1,3 +1,5 @@
+/// <reference types="@figma/plugin-typings" />
+
 // This plugin displays information about selected layers in Figma
 
 import { FigmaLayerInfoPlugin } from "./FigmaLayerInfoPlugin";
