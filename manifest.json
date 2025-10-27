@@ -1,0 +1,14 @@
+{
+  "name": "플러그인_테스트",
+  "id": "1564500782401608215",
+  "api": "1.0.0",
+  "main": "code.js",
+  "capabilities": ["inspect", "vscode"],
+  "enableProposedApi": false,
+  "documentAccess": "dynamic-page",
+  "editorType": ["figma", "dev"],
+  "ui": "ui.html",
+  "networkAccess": {
+    "allowedDomains": ["none"]
+  }
+}
