@@ -42,10 +42,23 @@ interface LayerData {
   availableVariants?: Record<string, string[]>;
 }
 
+// Component Property 설정 인터페이스
+interface PropertyConfig {
+  name: string;
+  type: "BOOLEAN" | "TEXT" | "VARIANT";
+  required: boolean;
+  is_prop: boolean;
+  initValue: string | boolean | null;
+  variantOptions?: string[];
+}
+
 function App() {
   const [layers, setLayers] = useState<LayerData[]>([]);
   const [componentSetInfo, setComponentSetInfo] =
     useState<ComponentPropertyDefinitions | null>(null);
+  const [savedPropertyConfig, setSavedPropertyConfig] = useState<
+    PropertyConfig[] | null
+  >(null);
 
   useEffect(() => {
     // Listen for messages from plugin code
@@ -58,6 +71,12 @@ function App() {
 
       if (msg.type === "component-set-info") {
         setComponentSetInfo(msg.data);
+        // ComponentSet이 변경되면 savedPropertyConfig 초기화
+        setSavedPropertyConfig(null);
+      }
+
+      if (msg.type === "component-property-config") {
+        setSavedPropertyConfig(msg.data);
       }
 
       if (msg.type === "download-json") {
@@ -122,7 +141,10 @@ function App() {
       )}
 
       {componentSetInfo && (
-        <ComponentProperty componentSetInfo={componentSetInfo} />
+        <ComponentProperty
+          componentSetInfo={componentSetInfo}
+          savedConfig={savedPropertyConfig}
+        />
       )}
 
       {/* Layer Info */}

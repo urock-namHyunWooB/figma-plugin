@@ -20,7 +20,10 @@ export class FigmaLayerInfoPlugin {
     this.nodeInfoExtractor = new NodeInfoExtractor();
     this.metadataManager = new MetadataManager();
     this.variantManager = new VariantManager();
-    this.selectionManager = new SelectionManager(this.nodeInfoExtractor);
+    this.selectionManager = new SelectionManager(
+      this.nodeInfoExtractor,
+      this.metadataManager
+    );
     this.messageHandler = new MessageHandler(
       this.variantManager,
       this.metadataManager,

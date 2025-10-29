@@ -1,4 +1,5 @@
 import { NodeInfoExtractor } from "../extractors/NodeInfoExtractor";
+import { MetadataManager } from "./MetadataManager";
 
 /**
  * 선택 관리 클래스
@@ -6,9 +7,14 @@ import { NodeInfoExtractor } from "../extractors/NodeInfoExtractor";
  */
 export class SelectionManager {
   private nodeInfoExtractor: NodeInfoExtractor;
+  private metadataManager: MetadataManager;
 
-  constructor(nodeInfoExtractor: NodeInfoExtractor) {
+  constructor(
+    nodeInfoExtractor: NodeInfoExtractor,
+    metadataManager: MetadataManager
+  ) {
     this.nodeInfoExtractor = nodeInfoExtractor;
+    this.metadataManager = metadataManager;
   }
 
   /**
@@ -17,6 +23,7 @@ export class SelectionManager {
   async sendCurrentSelection(): Promise<void> {
     const selection = figma.currentPage.selection;
     let componentSetInfo = null;
+    let componentPropertyConfig = null;
 
     if (selection.length === 0) {
       figma.ui.postMessage({
@@ -35,6 +42,11 @@ export class SelectionManager {
     if (selection[0].type === "COMPONENT_SET") {
       componentSetInfo = (selection[0] as ComponentSetNode)
         .componentPropertyDefinitions;
+
+      // 저장된 Component Property Config 불러오기
+      componentPropertyConfig = this.metadataManager.getComponentPropertyConfig(
+        selection[0]
+      );
     }
 
     figma.ui.postMessage({
@@ -46,6 +58,14 @@ export class SelectionManager {
       type: "component-set-info",
       data: componentSetInfo,
     });
+
+    // 저장된 설정이 있으면 전송
+    if (componentPropertyConfig) {
+      figma.ui.postMessage({
+        type: "component-property-config",
+        data: componentPropertyConfig,
+      });
+    }
   }
 
   /**
