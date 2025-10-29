@@ -43,6 +43,7 @@ interface LayerData {
 
 function App() {
   const [layers, setLayers] = useState<LayerData[]>([]);
+  const [componentSetInfo, setComponentSetInfo] = useState<any>(null);
 
   useEffect(() => {
     // Listen for messages from plugin code
@@ -51,6 +52,10 @@ function App() {
 
       if (msg.type === "selection-info") {
         setLayers(msg.data);
+      }
+
+      if (msg.type === "component-set-info") {
+        setComponentSetInfo(msg.data);
       }
 
       if (msg.type === "download-json") {

@@ -31,9 +31,20 @@ export class SelectionManager {
       )
     );
 
+    if (selection[0].type === "COMPONENT_SET") {
+      console.log(
+        (selection[0] as ComponentSetNode).componentPropertyDefinitions
+      );
+    }
+
     figma.ui.postMessage({
       type: "selection-info",
       data: selectionInfo,
+    });
+
+    figma.ui.postMessage({
+      type: "component-set-info",
+      data: (selection[0] as ComponentSetNode).componentPropertyDefinitions,
     });
   }
 
