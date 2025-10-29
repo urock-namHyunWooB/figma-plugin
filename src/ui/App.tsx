@@ -165,7 +165,7 @@ function App() {
       </div>
 
       {/* Extract Button */}
-      <ExtractButton />
+      {componentSetInfo && <ExtractButton />}
 
       {/* Close Button */}
       <button

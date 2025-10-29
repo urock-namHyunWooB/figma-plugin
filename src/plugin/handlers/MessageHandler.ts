@@ -132,6 +132,8 @@ export class MessageHandler {
       )
     );
     const json = JSON.stringify(selectionInfo, null, 2);
+
+    console.log(json);
     figma.ui.postMessage({
       type: "download-json",
       data: json,
