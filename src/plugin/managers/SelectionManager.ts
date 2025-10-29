@@ -16,6 +16,7 @@ export class SelectionManager {
    */
   async sendCurrentSelection(): Promise<void> {
     const selection = figma.currentPage.selection;
+    let componentSetInfo = null;
 
     if (selection.length === 0) {
       figma.ui.postMessage({
@@ -32,9 +33,8 @@ export class SelectionManager {
     );
 
     if (selection[0].type === "COMPONENT_SET") {
-      console.log(
-        (selection[0] as ComponentSetNode).componentPropertyDefinitions
-      );
+      componentSetInfo = (selection[0] as ComponentSetNode)
+        .componentPropertyDefinitions;
     }
 
     figma.ui.postMessage({
@@ -44,7 +44,7 @@ export class SelectionManager {
 
     figma.ui.postMessage({
       type: "component-set-info",
-      data: (selection[0] as ComponentSetNode).componentPropertyDefinitions,
+      data: componentSetInfo,
     });
   }
 

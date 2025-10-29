@@ -3,6 +3,7 @@ import MetadataSection from "./components/MetadataSection";
 import LayerInfo from "./components/LayerInfo";
 
 import ExtractButton from "./components/ExtractButton";
+import ComponentProperty from "./components/ComponentProperty";
 
 interface LayerData {
   id: string;
@@ -118,6 +119,10 @@ function App() {
           metadataType={layers[0].metadataType}
           onChange={(type) => handleMetadataChange(layers[0].id, type)}
         />
+      )}
+
+      {componentSetInfo && (
+        <ComponentProperty componentSetInfo={componentSetInfo} />
       )}
 
       {/* Layer Info */}
