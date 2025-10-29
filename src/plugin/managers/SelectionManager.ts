@@ -24,6 +24,7 @@ export class SelectionManager {
     const selection = figma.currentPage.selection;
     let componentSetInfo = null;
     let componentPropertyConfig = null;
+    let propsDefinition = null;
 
     if (selection.length === 0) {
       figma.ui.postMessage({
@@ -46,6 +47,8 @@ export class SelectionManager {
       componentPropertyConfig = this.metadataManager.getComponentPropertyConfig(
         selection[0]
       );
+
+      propsDefinition = this.metadataManager.getPropsDefinition(selection[0]);
     }
 
     figma.ui.postMessage({
@@ -64,6 +67,13 @@ export class SelectionManager {
         data: JSON.parse(JSON.stringify(componentPropertyConfig)),
       });
     }
+
+    figma.ui.postMessage({
+      type: "props-definition",
+      data: propsDefinition
+        ? JSON.parse(JSON.stringify(propsDefinition))
+        : null,
+    });
   }
 
   /**

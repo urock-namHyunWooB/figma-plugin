@@ -11,7 +11,7 @@
     "dev": "npm run build:plugin && vite build --watch",
     "lint": "eslint --ext .ts,.tsx --ignore-pattern node_modules .",
     "lint:fix": "eslint --ext .ts,.tsx --ignore-pattern node_modules --fix .",
-    "watch": "npm run build:plugin -- --watch"
+    "watch": "npm run build:plugin -- --watch & npm run build:ui -- --watch"
   },
   "author": "",
   "license": "",

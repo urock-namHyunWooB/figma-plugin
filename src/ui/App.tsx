@@ -4,6 +4,9 @@ import LayerInfo from "./components/LayerInfo";
 
 import ExtractButton from "./components/ExtractButton";
 import ComponentProperty from "./components/ComponentProperty";
+import SetProps from "./components/SetProps";
+import SetInternalState from "./components/SetInternalState";
+import ComponentStructure from "./components/ComponentStructure";
 
 interface LayerData {
   id: string;
@@ -70,7 +73,6 @@ function App() {
       }
 
       if (msg.type === "component-set-info") {
-        setComponentSetInfo(msg.data);
         // ComponentSet이 변경되면 savedPropertyConfig 초기화
         setSavedPropertyConfig(null);
       }
@@ -128,46 +130,14 @@ function App() {
     parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
   };
 
+  console.log(layers);
+
   return (
     <div className="flex flex-col h-full bg-gray-50 p-4">
-      <h2 className="text-lg font-semibold mb-4">선택된 레이어 정보</h2>
+      {layers.length > 0 && layers[0].type === "COMPONENT_SET" && <SetProps />}
 
-      {/* Metadata Section */}
-      {layers.length === 1 && (
-        <MetadataSection
-          metadataType={layers[0].metadataType}
-          onChange={(type) => handleMetadataChange(layers[0].id, type)}
-        />
-      )}
-
-      {componentSetInfo && (
-        <ComponentProperty
-          componentSetInfo={componentSetInfo}
-          savedConfig={savedPropertyConfig}
-        />
-      )}
-
-      {/* Layer Info */}
-      <div className="flex-1 overflow-y-auto mb-4 space-y-2">
-        {layers.length === 0 ? (
-          <div className="text-center text-gray-400 py-8">
-            레이어를 선택해주세요
-          </div>
-        ) : (
-          layers.map((layer) => (
-            <LayerInfo
-              key={layer.id}
-              layer={layer}
-              onVariantChange={handleVariantChange}
-            />
-          ))
-        )}
-      </div>
-
-      {/* Extract Button */}
-      {componentSetInfo && <ExtractButton />}
-
-      {/* Close Button */}
+      <SetInternalState />
+      <ComponentStructure />
       <button
         onClick={handleClose}
         className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"

@@ -1,5 +1,9 @@
 import { VariantManager } from "../managers/VariantManager";
-import { MetadataManager, PropertyConfig } from "../managers/MetadataManager";
+import {
+  MetadataManager,
+  PropertyConfig,
+  PropDefinition,
+} from "../managers/MetadataManager";
 import { SelectionManager } from "../managers/SelectionManager";
 import { NodeInfoExtractor } from "../extractors/NodeInfoExtractor";
 
@@ -72,6 +76,10 @@ export class MessageHandler {
 
       case "save-component-property":
         await this.handleSaveComponentProperty(msg);
+        break;
+
+      case "save-props-definition":
+        await this.handleSavePropsDefinition(msg);
         break;
     }
   }
@@ -161,6 +169,33 @@ export class MessageHandler {
 
     if (success) {
       this.notify("Component Property 설정이 저장되었습니다");
+      await this.selectionManager.sendCurrentSelection();
+    } else {
+      this.notify("저장 실패");
+    }
+  }
+
+  private async handleSavePropsDefinition(msg: {
+    data?: PropDefinition[];
+  }): Promise<void> {
+    if (!msg.data) {
+      this.notify("저장할 데이터가 없습니다");
+      return;
+    }
+
+    const selection = figma.currentPage.selection;
+    if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
+      this.notify("COMPONENT_SET을 선택해주세요");
+      return;
+    }
+
+    const success = await this.metadataManager.savePropsDefinition(
+      selection[0].id,
+      msg.data
+    );
+
+    if (success) {
+      this.notify("Props 정의가 저장되었습니다");
       await this.selectionManager.sendCurrentSelection();
     } else {
       this.notify("저장 실패");
