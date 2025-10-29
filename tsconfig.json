@@ -1,15 +1,15 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "lib": ["es6"],
+    "lib": ["es6", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "node",
     "outDir": "./dist",
-    "rootDir": "./src/plugin",
     "strict": true,
     "typeRoots": ["./node_modules/@types", "./node_modules/@figma"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "jsx": "react-jsx"
   },
-  "include": ["src/plugin/**/*.ts"],
-  "exclude": ["dist", "src/ui"]
+  "include": ["src/plugin/**/*.ts", "src/ui/**/*.ts", "src/ui/**/*.tsx"],
+  "exclude": ["dist"]
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import MetadataSection from "./components/MetadataSection";
 import LayerInfo from "./components/LayerInfo";
-import React from "react";
+
 import ExtractButton from "./components/ExtractButton";
 
 interface LayerData {
@@ -43,7 +43,8 @@ interface LayerData {
 
 function App() {
   const [layers, setLayers] = useState<LayerData[]>([]);
-  const [componentSetInfo, setComponentSetInfo] = useState<any>(null);
+  const [componentSetInfo, setComponentSetInfo] =
+    useState<ComponentPropertyDefinitions | null>(null);
 
   useEffect(() => {
     // Listen for messages from plugin code
