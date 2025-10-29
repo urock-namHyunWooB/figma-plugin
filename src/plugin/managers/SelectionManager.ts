@@ -43,7 +43,6 @@ export class SelectionManager {
       componentSetInfo = (selection[0] as ComponentSetNode)
         .componentPropertyDefinitions;
 
-      // 저장된 Component Property Config 불러오기
       componentPropertyConfig = this.metadataManager.getComponentPropertyConfig(
         selection[0]
       );
@@ -51,19 +50,18 @@ export class SelectionManager {
 
     figma.ui.postMessage({
       type: "selection-info",
-      data: selectionInfo,
+      data: JSON.parse(JSON.stringify(selectionInfo)),
     });
 
     figma.ui.postMessage({
       type: "component-set-info",
-      data: componentSetInfo,
+      data: JSON.parse(JSON.stringify(componentSetInfo)),
     });
 
-    // 저장된 설정이 있으면 전송
     if (componentPropertyConfig) {
       figma.ui.postMessage({
         type: "component-property-config",
-        data: componentPropertyConfig,
+        data: JSON.parse(JSON.stringify(componentPropertyConfig)),
       });
     }
   }
