@@ -65,7 +65,7 @@ function App() {
 
   useEffect(() => {
     // Listen for messages from plugin code
-    window.onmessage = (event) => {
+    const handleMessage = (event: MessageEvent) => {
       const msg = event.data.pluginMessage;
 
       if (msg.type === "selection-info") {
@@ -92,7 +92,13 @@ function App() {
         a.click();
         URL.revokeObjectURL(url);
       }
+
+      // Note: props-definition and internal-state-definition messages
+      // are handled by SetProps and SetInternalState components
     };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, []);
 
   const handleMetadataChange = (nodeId: string, metadataType: string) => {
@@ -135,8 +141,10 @@ function App() {
   return (
     <div className="flex flex-col h-full bg-gray-50 p-4">
       {layers.length > 0 && layers[0].type === "COMPONENT_SET" && <SetProps />}
+      {layers.length > 0 && layers[0].type === "COMPONENT_SET" && (
+        <SetInternalState />
+      )}
 
-      <SetInternalState />
       <ComponentStructure />
       <button
         onClick={handleClose}

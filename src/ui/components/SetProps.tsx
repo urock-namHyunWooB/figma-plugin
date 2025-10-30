@@ -19,7 +19,7 @@ function SetProps() {
 
   // Load saved props definition from plugin
   useEffect(() => {
-    window.onmessage = (event) => {
+    const handleMessage = (event: MessageEvent) => {
       const msg = event.data.pluginMessage;
 
       if (msg.type === "props-definition") {
@@ -33,6 +33,9 @@ function SetProps() {
         }
       }
     };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, []);
 
   const addProp = () => {

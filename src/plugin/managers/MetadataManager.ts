@@ -25,6 +25,15 @@ export interface PropDefinition {
   description?: string;
 }
 
+// Internal State 정의 인터페이스
+export interface StateDefinition {
+  id: string;
+  name: string;
+  type: "string" | "number" | "boolean" | "object" | "array";
+  initialValue: any;
+  description?: string;
+}
+
 /**
  * 메타데이터 관리 클래스
  * 단일 책임: 노드의 플러그인 데이터 읽기/쓰기
@@ -33,6 +42,7 @@ export class MetadataManager {
   private readonly METADATA_KEY = "metadata-type";
   private readonly COMPONENT_PROPERTY_KEY = "dev-component-property";
   private readonly PROPS_DEFINITION_KEY = "props-definition";
+  private readonly INTERNAL_STATE_DEFINITION_KEY = "internal-state-definition";
 
   /**
    * 노드에 메타데이터 설정
@@ -134,6 +144,48 @@ export class MetadataManager {
       return JSON.parse(propsJson) as PropDefinition[];
     } catch (error) {
       console.error("Failed to load props definition:", error);
+      return null;
+    }
+  }
+
+  /**
+   * ComponentSet에 Internal State Definition 저장
+   */
+  async saveInternalStateDefinition(
+    nodeId: string,
+    states: StateDefinition[]
+  ): Promise<boolean> {
+    const node = await figma.getNodeByIdAsync(nodeId);
+    if (!node || node.type !== "COMPONENT_SET") {
+      return false;
+    }
+
+    try {
+      const statesJson = JSON.stringify(states);
+      node.setPluginData(this.INTERNAL_STATE_DEFINITION_KEY, statesJson);
+      return true;
+    } catch (error) {
+      console.error("Failed to save internal state definition:", error);
+      return false;
+    }
+  }
+
+  /**
+   * ComponentSet의 Internal State Definition 불러오기
+   */
+  getInternalStateDefinition(node: SceneNode): StateDefinition[] | null {
+    if (node.type !== "COMPONENT_SET") {
+      return null;
+    }
+
+    try {
+      const statesJson = node.getPluginData(this.INTERNAL_STATE_DEFINITION_KEY);
+      if (!statesJson) {
+        return null;
+      }
+      return JSON.parse(statesJson) as StateDefinition[];
+    } catch (error) {
+      console.error("Failed to load internal state definition:", error);
       return null;
     }
   }

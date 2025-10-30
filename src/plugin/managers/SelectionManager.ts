@@ -25,6 +25,7 @@ export class SelectionManager {
     let componentSetInfo = null;
     let componentPropertyConfig = null;
     let propsDefinition = null;
+    let internalStateDefinition = null;
 
     if (selection.length === 0) {
       figma.ui.postMessage({
@@ -49,6 +50,10 @@ export class SelectionManager {
       );
 
       propsDefinition = this.metadataManager.getPropsDefinition(selection[0]);
+
+      internalStateDefinition = this.metadataManager.getInternalStateDefinition(
+        selection[0]
+      );
     }
 
     figma.ui.postMessage({
@@ -72,6 +77,13 @@ export class SelectionManager {
       type: "props-definition",
       data: propsDefinition
         ? JSON.parse(JSON.stringify(propsDefinition))
+        : null,
+    });
+
+    figma.ui.postMessage({
+      type: "internal-state-definition",
+      data: internalStateDefinition
+        ? JSON.parse(JSON.stringify(internalStateDefinition))
         : null,
     });
   }
