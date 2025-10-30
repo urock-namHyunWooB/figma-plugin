@@ -1,3 +1,10 @@
+// Function 파라미터 인터페이스
+export interface FunctionParameter {
+  id: string;
+  name: string;
+  type: string;
+}
+
 // Props 정의 인터페이스
 export interface PropDefinition {
   id: string;
@@ -13,6 +20,9 @@ export interface PropDefinition {
   defaultValue?: any;
   required: boolean;
   description?: string;
+  // function 타입일 때만 사용
+  parameters?: FunctionParameter[];
+  returnType?: string;
 }
 
 /**
