@@ -33,6 +33,8 @@ export class SelectionManager {
     let componentStructure = null;
     let elementBindings = null;
 
+    console.info("selection", selection);
+
     if (selection.length === 0) {
       figma.ui.postMessage({
         type: "selection-info",

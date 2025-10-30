@@ -4,9 +4,9 @@ import {
   isFormValid,
   getNameError,
   getDefaultValueError,
+  PropDefinition,
 } from "../utils/validation";
 import { getPropTypeBgColor } from "../utils/propStyles";
-import { PropDefinition } from "../domain/component-structure/types";
 
 function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
   const [props, setProps] = useState<PropDefinition[]>([]);

@@ -59,7 +59,6 @@ function StructureCanvas({
   const scaledWidth = structure.boundingBox.width * scale;
   const scaledHeight = structure.boundingBox.height * scale;
 
-
   return (
     <div
       ref={containerRef}
@@ -89,4 +88,3 @@ function StructureCanvas({
 }
 
 export default StructureCanvas;
-

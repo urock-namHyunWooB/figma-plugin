@@ -1,5 +1,4 @@
 import type { StructureElement } from "../types";
-import { getBindingCount } from "../utils/bindingSerializer";
 
 interface ElementBoxProps {
   element: StructureElement;
@@ -23,7 +22,6 @@ function ElementBox({
   const y = element.y * scale;
   const width = element.width * scale;
   const height = element.height * scale;
-
 
   // 타입별 색상
   const getTypeColor = (type: string): string => {
@@ -69,12 +67,7 @@ function ElementBox({
       </text>
 
       {/* 타입 표시 */}
-      <text
-        x={x + 5}
-        y={y + height - 5}
-        fontSize={11}
-        fill="#666666"
-      >
+      <text x={x + 5} y={y + height - 5} fontSize={11} fill="#666666">
         {element.type}
       </text>
 
@@ -94,4 +87,3 @@ function ElementBox({
 }
 
 export default ElementBox;
-

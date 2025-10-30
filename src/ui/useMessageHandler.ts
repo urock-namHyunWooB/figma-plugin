@@ -1,9 +1,7 @@
 import { useLayoutEffect, useState } from "react";
-import {
-  ComponentStructureData,
-  PropDefinition,
-  StateDefinition,
-} from "./domain/component-structure/types";
+import { ComponentStructureData } from "./domain/component-structure/types";
+import { StateDefinition } from "../plugin/managers/MetadataManager";
+import { PropDefinition } from "./utils/validation";
 
 interface LayerData {
   id: string;
