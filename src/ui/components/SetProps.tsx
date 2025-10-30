@@ -1,16 +1,15 @@
 import { useState, useEffect } from "react";
 import {
-  PropDefinition,
   FunctionParameter,
   isFormValid,
   getNameError,
   getDefaultValueError,
 } from "../utils/validation";
 import { getPropTypeBgColor } from "../utils/propStyles";
+import { PropDefinition } from "../domain/component-structure/types";
 
-function SetProps() {
+function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
   const [props, setProps] = useState<PropDefinition[]>([]);
-  const [savedProps, setSavedProps] = useState<PropDefinition[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [editingPropId, setEditingPropId] = useState<string | null>(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
@@ -19,23 +18,7 @@ function SetProps() {
 
   // Load saved props definition from plugin
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      const msg = event.data.pluginMessage;
-
-      if (msg.type === "props-definition") {
-        if (msg.data) {
-          setProps(msg.data);
-          setSavedProps(msg.data);
-          setIsEditing(false);
-        } else {
-          setProps([]);
-          setSavedProps([]);
-        }
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
+    setProps(savedProps);
   }, []);
 
   const addProp = () => {
@@ -168,7 +151,6 @@ function SetProps() {
       },
       "*"
     );
-    setSavedProps(props);
     setIsEditing(false);
     setEditingPropId(null);
     setExpandedDescriptions(new Set());
@@ -178,7 +160,6 @@ function SetProps() {
   const handleReset = () => {
     if (confirm("모든 Props 설정을 초기화하시겠습니까?")) {
       setProps([]);
-      setSavedProps([]);
       setIsEditing(false);
       setEditingPropId(null);
       parent.postMessage(

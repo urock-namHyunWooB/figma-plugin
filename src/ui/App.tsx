@@ -1,107 +1,15 @@
-import { useState, useEffect, useLayoutEffect } from "react";
-import MetadataSection from "./components/MetadataSection";
-import LayerInfo from "./components/LayerInfo";
-
-import ExtractButton from "./components/ExtractButton";
-import ComponentProperty from "./components/ComponentProperty";
 import SetProps from "./components/SetProps";
 import SetInternalState from "./components/SetInternalState";
 import ComponentStructure from "./domain/component-structure/ComponentStructure";
-
-interface LayerData {
-  id: string;
-  name: string;
-  type: string;
-  metadataType?: string;
-  visible: boolean;
-  locked: boolean;
-  x?: number;
-  y?: number;
-  width?: number;
-  height?: number;
-  rotation?: number;
-  opacity?: number;
-  fills?: any[];
-  strokes?: any[];
-  strokeWeight?: number;
-  cornerRadius?: number;
-  characters?: string;
-  fontSize?: number;
-  fontName?: any;
-  textAlignHorizontal?: string;
-  layoutMode?: string;
-  itemSpacing?: number;
-  paddingTop?: number;
-  paddingRight?: number;
-  paddingBottom?: number;
-  paddingLeft?: number;
-  childrenCount?: number;
-  effects?: any[];
-  blendMode?: string;
-  isInstance?: boolean;
-  mainComponentName?: string;
-  componentSetName?: string;
-  componentProperties?: any;
-  availableVariants?: Record<string, string[]>;
-}
-
-// Component Property 설정 인터페이스
-interface PropertyConfig {
-  name: string;
-  type: "BOOLEAN" | "TEXT" | "VARIANT";
-  required: boolean;
-  is_prop: boolean;
-  initValue: string | boolean | null;
-  variantOptions?: string[];
-}
+import useMessageHandler from "./useMessageHandler";
 
 function App() {
-  const [layers, setLayers] = useState<LayerData[]>([]);
-  const [componentSetInfo, setComponentSetInfo] =
-    useState<ComponentPropertyDefinitions | null>(null);
-  const [savedPropertyConfig, setSavedPropertyConfig] = useState<
-    PropertyConfig[] | null
-  >(null);
-
-  useLayoutEffect(() => {
-    // Listen for messages from plugin code
-    const handleMessage = (event: MessageEvent) => {
-      const msg = event.data.pluginMessage;
-
-      if (msg.type === "selection-info") {
-        setLayers(msg.data);
-      }
-
-      if (msg.type === "component-set-info") {
-        // ComponentSet이 변경되면 savedPropertyConfig 초기화
-        setSavedPropertyConfig(null);
-      }
-
-      if (msg.type === "component-property-config") {
-        setSavedPropertyConfig(msg.data);
-      }
-
-      if (msg.type === "download-json") {
-        const blob = new Blob([event.data.pluginMessage.data], {
-          type: "application/json",
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "figma-data.json";
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-
-      // Note: props-definition and internal-state-definition messages
-      // are handled by SetProps and SetInternalState components
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => {
-      window.removeEventListener("message", handleMessage);
-    };
-  }, []);
+  const {
+    layers,
+    componentStructure,
+    internalStateDefinition,
+    propsDefinition,
+  } = useMessageHandler();
 
   const handleClose = () => {
     parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
@@ -112,9 +20,9 @@ function App() {
       <div className="p-4 space-y-4">
         {layers.length > 0 && layers[0].type === "COMPONENT_SET" && (
           <>
-            <SetProps />
-            <SetInternalState />
-            <ComponentStructure />
+            <SetProps savedProps={propsDefinition ?? []} />
+            <SetInternalState savedStates={internalStateDefinition ?? []} />
+            <ComponentStructure structure={componentStructure ?? null} />
           </>
         )}
 

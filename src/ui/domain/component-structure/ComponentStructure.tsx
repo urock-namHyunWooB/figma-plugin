@@ -5,14 +5,17 @@ import { useComponentStructure } from "./hooks/useComponentStructure";
 import { useElementBindings } from "./hooks/useElementBindings";
 import { useSelectedElement } from "./hooks/useSelectedElement";
 import { usePropsAndStates } from "./hooks/usePropsAndStates";
-import type { StructureElement } from "./types";
+import type { ComponentStructureData, StructureElement } from "./types";
 
 /**
  * Component Structure 메인 컴포넌트
  * 책임: 레이아웃 조합만
  */
-function ComponentStructure() {
-  const { structure } = useComponentStructure();
+function ComponentStructure({
+  structure,
+}: {
+  structure: ComponentStructureData | null;
+}) {
   const {
     bindings,
     connectProp,

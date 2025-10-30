@@ -1,24 +1,10 @@
 import { useState, useEffect } from "react";
-import {
-  PropDefinition,
-  isFormValid,
-  getNameError,
-  getDefaultValueError,
-} from "../utils/validation";
 import { getPropTypeBgColor } from "../utils/propStyles";
+import { StateDefinition } from "../domain/component-structure/types";
 
-// Internal State는 Props와 달리 required가 없고, 항상 initialValue가 필요
-interface StateDefinition {
-  id: string;
-  name: string;
-  type: "string" | "number" | "boolean" | "object" | "array";
-  initialValue: any;
-  description?: string;
-}
-
-function SetInternalState() {
+function SetInternalState({ savedStates }: { savedStates: StateDefinition[] }) {
   const [states, setStates] = useState<StateDefinition[]>([]);
-  const [savedStates, setSavedStates] = useState<StateDefinition[]>([]);
+
   const [isEditing, setIsEditing] = useState(false);
   const [editingStateId, setEditingStateId] = useState<string | null>(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
@@ -27,24 +13,8 @@ function SetInternalState() {
 
   // Load saved state definition from plugin
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      const msg = event.data.pluginMessage;
-
-      if (msg.type === "internal-state-definition") {
-        if (msg.data) {
-          setStates(msg.data);
-          setSavedStates(msg.data);
-          setIsEditing(false);
-        } else {
-          setStates([]);
-          setSavedStates([]);
-        }
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, []);
+    setStates(savedStates);
+  }, [savedStates]);
 
   const addState = () => {
     const newState: StateDefinition = {
@@ -173,7 +143,6 @@ function SetInternalState() {
       },
       "*"
     );
-    setSavedStates(states);
     setIsEditing(false);
     setEditingStateId(null);
     setExpandedDescriptions(new Set());
@@ -183,7 +152,6 @@ function SetInternalState() {
   const handleReset = () => {
     if (confirm("모든 내부 상태 설정을 초기화하시겠습니까?")) {
       setStates([]);
-      setSavedStates([]);
       setIsEditing(false);
       setEditingStateId(null);
       parent.postMessage(
@@ -449,7 +417,7 @@ function SetInternalState() {
         )}
       </div>
 
-      {!isEditing && savedStates.length > 0 ? (
+      {!isEditing && states.length > 0 ? (
         // Chip view (saved state)
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
