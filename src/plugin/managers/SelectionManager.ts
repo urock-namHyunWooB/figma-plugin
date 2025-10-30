@@ -49,22 +49,19 @@ export class SelectionManager {
 
     if (selection[0].type === "COMPONENT_SET") {
       const componentSet = selection[0] as ComponentSetNode;
-      
+
       componentSetInfo = componentSet.componentPropertyDefinitions;
 
-      componentPropertyConfig = this.metadataManager.getComponentPropertyConfig(
-        componentSet
-      );
+      componentPropertyConfig =
+        this.metadataManager.getComponentPropertyConfig(componentSet);
 
       propsDefinition = this.metadataManager.getPropsDefinition(componentSet);
 
-      internalStateDefinition = this.metadataManager.getInternalStateDefinition(
-        componentSet
-      );
+      internalStateDefinition =
+        this.metadataManager.getInternalStateDefinition(componentSet);
 
-      componentStructure = this.componentStructureManager.extractStructure(
-        componentSet
-      );
+      componentStructure =
+        this.componentStructureManager.extractStructure(componentSet);
 
       elementBindings = this.metadataManager.getElementBindings(componentSet);
     }

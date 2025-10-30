@@ -5,7 +5,6 @@ import { useComponentStructure } from "./hooks/useComponentStructure";
 import { useElementBindings } from "./hooks/useElementBindings";
 import { useSelectedElement } from "./hooks/useSelectedElement";
 import { usePropsAndStates } from "./hooks/usePropsAndStates";
-import { useExpressionValidator } from "./hooks/useExpressionValidator";
 import type { StructureElement } from "./types";
 
 /**

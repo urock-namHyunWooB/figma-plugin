@@ -56,6 +56,7 @@ export class FigmaLayerInfoPlugin {
   /**
    * UI 메시지 핸들러 설정
    */
+
   private setupMessageHandler(): void {
     figma.ui.onmessage = async (msg) => {
       await this.messageHandler.handleMessage(msg);

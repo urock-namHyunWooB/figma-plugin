@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect } from "react";
 import MetadataSection from "./components/MetadataSection";
 import LayerInfo from "./components/LayerInfo";
 
@@ -63,7 +63,7 @@ function App() {
     PropertyConfig[] | null
   >(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Listen for messages from plugin code
     const handleMessage = (event: MessageEvent) => {
       const msg = event.data.pluginMessage;
@@ -98,39 +98,10 @@ function App() {
     };
 
     window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
   }, []);
-
-  const handleMetadataChange = (nodeId: string, metadataType: string) => {
-    parent.postMessage(
-      {
-        pluginMessage: {
-          type: "set-metadata",
-          nodeId,
-          metadataType,
-        },
-      },
-      "*"
-    );
-  };
-
-  const handleVariantChange = (
-    nodeId: string,
-    propertyName: string,
-    value: string
-  ) => {
-    parent.postMessage(
-      {
-        pluginMessage: {
-          type: "change-variant",
-          nodeId,
-          propertyName,
-          value,
-        },
-      },
-      "*"
-    );
-  };
 
   const handleClose = () => {
     parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");

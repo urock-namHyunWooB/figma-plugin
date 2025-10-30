@@ -196,7 +196,6 @@ export class NodeInfoExtractor {
 
       if (instance.componentProperties) {
         info.componentProperties = instance.componentProperties;
-        console.log("Component Properties:", instance.componentProperties);
       }
 
       const mainComponent = await instance.getMainComponentAsync();
@@ -205,7 +204,6 @@ export class NodeInfoExtractor {
         info.mainComponentId = mainComponent.id;
 
         const parent = mainComponent.parent;
-        console.log("Parent type:", parent?.type);
 
         if (parent && parent.type === "COMPONENT_SET") {
           info.componentSetName = parent.name;
@@ -228,7 +226,6 @@ export class NodeInfoExtractor {
               });
           }
 
-          console.log("Available Variants:", variantOptions);
           info.availableVariants = variantOptions;
         }
       }
