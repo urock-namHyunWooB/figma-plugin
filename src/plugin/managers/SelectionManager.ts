@@ -1,5 +1,6 @@
 import { NodeInfoExtractor } from "../extractors/NodeInfoExtractor";
 import { MetadataManager } from "./MetadataManager";
+import { ComponentStructureManager } from "./ComponentStructureManager";
 
 /**
  * 선택 관리 클래스
@@ -8,13 +9,16 @@ import { MetadataManager } from "./MetadataManager";
 export class SelectionManager {
   private nodeInfoExtractor: NodeInfoExtractor;
   private metadataManager: MetadataManager;
+  private componentStructureManager: ComponentStructureManager;
 
   constructor(
     nodeInfoExtractor: NodeInfoExtractor,
-    metadataManager: MetadataManager
+    metadataManager: MetadataManager,
+    componentStructureManager: ComponentStructureManager
   ) {
     this.nodeInfoExtractor = nodeInfoExtractor;
     this.metadataManager = metadataManager;
+    this.componentStructureManager = componentStructureManager;
   }
 
   /**
@@ -26,6 +30,8 @@ export class SelectionManager {
     let componentPropertyConfig = null;
     let propsDefinition = null;
     let internalStateDefinition = null;
+    let componentStructure = null;
+    let elementBindings = null;
 
     if (selection.length === 0) {
       figma.ui.postMessage({
@@ -42,18 +48,25 @@ export class SelectionManager {
     );
 
     if (selection[0].type === "COMPONENT_SET") {
-      componentSetInfo = (selection[0] as ComponentSetNode)
-        .componentPropertyDefinitions;
+      const componentSet = selection[0] as ComponentSetNode;
+      
+      componentSetInfo = componentSet.componentPropertyDefinitions;
 
       componentPropertyConfig = this.metadataManager.getComponentPropertyConfig(
-        selection[0]
+        componentSet
       );
 
-      propsDefinition = this.metadataManager.getPropsDefinition(selection[0]);
+      propsDefinition = this.metadataManager.getPropsDefinition(componentSet);
 
       internalStateDefinition = this.metadataManager.getInternalStateDefinition(
-        selection[0]
+        componentSet
       );
+
+      componentStructure = this.componentStructureManager.extractStructure(
+        componentSet
+      );
+
+      elementBindings = this.metadataManager.getElementBindings(componentSet);
     }
 
     figma.ui.postMessage({
@@ -84,6 +97,20 @@ export class SelectionManager {
       type: "internal-state-definition",
       data: internalStateDefinition
         ? JSON.parse(JSON.stringify(internalStateDefinition))
+        : null,
+    });
+
+    figma.ui.postMessage({
+      type: "component-structure",
+      data: componentStructure
+        ? JSON.parse(JSON.stringify(componentStructure))
+        : null,
+    });
+
+    figma.ui.postMessage({
+      type: "element-bindings",
+      data: elementBindings
+        ? JSON.parse(JSON.stringify(elementBindings))
         : null,
     });
   }

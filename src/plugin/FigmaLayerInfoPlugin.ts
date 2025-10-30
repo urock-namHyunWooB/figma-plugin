@@ -3,6 +3,7 @@ import { MetadataManager } from "./managers/MetadataManager";
 import { VariantManager } from "./managers/VariantManager";
 import { SelectionManager } from "./managers/SelectionManager";
 import { MessageHandler } from "./handlers/MessageHandler";
+import { ComponentStructureManager } from "./managers/ComponentStructureManager";
 
 /**
  * 메인 플러그인 클래스
@@ -12,6 +13,7 @@ export class FigmaLayerInfoPlugin {
   private nodeInfoExtractor: NodeInfoExtractor;
   private metadataManager: MetadataManager;
   private variantManager: VariantManager;
+  private componentStructureManager: ComponentStructureManager;
   private selectionManager: SelectionManager;
   private messageHandler: MessageHandler;
 
@@ -20,9 +22,11 @@ export class FigmaLayerInfoPlugin {
     this.nodeInfoExtractor = new NodeInfoExtractor();
     this.metadataManager = new MetadataManager();
     this.variantManager = new VariantManager();
+    this.componentStructureManager = new ComponentStructureManager();
     this.selectionManager = new SelectionManager(
       this.nodeInfoExtractor,
-      this.metadataManager
+      this.metadataManager,
+      this.componentStructureManager
     );
     this.messageHandler = new MessageHandler(
       this.variantManager,
@@ -37,7 +41,7 @@ export class FigmaLayerInfoPlugin {
    */
   async initialize(): Promise<void> {
     // UI 표시
-    figma.showUI(__html__, { width: 600, height: 500 });
+    figma.showUI(__html__, { width: 1200, height: 800 });
 
     // 초기 선택 정보 전송
     await this.selectionManager.sendCurrentSelection();

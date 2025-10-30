@@ -6,7 +6,7 @@ import ExtractButton from "./components/ExtractButton";
 import ComponentProperty from "./components/ComponentProperty";
 import SetProps from "./components/SetProps";
 import SetInternalState from "./components/SetInternalState";
-import ComponentStructure from "./components/ComponentStructure";
+import ComponentStructure from "./domain/component-structure/ComponentStructure";
 
 interface LayerData {
   id: string;
@@ -136,22 +136,24 @@ function App() {
     parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
   };
 
-  console.log(layers);
-
   return (
-    <div className="flex flex-col h-full bg-gray-50 p-4">
-      {layers.length > 0 && layers[0].type === "COMPONENT_SET" && <SetProps />}
-      {layers.length > 0 && layers[0].type === "COMPONENT_SET" && (
-        <SetInternalState />
-      )}
+    <div className="h-full overflow-y-auto bg-gray-50">
+      <div className="p-4 space-y-4">
+        {layers.length > 0 && layers[0].type === "COMPONENT_SET" && (
+          <>
+            <SetProps />
+            <SetInternalState />
+            <ComponentStructure />
+          </>
+        )}
 
-      <ComponentStructure />
-      <button
-        onClick={handleClose}
-        className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
-      >
-        닫기
-      </button>
+        <button
+          onClick={handleClose}
+          className="w-full py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+        >
+          닫기
+        </button>
+      </div>
     </div>
   );
 }

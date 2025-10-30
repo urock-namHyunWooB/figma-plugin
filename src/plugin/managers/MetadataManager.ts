@@ -34,6 +34,18 @@ export interface StateDefinition {
   description?: string;
 }
 
+// Element Binding 인터페이스 (단순화)
+export interface ElementBinding {
+  elementId: string;
+  elementName: string;
+  elementType: string;
+  connectedPropName: string | null;
+}
+
+export interface ElementBindingsMap {
+  [elementId: string]: ElementBinding;
+}
+
 /**
  * 메타데이터 관리 클래스
  * 단일 책임: 노드의 플러그인 데이터 읽기/쓰기
@@ -43,6 +55,7 @@ export class MetadataManager {
   private readonly COMPONENT_PROPERTY_KEY = "dev-component-property";
   private readonly PROPS_DEFINITION_KEY = "props-definition";
   private readonly INTERNAL_STATE_DEFINITION_KEY = "internal-state-definition";
+  private readonly ELEMENT_BINDINGS_KEY = "element-bindings";
 
   /**
    * 노드에 메타데이터 설정
@@ -186,6 +199,48 @@ export class MetadataManager {
       return JSON.parse(statesJson) as StateDefinition[];
     } catch (error) {
       console.error("Failed to load internal state definition:", error);
+      return null;
+    }
+  }
+
+  /**
+   * ComponentSet에 Element Bindings 저장
+   */
+  async saveElementBindings(
+    nodeId: string,
+    bindings: ElementBindingsMap
+  ): Promise<boolean> {
+    const node = await figma.getNodeByIdAsync(nodeId);
+    if (!node || node.type !== "COMPONENT_SET") {
+      return false;
+    }
+
+    try {
+      const bindingsJson = JSON.stringify(bindings);
+      node.setPluginData(this.ELEMENT_BINDINGS_KEY, bindingsJson);
+      return true;
+    } catch (error) {
+      console.error("Failed to save element bindings:", error);
+      return false;
+    }
+  }
+
+  /**
+   * ComponentSet의 Element Bindings 불러오기
+   */
+  getElementBindings(node: SceneNode): ElementBindingsMap | null {
+    if (node.type !== "COMPONENT_SET") {
+      return null;
+    }
+
+    try {
+      const bindingsJson = node.getPluginData(this.ELEMENT_BINDINGS_KEY);
+      if (!bindingsJson) {
+        return null;
+      }
+      return JSON.parse(bindingsJson) as ElementBindingsMap;
+    } catch (error) {
+      console.error("Failed to load element bindings:", error);
       return null;
     }
   }
