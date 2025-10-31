@@ -53,8 +53,7 @@ function ElementBox({
         rx={4}
       />
 
-      {/* 이름 텍스트 */}
-      <text
+      {/* <text
         x={x + width / 2}
         y={y + height / 2}
         textAnchor="middle"
@@ -64,24 +63,11 @@ function ElementBox({
         fontWeight="bold"
       >
         {element.name}
-      </text>
+      </text> */}
 
-      {/* 타입 표시 */}
-      <text x={x + 5} y={y + height - 5} fontSize={11} fill="#666666">
+      {/* <text x={x + 5} y={y + height - 5} fontSize={11} fill="#666666">
         {element.type}
-      </text>
-
-      {/* 자식 요소들 - 재귀 렌더링 */}
-      {element.children?.map((child) => (
-        <ElementBox
-          key={child.id}
-          element={child}
-          scale={scale}
-          isSelected={false}
-          bindingCount={0}
-          onClick={() => {}}
-        />
-      ))}
+      </text> */}
     </g>
   );
 }

@@ -41,7 +41,7 @@ export class FigmaLayerInfoPlugin {
    */
   async initialize(): Promise<void> {
     // UI 표시
-    figma.showUI(__html__, { width: 1200, height: 800 });
+    figma.showUI(__html__, { width: 800, height: 600 });
 
     // 초기 선택 정보 전송
     await this.selectionManager.sendCurrentSelection();
