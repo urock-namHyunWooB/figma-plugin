@@ -1,40 +1,71 @@
-import { VariantManager } from "../managers/VariantManager";
-import {
-  MetadataManager,
-  PropertyConfig,
-  PropDefinition,
-  StateDefinition,
-  ElementBindingsMap,
-} from "../managers/MetadataManager";
-import { SelectionManager } from "../managers/SelectionManager";
-import { NodeInfoExtractor } from "../extractors/NodeInfoExtractor";
+import { NodeInfoExtractor } from "./extractors/NodeInfoExtractor";
+import { MetadataManager } from "./managers/MetadataManager";
+import { VariantManager } from "./managers/VariantManager";
+import { SelectionManager } from "./managers/SelectionManager";
+import { ComponentStructureManager } from "./managers/ComponentStructureManager";
 
 /**
- * 메시지 핸들러 및 UI 통신 클래스
- * 단일 책임: UI로부터 받은 메시지 처리 및 UI와의 통신
+ * 메인 플러그인 클래스
+ * 단일 책임: 플러그인 초기화 및 전체 라이프사이클 관리
  */
-export class MessageHandler {
-  private variantManager: VariantManager;
-  private metadataManager: MetadataManager;
-  private selectionManager: SelectionManager;
+export class FigmaPlugin {
   private nodeInfoExtractor: NodeInfoExtractor;
+  private metadataManager: MetadataManager;
+  private variantManager: VariantManager;
+  private componentStructureManager: ComponentStructureManager;
+  private selectionManager: SelectionManager;
+  // Message handling is inlined from MessageHandler
 
-  constructor(
-    variantManager: VariantManager,
-    metadataManager: MetadataManager,
-    selectionManager: SelectionManager,
-    nodeInfoExtractor: NodeInfoExtractor
-  ) {
-    this.variantManager = variantManager;
-    this.metadataManager = metadataManager;
-    this.selectionManager = selectionManager;
-    this.nodeInfoExtractor = nodeInfoExtractor;
+  constructor() {
+    // 의존성 주입을 통한 클래스 인스턴스 생성
+    this.nodeInfoExtractor = new NodeInfoExtractor();
+    this.metadataManager = new MetadataManager();
+    this.variantManager = new VariantManager();
+    this.componentStructureManager = new ComponentStructureManager();
+    this.selectionManager = new SelectionManager(
+      this.nodeInfoExtractor,
+      this.metadataManager,
+      this.componentStructureManager
+    );
+  }
+
+  /**
+   * 플러그인 초기화
+   */
+  async initialize(): Promise<void> {
+    // UI 표시
+    figma.showUI(__html__, { width: 800, height: 600 });
+
+    // 초기 선택 정보 전송
+    await this.selectionManager.sendCurrentSelection();
+
+    // 선택 변경 이벤트 리스닝 시작
+    this.selectionManager.startListening();
+
+    // UI 메시지 핸들러 등록
+    this.setupMessageHandler();
+
+    figma.once("run", () => {
+      //json 추출
+
+      console.log("run");
+    });
+  }
+
+  /**
+   * UI 메시지 핸들러 설정
+   */
+
+  private setupMessageHandler(): void {
+    figma.ui.onmessage = async (msg) => {
+      await this.handleMessage(msg);
+    };
   }
 
   /**
    * UI로 선택 정보 전송
    */
-  sendSelectionInfo(data: Record<string, unknown>[]): void {
+  private sendSelectionInfo(data: Record<string, unknown>[]): void {
     figma.ui.postMessage({
       type: "selection-info",
       data,
@@ -44,14 +75,14 @@ export class MessageHandler {
   /**
    * 알림 메시지 표시
    */
-  notify(message: string): void {
+  private notify(message: string): void {
     figma.notify(message);
   }
 
   /**
-   * 메시지 처리
+   * 메시지 처리 (inlined from MessageHandler)
    */
-  async handleMessage(msg: {
+  private async handleMessage(msg: {
     type: string;
     nodeId?: string;
     propertyName?: string;
@@ -159,7 +190,7 @@ export class MessageHandler {
   }
 
   private async handleSaveComponentProperty(msg: {
-    data?: PropertyConfig[];
+    data?: import("./managers/MetadataManager").PropertyConfig[];
   }): Promise<void> {
     if (!msg.data) {
       this.notify("저장할 데이터가 없습니다");
@@ -186,7 +217,7 @@ export class MessageHandler {
   }
 
   private async handleSavePropsDefinition(msg: {
-    data?: PropDefinition[];
+    data?: import("./managers/MetadataManager").PropDefinition[];
   }): Promise<void> {
     if (!msg.data) {
       this.notify("저장할 데이터가 없습니다");
@@ -213,7 +244,7 @@ export class MessageHandler {
   }
 
   private async handleSaveInternalStateDefinition(msg: {
-    data?: StateDefinition[];
+    data?: import("./managers/MetadataManager").StateDefinition[];
   }): Promise<void> {
     if (!msg.data) {
       this.notify("저장할 데이터가 없습니다");
@@ -240,7 +271,7 @@ export class MessageHandler {
   }
 
   private async handleSaveElementBindings(msg: {
-    data?: ElementBindingsMap;
+    data?: import("./managers/MetadataManager").ElementBindingsMap;
   }): Promise<void> {
     if (!msg.data) {
       this.notify("저장할 데이터가 없습니다");
