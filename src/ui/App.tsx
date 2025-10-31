@@ -23,7 +23,11 @@ function App() {
           <>
             <SetProps savedProps={propsDefinition ?? []} />
             <SetInternalState savedStates={internalStateDefinition ?? []} />
-            <ComponentStructure structure={componentStructure ?? null} />
+            <ComponentStructure
+              structure={componentStructure ?? null}
+              props={propsDefinition ?? []}
+              states={internalStateDefinition ?? []}
+            />
           </>
         )}
 

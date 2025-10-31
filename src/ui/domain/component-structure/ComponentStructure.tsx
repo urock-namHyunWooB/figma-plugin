@@ -4,8 +4,12 @@ import BindingPanel from "./components/BindingPanel";
 import { useComponentStructure } from "./hooks/useComponentStructure";
 import { useElementBindings } from "./hooks/useElementBindings";
 import { useSelectedElement } from "./hooks/useSelectedElement";
-import { usePropsAndStates } from "./hooks/usePropsAndStates";
-import type { ComponentStructureData, StructureElement } from "./types";
+import type {
+  ComponentStructureData,
+  StructureElement,
+  PropDefinition,
+  StateDefinition,
+} from "./types";
 
 /**
  * Component Structure 메인 컴포넌트
@@ -13,8 +17,12 @@ import type { ComponentStructureData, StructureElement } from "./types";
  */
 function ComponentStructure({
   structure,
+  props,
+  states,
 }: {
   structure: ComponentStructureData | null;
+  props: PropDefinition[];
+  states: StateDefinition[];
 }) {
   const {
     bindings,
@@ -24,7 +32,6 @@ function ComponentStructure({
     hasUnsavedChanges,
   } = useElementBindings();
   const { selectedElementId, selectElement } = useSelectedElement();
-  const { props, states } = usePropsAndStates();
 
   console.log(structure);
 
