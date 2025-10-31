@@ -65,12 +65,91 @@ function StructureCanvas({
       className="w-full h-full bg-gray-50 p-6 flex items-center justify-center"
     >
       <svg
-        width={scaledWidth + 80}
-        height={scaledHeight + 80}
         viewBox={`0 0 ${scaledWidth + 80} ${scaledHeight + 80}`}
         className="border-2 border-gray-300 bg-white rounded-lg shadow-md"
       >
         <g transform="translate(40, 40)">
+          {/* Root container */}
+          <rect
+            x={0}
+            y={0}
+            width={scaledWidth}
+            height={scaledHeight}
+            fill="#ffffff"
+            stroke="#111827"
+            strokeWidth={1.5}
+            rx={6}
+          />
+
+          {/* Root padding overlay */}
+          {structure.padding && (
+            <g>
+              {structure.padding.top > 0 && (
+                <rect
+                  x={0}
+                  y={0}
+                  width={scaledWidth}
+                  height={structure.padding.top * scale}
+                  fill="#10b981"
+                  opacity={0.12}
+                />
+              )}
+              {structure.padding.bottom > 0 && (
+                <rect
+                  x={0}
+                  y={scaledHeight - structure.padding.bottom * scale}
+                  width={scaledWidth}
+                  height={structure.padding.bottom * scale}
+                  fill="#10b981"
+                  opacity={0.12}
+                />
+              )}
+              {structure.padding.left > 0 && (
+                <rect
+                  x={0}
+                  y={structure.padding.top * scale}
+                  width={structure.padding.left * scale}
+                  height={
+                    scaledHeight -
+                    (structure.padding.top + structure.padding.bottom) * scale
+                  }
+                  fill="#10b981"
+                  opacity={0.12}
+                />
+              )}
+              {structure.padding.right > 0 && (
+                <rect
+                  x={scaledWidth - structure.padding.right * scale}
+                  y={structure.padding.top * scale}
+                  width={structure.padding.right * scale}
+                  height={
+                    scaledHeight -
+                    (structure.padding.top + structure.padding.bottom) * scale
+                  }
+                  fill="#10b981"
+                  opacity={0.12}
+                />
+              )}
+              <rect
+                x={structure.padding.left * scale}
+                y={structure.padding.top * scale}
+                width={
+                  scaledWidth -
+                  (structure.padding.left + structure.padding.right) * scale
+                }
+                height={
+                  scaledHeight -
+                  (structure.padding.top + structure.padding.bottom) * scale
+                }
+                fill="none"
+                stroke="#10b981"
+                strokeDasharray="6 4"
+                strokeWidth={1}
+                rx={4}
+              />
+            </g>
+          )}
+
           {structure.elements.map((element) => (
             <ElementBox
               key={element.id}
