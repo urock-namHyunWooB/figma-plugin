@@ -33,6 +33,7 @@ export class SelectionManager {
     let internalStateDefinition = null;
     let componentStructure = null;
     let elementBindings = null;
+    let variantStyles = null;
 
     if (selection.length === 0) {
       figma.ui.postMessage({
@@ -65,6 +66,9 @@ export class SelectionManager {
         this.componentStructureManager.extractStructure(componentSet);
 
       elementBindings = this.metadataManager.getElementBindings(componentSet);
+
+      variantStyles =
+        this.componentStructureManager.extractVariantStyles(componentSet);
     }
 
     figma.ui.postMessage({

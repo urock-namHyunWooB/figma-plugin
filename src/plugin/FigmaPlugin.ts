@@ -56,12 +56,33 @@ export class FigmaPlugin {
       }
 
       const componentSet = selection[0] as ComponentSetNode;
-      const structure =
+      const componentSetInfo = componentSet.componentPropertyDefinitions;
+      const componentPropertyConfig =
+        this.metadataManager.getComponentPropertyConfig(componentSet);
+      const propsDefinition =
+        this.metadataManager.getPropsDefinition(componentSet);
+      const internalStateDefinition =
+        this.metadataManager.getInternalStateDefinition(componentSet);
+      const componentStructure =
         this.componentStructureManager.extractStructure(componentSet);
+      const elementBindings =
+        this.metadataManager.getElementBindings(componentSet);
+      const variantStyles =
+        this.componentStructureManager.extractVariantStyles(componentSet);
+
+      const spec = {
+        componentSetInfo,
+        componentPropertyConfig,
+        propsDefinition,
+        internalStateDefinition,
+        componentStructure,
+        elementBindings,
+        variantStyles,
+      };
 
       figma.ui.postMessage({
         type: MESSAGE_TYPES.COMPONENT_SPEC_JSON,
-        data: structure ? JSON.parse(JSON.stringify(structure)) : null,
+        data: JSON.parse(JSON.stringify(spec)),
       });
     });
   }
