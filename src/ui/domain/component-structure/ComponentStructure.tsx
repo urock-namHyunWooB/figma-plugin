@@ -27,6 +27,7 @@ function ComponentStructure({
   const {
     bindings,
     connectProp,
+    setVisibility,
     saveBindings,
     resetBindings,
     hasUnsavedChanges,
@@ -94,6 +95,7 @@ function ComponentStructure({
             props={props}
             states={states}
             onConnectProp={connectProp}
+            onSetVisibility={setVisibility}
             onSave={saveBindings}
             onReset={resetBindings}
             hasUnsavedChanges={hasUnsavedChanges}

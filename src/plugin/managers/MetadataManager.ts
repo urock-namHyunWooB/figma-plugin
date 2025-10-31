@@ -40,6 +40,8 @@ export interface ElementBinding {
   elementName: string;
   elementType: string;
   connectedPropName: string | null;
+  visibleMode?: "always" | "hidden" | "expression";
+  visibleExpression?: string;
 }
 
 export interface ElementBindingsMap {

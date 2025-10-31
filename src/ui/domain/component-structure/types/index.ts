@@ -73,6 +73,18 @@ export interface ElementBinding {
   elementName: string;
   elementType: string;
   connectedPropName: string | null; // 연결된 prop 이름 (하나만)
+  /**
+   * Visible 옵션 설정
+   * - "always": 항상 보임
+   * - "hidden": 항상 숨김
+   * - "expression": 표현식 평가 결과에 따라 보임/숨김
+   */
+  visibleMode?: "always" | "hidden" | "expression";
+  /**
+   * visibleMode가 "expression"일 때 사용되는 boolean 표현식
+   * 예: "prop:title && state:isOpen", "state:count > 0"
+   */
+  visibleExpression?: string;
 }
 
 /**

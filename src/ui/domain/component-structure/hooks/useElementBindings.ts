@@ -35,7 +35,15 @@ export function useElementBindings() {
 
         if (propName === null) {
           // 연결 해제
-          delete newBindings[elementId];
+          const existing = newBindings[elementId];
+          if (!existing) {
+            return newBindings;
+          }
+          // prop 연결만 제거하고, visibility 관련 설정은 유지
+          newBindings[elementId] = {
+            ...existing,
+            connectedPropName: null,
+          };
         } else {
           // 연결 또는 업데이트
           newBindings[elementId] = {
@@ -43,9 +51,36 @@ export function useElementBindings() {
             elementName,
             elementType,
             connectedPropName: propName,
+            visibleMode: newBindings[elementId]?.visibleMode ?? "always",
+            visibleExpression: newBindings[elementId]?.visibleExpression ?? "",
           };
         }
 
+        return newBindings;
+      });
+    },
+    []
+  );
+
+  const setVisibility = useCallback(
+    (
+      elementId: string,
+      elementName: string,
+      elementType: string,
+      mode: "always" | "hidden" | "expression",
+      expression?: string
+    ) => {
+      setBindings((prev) => {
+        const newBindings = { ...prev };
+        const prevBinding = newBindings[elementId];
+        newBindings[elementId] = {
+          elementId,
+          elementName,
+          elementType,
+          connectedPropName: prevBinding?.connectedPropName ?? null,
+          visibleMode: mode,
+          visibleExpression: mode === "expression" ? expression ?? "" : "",
+        };
         return newBindings;
       });
     },
@@ -77,6 +112,7 @@ export function useElementBindings() {
     bindings,
     savedBindings,
     connectProp,
+    setVisibility,
     saveBindings,
     resetBindings,
     hasUnsavedChanges: hasUnsavedChanges(),
