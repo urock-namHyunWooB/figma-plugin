@@ -51,6 +51,12 @@ export class FigmaLayerInfoPlugin {
 
     // UI 메시지 핸들러 등록
     this.setupMessageHandler();
+
+    figma.once("run", () => {
+      //json 추출
+
+      console.log("run");
+    });
   }
 
   /**

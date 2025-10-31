@@ -121,5 +121,9 @@ export class SelectionManager {
     figma.on("selectionchange", () => {
       this.sendCurrentSelection();
     });
+
+    figma.on("stylechange", () => {
+      console.log("stylechange");
+    });
   }
 }

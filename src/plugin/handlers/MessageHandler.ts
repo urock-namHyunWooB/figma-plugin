@@ -78,6 +78,7 @@ export class MessageHandler {
 
       case "save-component-property":
         await this.handleSaveComponentProperty(msg);
+        await this.handleExtractJson();
         break;
 
       case "save-props-definition":
@@ -152,7 +153,7 @@ export class MessageHandler {
     const json = JSON.stringify(selectionInfo, null, 2);
 
     figma.ui.postMessage({
-      type: "download-json",
+      type: "extract-json",
       data: json,
     });
   }

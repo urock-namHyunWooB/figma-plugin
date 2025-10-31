@@ -64,7 +64,7 @@ export default function useMessageHandler() {
   const [propsDefinition, setPropsDefinition] = useState<
     PropDefinition[] | null
   >([]);
-
+  const [extractJson, setExtractJson] = useState<string | null>(null);
   useLayoutEffect(() => {
     // Listen for messages from plugin code
     const handleMessage = (event: MessageEvent) => {
@@ -83,16 +83,9 @@ export default function useMessageHandler() {
         setSavedPropertyConfig(msg.data);
       }
 
-      if (msg.type === "download-json") {
-        const blob = new Blob([event.data.pluginMessage.data], {
-          type: "application/json",
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "figma-data.json";
-        a.click();
-        URL.revokeObjectURL(url);
+      if (msg.type === "extract-json") {
+        console.log("msg.data", msg.data);
+        setExtractJson(msg.data);
       }
 
       if (msg.type === "component-structure") {
@@ -121,5 +114,6 @@ export default function useMessageHandler() {
     componentStructure,
     internalStateDefinition,
     propsDefinition,
+    extractJson,
   };
 }

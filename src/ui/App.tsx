@@ -2,6 +2,7 @@ import SetProps from "./components/SetProps";
 import SetInternalState from "./components/SetInternalState";
 import ComponentStructure from "./domain/component-structure/ComponentStructure";
 import useMessageHandler from "./useMessageHandler";
+import ComponentDocument from "./domain/component-document/ComponentDocument";
 
 function App() {
   const {
@@ -9,6 +10,7 @@ function App() {
     componentStructure,
     internalStateDefinition,
     propsDefinition,
+    extractJson,
   } = useMessageHandler();
 
   console.log(componentStructure);
@@ -30,6 +32,8 @@ function App() {
             />
           </>
         )}
+
+        <ComponentDocument extractJson={extractJson} />
 
         <button
           onClick={handleClose}
