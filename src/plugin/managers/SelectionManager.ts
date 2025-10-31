@@ -1,6 +1,7 @@
 import { NodeInfoExtractor } from "../extractors/NodeInfoExtractor";
 import { MetadataManager } from "./MetadataManager";
 import { ComponentStructureManager } from "./ComponentStructureManager";
+import { MESSAGE_TYPES } from "../types/messages";
 
 /**
  * 선택 관리 클래스
@@ -37,7 +38,7 @@ export class SelectionManager {
 
     if (selection.length === 0) {
       figma.ui.postMessage({
-        type: "selection-info",
+        type: MESSAGE_TYPES.SELECTION_INFO,
         data: [],
       });
       return;
@@ -69,45 +70,45 @@ export class SelectionManager {
     }
 
     figma.ui.postMessage({
-      type: "selection-info",
+      type: MESSAGE_TYPES.SELECTION_INFO,
       data: JSON.parse(JSON.stringify(selectionInfo)),
     });
 
     figma.ui.postMessage({
-      type: "component-set-info",
+      type: MESSAGE_TYPES.COMPONENT_SET_INFO,
       data: JSON.parse(JSON.stringify(componentSetInfo)),
     });
 
     if (componentPropertyConfig) {
       figma.ui.postMessage({
-        type: "component-property-config",
+        type: MESSAGE_TYPES.COMPONENT_PROPERTY_CONFIG,
         data: JSON.parse(JSON.stringify(componentPropertyConfig)),
       });
     }
 
     figma.ui.postMessage({
-      type: "props-definition",
+      type: MESSAGE_TYPES.PROPS_DEFINITION,
       data: propsDefinition
         ? JSON.parse(JSON.stringify(propsDefinition))
         : null,
     });
 
     figma.ui.postMessage({
-      type: "internal-state-definition",
+      type: MESSAGE_TYPES.INTERNAL_STATE_DEFINITION,
       data: internalStateDefinition
         ? JSON.parse(JSON.stringify(internalStateDefinition))
         : null,
     });
 
     figma.ui.postMessage({
-      type: "component-structure",
+      type: MESSAGE_TYPES.COMPONENT_STRUCTURE,
       data: componentStructure
         ? JSON.parse(JSON.stringify(componentStructure))
         : null,
     });
 
     figma.ui.postMessage({
-      type: "element-bindings",
+      type: MESSAGE_TYPES.ELEMENT_BINDINGS,
       data: elementBindings
         ? JSON.parse(JSON.stringify(elementBindings))
         : null,

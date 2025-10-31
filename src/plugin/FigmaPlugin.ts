@@ -3,6 +3,7 @@ import { MetadataManager } from "./managers/MetadataManager";
 import { VariantManager } from "./managers/VariantManager";
 import { SelectionManager } from "./managers/SelectionManager";
 import { ComponentStructureManager } from "./managers/ComponentStructureManager";
+import { PluginMessage, MESSAGE_TYPES } from "./types/messages";
 
 /**
  * 메인 플러그인 클래스
@@ -63,16 +64,6 @@ export class FigmaPlugin {
   }
 
   /**
-   * UI로 선택 정보 전송
-   */
-  private sendSelectionInfo(data: Record<string, unknown>[]): void {
-    figma.ui.postMessage({
-      type: "selection-info",
-      data,
-    });
-  }
-
-  /**
    * 알림 메시지 표시
    */
   private notify(message: string): void {
@@ -82,45 +73,38 @@ export class FigmaPlugin {
   /**
    * 메시지 처리 (inlined from MessageHandler)
    */
-  private async handleMessage(msg: {
-    type: string;
-    nodeId?: string;
-    propertyName?: string;
-    value?: string;
-    metadataType?: string;
-    data?: any;
-  }): Promise<void> {
+  private async handleMessage(msg: PluginMessage): Promise<void> {
     switch (msg.type) {
-      case "cancel":
+      case MESSAGE_TYPES.CANCEL:
         await this.handleCancel();
         break;
 
-      case "change-variant":
+      case MESSAGE_TYPES.CHANGE_VARIANT:
         await this.handleChangeVariant(msg);
         break;
 
-      case "set-metadata":
+      case MESSAGE_TYPES.SET_METADATA:
         await this.handleSetMetadata(msg);
         break;
 
-      case "extract-json":
+      case MESSAGE_TYPES.EXTRACT_JSON:
         await this.handleExtractJson();
         break;
 
-      case "save-component-property":
+      case MESSAGE_TYPES.SAVE_COMPONENT_PROPERTY:
         await this.handleSaveComponentProperty(msg);
         await this.handleExtractJson();
         break;
 
-      case "save-props-definition":
+      case MESSAGE_TYPES.SAVE_PROPS_DEFINITION:
         await this.handleSavePropsDefinition(msg);
         break;
 
-      case "save-internal-state-definition":
+      case MESSAGE_TYPES.SAVE_INTERNAL_STATE_DEFINITION:
         await this.handleSaveInternalStateDefinition(msg);
         break;
 
-      case "save-element-bindings":
+      case MESSAGE_TYPES.SAVE_ELEMENT_BINDINGS:
         await this.handleSaveElementBindings(msg);
         break;
     }
@@ -130,15 +114,9 @@ export class FigmaPlugin {
     figma.closePlugin();
   }
 
-  private async handleChangeVariant(msg: {
-    nodeId?: string;
-    propertyName?: string;
-    value?: string;
-  }): Promise<void> {
-    if (!msg.nodeId || !msg.propertyName || !msg.value) {
-      return;
-    }
-
+  private async handleChangeVariant(
+    msg: Extract<PluginMessage, { type: "change-variant" }>
+  ): Promise<void> {
     const success = await this.variantManager.changeVariant(
       msg.nodeId,
       msg.propertyName,
@@ -153,14 +131,9 @@ export class FigmaPlugin {
     }
   }
 
-  private async handleSetMetadata(msg: {
-    nodeId?: string;
-    metadataType?: string;
-  }): Promise<void> {
-    if (!msg.nodeId || !msg.metadataType) {
-      return;
-    }
-
+  private async handleSetMetadata(
+    msg: Extract<PluginMessage, { type: "set-metadata" }>
+  ): Promise<void> {
     const success = await this.metadataManager.setMetadata(
       msg.nodeId,
       msg.metadataType
@@ -184,19 +157,14 @@ export class FigmaPlugin {
     const json = JSON.stringify(selectionInfo, null, 2);
 
     figma.ui.postMessage({
-      type: "extract-json",
+      type: MESSAGE_TYPES.EXTRACT_JSON_RESULT,
       data: json,
     });
   }
 
-  private async handleSaveComponentProperty(msg: {
-    data?: import("./managers/MetadataManager").PropertyConfig[];
-  }): Promise<void> {
-    if (!msg.data) {
-      this.notify("저장할 데이터가 없습니다");
-      return;
-    }
-
+  private async handleSaveComponentProperty(
+    msg: Extract<PluginMessage, { type: "save-component-property" }>
+  ): Promise<void> {
     const selection = figma.currentPage.selection;
     if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
       this.notify("ComponentSet을 선택해주세요");
@@ -216,14 +184,9 @@ export class FigmaPlugin {
     }
   }
 
-  private async handleSavePropsDefinition(msg: {
-    data?: import("./managers/MetadataManager").PropDefinition[];
-  }): Promise<void> {
-    if (!msg.data) {
-      this.notify("저장할 데이터가 없습니다");
-      return;
-    }
-
+  private async handleSavePropsDefinition(
+    msg: Extract<PluginMessage, { type: "save-props-definition" }>
+  ): Promise<void> {
     const selection = figma.currentPage.selection;
     if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
       this.notify("COMPONENT_SET을 선택해주세요");
@@ -243,14 +206,9 @@ export class FigmaPlugin {
     }
   }
 
-  private async handleSaveInternalStateDefinition(msg: {
-    data?: import("./managers/MetadataManager").StateDefinition[];
-  }): Promise<void> {
-    if (!msg.data) {
-      this.notify("저장할 데이터가 없습니다");
-      return;
-    }
-
+  private async handleSaveInternalStateDefinition(
+    msg: Extract<PluginMessage, { type: "save-internal-state-definition" }>
+  ): Promise<void> {
     const selection = figma.currentPage.selection;
     if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
       this.notify("COMPONENT_SET을 선택해주세요");
@@ -270,14 +228,9 @@ export class FigmaPlugin {
     }
   }
 
-  private async handleSaveElementBindings(msg: {
-    data?: import("./managers/MetadataManager").ElementBindingsMap;
-  }): Promise<void> {
-    if (!msg.data) {
-      this.notify("저장할 데이터가 없습니다");
-      return;
-    }
-
+  private async handleSaveElementBindings(
+    msg: Extract<PluginMessage, { type: "save-element-bindings" }>
+  ): Promise<void> {
     const selection = figma.currentPage.selection;
     if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
       this.notify("COMPONENT_SET을 선택해주세요");
