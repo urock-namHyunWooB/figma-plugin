@@ -26,6 +26,8 @@ function ComponentStructure({
   const { selectedElementId, selectElement } = useSelectedElement();
   const { props } = usePropsAndStates();
 
+  console.log(structure);
+
   // 선택된 요소 찾기
   const selectedElement = useMemo(() => {
     if (!structure || !selectedElementId) return null;

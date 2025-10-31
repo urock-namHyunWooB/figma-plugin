@@ -12,6 +12,29 @@ export interface StructureElement {
   width: number;
   height: number;
   visible: boolean;
+  /** padding 값: auto layout 프레임/컴포넌트 등에서 사용 */
+  padding?: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
+  /** margin 유사 개념: 부모 auto layout의 itemSpacing을 자식에 분배하여 표현 */
+  margin?: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
+  /** auto layout 및 정렬/간격 정보 */
+  layout?: {
+    layoutMode: "NONE" | "HORIZONTAL" | "VERTICAL";
+    itemSpacing: number;
+    primaryAxisAlignItems?: string; // 'MIN' | 'CENTER' | 'MAX' | 'SPACE_BETWEEN'
+    counterAxisAlignItems?: string; // 'MIN' | 'CENTER' | 'MAX'
+    layoutGrow?: number; // child 전용
+    layoutAlign?: string; // child 전용: 'STRETCH' | 'INHERIT' 등
+  };
   children?: StructureElement[];
 }
 
@@ -25,6 +48,20 @@ export interface ComponentStructureData {
   boundingBox: {
     width: number;
     height: number;
+  };
+  /** Base variant의 padding */
+  padding?: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
+  /** Base variant의 auto layout 정보 */
+  layout?: {
+    layoutMode: "NONE" | "HORIZONTAL" | "VERTICAL";
+    itemSpacing: number;
+    primaryAxisAlignItems?: string;
+    counterAxisAlignItems?: string;
   };
 }
 
