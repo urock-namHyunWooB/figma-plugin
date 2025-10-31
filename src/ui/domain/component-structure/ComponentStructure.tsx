@@ -24,7 +24,7 @@ function ComponentStructure({
     hasUnsavedChanges,
   } = useElementBindings();
   const { selectedElementId, selectElement } = useSelectedElement();
-  const { props } = usePropsAndStates();
+  const { props, states } = usePropsAndStates();
 
   console.log(structure);
 
@@ -85,6 +85,7 @@ function ComponentStructure({
             selectedElement={selectedElement}
             bindings={bindings}
             props={props}
+            states={states}
             onConnectProp={connectProp}
             onSave={saveBindings}
             onReset={resetBindings}

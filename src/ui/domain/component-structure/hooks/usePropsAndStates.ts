@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import type { PropDefinition } from "../types";
+import type { PropDefinition, StateDefinition } from "../types";
 
 /**
  * Props 정의 로드 hook (단순화)
  */
 export function usePropsAndStates() {
   const [props, setProps] = useState<PropDefinition[]>([]);
+  const [states, setStates] = useState<StateDefinition[]>([]);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -13,6 +14,10 @@ export function usePropsAndStates() {
 
       if (msg.type === "props-definition") {
         setProps(msg.data || []);
+      }
+
+      if (msg.type === "internal-state-definition") {
+        setStates(msg.data || []);
       }
     };
 
@@ -22,6 +27,7 @@ export function usePropsAndStates() {
 
   return {
     props,
+    states,
   };
 }
 

@@ -1,6 +1,7 @@
 import type {
   ElementBindingsMap,
   PropDefinition,
+  StateDefinition,
   StructureElement,
 } from "../types";
 
@@ -8,6 +9,7 @@ interface BindingPanelProps {
   selectedElement: StructureElement | null;
   bindings: ElementBindingsMap;
   props: PropDefinition[];
+  states: StateDefinition[];
   onConnectProp: (
     elementId: string,
     elementName: string,
@@ -26,6 +28,7 @@ function BindingPanel({
   selectedElement,
   bindings,
   props,
+  states,
   onConnectProp,
   onSave,
   onReset,
@@ -65,6 +68,31 @@ function BindingPanel({
     );
   };
 
+  // 현재 선택값을 UI용으로 정규화 (기존 저장값이 prefix가 없을 수 있음)
+  const normalizedSelectValue = (() => {
+    if (!connectedPropName) return "";
+    if (
+      connectedPropName.startsWith("prop:") ||
+      connectedPropName.startsWith("state:")
+    ) {
+      return connectedPropName;
+    }
+    // prefix 미포함: props 우선 확인 후 states 확인
+    if (props.some((p) => p.name === connectedPropName)) {
+      return `prop:${connectedPropName}`;
+    }
+    if (states.some((s) => s.name === connectedPropName)) {
+      return `state:${connectedPropName}`;
+    }
+    return connectedPropName;
+  })();
+
+  const formatConnectedLabel = (value: string) => {
+    if (value.startsWith("prop:")) return `[Prop] ${value.slice(5)}`;
+    if (value.startsWith("state:")) return `[State] ${value.slice(6)}`;
+    return value;
+  };
+
   return (
     <div className="h-full flex flex-col bg-white">
       {/* Header */}
@@ -88,26 +116,40 @@ function BindingPanel({
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Connect to Prop
+              Connect Value
             </label>
             <select
-              value={connectedPropName || ""}
+              value={normalizedSelectValue}
               onChange={handlePropChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">-- Not connected --</option>
-              {props.map((prop) => (
-                <option key={prop.id} value={prop.name}>
-                  {prop.name} ({prop.type})
-                </option>
-              ))}
+              {props.length > 0 && (
+                <optgroup label="Props">
+                  {props.map((prop) => (
+                    <option key={prop.id} value={`prop:${prop.name}`}>
+                      {prop.name} ({prop.type})
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {states.length > 0 && (
+                <optgroup label="States">
+                  {states.map((state) => (
+                    <option key={state.id} value={`state:${state.name}`}>
+                      {state.name} ({state.type})
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           </div>
 
           {connectedPropName && (
             <div className="p-3 bg-green-50 border border-green-200 rounded">
               <p className="text-sm text-green-800">
-                ✓ Connected to: <strong>{connectedPropName}</strong>
+                ✓ Connected to:{" "}
+                <strong>{formatConnectedLabel(normalizedSelectValue)}</strong>
               </p>
             </div>
           )}
@@ -120,7 +162,7 @@ function BindingPanel({
             </div>
           )}
 
-          {/* Available Props Info */}
+          {/* Available Props/States Info */}
           {props.length > 0 && (
             <div className="mt-6 p-3 bg-blue-50 rounded text-xs border border-blue-200">
               <p className="font-semibold text-blue-900 mb-2">
@@ -135,6 +177,28 @@ function BindingPanel({
                       <span className="text-blue-600">
                         {" "}
                         - {prop.description}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {states.length > 0 && (
+            <div className="mt-2 p-3 bg-purple-50 rounded text-xs border border-purple-200">
+              <p className="font-semibold text-purple-900 mb-2">
+                Available States ({states.length}):
+              </p>
+              <div className="space-y-1">
+                {states.map((state) => (
+                  <div key={state.id} className="text-purple-800">
+                    • <span className="font-medium">{state.name}</span>:{" "}
+                    {state.type}
+                    {state.description && (
+                      <span className="text-purple-600">
+                        {" "}
+                        - {state.description}
                       </span>
                     )}
                   </div>
