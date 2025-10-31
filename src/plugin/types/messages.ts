@@ -5,6 +5,7 @@ import {
   ElementBindingsMap,
 } from "../managers/MetadataManager";
 import { ComponentStructureData } from "../../ui/domain/component-structure/types";
+import { Component } from "react";
 
 /**
  * 메시지 타입 상수
@@ -29,6 +30,7 @@ export const MESSAGE_TYPES = {
   COMPONENT_STRUCTURE: "component-structure",
   ELEMENT_BINDINGS: "element-bindings",
   EXTRACT_JSON_RESULT: "extract-json",
+  COMPONENT_SPEC_JSON: "component-spec-json",
 } as const;
 
 /**

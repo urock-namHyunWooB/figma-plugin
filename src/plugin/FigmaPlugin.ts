@@ -37,30 +37,33 @@ export class FigmaPlugin {
     // UI 표시
     figma.showUI(__html__, { width: 800, height: 600 });
 
-    // 초기 선택 정보 전송
-    await this.selectionManager.sendCurrentSelection();
-
-    // 선택 변경 이벤트 리스닝 시작
-    this.selectionManager.startListening();
-
-    // UI 메시지 핸들러 등록
-    this.setupMessageHandler();
-
-    figma.once("run", () => {
-      //json 추출
-
-      console.log("run");
-    });
-  }
-
-  /**
-   * UI 메시지 핸들러 설정
-   */
-
-  private setupMessageHandler(): void {
     figma.ui.onmessage = async (msg) => {
       await this.handleMessage(msg);
     };
+
+    // 초기 선택 정보 전송
+    await this.selectionManager.sendCurrentSelection();
+
+    figma.on("selectionchange", () => {
+      this.selectionManager.sendCurrentSelection();
+    });
+
+    figma.once("run", () => {
+      const selection = figma.currentPage.selection;
+      if (selection.length === 0 || selection[0].type !== "COMPONENT_SET") {
+        this.notify("COMPONENT_SET을 선택한 상태에서 실행해주세요");
+        return;
+      }
+
+      const componentSet = selection[0] as ComponentSetNode;
+      const structure =
+        this.componentStructureManager.extractStructure(componentSet);
+
+      figma.ui.postMessage({
+        type: MESSAGE_TYPES.COMPONENT_SPEC_JSON,
+        data: structure ? JSON.parse(JSON.stringify(structure)) : null,
+      });
+    });
   }
 
   /**
@@ -148,33 +151,16 @@ export class FigmaPlugin {
   }
 
   private async handleExtractJson(): Promise<void> {
-    const selection = figma.currentPage.selection;
-    const selectionInfo = await Promise.all(
-      selection.map((node) =>
-        this.nodeInfoExtractor.extractNodeProperties(node)
-      )
-    );
-    const json = JSON.stringify(selectionInfo, null, 2);
-
-    figma.ui.postMessage({
-      type: MESSAGE_TYPES.EXTRACT_JSON_RESULT,
-      data: json,
-    });
+    await this.selectionManager.sendExtractJson();
   }
 
   private async handleSaveComponentProperty(
     msg: Extract<PluginMessage, { type: "save-component-property" }>
   ): Promise<void> {
-    const selection = figma.currentPage.selection;
-    if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
-      this.notify("ComponentSet을 선택해주세요");
-      return;
-    }
-
-    const success = await this.metadataManager.saveComponentPropertyConfig(
-      selection[0].id,
-      msg.data
-    );
+    const success =
+      await this.metadataManager.saveComponentPropertyConfigForCurrentSelection(
+        msg.data
+      );
 
     if (success) {
       this.notify("Component Property 설정이 저장되었습니다");
@@ -187,16 +173,10 @@ export class FigmaPlugin {
   private async handleSavePropsDefinition(
     msg: Extract<PluginMessage, { type: "save-props-definition" }>
   ): Promise<void> {
-    const selection = figma.currentPage.selection;
-    if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
-      this.notify("COMPONENT_SET을 선택해주세요");
-      return;
-    }
-
-    const success = await this.metadataManager.savePropsDefinition(
-      selection[0].id,
-      msg.data
-    );
+    const success =
+      await this.metadataManager.savePropsDefinitionForCurrentSelection(
+        msg.data
+      );
 
     if (success) {
       this.notify("Props 정의가 저장되었습니다");
@@ -209,16 +189,10 @@ export class FigmaPlugin {
   private async handleSaveInternalStateDefinition(
     msg: Extract<PluginMessage, { type: "save-internal-state-definition" }>
   ): Promise<void> {
-    const selection = figma.currentPage.selection;
-    if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
-      this.notify("COMPONENT_SET을 선택해주세요");
-      return;
-    }
-
-    const success = await this.metadataManager.saveInternalStateDefinition(
-      selection[0].id,
-      msg.data
-    );
+    const success =
+      await this.metadataManager.saveInternalStateDefinitionForCurrentSelection(
+        msg.data
+      );
 
     if (success) {
       this.notify("내부 상태 정의가 저장되었습니다");
@@ -231,16 +205,10 @@ export class FigmaPlugin {
   private async handleSaveElementBindings(
     msg: Extract<PluginMessage, { type: "save-element-bindings" }>
   ): Promise<void> {
-    const selection = figma.currentPage.selection;
-    if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
-      this.notify("COMPONENT_SET을 선택해주세요");
-      return;
-    }
-
-    const success = await this.metadataManager.saveElementBindings(
-      selection[0].id,
-      msg.data
-    );
+    const success =
+      await this.metadataManager.saveElementBindingsForCurrentSelection(
+        msg.data
+      );
 
     if (success) {
       this.notify("Element Bindings가 저장되었습니다");

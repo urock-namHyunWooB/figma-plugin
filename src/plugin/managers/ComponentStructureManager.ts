@@ -61,7 +61,7 @@ export class ComponentStructureManager {
   /**
    * ComponentSet의 Base variant (첫 번째 variant) 찾기
    */
-  getBaseVariant(componentSet: ComponentSetNode): ComponentNode | null {
+  public getBaseVariant(componentSet: ComponentSetNode): ComponentNode | null {
     const children = componentSet.children;
     if (children.length === 0) return null;
 
@@ -188,7 +188,7 @@ export class ComponentStructureManager {
   /**
    * ComponentSet의 전체 구조 데이터 추출
    */
-  extractStructure(
+  public extractStructure(
     componentSet: ComponentSetNode
   ): ComponentStructureData | null {
     const baseVariant = this.getBaseVariant(componentSet);

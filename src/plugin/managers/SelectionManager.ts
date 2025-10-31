@@ -34,8 +34,6 @@ export class SelectionManager {
     let componentStructure = null;
     let elementBindings = null;
 
-    console.info("selection", selection);
-
     if (selection.length === 0) {
       figma.ui.postMessage({
         type: MESSAGE_TYPES.SELECTION_INFO,
@@ -116,15 +114,20 @@ export class SelectionManager {
   }
 
   /**
-   * 선택 변경 이벤트 리스너 등록
+   * 현재 선택의 속성을 추출해 JSON으로 UI로 전송
    */
-  startListening(): void {
-    figma.on("selectionchange", () => {
-      this.sendCurrentSelection();
-    });
+  async sendExtractJson(): Promise<void> {
+    const selection = figma.currentPage.selection;
+    const selectionInfo = await Promise.all(
+      selection.map((node) =>
+        this.nodeInfoExtractor.extractNodeProperties(node)
+      )
+    );
+    const json = JSON.stringify(selectionInfo, null, 2);
 
-    figma.on("stylechange", () => {
-      console.log("stylechange");
+    figma.ui.postMessage({
+      type: "extract-json",
+      data: json,
     });
   }
 }

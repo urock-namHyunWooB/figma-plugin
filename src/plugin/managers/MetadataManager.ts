@@ -102,6 +102,19 @@ export class MetadataManager {
   }
 
   /**
+   * 현재 선택된 ComponentSet에 Property Config 저장
+   */
+  async saveComponentPropertyConfigForCurrentSelection(
+    config: PropertyConfig[]
+  ): Promise<boolean> {
+    const selection = figma.currentPage.selection;
+    if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
+      return false;
+    }
+    return this.saveComponentPropertyConfig(selection[0].id, config);
+  }
+
+  /**
    * ComponentSet의 Property Config 불러오기
    */
   getComponentPropertyConfig(node: SceneNode): PropertyConfig[] | null {
@@ -141,6 +154,19 @@ export class MetadataManager {
       console.error("Failed to save props definition:", error);
       return false;
     }
+  }
+
+  /**
+   * 현재 선택된 ComponentSet에 Props Definition 저장
+   */
+  async savePropsDefinitionForCurrentSelection(
+    props: PropDefinition[]
+  ): Promise<boolean> {
+    const selection = figma.currentPage.selection;
+    if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
+      return false;
+    }
+    return this.savePropsDefinition(selection[0].id, props);
   }
 
   /**
@@ -186,6 +212,19 @@ export class MetadataManager {
   }
 
   /**
+   * 현재 선택된 ComponentSet에 Internal State Definition 저장
+   */
+  async saveInternalStateDefinitionForCurrentSelection(
+    states: StateDefinition[]
+  ): Promise<boolean> {
+    const selection = figma.currentPage.selection;
+    if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
+      return false;
+    }
+    return this.saveInternalStateDefinition(selection[0].id, states);
+  }
+
+  /**
    * ComponentSet의 Internal State Definition 불러오기
    */
   getInternalStateDefinition(node: SceneNode): StateDefinition[] | null {
@@ -225,6 +264,19 @@ export class MetadataManager {
       console.error("Failed to save element bindings:", error);
       return false;
     }
+  }
+
+  /**
+   * 현재 선택된 ComponentSet에 Element Bindings 저장
+   */
+  async saveElementBindingsForCurrentSelection(
+    bindings: ElementBindingsMap
+  ): Promise<boolean> {
+    const selection = figma.currentPage.selection;
+    if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
+      return false;
+    }
+    return this.saveElementBindings(selection[0].id, bindings);
   }
 
   /**

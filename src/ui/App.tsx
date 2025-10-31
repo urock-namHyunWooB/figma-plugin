@@ -13,7 +13,6 @@ function App() {
     extractJson,
   } = useMessageHandler();
 
-  console.log(componentStructure);
   const handleClose = () => {
     parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
   };
