@@ -5,8 +5,9 @@ import {
   getNameError,
   getDefaultValueError,
   PropDefinition,
-} from "../utils/validation";
-import { getPropTypeBgColor } from "../utils/propStyles";
+} from "../../utils/validation";
+import { getPropTypeBgColor } from "../../utils/propStyles";
+import { MESSAGE_TYPES } from "../../../plugin/types/messages";
 
 function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
   const [props, setProps] = useState<PropDefinition[]>([]);
@@ -16,7 +17,6 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
     new Set()
   );
 
-  // Load saved props definition from plugin
   useEffect(() => {
     setProps(savedProps);
   }, []);
@@ -165,7 +165,7 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
       parent.postMessage(
         {
           pluginMessage: {
-            type: "save-props-definition",
+            type: MESSAGE_TYPES.SAVE_PROPS_DEFINITION,
             data: [],
           },
         },
@@ -537,7 +537,6 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
       </div>
 
       {!isEditing && savedProps.length > 0 ? (
-        // Chip view (saved state)
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
             {savedProps.map((prop) => renderPropChip(prop))}

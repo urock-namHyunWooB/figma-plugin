@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { getPropTypeBgColor } from "../utils/propStyles";
-import { StateDefinition } from "../domain/component-structure/types";
+import { getPropTypeBgColor } from "../../utils/propStyles";
+import { StateDefinition } from "../component-structure/types";
 
 function SetInternalState({ savedStates }: { savedStates: StateDefinition[] }) {
   const [states, setStates] = useState<StateDefinition[]>([]);

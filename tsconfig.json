@@ -10,6 +10,7 @@
     "skipLibCheck": true,
     "jsx": "react-jsx"
   },
+
   "include": ["src/plugin/**/*.ts", "src/ui/**/*.ts", "src/ui/**/*.tsx"],
   "exclude": ["dist"]
 }

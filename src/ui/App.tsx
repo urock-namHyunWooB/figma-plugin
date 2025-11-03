@@ -1,8 +1,8 @@
-import SetProps from "./components/SetProps";
-import SetInternalState from "./components/SetInternalState";
 import ComponentStructure from "./domain/component-structure/ComponentStructure";
 import useMessageHandler from "./useMessageHandler";
 import ComponentDocument from "./domain/component-document/ComponentDocument";
+import SetInternalState from "./domain/setting-internal-state/SetInternalState";
+import SetProps from "./domain/setting-props/SetProps";
 
 function App() {
   const {

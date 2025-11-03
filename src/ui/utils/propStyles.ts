@@ -3,9 +3,7 @@ import { PropDefinition } from "./validation";
 /**
  * prop 타입에 따른 배경색 클래스 반환
  */
-export const getPropTypeBgColor = (
-  type: PropDefinition["type"]
-): string => {
+export const getPropTypeBgColor = (type: PropDefinition["type"]): string => {
   switch (type) {
     case "string":
       return "bg-blue-100 text-blue-700";
@@ -25,4 +23,3 @@ export const getPropTypeBgColor = (
       return "bg-gray-100 text-gray-700";
   }
 };
-
