@@ -27,3 +27,8 @@ Thumbs.db
 
 # Temporary files
 src/ui/dist/
+
+vcpkg
+
+src/wasm-engine/build
+src/wasm-engine/build/*

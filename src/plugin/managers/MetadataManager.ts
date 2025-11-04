@@ -58,6 +58,7 @@ export class MetadataManager {
   private readonly PROPS_DEFINITION_KEY = "props-definition";
   private readonly INTERNAL_STATE_DEFINITION_KEY = "internal-state-definition";
   private readonly ELEMENT_BINDINGS_KEY = "element-bindings";
+  private readonly ROOT_ELEMENT_KEY = "root-element";
 
   /**
    * 노드에 메타데이터 설정
@@ -295,6 +296,57 @@ export class MetadataManager {
       return JSON.parse(bindingsJson) as ElementBindingsMap;
     } catch (error) {
       console.error("Failed to load element bindings:", error);
+      return null;
+    }
+  }
+
+  /**
+   * ComponentSet에 Root Element 저장
+   */
+  async saveRootElement(nodeId: string, rootElement: string): Promise<boolean> {
+    const node = await figma.getNodeByIdAsync(nodeId);
+    if (!node || node.type !== "COMPONENT_SET") {
+      return false;
+    }
+
+    try {
+      node.setPluginData(this.ROOT_ELEMENT_KEY, rootElement);
+      return true;
+    } catch (error) {
+      console.error("Failed to save root element:", error);
+      return false;
+    }
+  }
+
+  /**
+   * 현재 선택된 ComponentSet에 Root Element 저장
+   */
+  async saveRootElementForCurrentSelection(
+    rootElement: string
+  ): Promise<boolean> {
+    const selection = figma.currentPage.selection;
+    if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
+      return false;
+    }
+    return this.saveRootElement(selection[0].id, rootElement);
+  }
+
+  /**
+   * ComponentSet의 Root Element 불러오기
+   */
+  getRootElement(node: SceneNode): string | null {
+    if (node.type !== "COMPONENT_SET") {
+      return null;
+    }
+
+    try {
+      const rootElement = node.getPluginData(this.ROOT_ELEMENT_KEY);
+      if (!rootElement) {
+        return null;
+      }
+      return rootElement;
+    } catch (error) {
+      console.error("Failed to load root element:", error);
       return null;
     }
   }

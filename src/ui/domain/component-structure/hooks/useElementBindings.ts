@@ -4,24 +4,16 @@ import type { ElementBindingsMap } from "../types";
 /**
  * Element Bindings 관리 hook (단순화)
  */
-export function useElementBindings() {
-  const [bindings, setBindings] = useState<ElementBindingsMap>({});
-  const [savedBindings, setSavedBindings] = useState<ElementBindingsMap>({});
+export function useElementBindings(initialBindings: ElementBindingsMap = {}) {
+  const [bindings, setBindings] = useState<ElementBindingsMap>(initialBindings);
+  const [savedBindings, setSavedBindings] =
+    useState<ElementBindingsMap>(initialBindings);
 
+  // initialBindings가 변경되면 state 업데이트
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      const msg = event.data.pluginMessage;
-
-      if (msg.type === "element-bindings") {
-        const data = msg.data || {};
-        setBindings(data);
-        setSavedBindings(data);
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, []);
+    setBindings(initialBindings);
+    setSavedBindings(initialBindings);
+  }, [initialBindings]);
 
   const connectProp = useCallback(
     (

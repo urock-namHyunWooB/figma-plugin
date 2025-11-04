@@ -8,13 +8,21 @@
     "build": "npm run build:plugin && npm run build:ui",
     "build:plugin": "vite build --config vite.plugin.config.ts",
     "build:ui": "vite build --config vite.ui.config.ts",
+    "build:wasm": "cd src/wasm-engine && chmod +x build.sh && ./build.sh",
     "dev": "npm run build:plugin && vite build --watch",
     "lint": "eslint --ext .ts,.tsx --ignore-pattern node_modules .",
     "lint:fix": "eslint --ext .ts,.tsx --ignore-pattern node_modules --fix .",
-    "watch": "npm run build:plugin -- --watch & npm run build:ui -- --watch"
+    "watch": "npm run build:plugin -- --watch & npm run build:ui -- --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage"
   },
   "author": "",
   "license": "",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "devDependencies": {
     "@figma/eslint-plugin-figma-plugins": "*",
     "@figma/plugin-typings": "*",
@@ -24,13 +32,16 @@
     "@typescript-eslint/eslint-plugin": "^6.12.0",
     "@typescript-eslint/parser": "^6.12.0",
     "@vitejs/plugin-react": "^5.1.0",
+    "@vitest/ui": "^4.0.6",
     "autoprefixer": "^10.4.21",
     "eslint": "^8.54.0",
+    "happy-dom": "^20.0.10",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.16",
     "typescript": "^5.3.2",
     "vite": "^7.1.12",
-    "vite-plugin-singlefile": "^2.3.0"
+    "vite-plugin-singlefile": "^2.3.0",
+    "vitest": "^4.0.6"
   },
   "dependencies": {
     "react": "^19.2.0",

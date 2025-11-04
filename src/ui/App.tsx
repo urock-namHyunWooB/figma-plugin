@@ -10,6 +10,7 @@ function App() {
     componentStructure,
     internalStateDefinition,
     propsDefinition,
+    elementBindings,
     extractJson,
   } = useMessageHandler();
 
@@ -24,11 +25,15 @@ function App() {
           <>
             <SetProps savedProps={propsDefinition ?? []} />
             <SetInternalState savedStates={internalStateDefinition ?? []} />
-            <ComponentStructure
-              structure={componentStructure ?? null}
-              props={propsDefinition ?? []}
-              states={internalStateDefinition ?? []}
-            />
+
+            {componentStructure && (
+              <ComponentStructure
+                structure={componentStructure}
+                props={propsDefinition ?? []}
+                states={internalStateDefinition ?? []}
+                initialBindings={elementBindings}
+              />
+            )}
           </>
         )}
 

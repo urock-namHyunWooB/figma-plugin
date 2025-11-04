@@ -4,6 +4,7 @@ import { VariantManager } from "./managers/VariantManager";
 import { SelectionManager } from "./managers/SelectionManager";
 import { ComponentStructureManager } from "./managers/ComponentStructureManager";
 import { PluginMessage, MESSAGE_TYPES } from "./types/messages";
+import SpecManager from "./managers/SpecManager";
 
 /**
  * 메인 플러그인 클래스
@@ -15,7 +16,7 @@ export class FigmaPlugin {
   private variantManager: VariantManager;
   private componentStructureManager: ComponentStructureManager;
   private selectionManager: SelectionManager;
-  // Message handling is inlined from MessageHandler
+  private specManager: SpecManager;
 
   constructor() {
     // 의존성 주입을 통한 클래스 인스턴스 생성
@@ -25,6 +26,12 @@ export class FigmaPlugin {
     this.componentStructureManager = new ComponentStructureManager();
     this.selectionManager = new SelectionManager(
       this.nodeInfoExtractor,
+      this.metadataManager,
+      this.componentStructureManager
+    );
+
+    this.specManager = new SpecManager(
+      this,
       this.metadataManager,
       this.componentStructureManager
     );
@@ -50,35 +57,13 @@ export class FigmaPlugin {
 
     figma.once("run", () => {
       const selection = figma.currentPage.selection;
+
       if (selection.length === 0 || selection[0].type !== "COMPONENT_SET") {
         this.notify("COMPONENT_SET을 선택한 상태에서 실행해주세요");
         return;
       }
 
-      const componentSet = selection[0] as ComponentSetNode;
-      const componentSetInfo = componentSet.componentPropertyDefinitions;
-      const componentPropertyConfig =
-        this.metadataManager.getComponentPropertyConfig(componentSet);
-      const propsDefinition =
-        this.metadataManager.getPropsDefinition(componentSet);
-      const internalStateDefinition =
-        this.metadataManager.getInternalStateDefinition(componentSet);
-      const componentStructure =
-        this.componentStructureManager.extractStructure(componentSet);
-      const elementBindings =
-        this.metadataManager.getElementBindings(componentSet);
-      const variantStyles =
-        this.componentStructureManager.extractVariantStyles(componentSet);
-
-      const spec = {
-        componentSetInfo,
-        componentPropertyConfig,
-        propsDefinition,
-        internalStateDefinition,
-        componentStructure,
-        elementBindings,
-        variantStyles,
-      };
+      const spec = this.specManager.getComponentSpec();
 
       figma.ui.postMessage({
         type: MESSAGE_TYPES.COMPONENT_SPEC_JSON,

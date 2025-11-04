@@ -6,7 +6,6 @@ function ComponentDocument({ extractJson }: { extractJson: string | null }) {
     const handleMessage = (event: MessageEvent) => {
       const msg = event.data.pluginMessage;
       if (msg.type === MESSAGE_TYPES.COMPONENT_SPEC_JSON) {
-        console.log("msg.data", msg.data);
       }
     };
 
@@ -16,7 +15,6 @@ function ComponentDocument({ extractJson }: { extractJson: string | null }) {
     };
   }, []);
 
-  console.log("extractJson", extractJson);
   return <div>Document</div>;
 }
 

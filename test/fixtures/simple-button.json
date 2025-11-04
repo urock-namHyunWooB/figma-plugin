@@ -1,0 +1,60 @@
+{
+  "metadata": {
+    "name": "SimpleButton",
+    "rootElement": "button"
+  },
+  "propsDefinition": [
+    {
+      "id": "prop-1",
+      "name": "text",
+      "type": "string",
+      "defaultValue": "",
+      "required": true,
+      "description": ""
+    }
+  ],
+  "internalStateDefinition": [],
+  "componentStructure": {
+    "baseVariantId": "1:1",
+    "baseVariantName": "default",
+    "elements": [
+      {
+        "id": "1:2",
+        "name": "ButtonText",
+        "type": "TEXT",
+        "x": 10,
+        "y": 10,
+        "width": 100,
+        "height": 30,
+        "visible": true
+      }
+    ],
+    "boundingBox": {
+      "width": 120,
+      "height": 50
+    },
+    "padding": {
+      "top": 10,
+      "right": 10,
+      "bottom": 10,
+      "left": 10
+    },
+    "layout": {
+      "layoutMode": "HORIZONTAL",
+      "itemSpacing": 4,
+      "primaryAxisAlignItems": "CENTER",
+      "counterAxisAlignItems": "CENTER"
+    }
+  },
+  "elementBindings": {
+    "1:2": {
+      "elementId": "1:2",
+      "elementName": "ButtonText",
+      "elementType": "TEXT",
+      "connectedPropName": "prop:text",
+      "visibleMode": "always",
+      "visibleExpression": ""
+    }
+  }
+}
+

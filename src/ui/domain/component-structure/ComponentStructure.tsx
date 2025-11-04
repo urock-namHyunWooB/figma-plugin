@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import StructureCanvas from "./components/StructureCanvas";
 import BindingPanel from "./components/BindingPanel";
-import { useComponentStructure } from "./hooks/useComponentStructure";
+
 import { useElementBindings } from "./hooks/useElementBindings";
 import { useSelectedElement } from "./hooks/useSelectedElement";
 import type {
@@ -9,6 +9,7 @@ import type {
   StructureElement,
   PropDefinition,
   StateDefinition,
+  ElementBindingsMap,
 } from "./types";
 
 /**
@@ -19,10 +20,12 @@ function ComponentStructure({
   structure,
   props,
   states,
+  initialBindings,
 }: {
   structure: ComponentStructureData | null;
   props: PropDefinition[];
   states: StateDefinition[];
+  initialBindings: ElementBindingsMap;
 }) {
   const {
     bindings,
@@ -31,10 +34,8 @@ function ComponentStructure({
     saveBindings,
     resetBindings,
     hasUnsavedChanges,
-  } = useElementBindings();
+  } = useElementBindings(initialBindings);
   const { selectedElementId, selectElement } = useSelectedElement();
-
-  console.log(structure);
 
   // 선택된 요소 찾기
   const selectedElement = useMemo(() => {

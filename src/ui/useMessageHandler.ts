@@ -1,7 +1,12 @@
-import { useLayoutEffect, useState } from "react";
-import { ComponentStructureData } from "./domain/component-structure/types";
+import { useLayoutEffect, useRef, useState } from "react";
+import {
+  ComponentStructureData,
+  ElementBindingsMap,
+} from "./domain/component-structure/types";
 import { StateDefinition } from "../plugin/managers/MetadataManager";
 import { PropDefinition } from "./utils/validation";
+import { initWasm } from "../wasm-engine";
+import { MESSAGE_TYPES } from "../plugin/types/messages";
 
 interface LayerData {
   id: string;
@@ -56,18 +61,45 @@ export default function useMessageHandler() {
   const [savedPropertyConfig, setSavedPropertyConfig] = useState<
     PropertyConfig[] | null
   >(null);
+
   const [componentStructure, setComponentStructure] =
     useState<ComponentStructureData | null>(null);
+
   const [internalStateDefinition, setInternalStateDefinition] = useState<
     StateDefinition[] | null
   >(null);
+
   const [propsDefinition, setPropsDefinition] = useState<
     PropDefinition[] | null
   >([]);
+
+  const [elementBindings, setElementBindings] = useState<ElementBindingsMap>(
+    {}
+  );
+
   const [extractJson, setExtractJson] = useState<string | null>(null);
+
+  // Promise 기반으로 WASM 엔진 관리
+  const enginePromise = useRef<Promise<any> | null>(null);
+
   useLayoutEffect(() => {
-    // Listen for messages from plugin code
-    const handleMessage = (event: MessageEvent) => {
+    // Promise를 생성하여 저장 (한 번만)
+    enginePromise.current = (async () => {
+      try {
+        const wasm = await initWasm();
+
+        const engine = new wasm.Engine();
+        engine.init();
+
+        return engine;
+      } catch (error) {
+        throw error;
+      }
+    })();
+  }, []);
+
+  useLayoutEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
       const msg = event.data.pluginMessage;
 
       if (msg.type === "selection-info") {
@@ -84,7 +116,6 @@ export default function useMessageHandler() {
       }
 
       if (msg.type === "extract-json") {
-        console.log("msg.data", msg.data);
         setExtractJson(msg.data);
       }
 
@@ -98,6 +129,28 @@ export default function useMessageHandler() {
 
       if (msg.type === "props-definition") {
         setPropsDefinition(msg.data);
+      }
+
+      if (msg.type === "element-bindings") {
+        setElementBindings(msg.data || {});
+      }
+
+      if (msg.type === MESSAGE_TYPES.COMPONENT_SPEC_JSON) {
+        try {
+          if (!enginePromise.current) {
+            return;
+          }
+
+          const engine = await enginePromise.current;
+
+          engine.setComponentSpec(msg.data);
+
+          const result = engine.generateCode("React", "button.tsx");
+          console.log(msg.data);
+          console.log(result.code);
+        } catch (error) {
+          console.error("Failed to process COMPONENT_SPEC_JSON:", error);
+        }
       }
     };
 
@@ -114,6 +167,7 @@ export default function useMessageHandler() {
     componentStructure,
     internalStateDefinition,
     propsDefinition,
+    elementBindings,
     extractJson,
   };
 }
