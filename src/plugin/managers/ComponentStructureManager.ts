@@ -32,6 +32,18 @@ interface StructureElement {
     layoutGrow?: number;
     layoutAlign?: string;
   };
+  fills?: Array<{
+    type: string;
+    color?: { r: number; g: number; b: number };
+    opacity?: number;
+  }>;
+  strokes?: Array<{
+    type: string;
+    color?: { r: number; g: number; b: number };
+  }>;
+  strokeWeight?: number;
+  cornerRadius?: number;
+  opacity?: number;
   children?: StructureElement[];
 }
 
@@ -55,6 +67,18 @@ interface ComponentStructureData {
     primaryAxisAlignItems?: string;
     counterAxisAlignItems?: string;
   };
+  fills?: Array<{
+    type: string;
+    color?: { r: number; g: number; b: number };
+    opacity?: number;
+  }>;
+  strokes?: Array<{
+    type: string;
+    color?: { r: number; g: number; b: number };
+  }>;
+  strokeWeight?: number;
+  cornerRadius?: number;
+  opacity?: number;
 }
 
 export class ComponentStructureManager {
@@ -126,6 +150,66 @@ export class ComponentStructureManager {
           left: n.paddingLeft ?? 0,
         };
       }
+    }
+
+    // Fills (배경색)
+    if ("fills" in node && Array.isArray(node.fills)) {
+      const fills = node.fills as Paint[];
+      if (fills.length > 0) {
+        element.fills = fills.map((fill) => {
+          if (fill.type === "SOLID") {
+            return {
+              type: fill.type,
+              color: {
+                r: Math.round(fill.color.r * 255),
+                g: Math.round(fill.color.g * 255),
+                b: Math.round(fill.color.b * 255),
+              },
+              opacity: fill.opacity ?? 1,
+            };
+          }
+          return { type: fill.type };
+        });
+      }
+    }
+
+    // Strokes (테두리)
+    if ("strokes" in node && Array.isArray(node.strokes)) {
+      const strokes = node.strokes as Paint[];
+      if (strokes.length > 0) {
+        element.strokes = strokes.map((stroke) => {
+          if (stroke.type === "SOLID") {
+            return {
+              type: stroke.type,
+              color: {
+                r: Math.round(stroke.color.r * 255),
+                g: Math.round(stroke.color.g * 255),
+                b: Math.round(stroke.color.b * 255),
+              },
+            };
+          }
+          return { type: stroke.type };
+        });
+      }
+    }
+
+    // StrokeWeight
+    if (
+      "strokeWeight" in node &&
+      typeof node.strokeWeight === "number" &&
+      node.strokeWeight > 0
+    ) {
+      element.strokeWeight = node.strokeWeight;
+    }
+
+    // Corner Radius
+    if ("cornerRadius" in node && node.cornerRadius !== 0) {
+      element.cornerRadius = node.cornerRadius;
+    }
+
+    // Opacity
+    if ("opacity" in node && node.opacity !== 1) {
+      element.opacity = Math.round(node.opacity * 100) / 100;
     }
 
     // children이 있는 노드 타입들
@@ -247,6 +331,67 @@ export class ComponentStructureManager {
       };
     }
 
+    // baseVariant의 fills, strokes, cornerRadius 추출
+    let rootFills;
+    if ("fills" in baseVariant && Array.isArray(baseVariant.fills)) {
+      const fills = baseVariant.fills as Paint[];
+      if (fills.length > 0) {
+        rootFills = fills.map((fill) => {
+          if (fill.type === "SOLID") {
+            return {
+              type: fill.type,
+              color: {
+                r: Math.round(fill.color.r * 255),
+                g: Math.round(fill.color.g * 255),
+                b: Math.round(fill.color.b * 255),
+              },
+              opacity: fill.opacity ?? 1,
+            };
+          }
+          return { type: fill.type };
+        });
+      }
+    }
+
+    let rootStrokes;
+    if ("strokes" in baseVariant && Array.isArray(baseVariant.strokes)) {
+      const strokes = baseVariant.strokes as Paint[];
+      if (strokes.length > 0) {
+        rootStrokes = strokes.map((stroke) => {
+          if (stroke.type === "SOLID") {
+            return {
+              type: stroke.type,
+              color: {
+                r: Math.round(stroke.color.r * 255),
+                g: Math.round(stroke.color.g * 255),
+                b: Math.round(stroke.color.b * 255),
+              },
+            };
+          }
+          return { type: stroke.type };
+        });
+      }
+    }
+
+    let rootStrokeWeight;
+    if (
+      "strokeWeight" in baseVariant &&
+      typeof baseVariant.strokeWeight === "number" &&
+      baseVariant.strokeWeight > 0
+    ) {
+      rootStrokeWeight = baseVariant.strokeWeight;
+    }
+
+    let rootCornerRadius;
+    if ("cornerRadius" in baseVariant && baseVariant.cornerRadius !== 0) {
+      rootCornerRadius = baseVariant.cornerRadius;
+    }
+
+    let rootOpacity;
+    if ("opacity" in baseVariant && baseVariant.opacity !== 1) {
+      rootOpacity = Math.round(baseVariant.opacity * 100) / 100;
+    }
+
     return {
       baseVariantId: baseVariant.id,
       baseVariantName: baseVariant.name,
@@ -257,6 +402,11 @@ export class ComponentStructureManager {
       },
       padding: rootPadding,
       layout: rootLayout,
+      fills: rootFills,
+      strokes: rootStrokes,
+      strokeWeight: rootStrokeWeight,
+      cornerRadius: rootCornerRadius,
+      opacity: rootOpacity,
     };
   }
 

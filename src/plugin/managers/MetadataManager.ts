@@ -23,6 +23,9 @@ export interface PropDefinition {
   defaultValue?: any;
   required: boolean;
   description?: string;
+  // variant property로부터 자동 생성된 prop (편집 불가)
+  readonly?: boolean;
+  variantOptions?: string[];
 }
 
 // Internal State 정의 인터페이스
@@ -159,6 +162,7 @@ export class MetadataManager {
 
   /**
    * 현재 선택된 ComponentSet에 Props Definition 저장
+   * readonly props는 자동으로 제외됨
    */
   async savePropsDefinitionForCurrentSelection(
     props: PropDefinition[]
@@ -167,7 +171,9 @@ export class MetadataManager {
     if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
       return false;
     }
-    return this.savePropsDefinition(selection[0].id, props);
+    // readonly props 제외 (variant props는 자동 생성되므로 저장하지 않음)
+    const userDefinedProps = props.filter(prop => !prop.readonly);
+    return this.savePropsDefinition(selection[0].id, userDefinedProps);
   }
 
   /**
@@ -188,6 +194,72 @@ export class MetadataManager {
       console.error("Failed to load props definition:", error);
       return null;
     }
+  }
+
+  /**
+   * ComponentSet의 size와 type variant를 자동으로 prop으로 변환
+   */
+  private extractVariantProps(componentSet: ComponentSetNode): PropDefinition[] {
+    const variantProps: PropDefinition[] = [];
+    
+    if (!componentSet.componentPropertyDefinitions) {
+      return variantProps;
+    }
+
+    const targetVariants = ["size", "type"];
+    const defaultVariant = componentSet.defaultVariant;
+    
+    Object.entries(componentSet.componentPropertyDefinitions).forEach(([key, definition]) => {
+      // size와 type만 처리
+      if (!targetVariants.includes(key.toLowerCase())) {
+        return;
+      }
+
+      if (definition.type === "VARIANT" && definition.variantOptions) {
+        // defaultVariant에서 기본값 추출
+        let defaultValue = definition.defaultValue || definition.variantOptions[0];
+        
+        if (defaultVariant && defaultVariant.variantProperties) {
+          const variantValue = defaultVariant.variantProperties[key];
+          if (variantValue && typeof variantValue === "string") {
+            defaultValue = variantValue;
+          }
+        }
+
+        variantProps.push({
+          id: `variant-${key.toLowerCase()}`,
+          name: key,
+          type: "string",
+          defaultValue: defaultValue,
+          required: false,
+          description: `Variant property: ${key}`,
+          readonly: true,
+          variantOptions: definition.variantOptions,
+        });
+      }
+    });
+
+    return variantProps;
+  }
+
+  /**
+   * Props Definition과 Variant Props를 합쳐서 반환
+   */
+  getCombinedPropsDefinition(node: SceneNode): PropDefinition[] {
+    if (node.type !== "COMPONENT_SET") {
+      return [];
+    }
+
+    const componentSet = node as ComponentSetNode;
+    
+    // 저장된 props 불러오기
+    const savedProps = this.getPropsDefinition(node) || [];
+    
+    // variant props 추출
+    const variantProps = this.extractVariantProps(componentSet);
+    
+    // variant props를 먼저, 그 다음 user-defined props
+    return [...variantProps, ...savedProps];
   }
 
   /**

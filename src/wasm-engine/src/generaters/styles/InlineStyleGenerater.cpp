@@ -47,53 +47,108 @@ class InlineStyleGenerater {
     return oss.str();
   }
 
+  // RGB 색상을 CSS 문자열로 변환
+  std::string rgbToCss(const nlohmann::json& color, double opacity = 1.0) {
+    if (!color.contains("r") || !color.contains("g") || !color.contains("b")) {
+      return "";
+    }
+
+    int r = color["r"].get<int>();
+    int g = color["g"].get<int>();
+    int b = color["b"].get<int>();
+
+    std::ostringstream oss;
+    if (opacity < 1.0) {
+      oss << "rgba(" << r << ", " << g << ", " << b << ", " << opacity << ")";
+    } else {
+      oss << "rgb(" << r << ", " << g << ", " << b << ")";
+    }
+    return oss.str();
+  }
+
   // 단일 요소의 스타일 객체 생성
-  std::string generateElementStyleObject(const nlohmann::json& element,
-                                         const std::string& styleName) {
+  std::string generateElementStyleObject(
+      const nlohmann::json& element, const std::string& styleName,
+      const std::string& parentLayoutMode = "") {
     std::vector<std::string> styleProps;
 
-    // Width & Height
-    if (element.contains("width")) {
-      styleProps.push_back("    width: '" +
-                           toPx(element["width"].get<double>()) + "'");
-    }
-    if (element.contains("height")) {
-      styleProps.push_back("    height: '" +
-                           toPx(element["height"].get<double>()) + "'");
+    // 요소 타입 확인
+    std::string elementType = "";
+    if (element.contains("type")) {
+      elementType = element["type"].get<std::string>();
     }
 
-    // Layout (Flexbox)
+    // 부모가 layoutMode: NONE이면 자식은 absolute positioning
+    bool isAbsolutePositioned = (parentLayoutMode == "NONE");
+
+    if (isAbsolutePositioned) {
+      styleProps.push_back("    position: 'absolute'");
+
+      // x, y를 left, top으로 변환
+      if (element.contains("x")) {
+        styleProps.push_back("    left: '" + toPx(element["x"].get<double>()) +
+                             "'");
+      }
+      if (element.contains("y")) {
+        styleProps.push_back("    top: '" + toPx(element["y"].get<double>()) +
+                             "'");
+      }
+    }
+
+    // TEXT 타입은 width, height 제외 (텍스트 자체 크기 사용)
+    if (elementType != "TEXT") {
+      // Width & Height
+      if (element.contains("width")) {
+        styleProps.push_back("    width: '" +
+                             toPx(element["width"].get<double>()) + "'");
+      }
+      if (element.contains("height")) {
+        styleProps.push_back("    height: '" +
+                             toPx(element["height"].get<double>()) + "'");
+      }
+    }
+
+    // Layout (Flexbox or Absolute)
     if (element.contains("layout") && element["layout"].is_object()) {
       const auto& layout = element["layout"];
 
-      if (layout.contains("layoutMode") &&
-          layout["layoutMode"].get<std::string>() != "NONE") {
-        styleProps.push_back("    display: 'flex'");
-
+      if (layout.contains("layoutMode")) {
         std::string layoutMode = layout["layoutMode"].get<std::string>();
-        styleProps.push_back("    flexDirection: '" +
-                             convertLayoutMode(layoutMode) + "'");
 
-        // alignItems (counterAxis)
-        if (layout.contains("counterAxisAlignItems")) {
-          std::string align =
-              layout["counterAxisAlignItems"].get<std::string>();
-          styleProps.push_back("    alignItems: '" +
-                               convertCounterAxisAlign(align) + "'");
-        }
+        if (layoutMode == "NONE") {
+          // layoutMode: NONE → position: relative
+          // 자식 요소들이 absolute로 배치될 수 있도록
+          // 단, 이미 absolute로 설정되지 않았을 때만
+          if (!isAbsolutePositioned) {
+            styleProps.push_back("    position: 'relative'");
+          }
+        } else {
+          // AUTO LAYOUT (HORIZONTAL, VERTICAL)
+          styleProps.push_back("    display: 'flex'");
+          styleProps.push_back("    flexDirection: '" +
+                               convertLayoutMode(layoutMode) + "'");
 
-        // justifyContent (primaryAxis)
-        if (layout.contains("primaryAxisAlignItems")) {
-          std::string align =
-              layout["primaryAxisAlignItems"].get<std::string>();
-          styleProps.push_back("    justifyContent: '" +
-                               convertPrimaryAxisAlign(align) + "'");
-        }
+          // alignItems (counterAxis)
+          if (layout.contains("counterAxisAlignItems")) {
+            std::string align =
+                layout["counterAxisAlignItems"].get<std::string>();
+            styleProps.push_back("    alignItems: '" +
+                                 convertCounterAxisAlign(align) + "'");
+          }
 
-        // gap (itemSpacing)
-        if (layout.contains("itemSpacing")) {
-          styleProps.push_back("    gap: '" +
-                               toPx(layout["itemSpacing"].get<double>()) + "'");
+          // justifyContent (primaryAxis)
+          if (layout.contains("primaryAxisAlignItems")) {
+            std::string align =
+                layout["primaryAxisAlignItems"].get<std::string>();
+            styleProps.push_back("    justifyContent: '" +
+                                 convertPrimaryAxisAlign(align) + "'");
+          }
+
+          // gap (itemSpacing)
+          if (layout.contains("itemSpacing")) {
+            styleProps.push_back(
+                "    gap: '" + toPx(layout["itemSpacing"].get<double>()) + "'");
+          }
         }
       }
     }
@@ -124,6 +179,78 @@ class InlineStyleGenerater {
                                toPx(right) + " " + toPx(bottom) + " " +
                                toPx(left) + "'");
         }
+      }
+    }
+
+    // Fills (Background Color or Text Color)
+    if (element.contains("fills") && element["fills"].is_array() &&
+        !element["fills"].empty()) {
+      const auto& fills = element["fills"];
+      const auto& firstFill = fills[0];
+
+      if (firstFill.contains("type") &&
+          firstFill["type"].get<std::string>() == "SOLID") {
+        if (firstFill.contains("color")) {
+          double opacity = firstFill.contains("opacity")
+                               ? firstFill["opacity"].get<double>()
+                               : 1.0;
+          std::string colorValue = rgbToCss(firstFill["color"], opacity);
+
+          if (!colorValue.empty()) {
+            // TEXT 타입은 color, 나머지는 background
+            if (elementType == "TEXT") {
+              styleProps.push_back("    color: '" + colorValue + "'");
+            } else {
+              styleProps.push_back("    background: '" + colorValue + "'");
+            }
+          }
+        }
+      }
+    }
+
+    // Strokes (Border)
+    if (element.contains("strokes") && element["strokes"].is_array() &&
+        !element["strokes"].empty()) {
+      const auto& strokes = element["strokes"];
+      const auto& firstStroke = strokes[0];
+
+      if (firstStroke.contains("type") &&
+          firstStroke["type"].get<std::string>() == "SOLID") {
+        if (firstStroke.contains("color")) {
+          std::string borderColor = rgbToCss(firstStroke["color"]);
+          if (!borderColor.empty()) {
+            // strokeWeight가 있으면 함께 설정
+            std::string borderWidth = "1px";
+            if (element.contains("strokeWeight")) {
+              borderWidth = toPx(element["strokeWeight"].get<double>());
+            }
+            styleProps.push_back("    border: '" + borderWidth + " solid " +
+                                 borderColor + "'");
+          }
+        }
+      }
+    }
+
+    // Corner Radius (Border Radius)
+    if (element.contains("cornerRadius")) {
+      double radius = element["cornerRadius"].get<double>();
+      if (radius > 0) {
+        styleProps.push_back("    borderRadius: '" + toPx(radius) + "'");
+      }
+    }
+
+    // ELLIPSE 타입은 원형으로 (borderRadius: 50%)
+    if (elementType == "ELLIPSE") {
+      styleProps.push_back("    borderRadius: '50%'");
+    }
+
+    // Opacity
+    if (element.contains("opacity")) {
+      double opacity = element["opacity"].get<double>();
+      if (opacity < 1.0) {
+        std::ostringstream oss;
+        oss << opacity;
+        styleProps.push_back("    opacity: " + oss.str());
       }
     }
 
@@ -287,11 +414,17 @@ class InlineStyleGenerater {
     std::vector<std::pair<std::string, std::string>> stylesMap;
     int counter = 0;
 
-    // Root의 스타일
+    // Root의 스타일 (baseVariant의 스타일)
     std::string rootStyle = "";
     if (componentStructure.contains("padding") ||
-        componentStructure.contains("layout")) {
+        componentStructure.contains("layout") ||
+        componentStructure.contains("fills") ||
+        componentStructure.contains("strokes") ||
+        componentStructure.contains("cornerRadius") ||
+        componentStructure.contains("opacity") ||
+        componentStructure.contains("boundingBox")) {
       nlohmann::json rootElement = nlohmann::json::object();
+
       if (componentStructure.contains("padding")) {
         rootElement["padding"] = componentStructure["padding"];
       }
@@ -301,6 +434,21 @@ class InlineStyleGenerater {
       if (componentStructure.contains("boundingBox")) {
         rootElement["width"] = componentStructure["boundingBox"]["width"];
         rootElement["height"] = componentStructure["boundingBox"]["height"];
+      }
+      if (componentStructure.contains("fills")) {
+        rootElement["fills"] = componentStructure["fills"];
+      }
+      if (componentStructure.contains("strokes")) {
+        rootElement["strokes"] = componentStructure["strokes"];
+      }
+      if (componentStructure.contains("strokeWeight")) {
+        rootElement["strokeWeight"] = componentStructure["strokeWeight"];
+      }
+      if (componentStructure.contains("cornerRadius")) {
+        rootElement["cornerRadius"] = componentStructure["cornerRadius"];
+      }
+      if (componentStructure.contains("opacity")) {
+        rootElement["opacity"] = componentStructure["opacity"];
       }
 
       rootStyle = generateElementStyleObject(rootElement, "container");
@@ -363,8 +511,52 @@ class InlineStyleGenerater {
 
     // Children 재귀 처리
     if (element.contains("children") && element["children"].is_array()) {
+      // 현재 요소의 layoutMode 확인
+      std::string currentLayoutMode = "";
+      if (element.contains("layout") && element["layout"].is_object() &&
+          element["layout"].contains("layoutMode")) {
+        currentLayoutMode = element["layout"]["layoutMode"].get<std::string>();
+      }
+
       for (const auto& child : element["children"]) {
-        collectElementStylesWithMapping(child, stylesMap, counter);
+        // 자식에게 부모의 layoutMode 전달
+        collectElementStylesWithMappingAndParent(child, stylesMap, counter,
+                                                 currentLayoutMode);
+      }
+    }
+  }
+
+  // 부모 layoutMode를 전달하는 버전
+  void collectElementStylesWithMappingAndParent(
+      const nlohmann::json& element,
+      std::vector<std::pair<std::string, std::string>>& stylesMap, int& counter,
+      const std::string& parentLayoutMode) {
+    if (!element.contains("id")) {
+      return;
+    }
+
+    std::string elementId = element["id"].get<std::string>();
+    std::string styleKey = generateUniqueStyleKey(element, counter++);
+    std::string styleObject =
+        generateElementStyleObject(element, styleKey, parentLayoutMode);
+
+    if (!styleObject.empty()) {
+      stylesMap.push_back({elementId, styleObject});
+      elementIdToStyleKey[elementId] = styleKey;
+    }
+
+    // Children 재귀 처리
+    if (element.contains("children") && element["children"].is_array()) {
+      // 현재 요소의 layoutMode 확인
+      std::string currentLayoutMode = "";
+      if (element.contains("layout") && element["layout"].is_object() &&
+          element["layout"].contains("layoutMode")) {
+        currentLayoutMode = element["layout"]["layoutMode"].get<std::string>();
+      }
+
+      for (const auto& child : element["children"]) {
+        collectElementStylesWithMappingAndParent(child, stylesMap, counter,
+                                                 currentLayoutMode);
       }
     }
   }

@@ -36,6 +36,12 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
   };
 
   const removeProp = (id: string) => {
+    // readonly props는 삭제할 수 없음
+    const propToRemove = props.find((p) => p.id === id);
+    if (propToRemove?.readonly) {
+      return;
+    }
+
     setProps(props.filter((p) => p.id !== id));
     setExpandedDescriptions((prev) => {
       const newSet = new Set(prev);
@@ -53,6 +59,11 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
     setProps(
       props.map((p) => {
         if (p.id === id) {
+          // readonly props는 수정할 수 없음
+          if (p.readonly) {
+            return p;
+          }
+
           const updated = { ...p, [field]: value };
           // function 타입으로 변경될 때 초기화
           if (field === "type" && value === "function") {
@@ -298,12 +309,20 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
     return (
       <button
         key={prop.id}
-        onClick={() => handleEditProp(prop.id)}
-        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:shadow-md ${getPropTypeBgColor(
-          prop.type
-        )}`}
-        title={prop.description || "클릭하여 수정"}
+        onClick={() => !prop.readonly && handleEditProp(prop.id)}
+        disabled={prop.readonly}
+        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+          prop.readonly
+            ? "bg-gray-200 text-gray-700 cursor-not-allowed opacity-75"
+            : `hover:shadow-md ${getPropTypeBgColor(prop.type)}`
+        }`}
+        title={
+          prop.readonly
+            ? "Variant property (편집 불가)"
+            : prop.description || "클릭하여 수정"
+        }
       >
+        {prop.readonly && <span className="text-xs">🔒</span>}
         <span className="font-semibold">{prop.name}</span>
         <span className="opacity-70 font-mono text-xs">
           : {getFunctionSignature()}

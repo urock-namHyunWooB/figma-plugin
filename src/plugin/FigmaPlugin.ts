@@ -53,6 +53,19 @@ export class FigmaPlugin {
 
     figma.on("selectionchange", () => {
       this.selectionManager.sendCurrentSelection();
+
+      const selection = figma.currentPage.selection;
+
+      if (selection.length === 0 || selection[0].type !== "COMPONENT_SET") {
+        return;
+      }
+
+      const spec = this.specManager.getComponentSpec();
+
+      figma.ui.postMessage({
+        type: MESSAGE_TYPES.COMPONENT_SPEC_JSON,
+        data: JSON.parse(JSON.stringify(spec)),
+      });
     });
 
     figma.once("run", () => {

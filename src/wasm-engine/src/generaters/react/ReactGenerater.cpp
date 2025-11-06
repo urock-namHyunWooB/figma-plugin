@@ -35,6 +35,24 @@ class ReactGenerater {
 
   // PropDefinition type을 TypeScript 타입으로 변환
   std::string mapPropTypeToTsType(const nlohmann::json& prop) {
+    // variantOptions가 있으면 유니온 타입 생성
+    if (prop.contains("variantOptions") && prop["variantOptions"].is_array() &&
+        !prop["variantOptions"].empty()) {
+      std::string unionType = "";
+      const auto& options = prop["variantOptions"];
+
+      for (size_t i = 0; i < options.size(); i++) {
+        if (options[i].is_string()) {
+          unionType += "\"" + options[i].get<std::string>() + "\"";
+          if (i < options.size() - 1) {
+            unionType += " | ";
+          }
+        }
+      }
+
+      return unionType.empty() ? "string" : unionType;
+    }
+
     std::string type = prop["type"].get<std::string>();
 
     if (type == "string")
@@ -198,7 +216,7 @@ class ReactGenerater {
     if (type == "TEXT") {
       return "span";
     }
-    // 나머지는 div로
+    // 나머지는 div로 (ELLIPSE, RECTANGLE, FRAME, INSTANCE 등)
     return "div";
   }
 
@@ -240,6 +258,12 @@ class ReactGenerater {
 
     std::string type = element["type"].get<std::string>();
     std::string elementId = element["id"].get<std::string>();
+
+    // visible: false인 요소는 렌더링하지 않음
+    if (element.contains("visible") && element["visible"].is_boolean() &&
+        !element["visible"].get<bool>()) {
+      return "";
+    }
 
     // Visibility 확인
     std::string visibleMode = "always";
@@ -386,7 +410,7 @@ class ReactGenerater {
 
   std::string generateReactCode(const nlohmann::json& componentSpecs) {
     const auto& componentspecs = componentSpecs;
-    const auto& componentSpec = componentspecs[0];
+    const auto& componentSpec = componentspecs.back();
 
     std::string result = "";
 

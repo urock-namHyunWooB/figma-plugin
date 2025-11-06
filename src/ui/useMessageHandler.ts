@@ -79,6 +79,8 @@ export default function useMessageHandler() {
 
   const [extractJson, setExtractJson] = useState<string | null>(null);
 
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+
   // Promise 기반으로 WASM 엔진 관리
   const enginePromise = useRef<Promise<any> | null>(null);
 
@@ -148,6 +150,9 @@ export default function useMessageHandler() {
           const result = engine.generateCode("React", "button.tsx");
           console.log(msg.data);
           console.log(result.code);
+
+          // 생성된 코드를 state에 저장
+          setGeneratedCode(result.code);
         } catch (error) {
           console.error("Failed to process COMPONENT_SPEC_JSON:", error);
         }
@@ -169,5 +174,6 @@ export default function useMessageHandler() {
     propsDefinition,
     elementBindings,
     extractJson,
+    generatedCode,
   };
 }

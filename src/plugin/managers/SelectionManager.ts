@@ -57,7 +57,7 @@ export class SelectionManager {
       componentPropertyConfig =
         this.metadataManager.getComponentPropertyConfig(componentSet);
 
-      propsDefinition = this.metadataManager.getPropsDefinition(componentSet);
+      propsDefinition = this.metadataManager.getCombinedPropsDefinition(componentSet);
 
       internalStateDefinition =
         this.metadataManager.getInternalStateDefinition(componentSet);

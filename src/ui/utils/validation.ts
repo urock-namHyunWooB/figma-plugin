@@ -23,6 +23,9 @@ export interface PropDefinition {
   // function 타입일 때만 사용
   parameters?: FunctionParameter[];
   returnType?: string;
+  // variant property로부터 자동 생성된 prop (편집 불가)
+  readonly?: boolean;
+  variantOptions?: string[];
 }
 
 /**

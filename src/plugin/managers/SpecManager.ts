@@ -44,7 +44,7 @@ class SpecManager {
     const componentSetInfo = componentSet.componentPropertyDefinitions;
 
     const propsDefinition =
-      this.metadataManager.getPropsDefinition(componentSet);
+      this.metadataManager.getCombinedPropsDefinition(componentSet);
     const internalStateDefinition =
       this.metadataManager.getInternalStateDefinition(componentSet);
     const componentStructure =
