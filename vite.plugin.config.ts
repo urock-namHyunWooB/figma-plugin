@@ -9,7 +9,7 @@ export default defineConfig({
   build: {
     target: "es2017",
     lib: {
-      entry: path.resolve(__dirname, "src/plugin/code.ts"),
+      entry: path.resolve(__dirname, "src/backend/code.ts"),
       name: "code",
       fileName: "code",
       formats: ["iife"],

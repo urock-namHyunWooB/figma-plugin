@@ -1,5 +1,5 @@
+import { MESSAGE_TYPES } from "@backend";
 import { useLayoutEffect } from "react";
-import { MESSAGE_TYPES } from "../../../plugin/types/messages";
 
 function ComponentDocument({ extractJson }: { extractJson: string | null }) {
   useLayoutEffect(() => {

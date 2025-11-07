@@ -12,7 +12,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html", "json"],
       include: ["src/**/*.ts"],
-      exclude: ["src/**/*.d.ts", "src/wasm-engine/build/**"],
+      exclude: ["src/**/*.d.ts", "src/frontend/wasm-engine/build/**"],
     },
   },
   resolve: {

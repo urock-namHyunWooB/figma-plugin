@@ -7,7 +7,7 @@ import {
   PropDefinition,
 } from "../../utils/validation";
 import { getPropTypeBgColor } from "../../utils/propStyles";
-import { MESSAGE_TYPES } from "../../../plugin/types/messages";
+import { MESSAGE_TYPES } from "@backend";
 
 function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
   const [props, setProps] = useState<PropDefinition[]>([]);

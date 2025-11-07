@@ -3,10 +3,10 @@ import {
   ComponentStructureData,
   ElementBindingsMap,
 } from "./domain/component-structure/types";
-import { StateDefinition } from "../plugin/managers/MetadataManager";
+import { StateDefinition } from "../../backend/managers/MetadataManager";
 import { PropDefinition } from "./utils/validation";
 import { initWasm } from "../wasm-engine";
-import { MESSAGE_TYPES } from "../plugin/types/messages";
+import { MESSAGE_TYPES } from "../../backend/types/messages";
 
 interface LayerData {
   id: string;

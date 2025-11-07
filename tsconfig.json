@@ -8,9 +8,19 @@
     "strict": true,
     "typeRoots": ["./node_modules/@types", "./node_modules/@figma"],
     "skipLibCheck": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "@backend": ["./src/backend"],
+      "@backend/*": ["./src/backend/*"],
+      "@frontend/ui": ["./src/frontend/ui"],
+      "@frontend/ui/*": ["./src/frontend/ui/*"]
+    }
   },
 
-  "include": ["src/plugin/**/*.ts", "src/ui/**/*.ts", "src/ui/**/*.tsx"],
+  "include": [
+    "src/backend/**/*.ts",
+    "src/frontend/ui/**/*.ts",
+    "src/frontend/ui/**/*.tsx"
+  ],
   "exclude": ["dist"]
 }

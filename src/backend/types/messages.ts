@@ -4,7 +4,7 @@ import {
   StateDefinition,
   ElementBindingsMap,
 } from "../managers/MetadataManager";
-import { ComponentStructureData } from "../../ui/domain/component-structure/types";
+import { ComponentStructureData } from "../../frontend/ui/domain/component-structure/types";
 import { Component } from "react";
 
 /**

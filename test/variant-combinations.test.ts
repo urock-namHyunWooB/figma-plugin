@@ -4,7 +4,7 @@ import {
   generateRepresentativeCombinations,
   generateGridCombinations,
   generateAllCombinations,
-} from "../src/ui/utils/variantCombinations";
+} from "../src/frontend/ui/utils/variantCombinations";
 
 /**
  * Variant 조합 생성 유틸리티 테스트
@@ -174,4 +174,3 @@ describe("variantCombinations 유틸리티", () => {
     });
   });
 });
-
