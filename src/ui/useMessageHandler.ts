@@ -146,6 +146,7 @@ export default function useMessageHandler() {
           const engine = await enginePromise.current;
 
           engine.setComponentSpec(msg.data);
+          console.log(msg.data);
 
           const result = engine.generateCode("React", "button.tsx");
 
