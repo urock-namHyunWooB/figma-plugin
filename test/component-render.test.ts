@@ -39,7 +39,7 @@ describe("Component Runtime 렌더링 테스트", () => {
       const result = await generateReactCode(spec);
       const Component = compileReactComponent(result.code);
 
-      render(<Component text="Click me" />);
+      render(<Component />);
 
       expect(screen.getByRole("button")).toBeInTheDocument();
       expect(screen.getByText("Click me")).toBeInTheDocument();

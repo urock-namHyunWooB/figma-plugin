@@ -85,7 +85,10 @@ function App() {
         ) : (
           <div className="h-full">
             {generatedCode ? (
-              <ComponentPreview code={generatedCode} />
+              <ComponentPreview 
+                code={generatedCode} 
+                propsDefinition={propsDefinition ?? []}
+              />
             ) : (
               <div className="h-full flex items-center justify-center text-gray-400">
                 코드를 먼저 생성해주세요

@@ -1,11 +1,26 @@
 import { useState, useEffect, useRef } from "react";
 import { compileReactComponent } from "../../utils/component-compiler";
 import * as React from "react";
+import {
+  generateRepresentativeCombinations,
+  generateGridCombinations,
+  generateAllCombinations,
+  type VariantCombination,
+} from "../../utils/variantCombinations";
 
 interface ComponentPreviewProps {
   code: string;
+  propsDefinition?: Array<{
+    name: string;
+    type: string;
+    defaultValue?: any;
+    variantOptions?: string[];
+    readonly?: boolean;
+  }>;
   onError?: (error: Error) => void;
 }
+
+type ViewMode = "single" | "list" | "grid" | "all";
 
 // Props 인터페이스 추출 헬퍼
 function extractPropsFromCode(code: string): Record<string, any> {
@@ -46,6 +61,7 @@ function extractPropsFromCode(code: string): Record<string, any> {
  */
 export default function ComponentPreview({
   code,
+  propsDefinition = [],
   onError,
 }: ComponentPreviewProps) {
   const [Component, setComponent] = useState<React.ComponentType<any> | null>(
@@ -55,9 +71,8 @@ export default function ComponentPreview({
   const [isLoading, setIsLoading] = useState(false);
   const [componentProps, setComponentProps] = useState<Record<string, any>>({});
   const [showPropsPanel, setShowPropsPanel] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("single");
   const previewRef = useRef<HTMLDivElement>(null);
-
-  console.log("code", code);
 
   useEffect(() => {
     if (!code || code.trim() === "") {
@@ -139,80 +154,315 @@ export default function ComponentPreview({
     }));
   };
 
+  // variant 조합 생성
+  const variantCombinations =
+    generateRepresentativeCombinations(propsDefinition);
+  const gridData = generateGridCombinations(propsDefinition);
+  const allCombinations = generateAllCombinations(propsDefinition, 100);
+
   // 컴포넌트 렌더링
   return (
-    <div className="w-full h-full flex bg-gray-50">
-      {/* 프리뷰 영역 */}
-      <div
-        ref={previewRef}
-        className="flex-1 flex items-center justify-center p-8 overflow-auto"
-      >
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <div className="flex items-center justify-between mb-4 border-b pb-2">
-            <div className="text-sm text-gray-500">Live Preview</div>
+    <div className="w-full h-full flex flex-col bg-gray-50">
+      {/* 상단 컨트롤 바 */}
+      <div className="bg-white border-b px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-700">View Mode:</span>
+          <div className="flex gap-1">
             <button
-              onClick={() => setShowPropsPanel(!showPropsPanel)}
-              className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
+              onClick={() => setViewMode("single")}
+              className={`px-3 py-1 text-xs rounded ${
+                viewMode === "single"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
             >
-              {showPropsPanel ? "Hide Props" : "Edit Props"}
+              Single
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`px-3 py-1 text-xs rounded ${
+                viewMode === "list"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              List
+            </button>
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`px-3 py-1 text-xs rounded ${
+                viewMode === "grid"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+              disabled={!gridData}
+            >
+              Grid
+            </button>
+            <button
+              onClick={() => setViewMode("all")}
+              className={`px-3 py-1 text-xs rounded ${
+                viewMode === "all"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              All
             </button>
           </div>
-          <ErrorBoundary>
-            <Component {...componentProps} />
-          </ErrorBoundary>
         </div>
+        <button
+          onClick={() => setShowPropsPanel(!showPropsPanel)}
+          className="text-xs px-3 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100"
+        >
+          {showPropsPanel ? "Hide Props" : "Edit Props"}
+        </button>
       </div>
 
-      {/* Props 편집 패널 */}
-      {showPropsPanel && (
-        <div className="w-80 bg-white border-l p-4 overflow-y-auto">
-          <h3 className="font-semibold mb-4">Component Props</h3>
+      {/* 컨텐츠 영역 */}
+      <div className="flex-1 flex overflow-hidden">
+        <div ref={previewRef} className="flex-1 overflow-auto">
+          {viewMode === "single" && (
+            <SingleView
+              Component={Component}
+              componentProps={componentProps}
+              onPropChange={handlePropChange}
+            />
+          )}
 
-          {Object.keys(componentProps).length === 0 ? (
-            <div className="text-sm text-gray-400">No props defined</div>
-          ) : (
-            <div className="space-y-3">
-              {Object.entries(componentProps).map(([key, value]) => (
-                <div key={key} className="space-y-1">
-                  <label className="text-xs font-medium text-gray-700">
-                    {key}
-                  </label>
+          {viewMode === "list" && (
+            <ListView
+              Component={Component}
+              combinations={variantCombinations}
+            />
+          )}
 
-                  {typeof value === "boolean" ? (
-                    <button
-                      onClick={() => handlePropChange(key, !value)}
-                      className={`w-full text-left px-3 py-2 rounded border ${
-                        value
-                          ? "bg-green-50 border-green-300"
-                          : "bg-gray-50 border-gray-300"
-                      }`}
-                    >
-                      {value ? "true" : "false"}
-                    </button>
-                  ) : typeof value === "number" ? (
-                    <input
-                      type="number"
-                      value={value}
-                      onChange={(e) =>
-                        handlePropChange(key, Number(e.target.value))
-                      }
-                      className="w-full px-3 py-2 border rounded"
-                    />
-                  ) : (
-                    <input
-                      type="text"
-                      value={value || ""}
-                      onChange={(e) => handlePropChange(key, e.target.value)}
-                      className="w-full px-3 py-2 border rounded"
-                      placeholder={`Enter ${key}`}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
+          {viewMode === "grid" && gridData && (
+            <GridView Component={Component} gridData={gridData} />
+          )}
+
+          {viewMode === "all" && (
+            <AllCombinationsView
+              Component={Component}
+              combinations={allCombinations}
+            />
           )}
         </div>
-      )}
+
+        {/* Props 편집 패널 */}
+        {showPropsPanel && viewMode === "single" && (
+          <div className="w-80 bg-white border-l p-4 overflow-y-auto">
+            <h3 className="font-semibold mb-4">Component Props</h3>
+
+            {Object.keys(componentProps).length === 0 ? (
+              <div className="text-sm text-gray-400">No props defined</div>
+            ) : (
+              <div className="space-y-3">
+                {Object.entries(componentProps).map(([key, value]) => (
+                  <div key={key} className="space-y-1">
+                    <label className="text-xs font-medium text-gray-700">
+                      {key}
+                    </label>
+
+                    {typeof value === "boolean" ? (
+                      <button
+                        onClick={() => handlePropChange(key, !value)}
+                        className={`w-full text-left px-3 py-2 rounded border ${
+                          value
+                            ? "bg-green-50 border-green-300"
+                            : "bg-gray-50 border-gray-300"
+                        }`}
+                      >
+                        {value ? "true" : "false"}
+                      </button>
+                    ) : typeof value === "number" ? (
+                      <input
+                        type="number"
+                        value={value}
+                        onChange={(e) =>
+                          handlePropChange(key, Number(e.target.value))
+                        }
+                        className="w-full px-3 py-2 border rounded"
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={value || ""}
+                        onChange={(e) => handlePropChange(key, e.target.value)}
+                        className="w-full px-3 py-2 border rounded"
+                        placeholder={`Enter ${key}`}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 단일 컴포넌트 뷰
+ */
+function SingleView({
+  Component,
+  componentProps,
+  onPropChange,
+}: {
+  Component: React.ComponentType<any> | null;
+  componentProps: Record<string, any>;
+  onPropChange: (key: string, value: any) => void;
+}) {
+  if (!Component) return null;
+
+  return (
+    <div className="h-full flex items-center justify-center p-8">
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="text-xs text-gray-500 mb-4">Live Preview</div>
+        <ErrorBoundary>
+          <Component {...componentProps} />
+        </ErrorBoundary>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 리스트 뷰 - 대표 variant 조합들
+ */
+function ListView({
+  Component,
+  combinations,
+}: {
+  Component: React.ComponentType<any> | null;
+  combinations: VariantCombination[];
+}) {
+  if (!Component) return null;
+
+  return (
+    <div className="p-6 space-y-4">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        Variant Combinations ({combinations.length})
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {combinations.map((combo, index) => (
+          <div
+            key={index}
+            className="bg-white rounded-lg shadow p-4 border border-gray-200"
+          >
+            <div className="text-xs font-medium text-gray-600 mb-3">
+              {combo.label}
+            </div>
+            <ErrorBoundary>
+              <Component {...combo.props} />
+            </ErrorBoundary>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 그리드 뷰 - 2차원 조합 매트릭스
+ */
+function GridView({
+  Component,
+  gridData,
+}: {
+  Component: React.ComponentType<any> | null;
+  gridData: {
+    rowVariant: any;
+    colVariant: any;
+    combinations: VariantCombination[][];
+  };
+}) {
+  if (!Component) return null;
+
+  const { rowVariant, colVariant, combinations } = gridData;
+
+  return (
+    <div className="p-6">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        Grid View: {rowVariant.name} × {colVariant.name}
+      </h3>
+      <div className="overflow-x-auto">
+        <table className="border-collapse">
+          <thead>
+            <tr>
+              <th className="border border-gray-300 bg-gray-50 p-2 text-xs font-semibold sticky left-0 z-10">
+                {rowVariant.name} \ {colVariant.name}
+              </th>
+              {colVariant.variantOptions?.map((colOption: string) => (
+                <th
+                  key={colOption}
+                  className="border border-gray-300 bg-gray-50 p-2 text-xs font-semibold min-w-[200px]"
+                >
+                  {colOption}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {combinations.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                <td className="border border-gray-300 bg-gray-50 p-2 text-xs font-semibold sticky left-0 z-10">
+                  {rowVariant.variantOptions?.[rowIndex]}
+                </td>
+                {row.map((combo, colIndex) => (
+                  <td
+                    key={colIndex}
+                    className="border border-gray-300 bg-white p-4"
+                  >
+                    <ErrorBoundary>
+                      <Component {...combo.props} />
+                    </ErrorBoundary>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 모든 조합 뷰
+ */
+function AllCombinationsView({
+  Component,
+  combinations,
+}: {
+  Component: React.ComponentType<any> | null;
+  combinations: VariantCombination[];
+}) {
+  if (!Component) return null;
+
+  return (
+    <div className="p-6 space-y-4">
+      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        All Combinations ({combinations.length})
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        {combinations.map((combo, index) => (
+          <div
+            key={index}
+            className="bg-white rounded-lg shadow p-3 border border-gray-200"
+          >
+            <div className="text-[10px] font-medium text-gray-600 mb-2 break-words">
+              {combo.label}
+            </div>
+            <ErrorBoundary>
+              <Component {...combo.props} />
+            </ErrorBoundary>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

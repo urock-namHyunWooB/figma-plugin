@@ -148,8 +148,6 @@ export default function useMessageHandler() {
           engine.setComponentSpec(msg.data);
 
           const result = engine.generateCode("React", "button.tsx");
-          console.log(msg.data);
-          console.log(result.code);
 
           // 생성된 코드를 state에 저장
           setGeneratedCode(result.code);
