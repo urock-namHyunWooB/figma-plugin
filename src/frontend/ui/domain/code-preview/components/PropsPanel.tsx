@@ -6,10 +6,7 @@ interface PropsPanelProps {
 /**
  * Props 편집 패널
  */
-export function PropsPanel({
-  componentProps,
-  onPropChange,
-}: PropsPanelProps) {
+export function PropsPanel({ componentProps, onPropChange }: PropsPanelProps) {
   return (
     <div className="w-80 bg-white border-l p-4 overflow-y-auto">
       <h3 className="font-semibold mb-4">Component Props</h3>
@@ -56,4 +53,3 @@ export function PropsPanel({
     </div>
   );
 }
-

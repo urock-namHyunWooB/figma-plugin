@@ -5,6 +5,10 @@ import ComponentDocument from "./domain/component-document/ComponentDocument";
 import SetInternalState from "./domain/setting-internal-state/SetInternalState";
 import SetProps from "./domain/setting-props/SetProps";
 import ComponentPreview from "./domain/code-preview/ComponentPreview";
+import { TestComp } from "./components/TestComp";
+import { main } from "@frontend/ui/domain/ast-generator";
+
+main();
 
 function App() {
   const {
@@ -15,10 +19,11 @@ function App() {
     elementBindings,
     extractJson,
     generatedCode,
+    layoutTree,
   } = useMessageHandler();
 
   const [activeTab, setActiveTab] = useState<"settings" | "preview">(
-    "settings"
+    "settings",
   );
 
   const handleClose = () => {
@@ -27,6 +32,7 @@ function App() {
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
+      <TestComp />
       {/* 탭 헤더 */}
       {layers.length > 0 && layers[0].type === "COMPONENT_SET" && (
         <div className="flex border-b bg-white">
@@ -65,6 +71,7 @@ function App() {
                 {componentStructure && (
                   <ComponentStructure
                     structure={componentStructure}
+                    layoutTree={layoutTree}
                     props={propsDefinition ?? []}
                     states={internalStateDefinition ?? []}
                     initialBindings={elementBindings}
@@ -85,8 +92,8 @@ function App() {
         ) : (
           <div className="h-full">
             {generatedCode ? (
-              <ComponentPreview 
-                code={generatedCode} 
+              <ComponentPreview
+                code={generatedCode}
                 propsDefinition={propsDefinition ?? []}
               />
             ) : (

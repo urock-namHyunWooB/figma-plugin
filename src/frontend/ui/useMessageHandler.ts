@@ -1,12 +1,16 @@
 import { useLayoutEffect, useRef, useState } from "react";
+import { ElementBindingsMap } from "./domain/component-structure/types";
+import {
+  PropDefinition,
+  StateDefinition,
+} from "../../backend/managers/MetadataManager";
+
+import { MESSAGE_TYPES } from "../../backend/types/messages";
 import {
   ComponentStructureData,
-  ElementBindingsMap,
-} from "./domain/component-structure/types";
-import { StateDefinition } from "../../backend/managers/MetadataManager";
-import { PropDefinition } from "./utils/validation";
-import { initWasm } from "../wasm-engine";
-import { MESSAGE_TYPES } from "../../backend/types/messages";
+  LayoutTreeNode,
+} from "../../backend/managers/ComponentStructureManager";
+import { ASTGenerator, type ComponentDSL } from "./utils/ast-generator";
 
 interface LayerData {
   id: string;
@@ -65,6 +69,8 @@ export default function useMessageHandler() {
   const [componentStructure, setComponentStructure] =
     useState<ComponentStructureData | null>(null);
 
+  const [layoutTree, setLayoutTree] = useState<LayoutTreeNode | null>(null);
+
   const [internalStateDefinition, setInternalStateDefinition] = useState<
     StateDefinition[] | null
   >(null);
@@ -74,30 +80,21 @@ export default function useMessageHandler() {
   >([]);
 
   const [elementBindings, setElementBindings] = useState<ElementBindingsMap>(
-    {}
+    {},
   );
 
   const [extractJson, setExtractJson] = useState<string | null>(null);
 
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
 
-  // Promise 기반으로 WASM 엔진 관리
-  const enginePromise = useRef<Promise<any> | null>(null);
+  // AST Generator 인스턴스 (한 번만 생성)
+  const astGeneratorRef = useRef<ASTGenerator | null>(null);
 
   useLayoutEffect(() => {
-    // Promise를 생성하여 저장 (한 번만)
-    enginePromise.current = (async () => {
-      try {
-        const wasm = await initWasm();
-
-        const engine = new wasm.Engine();
-        engine.init();
-
-        return engine;
-      } catch (error) {
-        throw error;
-      }
-    })();
+    // AST Generator 인스턴스 생성 (한 번만)
+    if (!astGeneratorRef.current) {
+      astGeneratorRef.current = new ASTGenerator();
+    }
   }, []);
 
   useLayoutEffect(() => {
@@ -121,8 +118,10 @@ export default function useMessageHandler() {
         setExtractJson(msg.data);
       }
 
-      if (msg.type === "component-structure") {
-        setComponentStructure(msg.data);
+      if (msg.type === MESSAGE_TYPES.COMPONENT_STRUCTURE) {
+        setComponentStructure(msg.data?.componentStructure || null);
+        setLayoutTree(msg.data?.layoutTree || null);
+        console.log("msg.data", msg.data);
       }
 
       if (msg.type === "internal-state-definition") {
@@ -139,21 +138,25 @@ export default function useMessageHandler() {
 
       if (msg.type === MESSAGE_TYPES.COMPONENT_SPEC_JSON) {
         try {
-          if (!enginePromise.current) {
+          if (!astGeneratorRef.current) {
+            console.error("AST Generator가 초기화되지 않았습니다.");
             return;
           }
 
-          const engine = await enginePromise.current;
+          // DSL 데이터를 ComponentDSL 타입으로 변환
+          const dsl = msg.data as ComponentDSL;
 
-          engine.setComponentSpec(msg.data);
-          console.log(msg.data);
+          // AST Generator를 사용하여 코드 생성
+          const code = astGeneratorRef.current.generateCodeFromDSL(dsl);
 
-          const result = engine.generateCode("React", "button.tsx");
-
+          console.log(code);
           // 생성된 코드를 state에 저장
-          setGeneratedCode(result.code);
+          setGeneratedCode(code);
         } catch (error) {
           console.error("Failed to process COMPONENT_SPEC_JSON:", error);
+          if (error instanceof Error) {
+            console.error("Error stack:", error.stack);
+          }
         }
       }
     };
@@ -169,6 +172,7 @@ export default function useMessageHandler() {
     componentSetInfo,
     savedPropertyConfig,
     componentStructure,
+    layoutTree,
     internalStateDefinition,
     propsDefinition,
     elementBindings,

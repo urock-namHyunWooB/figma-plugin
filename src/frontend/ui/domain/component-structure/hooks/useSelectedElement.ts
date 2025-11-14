@@ -5,7 +5,7 @@ import { useState, useCallback } from "react";
  */
 export function useSelectedElement() {
   const [selectedElementId, setSelectedElementId] = useState<string | null>(
-    null
+    null,
   );
 
   const selectElement = useCallback((elementId: string | null) => {
@@ -23,4 +23,3 @@ export function useSelectedElement() {
     isSelected: (elementId: string) => selectedElementId === elementId,
   };
 }
-

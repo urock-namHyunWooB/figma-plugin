@@ -5,7 +5,7 @@ import ComponentPreview from "../src/ui/domain/code-preview/ComponentPreview";
 
 /**
  * ComponentPreview 컴포넌트 테스트
- * 
+ *
  * 테스트 목적:
  * 1. 코드를 받아서 컴포넌트로 컴파일하는지
  * 2. 에러 처리가 올바른지
@@ -37,7 +37,9 @@ describe("ComponentPreview 컴포넌트 테스트", () => {
     test("빈 코드일 때 메시지 표시", () => {
       render(<ComponentPreview code="" />);
 
-      const message = screen.getByText("코드를 생성하면 여기에 프리뷰가 나타납니다");
+      const message = screen.getByText(
+        "코드를 생성하면 여기에 프리뷰가 나타납니다",
+      );
       expect(message).toBeTruthy();
     });
 
@@ -53,7 +55,7 @@ describe("ComponentPreview 컴포넌트 테스트", () => {
           expect(content).toContain("0");
           expect(content).toContain("OFF");
         },
-        { timeout: 1000 }
+        { timeout: 1000 },
       );
     });
 
@@ -151,7 +153,7 @@ describe("ComponentPreview 컴포넌트 테스트", () => {
           const errorMessage = screen.getByText(/컴포넌트 렌더링 오류/);
           expect(errorMessage).toBeTruthy();
         },
-        { timeout: 1000 }
+        { timeout: 1000 },
       );
     });
 
@@ -165,7 +167,7 @@ describe("ComponentPreview 컴포넌트 테스트", () => {
         () => {
           expect(onError).toHaveBeenCalled();
         },
-        { timeout: 1000 }
+        { timeout: 1000 },
       );
     });
   });

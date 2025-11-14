@@ -13,7 +13,7 @@ export function compileReactComponent(code: string): React.ComponentType<any> {
     // 2. import 문 제거
     let cleanedCode = code.replace(
       /import\s+.*?from\s+['"]react['"];?\s*/g,
-      ""
+      "",
     );
 
     // 3. export 문 제거
@@ -73,7 +73,7 @@ export function compileReactComponent(code: string): React.ComponentType<any> {
     throw new Error(
       `컴포넌트 컴파일 실패: ${
         error instanceof Error ? error.message : "Unknown error"
-      }`
+      }`,
     );
   }
 }

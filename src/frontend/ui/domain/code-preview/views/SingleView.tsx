@@ -23,4 +23,3 @@ export function SingleView({ Component, componentProps }: SingleViewProps) {
     </div>
   );
 }
-

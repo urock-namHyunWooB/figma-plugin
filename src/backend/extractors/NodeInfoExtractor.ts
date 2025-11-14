@@ -186,7 +186,7 @@ export class NodeInfoExtractor {
    * Component Instance 정보 추출
    */
   private async getComponentInfo(
-    node: SceneNode
+    node: SceneNode,
   ): Promise<Record<string, unknown>> {
     const info: Record<string, unknown> = {};
 
@@ -322,7 +322,7 @@ export class NodeInfoExtractor {
 
     if ("children" in node) {
       nodeInfo.children = node.children.map((child) =>
-        this.extractNodeTree(child, depth + 1)
+        this.extractNodeTree(child, depth + 1),
       );
     }
 
@@ -431,7 +431,7 @@ export class NodeInfoExtractor {
       variantProperties: Record<string, string | boolean> | null;
       styles: any;
     }>,
-    propertyDefinitions: ComponentPropertyDefinitions
+    propertyDefinitions: ComponentPropertyDefinitions,
   ): Record<string, any> {
     const propertyStyleMap: Record<string, any> = {};
 
@@ -448,13 +448,13 @@ export class NodeInfoExtractor {
           const matchingVariants = variants.filter(
             (v) =>
               v.variantProperties &&
-              v.variantProperties[propName] === optionValue
+              v.variantProperties[propName] === optionValue,
           );
 
           if (matchingVariants.length > 0) {
             // 이 옵션에서 공통적으로 나타나는 스타일 찾기
             const commonStyles = this.findCommonStyles(
-              matchingVariants.map((v) => v.styles)
+              matchingVariants.map((v) => v.styles),
             );
 
             if (Object.keys(commonStyles).length > 0) {
@@ -472,12 +472,13 @@ export class NodeInfoExtractor {
         [true, false].forEach((boolValue) => {
           const matchingVariants = variants.filter(
             (v) =>
-              v.variantProperties && v.variantProperties[propName] === boolValue
+              v.variantProperties &&
+              v.variantProperties[propName] === boolValue,
           );
 
           if (matchingVariants.length > 0) {
             const commonStyles = this.findCommonStyles(
-              matchingVariants.map((v) => v.styles)
+              matchingVariants.map((v) => v.styles),
             );
 
             if (Object.keys(commonStyles).length > 0) {
@@ -543,7 +544,7 @@ export class NodeInfoExtractor {
       // 컴포넌트 구조 추출 (defaultVariant 기준)
       if (componentSet.defaultVariant) {
         info.componentStructure = this.extractNodeTree(
-          componentSet.defaultVariant
+          componentSet.defaultVariant,
         );
       }
 
@@ -569,7 +570,7 @@ export class NodeInfoExtractor {
         if (variants.length > 0) {
           const styleMapping = this.analyzePropertyStyleMapping(
             variants,
-            componentSet.componentPropertyDefinitions
+            componentSet.componentPropertyDefinitions,
           );
 
           if (Object.keys(styleMapping).length > 0) {
@@ -586,7 +587,7 @@ export class NodeInfoExtractor {
    * 노드의 모든 속성 추출 (public API)
    */
   async extractNodeProperties(
-    node: SceneNode
+    node: SceneNode,
   ): Promise<Record<string, unknown>> {
     const properties = {
       ...this.getBaseInfo(node),

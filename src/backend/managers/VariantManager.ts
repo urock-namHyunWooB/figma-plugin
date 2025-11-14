@@ -9,7 +9,7 @@ export class VariantManager {
   async changeVariant(
     nodeId: string,
     propertyName: string,
-    value: string
+    value: string,
   ): Promise<boolean> {
     const node = (await figma.getNodeByIdAsync(nodeId)) as InstanceNode;
 

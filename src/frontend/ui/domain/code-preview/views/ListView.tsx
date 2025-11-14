@@ -36,4 +36,3 @@ export function ListView({ Component, combinations }: ListViewProps) {
     </div>
   );
 }
-

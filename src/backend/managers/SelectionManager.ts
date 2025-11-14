@@ -2,6 +2,8 @@ import { NodeInfoExtractor } from "../extractors/NodeInfoExtractor";
 import { MetadataManager } from "./MetadataManager";
 import { ComponentStructureManager } from "./ComponentStructureManager";
 import { MESSAGE_TYPES } from "../types/messages";
+import SpecManager from "@backend/managers/SpecManager";
+import specManager from "@backend/managers/SpecManager";
 
 /**
  * 선택 관리 클래스
@@ -11,15 +13,18 @@ export class SelectionManager {
   private nodeInfoExtractor: NodeInfoExtractor;
   private metadataManager: MetadataManager;
   private componentStructureManager: ComponentStructureManager;
+  private specManager: SpecManager;
 
   constructor(
     nodeInfoExtractor: NodeInfoExtractor,
     metadataManager: MetadataManager,
-    componentStructureManager: ComponentStructureManager
+    componentStructureManager: ComponentStructureManager,
+    specManager: SpecManager,
   ) {
     this.nodeInfoExtractor = nodeInfoExtractor;
     this.metadataManager = metadataManager;
     this.componentStructureManager = componentStructureManager;
+    this.specManager = specManager;
   }
 
   /**
@@ -32,6 +37,7 @@ export class SelectionManager {
     let propsDefinition = null;
     let internalStateDefinition = null;
     let componentStructure = null;
+    let layoutTree = null;
     let elementBindings = null;
     let variantStyles = null;
 
@@ -45,8 +51,8 @@ export class SelectionManager {
 
     const selectionInfo = await Promise.all(
       selection.map((node) =>
-        this.nodeInfoExtractor.extractNodeProperties(node)
-      )
+        this.nodeInfoExtractor.extractNodeProperties(node),
+      ),
     );
 
     if (selection[0].type === "COMPONENT_SET") {
@@ -57,18 +63,27 @@ export class SelectionManager {
       componentPropertyConfig =
         this.metadataManager.getComponentPropertyConfig(componentSet);
 
-      propsDefinition = this.metadataManager.getCombinedPropsDefinition(componentSet);
+      propsDefinition =
+        this.metadataManager.getCombinedPropsDefinition(componentSet);
 
       internalStateDefinition =
         this.metadataManager.getInternalStateDefinition(componentSet);
 
-      componentStructure =
-        this.componentStructureManager.extractStructure(componentSet);
+      const specResult =
+        await this.specManager.getComponentSetNodeSpec(componentSet);
+      componentStructure = specResult.componentStructure;
+      layoutTree = specResult.layoutTree;
 
       elementBindings = this.metadataManager.getElementBindings(componentSet);
 
       variantStyles =
         this.componentStructureManager.extractVariantStyles(componentSet);
+
+      // COMPONENT_SPEC_JSON 메시지 전송 (AST Generator용)
+      figma.ui.postMessage({
+        type: MESSAGE_TYPES.COMPONENT_SPEC_JSON,
+        data: JSON.parse(JSON.stringify(specResult)),
+      });
     }
 
     figma.ui.postMessage({
@@ -104,9 +119,12 @@ export class SelectionManager {
 
     figma.ui.postMessage({
       type: MESSAGE_TYPES.COMPONENT_STRUCTURE,
-      data: componentStructure
-        ? JSON.parse(JSON.stringify(componentStructure))
-        : null,
+      data: {
+        componentStructure: componentStructure
+          ? JSON.parse(JSON.stringify(componentStructure))
+          : null,
+        layoutTree: layoutTree ? JSON.parse(JSON.stringify(layoutTree)) : null,
+      },
     });
 
     figma.ui.postMessage({
@@ -124,8 +142,8 @@ export class SelectionManager {
     const selection = figma.currentPage.selection;
     const selectionInfo = await Promise.all(
       selection.map((node) =>
-        this.nodeInfoExtractor.extractNodeProperties(node)
-      )
+        this.nodeInfoExtractor.extractNodeProperties(node),
+      ),
     );
     const json = JSON.stringify(selectionInfo, null, 2);
 

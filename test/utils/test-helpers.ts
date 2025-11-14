@@ -1,6 +1,6 @@
-import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { readFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,11 +16,16 @@ export async function getWasmEngine() {
   }
 
   // WASM 파일을 직접 읽기
-  const wasmPath = join(__dirname, '../../src/wasm-engine/build/Engine.wasm');
+  const wasmPath = join(
+    __dirname,
+    "../../src/frontend/wasm-engine/build/Engine.wasm",
+  );
   const wasmBinary = readFileSync(wasmPath);
 
   // Emscripten 모듈 로드
-  const createEngineModule = (await import('../../src/wasm-engine/build/Engine.js')).default;
+  const createEngineModule = (
+    await import("../../src/frontend/wasm-engine/build/Engine.js")
+  ).default;
 
   // WASM 바이너리를 직접 전달
   const wasm = await createEngineModule({
@@ -47,7 +52,7 @@ export async function createEngine() {
 export async function generateReactCode(spec: any) {
   const { engine, CodeType } = await createEngine();
   engine.setComponentSpec(spec);
-  return engine.generateCode(CodeType.React, 'component.tsx');
+  return engine.generateCode(CodeType.React, "component.tsx");
 }
 
 /**
@@ -55,17 +60,17 @@ export async function generateReactCode(spec: any) {
  */
 export function validateGeneratedCode(code: string) {
   return {
-    hasImport: code.includes('import'),
-    hasInterface: code.includes('interface'),
-    hasFunction: code.includes('function'),
-    hasStyles: code.includes('const styles'),
-    hasReturn: code.includes('return'),
-    hasExport: code.includes('export default'),
+    hasImport: code.includes("import"),
+    hasInterface: code.includes("interface"),
+    hasFunction: code.includes("function"),
+    hasStyles: code.includes("const styles"),
+    hasReturn: code.includes("return"),
+    hasExport: code.includes("export default"),
 
     // styles가 function 앞에 있는지
     stylesBeforeFunction: (() => {
-      const stylesPos = code.indexOf('const styles');
-      const funcPos = code.indexOf('function');
+      const stylesPos = code.indexOf("const styles");
+      const funcPos = code.indexOf("function");
       return stylesPos > 0 && stylesPos < funcPos;
     })(),
   };
@@ -75,7 +80,7 @@ export function validateGeneratedCode(code: string) {
  * 코드에서 특정 패턴 찾기
  */
 export function findInCode(code: string, pattern: string | RegExp): boolean {
-  if (typeof pattern === 'string') {
+  if (typeof pattern === "string") {
     return code.includes(pattern);
   }
   return pattern.test(code);
@@ -86,11 +91,10 @@ export function findInCode(code: string, pattern: string | RegExp): boolean {
  */
 export function parseGeneratedCode(code: string) {
   return {
-    imports: code.split('\n').filter(l => l.startsWith('import')),
-    interface: code.match(/interface\s+\w+Props\s*{[^}]+}/)?.[0] || '',
-    styles: code.match(/const\s+styles\s*=\s*{[\s\S]*?};\n/)?.[0] || '',
-    function: code.match(/function\s+\w+[\s\S]*?^}/m)?.[0] || '',
-    export: code.split('\n').find(l => l.startsWith('export')) || '',
+    imports: code.split("\n").filter((l) => l.startsWith("import")),
+    interface: code.match(/interface\s+\w+Props\s*{[^}]+}/)?.[0] || "",
+    styles: code.match(/const\s+styles\s*=\s*{[\s\S]*?};\n/)?.[0] || "",
+    function: code.match(/function\s+\w+[\s\S]*?^}/m)?.[0] || "",
+    export: code.split("\n").find((l) => l.startsWith("export")) || "",
   };
 }
-

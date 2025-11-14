@@ -27,9 +27,11 @@ export function deserializeBindings(json: string): ElementBindingsMap | null {
  */
 export function hasBinding(
   elementId: string,
-  bindings: ElementBindingsMap
+  bindings: ElementBindingsMap,
 ): boolean {
-  return elementId in bindings && bindings[elementId].connectedPropName !== null;
+  return (
+    elementId in bindings && bindings[elementId].connectedPropName !== null
+  );
 }
 
 /**
@@ -37,7 +39,7 @@ export function hasBinding(
  */
 export function getConnectedProp(
   elementId: string,
-  bindings: ElementBindingsMap
+  bindings: ElementBindingsMap,
 ): string | null {
   if (!bindings[elementId]) return null;
   return bindings[elementId].connectedPropName;
@@ -48,9 +50,9 @@ export function getConnectedProp(
  */
 export function getElementsConnectedToProp(
   propName: string,
-  bindings: ElementBindingsMap
+  bindings: ElementBindingsMap,
 ): number {
   return Object.values(bindings).filter(
-    (binding) => binding.connectedPropName === propName
+    (binding) => binding.connectedPropName === propName,
   ).length;
 }

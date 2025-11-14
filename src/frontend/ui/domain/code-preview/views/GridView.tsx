@@ -65,4 +65,3 @@ export function GridView({ Component, gridData }: GridViewProps) {
     </div>
   );
 }
-

@@ -24,16 +24,17 @@ export class FigmaPlugin {
     this.metadataManager = new MetadataManager();
     this.variantManager = new VariantManager();
     this.componentStructureManager = new ComponentStructureManager();
-    this.selectionManager = new SelectionManager(
-      this.nodeInfoExtractor,
-      this.metadataManager,
-      this.componentStructureManager
-    );
-
     this.specManager = new SpecManager(
       this,
       this.metadataManager,
-      this.componentStructureManager
+      this.componentStructureManager,
+    );
+
+    this.selectionManager = new SelectionManager(
+      this.nodeInfoExtractor,
+      this.metadataManager,
+      this.componentStructureManager,
+      this.specManager,
     );
   }
 
@@ -51,38 +52,27 @@ export class FigmaPlugin {
     // 초기 선택 정보 전송
     await this.selectionManager.sendCurrentSelection();
 
-    figma.on("selectionchange", () => {
-      this.selectionManager.sendCurrentSelection();
-
+    figma.on("selectionchange", async () => {
       const selection = figma.currentPage.selection;
+      const type = selection[0].type;
 
-      if (selection.length === 0 || selection[0].type !== "COMPONENT_SET") {
-        return;
+      if (type === "COMPONENT") {
+        const frameNodeTaget = selection[0] as ComponentNode;
+        const spec = this.specManager.getComponentNodeSpec(frameNodeTaget);
       }
 
-      const spec = this.specManager.getComponentSpec();
+      if (type === "COMPONENT_SET") {
+        const componentSetNodeTarget = selection[0] as ComponentSetNode;
 
-      figma.ui.postMessage({
-        type: MESSAGE_TYPES.COMPONENT_SPEC_JSON,
-        data: JSON.parse(JSON.stringify(spec)),
-      });
-    });
+        const spec = await this.specManager.getComponentSetNodeSpec(
+          componentSetNodeTarget,
+        );
 
-    figma.once("run", () => {
-      const selection = figma.currentPage.selection;
-
-      if (selection.length === 0 || selection[0].type !== "COMPONENT_SET") {
-        this.notify("COMPONENT_SET을 선택한 상태에서 실행해주세요");
-        return;
+        console.log(spec);
       }
-
-      const spec = this.specManager.getComponentSpec();
-
-      figma.ui.postMessage({
-        type: MESSAGE_TYPES.COMPONENT_SPEC_JSON,
-        data: JSON.parse(JSON.stringify(spec)),
-      });
     });
+
+    figma.once("run", () => {});
   }
 
   /**
@@ -137,12 +127,12 @@ export class FigmaPlugin {
   }
 
   private async handleChangeVariant(
-    msg: Extract<PluginMessage, { type: "change-variant" }>
+    msg: Extract<PluginMessage, { type: "change-variant" }>,
   ): Promise<void> {
     const success = await this.variantManager.changeVariant(
       msg.nodeId,
       msg.propertyName,
-      msg.value
+      msg.value,
     );
 
     if (success) {
@@ -154,11 +144,11 @@ export class FigmaPlugin {
   }
 
   private async handleSetMetadata(
-    msg: Extract<PluginMessage, { type: "set-metadata" }>
+    msg: Extract<PluginMessage, { type: "set-metadata" }>,
   ): Promise<void> {
     const success = await this.metadataManager.setMetadata(
       msg.nodeId,
-      msg.metadataType
+      msg.metadataType,
     );
 
     if (success) {
@@ -174,11 +164,11 @@ export class FigmaPlugin {
   }
 
   private async handleSaveComponentProperty(
-    msg: Extract<PluginMessage, { type: "save-component-property" }>
+    msg: Extract<PluginMessage, { type: "save-component-property" }>,
   ): Promise<void> {
     const success =
       await this.metadataManager.saveComponentPropertyConfigForCurrentSelection(
-        msg.data
+        msg.data,
       );
 
     if (success) {
@@ -190,11 +180,11 @@ export class FigmaPlugin {
   }
 
   private async handleSavePropsDefinition(
-    msg: Extract<PluginMessage, { type: "save-props-definition" }>
+    msg: Extract<PluginMessage, { type: "save-props-definition" }>,
   ): Promise<void> {
     const success =
       await this.metadataManager.savePropsDefinitionForCurrentSelection(
-        msg.data
+        msg.data,
       );
 
     if (success) {
@@ -206,11 +196,11 @@ export class FigmaPlugin {
   }
 
   private async handleSaveInternalStateDefinition(
-    msg: Extract<PluginMessage, { type: "save-internal-state-definition" }>
+    msg: Extract<PluginMessage, { type: "save-internal-state-definition" }>,
   ): Promise<void> {
     const success =
       await this.metadataManager.saveInternalStateDefinitionForCurrentSelection(
-        msg.data
+        msg.data,
       );
 
     if (success) {
@@ -222,11 +212,11 @@ export class FigmaPlugin {
   }
 
   private async handleSaveElementBindings(
-    msg: Extract<PluginMessage, { type: "save-element-bindings" }>
+    msg: Extract<PluginMessage, { type: "save-element-bindings" }>,
   ): Promise<void> {
     const success =
       await this.metadataManager.saveElementBindingsForCurrentSelection(
-        msg.data
+        msg.data,
       );
 
     if (success) {

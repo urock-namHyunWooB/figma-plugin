@@ -19,10 +19,10 @@ export interface VariantCombination {
  * Props 정의에서 variant props만 추출
  */
 export function extractVariantProps(
-  propsDefinition: PropDefinition[]
+  propsDefinition: PropDefinition[],
 ): PropDefinition[] {
   return propsDefinition.filter(
-    (prop) => prop.variantOptions && prop.variantOptions.length > 0
+    (prop) => prop.variantOptions && prop.variantOptions.length > 0,
   );
 }
 
@@ -31,7 +31,7 @@ export function extractVariantProps(
  * 모든 조합을 만들면 너무 많으므로, 각 variant의 모든 옵션을 개별적으로 보여주는 방식
  */
 export function generateRepresentativeCombinations(
-  propsDefinition: PropDefinition[]
+  propsDefinition: PropDefinition[],
 ): VariantCombination[] {
   const combinations: VariantCombination[] = [];
   const variantProps = extractVariantProps(propsDefinition);
@@ -80,9 +80,7 @@ export function generateRepresentativeCombinations(
  * 그리드로 보여줄 variant 조합 생성 (2가지 variant의 조합)
  * 예: size x type 조합
  */
-export function generateGridCombinations(
-  propsDefinition: PropDefinition[]
-): {
+export function generateGridCombinations(propsDefinition: PropDefinition[]): {
   rowVariant: PropDefinition;
   colVariant: PropDefinition;
   combinations: VariantCombination[][];
@@ -95,8 +93,7 @@ export function generateGridCombinations(
 
   // 가장 옵션이 많은 2개의 variant 선택
   const sortedVariants = [...variantProps].sort(
-    (a, b) =>
-      (b.variantOptions?.length || 0) - (a.variantOptions?.length || 0)
+    (a, b) => (b.variantOptions?.length || 0) - (a.variantOptions?.length || 0),
   );
 
   const rowVariant = sortedVariants[0];
@@ -134,7 +131,9 @@ export function generateGridCombinations(
 /**
  * 모든 props의 기본값 추출
  */
-function getDefaultProps(propsDefinition: PropDefinition[]): Record<string, any> {
+function getDefaultProps(
+  propsDefinition: PropDefinition[],
+): Record<string, any> {
   const props: Record<string, any> = {};
 
   propsDefinition.forEach((prop) => {
@@ -165,7 +164,7 @@ function getDefaultProps(propsDefinition: PropDefinition[]): Record<string, any>
  */
 export function generateAllCombinations(
   propsDefinition: PropDefinition[],
-  maxCombinations: number = 50
+  maxCombinations: number = 50,
 ): VariantCombination[] {
   const variantProps = extractVariantProps(propsDefinition);
 
@@ -185,7 +184,7 @@ export function generateAllCombinations(
   function generateRecursive(
     index: number,
     currentProps: Record<string, any>,
-    currentLabel: string[]
+    currentLabel: string[],
   ) {
     if (combinations.length >= maxCombinations) {
       return;
@@ -209,7 +208,7 @@ export function generateAllCombinations(
           ...currentProps,
           [variantProp.name]: option,
         },
-        [...currentLabel, `${variantProp.name}=${option}`]
+        [...currentLabel, `${variantProp.name}=${option}`],
       );
     });
   }
@@ -218,4 +217,3 @@ export function generateAllCombinations(
 
   return combinations;
 }
-

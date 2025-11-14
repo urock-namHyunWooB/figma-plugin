@@ -151,7 +151,14 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
 
   // Save handler
   const handleSave = () => {
-    if (!isFormValid(props)) return;
+    // 단일 prop 편집 모드인 경우 현재 편집 중인 prop만 검증
+    if (editingPropId) {
+      const editingProp = props.find((p) => p.id === editingPropId);
+      if (!editingProp || !isFormValid([editingProp])) return;
+    } else {
+      // 전체 편집 모드인 경우 모든 props 검증
+      if (!isFormValid(props)) return;
+    }
 
     parent.postMessage(
       {
@@ -220,8 +227,8 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
               prop.required
                 ? "bg-gray-200 opacity-50 cursor-not-allowed"
                 : prop.defaultValue
-                ? "bg-blue-600"
-                : "bg-gray-200"
+                  ? "bg-blue-600"
+                  : "bg-gray-200"
             }`}
           >
             <span
@@ -286,8 +293,8 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
               prop.type === "component"
                 ? "ComponentName"
                 : prop.type === "function"
-                ? "handleClick"
-                : "기본값 입력"
+                  ? "handleClick"
+                  : "기본값 입력"
             }
           />
         );
@@ -521,9 +528,9 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
         <div className="flex gap-2 pt-2 border-t">
           <button
             onClick={handleSave}
-            disabled={!isFormValid(props)}
+            disabled={!isFormValid([prop])}
             className={`flex-1 py-2 rounded-lg font-medium transition-colors ${
-              isFormValid(props)
+              isFormValid([prop])
                 ? "bg-green-500 hover:bg-green-600 text-white"
                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}

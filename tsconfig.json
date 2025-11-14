@@ -14,7 +14,9 @@
       "@backend/*": ["./src/backend/*"],
       "@frontend/ui": ["./src/frontend/ui"],
       "@frontend/ui/*": ["./src/frontend/ui/*"]
-    }
+    },
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true
   },
 
   "include": [

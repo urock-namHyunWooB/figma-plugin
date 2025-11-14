@@ -4,13 +4,25 @@ import BindingPanel from "./components/BindingPanel";
 
 import { useElementBindings } from "./hooks/useElementBindings";
 import { useSelectedElement } from "./hooks/useSelectedElement";
-import type {
-  ComponentStructureData,
-  StructureElement,
+
+import { ElementBindingsMap } from "./types";
+import {
   PropDefinition,
   StateDefinition,
-  ElementBindingsMap,
-} from "./types";
+} from "@backend/managers/MetadataManager";
+import {
+  ComponentStructureData,
+  LayoutTreeNode,
+  StructureElement as BackendStructureElement,
+} from "@backend/managers/ComponentStructureManager";
+
+interface ComponentStructureProps {
+  structure: ComponentStructureData | null;
+  props: PropDefinition[];
+  states: StateDefinition[];
+  initialBindings: ElementBindingsMap;
+  layoutTree: LayoutTreeNode | null;
+}
 
 /**
  * Component Structure 메인 컴포넌트
@@ -21,12 +33,8 @@ function ComponentStructure({
   props,
   states,
   initialBindings,
-}: {
-  structure: ComponentStructureData | null;
-  props: PropDefinition[];
-  states: StateDefinition[];
-  initialBindings: ElementBindingsMap;
-}) {
+  layoutTree,
+}: ComponentStructureProps) {
   const {
     bindings,
     connectProp,
@@ -34,7 +42,7 @@ function ComponentStructure({
     saveBindings,
     resetBindings,
     hasUnsavedChanges,
-  } = useElementBindings(initialBindings);
+  } = useElementBindings(initialBindings, props, states);
   const { selectedElementId, selectElement } = useSelectedElement();
 
   // 선택된 요소 찾기
@@ -42,19 +50,19 @@ function ComponentStructure({
     if (!structure || !selectedElementId) return null;
 
     const findElement = (
-      elements: StructureElement[]
-    ): StructureElement | null => {
-      for (const element of elements) {
-        if (element.id === selectedElementId) return element;
-        if (element.children) {
-          const found = findElement(element.children);
+      element: BackendStructureElement,
+    ): BackendStructureElement | null => {
+      if (element.id === selectedElementId) return element;
+      if (element.children) {
+        for (const child of element.children) {
+          const found = findElement(child);
           if (found) return found;
         }
       }
       return null;
     };
 
-    return findElement(structure.elements);
+    return findElement(structure.root);
   }, [structure, selectedElementId]);
 
   if (!structure) {
@@ -73,7 +81,7 @@ function ComponentStructure({
       <div className="p-4 border-b bg-gray-50">
         <h2 className="text-lg font-semibold">Component Structure</h2>
         <p className="text-sm text-gray-600 mt-1">
-          Base Variant: {structure.baseVariantName}
+          Root Element: {structure.root.name}
         </p>
       </div>
 
@@ -82,6 +90,7 @@ function ComponentStructure({
         <div className="flex-1 border-r">
           <StructureCanvas
             structure={structure}
+            layoutTree={layoutTree}
             bindings={bindings}
             selectedElementId={selectedElementId}
             onElementClick={selectElement}

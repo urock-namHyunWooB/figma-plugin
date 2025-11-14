@@ -1,14 +1,9 @@
+import { PropDefinition } from "@backend/managers/MetadataManager";
+
 export interface ComponentPreviewProps {
   code: string;
-  propsDefinition?: Array<{
-    name: string;
-    type: string;
-    defaultValue?: any;
-    variantOptions?: string[];
-    readonly?: boolean;
-  }>;
+  propsDefinition?: PropDefinition[];
   onError?: (error: Error) => void;
 }
 
 export type ViewMode = "single" | "list" | "grid" | "all";
-

@@ -11,7 +11,7 @@ import type { StructureElement } from "../types";
 export function calculateRelativePosition(
   element: StructureElement,
   parentX: number = 0,
-  parentY: number = 0
+  parentY: number = 0,
 ): { x: number; y: number } {
   return {
     x: element.x - parentX,
@@ -27,7 +27,7 @@ export function calculateScale(
   componentHeight: number,
   canvasWidth: number,
   canvasHeight: number,
-  padding: number = 20
+  padding: number = 20,
 ): number {
   const availableWidth = canvasWidth - padding * 2;
   const availableHeight = canvasHeight - padding * 2;
@@ -89,7 +89,7 @@ export function isPointInElement(
   x: number,
   y: number,
   element: StructureElement,
-  scale: number = 1
+  scale: number = 1,
 ): boolean {
   const scaledX = element.x * scale;
   const scaledY = element.y * scale;
@@ -103,4 +103,3 @@ export function isPointInElement(
     y <= scaledY + scaledHeight
   );
 }
-

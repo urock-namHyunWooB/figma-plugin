@@ -73,6 +73,7 @@ export interface ElementBinding {
   elementName: string;
   elementType: string;
   connectedPropName: string | null; // 연결된 prop 이름 (하나만)
+  connectedTargetId: string | null; // 연결된 prop/state의 id
   /**
    * Visible 옵션 설정
    * - "always": 항상 보임
@@ -123,4 +124,3 @@ export interface StateDefinition {
   initialValue: any;
   description?: string;
 }
-

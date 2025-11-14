@@ -8,7 +8,7 @@ function SetInternalState({ savedStates }: { savedStates: StateDefinition[] }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingStateId, setEditingStateId] = useState<string | null>(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   // Load saved state definition from plugin
@@ -46,7 +46,7 @@ function SetInternalState({ savedStates }: { savedStates: StateDefinition[] }) {
   const updateState = (
     id: string,
     field: keyof StateDefinition,
-    value: any
+    value: any,
   ) => {
     setStates(
       states.map((s) => {
@@ -55,7 +55,7 @@ function SetInternalState({ savedStates }: { savedStates: StateDefinition[] }) {
           return updated;
         }
         return s;
-      })
+      }),
     );
   };
 
@@ -75,7 +75,7 @@ function SetInternalState({ savedStates }: { savedStates: StateDefinition[] }) {
   // Validation for state
   const getStateNameError = (
     state: StateDefinition,
-    allStates: StateDefinition[]
+    allStates: StateDefinition[],
   ) => {
     if (!state.name.trim()) {
       return "상태 이름을 입력해주세요.";
@@ -84,7 +84,7 @@ function SetInternalState({ savedStates }: { savedStates: StateDefinition[] }) {
       return "유효한 JavaScript 변수명을 입력해주세요.";
     }
     const duplicates = allStates.filter(
-      (s) => s.name === state.name && s.id !== state.id
+      (s) => s.name === state.name && s.id !== state.id,
     );
     if (duplicates.length > 0) {
       return "이미 사용 중인 이름입니다.";
@@ -141,7 +141,7 @@ function SetInternalState({ savedStates }: { savedStates: StateDefinition[] }) {
           data: states,
         },
       },
-      "*"
+      "*",
     );
     setIsEditing(false);
     setEditingStateId(null);
@@ -161,7 +161,7 @@ function SetInternalState({ savedStates }: { savedStates: StateDefinition[] }) {
             data: [],
           },
         },
-        "*"
+        "*",
       );
     }
   };
@@ -216,7 +216,7 @@ function SetInternalState({ savedStates }: { savedStates: StateDefinition[] }) {
               updateState(
                 state.id,
                 "initialValue",
-                e.target.value ? Number(e.target.value) : ""
+                e.target.value ? Number(e.target.value) : "",
               )
             }
             className="w-full px-3 py-2 border border-gray-300 rounded"
@@ -280,7 +280,7 @@ function SetInternalState({ savedStates }: { savedStates: StateDefinition[] }) {
         key={state.id}
         onClick={() => handleEditState(state.id)}
         className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all hover:shadow-md ${getPropTypeBgColor(
-          state.type
+          state.type,
         )}`}
         title={state.description || "클릭하여 수정"}
       >
@@ -332,7 +332,7 @@ function SetInternalState({ savedStates }: { savedStates: StateDefinition[] }) {
               updateState(
                 state.id,
                 "type",
-                e.target.value as StateDefinition["type"]
+                e.target.value as StateDefinition["type"],
               )
             }
             className="w-full px-3 py-2 border border-gray-300 rounded"
@@ -501,7 +501,7 @@ function SetInternalState({ savedStates }: { savedStates: StateDefinition[] }) {
                       updateState(
                         state.id,
                         "type",
-                        e.target.value as StateDefinition["type"]
+                        e.target.value as StateDefinition["type"],
                       )
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded"

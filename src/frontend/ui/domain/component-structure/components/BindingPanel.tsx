@@ -1,9 +1,9 @@
-import type {
+import { StructureElement } from "@backend/managers/ComponentStructureManager";
+import {
   ElementBindingsMap,
   PropDefinition,
   StateDefinition,
-  StructureElement,
-} from "../types";
+} from "@backend/managers/MetadataManager";
 
 interface BindingPanelProps {
   selectedElement: StructureElement | null;
@@ -14,14 +14,15 @@ interface BindingPanelProps {
     elementId: string,
     elementName: string,
     elementType: string,
-    propName: string | null
+    propName: string | null,
+    targetId?: string | null,
   ) => void;
   onSetVisibility: (
     elementId: string,
     elementName: string,
     elementType: string,
     mode: "always" | "hidden" | "expression",
-    expression?: string
+    expression?: string,
   ) => void;
   onSave: () => void;
   onReset: () => void;
@@ -70,11 +71,26 @@ function BindingPanel({
 
   const handlePropChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
+    let targetId: string | null = null;
+
+    if (value !== "") {
+      if (value.startsWith("prop:")) {
+        const propName = value.slice(5);
+        const prop = props.find((p) => p.name === propName);
+        targetId = prop?.id ?? null;
+      } else if (value.startsWith("state:")) {
+        const stateName = value.slice(6);
+        const state = states.find((s) => s.name === stateName);
+        targetId = state?.id ?? null;
+      }
+    }
+
     onConnectProp(
       selectedElement.id,
       selectedElement.name,
       selectedElement.type,
-      value === "" ? null : value
+      value === "" ? null : value,
+      targetId,
     );
   };
 
@@ -110,12 +126,12 @@ function BindingPanel({
       selectedElement.name,
       selectedElement.type,
       mode,
-      mode === "expression" ? visibleExpression : undefined
+      mode === "expression" ? visibleExpression : undefined,
     );
   };
 
   const handleVisibleExpressionChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const expr = e.target.value;
     onSetVisibility(
@@ -123,7 +139,7 @@ function BindingPanel({
       selectedElement.name,
       selectedElement.type,
       "expression",
-      expr
+      expr,
     );
   };
 
@@ -136,7 +152,7 @@ function BindingPanel({
       selectedElement.name,
       selectedElement.type,
       "expression",
-      next
+      next,
     );
   };
 
@@ -255,7 +271,7 @@ function BindingPanel({
                 <optgroup label="Props">
                   {props.map((prop) => (
                     <option key={prop.id} value={`prop:${prop.name}`}>
-                      {prop.name} ({prop.type})
+                      {prop.name} ({String(prop.type)})
                     </option>
                   ))}
                 </optgroup>
@@ -273,10 +289,40 @@ function BindingPanel({
           </div>
 
           {connectedPropName && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded">
-              <p className="text-sm text-green-800">
-                ✓ Connected to:{" "}
-                <strong>{formatConnectedLabel(normalizedSelectValue)}</strong>
+            <div
+              className={`p-3 border rounded ${
+                elementBinding?.connectedTargetId
+                  ? "bg-green-50 border-green-200"
+                  : "bg-yellow-50 border-yellow-200"
+              }`}
+            >
+              <p
+                className={`text-sm ${
+                  elementBinding?.connectedTargetId
+                    ? "text-green-800"
+                    : "text-yellow-800"
+                }`}
+              >
+                {elementBinding?.connectedTargetId ? (
+                  <>
+                    ✓ Connected to:{" "}
+                    <strong>
+                      {formatConnectedLabel(normalizedSelectValue)}
+                    </strong>
+                  </>
+                ) : (
+                  <>
+                    ⚠ Connected to:{" "}
+                    <strong>
+                      {formatConnectedLabel(normalizedSelectValue)}
+                    </strong>
+                    <br />
+                    <span className="text-xs mt-1 block">
+                      Warning: The target prop/state was not found. Please
+                      reconnect.
+                    </span>
+                  </>
+                )}
               </p>
             </div>
           )}
@@ -299,7 +345,7 @@ function BindingPanel({
                 {props.map((prop) => (
                   <div key={prop.id} className="text-blue-800">
                     • <span className="font-medium">{prop.name}</span>:{" "}
-                    {prop.type}
+                    {String(prop.type)}
                     {prop.description && (
                       <span className="text-blue-600">
                         {" "}

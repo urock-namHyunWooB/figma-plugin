@@ -24,7 +24,7 @@ export default function ComponentPreview({
   onError,
 }: ComponentPreviewProps) {
   const [Component, setComponent] = useState<React.ComponentType<any> | null>(
-    null
+    null,
   );
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);

@@ -34,12 +34,11 @@ AccessModifierOffset: -1
 SortIncludes: true
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:           '^<emscripten/'
-    Priority:        1
-  - Regex:           '^<[a-z_]+>'
-    Priority:        2
-  - Regex:           '^<'
-    Priority:        3
-  - Regex:           '.*'
-    Priority:        4
-
+  - Regex: "^<emscripten/"
+    Priority: 1
+  - Regex: "^<[a-z_]+>"
+    Priority: 2
+  - Regex: "^<"
+    Priority: 3
+  - Regex: ".*"
+    Priority: 4

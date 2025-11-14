@@ -1,412 +1,70 @@
+import { StyleExtractor, ExtractedStyles } from "../extractors/StyleExtractor";
+import { BaseStyleProperties, Padding } from "../types/styles";
+
 /**
  * Component Structure 관리 클래스
  * 단일 책임: ComponentSet의 구조 추출
  */
 
-interface StructureElement {
+export interface StructureElement {
   id: string;
   name: string;
   type: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  visible: boolean;
-  padding?: {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-  };
-  margin?: {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-  };
-  layout?: {
-    layoutMode: "NONE" | "HORIZONTAL" | "VERTICAL";
-    itemSpacing: number;
-    primaryAxisAlignItems?: string;
-    counterAxisAlignItems?: string;
-    layoutGrow?: number;
-    layoutAlign?: string;
-  };
-  fills?: Array<{
-    type: string;
-    color?: { r: number; g: number; b: number };
-    opacity?: number;
-  }>;
-  strokes?: Array<{
-    type: string;
-    color?: { r: number; g: number; b: number };
-  }>;
-  strokeWeight?: number;
-  cornerRadius?: number;
-  opacity?: number;
   children?: StructureElement[];
 }
 
-interface ComponentStructureData {
-  baseVariantId: string;
-  baseVariantName: string;
-  elements: StructureElement[];
-  boundingBox: {
-    width: number;
-    height: number;
-  };
-  padding?: {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-  };
-  layout?: {
-    layoutMode: "NONE" | "HORIZONTAL" | "VERTICAL";
-    itemSpacing: number;
-    primaryAxisAlignItems?: string;
-    counterAxisAlignItems?: string;
-  };
-  fills?: Array<{
-    type: string;
-    color?: { r: number; g: number; b: number };
-    opacity?: number;
-  }>;
-  strokes?: Array<{
-    type: string;
-    color?: { r: number; g: number; b: number };
-  }>;
-  strokeWeight?: number;
-  cornerRadius?: number;
-  opacity?: number;
+export interface ComponentStructureData {
+  root: StructureElement;
+}
+
+/**
+ * Layout Tree 노드 타입
+ */
+export interface LayoutTreeNode extends BaseStyleProperties {
+  id: string;
+  width: number;
+  height: number;
+  children: LayoutTreeNode[];
 }
 
 export class ComponentStructureManager {
-  /**
-   * ComponentSet의 Base variant (첫 번째 variant) 찾기
-   */
-  public getBaseVariant(componentSet: ComponentSetNode): ComponentNode | null {
-    const children = componentSet.children;
-    if (children.length === 0) return null;
+  private styleExtractor: StyleExtractor;
 
-    // 첫 번째 COMPONENT 찾기
-    const firstComponent = children.find(
-      (child) => child.type === "COMPONENT"
-    ) as ComponentNode | undefined;
-
-    return firstComponent || null;
+  constructor() {
+    this.styleExtractor = new StyleExtractor();
   }
 
-  /**
-   * 노드의 구조를 재귀적으로 추출
-   */
-  private extractNodeStructure(node: SceneNode): StructureElement {
-    const element: StructureElement = {
-      id: node.id,
-      name: node.name,
-      type: node.type,
-      x: "x" in node ? node.x : 0,
-      y: "y" in node ? node.y : 0,
-      width: "width" in node ? node.width : 0,
-      height: "height" in node ? node.height : 0,
-      visible: node.visible,
-    };
+  public async extractStyleTree(componentStructure: ComponentStructureData) {
+    const root = componentStructure.root;
 
-    // padding / layout (Frame, Component, Instance 등 Auto Layout 관련 속성이 있는 노드)
-    const hasAutoLayoutProps =
-      "layoutMode" in (node as any) &&
-      typeof (node as any).layoutMode === "string";
+    const rootNode = await figma.getNodeByIdAsync(root.id);
 
-    if (hasAutoLayoutProps) {
-      const n = node as unknown as {
-        layoutMode: "NONE" | "HORIZONTAL" | "VERTICAL";
-        itemSpacing: number;
-        primaryAxisAlignItems?: string;
-        counterAxisAlignItems?: string;
-        paddingTop?: number;
-        paddingRight?: number;
-        paddingBottom?: number;
-        paddingLeft?: number;
-      };
-
-      element.layout = {
-        layoutMode: n.layoutMode ?? "NONE",
-        itemSpacing: n.itemSpacing ?? 0,
-        primaryAxisAlignItems: n.primaryAxisAlignItems,
-        counterAxisAlignItems: n.counterAxisAlignItems,
-      };
-
-      // Set padding if available
-      if (
-        typeof n.paddingTop === "number" ||
-        typeof n.paddingRight === "number" ||
-        typeof n.paddingBottom === "number" ||
-        typeof n.paddingLeft === "number"
-      ) {
-        element.padding = {
-          top: n.paddingTop ?? 0,
-          right: n.paddingRight ?? 0,
-          bottom: n.paddingBottom ?? 0,
-          left: n.paddingLeft ?? 0,
-        };
-      }
-    }
-
-    // Fills (배경색)
-    if ("fills" in node && Array.isArray(node.fills)) {
-      const fills = node.fills as Paint[];
-      if (fills.length > 0) {
-        element.fills = fills.map((fill) => {
-          if (fill.type === "SOLID") {
-            return {
-              type: fill.type,
-              color: {
-                r: Math.round(fill.color.r * 255),
-                g: Math.round(fill.color.g * 255),
-                b: Math.round(fill.color.b * 255),
-              },
-              opacity: fill.opacity ?? 1,
-            };
-          }
-          return { type: fill.type };
-        });
-      }
-    }
-
-    // Strokes (테두리)
-    if ("strokes" in node && Array.isArray(node.strokes)) {
-      const strokes = node.strokes as Paint[];
-      if (strokes.length > 0) {
-        element.strokes = strokes.map((stroke) => {
-          if (stroke.type === "SOLID") {
-            return {
-              type: stroke.type,
-              color: {
-                r: Math.round(stroke.color.r * 255),
-                g: Math.round(stroke.color.g * 255),
-                b: Math.round(stroke.color.b * 255),
-              },
-            };
-          }
-          return { type: stroke.type };
-        });
-      }
-    }
-
-    // StrokeWeight
-    if (
-      "strokeWeight" in node &&
-      typeof node.strokeWeight === "number" &&
-      node.strokeWeight > 0
-    ) {
-      element.strokeWeight = node.strokeWeight;
-    }
-
-    // Corner Radius
-    if ("cornerRadius" in node && node.cornerRadius !== 0) {
-      element.cornerRadius = node.cornerRadius;
-    }
-
-    // Opacity
-    if ("opacity" in node && node.opacity !== 1) {
-      element.opacity = Math.round(node.opacity * 100) / 100;
-    }
-
-    // children이 있는 노드 타입들
-    if (
-      "children" in node &&
-      Array.isArray(node.children) &&
-      node.children.length > 0
-    ) {
-      const parentLayoutMode = element.layout?.layoutMode ?? "NONE";
-      const parentItemSpacing = element.layout?.itemSpacing ?? 0;
-
-      element.children = node.children.map((child, index) => {
-        const childElement = this.extractNodeStructure(child);
-
-        // child-specific layout align/grow if available
-        const c: any = child as any;
-        if (childElement.layout == null) {
-          childElement.layout = {
-            layoutMode: "NONE",
-            itemSpacing: 0,
-          };
-        }
-        if ("layoutAlign" in c) {
-          childElement.layout.layoutAlign = c.layoutAlign;
-        }
-        if ("layoutGrow" in c) {
-          childElement.layout.layoutGrow = c.layoutGrow;
-        }
-
-        // derive margin from parent's auto layout spacing
-        if (parentLayoutMode !== "NONE" && parentItemSpacing > 0) {
-          const isFirst = index === 0;
-          const isLast = index === node.children.length - 1;
-          const spacing = parentItemSpacing;
-
-          if (parentLayoutMode === "VERTICAL") {
-            childElement.margin = {
-              top: isFirst ? 0 : spacing,
-              bottom: 0,
-              left: 0,
-              right: 0,
-            };
-          } else if (parentLayoutMode === "HORIZONTAL") {
-            childElement.margin = {
-              left: isFirst ? 0 : spacing,
-              right: 0,
-              top: 0,
-              bottom: 0,
-            };
-          }
-        }
-
-        return childElement;
-      });
-    }
-
-    return element;
-  }
-
-  /**
-   * ComponentSet의 전체 구조 데이터 추출
-   */
-  public extractStructure(
-    componentSet: ComponentSetNode
-  ): ComponentStructureData | null {
-    const baseVariant = this.getBaseVariant(componentSet);
-    if (!baseVariant) {
+    if (!rootNode || rootNode.type === "DOCUMENT" || rootNode.type === "PAGE") {
       return null;
     }
 
-    const elements: StructureElement[] = baseVariant.children.map((child) =>
-      this.extractNodeStructure(child)
-    );
+    const sceneNode = rootNode as SceneNode;
+    const layoutTree = await this.extractLayoutNodeRecursive(root, sceneNode);
 
-    // Base variant의 padding/layout도 구조에 포함
-    let rootPadding:
-      | { top: number; right: number; bottom: number; left: number }
-      | undefined;
-    let rootLayout:
-      | {
-          layoutMode: "NONE" | "HORIZONTAL" | "VERTICAL";
-          itemSpacing: number;
-          primaryAxisAlignItems?: string;
-          counterAxisAlignItems?: string;
-        }
-      | undefined;
+    return layoutTree;
+  }
 
-    const baseAny = baseVariant as unknown as {
-      layoutMode?: "NONE" | "HORIZONTAL" | "VERTICAL";
-      itemSpacing?: number;
-      primaryAxisAlignItems?: string;
-      counterAxisAlignItems?: string;
-      paddingTop?: number;
-      paddingRight?: number;
-      paddingBottom?: number;
-      paddingLeft?: number;
-    };
+  public async extractComponentStructure(
+    Node: FrameNode | GroupNode | ComponentNode | InstanceNode,
+    componentSetName: string,
+  ): Promise<{ componentStructure: ComponentStructureData }> {
+    const rootElementName = this.inferRootElement(componentSetName);
 
-    if (typeof baseAny.layoutMode === "string") {
-      rootLayout = {
-        layoutMode: baseAny.layoutMode ?? "NONE",
-        itemSpacing: baseAny.itemSpacing ?? 0,
-        primaryAxisAlignItems: baseAny.primaryAxisAlignItems,
-        counterAxisAlignItems: baseAny.counterAxisAlignItems,
-      };
-    }
+    // 노드 구조 추출 (재귀적으로 children 포함)
+    const rootElement = this.extractNodeStructureRecursive(Node);
 
-    if (
-      typeof baseAny.paddingTop === "number" ||
-      typeof baseAny.paddingRight === "number" ||
-      typeof baseAny.paddingBottom === "number" ||
-      typeof baseAny.paddingLeft === "number"
-    ) {
-      rootPadding = {
-        top: baseAny.paddingTop ?? 0,
-        right: baseAny.paddingRight ?? 0,
-        bottom: baseAny.paddingBottom ?? 0,
-        left: baseAny.paddingLeft ?? 0,
-      };
-    }
-
-    // baseVariant의 fills, strokes, cornerRadius 추출
-    let rootFills;
-    if ("fills" in baseVariant && Array.isArray(baseVariant.fills)) {
-      const fills = baseVariant.fills as Paint[];
-      if (fills.length > 0) {
-        rootFills = fills.map((fill) => {
-          if (fill.type === "SOLID") {
-            return {
-              type: fill.type,
-              color: {
-                r: Math.round(fill.color.r * 255),
-                g: Math.round(fill.color.g * 255),
-                b: Math.round(fill.color.b * 255),
-              },
-              opacity: fill.opacity ?? 1,
-            };
-          }
-          return { type: fill.type };
-        });
-      }
-    }
-
-    let rootStrokes;
-    if ("strokes" in baseVariant && Array.isArray(baseVariant.strokes)) {
-      const strokes = baseVariant.strokes as Paint[];
-      if (strokes.length > 0) {
-        rootStrokes = strokes.map((stroke) => {
-          if (stroke.type === "SOLID") {
-            return {
-              type: stroke.type,
-              color: {
-                r: Math.round(stroke.color.r * 255),
-                g: Math.round(stroke.color.g * 255),
-                b: Math.round(stroke.color.b * 255),
-              },
-            };
-          }
-          return { type: stroke.type };
-        });
-      }
-    }
-
-    let rootStrokeWeight;
-    if (
-      "strokeWeight" in baseVariant &&
-      typeof baseVariant.strokeWeight === "number" &&
-      baseVariant.strokeWeight > 0
-    ) {
-      rootStrokeWeight = baseVariant.strokeWeight;
-    }
-
-    let rootCornerRadius;
-    if ("cornerRadius" in baseVariant && baseVariant.cornerRadius !== 0) {
-      rootCornerRadius = baseVariant.cornerRadius;
-    }
-
-    let rootOpacity;
-    if ("opacity" in baseVariant && baseVariant.opacity !== 1) {
-      rootOpacity = Math.round(baseVariant.opacity * 100) / 100;
-    }
+    // 추론된 root element 이름으로 업데이트
+    rootElement.name = rootElementName;
 
     return {
-      baseVariantId: baseVariant.id,
-      baseVariantName: baseVariant.name,
-      elements,
-      boundingBox: {
-        width: baseVariant.width,
-        height: baseVariant.height,
+      componentStructure: {
+        root: rootElement,
       },
-      padding: rootPadding,
-      layout: rootLayout,
-      fills: rootFills,
-      strokes: rootStrokes,
-      strokeWeight: rootStrokeWeight,
-      cornerRadius: rootCornerRadius,
-      opacity: rootOpacity,
     };
   }
 
@@ -415,7 +73,7 @@ export class ComponentStructureManager {
    * 각 variant 속성 값별로 공통되는 스타일 정보를 추출
    */
   public extractVariantStyles(
-    componentSet: ComponentSetNode
+    componentSet: ComponentSetNode,
   ): Record<string, any> | null {
     const propertyDefinitions = componentSet.componentPropertyDefinitions;
     if (!propertyDefinitions) {
@@ -446,6 +104,53 @@ export class ComponentStructureManager {
 
     // 프로퍼티별 스타일 매핑 분석
     return this.analyzePropertyStyleMapping(variants, propertyDefinitions);
+  }
+
+  /**
+   * 노드의 구조를 재귀적으로 추출
+   */
+  private extractNodeStructure(node: SceneNode): StructureElement {
+    const element: StructureElement = {
+      id: node.id,
+      name: node.name,
+      type: node.type,
+    };
+
+    // padding / layout (Frame, Component, Instance 등 Auto Layout 관련 속성이 있는 노드)
+    const hasAutoLayoutProps =
+      "layoutMode" in (node as any) &&
+      typeof (node as any).layoutMode === "string";
+
+    if (hasAutoLayoutProps) {
+      const n = node as unknown as {
+        layoutMode: "NONE" | "HORIZONTAL" | "VERTICAL";
+        itemSpacing: number;
+        primaryAxisAlignItems?: string;
+        counterAxisAlignItems?: string;
+        paddingTop?: number;
+        paddingRight?: number;
+        paddingBottom?: number;
+        paddingLeft?: number;
+      };
+    }
+
+    return element;
+  }
+
+  /**
+   * 노드와 그 children을 재귀적으로 추출
+   */
+  private extractNodeStructureRecursive(node: SceneNode): StructureElement {
+    const element = this.extractNodeStructure(node);
+
+    // children이 있는 경우 재귀적으로 추출
+    if ("children" in node && Array.isArray(node.children)) {
+      element.children = node.children.map((child) =>
+        this.extractNodeStructureRecursive(child),
+      );
+    }
+
+    return element;
   }
 
   /**
@@ -550,7 +255,7 @@ export class ComponentStructureManager {
       variantProperties: Record<string, string | boolean> | null;
       styles: any;
     }>,
-    propertyDefinitions: ComponentPropertyDefinitions
+    propertyDefinitions: ComponentPropertyDefinitions,
   ): Record<string, any> {
     const propertyStyleMap: Record<string, any> = {};
 
@@ -567,13 +272,13 @@ export class ComponentStructureManager {
           const matchingVariants = variants.filter(
             (v) =>
               v.variantProperties &&
-              v.variantProperties[propName] === optionValue
+              v.variantProperties[propName] === optionValue,
           );
 
           if (matchingVariants.length > 0) {
             // 이 옵션에서 공통적으로 나타나는 스타일 찾기
             const commonStyles = this.findCommonStyles(
-              matchingVariants.map((v) => v.styles)
+              matchingVariants.map((v) => v.styles),
             );
 
             if (Object.keys(commonStyles).length > 0) {
@@ -591,12 +296,13 @@ export class ComponentStructureManager {
         [true, false].forEach((boolValue) => {
           const matchingVariants = variants.filter(
             (v) =>
-              v.variantProperties && v.variantProperties[propName] === boolValue
+              v.variantProperties &&
+              v.variantProperties[propName] === boolValue,
           );
 
           if (matchingVariants.length > 0) {
             const commonStyles = this.findCommonStyles(
-              matchingVariants.map((v) => v.styles)
+              matchingVariants.map((v) => v.styles),
             );
 
             if (Object.keys(commonStyles).length > 0) {
@@ -632,5 +338,142 @@ export class ComponentStructureManager {
     });
 
     return commonStyles;
+  }
+
+  /**
+   * 컴포넌트 이름으로부터 root 요소 추론
+   */
+  private inferRootElement(componentName: string): string {
+    const lowerName = componentName.toLowerCase();
+
+    if (lowerName.includes("button")) return "button";
+    if (lowerName.includes("input")) return "input";
+    if (lowerName.includes("checkbox")) return "input[type=checkbox]";
+    if (lowerName.includes("radio")) return "input[type=radio]";
+    if (lowerName.includes("select")) return "select";
+    if (lowerName.includes("textarea")) return "textarea";
+    if (lowerName.includes("link")) return "a";
+    if (lowerName.includes("heading") || lowerName.includes("title"))
+      return "h2";
+    if (lowerName.includes("card")) return "article";
+    if (lowerName.includes("modal") || lowerName.includes("dialog"))
+      return "dialog";
+
+    return "div";
+  }
+
+  /**
+   * 배열에서 가장 많이 나타나는 값 찾기
+   */
+  private findMostCommon<T extends string | number>(arr: T[]): T {
+    if (arr.length === 0) return "unknown" as T;
+
+    const counts = new Map<T, number>();
+    arr.forEach((item) => {
+      counts.set(item, (counts.get(item) || 0) + 1);
+    });
+
+    let maxCount = 0;
+    let mostCommon = arr[0];
+    counts.forEach((count, item) => {
+      if (count > maxCount) {
+        maxCount = count;
+        mostCommon = item;
+      }
+    });
+
+    return mostCommon;
+  }
+
+  /**
+   * child의 이름과 타입으로 역할 추론
+   */
+  private inferChildRoleByName(name: string, type: string): string {
+    const lowerName = name.toLowerCase();
+
+    // 이름 기반 매칭
+    if (lowerName.includes("icon")) return "icon";
+    if (
+      lowerName.includes("label") ||
+      lowerName.includes("text") ||
+      lowerName.includes("button")
+    )
+      return "label";
+    if (lowerName.includes("background") || lowerName.includes("bg"))
+      return "background";
+    if (lowerName.includes("container")) return "container";
+    if (lowerName.includes("secondary")) return "label";
+
+    // 타입 기반 매칭
+    if (type === "TEXT") return "label";
+    if (type === "INSTANCE") return lowerName || "element";
+
+    return lowerName || "unknown";
+  }
+
+  /**
+   * 노드의 레이아웃 정보를 재귀적으로 추출
+   */
+  private async extractLayoutNodeRecursive(
+    structureElement: StructureElement,
+    node: SceneNode,
+    parentNode?: SceneNode,
+    parentPadding?: Padding,
+  ): Promise<LayoutTreeNode> {
+    // StyleExtractor를 사용하여 스타일 정보 추출
+    const extractedStyles = this.styleExtractor.extractStyles(
+      node,
+      parentNode,
+      parentPadding,
+    );
+
+    const layoutNode: LayoutTreeNode = {
+      id: structureElement.id,
+      width: "width" in node ? node.width : 0,
+      height: "height" in node ? node.height : 0,
+      ...extractedStyles,
+      children: [],
+    };
+
+    // children 재귀적으로 추출
+    if (structureElement.children && structureElement.children.length > 0) {
+      const childrenNodes = await Promise.all(
+        structureElement.children.map((childElement) =>
+          this.extractChildNode(childElement, node, extractedStyles.padding),
+        ),
+      );
+
+      layoutNode.children = childrenNodes.filter(
+        (child): child is LayoutTreeNode => child !== null,
+      );
+    }
+
+    return layoutNode;
+  }
+
+  /**
+   * 자식 노드 추출 (헬퍼 메서드)
+   */
+  private async extractChildNode(
+    childElement: StructureElement,
+    parentNode: SceneNode,
+    parentPadding?: Padding,
+  ): Promise<LayoutTreeNode | null> {
+    const childNode = await figma.getNodeByIdAsync(childElement.id);
+
+    if (
+      !childNode ||
+      childNode.type === "DOCUMENT" ||
+      childNode.type === "PAGE"
+    ) {
+      return null;
+    }
+
+    return this.extractLayoutNodeRecursive(
+      childElement,
+      childNode as SceneNode,
+      parentNode,
+      parentPadding,
+    );
   }
 }

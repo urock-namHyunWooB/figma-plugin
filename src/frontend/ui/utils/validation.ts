@@ -10,13 +10,11 @@ export interface PropDefinition {
   id: string;
   name: string;
   type:
-    | "string"
-    | "number"
-    | "boolean"
-    | "object"
-    | "array"
-    | "component"
-    | "function";
+    | string
+    | number
+    | boolean
+    | object
+    | Array<string | number | boolean | object>;
   defaultValue?: any;
   required: boolean;
   description?: string;
@@ -91,7 +89,7 @@ export const isFormValid = (props: PropDefinition[]): boolean => {
  */
 export const getNameError = (
   prop: PropDefinition,
-  allProps: PropDefinition[]
+  allProps: PropDefinition[],
 ): string | null => {
   if (!prop.name) return "이름을 입력하세요";
   if (!isValidVariableName(prop.name))
@@ -118,4 +116,3 @@ export const getDefaultValueError = (prop: PropDefinition): string | null => {
   }
   return null;
 };
-

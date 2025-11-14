@@ -33,4 +33,3 @@ export function extractPropsFromCode(code: string): Record<string, any> {
 
   return props;
 }
-

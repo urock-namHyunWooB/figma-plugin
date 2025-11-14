@@ -1,11 +1,19 @@
-import { useRef, useEffect, useState } from "react";
-import type { ComponentStructureData, ElementBindingsMap } from "../types";
+import { useRef, useEffect, useState, useMemo } from "react";
+
 import ElementBox from "./ElementBox";
 import { calculateScale } from "../utils/layoutCalculator";
 import { hasBinding } from "../utils/bindingSerializer";
+import { ElementBindingsMap } from "@backend/managers/MetadataManager";
+import {
+  ComponentStructureData,
+  LayoutTreeNode,
+  StructureElement as BackendStructureElement,
+} from "@backend/managers/ComponentStructureManager";
+import { StructureElement } from "../types";
 
 interface StructureCanvasProps {
   structure: ComponentStructureData;
+  layoutTree: LayoutTreeNode | null;
   bindings: ElementBindingsMap;
   selectedElementId: string | null;
   onElementClick: (elementId: string) => void;
@@ -16,152 +24,197 @@ interface StructureCanvasProps {
  */
 function StructureCanvas({
   structure,
+  layoutTree,
   bindings,
   selectedElementId,
   onElementClick,
 }: StructureCanvasProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(1);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
+  // 캔버스 크기 업데이트
   useEffect(() => {
-    if (!containerRef.current) return;
-
-    const updateScale = () => {
-      const container = containerRef.current;
-      if (!container) return;
-
-      const rect = container.getBoundingClientRect();
-      const calculatedScale = calculateScale(
-        structure.boundingBox.width,
-        structure.boundingBox.height,
-        rect.width,
-        rect.height,
-        40
-      );
-      // 최소 scale을 2로 설정하여 더 크게 표시
-      const newScale = Math.max(calculatedScale, 2);
-      setScale(newScale);
+    const updateSize = () => {
+      if (canvasRef.current) {
+        setCanvasSize({
+          width: canvasRef.current.clientWidth,
+          height: canvasRef.current.clientHeight,
+        });
+      }
     };
 
-    updateScale();
-    window.addEventListener("resize", updateScale);
-    return () => window.removeEventListener("resize", updateScale);
-  }, [structure]);
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
 
-  if (!structure || structure.elements.length === 0) {
+  // Backend 구조와 LayoutTree를 Frontend StructureElement로 변환
+  const elements = useMemo(() => {
+    if (!layoutTree) return [];
+
+    const convertToElements = (
+      backendElement: BackendStructureElement,
+      layoutNode: LayoutTreeNode,
+      parentX: number = 0,
+      parentY: number = 0,
+    ): StructureElement[] => {
+      const x = (layoutNode.x ?? 0) + parentX;
+      const y = (layoutNode.y ?? 0) + parentY;
+
+      const element: StructureElement = {
+        id: backendElement.id,
+        name: backendElement.name,
+        type: backendElement.type,
+        x,
+        y,
+        width: layoutNode.width,
+        height: layoutNode.height,
+        visible: layoutNode.visible ?? true,
+        padding: layoutNode.padding,
+        margin: layoutNode.margin,
+        layout:
+          layoutNode.layoutMode && layoutNode.layoutMode !== "GRID"
+            ? {
+                layoutMode: layoutNode.layoutMode as
+                  | "NONE"
+                  | "HORIZONTAL"
+                  | "VERTICAL",
+                itemSpacing: layoutNode.itemSpacing ?? 0,
+                primaryAxisAlignItems: layoutNode.primaryAxisAlignItems,
+                counterAxisAlignItems: layoutNode.counterAxisAlignItems,
+                layoutGrow: layoutNode.layoutGrow,
+                layoutAlign: layoutNode.layoutAlign,
+              }
+            : undefined,
+      };
+
+      const result: StructureElement[] = [element];
+
+      // children 처리
+      if (
+        backendElement.children &&
+        layoutNode.children &&
+        backendElement.children.length === layoutNode.children.length
+      ) {
+        backendElement.children.forEach((childElement, index) => {
+          const childLayoutNode = layoutNode.children[index];
+          if (childLayoutNode) {
+            const childElements = convertToElements(
+              childElement,
+              childLayoutNode,
+              x,
+              y,
+            );
+            result.push(...childElements);
+          }
+        });
+      }
+
+      return result;
+    };
+
+    return convertToElements(structure.root, layoutTree);
+  }, [structure, layoutTree]);
+
+  // 스케일 계산
+  const scale = useMemo(() => {
+    if (
+      elements.length === 0 ||
+      canvasSize.width === 0 ||
+      canvasSize.height === 0
+    ) {
+      return 1;
+    }
+
+    // 모든 요소의 bounding box 계산
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    elements.forEach((element) => {
+      const marginLeft = element.margin?.left || 0;
+      const marginTop = element.margin?.top || 0;
+      minX = Math.min(minX, element.x - marginLeft);
+      minY = Math.min(minY, element.y - marginTop);
+      maxX = Math.max(maxX, element.x + element.width);
+      maxY = Math.max(maxY, element.y + element.height);
+    });
+
+    const componentWidth = maxX - minX;
+    const componentHeight = maxY - minY;
+
+    return calculateScale(
+      componentWidth,
+      componentHeight,
+      canvasSize.width,
+      canvasSize.height,
+      40,
+    );
+  }, [elements, canvasSize]);
+
+  // 컨테이너 offset 계산 (중앙 정렬)
+  const containerOffset = useMemo(() => {
+    if (elements.length === 0) {
+      return { x: 0, y: 0 };
+    }
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    elements.forEach((element) => {
+      const marginLeft = element.margin?.left || 0;
+      const marginTop = element.margin?.top || 0;
+      minX = Math.min(minX, element.x - marginLeft);
+      minY = Math.min(minY, element.y - marginTop);
+      maxX = Math.max(maxX, element.x + element.width);
+      maxY = Math.max(maxY, element.y + element.height);
+    });
+
+    const componentWidth = (maxX - minX) * scale;
+    const componentHeight = (maxY - minY) * scale;
+
+    return {
+      x: (canvasSize.width - componentWidth) / 2 - minX * scale,
+      y: (canvasSize.height - componentHeight) / 2 - minY * scale,
+    };
+  }, [elements, scale, canvasSize]);
+
+  if (!layoutTree || elements.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-400">
-        No structure data available
+      <div className="w-full h-full bg-gray-50 p-6 flex items-center justify-center">
+        <p className="text-gray-400">No layout data available</p>
       </div>
     );
   }
 
-  const scaledWidth = structure.boundingBox.width * scale;
-  const scaledHeight = structure.boundingBox.height * scale;
-
   return (
     <div
-      ref={containerRef}
-      className="w-full h-full bg-gray-50 p-6 flex items-center justify-center"
+      ref={canvasRef}
+      className="w-full h-full bg-gray-50 flex items-center justify-center overflow-hidden relative"
     >
-      <svg
-        viewBox={`0 0 ${scaledWidth + 80} ${scaledHeight + 80}`}
-        className="border-2 border-gray-300 bg-white rounded-lg shadow-md"
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          height: "100%",
+          transform: `translate(${containerOffset.x}px, ${containerOffset.y}px) scale(${scale})`,
+          transformOrigin: "0 0",
+        }}
       >
-        <g transform="translate(40, 40)">
-          {/* Root container */}
-          <rect
-            x={0}
-            y={0}
-            width={scaledWidth}
-            height={scaledHeight}
-            fill="#ffffff"
-            stroke="#111827"
-            strokeWidth={1.5}
-            rx={6}
+        {elements.map((element) => (
+          <ElementBox
+            key={element.id}
+            element={element}
+            scale={1}
+            isSelected={selectedElementId === element.id}
+            bindingCount={hasBinding(element.id, bindings) ? 1 : 0}
+            onClick={() => onElementClick(element.id)}
           />
-
-          {/* Root padding overlay */}
-          {structure.padding && (
-            <g>
-              {structure.padding.top > 0 && (
-                <rect
-                  x={0}
-                  y={0}
-                  width={scaledWidth}
-                  height={structure.padding.top * scale}
-                  fill="#10b981"
-                  opacity={0.12}
-                />
-              )}
-              {structure.padding.bottom > 0 && (
-                <rect
-                  x={0}
-                  y={scaledHeight - structure.padding.bottom * scale}
-                  width={scaledWidth}
-                  height={structure.padding.bottom * scale}
-                  fill="#10b981"
-                  opacity={0.12}
-                />
-              )}
-              {structure.padding.left > 0 && (
-                <rect
-                  x={0}
-                  y={structure.padding.top * scale}
-                  width={structure.padding.left * scale}
-                  height={
-                    scaledHeight -
-                    (structure.padding.top + structure.padding.bottom) * scale
-                  }
-                  fill="#10b981"
-                  opacity={0.12}
-                />
-              )}
-              {structure.padding.right > 0 && (
-                <rect
-                  x={scaledWidth - structure.padding.right * scale}
-                  y={structure.padding.top * scale}
-                  width={structure.padding.right * scale}
-                  height={
-                    scaledHeight -
-                    (structure.padding.top + structure.padding.bottom) * scale
-                  }
-                  fill="#10b981"
-                  opacity={0.12}
-                />
-              )}
-              <rect
-                x={structure.padding.left * scale}
-                y={structure.padding.top * scale}
-                width={
-                  scaledWidth -
-                  (structure.padding.left + structure.padding.right) * scale
-                }
-                height={
-                  scaledHeight -
-                  (structure.padding.top + structure.padding.bottom) * scale
-                }
-                fill="none"
-                stroke="#10b981"
-                strokeDasharray="6 4"
-                strokeWidth={1}
-                rx={4}
-              />
-            </g>
-          )}
-
-          {structure.elements.map((element) => (
-            <ElementBox
-              key={element.id}
-              element={element}
-              scale={scale}
-              isSelected={selectedElementId === element.id}
-              bindingCount={hasBinding(element.id, bindings) ? 1 : 0}
-              onClick={() => onElementClick(element.id)}
-            />
-          ))}
-        </g>
-      </svg>
+        ))}
+      </div>
     </div>
   );
 }
