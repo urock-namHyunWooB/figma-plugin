@@ -1,8 +1,4 @@
-import {
-  findPairsEfficient,
-  structuralDiff,
-  extractVariantPatterns,
-} from "../utils";
+import { extractVariantPatterns } from "../utils";
 import { FigmaPlugin } from "../FigmaPlugin";
 import type { ComponentStructureData } from "./ComponentStructureManager";
 import type {
@@ -25,8 +21,8 @@ export interface ComponentSetNodeSpec {
   internalStateDefinition: StateDefinition[] | null;
   elementBindings: ElementBindingsMap | null;
   variantPatterns: Record<string, Record<string, unknown>>;
-  componentStructure: ComponentStructureData;
-  layoutTree: LayoutTreeNode;
+  componentStructure: ComponentStructureData | null;
+  layoutTree: LayoutTreeNode | null;
 }
 
 class SpecManager {
@@ -37,7 +33,7 @@ class SpecManager {
   constructor(
     figmaPlugin: FigmaPlugin,
     metadataManager: FigmaPlugin["metadataManager"],
-    componentStructureManager: FigmaPlugin["componentStructureManager"],
+    componentStructureManager: FigmaPlugin["componentStructureManager"]
   ) {
     this.figmaPlugin = figmaPlugin;
     this.metadataManager = metadataManager;
@@ -66,12 +62,34 @@ class SpecManager {
     return "div";
   }
 
-  public async getComponentSetNodeSpec(
-    componentSetNode: ComponentSetNode,
-  ): Promise<ComponentSetNodeSpec> {
-    const componentPropertyDefinitions =
-      componentSetNode.componentPropertyDefinitions;
+  /**
+   * 단일 SceneNode 기준 스펙과 구조 정보 반환
+   */
+  public async getNodeSpec(node: SceneNode): Promise<{
+    spec: any;
+    componentStructure: ComponentStructureData | null;
+    layoutTree: LayoutTreeNode | null;
+  }> {
+    const spec = await this.buildNodeSpecTree(node);
 
+    const componentStructure =
+      await this.extractComponentStructureForNode(node);
+    const layoutTree = componentStructure
+      ? await this.componentStructureManager.extractStyleTree(
+          componentStructure
+        )
+      : null;
+
+    return {
+      spec,
+      componentStructure,
+      layoutTree,
+    };
+  }
+
+  public async getComponentSetNodeSpec(
+    componentSetNode: ComponentSetNode
+  ): Promise<ComponentSetNodeSpec> {
     const variantsMaps: Record<string, any> = {};
     const componentNodes: ComponentNode[] = [];
 
@@ -93,10 +111,10 @@ class SpecManager {
           structure:
             await this.componentStructureManager.extractComponentStructure(
               component,
-              componentSetNode.name,
+              componentSetNode.name
             ),
         };
-      }),
+      })
     );
 
     // 기본 variant의 component를 찾기
@@ -106,7 +124,7 @@ class SpecManager {
     if (defaultVariant) {
       // 기본 variant에 해당하는 component structure 찾기
       const defaultStructure = componentStructures.find(
-        ({ component }) => component.id === defaultVariant.id,
+        ({ component }) => component.id === defaultVariant.id
       );
       if (defaultStructure) {
         defaultComponentStructure =
@@ -120,12 +138,12 @@ class SpecManager {
       this.findStructureWithMostChildren(
         componentStructures.map(({ structure }) => ({
           componentStructure: structure.componentStructure,
-        })),
+        }))
       );
 
     const layoutTree = componentStructure
       ? await this.componentStructureManager.extractStyleTree(
-          componentStructure,
+          componentStructure
         )
       : null;
 
@@ -340,7 +358,7 @@ class SpecManager {
   private findStructureWithMostChildren(
     componentStructures: Array<{
       componentStructure: ComponentStructureData;
-    }>,
+    }>
   ): ComponentStructureData | null {
     if (componentStructures.length === 0) {
       return null;
@@ -363,6 +381,35 @@ class SpecManager {
   /**
    * 구조 요소의 자식 개수를 재귀적으로 세기
    */
+  private async buildNodeSpecTree(node: SceneNode): Promise<any | null> {
+    if (node.type === "COMPONENT_SET") {
+      return null;
+    }
+
+    const spec = await this.createNodeSpec(node);
+
+    if (this.hasChildren(node)) {
+      const childrenSpecs: any[] = [];
+
+      for (const child of node.children) {
+        if (child.type === "COMPONENT_SET") {
+          continue;
+        }
+
+        const childSpec = await this.buildNodeSpecTree(child);
+        if (childSpec) {
+          childrenSpecs.push(childSpec);
+        }
+      }
+
+      if (childrenSpecs.length > 0) {
+        spec.children = childrenSpecs;
+      }
+    }
+
+    return spec;
+  }
+
   private countChildren(element: {
     children?: Array<{ children?: any[] }>;
   }): number {
@@ -377,6 +424,64 @@ class SpecManager {
         return sum + this.countChildren(child);
       }, 0)
     );
+  }
+
+  private async createNodeSpec(node: SceneNode): Promise<any> {
+    switch (node.type) {
+      case "COMPONENT":
+        return this.getComponentNodeSpec(node);
+      case "INSTANCE":
+        return this.getInstanceNodeSpec(node);
+      case "FRAME":
+        return this.getFrameNodeSpec(node);
+      case "TEXT":
+        return this.getTextNodeSpec(node);
+      case "RECTANGLE":
+        return this.getRectangleNodeSpec(node);
+      case "VECTOR":
+        return this.getVectorNodeSpec(node);
+      case "ELLIPSE":
+        return this.getEllipseNodeSpec(node);
+      case "STAR":
+        return this.getStarNodeSpec(node);
+      case "POLYGON":
+        return this.getPolygonNodeSpec(node);
+      default:
+        return {
+          id: node.id,
+          name: node.name,
+          type: node.type,
+          visible: "visible" in node ? (node as any).visible : undefined,
+          width: "width" in node ? (node as any).width : undefined,
+          height: "height" in node ? (node as any).height : undefined,
+        };
+    }
+  }
+
+  private hasChildren(node: SceneNode): node is SceneNode & ChildrenMixin {
+    return "children" in node && Array.isArray((node as any).children);
+  }
+
+  private async extractComponentStructureForNode(
+    node: SceneNode
+  ): Promise<ComponentStructureData | null> {
+    const isSupportedForStructure =
+      node.type === "FRAME" ||
+      node.type === "GROUP" ||
+      node.type === "COMPONENT" ||
+      node.type === "INSTANCE";
+
+    if (!isSupportedForStructure) {
+      return null;
+    }
+
+    const { componentStructure } =
+      await this.componentStructureManager.extractComponentStructure(
+        node as FrameNode | GroupNode | ComponentNode | InstanceNode,
+        node.name
+      );
+
+    return componentStructure;
   }
 }
 

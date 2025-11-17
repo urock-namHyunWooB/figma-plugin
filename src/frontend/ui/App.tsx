@@ -6,7 +6,7 @@ import SetInternalState from "./domain/setting-internal-state/SetInternalState";
 import SetProps from "./domain/setting-props/SetProps";
 import ComponentPreview from "./domain/code-preview/ComponentPreview";
 import { TestComp } from "./components/TestComp";
-import { main } from "@frontend/ui/domain/ast-generator";
+import { main } from "@frontend/ui/domain/transpiler";
 
 main();
 
@@ -32,7 +32,7 @@ function App() {
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
-      <TestComp />
+      <TestComp text={"111"} />
       {/* 탭 헤더 */}
       {layers.length > 0 && layers[0].type === "COMPONENT_SET" && (
         <div className="flex border-b bg-white">

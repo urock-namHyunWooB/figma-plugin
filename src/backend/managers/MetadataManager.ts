@@ -12,12 +12,8 @@ export interface PropertyConfig {
 export interface PropDefinition {
   id: string;
   name: string;
-  type:
-    | string
-    | number
-    | boolean
-    | object
-    | Array<string | number | boolean | object>;
+  figmaType?: "BOOLEAN" | "TEXT" | "VARIANT" | "INSTANCE_SWAP";
+  type: string;
   defaultValue?: any;
   required: boolean;
   description?: string;
@@ -224,7 +220,8 @@ export class MetadataManager {
         variantProps.push({
           id: `variant-${key.toLowerCase()}`,
           name: key,
-          type: definition.type,
+          figmaType: definition.type,
+          type: "string",
           defaultValue: defaultValue,
           required: false,
           description: `Variant property: ${key}`,

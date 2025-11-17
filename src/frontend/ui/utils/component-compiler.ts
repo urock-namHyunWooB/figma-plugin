@@ -6,18 +6,41 @@ import * as React from "react";
  */
 export function compileReactComponent(code: string): React.ComponentType<any> {
   try {
-    // 1. 컴포넌트 이름 추출 (export default 뒤의 이름) - 먼저 추출
-    const exportMatch = code.match(/export\s+default\s+(\w+)/);
-    const componentName = exportMatch ? exportMatch[1] : "Component";
+    // 1. 컴포넌트 이름 추출
+    // export default ComponentName 형식 또는 export function ComponentName 형식 지원
+    let componentName = "Component";
+    const exportDefaultMatch = code.match(/export\s+default\s+(\w+)/);
+    const exportFunctionMatch = code.match(/export\s+function\s+(\w+)\s*\(/);
+
+    if (exportDefaultMatch) {
+      componentName = exportDefaultMatch[1];
+    } else if (exportFunctionMatch) {
+      componentName = exportFunctionMatch[1];
+    }
 
     // 2. import 문 제거
     let cleanedCode = code.replace(
       /import\s+.*?from\s+['"]react['"];?\s*/g,
-      "",
+      ""
     );
 
-    // 3. export 문 제거
+    // 3. export 문 제거/변환
+    // export default ComponentName 형식 제거
     cleanedCode = cleanedCode.replace(/export\s+default\s+\w+;?\s*$/m, "");
+    // export function ComponentName 형식을 function ComponentName으로 변환
+    cleanedCode = cleanedCode.replace(
+      /export\s+function\s+(\w+)/g,
+      "function $1"
+    );
+    // export interface를 interface로 변환
+    cleanedCode = cleanedCode.replace(
+      /export\s+interface\s+(\w+)/g,
+      "interface $1"
+    );
+    // export const를 const로 변환
+    cleanedCode = cleanedCode.replace(/export\s+const\s+(\w+)/g, "const $1");
+    // 기타 export 문 제거 (남아있는 경우)
+    cleanedCode = cleanedCode.replace(/export\s+/g, "");
 
     // 4. Babel로 JSX → JavaScript 변환
     const transformed = Babel.transform(cleanedCode, {
@@ -73,7 +96,7 @@ export function compileReactComponent(code: string): React.ComponentType<any> {
     throw new Error(
       `컴포넌트 컴파일 실패: ${
         error instanceof Error ? error.message : "Unknown error"
-      }`,
+      }`
     );
   }
 }

@@ -70,6 +70,14 @@ export class FigmaPlugin {
 
         console.log(spec);
       }
+
+      if (type === "FRAME") {
+        const frameNode = selection[0] as FrameNode;
+
+        const spec = await this.specManager.getNodeSpec(frameNode);
+
+        console.log(spec);
+      }
     });
 
     figma.once("run", () => {});
