@@ -99,6 +99,8 @@ export type OverflowDirection = "VISIBLE" | "HIDDEN";
  * 실제 추출되는 값들을 반영하여 정의
  */
 export interface BaseStyleProperties {
+  name: string;
+
   // 위치 및 변환
   x?: number;
   y?: number;

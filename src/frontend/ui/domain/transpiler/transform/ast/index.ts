@@ -24,7 +24,6 @@ export function generateAST(spec: FigmaNodeData): AstTree {
   const baseStyle = buildStyleTree(spec);
   // 2. Variant Styles 생성 (baseStyle을 공유받아 사용)
   const variantStyleMap = buildVariantStyles(spec, baseStyle);
-
   // 3. Style Tree 생성 (노드 바인딩용)
   const styleTree = buildStyleTree(spec.layoutTree);
 

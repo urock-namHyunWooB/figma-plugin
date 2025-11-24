@@ -1,6 +1,7 @@
 import { LayoutTreeNode } from "@backend/managers/ComponentStructureManager";
 import { StyleTreeNode } from "@frontend/ui/domain/transpiler/types/styles";
 import {
+  BaseStyleTree,
   FigmaNodeData,
   StyleTree,
 } from "@frontend/ui/domain/transpiler/types/figma-api";
@@ -53,7 +54,7 @@ export function buildStyleTree(figmaNodeData: FigmaNodeData): StyleTree | null {
 
   traverseNode(figmaNodeData.info.document);
 
-  return figmaNodeData.styleTree;
+  return getBaseStyleTree(figmaNodeData.styleTree);
 }
 
 /**
@@ -105,4 +106,77 @@ export function flattenStyleTree(
 
   traverse(styleTree);
   return map;
+}
+
+/**
+ * 노드의 모든 하위 자식 노드의 총 개수를 재귀적으로 계산
+ */
+function countAllDescendants(node: StyleTree): number {
+  if (!node.children || node.children.length === 0) {
+    return 0;
+  }
+
+  let total = node.children.length;
+  for (const child of node.children) {
+    total += countAllDescendants(child);
+  }
+  return total;
+}
+
+/**
+ * ComponentSetNode의 StyleTree에서 baseStyleTree를 찾아서 리턴
+ * baseStyleTree는 ComponentSetNode의 자식 노드 중에서 모든 하위 자식 노드의 총 개수가 가장 많은 노드를 찾아서 리턴
+ */
+function getBaseStyleTree(figmaNodeData: StyleTree | null) {
+  if (!figmaNodeData) return null;
+
+  // 자식이 없으면 자기 자신을 반환
+  if (!figmaNodeData.children || figmaNodeData.children.length === 0) {
+    return figmaNodeData;
+  }
+
+  // 자식 노드들 중에서 모든 하위 자식 노드의 총 개수가 가장 많은 노드를 찾기
+  let baseStyleTree: StyleTree | null = null;
+  let maxChildrenCount = -1;
+
+  for (const child of figmaNodeData.children) {
+    const totalChildrenCount = countAllDescendants(child);
+    if (totalChildrenCount > maxChildrenCount) {
+      maxChildrenCount = totalChildrenCount;
+      baseStyleTree = {
+        ...child,
+      };
+    }
+  }
+
+  // 자식이 없는 경우가 모두라면 첫 번째 자식을 반환
+  if (!baseStyleTree && figmaNodeData.children.length > 0) {
+    baseStyleTree = {
+      ...figmaNodeData.children[0],
+    };
+  }
+
+  const baseVariants = baseStyleTree?.figmaStyle?.name
+    ? {
+        ...parseVariantString(baseStyleTree.figmaStyle.name),
+      }
+    : {};
+
+  return { ...baseStyleTree, baseVariants };
+}
+
+function parseVariantString(str: string) {
+  const result: Record<string, string> = {};
+
+  str.split(",").forEach((pair) => {
+    const [rawKey, rawValue] = pair.split("=");
+    if (!rawKey || !rawValue) return;
+
+    const key = rawKey.trim();
+    const value = rawValue.trim();
+
+    result[key] = value;
+  });
+
+  return result;
 }

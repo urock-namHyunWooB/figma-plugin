@@ -55,11 +55,26 @@ export type RestLayoutSizing = "FIXED" | "HUG" | "FILL";
  */
 export type RestLayoutAlign = "INHERIT" | "STRETCH" | "MIN" | "CENTER" | "MAX";
 
+export interface DiffTree extends StyleTree {
+  _diff?: {
+    status: "ADDED" | "REMOVED" | "MODIFIED" | "UNCHANGED" | "IS_DEFAULT";
+  };
+  children: DiffTree[];
+}
+
 export interface StyleTree {
   id: string;
   cssStyle: { [p: string]: string };
   children: StyleTree[];
   figmaStyle?: BaseStyleProperties;
+}
+
+export interface BaseStyleTree {
+  id: string;
+  cssStyle: { [p: string]: string };
+  children: StyleTree[];
+  figmaStyle?: BaseStyleProperties;
+  baseVariants: Record<string, unknown>;
 }
 
 export interface FigmaNodeData {

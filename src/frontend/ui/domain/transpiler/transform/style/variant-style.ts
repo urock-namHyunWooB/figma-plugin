@@ -5,10 +5,24 @@ import type {
   LayoutTreeNode,
 } from "@backend/managers/ComponentStructureManager";
 
-import { buildStyleTree } from "./layoutTreeConverter";
 import type { StyleTreeNode } from "../../types/styles";
 
 import { VariantStyleIR } from "../../types";
+import { BaseStyleTree, FigmaNodeData, StyleTree } from "../../types/figma-api";
+
+import { findStyleTreeById } from "../../utils/tree-utils";
+import VariantUtils from "@frontend/ui/utils/variant";
+
+interface VariantPatterns {
+  [key: string]: Record<
+    string,
+    {
+      cssStyle: Record<string, string>;
+      figmaStyle: BaseStyleProperties;
+      children: VariantPatterns[];
+    }
+  >;
+}
 
 /**
  * spec의 variantPatterns를 처리하여 variant style을 생성
@@ -16,64 +30,148 @@ import { VariantStyleIR } from "../../types";
  * @param sharedBaseStyle 공유할 baseStyle (중복 제거를 위해 링킹)
  */
 export function buildVariantStyles(
-  spec: ComponentSetNodeSpec,
-  sharedBaseStyle?: StyleTreeNode | null
-): Map<string, VariantStyleIR> {
-  const variantStyleMap = new Map<string, VariantStyleIR>();
-
-  // baseStyle을 트리 형태로 생성 (공유된 baseStyle이 있으면 사용, 없으면 새로 생성)
-  const baseStyleTree = sharedBaseStyle ?? buildStyleTree(spec.layoutTree);
-
-  if (!spec.variantPatterns) {
-    return variantStyleMap;
+  spec: FigmaNodeData,
+  sharedBaseStyle: BaseStyleTree
+): Map<string, VariantStyleIR> | null {
+  if (spec.info.document.type !== "COMPONENT_SET") {
+    return null;
   }
 
-  // variantPatterns에서 각 prop별로 variant style 생성
-  for (const [propName, variantPatterns] of Object.entries(
-    spec.variantPatterns
-  )) {
-    const variantStyle = buildVariantStyleIR(
-      propName,
-      variantPatterns as Record<string, unknown>,
-      baseStyleTree,
-      spec.layoutTree
-    );
-    variantStyleMap.set(propName, variantStyle);
-  }
+  const componentSetNode = spec.info.document as ComponentSetNode;
+  const variantsMaps: Record<string, StyleTree> = {};
 
-  return variantStyleMap;
+  componentSetNode.children.forEach((child) => {
+    if (child.type === "COMPONENT") {
+      const component = child as ComponentNode;
+      const id = component.id;
+
+      const styleNode = findStyleTreeById(spec.styleTree!, id);
+      if (styleNode) {
+        variantsMaps[component.name] = styleNode;
+      }
+    }
+  });
+  const variantPatterns = VariantUtils.extractVariantPatterns(
+    variantsMaps,
+    sharedBaseStyle.baseVariants
+  );
+
+  const rtn = buildVariantStyleIR(
+    variantPatterns,
+    sharedBaseStyle,
+    componentSetNode.children as ComponentNode[]
+  );
+
+  return rtn;
 }
 
 /**
  * VariantStyleIR 생성
  * variantPatterns를 처리하여 baseStyle과 각 옵션별 델타를 계산
+ * ex) baseVariants = {
+    "Size": "Large",
+    "State": "Disabled",
+    "Left Icon": "True",
+    "Right Icon": "False"
+  }
+    가 이렇게 되어 있고 variantPatterns에서 각 baseVariants의 델타값을 찾아서 세팅한다.
+    Size의 다른점을 구하려면 components에서 Size만 다르고 나머지 variants는 똑같은 컴포넌트를 찾아서 비교한다.
  */
 function buildVariantStyleIR(
-  variantPropName: string,
-  variantPatterns: Record<string, unknown>,
-  baseStyleTree: StyleTreeNode | null,
-  layoutTree: LayoutTreeNode | null
-): VariantStyleIR {
-  const variantStyles: Record<string, StyleTreeNode | null> = {};
+  variantPatterns: VariantPatterns,
+  sharedBaseStyle: BaseStyleTree,
+  components: ComponentNode[]
+) {}
 
-  // 각 옵션 값별로 variantStyle 계산 및 델타 추출
-  for (const [variantValue, pattern] of Object.entries(variantPatterns)) {
-    // pattern을 트리 형태로 변환
-    const variantStyleTree = convertPatternToStyleTree(
-      pattern as Record<string, unknown>,
-      layoutTree
-    );
+/**
+ * 패턴을 baseStyle의 구조를 참고하여 StyleTree로 변환
+ */
+function convertPatternToStyleTreeFromBase(
+  pattern: {
+    cssStyle: Record<string, string>;
+    figmaStyle: BaseStyleProperties;
+  },
+  baseStyle: StyleTree | null
+): StyleTree | null {
+  if (!baseStyle) {
+    // baseStyle이 없으면 패턴만으로 StyleTree 생성
+    return {
+      id: "root",
+      cssStyle: pattern.cssStyle,
+      figmaStyle: pattern.figmaStyle,
+      children: [],
+    };
+  }
 
-    // baseStyleTree와 variantStyleTree를 비교하여 델타 계산
-    const deltaTree = diffStyleTree(baseStyleTree, variantStyleTree);
-    variantStyles[variantValue] = deltaTree;
+  // baseStyle의 구조를 유지하면서 패턴의 스타일 적용
+  const convertNode = (baseNode: StyleTree): StyleTree => {
+    return {
+      id: baseNode.id,
+      cssStyle: pattern.cssStyle, // 패턴의 cssStyle 사용
+      figmaStyle: pattern.figmaStyle, // 패턴의 figmaStyle 사용
+      children: baseNode.children.map(convertNode),
+    };
+  };
+
+  return convertNode(baseStyle);
+}
+
+/**
+ * 두 StyleTree를 비교하여 델타만 추출 (StyleTree 타입용)
+ */
+function diffStyleTreeForVariant(
+  baseTree: StyleTree | null,
+  variantTree: StyleTree | null
+): StyleTree | null {
+  if (!variantTree) {
+    return null;
+  }
+
+  if (!baseTree) {
+    // baseTree가 없으면 variantTree 전체를 반환
+    return variantTree;
+  }
+
+  // 현재 노드의 스타일 델타 계산
+  const cssStyleDelta: { [p: string]: string } = {};
+  const variantCssStyle = variantTree.cssStyle || {};
+  const baseCssStyle = baseTree.cssStyle || {};
+
+  for (const [key, value] of Object.entries(variantCssStyle)) {
+    // baseTree에 없거나 값이 다른 경우
+    if (!(key in baseCssStyle) || baseCssStyle[key] !== value) {
+      cssStyleDelta[key] = value;
+    }
+  }
+
+  // 자식 노드들 재귀적으로 비교 (ID 기반)
+  const children: StyleTree[] = [];
+
+  // baseTree의 자식들을 ID로 매핑 (빠른 조회를 위해)
+  const baseChildrenMap = new Map<string, StyleTree>();
+  for (const baseChild of baseTree.children) {
+    baseChildrenMap.set(baseChild.id, baseChild);
+  }
+
+  // variantTree의 모든 자식을 순회하면서 같은 ID를 가진 baseTree 자식과 비교
+  for (const variantChild of variantTree.children) {
+    const baseChild = baseChildrenMap.get(variantChild.id) || null;
+    const childDelta = diffStyleTreeForVariant(baseChild, variantChild);
+    if (childDelta) {
+      children.push(childDelta);
+    }
+  }
+
+  // 스타일 델타가 없고 자식도 없으면 null 반환
+  if (Object.keys(cssStyleDelta).length === 0 && children.length === 0) {
+    return null;
   }
 
   return {
-    id: variantPropName,
-    propName: variantPropName,
-    baseStyle: baseStyleTree,
-    variantStyles,
+    id: variantTree.id,
+    cssStyle: cssStyleDelta,
+    figmaStyle: variantTree.figmaStyle,
+    children,
   };
 }
 
@@ -88,6 +186,27 @@ function convertPatternToStyleTree(
 ): StyleTreeNode | null {
   if (!layoutTree) {
     return null;
+  }
+
+  // pattern이 { cssStyle, figmaStyle } 형태인지 확인
+  if ("cssStyle" in pattern && "figmaStyle" in pattern) {
+    const cssStyle = (pattern.cssStyle as CSSStyleValue) || {};
+    const figmaStyle =
+      (pattern.figmaStyle as BaseStyleProperties) || layoutTree.figmaStyle;
+
+    return {
+      id: layoutTree.id,
+      style: cssStyle,
+      figmaStyle: figmaStyle,
+      children: layoutTree.children.map((child) => {
+        return {
+          id: child.id,
+          style: child.style,
+          figmaStyle: child.figmaStyle,
+          children: [],
+        };
+      }),
+    };
   }
 
   // pattern이 노드 ID를 키로 하는 객체인지 확인
@@ -108,15 +227,12 @@ function convertPatternToStyleTree(
       style: rootStyle,
       figmaStyle: (pattern as BaseStyleProperties) || layoutTree.figmaStyle,
       children: layoutTree.children.map((child) => {
-        const childStyleTree = buildStyleTree(child);
-        return (
-          childStyleTree || {
-            id: child.id,
-            style: {} as CSSStyleValue,
-            figmaStyle: {} as BaseStyleProperties,
-            children: [],
-          }
-        );
+        return {
+          id: child.id,
+          style: child.style,
+          figmaStyle: child.figmaStyle,
+          children: [],
+        };
       }),
     };
   }
