@@ -14,7 +14,7 @@ export {
   Prettifier,
   generateAST,
 } from "./transform/ast";
-export { styleConverter } from "./transform/style";
+export { styleConverter } from "./transform/style/StyleConverter";
 export { CodeGenerator } from "./codegen";
 
 // Pipeline API export

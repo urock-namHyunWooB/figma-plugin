@@ -1,21 +1,22 @@
 import ts from "typescript";
-import type {
-  ComponentAST,
-  ElementASTNode,
-  ICodeGenerator,
-  BindingModel,
-} from "../../types";
 import { generatePropsInterface, createPropsParameter } from "./props-codegen";
-import type { PropIR, VariantStyleIR } from "../../types/props";
-import { createReactImport, createUseStateImport } from "./react/imports";
-import { createUseStateHook } from "./react/hooks";
+import type { VariantStyleIR } from "../../types";
+import {
+  createReactImport,
+  createUseStateImport,
+  createEmotionCssImport,
+} from "./react/imports";
 import { createVariantStyleConstants } from "./style/variant-style-generator";
+import { createElementStyleConstants } from "./style/element-style-generator";
 import { convertElementToJsx } from "./jsx/jsx-generator";
+import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
+import { traverseAST } from "@frontend/ui/domain/transpiler/utils/ast-tree-utils";
+import { createUseStateHook } from "./react/hooks";
 
 /**
  * ComponentAST를 TypeScript/TSX 코드로 변환하는 구현체
  */
-export class CodeGenerator implements ICodeGenerator {
+export class CodeGenerator {
   private readonly factory = ts.factory;
 
   /**
@@ -25,18 +26,8 @@ export class CodeGenerator implements ICodeGenerator {
    * 1. AST를 TypeScript SourceFile로 변환
    * 2. SourceFile을 코드 문자열로 출력
    */
-  public generateComponentTSXWithTS(
-    ast: ComponentAST,
-    propsIR: PropIR[],
-    variantStyleMap: Map<string, VariantStyleIR>,
-    bindingModel?: BindingModel
-  ): string {
-    const sourceFile = this.buildSourceFile(
-      ast,
-      propsIR,
-      variantStyleMap,
-      bindingModel
-    );
+  public generateComponentTSXWithTS(ast: AstTree): string {
+    const sourceFile = this.buildSourceFile(ast);
     const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
     return printer.printFile(sourceFile);
   }
@@ -48,43 +39,52 @@ export class CodeGenerator implements ICodeGenerator {
    * - React import 문
    * - useState import 문 (state가 있는 경우)
    * - Props 인터페이스
-   * - 컴포넌트 함수 선언 (export function ComponentName(props: Props) { ... return <JSX>; })
+   * - 컴포넌트 함수 선언 (function ComponentName(props: Props) { ... return <JSX>; })
+   * - export default 문
    */
-  private buildSourceFile(
-    ast: ComponentAST,
-    propsIR: PropIR[],
-    variantStyleMap: Map<string, VariantStyleIR>,
-    bindingModel?: BindingModel
-  ): ts.SourceFile {
+  private buildSourceFile(ast: AstTree): ts.SourceFile {
     const componentName = ast.name || "GeneratedComponent";
     const reactImport = createReactImport(this.factory);
     const statements: ts.Statement[] = [reactImport];
 
-    // State가 있으면 useState import 추가
-    if (bindingModel?.state && bindingModel.state.length > 0) {
-      const useStateImport = createUseStateImport(this.factory);
-      statements.push(useStateImport);
-    }
+    const emotionCssImport = createEmotionCssImport(this.factory);
+    statements.push(emotionCssImport);
 
-    const propsInterface = generatePropsInterface(propsIR, componentName);
+    const useStateImport = createUseStateImport(this.factory);
+    statements.push(useStateImport);
+
+    const propsInterface = generatePropsInterface(ast.props, componentName);
     statements.push(propsInterface);
 
     // Variant style 상수 생성 (baseStyle, dimension별 스타일 맵)
+    const variantStyleMap = ast.styleFeature?.variantStyleMap;
     const variantStyleConstants = createVariantStyleConstants(
       this.factory,
-      propsIR,
+      ast.props,
       variantStyleMap
     );
     statements.push(...variantStyleConstants);
 
+    // 자식 요소들의 스타일 상수 생성
+    const elementStyleConstants = createElementStyleConstants(
+      this.factory,
+      ast.root
+    );
+    statements.push(...elementStyleConstants);
+
     const componentFunction = this.createComponentFunction(
-      componentName,
-      ast.root,
-      propsIR,
-      variantStyleMap,
-      bindingModel
+      ast,
+      variantStyleMap
     );
     statements.push(componentFunction);
+
+    // export default 문 추가
+    const exportDefault = this.factory.createExportAssignment(
+      undefined,
+      false,
+      this.factory.createIdentifier(componentName)
+    );
+    statements.push(exportDefault);
 
     const sourceFile = this.factory.createSourceFile(
       statements,
@@ -99,24 +99,40 @@ export class CodeGenerator implements ICodeGenerator {
   }
 
   /**
-   * 컴포넌트 함수 선언 생성: export function ComponentName(props: Props) { ... return <JSX>; }
+   * 컴포넌트 함수 및 JSX 생성: function ComponentName(props: Props) { ... return <JSX>; }
    */
   private createComponentFunction(
-    componentName: string,
-    rootElement: ElementASTNode,
-    propsIR: PropIR[],
-    variantStyleMap: Map<string, VariantStyleIR>,
-    bindingModel?: BindingModel
+    ast: AstTree,
+    variantStyleMap?: Map<string, VariantStyleIR>
   ): ts.FunctionDeclaration {
+    const componentName = ast.name || "GeneratedComponent";
     const statements: ts.Statement[] = [];
 
     // State hook 선언들 추가
-    if (bindingModel?.state && bindingModel.state.length > 0) {
-      for (const stateBinding of bindingModel.state) {
+    // bindings에서 state id를 수집하고, 해당 id로 state 정보를 찾아서 hook 생성
+    const stateIds = new Set<string>();
+    traverseAST(ast.root, (path) => {
+      path.node.bindings.forEach((binding) => {
+        // state id는 "state-xxx" 형태
+        if (binding.id.startsWith("state-")) {
+          stateIds.add(binding.id);
+        }
+      });
+    });
+
+    // state 정보가 있으면 해당 state들에 대해 hook 생성
+    if (ast.states && ast.states.length > 0) {
+      const usedStates = ast.states.filter((state) => stateIds.has(state.id));
+      // 중복 제거 (같은 state가 여러 노드에서 사용될 수 있음)
+      const uniqueStates = Array.from(
+        new Map(usedStates.map((state) => [state.id, state])).values()
+      );
+
+      for (const state of uniqueStates) {
         const stateHook = createUseStateHook(
           this.factory,
-          stateBinding.name,
-          stateBinding.defaultValue
+          state.name,
+          state.defaultValue
         );
         statements.push(stateHook);
       }
@@ -126,11 +142,14 @@ export class CodeGenerator implements ICodeGenerator {
     // 루트 요소인 경우 variant style 머지 로직 적용
     const jsxRoot = convertElementToJsx(
       this.factory,
-      rootElement,
-      propsIR,
+      ast.root,
+      ast.props,
       variantStyleMap,
-      true
+      true,
+      ast.states
     );
+
+    console.log("jsxRoot", jsxRoot);
     const returnStatement = this.factory.createReturnStatement(jsxRoot);
     statements.push(returnStatement);
 
@@ -140,11 +159,11 @@ export class CodeGenerator implements ICodeGenerator {
     const parameters = createPropsParameter(
       this.factory,
       componentName,
-      propsIR
+      ast.props
     );
 
     return this.factory.createFunctionDeclaration(
-      [this.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+      undefined, // export 키워드 제거
       undefined,
       this.factory.createIdentifier(componentName),
       undefined,

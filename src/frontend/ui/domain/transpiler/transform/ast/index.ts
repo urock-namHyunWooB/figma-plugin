@@ -2,57 +2,64 @@
  * AST 변환 관련 구현체 모음
  */
 
-import type { ComponentSetNodeSpec } from "@backend/managers/SpecManager";
-import type { ComponentAST, PropIR, BindingModel } from "../../types";
-import type { VariantStyleIR } from "../../types/props";
-import { buildPropsIR, prettifyPropsIR } from "../props";
+import { buildPropsIR } from "../props";
 import buildBindingModel from "../binding";
 import { ASTGenerator } from "./ast-generator";
-import { Prettifier } from "./ast-prettifier";
+import { Prettifier } from "../../prettifier/Prettifier";
 import { TagMapper } from "./tag-mapper";
+import { buildVariantStyles } from "../style";
 import {
+  FigmaRestApiResponse,
   styleConverter,
-  createBaseStyle,
-  buildVariantStylesForProps,
-} from "../style";
-
-export { ASTGenerator, TagMapper, Prettifier };
+} from "@frontend/ui/domain/transpiler";
+import { buildStyleTree } from "../style/layoutTreeConverter";
+import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
+import { buildStateBindings } from "../binding/state/binding-state";
+import { FigmaNodeData } from "../../types/figma-api";
+import SpecManager, {
+  ComponentSetNodeSpec,
+} from "@backend/managers/SpecManager";
 
 /**
  * AST 생성 통합 함수
  * 내부적으로 props, binding을 처리하여 AST를 생성
+ * ComponentSetNode 전용
  */
-export function generateAST(spec: ComponentSetNodeSpec): {
-  ast: ComponentAST;
-  propsIR: PropIR[];
-  variantStyleMap: Map<string, VariantStyleIR>;
-  bindingModel: BindingModel;
-} {
-  // 1. Base style 및 variant styles 생성 (스타일 모듈에서 처리)
-  const baseStyle = createBaseStyle(spec.layoutTree);
-  const variantStyleMap = buildVariantStylesForProps(spec, baseStyle);
+export function generateAST(spec: ComponentSetNodeSpec): AstTree {
+  // 1. 공통 baseStyle 생성 (먼저 생성하여 공유)
+  const baseStyle = buildStyleTree(spec.layoutTree);
 
-  // 2. Props IR 생성 (props만 변환)
-  const propsIR = buildPropsIR(spec);
+  // 2. Variant Styles 생성 (baseStyle을 공유받아 사용)
+  const variantStyleMap = buildVariantStyles(spec, baseStyle);
 
-  // 3. Props IR 정리
-  const prettyPropsIR = prettifyPropsIR(propsIR);
+  // 3. Style Tree 생성 (노드 바인딩용)
+  const styleTree = buildStyleTree(spec.layoutTree);
 
-  // 4. Binding Model 생성
-  const bindingModel = buildBindingModel(spec);
+  // 4. Props IR 생성 (props만 변환)
+  const propsData = buildPropsIR(spec);
 
-  // 5. AST 생성
+  // 5. Binding Model 생성
+  const { bindings: bindingData, slots } = buildBindingModel(spec);
+
+  // 6. State Bindings 생성
+  const stateBindings = buildStateBindings(spec);
+
+  // 7. AST 생성
   const astGenerator = new ASTGenerator(new TagMapper(), styleConverter);
-  const ast = astGenerator.componentNodeSpecToAST(spec, bindingModel);
+  const ast = astGenerator.dslSpecToAST(spec);
+  const combinedAst = astGenerator.combineAllToAst({
+    ast,
+    propsData,
+    bindingData,
+    slots,
+    styleData: { styleTree, variantStyleMap },
+    baseStyle, // baseStyle 전달
+  });
 
-  // 6. AST 정리
-  const prettifier = new Prettifier();
-  const prettyAST = prettifier.prettify(ast);
+  // // State 정보 추가
+  // combinedAst.states = stateBindings;
 
-  return {
-    ast: prettyAST,
-    propsIR: prettyPropsIR,
-    variantStyleMap,
-    bindingModel,
-  };
+  return combinedAst;
 }
+
+export { ASTGenerator, TagMapper, Prettifier };

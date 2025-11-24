@@ -1,7 +1,8 @@
-import taptabpButton from "../assets/taptapButton.json";
+import taptabpButton from "../../../../../../test/fixtures/button/taptapButton.json";
+import airtableButton from "../../../../../../test/fixtures/button/airtable-button.json";
+
 import type { ComponentSetNodeSpec } from "@backend/managers/SpecManager";
 import { transpile } from "./transpiler";
-import buildBindingModel from "@frontend/ui/domain/transpiler/transform/binding";
 
 /**
  * 테스트용 main 함수

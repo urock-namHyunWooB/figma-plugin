@@ -1,28 +1,28 @@
 import { extractVariantPatterns } from "../utils";
 import { FigmaPlugin } from "../FigmaPlugin";
 import type { ComponentStructureData } from "./ComponentStructureManager";
-import type {
-  PropDefinition,
-  StateDefinition,
-  ElementBindingsMap,
-} from "./MetadataManager";
 import type { LayoutTreeNode } from "./ComponentStructureManager";
+import { BaseStyleProperties, NodeSpec } from "@backend";
+import { ComponentSetNode } from "@figma/plugin-typings/plugin-api-standalone";
+import { FigmaNodeData } from "@frontend/ui/domain/transpiler/types/figma-api";
 
 /**
  * Component Set Node Spec 반환 타입
  * getComponentSetNodeSpec() 메서드의 반환 타입
  */
-export interface ComponentSetNodeSpec {
+export interface ComponentSetNodeSpec extends NodeSpec {
   metadata: {
     name: string;
     rootElement: string;
+    nodeType: ComponentSetNode["type"];
   };
-  propsDefinition: PropDefinition[];
-  internalStateDefinition: StateDefinition[] | null;
-  elementBindings: ElementBindingsMap | null;
   variantPatterns: Record<string, Record<string, unknown>>;
-  componentStructure: ComponentStructureData | null;
-  layoutTree: LayoutTreeNode | null;
+  componentsReferences: Array<{
+    componentId: string;
+    componentName: string;
+    componentStructure: ComponentStructureData;
+    layoutTree: LayoutTreeNode | null;
+  }>;
 }
 
 class SpecManager {
@@ -65,6 +65,8 @@ class SpecManager {
   /**
    * 단일 SceneNode 기준 스펙과 구조 정보 반환
    */
+
+  //TODO NodeSpec return 타입으로 정의해야함.
   public async getNodeSpec(node: SceneNode): Promise<{
     spec: any;
     componentStructure: ComponentStructureData | null;
@@ -88,8 +90,9 @@ class SpecManager {
   }
 
   public async getComponentSetNodeSpec(
-    componentSetNode: ComponentSetNode
+    nodeData: FigmaNodeData
   ): Promise<ComponentSetNodeSpec> {
+    const componentSetNode = nodeData.info.document as ComponentSetNode;
     const variantsMaps: Record<string, any> = {};
     const componentNodes: ComponentNode[] = [];
 
@@ -117,29 +120,13 @@ class SpecManager {
       })
     );
 
-    // 기본 variant의 component를 찾기
-    const defaultVariant = componentSetNode.defaultVariant;
-    let defaultComponentStructure: ComponentStructureData | null = null;
-
-    if (defaultVariant) {
-      // 기본 variant에 해당하는 component structure 찾기
-      const defaultStructure = componentStructures.find(
-        ({ component }) => component.id === defaultVariant.id
-      );
-      if (defaultStructure) {
-        defaultComponentStructure =
-          defaultStructure.structure.componentStructure;
-      }
-    }
-
-    // 기본 variant의 structure가 없으면 자식 개수가 가장 많은 구조를 사용 (fallback)
-    const componentStructure =
-      defaultComponentStructure ||
-      this.findStructureWithMostChildren(
-        componentStructures.map(({ structure }) => ({
-          componentStructure: structure.componentStructure,
-        }))
-      );
+    // 가장 자식이 많은 구조를 기본으로 선택
+    // 이렇게 하면 iconLeft 같은 prop이 있는 완전한 variant를 기본으로 사용할 수 있음
+    const componentStructure = this.findStructureWithMostChildren(
+      componentStructures.map(({ structure }) => ({
+        componentStructure: structure.componentStructure,
+      }))
+    );
 
     const layoutTree = componentStructure
       ? await this.componentStructureManager.extractStyleTree(
@@ -147,17 +134,39 @@ class SpecManager {
         )
       : null;
 
-    const propsDefinition =
-      this.metadataManager.getCombinedPropsDefinition(componentSetNode);
-    const internalStateDefinition =
-      this.metadataManager.getInternalStateDefinition(componentSetNode);
+    // 각 컴포넌트에 대한 componentStructure와 layoutTree 생성
+    const componentsReferences = await Promise.all(
+      componentStructures.map(async ({ component, structure }) => {
+        const componentLayoutTree =
+          await this.componentStructureManager.extractStyleTree(
+            structure.componentStructure
+          );
 
-    const elementBindings =
-      this.metadataManager.getElementBindings(componentSetNode);
+        return {
+          componentId: component.id,
+          componentName: component.name,
+          componentStructure: structure.componentStructure,
+          layoutTree: componentLayoutTree,
+        };
+      })
+    );
+
+    const propsDefinition = this.metadataManager.getCombinedPropsDefinition(
+      componentSetNode as SceneNode
+    );
+    const internalStateDefinition =
+      this.metadataManager.getInternalStateDefinition(
+        componentSetNode as SceneNode
+      );
+
+    const elementBindings = this.metadataManager.getElementBindings(
+      componentSetNode as SceneNode
+    );
 
     const metadata = {
       name: componentSetNode.name,
       rootElement: this.inferRootElement(componentSetNode.name),
+      nodeType: componentSetNode.type,
     };
 
     return {
@@ -168,10 +177,12 @@ class SpecManager {
       variantPatterns,
       componentStructure: componentStructure || null,
       layoutTree,
+      componentsReferences,
+      figmaInfo: nodeData,
     };
   }
 
-  public getComponentNodeSpec(componentNode: ComponentNode) {
+  public async getComponentNodeSpec(componentNode: ComponentNode) {
     const children = componentNode.children.map((child) => {
       if (child.type === "TEXT") {
         return this.getTextNodeSpec(child);
@@ -192,80 +203,17 @@ class SpecManager {
       }
     });
 
-    // cornerRadius가 figma.mixed이거나 숫자가 아닌 경우 처리
-    let cornerRadius: number | undefined = undefined;
-    if (
-      "cornerRadius" in componentNode &&
-      typeof componentNode.cornerRadius === "number"
-    ) {
-      cornerRadius = componentNode.cornerRadius;
-    }
-
-    // fills 색상을 0..255 스케일로 변환
-    const fills = componentNode.fills
-      ? (componentNode.fills as Paint[]).map((fill) => {
-          if (fill.type === "SOLID" && fill.color) {
-            return {
-              ...fill,
-              color: {
-                r: Math.round(fill.color.r * 255),
-                g: Math.round(fill.color.g * 255),
-                b: Math.round(fill.color.b * 255),
-              },
-            };
-          }
-          return fill;
-        })
-      : componentNode.fills;
-
-    // strokes 색상을 0..255 스케일로 변환
-    const strokes = componentNode.strokes
-      ? (componentNode.strokes as Paint[]).map((stroke) => {
-          if (stroke.type === "SOLID" && stroke.color) {
-            return {
-              ...stroke,
-              color: {
-                r: Math.round(stroke.color.r * 255),
-                g: Math.round(stroke.color.g * 255),
-                b: Math.round(stroke.color.b * 255),
-              },
-            };
-          }
-          return stroke;
-        })
-      : componentNode.strokes;
-
-    const spec: any = {
+    const spec: BaseStyleProperties & {
+      children?: any[];
+      name: string;
+      id: string;
+      styles: CSSStyleValue;
+    } = {
       children,
       name: componentNode.name,
       id: componentNode.id,
-      width: componentNode.width,
-      height: componentNode.height,
-      visible: componentNode.visible,
-      fills,
-      strokes,
-      strokeWeight: componentNode.strokeWeight,
-      opacity: componentNode.opacity,
-      // fillGeometry: componentNode.fillGeometry,
-      strokeGeometry: componentNode.strokeGeometry,
-      strokeCap: componentNode.strokeCap,
-      strokeMiterLimit: componentNode.strokeMiterLimit,
-      paddingTop: componentNode.paddingTop,
-      paddingRight: componentNode.paddingRight,
-      paddingBottom: componentNode.paddingBottom,
-      paddingLeft: componentNode.paddingLeft,
-      layoutSizingVertical: componentNode.layoutSizingVertical,
-      layoutSizingHorizontal: componentNode.layoutSizingHorizontal,
-      layoutMode: componentNode.layoutMode,
-      itemSpacing: componentNode.itemSpacing,
-      primaryAxisAlignItems: componentNode.primaryAxisAlignItems,
-      counterAxisAlignItems: componentNode.counterAxisAlignItems,
+      styles: await componentNode.getCSSAsync(),
     };
-
-    // cornerRadius가 유효한 숫자인 경우에만 추가
-    if (cornerRadius !== undefined) {
-      spec.cornerRadius = cornerRadius;
-    }
 
     return spec;
   }
@@ -354,6 +302,7 @@ class SpecManager {
 
   /**
    * 구조 배열에서 자식 개수가 가장 많은 구조를 찾기
+   * TODO 노드가 visible false 되어 있으면 없는 자식처리
    */
   private findStructureWithMostChildren(
     componentStructures: Array<{

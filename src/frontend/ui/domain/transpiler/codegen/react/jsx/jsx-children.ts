@@ -1,6 +1,8 @@
 import ts from "typescript";
 import type { ElementASTNode } from "../../../../types";
 import type { PropIR } from "../../../../types/props";
+import type { VariantStyleIR } from "../../../../types";
+import type { StateBinding } from "../../../../types/binding";
 import { createBindingExpression } from "../binding/binding-expression";
 import { convertElementToJsx } from "./jsx-generator";
 
@@ -24,7 +26,9 @@ export function hasElementContent(node: ElementASTNode): boolean {
 export function buildJsxChildren(
   factory: ts.NodeFactory,
   node: ElementASTNode,
-  propsIR?: PropIR[]
+  propsIR?: PropIR[],
+  variantStyleMap?: Map<string, VariantStyleIR>,
+  states?: StateBinding[],
 ): ts.JsxChild[] {
   const children: ts.JsxChild[] = [];
 
@@ -64,7 +68,7 @@ export function buildJsxChildren(
   // 자식 요소들
   if (node.children && node.children.length > 0) {
     const childElements = node.children.map((child) =>
-      convertElementToJsx(factory, child, propsIR, false)
+      convertElementToJsx(factory, child, propsIR, variantStyleMap, false, states)
     );
     children.push(...childElements);
   }

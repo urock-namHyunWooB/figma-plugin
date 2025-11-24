@@ -8,6 +8,8 @@ export type { BaseASTNode, ElementASTNode, ComponentAST } from "./ast";
 // Props IR 타입
 export type { PropIR, PropType } from "./props";
 
+export type { VariantStyleIR } from "./styles";
+
 // 인터페이스
 export type {
   IASTGenerator,
@@ -18,3 +20,39 @@ export type {
 } from "./interfaces";
 
 export type * from "./binding";
+
+// Figma REST API 타입
+export type {
+  FigmaRestApiResponse,
+  FigmaRestNode,
+  FigmaRestComponentSetNode,
+  FigmaRestComponentNode,
+  FigmaRestTextNode,
+  FigmaRestFrameNode,
+  FigmaRestOtherNode,
+  ComponentMetadata,
+  ComponentSetMetadata,
+  StyleMetadata,
+  AbsoluteBoundingBox,
+  AbsoluteRenderBounds,
+  RestConstraints,
+  RestColor,
+  RestPaint,
+  RestEffect,
+  RestTextStyle,
+  RestInteraction,
+  RestLayoutMode,
+  RestPrimaryAxisAlignItems,
+  RestCounterAxisAlignItems,
+  RestPrimaryAxisSizingMode,
+  RestCounterAxisSizingMode,
+  RestLayoutSizing,
+  RestLayoutAlign,
+} from "./figma-api";
+
+export {
+  isComponentSetNode,
+  isComponentNode,
+  isTextNode,
+  isFrameNode,
+} from "./figma-api";

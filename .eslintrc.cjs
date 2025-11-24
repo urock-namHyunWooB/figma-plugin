@@ -3,6 +3,7 @@ module.exports = {
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:@figma/figma-plugins/recommended",
+    "prettier", // Prettier와 충돌하는 ESLint 규칙 비활성화
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {

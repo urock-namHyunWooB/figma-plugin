@@ -27,26 +27,12 @@ export function figmaStyleToCss(styles: BaseStyleProperties): CssStyleObject {
   }
 
   // 배경색 (fills)
-  if (styles.fills && styles.fills.length > 0) {
-    const solidFill = styles.fills.find(
-      (fill) => fill.type === "SOLID" && fill.color,
-    );
-    if (solidFill) {
-      const fill = solidFill as ConvertedFill;
-      const color = fill.color!;
-      const opacity = fill.opacity ?? 1;
-      if (opacity < 1) {
-        css.backgroundColor = `rgba(${color.r}, ${color.g}, ${color.b}, ${opacity})`;
-      } else {
-        css.backgroundColor = `rgb(${color.r}, ${color.g}, ${color.b})`;
-      }
-    }
-  }
+  _fill(css, styles);
 
   // 테두리 (strokes)
   if (styles.strokes && styles.strokes.length > 0) {
     const solidStroke = styles.strokes.find(
-      (stroke) => stroke.type === "SOLID" && stroke.color,
+      (stroke) => stroke.type === "SOLID" && stroke.color
     );
     if (solidStroke) {
       const stroke = solidStroke as ConvertedStroke;
@@ -55,19 +41,7 @@ export function figmaStyleToCss(styles: BaseStyleProperties): CssStyleObject {
   }
 
   // 테두리 두께
-  if (
-    styles.strokeWeight !== undefined &&
-    styles.strokeWeight > 0 &&
-    styles.strokeGeometry?.length &&
-    styles.strokeGeometry?.length > 0
-  ) {
-    css.borderWidth = `${styles.strokeWeight}px`;
-    // strokeAlign이 없으면 기본적으로 border-style을 solid로 설정
-    if (!css.borderStyle) {
-      css.borderStyle = "solid";
-    }
-  }
-
+  _border(css, styles);
   // 테두리 정렬 (strokeAlign)
   if (styles.strokeAlign) {
     // CSS에서는 strokeAlign을 직접 지원하지 않으므로
@@ -189,14 +163,16 @@ export function figmaStyleToCss(styles: BaseStyleProperties): CssStyleObject {
   if (styles.layoutSizingHorizontal) {
     if (styles.layoutSizingHorizontal === "FILL") {
       css.width = "100%";
-    } else if (styles.layoutSizingHorizontal === "HUG") {
+    } else if (styles.layoutSizingHorizontal === "HUG" && styles.width) {
+      css.width = `${styles.width}px`;
     }
   }
 
   if (styles.layoutSizingVertical) {
     if (styles.layoutSizingVertical === "FILL") {
       css.height = "100%";
-    } else if (styles.layoutSizingVertical === "HUG") {
+    } else if (styles.layoutSizingVertical === "HUG" && styles.height) {
+      css.height = `${styles.height}px`;
     }
   }
 
@@ -259,29 +235,45 @@ export function figmaStyleToCss(styles: BaseStyleProperties): CssStyleObject {
   return css;
 }
 
-/**
- * CSS 스타일 객체를 인라인 스타일 문자열로 변환
- * @param css CSS 스타일 객체
- * @returns 인라인 스타일 문자열 (예: "color: red; padding: 10px;")
- */
-export function cssObjectToInlineString(css: CssStyleObject): string {
-  return Object.entries(css)
-    .map(([key, value]) => {
-      if (value === undefined || value === null) return "";
-      // camelCase를 kebab-case로 변환
-      const kebabKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
-      return `${kebabKey}: ${value};`;
-    })
-    .filter((str) => str.length > 0)
-    .join(" ");
-}
+const _border = (css: CssStyleObject, styles: BaseStyleProperties) => {
+  if (
+    styles.strokeWeight !== undefined &&
+    typeof styles.strokeWeight === "number" &&
+    styles.strokeWeight > 0 &&
+    styles.strokeGeometry?.length &&
+    styles.strokeGeometry?.length > 0
+  ) {
+    css.borderWidth = `${styles.strokeWeight}px`;
 
-/**
- * Figma 스타일 데이터를 인라인 CSS 문자열로 직접 변환
- * @param styles Figma 스타일 데이터
- * @returns 인라인 CSS 문자열
- */
-export function figmaStyleToInlineCss(styles: BaseStyleProperties): string {
-  const css = figmaStyleToCss(styles);
-  return cssObjectToInlineString(css);
-}
+    if (!css.borderStyle) {
+      css.borderStyle = "solid";
+    }
+  } else {
+    css.border = "none";
+  }
+};
+
+const _fill = (css: CssStyleObject, styles: BaseStyleProperties) => {
+  if (styles.fills && styles.fills.length > 0) {
+    const solidFill = styles.fills.find(
+      (fill) => fill.type === "SOLID" && fill.color
+    );
+
+    if (solidFill) {
+      const fill = solidFill as ConvertedFill;
+      const color = fill.color!;
+      const opacity = fill.opacity ?? 1;
+      const visible = fill.visible ?? true;
+
+      if (!visible) {
+        return;
+      }
+
+      if (opacity < 1) {
+        css.backgroundColor = `rgba(${color.r}, ${color.g}, ${color.b}, ${opacity})`;
+      } else {
+        css.backgroundColor = `rgb(${color.r}, ${color.g}, ${color.b})`;
+      }
+    }
+  }
+};

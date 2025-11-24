@@ -32,3 +32,8 @@ vcpkg
 
 src/wasm-engine/build
 src/wasm-engine/build/*
+
+# 스크린샷 테스트 결과물
+__screenshots__
+**/__screenshots__/**
+**/__screenshots__/**/*

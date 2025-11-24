@@ -121,14 +121,13 @@ export default function useMessageHandler() {
       if (msg.type === MESSAGE_TYPES.COMPONENT_STRUCTURE) {
         setComponentStructure(msg.data?.componentStructure || null);
         setLayoutTree(msg.data?.layoutTree || null);
-        console.log("msg.data", msg.data);
       }
 
       if (msg.type === "internal-state-definition") {
         setInternalStateDefinition(msg.data);
       }
 
-      if (msg.type === "props-definition") {
+      if (msg.type === MESSAGE_TYPES.PROPS_DEFINITION) {
         setPropsDefinition(msg.data);
       }
 
@@ -149,7 +148,6 @@ export default function useMessageHandler() {
           // AST Generator를 사용하여 코드 생성
           const code = astGeneratorRef.current.generateCodeFromDSL(dsl);
 
-          console.log(code);
           // 생성된 코드를 state에 저장
           setGeneratedCode(code);
         } catch (error) {

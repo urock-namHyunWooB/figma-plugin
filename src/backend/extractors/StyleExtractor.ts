@@ -58,6 +58,7 @@ export class StyleExtractor {
       return {
         type: fill.type,
         color: this.convertRGBColor(fill.color),
+        visible: fill.visible,
         opacity: fill.opacity || 1,
       };
     }
@@ -83,7 +84,7 @@ export class StyleExtractor {
   public extractStyles(
     node: SceneNode | any,
     parentNode?: SceneNode | any,
-    parentPadding?: Padding,
+    parentPadding?: Padding
   ): ExtractedStyles {
     const styles: ExtractedStyles = {};
 
@@ -186,13 +187,13 @@ export class StyleExtractor {
    */
   private extractStrokeColors(
     node: SceneNode | any,
-    styles: ExtractedStyles,
+    styles: ExtractedStyles
   ): void {
     if ("strokes" in node && Array.isArray(node.strokes)) {
       const strokes = node.strokes as Paint[];
       if (strokes.length > 0) {
         styles.strokes = strokes.map((stroke) =>
-          this.convertPaintToStrokeInfo(stroke),
+          this.convertPaintToStrokeInfo(stroke)
         );
       }
     }
@@ -203,7 +204,7 @@ export class StyleExtractor {
    */
   private extractStrokeProperties(
     node: SceneNode | any,
-    styles: ExtractedStyles,
+    styles: ExtractedStyles
   ): void {
     if (
       "strokeWeight" in node &&
@@ -245,7 +246,7 @@ export class StyleExtractor {
    */
   private extractGeometry(
     node: SceneNode | any,
-    styles: ExtractedStyles,
+    styles: ExtractedStyles
   ): void {
     // if ("fillGeometry" in node && Array.isArray((node as any).fillGeometry)) {
     //   styles.fillGeometry = (node as any).fillGeometry;
@@ -264,7 +265,7 @@ export class StyleExtractor {
    */
   private extractCornerRadius(
     node: SceneNode | any,
-    styles: ExtractedStyles,
+    styles: ExtractedStyles
   ): void {
     if (
       "cornerRadius" in node &&
@@ -317,7 +318,7 @@ export class StyleExtractor {
       node.effects.length > 0
     ) {
       styles.effects = node.effects.map((effect: Effect) =>
-        this.convertEffectToEffectInfo(effect),
+        this.convertEffectToEffectInfo(effect)
       );
     }
   }
@@ -327,7 +328,7 @@ export class StyleExtractor {
    */
   private extractAutoLayout(
     node: SceneNode | any,
-    styles: ExtractedStyles,
+    styles: ExtractedStyles
   ): void {
     if ("layoutMode" in node && node.layoutMode !== "NONE") {
       styles.layoutMode = node.layoutMode;
@@ -359,7 +360,7 @@ export class StyleExtractor {
    */
   private extractLayoutProperties(
     node: SceneNode | any,
-    styles: ExtractedStyles,
+    styles: ExtractedStyles
   ): void {
     // Layout Grow 추출 (자식 노드의 grow 속성)
     if ("layoutGrow" in node) {
@@ -408,7 +409,7 @@ export class StyleExtractor {
     node: SceneNode | any,
     parentNode: SceneNode | any | undefined,
     parentPadding: Padding | undefined,
-    styles: ExtractedStyles,
+    styles: ExtractedStyles
   ): void {
     if (!parentNode || !parentPadding || !("x" in node) || !("y" in node)) {
       return;

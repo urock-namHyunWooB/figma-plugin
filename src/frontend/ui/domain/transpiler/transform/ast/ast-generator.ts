@@ -1,5 +1,4 @@
 import type { ComponentSetNodeSpec } from "@backend/managers/SpecManager";
-import type { LayoutTreeNode } from "@backend/managers/ComponentStructureManager";
 import type {
   ElementASTNode,
   ComponentAST,
@@ -7,9 +6,12 @@ import type {
   ITagMapper,
   IStyleConverter,
   BindingModel,
-  ElementBindingModel,
 } from "../../types";
-import { styleConverter } from "../style";
+import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
+
+import { NodeSpec } from "@backend";
+import { StyleTreeNode } from "../../types/styles";
+import { PrettifierContext } from "../../prettifier/strategies/IPrettifierStrategy";
 
 type ComponentStructureData = NonNullable<
   ComponentSetNodeSpec["componentStructure"]
@@ -25,38 +27,112 @@ export class ASTGenerator implements IASTGenerator {
     private readonly styleConverter: IStyleConverter
   ) {}
 
-  public componentNodeSpecToAST(
-    spec: ComponentSetNodeSpec,
-    bindingModel?: BindingModel
-  ): ComponentAST {
+  public dslSpecToAST(spec: NodeSpec): AstTree {
     if (!spec.componentStructure) {
       throw new Error("ComponentStructure is required");
     }
 
-    const layoutMap = this.buildLayoutMap(spec.layoutTree);
-    const bindingMap = this.buildBindingMap(bindingModel);
     const rootFigmaNode = spec.componentStructure.root;
 
-    const rootAST = this.figmaNodeToAST(rootFigmaNode, layoutMap, bindingMap);
+    const rootAST = this.figmaNodeToAST(rootFigmaNode);
 
     return {
-      kind: "Component",
+      styleFeature: {},
       name: spec.metadata.name,
       root: rootAST,
+      props: [],
+      figmaInfo: spec.figmaInfo,
     };
   }
 
-  private figmaNodeToAST(
-    node: FigmaStructureNode,
-    layoutMap: Map<string, LayoutTreeNode>,
-    bindingMap: Map<string, ElementBindingModel>
+  public combineAllToAst(params: PrettifierContext): AstTree {
+    const { ast, styleData, bindingData, propsData, slots, baseStyle } = params;
+
+    // variantStyleMap의 각 variant의 baseStyle을 styleFeature.baseStyle로 링킹
+    if (baseStyle && styleData.variantStyleMap) {
+      for (const variantStyle of styleData.variantStyleMap.values()) {
+        variantStyle.baseStyle = baseStyle; // 부모의 baseStyle을 참조
+      }
+    }
+
+    const combinedAst: AstTree = {
+      styleFeature: {
+        baseStyle: baseStyle ?? null, // 공통 baseStyle 저장
+        variantStyleMap: styleData.variantStyleMap,
+      },
+      props: propsData,
+      name: ast.name,
+      root: this.bindDataToNode(ast.root, styleData, bindingData, slots),
+      figmaInfo: ast.figmaInfo,
+    };
+
+    return combinedAst;
+  }
+
+  /**
+   * AST 노드에 스타일과 바인딩 데이터를 바인딩
+   */
+  private bindDataToNode(
+    node: ElementASTNode,
+    styleData: PrettifierContext["styleData"],
+    bindingData: BindingModel,
+    slots?: Array<{ elementId: string; propId: string; propName: string }>
   ): ElementASTNode {
+    // 스타일 바인딩
+    if (styleData.styleTree) {
+      const styleNode = this.findStyleNodeById(styleData.styleTree, node.id);
+      if (styleNode) {
+        node.styles = { ...node.styles, ...styleNode.style };
+        // 원본 Figma 스타일 정보 참조 링킹 (복사하지 않고 참조만)
+        node.figmaStyles = styleNode.figmaStyle;
+      }
+    }
+
+    // 바인딩 데이터 바인딩
+    if (bindingData && bindingData[node.id]) {
+      const elementBinding = bindingData[node.id];
+      if (elementBinding.connectedTargetId) {
+        node.bindings.push({ id: elementBinding.connectedTargetId });
+      }
+    }
+
+    // 자식 노드들 재귀적으로 처리
+    const boundChildren = node.children.map((child) =>
+      this.bindDataToNode(child, styleData, bindingData, slots)
+    );
+
+    return {
+      ...node,
+      children: boundChildren,
+    };
+  }
+
+  /**
+   * StyleTree에서 특정 ID의 노드 찾기
+   */
+  private findStyleNodeById(
+    styleNode: StyleTreeNode,
+    id: string
+  ): StyleTreeNode | null {
+    if (styleNode.id === id) {
+      return styleNode;
+    }
+
+    // 자식 노드들 탐색
+    for (const child of styleNode.children) {
+      const found = this.findStyleNodeById(child, id);
+      if (found) {
+        return found;
+      }
+    }
+
+    return null;
+  }
+
+  private figmaNodeToAST(node: FigmaStructureNode): ElementASTNode {
     const tag = this.tagMapper.mapFigmaTypeToTag(node.type);
-    const layoutNode = layoutMap.get(node.id);
-    const style = this.styleConverter.layoutNodeToStyle(layoutNode, node.type);
 
     const textContent = this.makeTextContent(node);
-    const binding = bindingMap.get(node.id);
 
     return {
       kind: "Element",
@@ -64,49 +140,14 @@ export class ASTGenerator implements IASTGenerator {
       name: node.name,
       tag,
       originalType: node.type,
-      props: {
-        style,
-      },
+      bindings: [],
+      styles: {},
+      attrs: {},
       children: (node.children ?? []).map((child: FigmaStructureNode) =>
-        this.figmaNodeToAST(child, layoutMap, bindingMap)
+        this.figmaNodeToAST(child)
       ),
       textContent,
-      binding,
     };
-  }
-
-  private buildLayoutMap(
-    layoutRoot: ComponentSetNodeSpec["layoutTree"]
-  ): Map<string, LayoutTreeNode> {
-    const map = new Map<string, LayoutTreeNode>();
-
-    if (!layoutRoot) {
-      return map;
-    }
-
-    function traverse(node: LayoutTreeNode) {
-      map.set(node.id, node);
-      node.children?.forEach((child) => traverse(child));
-    }
-
-    traverse(layoutRoot);
-    return map;
-  }
-
-  private buildBindingMap(
-    bindingModel?: BindingModel
-  ): Map<string, ElementBindingModel> {
-    const map = new Map<string, ElementBindingModel>();
-
-    if (!bindingModel?.elements) {
-      return map;
-    }
-
-    for (const elementBinding of bindingModel.elements) {
-      map.set(elementBinding.nodeId, elementBinding);
-    }
-
-    return map;
   }
 
   private makeTextContent(node: FigmaStructureNode): string | null {
@@ -123,4 +164,3 @@ export class ASTGenerator implements IASTGenerator {
     return textContent;
   }
 }
-

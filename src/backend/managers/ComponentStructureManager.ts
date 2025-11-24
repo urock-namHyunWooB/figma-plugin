@@ -18,12 +18,17 @@ export interface ComponentStructureData {
 }
 
 /**
+ * CSS Style Value 타입 (Figma getCSSAsync() 반환 타입)
+ */
+export type CSSStyleValue = { [key: string]: string };
+
+/**
  * Layout Tree 노드 타입
  */
-export interface LayoutTreeNode extends BaseStyleProperties {
+export interface LayoutTreeNode {
   id: string;
-  width: number;
-  height: number;
+  style: CSSStyleValue;
+  figmaStyle: BaseStyleProperties;
   children: LayoutTreeNode[];
 }
 
@@ -51,7 +56,7 @@ export class ComponentStructureManager {
 
   public async extractComponentStructure(
     Node: FrameNode | GroupNode | ComponentNode | InstanceNode,
-    componentSetName: string,
+    componentSetName: string
   ): Promise<{ componentStructure: ComponentStructureData }> {
     const rootElementName = this.inferRootElement(componentSetName);
 
@@ -73,7 +78,7 @@ export class ComponentStructureManager {
    * 각 variant 속성 값별로 공통되는 스타일 정보를 추출
    */
   public extractVariantStyles(
-    componentSet: ComponentSetNode,
+    componentSet: ComponentSetNode
   ): Record<string, any> | null {
     const propertyDefinitions = componentSet.componentPropertyDefinitions;
     if (!propertyDefinitions) {
@@ -146,7 +151,7 @@ export class ComponentStructureManager {
     // children이 있는 경우 재귀적으로 추출
     if ("children" in node && Array.isArray(node.children)) {
       element.children = node.children.map((child) =>
-        this.extractNodeStructureRecursive(child),
+        this.extractNodeStructureRecursive(child)
       );
     }
 
@@ -255,7 +260,7 @@ export class ComponentStructureManager {
       variantProperties: Record<string, string | boolean> | null;
       styles: any;
     }>,
-    propertyDefinitions: ComponentPropertyDefinitions,
+    propertyDefinitions: ComponentPropertyDefinitions
   ): Record<string, any> {
     const propertyStyleMap: Record<string, any> = {};
 
@@ -272,13 +277,13 @@ export class ComponentStructureManager {
           const matchingVariants = variants.filter(
             (v) =>
               v.variantProperties &&
-              v.variantProperties[propName] === optionValue,
+              v.variantProperties[propName] === optionValue
           );
 
           if (matchingVariants.length > 0) {
             // 이 옵션에서 공통적으로 나타나는 스타일 찾기
             const commonStyles = this.findCommonStyles(
-              matchingVariants.map((v) => v.styles),
+              matchingVariants.map((v) => v.styles)
             );
 
             if (Object.keys(commonStyles).length > 0) {
@@ -296,13 +301,12 @@ export class ComponentStructureManager {
         [true, false].forEach((boolValue) => {
           const matchingVariants = variants.filter(
             (v) =>
-              v.variantProperties &&
-              v.variantProperties[propName] === boolValue,
+              v.variantProperties && v.variantProperties[propName] === boolValue
           );
 
           if (matchingVariants.length > 0) {
             const commonStyles = this.findCommonStyles(
-              matchingVariants.map((v) => v.styles),
+              matchingVariants.map((v) => v.styles)
             );
 
             if (Object.keys(commonStyles).length > 0) {
@@ -418,20 +422,19 @@ export class ComponentStructureManager {
     structureElement: StructureElement,
     node: SceneNode,
     parentNode?: SceneNode,
-    parentPadding?: Padding,
+    parentPadding?: Padding
   ): Promise<LayoutTreeNode> {
     // StyleExtractor를 사용하여 스타일 정보 추출
     const extractedStyles = this.styleExtractor.extractStyles(
       node,
       parentNode,
-      parentPadding,
+      parentPadding
     );
 
     const layoutNode: LayoutTreeNode = {
       id: structureElement.id,
-      width: "width" in node ? node.width : 0,
-      height: "height" in node ? node.height : 0,
-      ...extractedStyles,
+      style: await node.getCSSAsync(),
+      figmaStyle: extractedStyles,
       children: [],
     };
 
@@ -439,12 +442,12 @@ export class ComponentStructureManager {
     if (structureElement.children && structureElement.children.length > 0) {
       const childrenNodes = await Promise.all(
         structureElement.children.map((childElement) =>
-          this.extractChildNode(childElement, node, extractedStyles.padding),
-        ),
+          this.extractChildNode(childElement, node, extractedStyles.padding)
+        )
       );
 
       layoutNode.children = childrenNodes.filter(
-        (child): child is LayoutTreeNode => child !== null,
+        (child): child is LayoutTreeNode => child !== null
       );
     }
 
@@ -457,7 +460,7 @@ export class ComponentStructureManager {
   private async extractChildNode(
     childElement: StructureElement,
     parentNode: SceneNode,
-    parentPadding?: Padding,
+    parentPadding?: Padding
   ): Promise<LayoutTreeNode | null> {
     const childNode = await figma.getNodeByIdAsync(childElement.id);
 
@@ -473,7 +476,7 @@ export class ComponentStructureManager {
       childElement,
       childNode as SceneNode,
       parentNode,
-      parentPadding,
+      parentPadding
     );
   }
 }

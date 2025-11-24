@@ -44,9 +44,9 @@ export default function ComponentPreview({
     setError(null);
 
     // 약간의 디바운스 (너무 빠른 업데이트 방지)
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       try {
-        const CompiledComponent = compileReactComponent(code);
+        const CompiledComponent = await compileReactComponent(code);
         setComponent(() => CompiledComponent);
 
         // Props 추출 및 초기값 설정

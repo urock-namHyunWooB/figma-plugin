@@ -4,152 +4,16 @@ import { ComponentStructureManager } from "./ComponentStructureManager";
 import { MESSAGE_TYPES } from "../types/messages";
 import SpecManager from "@backend/managers/SpecManager";
 import specManager from "@backend/managers/SpecManager";
+import { ComponentSetNode } from "@figma/plugin-typings/plugin-api-standalone";
 
 /**
  * 선택 관리 클래스
  * 단일 책임: 현재 선택된 노드 관리 및 변경 감지
  */
 export class SelectionManager {
-  private nodeInfoExtractor: NodeInfoExtractor;
-  private metadataManager: MetadataManager;
-  private componentStructureManager: ComponentStructureManager;
-  private specManager: SpecManager;
-
-  constructor(
-    nodeInfoExtractor: NodeInfoExtractor,
-    metadataManager: MetadataManager,
-    componentStructureManager: ComponentStructureManager,
-    specManager: SpecManager,
-  ) {
-    this.nodeInfoExtractor = nodeInfoExtractor;
-    this.metadataManager = metadataManager;
-    this.componentStructureManager = componentStructureManager;
-    this.specManager = specManager;
-  }
+  constructor() {}
 
   /**
    * 현재 선택 정보를 UI로 전송
    */
-  async sendCurrentSelection(): Promise<void> {
-    const selection = figma.currentPage.selection;
-    let componentSetInfo = null;
-    let componentPropertyConfig = null;
-    let propsDefinition = null;
-    let internalStateDefinition = null;
-    let componentStructure = null;
-    let layoutTree = null;
-    let elementBindings = null;
-    let variantStyles = null;
-
-    if (selection.length === 0) {
-      figma.ui.postMessage({
-        type: MESSAGE_TYPES.SELECTION_INFO,
-        data: [],
-      });
-      return;
-    }
-
-    const selectionInfo = await Promise.all(
-      selection.map((node) =>
-        this.nodeInfoExtractor.extractNodeProperties(node),
-      ),
-    );
-
-    if (selection[0].type === "COMPONENT_SET") {
-      const componentSet = selection[0] as ComponentSetNode;
-
-      componentSetInfo = componentSet.componentPropertyDefinitions;
-
-      componentPropertyConfig =
-        this.metadataManager.getComponentPropertyConfig(componentSet);
-
-      propsDefinition =
-        this.metadataManager.getCombinedPropsDefinition(componentSet);
-
-      internalStateDefinition =
-        this.metadataManager.getInternalStateDefinition(componentSet);
-
-      const specResult =
-        await this.specManager.getComponentSetNodeSpec(componentSet);
-      componentStructure = specResult.componentStructure;
-      layoutTree = specResult.layoutTree;
-
-      elementBindings = this.metadataManager.getElementBindings(componentSet);
-
-      variantStyles =
-        this.componentStructureManager.extractVariantStyles(componentSet);
-
-      // COMPONENT_SPEC_JSON 메시지 전송 (AST Generator용)
-      figma.ui.postMessage({
-        type: MESSAGE_TYPES.COMPONENT_SPEC_JSON,
-        data: JSON.parse(JSON.stringify(specResult)),
-      });
-    }
-
-    figma.ui.postMessage({
-      type: MESSAGE_TYPES.SELECTION_INFO,
-      data: JSON.parse(JSON.stringify(selectionInfo)),
-    });
-
-    figma.ui.postMessage({
-      type: MESSAGE_TYPES.COMPONENT_SET_INFO,
-      data: JSON.parse(JSON.stringify(componentSetInfo)),
-    });
-
-    if (componentPropertyConfig) {
-      figma.ui.postMessage({
-        type: MESSAGE_TYPES.COMPONENT_PROPERTY_CONFIG,
-        data: JSON.parse(JSON.stringify(componentPropertyConfig)),
-      });
-    }
-
-    figma.ui.postMessage({
-      type: MESSAGE_TYPES.PROPS_DEFINITION,
-      data: propsDefinition
-        ? JSON.parse(JSON.stringify(propsDefinition))
-        : null,
-    });
-
-    figma.ui.postMessage({
-      type: MESSAGE_TYPES.INTERNAL_STATE_DEFINITION,
-      data: internalStateDefinition
-        ? JSON.parse(JSON.stringify(internalStateDefinition))
-        : null,
-    });
-
-    figma.ui.postMessage({
-      type: MESSAGE_TYPES.COMPONENT_STRUCTURE,
-      data: {
-        componentStructure: componentStructure
-          ? JSON.parse(JSON.stringify(componentStructure))
-          : null,
-        layoutTree: layoutTree ? JSON.parse(JSON.stringify(layoutTree)) : null,
-      },
-    });
-
-    figma.ui.postMessage({
-      type: MESSAGE_TYPES.ELEMENT_BINDINGS,
-      data: elementBindings
-        ? JSON.parse(JSON.stringify(elementBindings))
-        : null,
-    });
-  }
-
-  /**
-   * 현재 선택의 속성을 추출해 JSON으로 UI로 전송
-   */
-  async sendExtractJson(): Promise<void> {
-    const selection = figma.currentPage.selection;
-    const selectionInfo = await Promise.all(
-      selection.map((node) =>
-        this.nodeInfoExtractor.extractNodeProperties(node),
-      ),
-    );
-    const json = JSON.stringify(selectionInfo, null, 2);
-
-    figma.ui.postMessage({
-      type: "extract-json",
-      data: json,
-    });
-  }
 }

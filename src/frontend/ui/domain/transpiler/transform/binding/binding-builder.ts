@@ -1,39 +1,37 @@
 import { BindingModel } from "../../types";
-import { buildPropBindings } from "./prop/binding-props";
-import { buildElementBindings } from "./element/binding-elements";
-import { buildVariantRules } from "./variant-rules";
 import { ComponentSetNodeSpec } from "@backend/managers/SpecManager";
 import {
-  PropDefinition,
-  StateDefinition,
-} from "@backend/managers/MetadataManager";
-import { buildStateBindings } from "./state/binding-state";
+  inferBindingsFromStructureComparison,
+  type SlotInfo,
+} from "./element/infer-bindings-from-structure";
 
-export function buildBindingModel(spec: ComponentSetNodeSpec): BindingModel {
-  // 1) props
-  const props = buildPropBindings(spec);
-  const propsById = new Map<string, PropDefinition>(
-    spec.propsDefinition.map((d) => [d.id, d]),
-  );
+export function buildBindingModel(spec: ComponentSetNodeSpec): {
+  bindings: BindingModel;
+  slots: SlotInfo[];
+} {
+  // 기존 elementBindings를 기준으로 시작
+  const baseBindings = spec.elementBindings || {};
 
-  // 2) state
-  const state = buildStateBindings(spec);
-  const statesById = new Map<string, StateDefinition>(
-    (spec.internalStateDefinition ?? []).map((s) => [s.id, s]),
-  );
+  // componentStructure를 기준으로 다른 variant들과 비교하여 자동 바인딩 추론
+  if (spec.componentStructure && spec.componentsReferences) {
+    const { bindings: inferredBindings, slots } =
+      inferBindingsFromStructureComparison(
+        spec.componentStructure,
+        spec.componentsReferences,
+        spec.propsDefinition
+      );
 
-  // 3) elements (props + state 모두 지원)
-  const elements = buildElementBindings(spec, propsById, statesById);
+    // 추론된 바인딩을 기존 바인딩과 병합
+    // (기존 바인딩이 우선, 없으면 추론된 바인딩 사용)
+    const mergedBindings = { ...baseBindings };
+    for (const [elementId, binding] of Object.entries(inferredBindings)) {
+      if (!mergedBindings[elementId]) {
+        mergedBindings[elementId] = binding;
+      }
+    }
 
-  // 4) variant rules
-  const variantRules = buildVariantRules(spec);
+    return { bindings: mergedBindings, slots };
+  }
 
-  return {
-    componentName: spec.metadata.name,
-    rootElement: spec.metadata.rootElement,
-    props,
-    state,
-    elements,
-    variantRules,
-  };
+  return { bindings: baseBindings, slots: [] };
 }

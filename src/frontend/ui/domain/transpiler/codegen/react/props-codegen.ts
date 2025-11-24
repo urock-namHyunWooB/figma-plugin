@@ -3,12 +3,12 @@ import type { PropIR } from "../../types/props";
 
 /**
  * PropIR[]를 TypeScript InterfaceDeclaration으로 변환
- * 
+ *
  * PropIR[] → ts.InterfaceDeclaration
  */
 export function generatePropsInterface(
   props: PropIR[],
-  componentName: string,
+  componentName: string
 ): ts.InterfaceDeclaration {
   const members: ts.TypeElement[] = [];
 
@@ -20,7 +20,7 @@ export function generatePropsInterface(
       prop.optional
         ? ts.factory.createToken(ts.SyntaxKind.QuestionToken)
         : undefined,
-      typeNode,
+      typeNode
     );
 
     members.push(propSig);
@@ -31,7 +31,7 @@ export function generatePropsInterface(
     `${componentName}Props`,
     undefined,
     undefined,
-    members,
+    members
   );
 
   return interfaceDeclaration;
@@ -45,7 +45,7 @@ function createPropTypeNode(prop: PropIR): ts.TypeNode {
   // variantOptions가 있으면 유니온 타입으로 변환 (type이 VARIANT가 아니어도)
   if (prop.variantOptions && prop.variantOptions.length > 0) {
     const literals = prop.variantOptions.map((opt) =>
-      ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(opt)),
+      ts.factory.createLiteralTypeNode(ts.factory.createStringLiteral(opt))
     );
     return ts.factory.createUnionTypeNode(literals);
   }
@@ -59,8 +59,16 @@ function createPropTypeNode(prop: PropIR): ts.TypeNode {
       return ts.factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
     case "TEXT":
       return ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
-    case "COMPONENT":
-      return ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
+    case "COMPONENT": {
+      // React.ReactNode 타입으로 변환
+      return ts.factory.createTypeReferenceNode(
+        ts.factory.createQualifiedName(
+          ts.factory.createIdentifier("React"),
+          "ReactNode"
+        ),
+        undefined
+      );
+    }
     case "ANY":
     default:
       return ts.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
@@ -88,14 +96,18 @@ export function createPropsParameter(
     let initializer: ts.Expression | undefined;
 
     if (p.defaultValue !== undefined) {
-      if (typeof p.defaultValue === "string") {
-        initializer = factory.createStringLiteral(p.defaultValue);
-      } else if (typeof p.defaultValue === "boolean") {
-        initializer = p.defaultValue
-          ? factory.createTrue()
-          : factory.createFalse();
-      } else if (typeof p.defaultValue === "number") {
-        initializer = factory.createNumericLiteral(p.defaultValue);
+      if (p.type === "COMPONENT") {
+        // COMPONENT 타입은 default value를 지원하지 않음
+      } else {
+        if (typeof p.defaultValue === "string") {
+          initializer = factory.createStringLiteral(p.defaultValue);
+        } else if (typeof p.defaultValue === "boolean") {
+          initializer = p.defaultValue
+            ? factory.createTrue()
+            : factory.createFalse();
+        } else if (typeof p.defaultValue === "number") {
+          initializer = factory.createNumericLiteral(p.defaultValue);
+        }
       }
     }
 
@@ -123,4 +135,3 @@ export function createPropsParameter(
     ),
   ];
 }
-

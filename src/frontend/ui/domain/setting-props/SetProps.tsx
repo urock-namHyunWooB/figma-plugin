@@ -14,7 +14,7 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editingPropId, setEditingPropId] = useState<string | null>(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   useEffect(() => {
@@ -73,7 +73,7 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
           return updated;
         }
         return p;
-      })
+      }),
     );
   };
 
@@ -93,7 +93,7 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
           };
         }
         return p;
-      })
+      }),
     );
   };
 
@@ -105,12 +105,12 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
           return {
             ...p,
             parameters: (p.parameters || []).filter(
-              (param) => param.id !== paramId
+              (param) => param.id !== paramId,
             ),
           };
         }
         return p;
-      })
+      }),
     );
   };
 
@@ -119,7 +119,7 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
     propId: string,
     paramId: string,
     field: keyof FunctionParameter,
-    value: string
+    value: string,
   ) => {
     setProps(
       props.map((p) => {
@@ -127,12 +127,12 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
           return {
             ...p,
             parameters: (p.parameters || []).map((param) =>
-              param.id === paramId ? { ...param, [field]: value } : param
+              param.id === paramId ? { ...param, [field]: value } : param,
             ),
           };
         }
         return p;
-      })
+      }),
     );
   };
 
@@ -167,7 +167,7 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
           data: props,
         },
       },
-      "*"
+      "*",
     );
     setIsEditing(false);
     setEditingPropId(null);
@@ -187,7 +187,7 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
             data: [],
           },
         },
-        "*"
+        "*",
       );
     }
   };
@@ -248,7 +248,7 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
               updateProp(
                 prop.id,
                 "defaultValue",
-                e.target.value ? Number(e.target.value) : ""
+                e.target.value ? Number(e.target.value) : "",
               )
             }
             disabled={prop.required}
@@ -379,7 +379,7 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
               updateProp(
                 prop.id,
                 "type",
-                e.target.value as PropDefinition["type"]
+                e.target.value as PropDefinition["type"],
               )
             }
             className="w-full px-3 py-2 border border-gray-300 rounded"
@@ -437,7 +437,7 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
                           prop.id,
                           param.id,
                           "name",
-                          e.target.value
+                          e.target.value,
                         )
                       }
                       className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
@@ -451,7 +451,7 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
                           prop.id,
                           param.id,
                           "type",
-                          e.target.value
+                          e.target.value,
                         )
                       }
                       className="w-24 px-2 py-1 border border-gray-300 rounded text-sm"
@@ -645,7 +645,7 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
                       updateProp(
                         prop.id,
                         "type",
-                        e.target.value as PropDefinition["type"]
+                        e.target.value as PropDefinition["type"],
                       )
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded"
@@ -710,7 +710,7 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
                                   prop.id,
                                   param.id,
                                   "name",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
@@ -724,7 +724,7 @@ function SetProps({ savedProps }: { savedProps: PropDefinition[] }) {
                                   prop.id,
                                   param.id,
                                   "type",
-                                  e.target.value
+                                  e.target.value,
                                 )
                               }
                               className="w-24 px-2 py-1 border border-gray-300 rounded text-sm"

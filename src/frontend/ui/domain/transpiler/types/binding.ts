@@ -1,5 +1,7 @@
 // ====== Binding 레이어에서 쓸 타입 ======
 
+import { ElementBindingsMap } from "@backend/managers/MetadataManager";
+
 export type PropKind = "variant" | "primitive" | "component";
 
 export interface PropBinding {
@@ -46,11 +48,4 @@ export interface StateBinding {
   defaultValue?: any;
 }
 
-export interface BindingModel {
-  componentName: string;
-  rootElement: string;
-  props: PropBinding[];
-  state: StateBinding[]; // ✅ 추가
-  elements: ElementBindingModel[];
-  variantRules: VariantRule[];
-}
+export type BindingModel = ElementBindingsMap | null;

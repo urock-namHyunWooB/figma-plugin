@@ -2,8 +2,8 @@ import ts from "typescript";
 
 import { convertStyleToExpression } from "../style/style-converter";
 import { createVariantStyleAttribute } from "../style/variant-style-generator";
-import type { ElementASTNode, PropIR } from "../../../types";
-import type { VariantStyleIR } from "../../../types/props";
+import { getStyleKeyForElement } from "../style/element-style-generator";
+import type { ElementASTNode, PropIR, VariantStyleIR } from "../../../types";
 
 /**
  * JSX 속성 생성 관련 함수
@@ -13,20 +13,27 @@ import type { VariantStyleIR } from "../../../types/props";
  * 요소에 style 속성이 있는지 확인
  */
 export function hasStyle(node: ElementASTNode): boolean {
-  return !!(node.props?.style && Object.keys(node.props.style).length > 0);
+  return !!(node.styles && Object.keys(node.styles).length > 0);
 }
 
 /**
- * style 속성 생성: style={...}
+ * css prop 생성: css={css({...})}
+ * emotion의 css prop을 사용하여 스타일을 적용
  */
 export function createStyleAttribute(
   factory: ts.NodeFactory,
-  style: Record<string, any>,
+  style: Record<string, any>
 ): ts.JsxAttribute {
   const styleExpression = convertStyleToExpression(factory, style);
+  // css={css({...})} 형태로 생성
+  const cssCall = factory.createCallExpression(
+    factory.createIdentifier("css"),
+    undefined,
+    [styleExpression]
+  );
   return factory.createJsxAttribute(
-    factory.createIdentifier("style"),
-    factory.createJsxExpression(undefined, styleExpression),
+    factory.createIdentifier("css"),
+    factory.createJsxExpression(undefined, cssCall)
   );
 }
 
@@ -39,7 +46,7 @@ export function buildJsxAttributes(
   node: ElementASTNode,
   propsIR?: PropIR[],
   variantStyleMap?: Map<string, VariantStyleIR>,
-  isRoot: boolean = false,
+  isRoot: boolean = false
 ): ts.JsxAttributes {
   const attributes: ts.JsxAttributeLike[] = [];
 
@@ -48,14 +55,45 @@ export function buildJsxAttributes(
     const styleAttribute = createVariantStyleAttribute(
       factory,
       propsIR,
-      variantStyleMap,
+      variantStyleMap
     );
     if (styleAttribute) {
       attributes.push(styleAttribute);
+    } else if (hasStyle(node) && node.styles) {
+      // variant style이 없으면 일반 스타일 사용
+      const styleAttribute = createStyleAttribute(factory, node.styles);
+      attributes.push(styleAttribute);
     }
-  } else if (hasStyle(node) && node.props?.style) {
-    const styleAttribute = createStyleAttribute(factory, node.props.style);
+  } else if (hasStyle(node) && node.styles) {
+    // 루트가 아닌 경우: 스타일 상수를 참조하도록 변경
+    const styleKey = getStyleKeyForElement(node.id);
+    const styleIdentifier = factory.createPropertyAccessExpression(
+      factory.createIdentifier("styles"),
+      factory.createIdentifier(styleKey)
+    );
+    const cssCall = factory.createCallExpression(
+      factory.createIdentifier("css"),
+      undefined,
+      [styleIdentifier]
+    );
+    const styleAttribute = factory.createJsxAttribute(
+      factory.createIdentifier("css"),
+      factory.createJsxExpression(undefined, cssCall)
+    );
     attributes.push(styleAttribute);
+  }
+
+  // attrs를 JSX 속성으로 변환
+  // 예: { disabled: 'isDisabled' } → disabled={isDisabled}
+  if (node.attrs) {
+    for (const [attrName, propName] of Object.entries(node.attrs)) {
+      const propIdentifier = factory.createIdentifier(propName);
+      const jsxAttribute = factory.createJsxAttribute(
+        factory.createIdentifier(attrName),
+        factory.createJsxExpression(undefined, propIdentifier)
+      );
+      attributes.push(jsxAttribute);
+    }
   }
 
   return factory.createJsxAttributes(attributes);

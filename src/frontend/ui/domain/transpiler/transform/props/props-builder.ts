@@ -7,13 +7,21 @@ import type { PropIR, PropType } from "../../types/props";
  * "Size" -> "size"
  * "left Icon" -> "leftIcon"
  * "left-Icon" -> "leftIcon" (하이픈도 처리)
+ * "iconLeft#2074:0" -> "iconLeft" (# 이후 제거)
  */
 export function normalizePropName(name: string): string {
+  // #, @ 같은 특수 문자 이후 부분 제거
+  const specialCharMatch = name.match(/[#@]/);
+  let cleanedName = name;
+  if (specialCharMatch && specialCharMatch.index !== undefined) {
+    cleanedName = name.substring(0, specialCharMatch.index);
+  }
+
   // 하이픈이나 공백으로 분리
-  const words = name.split(/[\s-]+/).filter((w) => w.length > 0);
+  const words = cleanedName.split(/[\s-]+/).filter((w) => w.length > 0);
 
   if (words.length === 0) {
-    return name;
+    return cleanedName;
   }
 
   if (words.length === 1) {
@@ -39,7 +47,7 @@ export function normalizePropName(name: string): string {
 function mapFigmaTypeToPropType(
   type: string | undefined,
   figmaType?: string,
-  variantOptions?: string[]
+  variantOptions?: string[],
 ): PropType {
   // variantOptions가 있거나 figmaType이 VARIANT이면 VARIANT 타입
   if (variantOptions && variantOptions.length > 0) {
@@ -47,6 +55,11 @@ function mapFigmaTypeToPropType(
   }
   if (figmaType === "VARIANT") {
     return "VARIANT";
+  }
+
+  // INSTANCE_SWAP은 컴포넌트 교체를 의미하므로 COMPONENT 타입
+  if (figmaType === "INSTANCE_SWAP") {
+    return "COMPONENT";
   }
 
   // 기본 타입 매핑
@@ -74,10 +87,11 @@ export function buildPropsIR(spec: ComponentSetNodeSpec): PropIR[] {
     const propType = mapFigmaTypeToPropType(
       def.type,
       def.figmaType,
-      def.variantOptions
+      def.variantOptions,
     );
 
     const propIR: PropIR = {
+      id: def.id,
       originalName: def.name,
       normalizedName,
       type: propType,

@@ -42,3 +42,26 @@ export function createUseStateImport(
   );
 }
 
+/**
+ * Emotion css import 문 생성: import { css } from "@emotion/react";
+ */
+export function createEmotionCssImport(
+  factory: ts.NodeFactory
+): ts.ImportDeclaration {
+  return factory.createImportDeclaration(
+    undefined,
+    factory.createImportClause(
+      false,
+      undefined,
+      factory.createNamedImports([
+        factory.createImportSpecifier(
+          false,
+          undefined,
+          factory.createIdentifier("css")
+        ),
+      ])
+    ),
+    factory.createStringLiteral("@emotion/react")
+  );
+}
+

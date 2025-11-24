@@ -20,7 +20,7 @@ export function TestComp() {
       // 컴파일해서 렌더링도 시도
       try {
         const Component = compileReactComponent(code);
-        console.log(Component);
+
         setCompiledComponent(() => Component);
         setError(null);
       } catch (compileError) {

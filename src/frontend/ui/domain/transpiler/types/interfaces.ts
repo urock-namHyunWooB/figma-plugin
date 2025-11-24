@@ -1,8 +1,9 @@
 import type { ComponentSetNodeSpec } from "@backend/managers/SpecManager";
-import type { ComponentAST } from "./ast";
+import type { AstTree, ComponentAST } from "./ast";
 import type { LayoutTreeNode } from "@backend/managers/ComponentStructureManager";
-import type { PropIR, VariantStyleIR } from "./props";
+import type { PropIR } from "./props";
 import type { BindingModel } from "./binding";
+import { VariantStyleIR } from "./styles";
 
 /**
  * Figma ComponentSetNodeSpec을 ComponentAST로 변환하는 인터페이스
@@ -13,10 +14,10 @@ export interface IASTGenerator {
    * @param spec ComponentSetNodeSpec
    * @param bindingModel Optional binding 모델 (요소에 binding 정보를 연결하기 위해 사용)
    */
-  componentNodeSpecToAST(
+  dslSpecToAST(
     spec: ComponentSetNodeSpec,
-    bindingModel?: BindingModel
-  ): ComponentAST;
+    bindingModel?: BindingModel,
+  ): AstTree;
 }
 
 /**
@@ -45,7 +46,23 @@ export interface IPrettifier {
   /**
    * ComponentAST를 정리하여 반환
    */
-  prettify(ast: ComponentAST): ComponentAST;
+  prettify({
+    ast,
+    bindingData,
+    propsData,
+    styleData,
+  }: {
+    ast: ComponentAST;
+    propsData: PropIR[];
+    styleData: {
+      layoutTree: ComponentSetNodeSpec["layoutTree"];
+      variantStyleMap: Map<string, VariantStyleIR>;
+    };
+
+    bindingData: BindingModel;
+  }): {
+    ast: ComponentAST;
+  };
 }
 
 /**
@@ -70,4 +87,3 @@ export interface IStyleConverter {
     figmaType: string,
   ): Record<string, any>;
 }
-

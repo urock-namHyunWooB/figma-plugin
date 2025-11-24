@@ -83,7 +83,7 @@ export class MetadataManager {
    */
   async saveComponentPropertyConfig(
     nodeId: string,
-    config: PropertyConfig[],
+    config: PropertyConfig[]
   ): Promise<boolean> {
     const node = await figma.getNodeByIdAsync(nodeId);
     if (!node || node.type !== "COMPONENT_SET") {
@@ -104,7 +104,7 @@ export class MetadataManager {
    * 현재 선택된 ComponentSet에 Property Config 저장
    */
   async saveComponentPropertyConfigForCurrentSelection(
-    config: PropertyConfig[],
+    config: PropertyConfig[]
   ): Promise<boolean> {
     const selection = figma.currentPage.selection;
     if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
@@ -138,7 +138,7 @@ export class MetadataManager {
    */
   async savePropsDefinition(
     nodeId: string,
-    props: PropDefinition[],
+    props: PropDefinition[]
   ): Promise<boolean> {
     const node = await figma.getNodeByIdAsync(nodeId);
     if (!node || node.type !== "COMPONENT_SET") {
@@ -160,7 +160,7 @@ export class MetadataManager {
    * readonly props는 자동으로 제외됨
    */
   async savePropsDefinitionForCurrentSelection(
-    props: PropDefinition[],
+    props: PropDefinition[]
   ): Promise<boolean> {
     const selection = figma.currentPage.selection;
     if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
@@ -195,7 +195,7 @@ export class MetadataManager {
    * ComponentSet의 size와 type variant를 자동으로 prop으로 변환
    */
   private extractVariantProps(
-    componentSet: ComponentSetNode,
+    componentSet: ComponentSetNode
   ): PropDefinition[] {
     const variantProps: PropDefinition[] = [];
 
@@ -228,7 +228,7 @@ export class MetadataManager {
           readonly: true,
           variantOptions: definition.variantOptions,
         });
-      },
+      }
     );
 
     return variantProps;
@@ -259,7 +259,7 @@ export class MetadataManager {
    */
   async saveInternalStateDefinition(
     nodeId: string,
-    states: StateDefinition[],
+    states: StateDefinition[]
   ): Promise<boolean> {
     const node = await figma.getNodeByIdAsync(nodeId);
     if (!node || node.type !== "COMPONENT_SET") {
@@ -280,7 +280,7 @@ export class MetadataManager {
    * 현재 선택된 ComponentSet에 Internal State Definition 저장
    */
   async saveInternalStateDefinitionForCurrentSelection(
-    states: StateDefinition[],
+    states: StateDefinition[]
   ): Promise<boolean> {
     const selection = figma.currentPage.selection;
     if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
@@ -314,7 +314,7 @@ export class MetadataManager {
    */
   async saveElementBindings(
     nodeId: string,
-    bindings: ElementBindingsMap,
+    bindings: ElementBindingsMap
   ): Promise<boolean> {
     const node = await figma.getNodeByIdAsync(nodeId);
     if (!node || node.type !== "COMPONENT_SET") {
@@ -335,7 +335,7 @@ export class MetadataManager {
    * 현재 선택된 ComponentSet에 Element Bindings 저장
    */
   async saveElementBindingsForCurrentSelection(
-    bindings: ElementBindingsMap,
+    bindings: ElementBindingsMap
   ): Promise<boolean> {
     const selection = figma.currentPage.selection;
     if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
@@ -397,7 +397,7 @@ export class MetadataManager {
    * 현재 선택된 ComponentSet에 Root Element 저장
    */
   async saveRootElementForCurrentSelection(
-    rootElement: string,
+    rootElement: string
   ): Promise<boolean> {
     const selection = figma.currentPage.selection;
     if (selection.length !== 1 || selection[0].type !== "COMPONENT_SET") {
