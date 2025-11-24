@@ -8,26 +8,20 @@ import { ASTGenerator } from "./ast-generator";
 import { Prettifier } from "../../prettifier/Prettifier";
 import { TagMapper } from "./tag-mapper";
 import { buildVariantStyles } from "../style";
-import {
-  FigmaRestApiResponse,
-  styleConverter,
-} from "@frontend/ui/domain/transpiler";
+import { styleConverter } from "@frontend/ui/domain/transpiler";
 import { buildStyleTree } from "../style/layoutTreeConverter";
 import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
 import { buildStateBindings } from "../binding/state/binding-state";
 import { FigmaNodeData } from "../../types/figma-api";
-import SpecManager, {
-  ComponentSetNodeSpec,
-} from "@backend/managers/SpecManager";
 
 /**
  * AST 생성 통합 함수
  * 내부적으로 props, binding을 처리하여 AST를 생성
  * ComponentSetNode 전용
  */
-export function generateAST(spec: ComponentSetNodeSpec): AstTree {
+export function generateAST(spec: FigmaNodeData): AstTree {
   // 1. 공통 baseStyle 생성 (먼저 생성하여 공유)
-  const baseStyle = buildStyleTree(spec.layoutTree);
+  const baseStyle = buildStyleTree(spec);
 
   // 2. Variant Styles 생성 (baseStyle을 공유받아 사용)
   const variantStyleMap = buildVariantStyles(spec, baseStyle);

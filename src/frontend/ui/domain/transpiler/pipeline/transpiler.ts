@@ -14,7 +14,7 @@ import { FigmaNodeData } from "../types/figma-api";
  *
  * ComponentSetNodeSpec을 받아서 TSX 코드 문자열을 반환
  */
-export function transpile(spec: ComponentSetNodeSpec): string {
+export function transpile(spec: FigmaNodeData): string {
   // 각 재료 준비
   const ast = generateAST(spec);
 
@@ -29,7 +29,7 @@ export function transpile(spec: ComponentSetNodeSpec): string {
   return tsxCode;
 }
 
-function TranspileForDev(spec: ComponentSetNodeSpec) {
+function TranspileForDev(spec: FigmaNodeData) {
   // 각 재료 준비
   const ast = generateAST(spec);
   console.log("ast", ast);
@@ -44,6 +44,4 @@ function TranspileForDev(spec: ComponentSetNodeSpec) {
   return tsxCode;
 }
 
-export const transpileForDev = TranspileForDev(
-  taptabpButton as unknown as ComponentSetNodeSpec
-);
+export const transpileForDev = TranspileForDev(taptabpButton as any);

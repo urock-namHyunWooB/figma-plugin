@@ -1,37 +1,25 @@
 import { LayoutTreeNode } from "@backend/managers/ComponentStructureManager";
 import { StyleTreeNode } from "@frontend/ui/domain/transpiler/types/styles";
+import {
+  FigmaNodeData,
+  StyleTree,
+} from "@frontend/ui/domain/transpiler/types/figma-api";
+import { traverseAST } from "../../utils/ast-tree-utils";
 
 /**
- * layoutTree를 순회하여 styleTree를 생성
- * 각 노드의 Figma 스타일을 CSS 스타일 객체로 변환
+ * figmaNodeData에 있는 figmaStyle을 styleTree에 붙여서 리턴
  */
-export function buildStyleTree(
-  layoutNode: LayoutTreeNode | null | undefined
-): StyleTreeNode | null {
-  if (!layoutNode) {
+export function buildStyleTree(figmaNodeData: FigmaNodeData): StyleTree | null {
+  const styleTree = figmaNodeData.styleTree;
+  if (!styleTree) {
     return null;
   }
 
-  // 자식 노드들 재귀적으로 변환
-  const children: StyleTreeNode[] = [];
-  if (layoutNode.children && Array.isArray(layoutNode.children)) {
-    for (const child of layoutNode.children) {
-      const childStyleNode = buildStyleTree(child);
-      if (childStyleNode) {
-        children.push(childStyleNode);
-      }
-    }
-  }
+  /**
+   * figmaNodeData.document를 전부 순회해서 styleTree.id와 매칭되는 노드를 찾아서 styleTree에 붙여서 리턴
+   */
 
-  // id와 children을 제외한 원본 figmaStyle 추출
-  const { id: _, children: __ } = layoutNode;
-
-  return {
-    id: layoutNode.id,
-    style: layoutNode.style,
-    figmaStyle: layoutNode.figmaStyle,
-    children,
-  };
+  return figmaNodeData.styleTree;
 }
 
 /**

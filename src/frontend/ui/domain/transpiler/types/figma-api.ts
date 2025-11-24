@@ -5,8 +5,8 @@
  * Figma Plugin API 타입을 최대한 활용하여 정의
  */
 
+import { BaseStyleProperties } from "@backend";
 import type {
-  ComponentPropertyDefinitions,
   Paint,
   Effect,
   BlendMode,
@@ -55,12 +55,20 @@ export type RestLayoutSizing = "FIXED" | "HUG" | "FILL";
  */
 export type RestLayoutAlign = "INHERIT" | "STRETCH" | "MIN" | "CENTER" | "MAX";
 
+export interface StyleTree {
+  id: string;
+  cssStyle: { [p: string]: string };
+  children: StyleTree[];
+  figmaStyle?: BaseStyleProperties;
+}
+
 export interface FigmaNodeData {
   pluginData: {
     key: string;
     value: string;
   }[];
   info: FigmaRestApiResponse;
+  styleTree: StyleTree | null;
 }
 
 /**

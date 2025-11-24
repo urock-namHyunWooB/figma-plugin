@@ -1,10 +1,11 @@
 import { MetadataManager } from "./managers/MetadataManager";
 
-import { PluginMessage, MESSAGE_TYPES } from "./types/messages";
+import { MESSAGE_TYPES, PluginMessage } from "./types/messages";
 
 import {
   FigmaNodeData,
   FigmaRestApiResponse,
+  StyleTree,
 } from "@frontend/ui/domain/transpiler/types/figma-api";
 
 /**
@@ -31,9 +32,12 @@ export class FigmaPlugin {
     };
 
     figma.on("selectionchange", async () => {
+      const data = await this.getNodeData([...figma.currentPage.selection]);
+      console.log(data);
+
       figma.ui.postMessage({
         type: MESSAGE_TYPES.ON_SELECTION_CHANGE,
-        data: await this.getNodeData([...figma.currentPage.selection]),
+        data,
       });
     });
 
@@ -82,21 +86,56 @@ export class FigmaPlugin {
   }
 
   private async getNodeData(selection: SceneNode[]): Promise<FigmaNodeData> {
+    const selectedNode = selection[0];
+    const figmaNodeInfo = (await selectedNode.exportAsync({
+      format: "JSON_REST_V1",
+    })) as FigmaRestApiResponse;
+
+    const styleTree = await this._makeStyleTree(selectedNode);
+
     const nodeData: FigmaNodeData = {
       pluginData: (() => {
-        const keys = selection[0].getPluginDataKeys();
+        const keys = selectedNode.getPluginDataKeys();
         return keys.map((key) => {
           return {
             key,
-            value: selection[0].getPluginData(key),
+            value: selectedNode.getPluginData(key),
           };
         });
       })(),
-      info: (await selection[0].exportAsync({
-        format: "JSON_REST_V1",
-      })) as FigmaRestApiResponse,
+      info: figmaNodeInfo,
+      styleTree: styleTree || null,
     };
 
     return nodeData;
+  }
+
+  private async _makeStyleTree(node: SceneNode): Promise<StyleTree | null> {
+    if (!node) return null;
+    const cssStyle = await node.getCSSAsync();
+
+    if (!("children" in node) || !node.children || node.children.length === 0) {
+      return {
+        id: node.id,
+        cssStyle,
+        children: [],
+      };
+    }
+
+    const styleTree: StyleTree = {
+      id: node.id,
+      cssStyle,
+
+      children: [],
+    };
+
+    for (const child of node.children) {
+      const childStyleTree = await this._makeStyleTree(child);
+      if (childStyleTree) {
+        styleTree.children.push(childStyleTree);
+      }
+    }
+
+    return styleTree;
   }
 }

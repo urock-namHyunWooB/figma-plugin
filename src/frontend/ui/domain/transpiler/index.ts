@@ -18,12 +18,7 @@ export { styleConverter } from "./transform/style/StyleConverter";
 export { CodeGenerator } from "./codegen";
 
 // Pipeline API export
-export {
-  transpile,
-  createASTGenerator,
-  createPrettifier,
-  main,
-} from "./pipeline";
+export { transpile, createASTGenerator, createPrettifier } from "./pipeline";
 
 // Props 변환 함수 export
 export { buildPropsIR, prettifyPropsIR } from "./transform/props";

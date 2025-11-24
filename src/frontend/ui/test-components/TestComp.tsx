@@ -1,13 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
-// import selects from "../domain/transpiler/assets/selects.json";
-// import taptabpButton from "../../../../test/fixtures/button/taptapButton.json";
-import airtableButton from "../../../../test/fixtures/button/airtable-button.json";
-import type { ComponentSetNodeSpec } from "@backend/managers/SpecManager";
-import {
-  transpile,
-  transpileForDev,
-} from "../domain/transpiler/pipeline/transpiler";
+import { transpileForDev } from "../domain/transpiler/pipeline/transpiler";
 import { compileReactComponent } from "../utils/component-compiler";
 
 export function TestComp() {
@@ -19,7 +12,6 @@ export function TestComp() {
   useEffect(() => {
     async function compile() {
       try {
-        const componentSpec = airtableButton as ComponentSetNodeSpec;
         const code = transpileForDev;
         setTsxCode(code);
 

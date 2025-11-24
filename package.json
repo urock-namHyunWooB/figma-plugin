@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "@figma/eslint-plugin-figma-plugins": "*",
-    "@figma/plugin-typings": "*",
+    "@figma/plugin-typings": "^1.121.0",
     "@tailwindcss/postcss": "^4.1.16",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.9.1",
