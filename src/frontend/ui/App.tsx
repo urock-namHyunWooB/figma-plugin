@@ -29,7 +29,7 @@ function App() {
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
-      <TestComp />
+      {/* <TestComp /> */}
       {/* 탭 헤더 */}
       {layers.length > 0 && layers[0].type === "COMPONENT_SET" && (
         <div className="flex border-b bg-white">
