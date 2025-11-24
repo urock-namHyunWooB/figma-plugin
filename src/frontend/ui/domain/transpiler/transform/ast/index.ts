@@ -22,7 +22,6 @@ import { FigmaNodeData } from "../../types/figma-api";
 export function generateAST(spec: FigmaNodeData): AstTree {
   // 1. 공통 baseStyle 생성 (먼저 생성하여 공유)
   const baseStyle = buildStyleTree(spec);
-
   // 2. Variant Styles 생성 (baseStyle을 공유받아 사용)
   const variantStyleMap = buildVariantStyles(spec, baseStyle);
 

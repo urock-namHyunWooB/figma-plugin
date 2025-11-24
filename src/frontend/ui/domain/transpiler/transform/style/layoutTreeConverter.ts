@@ -5,19 +5,53 @@ import {
   StyleTree,
 } from "@frontend/ui/domain/transpiler/types/figma-api";
 import { traverseAST } from "../../utils/ast-tree-utils";
+import { BaseStyleProperties } from "@backend";
 
 /**
  * figmaNodeData에 있는 figmaStyle을 styleTree에 붙여서 리턴
  */
 export function buildStyleTree(figmaNodeData: FigmaNodeData): StyleTree | null {
+  if (!figmaNodeData) return null;
+
   const styleTree = figmaNodeData.styleTree;
   if (!styleTree) {
     return null;
   }
 
+  const styleTreeIdMap = {
+    [styleTree.id]: styleTree,
+  };
+
+  const traverse = (node: StyleTree) => {
+    styleTreeIdMap[node.id] = node;
+    for (const child of node.children) {
+      traverse(child);
+    }
+  };
+
+  traverse(styleTree);
+
   /**
    * figmaNodeData.document를 전부 순회해서 styleTree.id와 매칭되는 노드를 찾아서 styleTree에 붙여서 리턴
    */
+
+  const traverseNode = (node: SceneNode) => {
+    const { ...figmaStyle } = node;
+
+    if (styleTreeIdMap[node.id]) {
+      styleTreeIdMap[node.id].figmaStyle = figmaStyle as BaseStyleProperties;
+    }
+
+    if (!("children" in node) || !node.children || node.children.length === 0) {
+      return;
+    }
+
+    for (const child of node.children) {
+      traverseNode(child);
+    }
+  };
+
+  traverseNode(figmaNodeData.info.document);
 
   return figmaNodeData.styleTree;
 }

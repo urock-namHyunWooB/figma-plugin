@@ -1,6 +1,5 @@
 import taptabpButton from "../../../../../../test/fixtures/button/taptapButton.json";
 import airtableButton from "../../../../../../test/fixtures/button/airtable-button.json";
-import taptabpButtonFigmaDSL from "../../../../../../test/fixtures/button/taptapButton_figmaDSL.json";
 
 import type { ComponentSetNodeSpec } from "@backend/managers/SpecManager";
 import { generateAST } from "../transform";
