@@ -1,10 +1,7 @@
 import { MetadataManager } from "./managers/MetadataManager";
 
-import { SelectionManager } from "./managers/SelectionManager";
-import { ComponentStructureManager } from "./managers/ComponentStructureManager";
 import { PluginMessage, MESSAGE_TYPES } from "./types/messages";
-import SpecManager from "./managers/SpecManager";
-import { ComponentSetNode } from "@figma/plugin-typings/plugin-api-standalone";
+
 import {
   FigmaNodeData,
   FigmaRestApiResponse,
@@ -16,22 +13,10 @@ import {
  */
 export class FigmaPlugin {
   private metadataManager: MetadataManager;
-  private componentStructureManager: ComponentStructureManager;
-  private selectionManager: SelectionManager;
-  private specManager: SpecManager;
 
   constructor() {
     // 의존성 주입을 통한 클래스 인스턴스 생성
     this.metadataManager = new MetadataManager();
-
-    this.componentStructureManager = new ComponentStructureManager();
-    this.specManager = new SpecManager(
-      this,
-      this.metadataManager,
-      this.componentStructureManager
-    );
-
-    this.selectionManager = new SelectionManager();
   }
 
   /**
@@ -46,40 +31,10 @@ export class FigmaPlugin {
     };
 
     figma.on("selectionchange", async () => {
-      const selection = figma.currentPage.selection;
-      const type = selection[0].type;
-
-      const nodeData: FigmaNodeData = {
-        pluginData: (() => {
-          const keys = selection[0].getPluginDataKeys();
-          return keys.map((key) => {
-            return {
-              key,
-              value: selection[0].getPluginData(key),
-            };
-          });
-        })(),
-        info: (await selection[0].exportAsync({
-          format: "JSON_REST_V1",
-        })) as FigmaRestApiResponse,
-      };
-
-      if (type === "COMPONENT") {
-        const frameNodeTaget = selection[0] as ComponentNode;
-        const spec = this.specManager.getComponentNodeSpec(frameNodeTaget);
-      }
-
-      if (nodeData.info.document.type === "COMPONENT_SET") {
-        const spec = await this.specManager.getComponentSetNodeSpec(nodeData);
-
-        console.log(spec);
-      }
-
-      if (type === "FRAME") {
-        const frameNode = selection[0] as FrameNode;
-
-        const spec = await this.specManager.getNodeSpec(frameNode);
-      }
+      figma.ui.postMessage({
+        type: MESSAGE_TYPES.ON_SELECTION_CHANGE,
+        data: await this.getNodeData([...figma.currentPage.selection]),
+      });
     });
 
     figma.once("run", () => {});
@@ -121,9 +76,27 @@ export class FigmaPlugin {
 
     if (success) {
       this.notify(`메타데이터 설정됨: ${msg.metadataType}`);
-      // await this.selectionManager.sendCurrentSelection();
     } else {
       this.notify("메타데이터 설정 실패");
     }
+  }
+
+  private async getNodeData(selection: SceneNode[]): Promise<FigmaNodeData> {
+    const nodeData: FigmaNodeData = {
+      pluginData: (() => {
+        const keys = selection[0].getPluginDataKeys();
+        return keys.map((key) => {
+          return {
+            key,
+            value: selection[0].getPluginData(key),
+          };
+        });
+      })(),
+      info: (await selection[0].exportAsync({
+        format: "JSON_REST_V1",
+      })) as FigmaRestApiResponse,
+    };
+
+    return nodeData;
   }
 }

@@ -1,10 +1,8 @@
 import type { ComponentSetNodeSpec } from "@backend/managers/SpecManager";
 import type {
   ElementASTNode,
-  ComponentAST,
   IASTGenerator,
   ITagMapper,
-  IStyleConverter,
   BindingModel,
 } from "../../types";
 import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
@@ -22,10 +20,7 @@ type FigmaStructureNode = ComponentStructureData["root"];
  * Figma ComponentSetNodeSpec을 ComponentAST로 변환하는 구현체
  */
 export class ASTGenerator implements IASTGenerator {
-  constructor(
-    private readonly tagMapper: ITagMapper,
-    private readonly styleConverter: IStyleConverter
-  ) {}
+  constructor(private readonly tagMapper: ITagMapper) {}
 
   public dslSpecToAST(spec: NodeSpec): AstTree {
     if (!spec.componentStructure) {

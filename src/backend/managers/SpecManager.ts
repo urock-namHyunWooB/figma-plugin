@@ -28,16 +28,13 @@ export interface ComponentSetNodeSpec extends NodeSpec {
 class SpecManager {
   private figmaPlugin: FigmaPlugin;
   private metadataManager: FigmaPlugin["metadataManager"];
-  private componentStructureManager: FigmaPlugin["componentStructureManager"];
 
   constructor(
     figmaPlugin: FigmaPlugin,
-    metadataManager: FigmaPlugin["metadataManager"],
-    componentStructureManager: FigmaPlugin["componentStructureManager"]
+    metadataManager: FigmaPlugin["metadataManager"]
   ) {
     this.figmaPlugin = figmaPlugin;
     this.metadataManager = metadataManager;
-    this.componentStructureManager = componentStructureManager;
   }
 
   /**
@@ -73,14 +70,6 @@ class SpecManager {
     layoutTree: LayoutTreeNode | null;
   }> {
     const spec = await this.buildNodeSpecTree(node);
-
-    const componentStructure =
-      await this.extractComponentStructureForNode(node);
-    const layoutTree = componentStructure
-      ? await this.componentStructureManager.extractStyleTree(
-          componentStructure
-        )
-      : null;
 
     return {
       spec,
