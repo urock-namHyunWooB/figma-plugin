@@ -31,6 +31,7 @@ export function transpile(spec: FigmaNodeData): string {
 function TranspileForDev(spec: FigmaNodeData) {
   // 각 재료 준비
   const ast = generateAST(spec);
+
   console.log("ast", ast);
   //요리하기
   const prettyAST = new Prettifier().prettify(ast);

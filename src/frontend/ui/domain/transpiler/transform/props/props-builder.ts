@@ -47,7 +47,7 @@ export function normalizePropName(name: string): string {
 function mapFigmaTypeToPropType(
   type: string | undefined,
   figmaType?: string,
-  variantOptions?: string[],
+  variantOptions?: string[]
 ): PropType {
   // variantOptions가 있거나 figmaType이 VARIANT이면 VARIANT 타입
   if (variantOptions && variantOptions.length > 0) {
@@ -87,7 +87,7 @@ export function buildPropsIR(spec: ComponentSetNodeSpec): PropIR[] {
     const propType = mapFigmaTypeToPropType(
       def.type,
       def.figmaType,
-      def.variantOptions,
+      def.variantOptions
     );
 
     const propIR: PropIR = {

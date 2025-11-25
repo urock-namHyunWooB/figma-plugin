@@ -10,6 +10,7 @@ import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
 import { NodeSpec } from "@backend";
 import { StyleTreeNode } from "../../types/styles";
 import { PrettifierContext } from "../../prettifier/strategies/IPrettifierStrategy";
+import { FigmaNodeData } from "../../types/figma-api";
 
 type ComponentStructureData = NonNullable<
   ComponentSetNodeSpec["componentStructure"]
@@ -22,12 +23,8 @@ type FigmaStructureNode = ComponentStructureData["root"];
 export class ASTGenerator implements IASTGenerator {
   constructor(private readonly tagMapper: ITagMapper) {}
 
-  public dslSpecToAST(spec: NodeSpec): AstTree {
-    if (!spec.componentStructure) {
-      throw new Error("ComponentStructure is required");
-    }
-
-    const rootFigmaNode = spec.componentStructure.root;
+  public dslSpecToAST(spec: FigmaNodeData): AstTree {
+    const rootFigmaNode = spec.info.document;
 
     const rootAST = this.figmaNodeToAST(rootFigmaNode);
 
@@ -124,10 +121,8 @@ export class ASTGenerator implements IASTGenerator {
     return null;
   }
 
-  private figmaNodeToAST(node: FigmaStructureNode): ElementASTNode {
+  private figmaNodeToAST(node: SceneNode) {
     const tag = this.tagMapper.mapFigmaTypeToTag(node.type);
-
-    const textContent = this.makeTextContent(node);
 
     return {
       kind: "Element",
@@ -141,7 +136,6 @@ export class ASTGenerator implements IASTGenerator {
       children: (node.children ?? []).map((child: FigmaStructureNode) =>
         this.figmaNodeToAST(child)
       ),
-      textContent,
     };
   }
 

@@ -1,131 +1,125 @@
-import type { ComponentStructureData } from "@backend/managers/ComponentStructureManager";
-import type { PropDefinition } from "@backend/managers/MetadataManager";
-import type { ElementBindingsMap } from "@backend/managers/MetadataManager";
-import { normalizePropName } from "../../props/props-builder";
+import type {
+  FigmaNodeData,
+  BaseStyleTree,
+  StyleTree,
+} from "../../../types/figma-api";
+import type { FigmaNodeTree } from "../../../types/tree";
 
 /**
- * Slot 정보: 어떤 elementId가 어떤 prop 때문에 Slot으로 유추되었는지
+ * Slot 신뢰도: 몇 개의 variant에 노드가 존재하는지
  */
-export interface SlotInfo {
-  elementId: string;
-  propId: string;
-  propName: string;
+export interface SlotConfidence {
+  existsIn: number;
+  totalVariants: number;
 }
 
 /**
- * componentStructure를 기준으로 다른 variant들과 비교하여 자동 바인딩 추론
+ * baseStyle을 기준으로 모든 variant들과 비교하여 Slot 추론
  *
  * 로직:
- * 1. componentStructure의 root.children을 기준으로 설정
- * 2. 다른 variant들의 root.children과 비교
- * 3. componentStructure에만 있는 노드 = Slot으로 처리, 특정 prop과 매칭 가능
- * 4. 모든 variant에 공통인 노드 = 다른 prop과 매칭 가능
+ * 1. baseStyle 트리의 각 노드를 순회
+ * 2. spec의 모든 variant에서 같은 id의 노드가 있는지 확인
+ * 3. 존재 비율을 각 노드의 meta.slot에 저장
  */
 export function inferBindingsFromStructureComparison(
-  componentStructure: ComponentStructureData,
-  componentsReferences: Array<{
-    componentId: string;
-    componentName: string;
-    componentStructure: ComponentStructureData;
-    layoutTree: any;
-  }>,
-  propsDefinition: PropDefinition[]
-): {
-  bindings: ElementBindingsMap;
-  slots: SlotInfo[];
-} {
-  const inferredBindings: ElementBindingsMap = {};
-  const slots: SlotInfo[] = [];
+  spec: FigmaNodeData,
+  baseStyle: BaseStyleTree
+): FigmaNodeTree {
+  const document = spec.info.document;
 
-  if (!componentStructure.root.children) {
-    return { bindings: inferredBindings, slots };
+  // Helper: StyleTree를 FigmaNodeTree로 변환 (기본 meta 추가)
+  const convertToNodeTree = (node: StyleTree): FigmaNodeTree => {
+    return {
+      ...node,
+      meta: {},
+      children: node.children?.map(convertToNodeTree) || [],
+    };
+  };
+
+  if (!document || document.type !== "COMPONENT_SET") {
+    // ComponentSet이 아니면 baseStyle을 그대로 반환 (meta만 추가)
+    return convertToNodeTree(baseStyle);
   }
 
-  // componentStructure의 root children 수집
-  const baseChildren = componentStructure.root.children;
+  // 모든 variant 컴포넌트
+  const variantComponents = document.children || [];
+  const totalVariants = variantComponents.length;
 
-  // componentStructure와 같은 variant는 제외하고 다른 variant들의 root children 수집
-  const otherVariantChildren = componentsReferences
-    .filter(
-      (ref) => ref.componentStructure.root.id !== componentStructure.root.id
-    )
-    .map((ref) => {
-      return ref.componentStructure.root.children || [];
+  if (totalVariants === 0) {
+    return convertToNodeTree(baseStyle);
+  }
+
+  // 각 노드를 name+type으로 식별하여 몇 개의 variant에 존재하는지 카운트
+  // key: "name|type", value: 존재하는 variant 수
+  const nodeExistenceMap = new Map<string, number>();
+
+  // baseStyle 트리의 모든 노드 수집 (name 기준)
+  const collectNodeNames = (node: StyleTree): string[] => {
+    const names: string[] = [];
+
+    if (node.figmaStyle?.name) {
+      names.push(node.figmaStyle.name);
+    }
+
+    node.children.forEach((child) => {
+      names.push(...collectNodeNames(child));
     });
 
-  // 각 baseChildren의 노드에 대해 분석
-  for (let i = 0; i < baseChildren.length; i++) {
-    const baseChild = baseChildren[i];
+    return names;
+  };
 
-    // 다른 variant들에서 같은 이름+타입의 노드가 있는지 확인 (위치 무관)
-    // componentStructure에 있는 노드가 다른 variant에서 "없어지는지" 확인
-    // 모든 다른 variant에서 찾아야 함 (일부에만 있으면 안 됨)
-    let foundCount = 0;
-    for (const otherChildren of otherVariantChildren) {
-      const found = otherChildren.some(
-        (otherChild) =>
-          otherChild.name === baseChild.name &&
-          otherChild.type === baseChild.type
-      );
-      if (found) {
-        foundCount++;
+  const baseNodeNames = collectNodeNames(baseStyle);
+
+  // 각 variant를 순회하면서 노드 존재 여부 체크
+  variantComponents.forEach((variant) => {
+    const variantNodeNames = collectNodeNamesFromVariant(variant);
+    const variantNodeSet = new Set(variantNodeNames);
+
+    baseNodeNames.forEach((nodeName) => {
+      if (variantNodeSet.has(nodeName)) {
+        nodeExistenceMap.set(
+          nodeName,
+          (nodeExistenceMap.get(nodeName) || 0) + 1
+        );
       }
+    });
+  });
+
+  // baseStyle 트리에 meta 추가
+  const addMetaToTree = (node: StyleTree): FigmaNodeTree => {
+    const nodeName = node.figmaStyle?.name || "";
+    const existsIn = nodeExistenceMap.get(nodeName) || 0;
+
+    return {
+      ...node,
+      meta: {
+        slot: {
+          existsIn,
+          totalVariants,
+        },
+      },
+      children: node.children.map((child) => addMetaToTree(child)),
+    };
+  };
+
+  return addMetaToTree(baseStyle);
+}
+
+/**
+ * Variant 노드에서 모든 하위 노드 이름 수집
+ */
+function collectNodeNamesFromVariant(variantNode: any): string[] {
+  const names: string[] = [];
+
+  const traverse = (node: any) => {
+    if (node.name) {
+      names.push(node.name);
     }
-
-    // 모든 다른 variant에 있으면 공통 요소, 일부에만 있거나 없으면 Slot 후보
-    const existsInAllOtherVariants = foundCount === otherVariantChildren.length;
-
-    // componentStructure에만 있는 노드 (모든 다른 variant에 없음 = 없어지는 노드)
-    if (!existsInAllOtherVariants) {
-      // element 이름 기반으로 prop 이름 추론
-      const normalizedName = normalizePropName(baseChild.name);
-      const inferredPropName = normalizedName;
-
-      // propsDefinition에서 매칭되는 모든 prop 찾기 (여러 prop과 매칭될 수 있음)
-      // 정확한 매칭만 허용 (부분 매칭은 오매칭을 방지하기 위해 제외)
-      const matchingProps = propsDefinition.filter((prop) => {
-        const normalizedPropName = normalizePropName(prop.name);
-
-        // 정확한 매칭만 허용
-        return normalizedPropName === inferredPropName;
-      });
-
-      // prop 매칭이 성공한 경우에만 바인딩 생성
-      if (matchingProps.length > 0) {
-        // 첫 번째 매칭된 prop을 바인딩에 사용
-        const firstMatchingProp = matchingProps[0];
-        inferredBindings[baseChild.id] = {
-          elementId: baseChild.id,
-          elementName: baseChild.name,
-          elementType: baseChild.type,
-          connectedPropName: `prop:${normalizePropName(firstMatchingProp.name)}`,
-          connectedTargetId: firstMatchingProp.id,
-          visibleMode: "always",
-          visibleExpression: "",
-        };
-      }
-
-      // Slot 정보 저장 (prop 매칭 여부와 관계없이 Slot으로 판정된 노드는 Slot 정보에 추가)
-      // 매칭된 prop이 있으면 추가, 없으면 빈 propId/propName으로 추가
-      if (matchingProps.length > 0) {
-        // 매칭된 prop들을 Slot 정보로 저장
-        for (const matchingProp of matchingProps) {
-          slots.push({
-            elementId: baseChild.id,
-            propId: matchingProp.id,
-            propName: normalizePropName(matchingProp.name),
-          });
-        }
-      } else {
-        // prop 매칭이 실패해도 Slot으로 판정된 노드는 Slot 정보에 추가 (slotProp은 빈 배열)
-        slots.push({
-          elementId: baseChild.id,
-          propId: "", // prop 매칭 실패
-          propName: "", // prop 매칭 실패
-        });
-      }
+    if (node.children && Array.isArray(node.children)) {
+      node.children.forEach((child: any) => traverse(child));
     }
-  }
+  };
 
-  return { bindings: inferredBindings, slots };
+  traverse(variantNode);
+  return names;
 }

@@ -14,49 +14,73 @@ import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
 import { buildStateBindings } from "../binding/state/binding-state";
 import { FigmaNodeData } from "../../types/figma-api";
 import { VariantStyleBuilder } from "../style/variant-style";
+import { mergeStructureNodes } from "./structure/merger";
 
 /**
- * AST 생성 통합 함수
- * 내부적으로 props, binding을 처리하여 AST를 생성
+ * 컴포넌트를 만들기 위한 재료 준비 레이어
  * ComponentSetNode 전용
  */
 export function generateAST(spec: FigmaNodeData): AstTree {
-  // 1. 공통 baseStyle 생성 (먼저 생성하여 공유)
   const baseStyle = buildStyleTree(spec);
-  // 2. Variant Styles 생성 (baseStyle을 공유받아 사용)
   const variantStyleMap = new VariantStyleBuilder(
     spec,
     baseStyle!
   ).buildVariantStyles();
 
-  // 3. Style Tree 생성 (노드 바인딩용)
-  const styleTree = buildStyleTree(spec.layoutTree);
+  const rootNode = spec.info.document;
+  let structureRoot;
 
-  // 4. Props IR 생성 (props만 변환)
-  const propsData = buildPropsIR(spec);
+  // 구조 분석 실행
+  if (rootNode.type === "COMPONENT_SET") {
+    // COMPONENT_SET인 경우 자식들(Variants)을 병합
+    // 주의: COMPONENT_SET의 자식들은 COMPONENT 노드들임
+    structureRoot = mergeStructureNodes(rootNode.children, rootNode.children);
+  } else {
+    // 단일 컴포넌트인 경우 자기 자신 1개로 병합 (무조건 Fixed)
+    structureRoot = mergeStructureNodes([rootNode], [rootNode]);
+  }
 
-  // 5. Binding Model 생성
-  const { bindings: bindingData, slots } = buildBindingModel(spec);
+  debugger;
 
-  // 6. State Bindings 생성
-  const stateBindings = buildStateBindings(spec);
+  const astTree = {
+    name: spec.info.document.name,
+    nodeTree: spec.info.document,
+    style: {
+      baseStyle,
+      variantStyleMap,
+      styleTree: spec.styleTree,
+    },
+    structure: {
+      root: structureRoot,
+      variantCount:
+        rootNode.type === "COMPONENT_SET" ? rootNode.children.length : 1,
+    },
+  };
 
-  // 7. AST 생성
-  const astGenerator = new ASTGenerator(new TagMapper(), styleConverter);
-  const ast = astGenerator.dslSpecToAST(spec);
-  const combinedAst = astGenerator.combineAllToAst({
-    ast,
-    propsData,
-    bindingData,
-    slots,
-    styleData: { styleTree, variantStyleMap },
-    baseStyle, // baseStyle 전달
-  });
+  // [DEBUG] 구조 분석 결과 출력
+  console.log("=== Analyzed Structure Root ===");
+  console.log(
+    JSON.stringify(
+      astTree.structure.root,
+      (key, value) => {
+        // 보기 편하게 필터링
+        if (key === "variants") return `[${value.length} Variants]`;
+        if (key === "variantMap") {
+          const simpleMap: any = {};
+          for (const k in value)
+            simpleMap[k] = value[k]
+              ? `${value[k].type}(${value[k].name})`
+              : "null";
+          return simpleMap;
+        }
+        return value;
+      },
+      2
+    )
+  );
+  console.log("===============================");
 
-  // // State 정보 추가
-  // combinedAst.states = stateBindings;
-
-  return combinedAst;
+  return astTree;
 }
 
 export { ASTGenerator, TagMapper, Prettifier };

@@ -3,7 +3,9 @@ import type { PropIR } from "@frontend/ui/domain/transpiler";
 import { PrettifierContext } from "@frontend/ui/domain/transpiler/prettifier/strategies/IPrettifierStrategy";
 import type { StyleTreeNode } from "./styles";
 import type { BaseStyleProperties } from "@backend";
-import { FigmaNodeData } from "./figma-api";
+import { BaseStyleTree, FigmaNodeData, StyleTree } from "./figma-api";
+import { VariantStyleMap } from "./variant";
+import type { AnalyzedStructureTree } from "../transform/ast/structure/types";
 
 // AST 노드 공통
 export interface BaseASTNode {
@@ -32,15 +34,13 @@ export interface ElementASTNode extends BaseASTNode {
 
 export interface AstTree {
   name: string;
-  props: PropIR[];
-  styleFeature: {
-    /** 공통 baseStyle - variantStyleMap의 모든 variant가 이 객체를 참조 */
-    baseStyle?: StyleTreeNode | null;
-    variantStyleMap?: PrettifierContext["styleData"]["variantStyleMap"];
+  nodeTree: SceneNode;
+  style: {
+    baseStyle: BaseStyleTree | null;
+    variantStyleMap: VariantStyleMap | null;
+    styleTree: StyleTree | null;
   };
-
-  root: ElementASTNode;
-  figmaInfo: FigmaNodeData;
+  structure: AnalyzedStructureTree;
 }
 
 export interface ComponentAST {
