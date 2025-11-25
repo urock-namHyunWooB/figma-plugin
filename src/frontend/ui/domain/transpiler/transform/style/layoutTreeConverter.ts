@@ -1,17 +1,17 @@
-import { LayoutTreeNode } from "@backend/managers/ComponentStructureManager";
 import { StyleTreeNode } from "@frontend/ui/domain/transpiler/types/styles";
 import {
   BaseStyleTree,
   FigmaNodeData,
   StyleTree,
 } from "@frontend/ui/domain/transpiler/types/figma-api";
-import { traverseAST } from "../../utils/ast-tree-utils";
 import { BaseStyleProperties } from "@backend";
 
 /**
  * figmaNodeData에 있는 figmaStyle을 styleTree에 붙여서 리턴
  */
-export function buildStyleTree(figmaNodeData: FigmaNodeData): StyleTree | null {
+export function buildStyleTree(
+  figmaNodeData: FigmaNodeData
+): BaseStyleTree | null {
   if (!figmaNodeData) return null;
 
   const styleTree = figmaNodeData.styleTree;
@@ -127,12 +127,14 @@ function countAllDescendants(node: StyleTree): number {
  * ComponentSetNode의 StyleTree에서 baseStyleTree를 찾아서 리턴
  * baseStyleTree는 ComponentSetNode의 자식 노드 중에서 모든 하위 자식 노드의 총 개수가 가장 많은 노드를 찾아서 리턴
  */
-function getBaseStyleTree(figmaNodeData: StyleTree | null) {
+function getBaseStyleTree(
+  figmaNodeData: StyleTree | null
+): BaseStyleTree | null {
   if (!figmaNodeData) return null;
 
   // 자식이 없으면 자기 자신을 반환
   if (!figmaNodeData.children || figmaNodeData.children.length === 0) {
-    return figmaNodeData;
+    return null;
   }
 
   // 자식 노드들 중에서 모든 하위 자식 노드의 총 개수가 가장 많은 노드를 찾기
@@ -151,18 +153,19 @@ function getBaseStyleTree(figmaNodeData: StyleTree | null) {
 
   // 자식이 없는 경우가 모두라면 첫 번째 자식을 반환
   if (!baseStyleTree && figmaNodeData.children.length > 0) {
-    baseStyleTree = {
-      ...figmaNodeData.children[0],
-    };
+    baseStyleTree = figmaNodeData.children[0];
   }
 
-  const baseVariants = baseStyleTree?.figmaStyle?.name
+  const baseVariants: BaseStyleTree["baseVariants"] = baseStyleTree?.figmaStyle
+    ?.name
     ? {
         ...parseVariantString(baseStyleTree.figmaStyle.name),
       }
     : {};
 
-  return { ...baseStyleTree, baseVariants };
+  const baseStyleTreeResult = { ...baseStyleTree, baseVariants };
+
+  return baseStyleTreeResult as BaseStyleTree;
 }
 
 function parseVariantString(str: string) {

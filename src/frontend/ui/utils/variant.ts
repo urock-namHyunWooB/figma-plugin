@@ -1,27 +1,16 @@
 import { StyleTree, DiffTree } from "../domain/transpiler/types/figma-api";
 import type { BaseStyleProperties } from "@backend/types/styles";
-
-interface VariantPatterns {
-  [key: string]: Record<
-    string,
-    {
-      cssStyle: Record<string, string>;
-      figmaStyle: BaseStyleProperties;
-      children: VariantPatterns[];
-    }
-  >;
-}
+import { VariantStyleMap } from "../domain/transpiler/types/variant";
 
 export default class VariantUtils {
   /**
-   * 하나만 다른걸 구한다. 예) { Large: {...}, Medium: {...}, Small: {...} } 이런 형태
    * @param obj
    * @returns
    */
-  static extractVariantPatterns(
+  public static extractVariantPatterns(
     obj: Record<string, StyleTree>,
     baseVariants: Record<string, unknown>
-  ): VariantPatterns {
+  ): VariantStyleMap {
     const variantTypes = this.extractVariantTypes(obj);
 
     const componentHash = new Map<string, StyleTree>();
@@ -33,15 +22,7 @@ export default class VariantUtils {
     const result = this._baseUtil(componentHash, baseVariants, variantTypes);
     console.log(result);
 
-    // componentHash의 변경사항을 obj에 반영
-    componentHash.forEach((value, key) => {
-      const originalKey = key.replace(/,/g, ", ");
-      if (obj[originalKey]) {
-        obj[originalKey] = value;
-      }
-    });
-
-    return this.getVariantPatterns(obj);
+    return result;
   }
 
   /**
@@ -68,61 +49,6 @@ export default class VariantUtils {
       const values = Object.keys(value);
       return { [key]: values };
     });
-  }
-
-  private static getVariantPatterns(
-    obj: Record<string, StyleTree>
-  ): VariantPatterns {
-    const p: Record<string, Record<string, boolean>> = {};
-
-    // 먼저 variant 타입과 값들을 추출
-    for (const [key] of Object.entries(obj)) {
-      const nameSplit = key.split(", ");
-      nameSplit.forEach((name) => {
-        const [variantKey, variantValue] = name.split("=");
-        if (!p[variantKey]) {
-          p[variantKey] = {};
-        }
-        p[variantKey][variantValue] = true;
-      });
-    }
-
-    // VariantPatterns 형태로 변환
-    const result: VariantPatterns = {};
-
-    for (const [variantTypeName, variantValues] of Object.entries(p)) {
-      result[variantTypeName] = {};
-
-      for (const variantValue of Object.keys(variantValues)) {
-        // 해당 variant 조합을 가진 컴포넌트 찾기
-        const matchingKey = Object.keys(obj).find((key) => {
-          const variants = this.parseVariantString(key.replace(/,\s+/g, ","));
-          return variants[variantTypeName] === variantValue;
-        });
-
-        if (matchingKey && obj[matchingKey]) {
-          const styleTree = obj[matchingKey];
-          result[variantTypeName][variantValue] = {
-            cssStyle: styleTree.cssStyle || {},
-            figmaStyle: styleTree.figmaStyle || ({} as BaseStyleProperties),
-            children: this.convertChildrenToVariantPatterns(styleTree.children),
-          };
-        }
-      }
-    }
-
-    return result;
-  }
-
-  /**
-   * StyleTree의 children을 VariantPatterns 형태로 재귀적으로 변환
-   */
-  private static convertChildrenToVariantPatterns(
-    _children: StyleTree[]
-  ): VariantPatterns[] {
-    // children은 단일 레벨이므로 빈 배열 반환
-    // 필요시 재귀적으로 처리할 수 있지만, 현재 구조상 children은 variant pattern이 아님
-    return [];
   }
 
   /**
@@ -223,7 +149,7 @@ export default class VariantUtils {
     variantTypes: {
       [x: string]: string[];
     }[]
-  ): Record<string, Record<string, DiffTree | null> | "SLOT"> {
+  ): VariantStyleMap {
     const result: Record<string, Record<string, DiffTree | null> | "SLOT"> = {};
 
     for (const variantTypeObj of variantTypes) {

@@ -13,6 +13,7 @@ import { buildStyleTree } from "../style/layoutTreeConverter";
 import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
 import { buildStateBindings } from "../binding/state/binding-state";
 import { FigmaNodeData } from "../../types/figma-api";
+import { VariantStyleBuilder } from "../style/variant-style";
 
 /**
  * AST 생성 통합 함수
@@ -23,7 +24,11 @@ export function generateAST(spec: FigmaNodeData): AstTree {
   // 1. 공통 baseStyle 생성 (먼저 생성하여 공유)
   const baseStyle = buildStyleTree(spec);
   // 2. Variant Styles 생성 (baseStyle을 공유받아 사용)
-  const variantStyleMap = buildVariantStyles(spec, baseStyle);
+  const variantStyleMap = new VariantStyleBuilder(
+    spec,
+    baseStyle!
+  ).buildVariantStyles();
+
   // 3. Style Tree 생성 (노드 바인딩용)
   const styleTree = buildStyleTree(spec.layoutTree);
 
