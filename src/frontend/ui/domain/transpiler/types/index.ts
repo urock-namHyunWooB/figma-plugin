@@ -56,3 +56,5 @@ export {
   isTextNode,
   isFrameNode,
 } from "./figma-api";
+
+export type * from "./type";

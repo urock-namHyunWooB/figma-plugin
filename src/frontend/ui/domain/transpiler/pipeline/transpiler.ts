@@ -1,4 +1,5 @@
 import taptabpButton from "../../../../../../test/fixtures/button/taptapButton.json";
+import taptapButtonSample from "../../../../../../test/fixtures/button/taptapButton_sample.json";
 import airtableButton from "../../../../../../test/fixtures/button/airtable-button.json";
 
 import type { ComponentSetNodeSpec } from "@backend/managers/SpecManager";
@@ -7,6 +8,8 @@ import { CodeGenerator } from "../codegen";
 import Prettifier from "../prettifier";
 import { FigmaRestApiResponse } from "../types";
 import { FigmaNodeData } from "../types/figma-api";
+import { createComponentSourceFile } from "@frontend/ui/domain/transpiler/codegen/react2/ast-factory";
+import { printAST } from "@frontend/ui/domain/transpiler/codegen/react2/printer";
 
 /**
  * High-level Transpiler API
@@ -32,16 +35,15 @@ function TranspileForDev(spec: FigmaNodeData) {
   // 각 재료 준비
   const ast = generateAST(spec);
 
-  console.log("ast", ast);
+  const sourceFile = createComponentSourceFile(ast);
+  const tsxCode = printAST(sourceFile);
+
+  console.log(tsxCode);
+
   //요리하기
-  const prettyAST = new Prettifier().prettify(ast);
+  // const prettyAST = new Prettifier().prettify(ast);
 
-  console.log("prettyAST", prettyAST);
-
-  const codeGenerator = new CodeGenerator();
-  const tsxCode = codeGenerator.generateComponentTSXWithTS(prettyAST);
-
-  return tsxCode;
+  return 1;
 }
 
-export const transpileForDev = TranspileForDev(taptabpButton as any);
+export const transpileForDev = TranspileForDev(taptapButtonSample as any);

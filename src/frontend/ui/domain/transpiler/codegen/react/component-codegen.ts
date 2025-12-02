@@ -1,6 +1,6 @@
 import ts from "typescript";
 import { generatePropsInterface, createPropsParameter } from "./props-codegen";
-import type { VariantStyleIR } from "../../types";
+import type { UnifiedNode, VariantStyleIR } from "../../types";
 import {
   createReactImport,
   createUseStateImport,
@@ -42,7 +42,7 @@ export class CodeGenerator {
    * - 컴포넌트 함수 선언 (function ComponentName(props: Props) { ... return <JSX>; })
    * - export default 문
    */
-  private buildSourceFile(ast: AstTree): ts.SourceFile {
+  private buildSourceFile(ast: UnifiedNode): ts.SourceFile {
     const componentName = ast.name || "GeneratedComponent";
     const reactImport = createReactImport(this.factory);
     const statements: ts.Statement[] = [reactImport];
