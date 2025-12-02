@@ -21,6 +21,30 @@ function styleTreeToObject(
   return styleTree.style;
 }
 
+// Helper: css(...) 함수 호출 표현식 생성
+function createCssCall(
+  factory: ts.NodeFactory,
+  objectLiteral: ts.ObjectLiteralExpression
+): ts.CallExpression {
+  return factory.createCallExpression(
+    factory.createIdentifier("css"),
+    undefined,
+    [objectLiteral]
+  );
+}
+
+// Helper: StyleTree -> Object Literal Expression
+function createStyleObject(
+  factory: ts.NodeFactory,
+  styleTree: StyleTreeNode | null
+): ts.ObjectLiteralExpression {
+  const styleObj = styleTree ? styleTree.style : {};
+  return convertStyleToExpression(
+    factory,
+    styleObj
+  ) as ts.ObjectLiteralExpression;
+}
+
 /**
  * Variant style 상수 생성
  * baseStyle과 dimension별 스타일 맵을 생성
