@@ -62,11 +62,13 @@ export function createVariantStyleConstants(
   propsIR: PropIR[],
   variantStyleMap: VariantStyleMap
 ): ts.VariableStatement[] {
-  if (!variantStyleMap || variantStyleMap.size === 0) return [];
+  // [수정] .size 대신 Object.keys().length 사용
+  if (!variantStyleMap || Object.keys(variantStyleMap).length === 0) return [];
   const statements: ts.VariableStatement[] = [];
 
   const variantProps = propsIR.filter((prop) => prop.type === "VARIANT");
-  const hasStateStyle = variantStyleMap.has(":state");
+  // [수정] .has() 대신 in 연산자 사용
+  const hasStateStyle = ":state" in variantStyleMap;
 
   if (variantProps.length === 0 && !hasStateStyle) return statements;
 
@@ -74,16 +76,23 @@ export function createVariantStyleConstants(
   let baseStyleObj: Record<string, any> = {};
 
   if (variantProps.length > 0) {
-    // 먼저 공통 baseStyle 가져오기 (모든 variant prop이 같은 baseStyle 공유)
-    const firstVariantStyle = Array.from(variantStyleMap.values())[0];
-    if (firstVariantStyle?.baseStyle) {
-      baseStyleObj = styleTreeToObject(firstVariantStyle.baseStyle);
+    // [수정] Map.values() 대신 Object.values() 사용 및 SLOT 필터링
+    // 모든 variant prop이 같은 baseStyle 공유한다고 가정하고, 첫 번째 유효한 객체를 찾음
+    const firstValidVariantStyle = Object.values(variantStyleMap).find(
+      (val) => val !== "SLOT" && typeof val === "object"
+    ) as any; // 타입 정의 불일치 회피를 위해 any 사용
+
+    if (firstValidVariantStyle?.baseStyle) {
+      baseStyleObj = styleTreeToObject(firstValidVariantStyle.baseStyle);
     }
 
     // 각 variant prop의 defaultValue에 해당하는 delta를 baseStyle에 합침
     for (const variantProp of variantProps) {
-      const variantStyle = variantStyleMap.get(variantProp.originalName);
-      if (!variantStyle) continue;
+      // [수정] .get() 대신 객체 프로퍼티 접근
+      const variantStyle = variantStyleMap[variantProp.originalName];
+
+      // [수정] SLOT 체크 추가
+      if (!variantStyle || variantStyle === "SLOT") continue;
 
       // defaultValue 확인
       const defaultValue = variantProp.defaultValue;
@@ -94,8 +103,10 @@ export function createVariantStyleConstants(
       // defaultValue를 문자열로 변환 (variantOptions는 문자열이므로)
       const defaultValueStr = String(defaultValue);
 
-      // variantStyles에서 defaultValue에 해당하는 delta 가져오기
-      const deltaStyleTree = variantStyle.variantStyles[defaultValueStr];
+      // [수정] any 캐스팅으로 타입 에러 방지 (실제 런타임엔 variantStyles가 존재함)
+      const styleAny = variantStyle as any;
+
+      const deltaStyleTree = styleAny.variantStyles?.[defaultValueStr];
       if (deltaStyleTree) {
         const deltaStyleObj = styleTreeToObject(deltaStyleTree);
         // baseStyle에 delta 합치기
@@ -124,15 +135,20 @@ export function createVariantStyleConstants(
 
   // 2. Dimension Styles (Size, etc.)
   for (const variantProp of variantProps) {
-    const variantStyle = variantStyleMap.get(variantProp.originalName);
-    if (!variantStyle) continue;
+    // [수정] 객체 접근
+    const variantStyle = variantStyleMap[variantProp.originalName];
+    if (!variantStyle || variantStyle === "SLOT") continue;
 
     const mapName = `${variantProp.normalizedName}Styles`;
     const mapProperties: ts.PropertyAssignment[] = [];
 
-    for (const [optionValue, deltaStyleTree] of Object.entries(
-      variantStyle.variantStyles
-    )) {
+    // [수정] 타입 캐스팅
+    const styles = (variantStyle as any).variantStyles || {};
+
+    for (const [optionValue, deltaStyleTree] of Object.entries(styles) as [
+      string,
+      any,
+    ][]) {
       const key = factory.createStringLiteral(optionValue);
       // [수정] 값도 css({ ... }) 호출로 변환
       const styleExpr = createStyleObject(factory, deltaStyleTree);
@@ -161,8 +177,9 @@ export function createVariantStyleConstants(
   }
 
   // 3. State Styles (Pseudo-classes)
-  const stateVariantStyle = variantStyleMap.get(":state");
-  if (stateVariantStyle) {
+  // [수정] 객체 접근
+  const stateVariantStyle = variantStyleMap[":state"];
+  if (stateVariantStyle && stateVariantStyle !== "SLOT") {
     const stateKeyToPseudoClass: Record<string, string> = {
       hover: "&:hover",
       pressed: "&:active",
@@ -170,9 +187,13 @@ export function createVariantStyleConstants(
       // focus 등 추가 가능
     };
 
-    for (const [stateKey, deltaStyleTree] of Object.entries(
-      stateVariantStyle.variantStyles
-    )) {
+    // [수정] 타입 캐스팅
+    const styles = (stateVariantStyle as any).variantStyles || {};
+
+    for (const [stateKey, deltaStyleTree] of Object.entries(styles) as [
+      string,
+      any,
+    ][]) {
       if (stateKey === "default") continue; // Default는 baseStyle에 포함됨
 
       const styleConstantName = `${stateKey}Styles`;
@@ -224,7 +245,8 @@ export function createVariantStyleConstants(
 export function createClassNameAttribute(
   factory: ts.NodeFactory,
   propsIR: PropIR[],
-  variantStyleMap: Map<string, VariantStyleIR>
+  // [수정] 타입 변경 Map<string, VariantStyleIR> -> VariantStyleMap
+  variantStyleMap: VariantStyleMap
 ): ts.JsxAttribute | null {
   // 인자 목록 (cx 함수에 들어갈 아규먼트들)
   const cxArgs: ts.Expression[] = [];
@@ -235,7 +257,10 @@ export function createClassNameAttribute(
   // 2. Variant Props (sizeStyles[size])
   const variantProps = propsIR.filter((prop) => prop.type === "VARIANT");
   for (const variantProp of variantProps) {
-    if (!variantStyleMap.has(variantProp.originalName)) continue;
+    // [수정] .has() -> in 연산자
+    if (!(variantProp.originalName in variantStyleMap)) continue;
+    // [수정] SLOT 체크
+    if (variantStyleMap[variantProp.originalName] === "SLOT") continue;
 
     const propName = variantProp.normalizedName;
     const mapName = `${propName}Styles`;
@@ -249,9 +274,11 @@ export function createClassNameAttribute(
   }
 
   // 3. State Styles (hoverStyles, etc.)
-  const stateVariantStyle = variantStyleMap.get(":state");
-  if (stateVariantStyle) {
-    for (const stateKey of Object.keys(stateVariantStyle.variantStyles)) {
+  // [수정] 객체 접근
+  const stateVariantStyle = variantStyleMap[":state"];
+  if (stateVariantStyle && stateVariantStyle !== "SLOT") {
+    const styles = (stateVariantStyle as any).variantStyles || {};
+    for (const stateKey of Object.keys(styles)) {
       if (stateKey === "default") continue;
 
       // 이미 상수로 만들어진 스타일 이름 (예: hoverStyles)

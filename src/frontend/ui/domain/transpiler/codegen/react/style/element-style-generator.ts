@@ -1,5 +1,5 @@
 import ts from "typescript";
-import type { ElementASTNode } from "../../../types";
+import type { ElementASTNode, UnifiedNode } from "../../../types";
 import { convertStyleToExpression } from "./style-converter";
 import { traverseAST } from "@frontend/ui/domain/transpiler/utils/ast-tree-utils";
 
@@ -9,7 +9,7 @@ import { traverseAST } from "@frontend/ui/domain/transpiler/utils/ast-tree-utils
  */
 export function createElementStyleConstants(
   factory: ts.NodeFactory,
-  rootNode: ElementASTNode
+  rootNode: UnifiedNode
 ): ts.VariableStatement[] {
   const statements: ts.VariableStatement[] = [];
   const elementStyles = new Map<string, Record<string, any>>();

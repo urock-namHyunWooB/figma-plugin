@@ -77,7 +77,7 @@ export class CodeGenerator {
     // 자식 요소들의 스타일 상수 생성
     const elementStyleConstants = createElementStyleConstants(
       this.factory,
-      ast.root
+      ast
     );
     statements.push(...elementStyleConstants);
 
