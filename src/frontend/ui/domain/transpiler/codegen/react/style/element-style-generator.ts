@@ -1,7 +1,6 @@
 import ts from "typescript";
-import type { ElementASTNode, UnifiedNode } from "../../../types";
+import type { UnifiedNode } from "../../../types";
 import { convertStyleToExpression } from "./style-converter";
-import { traverseAST } from "@frontend/ui/domain/transpiler/utils/ast-tree-utils";
 
 /**
  * 자식 요소들의 스타일 상수 생성
@@ -14,18 +13,26 @@ export function createElementStyleConstants(
   const statements: ts.VariableStatement[] = [];
   const elementStyles = new Map<string, Record<string, any>>();
 
-  // AST를 순회하면서 모든 요소의 스타일 수집 (루트 제외)
-  traverseAST(rootNode, (path) => {
+  // UnifiedNode 순회 함수 정의
+  function traverseUnified(node: UnifiedNode) {
     // 루트 노드는 제외 (variant style로 처리되므로)
-    if (path.node.id === rootNode.id) {
-      return;
+    if (node.id !== rootNode.id) {
+      // UnifiedNode에는 styles 속성이 없으므로, props나 다른 곳에서 가져와야 함.
+      // 현재 타입 정의상 styles가 없으므로, any로 캐스팅하여 확인하거나
+      // 로직을 보완해야 함. 여기서는 일단 any로 캐스팅하여 styles가 혹시 있는지 확인.
+      const nodeAny = node as any;
+      if (nodeAny.styles && Object.keys(nodeAny.styles).length > 0) {
+        elementStyles.set(node.id, nodeAny.styles);
+      }
     }
 
-    // 스타일이 있는 요소만 수집
-    if (path.node.styles && Object.keys(path.node.styles).length > 0) {
-      elementStyles.set(path.node.id, path.node.styles);
+    if (node.children) {
+      node.children.forEach(traverseUnified);
     }
-  });
+  }
+
+  // AST를 순회하면서 모든 요소의 스타일 수집 (루트 제외)
+  traverseUnified(rootNode);
 
   // styles 객체를 항상 생성 (사용되지 않아도 빈 객체라도 생성)
   // JSX에서 styles를 참조할 수 있으므로 항상 정의되어 있어야 함
@@ -34,9 +41,12 @@ export function createElementStyleConstants(
     // 요소 ID를 스타일 키로 변환 (특수 문자 제거)
     const styleKey = generateStyleKey(elementId);
     const styleExpression = convertStyleToExpression(factory, style);
-    styleProperties.push(
-      factory.createPropertyAssignment(styleKey, styleExpression)
+    const cssCall = createCssCall(
+      factory,
+      styleExpression as ts.ObjectLiteralExpression
     );
+
+    styleProperties.push(factory.createPropertyAssignment(styleKey, cssCall));
   }
 
   // 빈 객체라도 styles 상수를 생성 (JSX에서 참조할 수 있으므로)
@@ -87,4 +97,16 @@ function generateStyleKey(elementId: string): string {
  */
 export function getStyleKeyForElement(elementId: string): string {
   return generateStyleKey(elementId);
+}
+
+// Helper: css(...) 함수 호출 표현식 생성
+function createCssCall(
+  factory: ts.NodeFactory,
+  objectLiteral: ts.ObjectLiteralExpression
+): ts.CallExpression {
+  return factory.createCallExpression(
+    factory.createIdentifier("css"),
+    undefined,
+    [objectLiteral]
+  );
 }
