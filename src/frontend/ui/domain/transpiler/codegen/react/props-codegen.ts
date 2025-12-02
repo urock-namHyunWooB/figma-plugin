@@ -10,7 +10,6 @@ export function generatePropsInterface(
   props: PropIR[],
   componentName: string
 ): ts.InterfaceDeclaration {
-  debugger;
   const members: ts.TypeElement[] = [];
 
   for (const prop of props) {

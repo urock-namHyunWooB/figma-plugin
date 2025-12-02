@@ -38,7 +38,8 @@ function TranspileForDev(spec: FigmaNodeData) {
   const codeGenerator = new CodeGenerator();
   const tsxCode = codeGenerator.generateComponentTSXWithTS(
     unifiedAST,
-    variantStyleMap
+    [],
+    variantStyleMap!
   );
 
   console.log(tsxCode);

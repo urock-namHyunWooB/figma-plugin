@@ -7,7 +7,9 @@ import ts from "typescript";
 /**
  * React import 문 생성: import React from "react";
  */
-export function createReactImport(factory: ts.NodeFactory): ts.ImportDeclaration {
+export function createReactImport(
+  factory: ts.NodeFactory
+): ts.ImportDeclaration {
   return factory.createImportDeclaration(
     undefined,
     factory.createImportClause(
@@ -59,9 +61,13 @@ export function createEmotionCssImport(
           undefined,
           factory.createIdentifier("css")
         ),
+        factory.createImportSpecifier(
+          false,
+          undefined,
+          factory.createIdentifier("cx")
+        ),
       ])
     ),
-    factory.createStringLiteral("@emotion/react")
+    factory.createStringLiteral("@emotion/css")
   );
 }
-

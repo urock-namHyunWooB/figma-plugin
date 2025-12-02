@@ -9,6 +9,7 @@ export interface VariantStyleIR {
   propName: string;
   /** 각 옵션 값별 스타일 델타 (baseStyle과의 차이만 저장, 트리 형태) */
   variantStyles: Record<string, StyleTree | null>;
+  baseStyle?: StyleTreeNode | null;
 }
 
 /**

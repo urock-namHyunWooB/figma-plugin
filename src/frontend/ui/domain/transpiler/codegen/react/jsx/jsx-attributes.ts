@@ -1,7 +1,7 @@
 import ts from "typescript";
 
 import { convertStyleToExpression } from "../style/style-converter";
-import { createVariantStyleAttribute } from "../style/variant-style-generator";
+import { createClassNameAttribute } from "../style/variant-style-generator";
 import { getStyleKeyForElement } from "../style/element-style-generator";
 import type { ElementASTNode, PropIR, VariantStyleIR } from "../../../types";
 
@@ -17,22 +17,22 @@ export function hasStyle(node: ElementASTNode): boolean {
 }
 
 /**
- * css prop 생성: css={css({...})}
- * emotion의 css prop을 사용하여 스타일을 적용
+ * className prop 생성: className={css({...})}
+ * emotion의 css 함수를 사용하여 클래스 이름을 생성
  */
 export function createStyleAttribute(
   factory: ts.NodeFactory,
   style: Record<string, any>
 ): ts.JsxAttribute {
   const styleExpression = convertStyleToExpression(factory, style);
-  // css={css({...})} 형태로 생성
+  // className={css({...})} 형태로 생성
   const cssCall = factory.createCallExpression(
     factory.createIdentifier("css"),
     undefined,
     [styleExpression]
   );
   return factory.createJsxAttribute(
-    factory.createIdentifier("css"),
+    factory.createIdentifier("className"),
     factory.createJsxExpression(undefined, cssCall)
   );
 }
@@ -52,7 +52,7 @@ export function buildJsxAttributes(
 
   // 루트 요소이고 variant style이 있는 경우 머지
   if (isRoot && propsIR && variantStyleMap) {
-    const styleAttribute = createVariantStyleAttribute(
+    const styleAttribute = createClassNameAttribute(
       factory,
       propsIR,
       variantStyleMap
@@ -77,7 +77,7 @@ export function buildJsxAttributes(
       [styleIdentifier]
     );
     const styleAttribute = factory.createJsxAttribute(
-      factory.createIdentifier("css"),
+      factory.createIdentifier("className"),
       factory.createJsxExpression(undefined, cssCall)
     );
     attributes.push(styleAttribute);

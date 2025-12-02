@@ -27,8 +27,12 @@ export class CodeGenerator {
    * 1. AST를 TypeScript SourceFile로 변환
    * 2. SourceFile을 코드 문자열로 출력
    */
-  public generateComponentTSXWithTS(ast: UnifiedNode, props: PropIR[]): string {
-    const sourceFile = this.buildSourceFile(ast, props);
+  public generateComponentTSXWithTS(
+    ast: UnifiedNode,
+    props: PropIR[],
+    variantStyleMap: VariantStyleMap
+  ): string {
+    const sourceFile = this.buildSourceFile(ast, props, variantStyleMap);
     const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
     return printer.printFile(sourceFile);
   }
@@ -43,7 +47,11 @@ export class CodeGenerator {
    * - 컴포넌트 함수 선언 (function ComponentName(props: Props) { ... return <JSX>; })
    * - export default 문
    */
-  private buildSourceFile(ast: UnifiedNode, props: PropIR[]): ts.SourceFile {
+  private buildSourceFile(
+    ast: UnifiedNode,
+    props: PropIR[],
+    variantStyleMap: VariantStyleMap
+  ): ts.SourceFile {
     const componentName = ast.name || "GeneratedComponent";
     const reactImport = createReactImport(this.factory);
     const statements: ts.Statement[] = [reactImport];
