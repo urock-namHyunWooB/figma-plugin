@@ -62,7 +62,6 @@ export function createVariantStyleConstants(
   propsIR: PropIR[],
   variantStyleMap: VariantStyleMap
 ): ts.VariableStatement[] {
-  debugger;
   if (!variantStyleMap || variantStyleMap.size === 0) return [];
   const statements: ts.VariableStatement[] = [];
 
