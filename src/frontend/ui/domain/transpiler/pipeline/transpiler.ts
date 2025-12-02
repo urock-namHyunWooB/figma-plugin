@@ -33,10 +33,14 @@ export function transpile(spec: FigmaNodeData): string {
 
 function TranspileForDev(spec: FigmaNodeData) {
   // 각 재료 준비
-  const ast = generateAST(spec);
+  const { unifiedAST, variantStyleMap } = generateAST(spec);
 
-  const sourceFile = createComponentSourceFile(ast);
-  const tsxCode = printAST(sourceFile);
+  const sourceFile = createComponentSourceFile(unifiedAST);
+  const codeGenerator = new CodeGenerator();
+  const tsxCode = codeGenerator.generateComponentTSXWithTS(
+    sourceFile,
+    variantStyleMap
+  );
 
   console.log(tsxCode);
 

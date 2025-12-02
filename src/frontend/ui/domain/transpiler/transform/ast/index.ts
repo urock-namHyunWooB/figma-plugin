@@ -18,7 +18,7 @@ import { createStyleMap } from "../../utils/util";
  * 컴포넌트를 만들기 위한 재료 준비 레이어
  * ComponentSetNode 전용
  */
-export function generateAST(spec: FigmaNodeData): UnifiedNode {
+export function generateAST(spec: FigmaNodeData) {
   const baseStyle = buildStyleTree(spec);
   const variantStyleMap = new VariantStyleBuilder(
     spec,
@@ -58,7 +58,7 @@ export function generateAST(spec: FigmaNodeData): UnifiedNode {
     mergeVariantIntoUnified(unifiedAST, target.root, target.name);
   });
 
-  return unifiedAST;
+  return { unifiedAST, variantStyleMap };
 }
 
 export { ASTGenerator, TagMapper, Prettifier };

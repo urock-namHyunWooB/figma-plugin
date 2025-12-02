@@ -12,6 +12,7 @@ import { convertElementToJsx } from "./jsx/jsx-generator";
 import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
 import { traverseAST } from "@frontend/ui/domain/transpiler/utils/ast-tree-utils";
 import { createUseStateHook } from "./react/hooks";
+import { VariantStyleMap } from "@frontend/ui/domain/transpiler/types/variant";
 
 /**
  * ComponentAST를 TypeScript/TSX 코드로 변환하는 구현체
@@ -26,8 +27,11 @@ export class CodeGenerator {
    * 1. AST를 TypeScript SourceFile로 변환
    * 2. SourceFile을 코드 문자열로 출력
    */
-  public generateComponentTSXWithTS(ast: AstTree): string {
-    const sourceFile = this.buildSourceFile(ast);
+  public generateComponentTSXWithTS(
+    ast: AstTree,
+    variantStyleMap: VariantStyleMap
+  ): string {
+    const sourceFile = this.buildSourceFile(ast, variantStyleMap);
     const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
     return printer.printFile(sourceFile);
   }
@@ -42,7 +46,10 @@ export class CodeGenerator {
    * - 컴포넌트 함수 선언 (function ComponentName(props: Props) { ... return <JSX>; })
    * - export default 문
    */
-  private buildSourceFile(ast: UnifiedNode): ts.SourceFile {
+  private buildSourceFile(
+    ast: UnifiedNode,
+    variantStyleMap: VariantStyleMap
+  ): ts.SourceFile {
     const componentName = ast.name || "GeneratedComponent";
     const reactImport = createReactImport(this.factory);
     const statements: ts.Statement[] = [reactImport];
@@ -57,7 +64,7 @@ export class CodeGenerator {
     statements.push(propsInterface);
 
     // Variant style 상수 생성 (baseStyle, dimension별 스타일 맵)
-    const variantStyleMap = ast.styleFeature?.variantStyleMap;
+
     const variantStyleConstants = createVariantStyleConstants(
       this.factory,
       ast.props,
