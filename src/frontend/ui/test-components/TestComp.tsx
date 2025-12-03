@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-
-import { transpileForDev } from "../domain/transpiler/pipeline/transpiler";
 import { compileReactComponent } from "../utils/component-compiler";
+import FigmaCompiler from "@frontend/ui/domain/compiler";
+import taptapButtonSample from "../../../../test/fixtures/button/taptapButton_sample.json";
 
 export function TestComp() {
   const [tsxCode, setTsxCode] = useState<string>("");
@@ -12,7 +12,7 @@ export function TestComp() {
   useEffect(() => {
     async function compile() {
       try {
-        const code = transpileForDev;
+        const code = new FigmaCompiler(taptapButtonSample);
         setTsxCode(code);
 
         // 컴파일해서 렌더링도 시도

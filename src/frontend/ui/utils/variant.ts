@@ -249,9 +249,9 @@ export default class VariantUtils {
         // 결과에서 제외
         delete result[variantTypeName];
       } else if (result[variantTypeName] === "SLOT") {
-        console.info(
-          `[VariantUtils] "${variantTypeName}" has structural differences - marked as SLOT for conditional rendering.`
-        );
+        // console.info(
+        //   `[VariantUtils] "${variantTypeName}" has structural differences - marked as SLOT for conditional rendering.`
+        // );
       }
     }
 
