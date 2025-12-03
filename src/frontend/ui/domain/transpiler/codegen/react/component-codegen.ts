@@ -83,19 +83,17 @@ export class CodeGenerator {
 
     this._testDebug(statements);
 
-    const componentFunction = this.createComponentFunction(
-      ast,
-      variantStyleMap
-    );
-    statements.push(componentFunction);
+    statements.push(this.createComponentFunction(ast, variantStyleMap));
 
     // export default 문 추가
-    const exportDefault = this.factory.createExportAssignment(
-      undefined,
-      false,
-      this.factory.createIdentifier(componentName)
+
+    statements.push(
+      this.factory.createExportAssignment(
+        undefined,
+        false,
+        this.factory.createIdentifier(componentName)
+      )
     );
-    statements.push(exportDefault);
 
     const sourceFile = this.factory.createSourceFile(
       statements,
