@@ -1,13 +1,64 @@
-import ts from "typescript";
-import type { PropIR, VariantStyleIR } from "../../../types";
+import ts, { factory, TypeAliasDeclaration } from "typescript";
+import type { PropIR, UnifiedNode } from "../../../types";
 import type { StyleTreeNode } from "../../../types/styles";
 import type { StyleTree } from "../../../types/figma-api";
 import { convertStyleToExpression } from "./style-converter";
 import { VariantStyleMap } from "@frontend/ui/domain/transpiler/types/variant";
 
-/**
- * Variant style 생성 관련 함수
- */
+export default class VariantGenerator {
+  private _ast: UnifiedNode;
+  private _variantStyleMap: VariantStyleMap;
+
+  public nodesTypeAliasDeclars: TypeAliasDeclaration[] = [];
+
+  constructor(ast: UnifiedNode, variantStyleMap: VariantStyleMap) {
+    this._ast = ast;
+    this._variantStyleMap = variantStyleMap;
+  }
+  /**
+   * variant 및 state 타입 종류 생성.
+   */
+  public createVariantType() {
+    const nodes = Object.entries(this._variantStyleMap)
+      .filter(([, styleData]) => styleData !== "SLOT")
+      .map(([variantName, styleData]) => {
+        // 내부 스타일 객체의 키들(예: "Small", "Large") 추출
+        const variantOptions = Object.keys(styleData);
+
+        // 각 옵션을 리터럴 타입 노드로 변환
+        const literalTypes = variantOptions.map((option) =>
+          factory.createLiteralTypeNode(factory.createStringLiteral(option))
+        );
+
+        // Union 타입 생성 ( "Small" | "Large" )
+        const unionType = factory.createUnionTypeNode(literalTypes);
+
+        // Type Alias 선언 생성 (export type Size = ...)
+        return factory.createTypeAliasDeclaration(
+          [factory.createModifier(ts.SyntaxKind.ExportKeyword)], // export 붙이기
+          factory.createIdentifier(variantName), // 객체의 Key("Size")를 타입 이름으로 사용
+          undefined, // 제네릭 없음
+          unionType
+        );
+      });
+
+    this.nodesTypeAliasDeclars = nodes;
+
+    return this;
+  }
+
+  public createGetVariantStyleFunction() {
+    return this;
+  }
+
+  public createStyledComponent() {
+    return this;
+  }
+
+  public getResults() {
+    return [...this.nodesTypeAliasDeclars];
+  }
+}
 
 /**
  * StyleTree를 평평한 스타일 객체로 변환
@@ -41,198 +92,136 @@ function createCssCall(
   );
 }
 
-// Helper: StyleTree -> Object Literal Expression
+// Helper: StyleTree -> Object Literal Expression (with children styles)
 function createStyleObject(
   factory: ts.NodeFactory,
   styleTree: StyleTreeNode | StyleTree | null | undefined
 ): ts.ObjectLiteralExpression {
   const styleObj = styleTreeToObject(styleTree);
-  return convertStyleToExpression(
+
+  // 1. 기본 스타일 변환
+  const styleExpression = convertStyleToExpression(
     factory,
     styleObj
   ) as ts.ObjectLiteralExpression;
+
+  // 2. 자식 스타일 처리 (Nested Selector)
+  const properties = [...styleExpression.properties];
+
+  if (
+    styleTree &&
+    "children" in styleTree &&
+    Array.isArray(styleTree.children)
+  ) {
+    const children = styleTree.children as StyleTree[];
+    for (const child of children) {
+      if (!child.cssStyle || Object.keys(child.cssStyle).length === 0) continue;
+
+      // 자식 스타일 객체 생성 (재귀적으로 자식의 자식도 처리됨)
+      const childStyleExpr = createStyleObject(factory, child);
+
+      // Nested Selector 생성: "& .node_1234"
+      const selector = `& .node_${child.id.replace(/[^a-zA-Z0-9]/g, "_")}`;
+
+      properties.push(
+        factory.createPropertyAssignment(
+          factory.createStringLiteral(selector),
+          childStyleExpr
+        )
+      );
+    }
+  }
+
+  return factory.createObjectLiteralExpression(properties, true);
+}
+
+/**
+ * Variant 이름 정규화 (예: "Left Icon" -> "leftIcon", "Size" -> "size")
+ */
+function toCamelCase(str: string): string {
+  return str
+    .replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
+    .replace(/^[A-Z]/, (c) => c.toLowerCase());
 }
 
 /**
  * Variant style 상수 생성
- * baseStyle과 dimension별 스타일 맵을 생성
  */
 export function createVariantStyleConstants(
   factory: ts.NodeFactory,
-  propsIR: PropIR[],
+  ast: UnifiedNode,
   variantStyleMap: VariantStyleMap
 ): ts.VariableStatement[] {
-  // [수정] .size 대신 Object.keys().length 사용
-  if (!variantStyleMap || Object.keys(variantStyleMap).length === 0) return [];
   const statements: ts.VariableStatement[] = [];
 
-  const variantProps = propsIR.filter((prop) => prop.type === "VARIANT");
-  // [수정] .has() 대신 in 연산자 사용
-  const hasStateStyle = ":state" in variantStyleMap;
+  for (const [key, variantStyles] of Object.entries(variantStyleMap)) {
+    // 1. SLOT은 스타일 상수를 생성하지 않음
+    if (variantStyles === "SLOT") continue;
 
-  if (variantProps.length === 0 && !hasStateStyle) return statements;
+    // 2. :state 처리 (개별 상수로 분리)
+    if (key === ":state") {
+      for (const [stateName, styleTree] of Object.entries(variantStyles)) {
+        // default는 baseStyle로 처리되므로 제외
+        if (stateName === "default") continue;
+        if (!styleTree) continue;
 
-  // 1. Base Style Calculation (기존 로직 유지)
-  let baseStyleObj: Record<string, any> = {};
+        // 예: const hoverStyles = css(...)
+        const variableName = `${toCamelCase(stateName)}Styles`;
 
-  if (variantProps.length > 0) {
-    // [수정] Map.values() 대신 Object.values() 사용 및 SLOT 필터링
-    // 모든 variant prop이 같은 baseStyle 공유한다고 가정하고, 첫 번째 유효한 객체를 찾음
-    const firstValidVariantStyle = Object.values(variantStyleMap).find(
-      (val) => val !== "SLOT" && typeof val === "object"
-    ) as any; // 타입 정의 불일치 회피를 위해 any 사용
-
-    if (firstValidVariantStyle?.baseStyle) {
-      baseStyleObj = styleTreeToObject(firstValidVariantStyle.baseStyle);
-    }
-
-    // 각 variant prop의 defaultValue에 해당하는 delta를 baseStyle에 합침
-    for (const variantProp of variantProps) {
-      // [수정] .get() 대신 객체 프로퍼티 접근
-      const variantStyle = variantStyleMap[variantProp.originalName];
-
-      // [수정] SLOT 체크 추가
-      if (!variantStyle || variantStyle === "SLOT") continue;
-
-      // defaultValue 확인
-      const defaultValue = variantProp.defaultValue;
-      if (defaultValue === undefined || defaultValue === null) {
-        continue;
+        statements.push(
+          factory.createVariableStatement(
+            undefined, // export modifier 없음 (파일 내부 const)
+            factory.createVariableDeclarationList(
+              [
+                factory.createVariableDeclaration(
+                  factory.createIdentifier(variableName),
+                  undefined,
+                  undefined,
+                  createCssCall(factory, createStyleObject(factory, styleTree))
+                ),
+              ],
+              ts.NodeFlags.Const
+            )
+          )
+        );
       }
-
-      // defaultValue를 문자열로 변환 (variantOptions는 문자열이므로)
-      const defaultValueStr = String(defaultValue);
-
-      // [수정] any 캐스팅으로 타입 에러 방지 (실제 런타임엔 variantStyles가 존재함)
-      const styleAny = variantStyle as any;
-
-      const deltaStyleTree = styleAny.variantStyles?.[defaultValueStr];
-      if (deltaStyleTree) {
-        const deltaStyleObj = styleTreeToObject(deltaStyleTree);
-        // baseStyle에 delta 합치기
-        baseStyleObj = { ...baseStyleObj, ...deltaStyleObj };
-      }
-    }
-  }
-
-  // [수정] const baseStyle = css({ ... });
-  const baseStyleExpr = convertStyleToExpression(factory, baseStyleObj);
-  const baseStyleConstant = factory.createVariableStatement(
-    undefined,
-    factory.createVariableDeclarationList(
-      [
-        factory.createVariableDeclaration(
-          factory.createIdentifier("baseStyle"),
-          undefined,
-          undefined,
-          createCssCall(factory, baseStyleExpr as ts.ObjectLiteralExpression) // css()로 감싸기
-        ),
-      ],
-      ts.NodeFlags.Const
-    )
-  );
-  statements.push(baseStyleConstant);
-
-  // 2. Dimension Styles (Size, etc.)
-  for (const variantProp of variantProps) {
-    // [수정] 객체 접근
-    const variantStyle = variantStyleMap[variantProp.originalName];
-    if (!variantStyle || variantStyle === "SLOT") continue;
-
-    const mapName = `${variantProp.normalizedName}Styles`;
-    const mapProperties: ts.PropertyAssignment[] = [];
-
-    // [수정] 타입 캐스팅
-    const styles = (variantStyle as any).variantStyles || {};
-
-    for (const [optionValue, deltaStyleTree] of Object.entries(styles) as [
-      string,
-      any,
-    ][]) {
-      const key = factory.createStringLiteral(optionValue);
-      // [수정] 값도 css({ ... }) 호출로 변환
-      const styleExpr = createStyleObject(factory, deltaStyleTree);
-      const cssCall = createCssCall(factory, styleExpr);
-
-      mapProperties.push(factory.createPropertyAssignment(key, cssCall));
+      continue;
     }
 
-    const styleMap = factory.createObjectLiteralExpression(mapProperties, true);
+    // 3. 일반 Variant 처리 (객체로 묶음)
+    // 예: const sizeStyles = { Medium: css(...), Large: css(...) }
+    const propName = toCamelCase(key);
+    const variableName = `${propName}Styles`;
+
+    const properties: ts.ObjectLiteralElementLike[] = [];
+
+    for (const [variantValue, styleTree] of Object.entries(variantStyles)) {
+      if (!styleTree) continue;
+
+      properties.push(
+        factory.createPropertyAssignment(
+          factory.createStringLiteral(variantValue), // Key: "Medium"
+          createCssCall(factory, createStyleObject(factory, styleTree)) // Value: css(...)
+        )
+      );
+    }
+
     statements.push(
       factory.createVariableStatement(
         undefined,
         factory.createVariableDeclarationList(
           [
             factory.createVariableDeclaration(
-              factory.createIdentifier(mapName),
+              factory.createIdentifier(variableName),
               undefined,
               undefined,
-              styleMap
+              factory.createObjectLiteralExpression(properties, true)
             ),
           ],
           ts.NodeFlags.Const
         )
       )
     );
-  }
-
-  // 3. State Styles (Pseudo-classes)
-  // [수정] 객체 접근
-  const stateVariantStyle = variantStyleMap[":state"];
-  if (stateVariantStyle && stateVariantStyle !== "SLOT") {
-    const stateKeyToPseudoClass: Record<string, string> = {
-      hover: "&:hover",
-      pressed: "&:active",
-      disabled: "&:disabled",
-      // focus 등 추가 가능
-    };
-
-    // [수정] 타입 캐스팅
-    const styles = (stateVariantStyle as any).variantStyles || {};
-
-    for (const [stateKey, deltaStyleTree] of Object.entries(styles) as [
-      string,
-      any,
-    ][]) {
-      if (stateKey === "default") continue; // Default는 baseStyle에 포함됨
-
-      const styleConstantName = `${stateKey}Styles`;
-      const styleExpr = createStyleObject(factory, deltaStyleTree);
-
-      const pseudoClass = stateKeyToPseudoClass[stateKey];
-      let finalExpr: ts.Expression = styleExpr;
-
-      // [핵심 수정] Pseudo-class가 있다면 객체를 한 번 더 감쌈
-      // 예: const hoverStyles = css({ "&:hover": { ...style } });
-      if (pseudoClass) {
-        finalExpr = factory.createObjectLiteralExpression(
-          [
-            factory.createPropertyAssignment(
-              factory.createStringLiteral(pseudoClass),
-              styleExpr
-            ),
-          ],
-          true
-        );
-      }
-
-      statements.push(
-        factory.createVariableStatement(
-          undefined,
-          factory.createVariableDeclarationList(
-            [
-              factory.createVariableDeclaration(
-                factory.createIdentifier(styleConstantName),
-                undefined,
-                undefined,
-                createCssCall(factory, finalExpr as ts.ObjectLiteralExpression)
-              ),
-            ],
-            ts.NodeFlags.Const
-          )
-        )
-      );
-    }
   }
 
   return statements;

@@ -6,7 +6,6 @@ import { ASTGenerator } from "./ast-generator";
 import { Prettifier } from "../../prettifier/Prettifier";
 import { TagMapper } from "./tag-mapper";
 import { buildStyleTree } from "../style/layoutTreeConverter";
-import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
 import { FigmaNodeData } from "../../types/figma-api";
 import { VariantStyleBuilder } from "../style/variant-style";
 import { createUnifiedNode, mergeVariantIntoUnified } from "./structure/merger";

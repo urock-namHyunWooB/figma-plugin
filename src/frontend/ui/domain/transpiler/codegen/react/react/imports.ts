@@ -71,3 +71,17 @@ export function createEmotionCssImport(
     factory.createStringLiteral("@emotion/css")
   );
 }
+
+export function createEmotionStyledImport(
+  factory: ts.NodeFactory
+): ts.ImportDeclaration {
+  return factory.createImportDeclaration(
+    undefined,
+    factory.createImportClause(
+      false,
+      factory.createIdentifier("styled"),
+      undefined
+    ),
+    factory.createStringLiteral("@emotion/styled")
+  );
+}

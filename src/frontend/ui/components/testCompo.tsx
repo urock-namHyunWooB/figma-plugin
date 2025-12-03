@@ -1,171 +1,163 @@
-import React from "react";
-export interface llProps {
-  variant?: "Size=Large, State=Disabled, Left Icon=False, Right Icon=False";
+/** @jsxImportSource @emotion/react */
+import { css } from "@emotion/react";
+import styled from "@emotion/styled";
+import React, { ReactNode } from "react";
+
+// --- Types ---
+type ButtonSize = "Large" | "Medium" | "Small";
+type ButtonState = "Default" | "Hover" | "Pressed" | "Disabled";
+
+interface PrimaryButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  size?: ButtonSize;
+  buttonState?: ButtonState; // 'state'는 HTML 속성과 충돌 가능성이 있어 buttonState로 명명
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
+  text?: string;
 }
-export function ll(
-  props: Size = Large,
-  State = Disabled,
-  LeftIcon = False,
-  RightIcon = FalseProps
-) {
-  const {
-    variant = "Size=Large, State=Disabled, Left Icon=False, Right Icon=False",
-  } = props;
+
+// --- Design Tokens (from JSON) ---
+const COLORS = {
+  white: "#FFFFFF",
+  primary300: "#B0EBEC", // Disabled state background from JSON
+  primary500: "#2D0830", // Default state (유추/임의 설정, 필요시 수정)
+  primary600: "#65DE64", // Hover state
+  primary700: "#DAABE5", // Pressed state
+};
+
+// --- Styles Mixins ---
+
+// 1. Size & Typography Styles
+const getSizeStyles = (size: ButtonSize) => {
+  switch (size) {
+    case "Large":
+      return css`
+        padding: 8px;
+        font-size: 16px;
+        line-height: 24px; // 150%
+        min-width: 90px; // From Figma "Min Width" layer
+        height: 40px;
+      `;
+    case "Medium":
+      return css`
+        padding: 7px 8px;
+        font-size: 14px;
+        line-height: 22px; // 157.143%
+        min-width: 82px; // From Figma "Min Width" layer
+        height: 36px;
+      `;
+    case "Small":
+      // JSON에는 없으나 Variant 옵션에 존재하므로 Medium을 기반으로 축소 추정
+      return css`
+        padding: 4px 8px;
+        font-size: 12px;
+        line-height: 20px;
+        min-width: 70px;
+        height: 32px;
+      `;
+    default:
+      return css``;
+  }
+};
+
+// 2. State Styles (Colors & Interaction)
+const getStateStyles = (state: ButtonState) => {
+  switch (state) {
+    case "Disabled":
+      return css`
+        background-color: ${COLORS.primary300};
+        color: ${COLORS.white};
+        cursor: not-allowed;
+        pointer-events: none; // 클릭 방지
+      `;
+    case "Hover":
+      return css`
+        background-color: ${COLORS.primary600}; // 예시 색상
+        color: ${COLORS.white};
+        cursor: pointer;
+      `;
+    case "Pressed":
+      return css`
+        background-color: ${COLORS.primary700}; // 예시 색상
+        color: ${COLORS.white};
+        cursor: pointer;
+      `;
+    case "Default":
+    default:
+      return css`
+        background-color: ${COLORS.primary300}; // JSON 예시가 Disabled(Primary/300)만 있어 기본값으로 설정
+        /* 실제 Default 색상이 있다면 여기를 변경하세요. 예: COLORS.primary500 */
+        color: ${COLORS.white};
+        cursor: pointer;
+        &:hover {
+          opacity: 0.9;
+        }
+      `;
+  }
+};
+
+// --- Styled Components ---
+
+const StyledButton = styled.button<{
+  sizeVariant: ButtonSize;
+  stateVariant: ButtonState;
+}>`
+  /* Base Layout */
+  display: inline-flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 4px; /* Icon과 Text 사이 간격 */
+
+  /* Borders & Radius */
+  border: none;
+  border-radius: 4px;
+
+  /* Typography Common */
+  font-family:
+    "PingFang SC",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+
+  /* Transition */
+  transition: all 0.2s ease-in-out;
+
+  /* Dynamic Styles */
+  ${({ sizeVariant }) => getSizeStyles(sizeVariant)}
+  ${({ stateVariant }) => getStateStyles(stateVariant)}
+`;
+
+export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
+  size = "Large",
+  buttonState = "Default",
+  leftIcon,
+  rightIcon,
+  text,
+  children,
+  ...props
+}) => {
+  // Figma 상 'Disabled' 상태가 주어졌을 때의 처리
+  const finalState = props.disabled ? "Disabled" : buttonState;
+
   return (
-    <div
-      id={
-        variant ===
-        "Size=Large, State=Disabled, Left Icon=False, Right Icon=False"
-          ? "15:12969"
-          : variant ===
-              "Size=Large, State=Disabled, Left Icon=True, Right Icon=False"
-            ? "15:12972"
-            : variant ===
-                "Size=Large, State=Disabled, Left Icon=False, Right Icon=True"
-              ? "15:12977"
-              : "15:12982"
-      }
-      name={
-        variant ===
-        "Size=Large, State=Disabled, Left Icon=False, Right Icon=False"
-          ? "Size=Large, State=Disabled, Left Icon=False, Right Icon=False"
-          : variant ===
-              "Size=Large, State=Disabled, Left Icon=True, Right Icon=False"
-            ? "Size=Large, State=Disabled, Left Icon=True, Right Icon=False"
-            : variant ===
-                "Size=Large, State=Disabled, Left Icon=False, Right Icon=True"
-              ? "Size=Large, State=Disabled, Left Icon=False, Right Icon=True"
-              : "Size=Medium, State=Disabled, Left Icon=False, Right Icon=False"
-      }
-      isMask={false}
-      style={
-        variant ===
-        "Size=Large, State=Disabled, Left Icon=False, Right Icon=False"
-          ? null
-          : variant ===
-              "Size=Large, State=Disabled, Left Icon=True, Right Icon=False"
-            ? null
-            : variant ===
-                "Size=Large, State=Disabled, Left Icon=False, Right Icon=True"
-              ? null
-              : null
-      }
-      visible={null}
-      x={null}
-      y={null}
-      width={null}
-      height={null}
+    <StyledButton
+      sizeVariant={size}
+      stateVariant={finalState}
+      disabled={finalState === "Disabled"}
+      {...props}
     >
-      {variant ===
-        "Size=Large, State=Disabled, Left Icon=False, Right Icon=False" && (
-        <div
-          id={
-            variant ===
-            "Size=Large, State=Disabled, Left Icon=False, Right Icon=False"
-              ? "15:12970"
-              : variant ===
-                  "Size=Large, State=Disabled, Left Icon=True, Right Icon=False"
-                ? "15:12973"
-                : variant ===
-                    "Size=Large, State=Disabled, Left Icon=False, Right Icon=True"
-                  ? "15:12978"
-                  : "15:12983"
-          }
-          name={"Min Width"}
-          isMask={false}
-          style={null}
-          visible={null}
-          x={null}
-          y={null}
-          width={null}
-          height={null}
-        ></div>
-      )}
-      {variant ===
-        "Size=Large, State=Disabled, Left Icon=False, Right Icon=True" && (
-        <div
-          id={"15:12979"}
-          name={"Frame 427318163"}
-          isMask={false}
-          style={null}
-        >
-          {variant ===
-            "Size=Large, State=Disabled, Left Icon=False, Right Icon=True" && (
-            <span
-              id={"15:12980"}
-              name={"Text"}
-              isMask={false}
-              style={null}
-            ></span>
-          )}
-          {variant ===
-            "Size=Large, State=Disabled, Left Icon=False, Right Icon=True" && (
-            <Plus id={"15:12981"} name={"Plus"} isMask={false} style={null}>
-              {variant ===
-                "Size=Large, State=Disabled, Left Icon=False, Right Icon=True" && (
-                <div
-                  id={"I15:12981;297:22915"}
-                  name={"Union"}
-                  isMask={false}
-                  style={null}
-                ></div>
-              )}
-            </Plus>
-          )}
-        </div>
-      )}
-      {variant ===
-        "Size=Large, State=Disabled, Left Icon=True, Right Icon=False" && (
-        <div
-          id={"15:12974"}
-          name={"Frame 427318163"}
-          isMask={false}
-          style={null}
-        >
-          {variant ===
-            "Size=Large, State=Disabled, Left Icon=True, Right Icon=False" && (
-            <Plus id={"15:12975"} name={"Plus"} isMask={false} style={null}>
-              {variant ===
-                "Size=Large, State=Disabled, Left Icon=True, Right Icon=False" && (
-                <div
-                  id={"I15:12975;297:22915"}
-                  name={"Union"}
-                  isMask={false}
-                  style={null}
-                ></div>
-              )}
-            </Plus>
-          )}
-          {variant ===
-            "Size=Large, State=Disabled, Left Icon=True, Right Icon=False" && (
-            <span
-              id={"15:12976"}
-              name={"Text"}
-              isMask={false}
-              style={null}
-            ></span>
-          )}
-        </div>
-      )}
-      {variant ===
-        "Size=Large, State=Disabled, Left Icon=False, Right Icon=False" && (
-        <span
-          id={
-            variant ===
-            "Size=Large, State=Disabled, Left Icon=False, Right Icon=False"
-              ? "15:12971"
-              : "15:12984"
-          }
-          name={"Text"}
-          isMask={false}
-          style={null}
-          visible={null}
-          x={null}
-          y={null}
-          width={null}
-          height={null}
-        ></span>
-      )}
-    </div>
+      {/* Left Icon Slot */}
+      {leftIcon && leftIcon}
+
+      {/* Text Content */}
+      <span>{children || text}</span>
+
+      {/* Right Icon Slot */}
+      {rightIcon && rightIcon}
+    </StyledButton>
   );
-}
+};

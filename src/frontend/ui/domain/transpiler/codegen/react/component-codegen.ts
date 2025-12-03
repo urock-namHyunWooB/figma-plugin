@@ -5,8 +5,11 @@ import {
   createReactImport,
   createUseStateImport,
   createEmotionCssImport,
+  createEmotionStyledImport,
 } from "./react/imports";
-import { createVariantStyleConstants } from "./style/variant-style-generator";
+import VariantGenerator, {
+  createVariantStyleConstants,
+} from "./style/variant-style-generator";
 import { createElementStyleConstants } from "./style/element-style-generator";
 import { convertElementToJsx } from "./jsx/jsx-generator";
 import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
@@ -53,27 +56,27 @@ export class CodeGenerator {
     variantStyleMap: VariantStyleMap
   ): ts.SourceFile {
     // const componentName = ast.name || "GeneratedComponent";
-    const componentName = "Button" || "GeneratedComponent";
-    const reactImport = createReactImport(this.factory);
-    const statements: ts.Statement[] = [reactImport];
+    const componentName = "Button";
 
-    const emotionCssImport = createEmotionCssImport(this.factory);
-    statements.push(emotionCssImport);
+    const statements: ts.Statement[] = [];
 
-    const useStateImport = createUseStateImport(this.factory);
-    statements.push(useStateImport);
-
-    const propsInterface = generatePropsInterface(props, componentName);
-    statements.push(propsInterface);
-
-    // Variant style 상수 생성 (baseStyle, dimension별 스타일 맵)
-
-    const variantStyleConstants = createVariantStyleConstants(
-      this.factory,
-      props,
-      variantStyleMap
+    statements.push(
+      createReactImport(this.factory),
+      createEmotionCssImport(this.factory),
+      createEmotionStyledImport(this.factory)
     );
-    statements.push(...variantStyleConstants);
+
+    statements.push(createUseStateImport(this.factory));
+
+    statements.push(generatePropsInterface(props, componentName));
+
+    statements.push(
+      ...new VariantGenerator(ast, variantStyleMap)
+        .createVariantType()
+        .createGetVariantStyleFunction()
+        .createStyledComponent()
+        .getResults()
+    );
 
     this._testDebug(statements);
 
@@ -83,8 +86,6 @@ export class CodeGenerator {
       ast
     );
     statements.push(...elementStyleConstants);
-
-    this._testDebug(statements);
 
     const componentFunction = this.createComponentFunction(
       ast,

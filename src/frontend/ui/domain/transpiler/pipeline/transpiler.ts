@@ -77,8 +77,6 @@ function TranspileForDev(spec: FigmaNodeData) {
     variantStyleMap!
   );
 
-  console.log(tsxCode);
-
   //요리하기
   // const prettyAST = new Prettifier().prettify(ast);
 
