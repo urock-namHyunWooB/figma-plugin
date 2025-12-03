@@ -9,7 +9,8 @@ export default class VariantGenerator {
   private _ast: UnifiedNode;
   private _variantStyleMap: VariantStyleMap;
 
-  public nodesTypeAliasDeclars: TypeAliasDeclaration[] = [];
+  public nodesTypeAliasDeclares: TypeAliasDeclaration[] = [];
+  public nodesVariantFunctionDeclares: ts.FunctionDeclaration[] = [];
 
   constructor(ast: UnifiedNode, variantStyleMap: VariantStyleMap) {
     this._ast = ast;
@@ -42,12 +43,60 @@ export default class VariantGenerator {
         );
       });
 
-    this.nodesTypeAliasDeclars = nodes;
+    this.nodesTypeAliasDeclares = nodes;
 
     return this;
   }
 
   public createGetVariantStyleFunction() {
+    const nodes = Object.entries(this._variantStyleMap)
+      .filter(
+        ([variantName, styleData]) =>
+          styleData !== "SLOT" && variantName !== ":state"
+      )
+      .map(([variantName]) => {
+        // 1. 함수 이름 생성: get{VariantName}Styles
+        const camelName = toCamelCase(variantName);
+        const pascalName =
+          camelName.charAt(0).toUpperCase() + camelName.slice(1);
+
+        const functionName = `get${pascalName}Styles`;
+        const styleMapName = `${camelName}Styles`;
+
+        return factory.createFunctionDeclaration(
+          [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+          undefined,
+          factory.createIdentifier(functionName),
+          undefined,
+          [
+            factory.createParameterDeclaration(
+              undefined,
+              undefined,
+              factory.createIdentifier("value"),
+              undefined,
+              factory.createTypeReferenceNode(
+                factory.createIdentifier(variantName)
+              ),
+              undefined
+            ),
+          ],
+          undefined,
+          factory.createBlock(
+            [
+              factory.createReturnStatement(
+                factory.createElementAccessExpression(
+                  factory.createIdentifier(styleMapName),
+                  factory.createIdentifier("value")
+                )
+              ),
+            ],
+            true
+          )
+        );
+      });
+
+    this.nodesVariantFunctionDeclares = nodes;
+
     return this;
   }
 
@@ -56,7 +105,10 @@ export default class VariantGenerator {
   }
 
   public getResults() {
-    return [...this.nodesTypeAliasDeclars];
+    return [
+      ...this.nodesTypeAliasDeclares,
+      ...this.nodesVariantFunctionDeclares,
+    ];
   }
 }
 
