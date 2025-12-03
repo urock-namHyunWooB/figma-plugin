@@ -20,7 +20,6 @@ export default class VariantUtils {
     });
 
     const result = this._baseUtil(componentHash, baseVariants, variantTypes);
-    console.log(result);
 
     return result;
   }

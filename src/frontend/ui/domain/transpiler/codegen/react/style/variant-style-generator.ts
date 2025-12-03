@@ -54,15 +54,49 @@ export default class VariantGenerator {
         ([variantName, styleData]) =>
           styleData !== "SLOT" && variantName !== ":state"
       )
-      .map(([variantName]) => {
+      .map(([variantName, styleData]) => {
         // 1. 함수 이름 생성: get{VariantName}Styles
         const camelName = toCamelCase(variantName);
         const pascalName =
           camelName.charAt(0).toUpperCase() + camelName.slice(1);
 
         const functionName = `get${pascalName}Styles`;
-        const styleMapName = `${camelName}Styles`;
+        const paramName = camelName;
 
+        // 2. Switch Case 생성
+        const cases: ts.CaseClause[] = [];
+
+        // styleData: { "Medium": StyleTree, "Large": StyleTree }
+        for (const [optionName, styleTree] of Object.entries(styleData)) {
+          if (!styleTree) continue;
+
+          // return css(...)
+          const returnStmt = factory.createReturnStatement(
+            createCssCall(factory, createStyleObject(factory, styleTree))
+          );
+
+          // case "Medium": return ...
+          cases.push(
+            factory.createCaseClause(factory.createStringLiteral(optionName), [
+              returnStmt,
+            ])
+          );
+        }
+
+        // default: return css``;
+        const defaultClause = factory.createDefaultClause([
+          factory.createReturnStatement(
+            createCssCall(
+              factory,
+              factory.createObjectLiteralExpression([], false)
+            )
+          ),
+        ]);
+
+        // 3. 함수 선언 생성
+        // export function getSizeStyles(size: Size) {
+        //   switch(size) { ... }
+        // }
         return factory.createFunctionDeclaration(
           [factory.createModifier(ts.SyntaxKind.ExportKeyword)],
           undefined,
@@ -72,7 +106,7 @@ export default class VariantGenerator {
             factory.createParameterDeclaration(
               undefined,
               undefined,
-              factory.createIdentifier("value"),
+              factory.createIdentifier(paramName),
               undefined,
               factory.createTypeReferenceNode(
                 factory.createIdentifier(variantName)
@@ -83,11 +117,9 @@ export default class VariantGenerator {
           undefined,
           factory.createBlock(
             [
-              factory.createReturnStatement(
-                factory.createElementAccessExpression(
-                  factory.createIdentifier(styleMapName),
-                  factory.createIdentifier("value")
-                )
+              factory.createSwitchStatement(
+                factory.createIdentifier(paramName),
+                factory.createCaseBlock([...cases, defaultClause])
               ),
             ],
             true

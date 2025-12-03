@@ -34,6 +34,7 @@ export class VariantStyleBuilder {
         }
       }
     });
+
     const variantPatterns = VariantUtils.extractVariantPatterns(
       variantsMaps,
       sharedBaseStyle.baseVariants
