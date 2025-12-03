@@ -17,12 +17,18 @@ export function createElementStyleConstants(
   function traverseUnified(node: UnifiedNode) {
     // 루트 노드는 제외 (variant style로 처리되므로)
     if (node.id !== rootNode.id) {
-      // UnifiedNode에는 styles 속성이 없으므로, props나 다른 곳에서 가져와야 함.
-      // 현재 타입 정의상 styles가 없으므로, any로 캐스팅하여 확인하거나
-      // 로직을 보완해야 함. 여기서는 일단 any로 캐스팅하여 styles가 혹시 있는지 확인.
-      const nodeAny = node as any;
-      if (nodeAny.styles && Object.keys(nodeAny.styles).length > 0) {
-        elementStyles.set(node.id, nodeAny.styles);
+      // UnifiedNode의 스타일은 props["style"]에 저장됨
+      // { "variant조합1": { display: "flex", ... }, "variant조합2": { ... } } 형태
+      const styleMap = node.props["style"] as
+        | Record<string, Record<string, string>>
+        | undefined;
+
+      if (styleMap) {
+        // 모든 variant에서 공통인 스타일만 추출 (교집합)
+        const commonStyle = extractCommonStyle(styleMap);
+        if (Object.keys(commonStyle).length > 0) {
+          elementStyles.set(node.id, commonStyle);
+        }
       }
     }
 
@@ -109,4 +115,33 @@ function createCssCall(
     undefined,
     [objectLiteral]
   );
+}
+
+/**
+ * 모든 variant 조합에서 공통인 스타일만 추출 (교집합)
+ */
+function extractCommonStyle(
+  styleMap: Record<string, Record<string, string>>
+): Record<string, string> {
+  const allStyles = Object.values(styleMap);
+
+  if (allStyles.length === 0) {
+    return {};
+  }
+
+  // 첫 번째 스타일을 기준으로 시작
+  const firstStyle = allStyles[0];
+  const commonStyle: Record<string, string> = {};
+
+  // 첫 번째 스타일의 각 속성에 대해
+  for (const [key, value] of Object.entries(firstStyle)) {
+    // 모든 variant에서 동일한 값을 가지는지 확인
+    const isCommon = allStyles.every((style) => style[key] === value);
+
+    if (isCommon) {
+      commonStyle[key] = value;
+    }
+  }
+
+  return commonStyle;
 }

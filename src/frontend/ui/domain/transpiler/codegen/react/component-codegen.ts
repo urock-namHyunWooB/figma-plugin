@@ -78,14 +78,10 @@ export class CodeGenerator {
         .getResults()
     );
 
-    this._testDebug(statements);
-
     // 자식 요소들의 스타일 상수 생성
-    const elementStyleConstants = createElementStyleConstants(
-      this.factory,
-      ast
-    );
-    statements.push(...elementStyleConstants);
+    statements.push(...createElementStyleConstants(this.factory, ast));
+
+    this._testDebug(statements);
 
     const componentFunction = this.createComponentFunction(
       ast,

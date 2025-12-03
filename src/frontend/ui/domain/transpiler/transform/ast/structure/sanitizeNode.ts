@@ -68,7 +68,7 @@ export function sanitizeNode(
     // Component Set이나 Instance는 내부를 파고들어야 함
     if ("children" in node && !isTerminal) {
       for (const child of node.children) {
-        const sanitizedChild = sanitizeNode(child);
+        const sanitizedChild = sanitizeNode(child, globalStyleMap);
         if (sanitizedChild) {
           vNode.children.push(sanitizedChild);
         }

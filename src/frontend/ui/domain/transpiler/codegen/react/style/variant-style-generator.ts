@@ -137,8 +137,6 @@ export default class VariantGenerator {
     // 1. AST에서 공통 base 스타일 추출
     const baseStyle = this.extractCommonBaseStyle();
 
-    console.log("baseStyle", baseStyle);
-
     // 2. 컴포넌트 이름 생성
     const componentName = "Component";
     const styledComponentName = `Styled${toPascalCase(componentName)}`;
