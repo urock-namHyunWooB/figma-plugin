@@ -84,6 +84,8 @@ export function traverseAST(
 ): void {
   const path = new ASTPath(node, parent ?? null, index ?? null);
 
+  debugger;
+
   // 역순으로 순회하여 안전하게 제거 가능
   // (뒤에서부터 제거하면 인덱스 변경이 앞쪽에 영향을 주지 않음)
   for (let i = node.children.length - 1; i >= 0; i--) {

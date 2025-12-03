@@ -52,7 +52,8 @@ export class CodeGenerator {
     props: PropIR[],
     variantStyleMap: VariantStyleMap
   ): ts.SourceFile {
-    const componentName = ast.name || "GeneratedComponent";
+    // const componentName = ast.name || "GeneratedComponent";
+    const componentName = "Button" || "GeneratedComponent";
     const reactImport = createReactImport(this.factory);
     const statements: ts.Statement[] = [reactImport];
 
@@ -74,12 +75,16 @@ export class CodeGenerator {
     );
     statements.push(...variantStyleConstants);
 
+    this._testDebug(statements);
+
     // 자식 요소들의 스타일 상수 생성
     const elementStyleConstants = createElementStyleConstants(
       this.factory,
       ast
     );
     statements.push(...elementStyleConstants);
+
+    this._testDebug(statements);
 
     const componentFunction = this.createComponentFunction(
       ast,
@@ -111,74 +116,22 @@ export class CodeGenerator {
    * 컴포넌트 함수 및 JSX 생성: function ComponentName(props: Props) { ... return <JSX>; }
    */
   private createComponentFunction(
-    ast: AstTree,
-    variantStyleMap?: Map<string, VariantStyleIR>
+    ast: UnifiedNode,
+    variantStyleMap: VariantStyleMap
   ): ts.FunctionDeclaration {
     const componentName = ast.name || "GeneratedComponent";
     const statements: ts.Statement[] = [];
+  }
 
-    // State hook 선언들 추가
-    // bindings에서 state id를 수집하고, 해당 id로 state 정보를 찾아서 hook 생성
-    const stateIds = new Set<string>();
-    traverseAST(ast.root, (path) => {
-      path.node.bindings.forEach((binding) => {
-        // state id는 "state-xxx" 형태
-        if (binding.id.startsWith("state-")) {
-          stateIds.add(binding.id);
-        }
-      });
-    });
-
-    // state 정보가 있으면 해당 state들에 대해 hook 생성
-    if (ast.states && ast.states.length > 0) {
-      const usedStates = ast.states.filter((state) => stateIds.has(state.id));
-      // 중복 제거 (같은 state가 여러 노드에서 사용될 수 있음)
-      const uniqueStates = Array.from(
-        new Map(usedStates.map((state) => [state.id, state])).values()
-      );
-
-      for (const state of uniqueStates) {
-        const stateHook = createUseStateHook(
-          this.factory,
-          state.name,
-          state.defaultValue
-        );
-        statements.push(stateHook);
-      }
-    }
-
-    // JSX return 문
-    // 루트 요소인 경우 variant style 머지 로직 적용
-    const jsxRoot = convertElementToJsx(
-      this.factory,
-      ast.root,
-      ast.props,
-      variantStyleMap,
-      true,
-      ast.states
+  private _testDebug(statements: ts.Statement[]) {
+    const sourceFile = this.factory.createSourceFile(
+      statements,
+      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+      ts.NodeFlags.None
     );
 
-    console.log("jsxRoot", jsxRoot);
-    const returnStatement = this.factory.createReturnStatement(jsxRoot);
-    statements.push(returnStatement);
+    const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
 
-    const functionBody = this.factory.createBlock(statements, true);
-
-    // Props 파라미터 생성
-    const parameters = createPropsParameter(
-      this.factory,
-      componentName,
-      ast.props
-    );
-
-    return this.factory.createFunctionDeclaration(
-      undefined, // export 키워드 제거
-      undefined,
-      this.factory.createIdentifier(componentName),
-      undefined,
-      parameters,
-      undefined, // 반환 타입은 추론
-      functionBody
-    );
+    console.log(printer.printFile(sourceFile));
   }
 }
