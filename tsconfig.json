@@ -13,7 +13,9 @@
       "@backend": ["./src/backend"],
       "@backend/*": ["./src/backend/*"],
       "@frontend/ui": ["./src/frontend/ui"],
-      "@frontend/ui/*": ["./src/frontend/ui/*"]
+      "@frontend/ui/*": ["./src/frontend/ui/*"],
+      "@compiler": ["./src/frontend/ui/domain/compiler"],
+      "@compiler/*": ["./src/frontend/ui/domain/compiler/*"]
     },
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true

@@ -67,7 +67,7 @@ export interface FigmaNodeData {
     value: string;
   }[];
   info: FigmaRestApiResponse;
-  styleTree: StyleTree | null;
+  styleTree: StyleTree;
 }
 
 /**

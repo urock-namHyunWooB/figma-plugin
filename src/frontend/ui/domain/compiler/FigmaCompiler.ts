@@ -1,11 +1,14 @@
 import Engine from "./core/Engine";
-import { FigmaNodeData } from "./type";
+import SpecDataManager from "./manager/SpecDataManager";
+import { FigmaNodeData } from "./types/baseType";
 
 export class FigmaCompiler {
+  private SpecDataManager: SpecDataManager;
   private Engine: Engine;
 
   constructor(spec: FigmaNodeData) {
-    this.Engine = new Engine(spec);
+    const specDataManager = (this.SpecDataManager = new SpecDataManager(spec));
+    this.Engine = new Engine(specDataManager.getRenderTree());
   }
 }
 

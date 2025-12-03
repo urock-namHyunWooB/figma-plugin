@@ -3,15 +3,16 @@ import { defineConfig } from "vite";
 import { viteSingleFile } from "vite-plugin-singlefile";
 import path from "path";
 import tsconfigPaths from "vite-tsconfig-paths";
-import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  plugins: [react(), viteSingleFile(), tsconfigPaths()],
+  plugins: [viteSingleFile(), tsconfigPaths()],
   root: path.resolve(__dirname, "src/frontend/ui"),
+
   resolve: {
     alias: {
       "@backend": path.resolve(__dirname, "src/backend"),
       "@frontend/ui": path.resolve(__dirname, "src/frontend/ui"),
+      "@compiler": path.resolve(__dirname, "src/frontend/ui/domain/compiler"),
     },
   },
   build: {

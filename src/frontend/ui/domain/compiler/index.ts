@@ -1,4 +1,5 @@
-export type * from "./type";
+export type * from "./types/baseType";
+export type * from "./types/customType";
 
 import FigmaCompiler from "./FigmaCompiler";
 

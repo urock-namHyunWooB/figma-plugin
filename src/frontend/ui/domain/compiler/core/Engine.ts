@@ -1,8 +1,8 @@
-import { FigmaNodeData } from "../type";
+import { RenderTree } from "@compiler";
 
 class Engine {
-  constructor(spec: FigmaNodeData) {
-    console.log(spec);
+  constructor(renderTree: RenderTree) {
+    console.log(renderTree);
   }
 }
 
