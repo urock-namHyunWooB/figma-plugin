@@ -119,7 +119,7 @@ export class CodeGenerator {
   private createComponentFunction(
     ast: UnifiedNode,
     variantStyleMap: VariantStyleMap
-  ): ts.FunctionDeclaration {
+  ) {
     const componentName = ast.name || "GeneratedComponent";
     const statements: ts.Statement[] = [];
   }

@@ -11,6 +11,7 @@ export default class VariantGenerator {
 
   public nodesTypeAliasDeclares: TypeAliasDeclaration[] = [];
   public nodesVariantFunctionDeclares: ts.FunctionDeclaration[] = [];
+  public nodeStyledComponentDeclare: ts.VariableStatement | null = null;
 
   constructor(ast: UnifiedNode, variantStyleMap: VariantStyleMap) {
     this._ast = ast;
@@ -133,14 +134,181 @@ export default class VariantGenerator {
   }
 
   public createStyledComponent() {
+    // 1. AST에서 공통 base 스타일 추출
+    const baseStyle = this.extractCommonBaseStyle();
+
+    console.log("baseStyle", baseStyle);
+
+    // 2. 컴포넌트 이름 생성
+    const componentName = "Component";
+    const styledComponentName = `Styled${toPascalCase(componentName)}`;
+
+    // 3. Variant props 수집 (SLOT 제외, :state 제외)
+    const variantProps = Object.entries(this._variantStyleMap)
+      .filter(([key, value]) => value !== "SLOT" && key !== ":state")
+      .map(([variantName]) => ({
+        propName: `${toCamelCase(variantName)}Variant`,
+        typeName: variantName,
+      }));
+
+    // 4. Generic 타입 파라미터 생성: { sizeVariant: Size; stateVariant: State; }
+    const typeProperties = variantProps.map(({ propName, typeName }) =>
+      factory.createPropertySignature(
+        undefined,
+        factory.createIdentifier(propName),
+        undefined,
+        factory.createTypeReferenceNode(factory.createIdentifier(typeName))
+      )
+    );
+
+    const genericType = factory.createTypeLiteralNode(typeProperties);
+
+    // 5. Base 스타일을 CSS 문자열로 변환
+    const baseCssString = objectToCssString(baseStyle);
+
+    // 6. Variant interpolation 생성
+    // ${({ sizeVariant }) => getSizeStyles(sizeVariant)}
+    const interpolations = variantProps.map(({ propName, typeName }) => {
+      const camelName = toCamelCase(typeName);
+      const pascalName = camelName.charAt(0).toUpperCase() + camelName.slice(1);
+      const functionName = `get${pascalName}Styles`;
+
+      // Arrow function: ({ propName }) => getFunctionName(propName)
+      return factory.createArrowFunction(
+        undefined,
+        undefined,
+        [
+          factory.createParameterDeclaration(
+            undefined,
+            undefined,
+            factory.createObjectBindingPattern([
+              factory.createBindingElement(
+                undefined,
+                undefined,
+                factory.createIdentifier(propName),
+                undefined
+              ),
+            ]),
+            undefined,
+            undefined,
+            undefined
+          ),
+        ],
+        undefined,
+        factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+        factory.createCallExpression(
+          factory.createIdentifier(functionName),
+          undefined,
+          [factory.createIdentifier(propName)]
+        )
+      );
+    });
+
+    // 7. Template Literal 생성
+    let templateExpression: ts.TemplateLiteral;
+
+    if (interpolations.length === 0) {
+      // interpolation이 없으면 NoSubstitutionTemplateLiteral
+      templateExpression = factory.createNoSubstitutionTemplateLiteral(
+        baseCssString,
+        baseCssString
+      );
+    } else {
+      // interpolation이 있으면 TemplateExpression
+      const spans: ts.TemplateSpan[] = interpolations.map((arrowFn, index) => {
+        const isLast = index === interpolations.length - 1;
+        const templatePart = isLast
+          ? factory.createTemplateTail("\n", "\n")
+          : factory.createTemplateMiddle("\n  ", "\n  ");
+
+        return factory.createTemplateSpan(arrowFn, templatePart);
+      });
+
+      templateExpression = factory.createTemplateExpression(
+        factory.createTemplateHead(
+          baseCssString + "\n\n  /* Dynamic Styles */\n  ",
+          baseCssString + "\n\n  /* Dynamic Styles */\n  "
+        ),
+        spans
+      );
+    }
+
+    // 8. Tagged Template Expression 생성: styled.button<{...}>`...`
+    const styledAccess = factory.createPropertyAccessExpression(
+      factory.createIdentifier("styled"),
+      factory.createIdentifier("button") // TODO: HTML 태그 결정 로직 추가
+    );
+
+    const taggedTemplate = factory.createTaggedTemplateExpression(
+      factory.createExpressionWithTypeArguments(styledAccess, [genericType]),
+      undefined,
+      templateExpression
+    );
+
+    // 9. const StyledButton = styled.button<{...}>`...`
+    this.nodeStyledComponentDeclare = factory.createVariableStatement(
+      undefined,
+      factory.createVariableDeclarationList(
+        [
+          factory.createVariableDeclaration(
+            factory.createIdentifier(styledComponentName),
+            undefined,
+            undefined,
+            taggedTemplate
+          ),
+        ],
+        ts.NodeFlags.Const
+      )
+    );
+
     return this;
   }
 
+  /**
+   * AST의 모든 variant 조합에서 공통인 스타일만 추출 (교집합)
+   */
+  private extractCommonBaseStyle(): Record<string, string> {
+    const styleMap = this._ast.props["style"] as
+      | Record<string, Record<string, string>>
+      | undefined;
+
+    if (!styleMap) {
+      return {};
+    }
+
+    const allStyles = Object.values(styleMap);
+    if (allStyles.length === 0) {
+      return {};
+    }
+
+    // 첫 번째 스타일을 기준으로 시작
+    const firstStyle = allStyles[0];
+    const commonStyle: Record<string, string> = {};
+
+    // 첫 번째 스타일의 각 속성에 대해
+    for (const [key, value] of Object.entries(firstStyle)) {
+      // 모든 variant에서 동일한 값을 가지는지 확인
+      const isCommon = allStyles.every((style) => style[key] === value);
+
+      if (isCommon) {
+        commonStyle[key] = value;
+      }
+    }
+
+    return commonStyle;
+  }
+
   public getResults() {
-    return [
+    const results: ts.Statement[] = [
       ...this.nodesTypeAliasDeclares,
       ...this.nodesVariantFunctionDeclares,
     ];
+
+    if (this.nodeStyledComponentDeclare) {
+      results.push(this.nodeStyledComponentDeclare);
+    }
+
+    return results;
   }
 }
 
@@ -226,6 +394,29 @@ function toCamelCase(str: string): string {
   return str
     .replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
     .replace(/^[A-Z]/, (c) => c.toLowerCase());
+}
+
+/**
+ * PascalCase 변환 (예: "left icon" -> "LeftIcon", "size" -> "Size")
+ */
+function toPascalCase(str: string): string {
+  return str
+    .replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
+    .replace(/^[a-z]/, (c) => c.toUpperCase());
+}
+
+/**
+ * 스타일 객체를 CSS 문자열로 변환
+ * { display: "flex", "flex-direction": "row" } -> "display: flex;\n  flex-direction: row;"
+ */
+function objectToCssString(styleObj: Record<string, string>): string {
+  const lines = Object.entries(styleObj).map(([key, value]) => {
+    // camelCase를 kebab-case로 변환
+    const kebabKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+    return `${kebabKey}: ${value};`;
+  });
+
+  return lines.length > 0 ? "\n  " + lines.join("\n  ") + "\n" : "";
 }
 
 /**
