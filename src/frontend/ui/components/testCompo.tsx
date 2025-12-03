@@ -46,15 +46,6 @@ const getSizeStyles = (size: ButtonSize) => {
         min-width: 82px; // From Figma "Min Width" layer
         height: 36px;
       `;
-    case "Small":
-      // JSON에는 없으나 Variant 옵션에 존재하므로 Medium을 기반으로 축소 추정
-      return css`
-        padding: 4px 8px;
-        font-size: 12px;
-        line-height: 20px;
-        min-width: 70px;
-        height: 32px;
-      `;
     default:
       return css``;
   }
