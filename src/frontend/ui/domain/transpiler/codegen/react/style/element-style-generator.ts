@@ -19,9 +19,7 @@ export function createElementStyleConstants(
     if (node.id !== rootNode.id) {
       // UnifiedNode의 스타일은 props["style"]에 저장됨
       // { "variant조합1": { display: "flex", ... }, "variant조합2": { ... } } 형태
-      const styleMap = node.props["style"] as
-        | Record<string, Record<string, string>>
-        | undefined;
+      const styleMap = node.props["style"];
 
       if (styleMap) {
         // 모든 variant에서 공통인 스타일만 추출 (교집합)

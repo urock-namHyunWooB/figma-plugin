@@ -1,11 +1,9 @@
 import type {
   BindingModel,
-  ComponentAST,
-  ElementASTNode,
   PropIR,
+  UnifiedNode,
   VariantStyleIR,
 } from "../../types";
-import type { ComponentSetNodeSpec } from "@backend/managers/SpecManager";
 import { StyleTreeNode } from "@frontend/ui/domain/transpiler/types/styles";
 import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
 
@@ -17,12 +15,15 @@ export interface IPrettifierStrategy {
   /**
    * 노드를 prettify 처리
    */
-  prettifyNode(ast: AstTree): AstTree;
+  prettifyNode(
+    ast: UnifiedNode,
+    props: PropIR[]
+  ): { unifiedNode: UnifiedNode; props: PropIR[] };
 
   /**
    * 이 전략이 적용 가능한지 확인
    */
-  canHandle(ast: AstTree): boolean;
+  canHandle(ast: UnifiedNode): boolean;
 }
 
 /**

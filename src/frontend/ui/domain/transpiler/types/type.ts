@@ -46,9 +46,7 @@ export interface UnifiedNode {
   type: SupportedType;
   name: string;
 
-  // 핵심: 속성별로 어떤 Variant에서 어떤 값을 가지는지 기록
-  // 예: { "fills": { "Default": Blue, "Hover": Red } }
-  props: Record<string, Record<string, any>>;
+  props: NodeAttributes;
 
   // 핵심: 이 노드가 보이는 Variant 목록
   // 예: Set(["Default", "Hover"]) -> "Active"에는 없음

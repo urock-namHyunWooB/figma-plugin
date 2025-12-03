@@ -1,4 +1,9 @@
-import type { ComponentAST, ElementASTNode, VariantStyleIR } from "../../types";
+import type {
+  ComponentAST,
+  ElementASTNode,
+  PropIR,
+  VariantStyleIR,
+} from "../../types";
 import { traverseAST } from "../../utils/ast-tree-utils";
 
 import { DefaultPrettifierStrategy } from "./DefaultPrettifierStrategy";
@@ -16,7 +21,7 @@ export class ButtonPrettifierStrategy extends DefaultPrettifierStrategy {
 
   public canHandle(ast: AstTree): boolean {
     // 기본 버튼 추론
-    if (!isButtonLike(ast.root)) {
+    if (!isButtonLike(ast)) {
       return false;
     }
 
@@ -43,16 +48,12 @@ export class ButtonPrettifierStrategy extends DefaultPrettifierStrategy {
     return true;
   }
 
-  public prettifyNode(ast: AstTree) {
-    super.normalizeText(ast);
-    super.convertKind(ast);
-    super.convertBooleanProp(ast);
+  public prettifyNode(ast: AstTree, props: PropIR[]) {
     super.deleteMargin(ast);
     super.normalizeNodes(ast);
-    super.normalizeStyles(ast);
-    ast.root.tag = "button";
+    // ast.root.tag = "button";
 
-    delete ast.styleFeature.baseStyle?.style.width;
+    // delete ast.styleFeature.baseStyle?.style.width;
 
     this.transformStateToIsDisabled(ast);
 
@@ -64,7 +65,7 @@ export class ButtonPrettifierStrategy extends DefaultPrettifierStrategy {
 
     this.bindPropsToNodes(ast);
 
-    return ast;
+    return {};
   }
 
   /**
@@ -170,11 +171,10 @@ export class ButtonPrettifierStrategy extends DefaultPrettifierStrategy {
 
   private bindPropsToAttrs(ast: AstTree): void {}
 
-  private normalizeProps(ast: AstTree): void {
+  private normalizeProps(ast: AstTree, props: PropIR[]): void {
     /**
      * prop에 text 및 label : string 형태가 없다면 prop에 text: string 형태를 추가한다.
      */
-    const props = ast.props;
 
     // text 또는 label prop이 있는지 확인 (TEXT 타입)
     const hasTextOrLabelProp = props.some(

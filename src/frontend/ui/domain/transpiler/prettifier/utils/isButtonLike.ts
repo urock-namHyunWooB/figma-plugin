@@ -1,9 +1,9 @@
-import { ElementASTNode } from "../../types";
+import { ElementASTNode, UnifiedNode } from "../../types";
 import { findNodesByPredicate } from "../../utils/ast-tree-utils";
 
-export function isButtonLike(node: ElementASTNode): boolean {
+export function isButtonLike(node: UnifiedNode): boolean {
   // 1) Figma 타입 기준: FRAME/RECTANGLE/COMPONENT/INSTANCE만 허용
-  const t = node.originalType;
+  const t = node.type;
   if (
     t !== "FRAME" &&
     t !== "RECTANGLE" &&

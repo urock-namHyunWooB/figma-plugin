@@ -1,5 +1,5 @@
 import type { ElementBindingModel } from "./binding";
-import type { PropIR } from "@frontend/ui/domain/transpiler";
+import type { PropIR, UnifiedNode } from "@frontend/ui/domain/transpiler";
 import { PrettifierContext } from "@frontend/ui/domain/transpiler/prettifier/strategies/IPrettifierStrategy";
 import type { StyleTreeNode } from "./styles";
 import type { BaseStyleProperties } from "@backend";
@@ -32,16 +32,7 @@ export interface ElementASTNode extends BaseASTNode {
   }>;
 }
 
-export interface AstTree {
-  name: string;
-  nodeTree: SceneNode;
-  style: {
-    baseStyle: BaseStyleTree | null;
-    variantStyleMap: VariantStyleMap | null;
-    styleTree: StyleTree | null;
-  };
-  structure: AnalyzedStructureTree;
-}
+export type AstTree = UnifiedNode;
 
 export interface ComponentAST {
   kind: "Component";

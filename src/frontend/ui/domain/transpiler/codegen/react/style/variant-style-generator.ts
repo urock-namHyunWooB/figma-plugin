@@ -266,9 +266,7 @@ export default class VariantGenerator {
    * AST의 모든 variant 조합에서 공통인 스타일만 추출 (교집합)
    */
   private extractCommonBaseStyle(): Record<string, string> {
-    const styleMap = this._ast.props["style"] as
-      | Record<string, Record<string, string>>
-      | undefined;
+    const styleMap = this._ast.props["style"];
 
     if (!styleMap) {
       return {};

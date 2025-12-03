@@ -70,17 +70,21 @@ function TranspileForDev(spec: FigmaNodeData) {
     }
   });
 
+  //요리하기
+  const { unifiedNode, props: props2 } = new Prettifier().prettify(
+    unifiedAST,
+    props
+  );
+
+  debugger;
   const codeGenerator = new CodeGenerator();
   const tsxCode = codeGenerator.generateComponentTSXWithTS(
-    unifiedAST,
-    props,
+    unifiedNode,
+    props2,
     variantStyleMap!
   );
 
-  //요리하기
-  // const prettyAST = new Prettifier().prettify(ast);
-
-  return 1;
+  return tsxCode;
 }
 
 export const transpileForDev = TranspileForDev(taptapButtonSample as any);
