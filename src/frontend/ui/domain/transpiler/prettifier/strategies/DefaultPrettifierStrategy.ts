@@ -2,13 +2,11 @@ import type { IPrettifierStrategy } from "./IPrettifierStrategy";
 import { StyleCleaner } from "../cleaners/StyleCleaner";
 import { NodeRemover } from "../cleaners/NodeRemover";
 import { PropsCleaner } from "@frontend/ui/domain/transpiler/prettifier/cleaners/PropsCleaner";
-import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
-
 import {
   traverseUnifiedNode,
   UnifiedNodePath,
 } from "@frontend/ui/domain/transpiler/utils/ast-tree-utils";
-import { PropIR } from "@frontend/ui/domain/transpiler";
+import { PropIR, UnifiedNode } from "@frontend/ui/domain/transpiler";
 
 /**
  * 기본 prettify 전략 구현
@@ -19,12 +17,15 @@ export class DefaultPrettifierStrategy implements IPrettifierStrategy {
   private nodeRemover = new NodeRemover();
   private propsCleaner = new PropsCleaner();
 
-  public canHandle(_ast: AstTree): boolean {
+  public canHandle(_ast: UnifiedNode): boolean {
     // 기본 전략은 항상 적용 가능
     return true;
   }
 
-  public prettifyNode(ast: AstTree, props: PropIR[]) {
+  public prettifyNode(
+    ast: UnifiedNode,
+    props: PropIR[]
+  ): { unifiedNode: UnifiedNode; props: PropIR[] } {
     const cleanedProps = this.propsCleaner.clean(props);
 
     this.deleteMargin(ast);
@@ -35,13 +36,21 @@ export class DefaultPrettifierStrategy implements IPrettifierStrategy {
     };
   }
 
-  protected normalizeNodes(ast: AstTree) {
+  protected normalizeNodes(ast: UnifiedNode) {
     /**
      * 불필요한 태그 제거
      */
-    traverseUnifiedNode(ast, (path) => {
-      if (path.node.props.style?.height === 0) {
-        path.remove();
+    traverseUnifiedNode(ast, (path: UnifiedNodePath) => {
+      const styleMap = path.node.props["style"];
+
+      if (styleMap) {
+        // 모든 variant에서 height가 0인지 확인
+        const allHeightZero = Object.values(styleMap).every(
+          (style) => style?.height === 0
+        );
+        if (allHeightZero) {
+          path.remove();
+        }
       }
     });
   }
@@ -51,13 +60,22 @@ export class DefaultPrettifierStrategy implements IPrettifierStrategy {
    * true, false 일때 ComponentStructure의 노드 개수가 바뀐다면 Component 타입으로 변경된다.
    */
 
-  protected deleteMargin(ast: AstTree): void {
+  protected deleteMargin(ast: UnifiedNode): void {
     /**
      * 모든 margin은 지운다.
      */
+    traverseUnifiedNode(ast, (path: UnifiedNodePath) => {
+      const styleMap = path.node.props["style"] as
+        | Record<string, Record<string, any>>
+        | undefined;
 
-    traverseUnifiedNode(ast, (path) => {
-      delete path.node.props.style.margin;
+      if (styleMap) {
+        for (const style of Object.values(styleMap)) {
+          if (style) {
+            delete style.margin;
+          }
+        }
+      }
     });
   }
 }

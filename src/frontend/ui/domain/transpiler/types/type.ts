@@ -20,7 +20,7 @@ export interface NodeAttributes {
   width: number;
   height: number;
 
-  style: Record<string, string | number>;
+  style: Record<string, string | number | object>;
 
   // Identity & Meta
   imageHash?: string;

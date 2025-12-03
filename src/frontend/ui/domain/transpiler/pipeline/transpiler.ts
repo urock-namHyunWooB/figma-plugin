@@ -76,7 +76,6 @@ function TranspileForDev(spec: FigmaNodeData) {
     props
   );
 
-  debugger;
   const codeGenerator = new CodeGenerator();
   const tsxCode = codeGenerator.generateComponentTSXWithTS(
     unifiedNode,

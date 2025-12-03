@@ -1,5 +1,5 @@
-import { ElementASTNode, UnifiedNode } from "../../types";
-import { findNodesByPredicate } from "../../utils/ast-tree-utils";
+import { UnifiedNode } from "../../types";
+import { findUnifiedNodesByPredicate } from "../../utils/ast-tree-utils";
 
 export function isButtonLike(node: UnifiedNode): boolean {
   // 1) Figma 타입 기준: FRAME/RECTANGLE/COMPONENT/INSTANCE만 허용
@@ -13,18 +13,25 @@ export function isButtonLike(node: UnifiedNode): boolean {
     return false;
   }
 
-  // 2) 높이 체크: 100px 이하
-  const height = node.figmaStyles?.height;
-  if (height !== undefined && height > 100) {
-    return false;
+  // 2) 높이 체크: UnifiedNode.props.style에서 height 확인
+  const styleMap = node.props["style"] as
+    | Record<string, Record<string, any>>
+    | undefined;
+  if (styleMap) {
+    const firstStyle = Object.values(styleMap)[0];
+    const height =
+      firstStyle?.height !== undefined
+        ? parseFloat(String(firstStyle.height))
+        : undefined;
+    if (height !== undefined && height > 100) {
+      return false;
+    }
   }
 
   // 3) 재귀적으로 모든 자식 요소를 탐색하여 TEXT 노드가 최소 1개 있어야 함
-  const textNodes = findNodesByPredicate(
+  const textNodes = findUnifiedNodesByPredicate(
     node,
-    (child) =>
-      child.originalType === "TEXT" &&
-      !!(child.textContent && child.textContent.trim())
+    (child) => child.type === "TEXT"
   );
   const hasTextChild = textNodes.length > 0;
   if (!hasTextChild) return false;
@@ -43,12 +50,12 @@ export function isButtonLike(node: UnifiedNode): boolean {
 
   // 5) 구조 패턴 체크: TEXT + 아이콘 조합 (향후 더 정교한 추론을 위해 계산)
   const _hasIconChild =
-    findNodesByPredicate(
+    findUnifiedNodesByPredicate(
       node,
       (child) =>
-        (child.originalType === "VECTOR" ||
-          child.originalType === "INSTANCE" ||
-          child.originalType === "COMPONENT") &&
+        (child.type === "VECTOR" ||
+          child.type === "INSTANCE" ||
+          child.type === "COMPONENT") &&
         child.name.toLowerCase().includes("icon")
     ).length > 0;
 
