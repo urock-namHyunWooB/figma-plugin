@@ -13,6 +13,7 @@ export function TestComp() {
     async function compile() {
       try {
         const code = new FigmaCompiler(taptapButtonSample);
+        return;
         setTsxCode(code);
 
         // 컴파일해서 렌더링도 시도

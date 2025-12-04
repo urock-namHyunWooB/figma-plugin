@@ -33,7 +33,6 @@ const getSizeStyles = (size: ButtonSize) => {
     case "Large":
       return css`
         padding: 8px;
-
         font-size: 16px;
         line-height: 24px; // 150%
         min-width: 90px; // From Figma "Min Width" layer
