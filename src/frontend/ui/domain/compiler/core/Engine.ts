@@ -1,5 +1,5 @@
 import FigmaCompiler, { RenderTree } from "@compiler";
-import ComponentSetCompiler from "@compiler/core/ComponentSetCompiler";
+import ComponentSetCompiler from "@compiler/core/componentSetNode/ComponentSetCompiler";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 
 class Engine {
@@ -13,8 +13,6 @@ class Engine {
         specManager,
         new NodeMatcher(specManager)
       );
-
-      console.log(componentSetCompiler.superTree);
     }
   }
 }

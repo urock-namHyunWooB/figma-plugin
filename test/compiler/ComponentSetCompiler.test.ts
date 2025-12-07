@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import taptapButtonSampleMockData from "../fixtures/button/taptapButton_sample.json";
-import ComponentSetCompiler from "@compiler/core/ComponentSetCompiler";
+import ComponentSetCompiler from "@compiler/core/componentSetNode/ComponentSetCompiler";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import { SuperTreeNode } from "@compiler";

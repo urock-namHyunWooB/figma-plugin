@@ -1,27 +1,15 @@
-import { RenderTree } from "@compiler";
+import { RenderTree, SuperTreeNode } from "@compiler";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
-import { toCamelCase } from "@compiler/utils/normalizeString";
-import { getNodesAtDepth, traverseBFS } from "@compiler/utils/traverse";
 import NodeMatcher from "@compiler/core/NodeMatcher";
+import { getNodesAtDepth, traverseBFS } from "@compiler/utils/traverse";
 
-type PropsDef = Record<string, any>;
-
-type SuperTreeNode = {
-  id: string;
-  type: string;
-  name: string;
-  parent: SuperTreeNode | null;
-  children: (SuperTreeNode | undefined)[];
-};
-
-class ComponentSetCompiler {
-  public readonly superTree: SuperTreeNode;
-
+//TODO 구조에 따라서 슈퍼트리, 슬롯 + 레이아웃 전략을 한다.
+class CreateSuperTree {
   private renderTree: RenderTree;
   private specDataManager: SpecDataManager;
   private matcher: NodeMatcher;
 
-  private propsDef: PropsDef;
+  private superTree: SuperTreeNode;
 
   constructor(
     renderTree: RenderTree,
@@ -32,33 +20,12 @@ class ComponentSetCompiler {
     this.specDataManager = specDataManager;
     this.matcher = matcher;
 
-    this.propsDef = this.extractPropsDef();
-    //TODO 구조에 따라서 슈퍼트리, 슬롯 + 레이아웃 전략을 한다.
-
     this.superTree = this.createSuperTree();
   }
 
-  private extractPropsDef() {
-    const props = {} as PropsDef;
-
-    const nodeData = this.specDataManager.getSpecById(
-      this.renderTree.id
-    ) as ComponentSetNode;
-
-    const componentPropertyDefinitions = nodeData.componentPropertyDefinitions;
-
-    Object.entries(componentPropertyDefinitions).forEach(([key, value]) => {
-      props[toCamelCase(key)] = value;
-    });
-
-    return props;
+  public getSuperTree() {
+    return this.superTree;
   }
-
-  /**
-   * 각 variants가 주어지면 노드 style이 어떤식으로 바뀌어야하는지 나타내는 맵
-   * @private
-   */
-  private createVariantStyleMap() {}
 
   /**
    * 모든 컴포넌트 구조를 표현할 수 있는 슈퍼트리를 만듭니다.
@@ -155,4 +122,4 @@ class ComponentSetCompiler {
   }
 }
 
-export default ComponentSetCompiler;
+export default CreateSuperTree;
