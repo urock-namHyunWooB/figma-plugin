@@ -1,14 +1,17 @@
-import { FigmaNodeData } from "@compiler";
+import { FigmaNodeData, StyleTree } from "@compiler";
 import { RenderTree } from "@frontend/ui/domain/compiler/types/customType";
 
 class SpecDataManager {
   private spec: FigmaNodeData;
   private specHashMap: Record<string, FigmaNodeData["info"]["document"]> = {};
 
+  private renderTreeHashMap: Record<string, RenderTree> = {};
+
   constructor(spec: FigmaNodeData) {
     this.spec = spec;
 
     this.recursiveAddSpec(spec.info.document);
+    this.recursiveAddRenderTree(spec.styleTree);
   }
 
   public getSpecById(id: string) {
@@ -17,6 +20,10 @@ class SpecDataManager {
 
   public getRenderTree(): RenderTree {
     return this.spec.styleTree!;
+  }
+
+  public getRenderTreeById(id: string): RenderTree {
+    return this.renderTreeHashMap[id]!;
   }
 
   public getComponentPropertyDefinitions() {
@@ -31,6 +38,16 @@ class SpecDataManager {
     if ("children" in node && node.children) {
       node.children.forEach((child) => {
         this.recursiveAddSpec(child);
+      });
+    }
+  }
+
+  private recursiveAddRenderTree(renderTree: StyleTree) {
+    this.renderTreeHashMap[renderTree.id] = renderTree;
+
+    if ("children" in renderTree && renderTree.children) {
+      renderTree.children.forEach((child) => {
+        this.recursiveAddRenderTree(child);
       });
     }
   }

@@ -1,7 +1,6 @@
 import SpecDataManager from "@compiler/manager/SpecDataManager";
-import { TempAstTree, SuperTreeNode, FinalAstTree } from "@compiler";
+import { TempAstTree, SuperTreeNode, FinalAstTree, StyleTree } from "@compiler";
 import { PropsDef } from "@compiler/core/componentSetNode/RefineProps";
-
 /**
  * 슈퍼트리에 각 variant 트리를 diff 해서 슈퍼트리 노드 하나하나 값을 채워나간다.
  */
@@ -22,29 +21,53 @@ class CreateFinalAstTree {
   ) {
     this.specDataManager = specDataManager;
 
-    const mergedTree = this.mergeVariantTrees(superTree, refinedProps);
-    this._tempAstTree = this.convertFinalNode(mergedTree);
+    this._tempAstTree = this.mergeVariantTrees(superTree, refinedProps);
+    console.log("this._tempAstTree", this._tempAstTree);
   }
 
   private mergeVariantTrees(superTree: SuperTreeNode, refinedProps: PropsDef) {
-    console.log(superTree, refinedProps);
-    return superTree;
+    const specManager = this.specDataManager;
+    const tempAstTree = this.createTempAstTree(superTree, refinedProps);
+
+    const variantTrees = specManager.getRenderTree().children;
+
+    variantTrees.forEach((variantTree) => {
+      this._mergeTree(tempAstTree, variantTree);
+    });
+
+    return tempAstTree;
   }
 
-  private convertFinalNode(superNode: SuperTreeNode): TempAstTree {
-    const children = superNode.children
-      .filter((child): child is SuperTreeNode => !!child) // undefined 제거
-      .map((child) => this.convertFinalNode(child));
+  private createTempAstTree(
+    superTree: SuperTreeNode,
+    refinedProps: PropsDef
+  ): TempAstTree {
+    /**
+     * 최상위 부모만 refinedProps 할당됨.
+     */
+    const convert = (node: SuperTreeNode, isRoot: boolean): TempAstTree => {
+      const styleTree = this.specDataManager.getRenderTreeById(node.id);
 
-    return {
-      ...superNode,
-      props: {},
-      style: {
-        base: {},
-        dynamic: [],
-      },
-      children,
-    } as TempAstTree;
+      const children = node.children
+        .filter((child): child is SuperTreeNode => !!child)
+        .map((child) => convert(child, false));
+
+      return {
+        ...node,
+        props: isRoot ? (refinedProps as any) : {},
+        style: {
+          base: styleTree?.cssStyle || {},
+          dynamic: [],
+        },
+        children,
+      } as TempAstTree;
+    };
+
+    return convert(superTree, true);
+  }
+
+  private _mergeTree(pivotTree: TempAstTree, targetTree: StyleTree) {
+    if (pivotTree.name === targetTree.figmaStyle?.name) return pivotTree;
   }
 }
 
