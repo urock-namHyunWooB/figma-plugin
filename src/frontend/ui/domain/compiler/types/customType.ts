@@ -13,6 +13,8 @@ export type SuperTreeNode = {
 
   // 각 Variant에서 이 노드에 합쳐진 노드 정보
   mergedNode: Record<string, string>[];
+
+  metaData?: any;
 };
 
 // 1. 값의 형태 정의 (고정 vs 조건부)
@@ -24,7 +26,7 @@ type ReactiveValue<T> =
       cases: Array<{ condition: string; value: T }>;
     };
 
-export interface FinalAstTree extends SuperTreeNode {
+export interface TempAstTree extends SuperTreeNode {
   props: {
     visible?: ReactiveValue<boolean>; // 예: props.hasIcon ? true : false
     text?: ReactiveValue<string>; // 텍스트 내용
@@ -40,5 +42,11 @@ export interface FinalAstTree extends SuperTreeNode {
     }>;
   };
 
+  children: TempAstTree[];
+}
+
+export interface FinalAstTree {
+  props: any;
+  style: any;
   children: FinalAstTree[];
 }

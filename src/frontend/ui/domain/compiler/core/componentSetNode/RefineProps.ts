@@ -3,13 +3,13 @@ import SpecDataManager from "@compiler/manager/SpecDataManager";
 
 import { toCamelCase } from "@compiler/utils/normalizeString";
 
-type PropsDef = Record<string, any>;
+export type PropsDef = Record<string, any>;
 
 class RefineProps {
   private specDataManager: SpecDataManager;
   private renderTree: RenderTree;
 
-  private propsDef: PropsDef | null;
+  private propsDef: PropsDef = {};
 
   public get refinedProps() {
     return this.propsDef;
@@ -20,13 +20,13 @@ class RefineProps {
     this.renderTree = renderTree;
 
     const propsDef = (this.propsDef =
-      specDataManager.getComponentPropertyDefinitions());
+      specDataManager.getComponentPropertyDefinitions() || {});
 
     if (propsDef) {
       this.propsDef = this.addId(propsDef);
-      this.propsDef = this.normalizePropsName(this.propsDef);
-      this.propsDef = this.refineLikeComponent(this.propsDef);
-      this.propsDef = this.refineStateProp(this.propsDef);
+      // this.propsDef = this.normalizePropsName(this.propsDef);
+      // this.propsDef = this.refineLikeComponent(this.propsDef);
+      // this.propsDef = this.refineStateProp(this.propsDef);
     }
   }
 

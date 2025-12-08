@@ -1,34 +1,37 @@
 import SpecDataManager from "@compiler/manager/SpecDataManager";
-import { FinalAstTree, SuperTreeNode } from "@compiler";
+import { TempAstTree, SuperTreeNode, FinalAstTree } from "@compiler";
+import { PropsDef } from "@compiler/core/componentSetNode/RefineProps";
 
 /**
  * 슈퍼트리에 각 variant 트리를 diff 해서 슈퍼트리 노드 하나하나 값을 채워나간다.
  */
 class CreateFinalAstTree {
   private specDataManager: SpecDataManager;
-  private superTree: SuperTreeNode;
 
   private _finalAstTree: FinalAstTree;
+  private _tempAstTree: TempAstTree;
 
   public get finalAstTree() {
     return this._finalAstTree;
   }
 
-  constructor(specDataManager: SpecDataManager, superTree: SuperTreeNode) {
+  constructor(
+    specDataManager: SpecDataManager,
+    superTree: SuperTreeNode,
+    refinedProps: PropsDef
+  ) {
     this.specDataManager = specDataManager;
-    this.superTree = superTree;
 
-    const mergedTree = this.mergeVariantTrees();
-    this._finalAstTree = this.convertFinalNode(mergedTree);
+    const mergedTree = this.mergeVariantTrees(superTree, refinedProps);
+    this._tempAstTree = this.convertFinalNode(mergedTree);
   }
 
-  private mergeVariantTrees() {
-    const superTree = this.superTree;
-
+  private mergeVariantTrees(superTree: SuperTreeNode, refinedProps: PropsDef) {
+    console.log(superTree, refinedProps);
     return superTree;
   }
 
-  private convertFinalNode(superNode: SuperTreeNode): FinalAstTree {
+  private convertFinalNode(superNode: SuperTreeNode): TempAstTree {
     const children = superNode.children
       .filter((child): child is SuperTreeNode => !!child) // undefined 제거
       .map((child) => this.convertFinalNode(child));
@@ -41,7 +44,7 @@ class CreateFinalAstTree {
         dynamic: [],
       },
       children,
-    } as FinalAstTree;
+    } as TempAstTree;
   }
 }
 

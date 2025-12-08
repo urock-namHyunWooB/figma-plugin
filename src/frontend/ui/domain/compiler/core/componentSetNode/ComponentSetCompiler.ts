@@ -38,7 +38,8 @@ class ComponentSetCompiler {
 
     this.CreateFinalAstTree = new CreateFinalAstTree(
       specDataManager,
-      superNodeTree
+      superNodeTree,
+      refinedProps
     );
   }
 
