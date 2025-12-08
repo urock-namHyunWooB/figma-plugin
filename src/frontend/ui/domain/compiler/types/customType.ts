@@ -26,7 +26,7 @@ type ReactiveValue<T> =
 
 export interface FinalAstTree extends SuperTreeNode {
   props: {
-    visible: ReactiveValue<boolean>; // 예: props.hasIcon ? true : false
+    visible?: ReactiveValue<boolean>; // 예: props.hasIcon ? true : false
     text?: ReactiveValue<string>; // 텍스트 내용
     src?: ReactiveValue<string>; // 이미지 소스 등
   };
@@ -41,8 +41,4 @@ export interface FinalAstTree extends SuperTreeNode {
   };
 
   children: FinalAstTree[];
-
-  // 🔹 참조: 이 슈퍼 노드가 각 Variant에서 어떤 원본 노드에 해당하는지 매핑 (Diffing용)
-  // Key: Variant ID (또는 Variant Properties 조합), Value: 원본 SceneNode ID
-  sourceNodeMap: Record<string, string>;
 }

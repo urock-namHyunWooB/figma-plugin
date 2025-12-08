@@ -8,36 +8,39 @@ class CreateFinalAstTree {
   private specDataManager: SpecDataManager;
   private superTree: SuperTreeNode;
 
-  private finalAstTree: FinalAstTree;
+  private _finalAstTree: FinalAstTree;
 
   public get finalAstTree() {
-    return this.finalAstTree;
+    return this._finalAstTree;
   }
 
   constructor(specDataManager: SpecDataManager, superTree: SuperTreeNode) {
     this.specDataManager = specDataManager;
     this.superTree = superTree;
 
-    this.finalAstTree = this.mergeVariantTrees();
+    const mergedTree = this.mergeVariantTrees();
+    this._finalAstTree = this.convertFinalNode(mergedTree);
   }
 
   private mergeVariantTrees() {
     const superTree = this.superTree;
-    const variantTrees = this.specDataManager.getRenderTree().children;
+
+    return superTree;
   }
 
-  private createFinalNode(superNode: SuperTreeNode): FinalAstTree {
+  private convertFinalNode(superNode: SuperTreeNode): FinalAstTree {
+    const children = superNode.children
+      .filter((child): child is SuperTreeNode => !!child) // undefined 제거
+      .map((child) => this.convertFinalNode(child));
+
     return {
       ...superNode,
-      props: {
-        visible: { type: "static", value: true }, // 기본값
-      },
+      props: {},
       style: {
         base: {},
         dynamic: [],
       },
-      children: [], // 나중에 채움
-      sourceNodeMap: {}, // 여기서 채워야 함
+      children,
     } as FinalAstTree;
   }
 }
