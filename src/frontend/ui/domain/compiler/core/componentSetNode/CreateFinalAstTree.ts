@@ -68,6 +68,20 @@ class CreateFinalAstTree {
 
   private _mergeTree(pivotTree: TempAstTree, targetTree: StyleTree) {
     if (pivotTree.name === targetTree.figmaStyle?.name) return pivotTree;
+
+    const pivotCss = pivotTree.style.base;
+    const targetCss = targetTree.cssStyle;
+  }
+
+  private _diffStyle(
+    pivotStyle: Record<string, any>,
+    targetStyle: Record<string, any>
+  ) {
+    const diff: Record<string, any> = {};
+
+    Object.en;
+
+    return diff;
   }
 }
 
