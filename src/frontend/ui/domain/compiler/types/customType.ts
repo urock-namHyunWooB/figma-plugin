@@ -21,8 +21,7 @@ type ReactiveValue<T> =
       cases: Array<{ condition: string; value: T }>;
     };
 
-// 2. 슈퍼 트리 노드 (SuperNode) 정의
-export interface AstTree extends SuperTreeNode {
+export interface FinalAstTree extends SuperTreeNode {
   props: {
     visible: ReactiveValue<boolean>; // 예: props.hasIcon ? true : false
     text?: ReactiveValue<string>; // 텍스트 내용
@@ -38,7 +37,7 @@ export interface AstTree extends SuperTreeNode {
     }>;
   };
 
-  children: AstTree[];
+  children: FinalAstTree[];
 
   // 🔹 참조: 이 슈퍼 노드가 각 Variant에서 어떤 원본 노드에 해당하는지 매핑 (Diffing용)
   // Key: Variant ID (또는 Variant Properties 조합), Value: 원본 SceneNode ID

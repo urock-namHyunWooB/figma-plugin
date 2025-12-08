@@ -19,6 +19,12 @@ class SpecDataManager {
     return this.spec.styleTree!;
   }
 
+  public getComponentPropertyDefinitions() {
+    return "componentPropertyDefinitions" in this.spec.info.document
+      ? this.spec.info.document.componentPropertyDefinitions
+      : null;
+  }
+
   private recursiveAddSpec(node: FigmaNodeData["info"]["document"]) {
     this.specHashMap[node.id] = node;
 

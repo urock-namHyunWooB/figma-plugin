@@ -4,6 +4,7 @@ import { toCamelCase } from "@compiler/utils/normalizeString";
 import { getNodesAtDepth, traverseBFS } from "@compiler/utils/traverse";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import CreateSuperTree from "./CreateSuperTree";
+import RefineProps from "@compiler/core/componentSetNode/RefineProps";
 
 type PropsDef = Record<string, any>;
 
@@ -11,6 +12,7 @@ class ComponentSetCompiler {
   private propsDef: PropsDef;
 
   private CreateSuperTree: CreateSuperTree;
+  private RefindProps: RefineProps;
 
   constructor(
     renderTree: RenderTree,
@@ -25,8 +27,14 @@ class ComponentSetCompiler {
       matcher
     );
 
+    const RefindProps = (this.RefindProps = new RefineProps(
+      renderTree,
+      specDataManager
+    ));
+    const refinedProps = RefindProps.refinedProps;
     const superNodeTree = this.CreateSuperTree.getSuperTree();
-    console.log(this.propsDef, superNodeTree);
+
+    console.log(refinedProps);
   }
 
   private extractPropsDef(
