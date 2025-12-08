@@ -79,8 +79,6 @@ class CreateFinalAstTree {
   ) {
     const diff: Record<string, any> = {};
 
-    Object.en;
-
     return diff;
   }
 }

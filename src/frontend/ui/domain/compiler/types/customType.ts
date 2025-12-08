@@ -1,4 +1,21 @@
+import type {
+  Expression,
+  BinaryExpression,
+  MemberExpression,
+  Literal,
+  UnaryExpression,
+} from "estree";
 import { StyleTree } from "@frontend/ui/domain/compiler";
+
+// 2. 우리가 사용할 조건 노드 타입 정의 (필요한 것만 좁혀서 써도 되고, Expression 전체를 써도 됩니다)
+// Expression은 ESTree의 모든 표현식 타입을 포함합니다.
+// export type ConditionNode = Expression;
+
+export type ConditionNode =
+  | BinaryExpression
+  | UnaryExpression
+  | MemberExpression
+  | Literal;
 
 export type RenderTree = StyleTree;
 
@@ -37,7 +54,7 @@ export interface TempAstTree extends SuperTreeNode {
     base: Record<string, any>;
 
     dynamic: Array<{
-      condition: string; // 예: "props.type === 'primary'"
+      condition: ConditionNode;
       style: Record<string, any>; // 예: { backgroundColor: 'blue' }
     }>;
   };
