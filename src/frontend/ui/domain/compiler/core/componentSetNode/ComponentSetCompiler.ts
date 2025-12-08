@@ -26,6 +26,7 @@ class ComponentSetCompiler {
     );
 
     const superNodeTree = this.CreateSuperTree.getSuperTree();
+    console.log(this.propsDef, superNodeTree);
   }
 
   private extractPropsDef(

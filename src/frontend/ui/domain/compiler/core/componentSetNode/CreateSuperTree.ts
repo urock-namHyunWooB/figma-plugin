@@ -52,7 +52,6 @@ class CreateSuperTree {
    * 각 계층에서 같은게 있나 비교
    * 같은건 합치고
    * 다른건 기존 구조에 ADD
-   * 순서 정렬
    * @param pivotSuperTree
    * @param targetTree
    * @private
