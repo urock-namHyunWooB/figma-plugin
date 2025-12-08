@@ -4,8 +4,11 @@ import type {
   MemberExpression,
   Literal,
   UnaryExpression,
+  BinaryOperator,
 } from "estree";
 import { StyleTree } from "@frontend/ui/domain/compiler";
+
+export type { BinaryOperator };
 
 // 2. 우리가 사용할 조건 노드 타입 정의 (필요한 것만 좁혀서 써도 되고, Expression 전체를 써도 됩니다)
 // Expression은 ESTree의 모든 표현식 타입을 포함합니다.
