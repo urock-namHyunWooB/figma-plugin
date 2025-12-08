@@ -5,6 +5,7 @@ import { getNodesAtDepth, traverseBFS } from "@compiler/utils/traverse";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import CreateSuperTree from "./CreateSuperTree";
 import RefineProps from "@compiler/core/componentSetNode/RefineProps";
+import CreateFinalAstTree from "./CreateFinalAstTree";
 
 type PropsDef = Record<string, any>;
 
@@ -13,6 +14,7 @@ class ComponentSetCompiler {
 
   private CreateSuperTree: CreateSuperTree;
   private RefindProps: RefineProps;
+  private CreateFinalAstTree: CreateFinalAstTree;
 
   constructor(
     renderTree: RenderTree,
@@ -34,7 +36,10 @@ class ComponentSetCompiler {
     const refinedProps = RefindProps.refinedProps;
     const superNodeTree = this.CreateSuperTree.getSuperTree();
 
-    console.log(refinedProps);
+    this.CreateFinalAstTree = new CreateFinalAstTree(
+      specDataManager,
+      superNodeTree
+    );
   }
 
   private extractPropsDef(
