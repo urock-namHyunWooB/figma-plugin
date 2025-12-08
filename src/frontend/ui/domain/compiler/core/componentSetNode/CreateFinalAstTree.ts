@@ -69,15 +69,36 @@ class CreateFinalAstTree {
   private _mergeTree(pivotTree: TempAstTree, targetTree: StyleTree) {
     if (pivotTree.name === targetTree.figmaStyle?.name) return pivotTree;
 
+    // 변경 후 제안
     const pivotCss = pivotTree.style.base;
     const targetCss = targetTree.cssStyle;
+    const pivotName = pivotTree.name;
+    const targetName = targetTree.figmaStyle!.name;
+
+    if (!targetName) {
+      console.warn(`targetTree ${targetTree.id} is not have figmaStyle name`);
+    }
+
+    this._diffStyle(pivotCss, targetCss, pivotName, targetName);
   }
 
   private _diffStyle(
     pivotStyle: Record<string, any>,
-    targetStyle: Record<string, any>
+    targetStyle: Record<string, any>,
+    pivotName: string,
+    targetName: string
   ) {
-    const diff: Record<string, any> = {};
+    const diff: Record<string, any> = {
+      base: {},
+      dynamic: [],
+    };
+
+    /**
+     * A,B 둘 다 있고 값도 같으면 base에 해당 style 넣기
+     * A,B 둘다 있지만 값이 서로 다르면 base에 A값 넣고 dynamic에 B 넣기
+     * A에만 있으면 dynamic에 A에 넣기
+     * B에만 있으면 dynamic에 B에 넣기
+     */
 
     return diff;
   }
