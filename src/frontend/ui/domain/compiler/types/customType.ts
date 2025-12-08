@@ -52,14 +52,15 @@ export type StyleObject = {
     condition: ConditionNode;
     style: Record<string, any>; // 예: { backgroundColor: 'blue' }
   }>;
+
+  visible: Array<{
+    condition: ConditionNode;
+    value: boolean;
+  }>;
 };
 
 export interface TempAstTree extends SuperTreeNode {
-  props: {
-    visible?: ReactiveValue<boolean>; // 예: props.hasIcon ? true : false
-    text?: ReactiveValue<string>; // 텍스트 내용
-    src?: ReactiveValue<string>; // 이미지 소스 등
-  };
+  props: any;
 
   style: StyleObject;
 

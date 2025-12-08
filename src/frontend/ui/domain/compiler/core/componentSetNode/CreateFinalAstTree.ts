@@ -35,7 +35,6 @@ class CreateFinalAstTree {
     this.specDataManager = specDataManager;
 
     this._tempAstTree = this.mergeVariantTrees(superTree, refinedProps);
-    console.log("this._tempAstTree", this._tempAstTree);
   }
 
   private mergeVariantTrees(superTree: SuperTreeNode, refinedProps: PropsDef) {
