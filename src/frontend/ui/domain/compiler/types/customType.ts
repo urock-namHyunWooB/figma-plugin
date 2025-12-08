@@ -10,6 +10,9 @@ export type SuperTreeNode = {
   name: string;
   parent: SuperTreeNode | null;
   children: (SuperTreeNode | undefined)[];
+
+  // 각 Variant에서 이 노드에 합쳐진 노드 정보
+  mergedNode: Record<string, string>[];
 };
 
 // 1. 값의 형태 정의 (고정 vs 조건부)

@@ -33,12 +33,12 @@ class CreateSuperTree {
    */
   private createSuperTree() {
     const components = this.renderTree.children;
-    // const superTreeRoot = this._makeSuperTreeNode(this.renderTree);
+    // const superTreeRoot = this._convertSuperTreeNode(this.renderTree);
 
-    let superTree = this._makeSuperTreeNode(components[0])!;
+    let superTree = this._convertSuperTreeNode(components[0])!;
 
     for (let i = 1; i < components.length; i++) {
-      const target = this._makeSuperTreeNode(components[i])!;
+      const target = this._convertSuperTreeNode(components[i])!;
 
       superTree = this._mergeTree(superTree, target);
     }
@@ -65,11 +65,15 @@ class CreateSuperTree {
       // 1. 같은 depth에서 동일 노드 찾기
       const sameDepthNodes = getNodesAtDepth(pivotSuperTree, targetMeta.depth);
 
-      const matchedNode = sameDepthNodes.find((pivot) => {
+      const pivotMatchedNode = sameDepthNodes.find((pivot) => {
         return this.matcher.isSameNode(targetNode, pivot);
       });
 
-      if (matchedNode) return; // 이미 존재하면 스킵
+      if (pivotMatchedNode) {
+        pivotMatchedNode.mergedNode.push(...targetNode.mergedNode);
+
+        return; // 이미 존재하면 스킵
+      }
 
       // 2. targetNode의 부모와 매칭되는 pivotTree의 노드 찾기
       if (!targetNode.parent) return; // 루트는 스킵
@@ -98,7 +102,7 @@ class CreateSuperTree {
     return pivotSuperTree;
   }
 
-  private _makeSuperTreeNode(
+  private _convertSuperTreeNode(
     renderTree: RenderTree,
     parent: SuperTreeNode | null = null
   ): SuperTreeNode | undefined {
@@ -111,10 +115,11 @@ class CreateSuperTree {
       name: nodeData.name,
       parent,
       children: [],
+      mergedNode: [{ [nodeData.name]: renderTree.id }], // [추가] 초기화: 현재 Variant ID와 노드 ID 매핑
     };
 
     node.children = renderTree.children.map((child) =>
-      this._makeSuperTreeNode(child, node)
+      this._convertSuperTreeNode(child, node)
     );
 
     return node;
