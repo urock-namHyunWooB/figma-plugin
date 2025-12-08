@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { compileReactComponent } from "../utils/component-compiler";
 import FigmaCompiler from "@frontend/ui/domain/compiler";
 import taptapButtonSample from "../../../../test/fixtures/button/taptapButton_sample.json";
@@ -9,12 +9,15 @@ export function TestComp() {
     useState<React.ComponentType<any> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const codeRef = useRef();
+
   useEffect(() => {
     async function compile() {
+      if (codeRef.current) return;
       try {
-        const code = new FigmaCompiler(taptapButtonSample);
+        codeRef.current = new FigmaCompiler(taptapButtonSample);
         return;
-        setTsxCode(code);
+        setTsxCode(codeRef.current);
 
         // 컴파일해서 렌더링도 시도
         try {
@@ -31,7 +34,7 @@ export function TestComp() {
       }
     }
     compile();
-  }, []);
+  }, [codeRef]);
 
   return (
     <div style={{ padding: "20px", fontFamily: "monospace" }}>

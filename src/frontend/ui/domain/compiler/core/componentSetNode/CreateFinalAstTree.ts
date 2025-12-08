@@ -1,10 +1,18 @@
 import SpecDataManager from "@compiler/manager/SpecDataManager";
-import { TempAstTree, SuperTreeNode, FinalAstTree, StyleTree } from "@compiler";
+import {
+  TempAstTree,
+  SuperTreeNode,
+  FinalAstTree,
+  StyleTree,
+  StyleObject,
+} from "@compiler";
 import { PropsDef } from "@compiler/core/componentSetNode/RefineProps";
 import {
   ConditionNode,
   BinaryOperator,
 } from "@frontend/ui/domain/compiler/types/customType";
+import { findNodeBFS, traverseBFS } from "../../utils/traverse";
+import debug from "@compiler/manager/DebuggingManager";
 
 /**
  * 슈퍼트리에 각 variant 트리를 diff 해서 슈퍼트리 노드 하나하나 값을 채워나간다.
@@ -36,9 +44,9 @@ class CreateFinalAstTree {
 
     const variantTrees = specManager.getRenderTree().children;
 
-    variantTrees.forEach((variantTree) => {
-      this._mergeTree(tempAstTree, variantTree);
-    });
+    const mergedStyleTree = this.mergeTreeForStyle(tempAstTree, variantTrees);
+
+    debug.tree(mergedStyleTree);
 
     return tempAstTree;
   }
@@ -71,44 +79,83 @@ class CreateFinalAstTree {
     return convert(superTree, true);
   }
 
-  private _mergeTree(pivotTree: TempAstTree, targetTree: StyleTree) {
-    if (pivotTree.name === targetTree.figmaStyle?.name) return pivotTree;
+  /**
+   * pivotTree와 targetTree 두 트리 diff해서 pivotTree style 적용
+   * @param pivotTree
+   * @param targetTrees
+   * @private
+   */
+  private mergeTreeForStyle(pivotTree: TempAstTree, targetTrees: StyleTree[]) {
+    /**
+     * targetTree 트리 순회하면서 pivotTree에 매칭(mergedNode) 되는 노드를 찾아서
+     * 해당 노드에 스타일 diff 결괏값을 할당한다.
+     */
+    targetTrees.forEach((targetTree) => {
+      const pivotVariantName = pivotTree.name;
+      const targetVariantName = targetTree.figmaStyle!.name;
 
-    // 변경 후 제안
-    const pivotCss = pivotTree.style.base;
-    const targetCss = targetTree.cssStyle;
-    const pivotName = pivotTree.name;
-    const targetName = targetTree.figmaStyle!.name;
+      if (!targetVariantName) {
+        console.warn("targetVariantName is null", targetTree);
+      }
 
-    if (!targetName) {
-      console.warn(`targetTree ${targetTree.id} is not have figmaStyle name`);
+      traverseBFS(targetTree, (targetNode, targetMeta) => {
+        const matchedPivotNode = findNodeBFS(pivotTree, (pivotNode) => {
+          return pivotNode.mergedNode.some((merged) =>
+            Object.values(merged).includes(targetNode.id)
+          );
+        });
+
+        if (matchedPivotNode) {
+          const diffStyle = this._getDiffStyle(
+            matchedPivotNode,
+            targetNode,
+            pivotVariantName,
+            targetVariantName
+          );
+          matchedPivotNode.style = diffStyle;
+        }
+      });
+    });
+
+    return pivotTree;
+  }
+
+  private _getDiffStyle(
+    pivotNode: TempAstTree,
+    targetNode: StyleTree,
+    pivotVariantName: string,
+    targetVariantName: string
+  ) {
+    if (pivotNode.id === targetNode.id) {
+      return pivotNode.style;
     }
 
-    const diff = this._diffStyle(pivotCss, targetCss, pivotName, targetName);
+    const pivotCss = pivotNode.style.base;
+    const targetCss = targetNode.cssStyle;
 
-    console.log("diff", diff);
+    const diff = this._diffStyle(
+      pivotCss,
+      targetCss,
+      pivotVariantName,
+      targetVariantName
+    );
 
-    // TODO: diff 결과를 pivotTree에 적용하는 로직 필요
-    // pivotTree.style.base = diff.base;
-    // pivotTree.style.dynamic.push(...diff.dynamic);
+    return diff;
   }
 
   private _diffStyle(
     pivotStyle: Record<string, any>,
     targetStyle: Record<string, any>,
-    pivotName: string,
-    targetName: string
+    pivotVariantName: string,
+    targetVariantName: string
   ) {
-    const diff = {
-      base: {} as Record<string, any>,
-      dynamic: [] as Array<{
-        condition: ConditionNode;
-        style: Record<string, any>;
-      }>,
+    const diff: StyleObject = {
+      base: {},
+      dynamic: [],
     };
 
-    const pivotCondition = this._parseVariantCondition(pivotName);
-    const targetCondition = this._parseVariantCondition(targetName);
+    const pivotCondition = this._parseVariantCondition(pivotVariantName);
+    const targetCondition = this._parseVariantCondition(targetVariantName);
 
     const dynamicA: Record<string, any> = {};
     const dynamicB: Record<string, any> = {};

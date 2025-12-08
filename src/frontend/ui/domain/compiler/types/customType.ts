@@ -37,7 +37,6 @@ export type SuperTreeNode = {
   metaData?: any;
 };
 
-// 1. 값의 형태 정의 (고정 vs 조건부)
 type ReactiveValue<T> =
   | { type: "static"; value: T }
   | {
@@ -46,6 +45,15 @@ type ReactiveValue<T> =
       cases: Array<{ condition: string; value: T }>;
     };
 
+export type StyleObject = {
+  base: Record<string, any>;
+
+  dynamic: Array<{
+    condition: ConditionNode;
+    style: Record<string, any>; // 예: { backgroundColor: 'blue' }
+  }>;
+};
+
 export interface TempAstTree extends SuperTreeNode {
   props: {
     visible?: ReactiveValue<boolean>; // 예: props.hasIcon ? true : false
@@ -53,14 +61,7 @@ export interface TempAstTree extends SuperTreeNode {
     src?: ReactiveValue<string>; // 이미지 소스 등
   };
 
-  style: {
-    base: Record<string, any>;
-
-    dynamic: Array<{
-      condition: ConditionNode;
-      style: Record<string, any>; // 예: { backgroundColor: 'blue' }
-    }>;
-  };
+  style: StyleObject;
 
   children: TempAstTree[];
 }

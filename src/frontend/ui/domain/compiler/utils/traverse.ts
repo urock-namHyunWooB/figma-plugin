@@ -11,7 +11,7 @@ import { SuperTreeNode } from "@compiler";
  */
 export interface TraversableNode {
   children: (TraversableNode | undefined)[];
-  [key: string]: unknown;
+  [key: string]: any;
 }
 
 /**
