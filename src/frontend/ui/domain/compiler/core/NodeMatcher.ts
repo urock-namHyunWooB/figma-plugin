@@ -82,10 +82,10 @@ class NodeMatcher {
     }
 
     /**
-     * -> text node는 constraints값이 같아야 하고
-     * -> constraints에 따른 기준점 비교
+     * //TODO 두개의 텍스트가 같은 역할군인지 비교하는 로직
      */
     if (node1Data.type === "TEXT" && node2Data.type === "TEXT") {
+
       // 1. constraints가 같아야 함
 
       if (
