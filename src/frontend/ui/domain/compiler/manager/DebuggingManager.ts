@@ -16,23 +16,12 @@ class DebuggingManager {
     console.info("===================");
   }
 
-  public tree(tree: TempAstTree) {
-    const toDebugTree = (node: TempAstTree): any => {
-      return {
-        ...node,
-        style: {
-          base: node.style.base,
-          dynamic: node.style.dynamic.map((d) => ({
-            condition: this.conditionToString(d.condition), // 여기서 변환
-            style: d.style,
-          })),
-        },
-        children: node.children.map((child) => toDebugTree(child)),
-      };
-    };
-
-    return this.log(toDebugTree(tree));
-  }
+  /**
+   * 원본 tree는 수정하지 않는다.
+   * 트리를 순회해서 condition이 보이면 전부 conditionToString로 파싱한다.
+   *
+   */
+  public tree(tree: TempAstTree) {}
 
   public debugger(target: any[] | [[]], onMatch?: () => void) {
     if (isOneDArray(target)) {

@@ -50,6 +50,8 @@ class CreateFinalAstTree {
     tempAstTree = this.updateStyle(tempAstTree, variantTrees);
     tempAstTree = this.updateVisible(tempAstTree);
 
+    debug.tree(tempAstTree);
+
     return tempAstTree;
   }
 
@@ -168,6 +170,7 @@ class CreateFinalAstTree {
 
     if (!componentPropertyDefinitions) return null;
 
+    //TODO 여기 로직 맞는지 검증 한번 해봐야함.
     const booleanProps = helper.findBooleanVariantProps(
       componentPropertyDefinitions
     );
@@ -176,6 +179,7 @@ class CreateFinalAstTree {
         return { type: "prop", name: boolPropName };
       }
     }
+    //////
 
     // 3. mergedNode로 추론 (일부 variant에서만 존재하는 경우)
     const condition = this._inferConditionFromMergedNode(targetNode);
@@ -367,7 +371,8 @@ class CreateFinalAstTree {
     const presentValues: Record<string, Set<string>> = {};
 
     for (const merged of targetNode.mergedNode) {
-      const variantName = Object.keys(merged)[0];
+      const variantName = merged.variantName;
+      if (!variantName) continue;
       const parsed = helper.parseVariantName(variantName); // { Size: "Large", State: "Hover" }
 
       for (const [prop, value] of Object.entries(parsed)) {
