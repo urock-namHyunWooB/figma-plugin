@@ -20,6 +20,22 @@ function countNodesByType(node: SuperTreeNode, type: string): number {
   return count;
 }
 
+function collectNodesByType(
+  node: SuperTreeNode,
+  type: string
+): SuperTreeNode[] {
+  const nodes: SuperTreeNode[] = [];
+  if (node.type === type) {
+    nodes.push(node);
+  }
+  for (const child of node.children) {
+    if (child) {
+      nodes.push(...collectNodesByType(child, type));
+    }
+  }
+  return nodes;
+}
+
 describe("ComponentSetCompiler", () => {
   describe("tempAstTree (중간트리) 테스트", () => {
     describe("taptapButton_sample", () => {
@@ -96,11 +112,15 @@ describe("ComponentSetCompiler", () => {
       });
 
       test("children중에 ICON 타입은 두개여야 한다.", () => {
-        const iconNodes = countNodesByType(
+        const iconNodes = collectNodesByType(
           createFinalAstTree.tempAstTree,
           "INSTANCE"
+        ).filter(
+          (node) =>
+            node.name.includes("Left Icon") || node.name.includes("Right Icon")
         );
-        expect(iconNodes).toBe(2);
+
+        expect(iconNodes.length).toBe(2);
       });
     });
 
