@@ -32,7 +32,7 @@ export type SuperTreeNode = {
   children: (SuperTreeNode | undefined)[];
 
   // 각 Variant에서 이 노드에 합쳐진 노드 정보
-  mergedNode: Record<string, string>[];
+  mergedNode: { id: string; name: string; variantName?: string | null }[];
 
   metaData?: any;
 };

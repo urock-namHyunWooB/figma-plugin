@@ -12,9 +12,11 @@ import {
   ConditionNode,
   BinaryOperator,
 } from "@frontend/ui/domain/compiler/types/customType";
-import { findNodeBFS, traverseBFS } from "../../utils/traverse";
+import { findNodeBFS, getRootNode, traverseBFS } from "../../utils/traverse";
 import debug from "@compiler/manager/DebuggingManager";
 import { target } from "happy-dom/lib/PropertySymbol";
+import helper from "@compiler/manager/HelperManager";
+import finder from "@compiler/manager/FinderManager";
 
 /**
  * 슈퍼트리에 각 variant 트리를 diff 해서 슈퍼트리 노드 하나하나 값을 채워나간다.
@@ -143,6 +145,8 @@ class CreateFinalAstTree {
    * mergedNode 값에 따라서 추론
    */
   private _inferVisible(targetNode: TempAstTree): VisibleValue | null {
+    const componentPropertyDefinitions =
+      this.specDataManager.getComponentPropertyDefinitions();
     const targetNodeData = this.specDataManager.getSpecById(targetNode.id);
 
     if (targetNodeData.componentPropertyReferences?.visible) {
@@ -152,10 +156,56 @@ class CreateFinalAstTree {
       };
     }
 
-    const componentPropertyDefinitions =
-      this.specDataManager.getComponentPropertyDefinitions();
+    if (
+      targetNode.mergedNode.length ===
+      this.specDataManager.getRenderTree().children.length
+    ) {
+      return {
+        type: "static",
+        value: true,
+      };
+    }
+
+    if (!componentPropertyDefinitions) return null;
+
+    const booleanProps = helper.findBooleanVariantProps(
+      componentPropertyDefinitions
+    );
+    for (const boolPropName of booleanProps) {
+      if (this._isVisibleOnlyWhenBooleanTrue(targetNode, boolPropName)) {
+        return { type: "prop", name: boolPropName };
+      }
+    }
+
+    // 3. mergedNode로 추론 (일부 variant에서만 존재하는 경우)
+    const condition = this._inferConditionFromMergedNode(targetNode);
+    if (condition) {
+      return { type: "condition", condition };
+    }
 
     return null;
+  }
+
+  // Helper: 해당 불리언 속성이 True일 때만 노드가 존재하는지 확인
+  private _isVisibleOnlyWhenBooleanTrue(
+    node: TempAstTree,
+    boolPropName: string
+  ): boolean {
+    // mergedNode의 key(variant name)를 파싱해서
+    // boolPropName=True인 variant에서만 존재하는지 확인
+    for (const merged of node.mergedNode) {
+      const variantName = merged.variantName;
+
+      if (!variantName) continue;
+
+      const parsedVariant = helper.parseVariantName(variantName);
+
+      // False인 variant에서도 존재하면 이 조건으로는 추론 불가
+      if (parsedVariant[boolPropName].toLowerCase() === "false") {
+        return false;
+      }
+    }
+    return node.mergedNode.length > 0; // True인 variant에서만 존재
   }
 
   private _getDiffStyle(
@@ -297,6 +347,64 @@ class CreateFinalAstTree {
       left: acc,
       right: curr,
     })) as unknown as ConditionNode;
+  }
+
+  private _inferConditionFromMergedNode(
+    targetNode: TempAstTree
+  ): ConditionNode | null {
+    const totalVariantCount =
+      this.specDataManager.getRenderTree().children.length;
+
+    // 모든 variant에서 존재하면 조건 불필요
+    if (targetNode.mergedNode.length >= totalVariantCount) {
+      return null;
+    }
+
+    const definitions = this.specDataManager.getComponentPropertyDefinitions();
+    if (!definitions) return null;
+
+    // 1. mergedNode의 variant name들에서 각 속성별 값 수집
+    const presentValues: Record<string, Set<string>> = {};
+
+    for (const merged of targetNode.mergedNode) {
+      const variantName = Object.keys(merged)[0];
+      const parsed = helper.parseVariantName(variantName); // { Size: "Large", State: "Hover" }
+
+      for (const [prop, value] of Object.entries(parsed)) {
+        if (!presentValues[prop]) presentValues[prop] = new Set();
+        presentValues[prop].add(value);
+      }
+    }
+
+    // 2. 전체 옵션 대비 일부 값에서만 존재하는 속성들 찾기
+    const conditions: ConditionNode[] = [];
+
+    for (const [propName, def] of Object.entries(definitions)) {
+      const allOptions = new Set(def.variantOptions);
+      const presentOptions = presentValues[propName] || new Set();
+
+      // 모든 옵션에서 존재하면 이 속성으로는 조건 추론 불가
+      if (presentOptions.size === allOptions.size) continue;
+
+      // 일부 옵션에서만 존재 → 조건 생성
+      if (presentOptions.size === 1) {
+        // 단일 값: props.Left Icon === 'True'
+        const value = [...presentOptions][0];
+        conditions.push(helper.createBinaryCondition(propName, value));
+      } else {
+        // 복수 값: props.State === 'Hover' || props.State === 'Pressed'
+        const orConditions = [...presentOptions].map((v) =>
+          helper.createBinaryCondition(propName, v)
+        );
+        conditions.push(helper.combineWithOr(orConditions));
+      }
+    }
+
+    // 3. 조건들을 AND로 연결
+    if (conditions.length === 0) return null;
+    if (conditions.length === 1) return conditions[0];
+
+    return helper.combineWithAnd(conditions);
   }
 }
 

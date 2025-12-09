@@ -35,10 +35,18 @@ class CreateSuperTree {
     const components = this.renderTree.children;
     // const superTreeRoot = this._convertSuperTreeNode(this.renderTree);
 
-    let superTree = this._convertSuperTreeNode(components[0])!;
+    let superTree = this._convertSuperTreeNode(
+      components[0],
+      null,
+      components[0].figmaStyle!.name
+    )!;
 
     for (let i = 1; i < components.length; i++) {
-      const target = this._convertSuperTreeNode(components[i])!;
+      const target = this._convertSuperTreeNode(
+        components[i],
+        null,
+        components[i].figmaStyle!.name
+      )!;
 
       superTree = this._mergeTree(superTree, target);
     }
@@ -104,7 +112,8 @@ class CreateSuperTree {
 
   private _convertSuperTreeNode(
     renderTree: RenderTree,
-    parent: SuperTreeNode | null = null
+    parent: SuperTreeNode | null = null,
+    variantName: string | null = null
   ): SuperTreeNode | undefined {
     const nodeData = this.specDataManager.getSpecById(renderTree.id);
     if (!nodeData) return;
@@ -115,11 +124,17 @@ class CreateSuperTree {
       name: nodeData.name,
       parent,
       children: [],
-      mergedNode: [{ [nodeData.name]: renderTree.id }], // [추가] 초기화: 현재 Variant ID와 노드 ID 매핑
+      mergedNode: [
+        {
+          id: renderTree.id,
+          name: nodeData.name,
+          variantName,
+        },
+      ],
     };
 
     node.children = renderTree.children.map((child) =>
-      this._convertSuperTreeNode(child, node)
+      this._convertSuperTreeNode(child, node, variantName)
     );
 
     return node;
