@@ -29,6 +29,8 @@ class DebuggingManager {
     return this.log(this.transformConditions(cloned));
   }
 
+  public analyzeFigmaJSON() {}
+
   private transformConditions(obj: any): any {
     if (obj === null || obj === undefined) return obj;
 
