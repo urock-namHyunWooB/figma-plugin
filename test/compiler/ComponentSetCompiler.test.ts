@@ -1,7 +1,8 @@
 import { describe, expect } from "vitest";
 import taptapButtonSampleMockData from "../fixtures/button/taptapButton_sample.json";
 import tadaButtonMockData from "../fixtures/button/tadaButton.json";
-import awsButtonMockData from "../fixtures/button/awsButton.json";
+
+import airtableButtonMockData from "../fixtures/button/airtableButton.json";
 
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
@@ -124,8 +125,10 @@ describe("ComponentSetCompiler", () => {
       });
     });
 
-    describe("awsButton", () => {
-      const specDataManager = new SpecDataManager(awsButtonMockData as any);
+    describe("airtableButton", () => {
+      const specDataManager = new SpecDataManager(
+        airtableButtonMockData as any
+      );
       const renderTree = specDataManager.getRenderTree();
 
       const matcher = new NodeMatcher(specDataManager);
@@ -151,12 +154,12 @@ describe("ComponentSetCompiler", () => {
         expect(textNodes).toBe(1);
       });
 
-      test("children중에 ICON 타입은 두개여야 한다.", () => {
+      test("children중에 ICON 타입은 1개여야 한다.", () => {
         const iconNodes = countNodesByType(
           createFinalAstTree.tempAstTree,
           "INSTANCE"
         );
-        expect(iconNodes).toBe(2);
+        expect(iconNodes).toBe(1);
       });
     });
   });

@@ -19,11 +19,7 @@ class NodeMatcher {
    * @param node2
    */
   public isSameNode(node1: SuperTreeNode, node2: SuperTreeNode) {
-    debug.debugger([node1.id, "15:12974", "15:12979"], () => {
-      if (node2.type === "FRAME") {
-        debugger;
-      }
-    });
+    debug.debugger([node1.id, "716:526"]);
     if (node1.type !== node2.type) return false;
     if (node1.id === node2.id) {
       console.warn("Something Wrong! Same node id: ", node1.id, node2.id);

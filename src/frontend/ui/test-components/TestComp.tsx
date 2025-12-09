@@ -3,7 +3,7 @@ import { compileReactComponent } from "../utils/component-compiler";
 import FigmaCompiler from "@frontend/ui/domain/compiler";
 import taptapButtonSample from "../../../../test/fixtures/button/taptapButton_sample.json";
 import tadaButtonSample from "../../../../test/fixtures/button/tadaButton.json";
-import awsButtonSample from "../../../../test/fixtures/button/awsButton.json";
+import airtableButton from "../../../../test/fixtures/button/airtableButton.json";
 
 export function TestComp() {
   const [tsxCode, setTsxCode] = useState<string>("");
@@ -17,7 +17,7 @@ export function TestComp() {
     async function compile() {
       if (codeRef.current) return;
       try {
-        codeRef.current = new FigmaCompiler(awsButtonSample);
+        codeRef.current = new FigmaCompiler(airtableButton);
         return;
         setTsxCode(codeRef.current);
 
