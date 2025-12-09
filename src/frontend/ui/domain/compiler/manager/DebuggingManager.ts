@@ -4,8 +4,39 @@ import helper from "./HelperManager";
 
 class DebuggingManager {
   private isDebugMode: boolean = false;
+
   constructor(isDebugMode: boolean) {
     this.isDebugMode = isDebugMode;
+
+    /**
+     * 키보드 d + 숫자 1 누르면 로컬스토리지에 debugPoint + 숫자 토글
+     */
+
+    let isDKeyPressed = false;
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "d") {
+        isDKeyPressed = true;
+        return;
+      }
+
+      // d가 눌린 상태에서 숫자 키(1-9) 입력 시
+      if (isDKeyPressed && e.key >= "1" && e.key <= "9") {
+        const num = e.key;
+        const key = `debugPoint${num}`;
+        const current = localStorage.getItem(key);
+        const newValue = current === "true" ? "false" : "true";
+
+        localStorage.setItem(key, newValue);
+        console.log(`🐛 ${key} toggled to: ${newValue}`);
+      }
+    });
+
+    window.addEventListener("keyup", (e) => {
+      if (e.key === "d") {
+        isDKeyPressed = false;
+      }
+    });
   }
 
   public log(target: any) {
@@ -29,7 +60,15 @@ class DebuggingManager {
     return this.log(this.transformConditions(cloned));
   }
 
-  public analyzeFigmaJSON() {}
+  /**
+   * 디버깅 포인트를 만듬.
+   * localstorage에 값을 참조해서 실행.
+   */
+  public point(number: number) {
+    if (window.localStorage.getItem(`debugPoint${number}`) === "true") {
+      debugger;
+    }
+  }
 
   private transformConditions(obj: any): any {
     if (obj === null || obj === undefined) return obj;

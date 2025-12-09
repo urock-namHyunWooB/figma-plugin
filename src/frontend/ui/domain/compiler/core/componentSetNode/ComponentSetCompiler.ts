@@ -6,6 +6,7 @@ import NodeMatcher from "@compiler/core/NodeMatcher";
 import CreateSuperTree from "./CreateSuperTree";
 import RefineProps from "@compiler/core/componentSetNode/RefineProps";
 import CreateFinalAstTree from "./CreateFinalAstTree";
+import debug from "@compiler/manager/DebuggingManager";
 
 type PropsDef = Record<string, any>;
 
@@ -21,6 +22,7 @@ class ComponentSetCompiler {
     specDataManager: SpecDataManager,
     matcher: NodeMatcher
   ) {
+    debug.point(1);
     this.propsDef = this.extractPropsDef(renderTree, specDataManager, matcher);
 
     this.CreateSuperTree = new CreateSuperTree(
