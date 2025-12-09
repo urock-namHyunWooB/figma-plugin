@@ -1,5 +1,6 @@
 import { ConditionNode, TempAstTree } from "@compiler";
 import { traverseBFS } from "@compiler/utils/traverse";
+import helper from "./HelperManager";
 
 class DebuggingManager {
   private isDebugMode: boolean = false;
@@ -21,7 +22,41 @@ class DebuggingManager {
    * 트리를 순회해서 condition이 보이면 전부 conditionToString로 파싱한다.
    *
    */
-  public tree(tree: TempAstTree) {}
+  public tree(tree: TempAstTree) {
+    // 1. Deep clone (원본 수정 방지)
+    const cloned = helper.deepCloneTree(tree);
+
+    return this.log(this.transformConditions(cloned));
+  }
+
+  private transformConditions(obj: any): any {
+    if (obj === null || obj === undefined) return obj;
+
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.transformConditions(item));
+    }
+
+    if (typeof obj === "object") {
+      const result: any = {};
+
+      for (const key of Object.keys(obj)) {
+        if (key === "parent") {
+          result[key] = null; // 순환 참조 방지
+          continue;
+        }
+
+        if (key === "condition") {
+          result[key] = this.conditionToString(obj[key]);
+        } else {
+          result[key] = this.transformConditions(obj[key]);
+        }
+      }
+
+      return result;
+    }
+
+    return obj;
+  }
 
   public debugger(target: any[] | [[]], onMatch?: () => void) {
     if (isOneDArray(target)) {

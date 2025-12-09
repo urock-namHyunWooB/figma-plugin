@@ -1,5 +1,5 @@
 import { ConditionNode } from "@compiler";
-import { BinaryOperator } from "@compiler/types/customType";
+import { BinaryOperator, TempAstTree } from "@compiler/types/customType";
 
 class HelperManager {
   public findBooleanVariantProps(definitions: Record<string, any>): string[] {
@@ -67,6 +67,18 @@ class HelperManager {
         raw: `'${value}'`,
       },
     } as unknown as ConditionNode;
+  }
+
+  public deepCloneTree(tree: TempAstTree): any {
+    // 순환 참조(parent) 제외하고 복사
+    const clone = (node: TempAstTree): any => {
+      const { parent, children, ...rest } = node;
+      return {
+        ...JSON.parse(JSON.stringify(rest)), // deep clone (parent 제외)
+        children: children.map((child) => clone(child)),
+      };
+    };
+    return clone(tree);
   }
 }
 
