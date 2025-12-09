@@ -117,6 +117,7 @@ export class FigmaPlugin {
     if (!("children" in node) || !node.children || node.children.length === 0) {
       return {
         id: node.id,
+        name: node.name,
         cssStyle,
         children: [],
       };
@@ -124,6 +125,7 @@ export class FigmaPlugin {
 
     const styleTree: StyleTree = {
       id: node.id,
+      name: node.name,
       cssStyle,
 
       children: [],

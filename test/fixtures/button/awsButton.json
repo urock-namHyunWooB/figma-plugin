@@ -14368,10 +14368,12 @@
   },
   "styleTree": {
     "id": "2976:3322",
+    "name": "AWSButton",
     "cssStyle": {},
     "children": [
       {
         "id": "2976:3323",
+        "name": "size=large, isDisabled=false, type=primary",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -14384,6 +14386,7 @@
         "children": [
           {
             "id": "3880:2656",
+            "name": "Button",
             "cssStyle": {
               "color": "#FFF",
               "font-family": "Inter",
@@ -14398,6 +14401,7 @@
       },
       {
         "id": "3860:3252",
+        "name": "size=large, isDisabled=false, type=destructive",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -14410,6 +14414,7 @@
         "children": [
           {
             "id": "3879:3583",
+            "name": "label",
             "cssStyle": {
               "width": "63.36px",
               "height": "14.758px"
@@ -14417,6 +14422,7 @@
             "children": [
               {
                 "id": "3879:3584",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.057px",
                   "height": "11.051px",
@@ -14426,6 +14432,7 @@
               },
               {
                 "id": "3879:3585",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.739px",
                   "height": "11.264px",
@@ -14435,6 +14442,7 @@
               },
               {
                 "id": "3879:3586",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -14444,6 +14452,7 @@
               },
               {
                 "id": "3879:3587",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -14453,6 +14462,7 @@
               },
               {
                 "id": "3879:3588",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.021px",
                   "height": "11.051px",
@@ -14462,6 +14472,7 @@
               },
               {
                 "id": "3879:3589",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "11.222px",
                   "height": "14.545px",
@@ -14475,6 +14486,7 @@
       },
       {
         "id": "2976:3327",
+        "name": "size=large, isDisabled=true, type=primary",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -14486,6 +14498,7 @@
         "children": [
           {
             "id": "3879:3591",
+            "name": "label",
             "cssStyle": {
               "width": "63.36px",
               "height": "14.758px"
@@ -14493,6 +14506,7 @@
             "children": [
               {
                 "id": "3879:3592",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.057px",
                   "height": "11.051px",
@@ -14502,6 +14516,7 @@
               },
               {
                 "id": "3879:3593",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.739px",
                   "height": "11.264px",
@@ -14511,6 +14526,7 @@
               },
               {
                 "id": "3879:3594",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -14520,6 +14536,7 @@
               },
               {
                 "id": "3879:3595",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -14529,6 +14546,7 @@
               },
               {
                 "id": "3879:3596",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.021px",
                   "height": "11.051px",
@@ -14538,6 +14556,7 @@
               },
               {
                 "id": "3879:3597",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "11.222px",
                   "height": "14.545px",
@@ -14551,6 +14570,7 @@
       },
       {
         "id": "3860:3264",
+        "name": "size=large, isDisabled=true, type=destructive",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -14562,6 +14582,7 @@
         "children": [
           {
             "id": "3879:3599",
+            "name": "label",
             "cssStyle": {
               "width": "63.36px",
               "height": "14.758px"
@@ -14569,6 +14590,7 @@
             "children": [
               {
                 "id": "3879:3600",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.057px",
                   "height": "11.051px",
@@ -14578,6 +14600,7 @@
               },
               {
                 "id": "3879:3601",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.739px",
                   "height": "11.264px",
@@ -14587,6 +14610,7 @@
               },
               {
                 "id": "3879:3602",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -14596,6 +14620,7 @@
               },
               {
                 "id": "3879:3603",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -14605,6 +14630,7 @@
               },
               {
                 "id": "3879:3604",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.021px",
                   "height": "11.051px",
@@ -14614,6 +14640,7 @@
               },
               {
                 "id": "3879:3605",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "11.222px",
                   "height": "14.545px",
@@ -14627,6 +14654,7 @@
       },
       {
         "id": "2976:3331",
+        "name": "size=default, isDisabled=false, type=primary",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -14639,6 +14667,7 @@
         "children": [
           {
             "id": "3879:3607",
+            "name": "label",
             "cssStyle": {
               "width": "50.688px",
               "height": "11.807px"
@@ -14646,6 +14675,7 @@
             "children": [
               {
                 "id": "3879:3608",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.045px",
                   "height": "8.841px",
@@ -14655,6 +14685,7 @@
               },
               {
                 "id": "3879:3609",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.591px",
                   "height": "9.011px",
@@ -14664,6 +14695,7 @@
               },
               {
                 "id": "3879:3610",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -14673,6 +14705,7 @@
               },
               {
                 "id": "3879:3611",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -14682,6 +14715,7 @@
               },
               {
                 "id": "3879:3612",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.017px",
                   "height": "8.841px",
@@ -14691,6 +14725,7 @@
               },
               {
                 "id": "3879:3613",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.977px",
                   "height": "11.636px",
@@ -14704,6 +14739,7 @@
       },
       {
         "id": "3860:3248",
+        "name": "size=default, isDisabled=false, type=destructive",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -14716,6 +14752,7 @@
         "children": [
           {
             "id": "3879:3615",
+            "name": "label",
             "cssStyle": {
               "width": "50.688px",
               "height": "11.807px"
@@ -14723,6 +14760,7 @@
             "children": [
               {
                 "id": "3879:3616",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.045px",
                   "height": "8.841px",
@@ -14732,6 +14770,7 @@
               },
               {
                 "id": "3879:3617",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.591px",
                   "height": "9.011px",
@@ -14741,6 +14780,7 @@
               },
               {
                 "id": "3879:3618",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -14750,6 +14790,7 @@
               },
               {
                 "id": "3879:3619",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -14759,6 +14800,7 @@
               },
               {
                 "id": "3879:3620",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.017px",
                   "height": "8.841px",
@@ -14768,6 +14810,7 @@
               },
               {
                 "id": "3879:3621",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.977px",
                   "height": "11.636px",
@@ -14781,6 +14824,7 @@
       },
       {
         "id": "2976:3335",
+        "name": "size=default, isDisabled=true, type=primary",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -14792,6 +14836,7 @@
         "children": [
           {
             "id": "3879:3623",
+            "name": "label",
             "cssStyle": {
               "width": "50.688px",
               "height": "11.807px"
@@ -14799,6 +14844,7 @@
             "children": [
               {
                 "id": "3879:3624",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.045px",
                   "height": "8.841px",
@@ -14808,6 +14854,7 @@
               },
               {
                 "id": "3879:3625",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.591px",
                   "height": "9.011px",
@@ -14817,6 +14864,7 @@
               },
               {
                 "id": "3879:3626",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -14826,6 +14874,7 @@
               },
               {
                 "id": "3879:3627",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -14835,6 +14884,7 @@
               },
               {
                 "id": "3879:3628",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.017px",
                   "height": "8.841px",
@@ -14844,6 +14894,7 @@
               },
               {
                 "id": "3879:3629",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.977px",
                   "height": "11.636px",
@@ -14857,6 +14908,7 @@
       },
       {
         "id": "3860:3260",
+        "name": "size=default, isDisabled=true, type=destructive",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -14868,6 +14920,7 @@
         "children": [
           {
             "id": "3879:3631",
+            "name": "label",
             "cssStyle": {
               "width": "50.688px",
               "height": "11.807px"
@@ -14875,6 +14928,7 @@
             "children": [
               {
                 "id": "3879:3632",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.045px",
                   "height": "8.841px",
@@ -14884,6 +14938,7 @@
               },
               {
                 "id": "3879:3633",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.591px",
                   "height": "9.011px",
@@ -14893,6 +14948,7 @@
               },
               {
                 "id": "3879:3634",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -14902,6 +14958,7 @@
               },
               {
                 "id": "3879:3635",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -14911,6 +14968,7 @@
               },
               {
                 "id": "3879:3636",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.017px",
                   "height": "8.841px",
@@ -14920,6 +14978,7 @@
               },
               {
                 "id": "3879:3637",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.977px",
                   "height": "11.636px",
@@ -14933,6 +14992,7 @@
       },
       {
         "id": "2976:3339",
+        "name": "size=small, isDisabled=false, type=primary",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "6px 12px",
@@ -14945,6 +15005,7 @@
         "children": [
           {
             "id": "3879:3639",
+            "name": "label",
             "cssStyle": {
               "width": "44.352px",
               "height": "10.331px"
@@ -14952,6 +15013,7 @@
             "children": [
               {
                 "id": "3879:3640",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.04px",
                   "height": "7.736px",
@@ -14961,6 +15023,7 @@
               },
               {
                 "id": "3879:3641",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.517px",
                   "height": "7.885px",
@@ -14970,6 +15033,7 @@
               },
               {
                 "id": "3879:3642",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -14979,6 +15043,7 @@
               },
               {
                 "id": "3879:3643",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -14988,6 +15053,7 @@
               },
               {
                 "id": "3879:3644",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.015px",
                   "height": "7.736px",
@@ -14997,6 +15063,7 @@
               },
               {
                 "id": "3879:3645",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.855px",
                   "height": "10.182px",
@@ -15010,6 +15077,7 @@
       },
       {
         "id": "3860:3256",
+        "name": "size=small, isDisabled=false, type=destructive",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "6px 12px",
@@ -15022,6 +15090,7 @@
         "children": [
           {
             "id": "3879:3647",
+            "name": "label",
             "cssStyle": {
               "width": "44.352px",
               "height": "10.331px"
@@ -15029,6 +15098,7 @@
             "children": [
               {
                 "id": "3879:3648",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.04px",
                   "height": "7.736px",
@@ -15038,6 +15108,7 @@
               },
               {
                 "id": "3879:3649",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.517px",
                   "height": "7.885px",
@@ -15047,6 +15118,7 @@
               },
               {
                 "id": "3879:3650",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -15056,6 +15128,7 @@
               },
               {
                 "id": "3879:3651",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -15065,6 +15138,7 @@
               },
               {
                 "id": "3879:3652",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.015px",
                   "height": "7.736px",
@@ -15074,6 +15148,7 @@
               },
               {
                 "id": "3879:3653",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.855px",
                   "height": "10.182px",
@@ -15087,6 +15162,7 @@
       },
       {
         "id": "2976:3343",
+        "name": "size=small, isDisabled=true, type=primary",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "6px 12px",
@@ -15098,6 +15174,7 @@
         "children": [
           {
             "id": "2976:3344",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "24px",
               "height": "24px"
@@ -15106,6 +15183,7 @@
           },
           {
             "id": "3879:3655",
+            "name": "label",
             "cssStyle": {
               "width": "44.352px",
               "height": "10.331px"
@@ -15113,6 +15191,7 @@
             "children": [
               {
                 "id": "3879:3656",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.04px",
                   "height": "7.736px",
@@ -15122,6 +15201,7 @@
               },
               {
                 "id": "3879:3657",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.517px",
                   "height": "7.885px",
@@ -15131,6 +15211,7 @@
               },
               {
                 "id": "3879:3658",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -15140,6 +15221,7 @@
               },
               {
                 "id": "3879:3659",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -15149,6 +15231,7 @@
               },
               {
                 "id": "3879:3660",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.015px",
                   "height": "7.736px",
@@ -15158,6 +15241,7 @@
               },
               {
                 "id": "3879:3661",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.855px",
                   "height": "10.182px",
@@ -15169,6 +15253,7 @@
           },
           {
             "id": "2976:3346",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "24px",
               "height": "24px"
@@ -15179,6 +15264,7 @@
       },
       {
         "id": "3860:3268",
+        "name": "size=small, isDisabled=true, type=destructive",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "6px 12px",
@@ -15190,6 +15276,7 @@
         "children": [
           {
             "id": "3860:3269",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "24px",
               "height": "24px"
@@ -15198,6 +15285,7 @@
           },
           {
             "id": "3879:3663",
+            "name": "label",
             "cssStyle": {
               "width": "44.352px",
               "height": "10.331px"
@@ -15205,6 +15293,7 @@
             "children": [
               {
                 "id": "3879:3664",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.04px",
                   "height": "7.736px",
@@ -15214,6 +15303,7 @@
               },
               {
                 "id": "3879:3665",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.517px",
                   "height": "7.885px",
@@ -15223,6 +15313,7 @@
               },
               {
                 "id": "3879:3666",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -15232,6 +15323,7 @@
               },
               {
                 "id": "3879:3667",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -15241,6 +15333,7 @@
               },
               {
                 "id": "3879:3668",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.015px",
                   "height": "7.736px",
@@ -15250,6 +15343,7 @@
               },
               {
                 "id": "3879:3669",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.855px",
                   "height": "10.182px",
@@ -15261,6 +15355,7 @@
           },
           {
             "id": "3860:3271",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "24px",
               "height": "24px"
@@ -15271,6 +15366,7 @@
       },
       {
         "id": "2976:3347",
+        "name": "size=large, isDisabled=false, type=default",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -15282,6 +15378,7 @@
         "children": [
           {
             "id": "2976:3348",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "20px",
               "height": "20px"
@@ -15290,6 +15387,7 @@
           },
           {
             "id": "3879:3671",
+            "name": "label",
             "cssStyle": {
               "width": "63.36px",
               "height": "14.758px"
@@ -15297,6 +15395,7 @@
             "children": [
               {
                 "id": "3879:3672",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.057px",
                   "height": "11.051px",
@@ -15306,6 +15405,7 @@
               },
               {
                 "id": "3879:3673",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.739px",
                   "height": "11.264px",
@@ -15315,6 +15415,7 @@
               },
               {
                 "id": "3879:3674",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -15324,6 +15425,7 @@
               },
               {
                 "id": "3879:3675",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -15333,6 +15435,7 @@
               },
               {
                 "id": "3879:3676",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.021px",
                   "height": "11.051px",
@@ -15342,6 +15445,7 @@
               },
               {
                 "id": "3879:3677",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "11.222px",
                   "height": "14.545px",
@@ -15353,6 +15457,7 @@
           },
           {
             "id": "2976:3350",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "20px",
               "height": "20px"
@@ -15363,6 +15468,7 @@
       },
       {
         "id": "3860:3228",
+        "name": "size=large, isDisabled=false, type=warning",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -15375,6 +15481,7 @@
         "children": [
           {
             "id": "3860:3229",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "20px",
               "height": "20px"
@@ -15383,6 +15490,7 @@
           },
           {
             "id": "3879:3679",
+            "name": "label",
             "cssStyle": {
               "width": "63.36px",
               "height": "14.758px"
@@ -15390,6 +15498,7 @@
             "children": [
               {
                 "id": "3879:3680",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.057px",
                   "height": "11.051px",
@@ -15399,6 +15508,7 @@
               },
               {
                 "id": "3879:3681",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.739px",
                   "height": "11.264px",
@@ -15408,6 +15518,7 @@
               },
               {
                 "id": "3879:3682",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -15417,6 +15528,7 @@
               },
               {
                 "id": "3879:3683",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -15426,6 +15538,7 @@
               },
               {
                 "id": "3879:3684",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.021px",
                   "height": "11.051px",
@@ -15435,6 +15548,7 @@
               },
               {
                 "id": "3879:3685",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "11.222px",
                   "height": "14.545px",
@@ -15446,6 +15560,7 @@
           },
           {
             "id": "3860:3231",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "20px",
               "height": "20px"
@@ -15456,6 +15571,7 @@
       },
       {
         "id": "2976:3351",
+        "name": "size=large, isDisabled=true, type=default",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -15467,6 +15583,7 @@
         "children": [
           {
             "id": "2976:3352",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "20px",
               "height": "20px"
@@ -15475,6 +15592,7 @@
           },
           {
             "id": "3879:3687",
+            "name": "label",
             "cssStyle": {
               "width": "63.36px",
               "height": "14.758px"
@@ -15482,6 +15600,7 @@
             "children": [
               {
                 "id": "3879:3688",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.057px",
                   "height": "11.051px",
@@ -15491,6 +15610,7 @@
               },
               {
                 "id": "3879:3689",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.739px",
                   "height": "11.264px",
@@ -15500,6 +15620,7 @@
               },
               {
                 "id": "3879:3690",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -15509,6 +15630,7 @@
               },
               {
                 "id": "3879:3691",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -15518,6 +15640,7 @@
               },
               {
                 "id": "3879:3692",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.021px",
                   "height": "11.051px",
@@ -15527,6 +15650,7 @@
               },
               {
                 "id": "3879:3693",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "11.222px",
                   "height": "14.545px",
@@ -15538,6 +15662,7 @@
           },
           {
             "id": "2976:3354",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "20px",
               "height": "20px"
@@ -15548,6 +15673,7 @@
       },
       {
         "id": "3860:3240",
+        "name": "size=large, isDisabled=true, type=warning",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -15560,6 +15686,7 @@
         "children": [
           {
             "id": "3860:3241",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "20px",
               "height": "20px"
@@ -15568,6 +15695,7 @@
           },
           {
             "id": "3879:3695",
+            "name": "label",
             "cssStyle": {
               "width": "63.36px",
               "height": "14.758px"
@@ -15575,6 +15703,7 @@
             "children": [
               {
                 "id": "3879:3696",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.057px",
                   "height": "11.051px",
@@ -15584,6 +15713,7 @@
               },
               {
                 "id": "3879:3697",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.739px",
                   "height": "11.264px",
@@ -15593,6 +15723,7 @@
               },
               {
                 "id": "3879:3698",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -15602,6 +15733,7 @@
               },
               {
                 "id": "3879:3699",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -15611,6 +15743,7 @@
               },
               {
                 "id": "3879:3700",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.021px",
                   "height": "11.051px",
@@ -15620,6 +15753,7 @@
               },
               {
                 "id": "3879:3701",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "11.222px",
                   "height": "14.545px",
@@ -15631,6 +15765,7 @@
           },
           {
             "id": "3860:3243",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "20px",
               "height": "20px"
@@ -15641,6 +15776,7 @@
       },
       {
         "id": "2976:3355",
+        "name": "size=default, isDisabled=false, type=default",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -15652,6 +15788,7 @@
         "children": [
           {
             "id": "2976:3356",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "16px",
               "height": "16px"
@@ -15660,6 +15797,7 @@
           },
           {
             "id": "3879:3703",
+            "name": "label",
             "cssStyle": {
               "width": "50.688px",
               "height": "11.807px"
@@ -15667,6 +15805,7 @@
             "children": [
               {
                 "id": "3879:3704",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.045px",
                   "height": "8.841px",
@@ -15676,6 +15815,7 @@
               },
               {
                 "id": "3879:3705",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.591px",
                   "height": "9.011px",
@@ -15685,6 +15825,7 @@
               },
               {
                 "id": "3879:3706",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -15694,6 +15835,7 @@
               },
               {
                 "id": "3879:3707",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -15703,6 +15845,7 @@
               },
               {
                 "id": "3879:3708",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.017px",
                   "height": "8.841px",
@@ -15712,6 +15855,7 @@
               },
               {
                 "id": "3879:3709",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.977px",
                   "height": "11.636px",
@@ -15723,6 +15867,7 @@
           },
           {
             "id": "2976:3358",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "16px",
               "height": "16px"
@@ -15733,6 +15878,7 @@
       },
       {
         "id": "2976:3359",
+        "name": "size=default, isDisabled=true, type=default",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -15744,6 +15890,7 @@
         "children": [
           {
             "id": "2976:3360",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "16px",
               "height": "16px"
@@ -15752,6 +15899,7 @@
           },
           {
             "id": "3879:3711",
+            "name": "label",
             "cssStyle": {
               "width": "50.688px",
               "height": "11.807px"
@@ -15759,6 +15907,7 @@
             "children": [
               {
                 "id": "3879:3712",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.045px",
                   "height": "8.841px",
@@ -15768,6 +15917,7 @@
               },
               {
                 "id": "3879:3713",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.591px",
                   "height": "9.011px",
@@ -15777,6 +15927,7 @@
               },
               {
                 "id": "3879:3714",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -15786,6 +15937,7 @@
               },
               {
                 "id": "3879:3715",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -15795,6 +15947,7 @@
               },
               {
                 "id": "3879:3716",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.017px",
                   "height": "8.841px",
@@ -15804,6 +15957,7 @@
               },
               {
                 "id": "3879:3717",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.977px",
                   "height": "11.636px",
@@ -15815,6 +15969,7 @@
           },
           {
             "id": "2976:3362",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "16px",
               "height": "16px"
@@ -15825,6 +15980,7 @@
       },
       {
         "id": "3860:3236",
+        "name": "size=default, isDisabled=true, type=warning",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -15837,6 +15993,7 @@
         "children": [
           {
             "id": "3860:3237",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "16px",
               "height": "16px"
@@ -15845,6 +16002,7 @@
           },
           {
             "id": "3879:3719",
+            "name": "label",
             "cssStyle": {
               "width": "50.688px",
               "height": "11.807px"
@@ -15852,6 +16010,7 @@
             "children": [
               {
                 "id": "3879:3720",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.045px",
                   "height": "8.841px",
@@ -15861,6 +16020,7 @@
               },
               {
                 "id": "3879:3721",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.591px",
                   "height": "9.011px",
@@ -15870,6 +16030,7 @@
               },
               {
                 "id": "3879:3722",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -15879,6 +16040,7 @@
               },
               {
                 "id": "3879:3723",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -15888,6 +16050,7 @@
               },
               {
                 "id": "3879:3724",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.017px",
                   "height": "8.841px",
@@ -15897,6 +16060,7 @@
               },
               {
                 "id": "3879:3725",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.977px",
                   "height": "11.636px",
@@ -15908,6 +16072,7 @@
           },
           {
             "id": "3860:3239",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "16px",
               "height": "16px"
@@ -15918,6 +16083,7 @@
       },
       {
         "id": "2976:3363",
+        "name": "size=small, isDisabled=false, type=default",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "6px 12px",
@@ -15929,6 +16095,7 @@
         "children": [
           {
             "id": "2976:3364",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "14px",
               "height": "14px"
@@ -15937,6 +16104,7 @@
           },
           {
             "id": "3879:3727",
+            "name": "label",
             "cssStyle": {
               "width": "44.352px",
               "height": "10.331px"
@@ -15944,6 +16112,7 @@
             "children": [
               {
                 "id": "3879:3728",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.04px",
                   "height": "7.736px",
@@ -15953,6 +16122,7 @@
               },
               {
                 "id": "3879:3729",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.517px",
                   "height": "7.885px",
@@ -15962,6 +16132,7 @@
               },
               {
                 "id": "3879:3730",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -15971,6 +16142,7 @@
               },
               {
                 "id": "3879:3731",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -15980,6 +16152,7 @@
               },
               {
                 "id": "3879:3732",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.015px",
                   "height": "7.736px",
@@ -15989,6 +16162,7 @@
               },
               {
                 "id": "3879:3733",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.855px",
                   "height": "10.182px",
@@ -16000,6 +16174,7 @@
           },
           {
             "id": "2976:3366",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "14px",
               "height": "14px"
@@ -16010,6 +16185,7 @@
       },
       {
         "id": "3860:3232",
+        "name": "size=small, isDisabled=false, type=warning",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "6px 12px",
@@ -16022,6 +16198,7 @@
         "children": [
           {
             "id": "3860:3233",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "14px",
               "height": "14px"
@@ -16030,6 +16207,7 @@
           },
           {
             "id": "3879:3735",
+            "name": "label",
             "cssStyle": {
               "width": "44.352px",
               "height": "10.331px"
@@ -16037,6 +16215,7 @@
             "children": [
               {
                 "id": "3879:3736",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.04px",
                   "height": "7.736px",
@@ -16046,6 +16225,7 @@
               },
               {
                 "id": "3879:3737",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.517px",
                   "height": "7.885px",
@@ -16055,6 +16235,7 @@
               },
               {
                 "id": "3879:3738",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -16064,6 +16245,7 @@
               },
               {
                 "id": "3879:3739",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -16073,6 +16255,7 @@
               },
               {
                 "id": "3879:3740",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.015px",
                   "height": "7.736px",
@@ -16082,6 +16265,7 @@
               },
               {
                 "id": "3879:3741",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.855px",
                   "height": "10.182px",
@@ -16093,6 +16277,7 @@
           },
           {
             "id": "3860:3235",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "14px",
               "height": "14px"
@@ -16103,6 +16288,7 @@
       },
       {
         "id": "2976:3367",
+        "name": "size=small, isDisabled=true, type=default",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "6px 12px",
@@ -16114,6 +16300,7 @@
         "children": [
           {
             "id": "2976:3368",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "14px",
               "height": "14px"
@@ -16122,6 +16309,7 @@
           },
           {
             "id": "3879:3743",
+            "name": "label",
             "cssStyle": {
               "width": "44.352px",
               "height": "10.331px"
@@ -16129,6 +16317,7 @@
             "children": [
               {
                 "id": "3879:3744",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.04px",
                   "height": "7.736px",
@@ -16138,6 +16327,7 @@
               },
               {
                 "id": "3879:3745",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.517px",
                   "height": "7.885px",
@@ -16147,6 +16337,7 @@
               },
               {
                 "id": "3879:3746",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -16156,6 +16347,7 @@
               },
               {
                 "id": "3879:3747",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -16165,6 +16357,7 @@
               },
               {
                 "id": "3879:3748",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.015px",
                   "height": "7.736px",
@@ -16174,6 +16367,7 @@
               },
               {
                 "id": "3879:3749",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.855px",
                   "height": "10.182px",
@@ -16185,6 +16379,7 @@
           },
           {
             "id": "2976:3370",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "14px",
               "height": "14px"
@@ -16195,6 +16390,7 @@
       },
       {
         "id": "3860:3244",
+        "name": "size=small, isDisabled=true, type=warning",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "6px 12px",
@@ -16207,6 +16403,7 @@
         "children": [
           {
             "id": "3860:3245",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "14px",
               "height": "14px"
@@ -16215,6 +16412,7 @@
           },
           {
             "id": "3879:3751",
+            "name": "label",
             "cssStyle": {
               "width": "44.352px",
               "height": "10.331px"
@@ -16222,6 +16420,7 @@
             "children": [
               {
                 "id": "3879:3752",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.04px",
                   "height": "7.736px",
@@ -16231,6 +16430,7 @@
               },
               {
                 "id": "3879:3753",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.517px",
                   "height": "7.885px",
@@ -16240,6 +16440,7 @@
               },
               {
                 "id": "3879:3754",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -16249,6 +16450,7 @@
               },
               {
                 "id": "3879:3755",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -16258,6 +16460,7 @@
               },
               {
                 "id": "3879:3756",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.015px",
                   "height": "7.736px",
@@ -16267,6 +16470,7 @@
               },
               {
                 "id": "3879:3757",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.855px",
                   "height": "10.182px",
@@ -16278,6 +16482,7 @@
           },
           {
             "id": "3860:3247",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "14px",
               "height": "14px"
@@ -16288,6 +16493,7 @@
       },
       {
         "id": "2976:3371",
+        "name": "size=large, isDisabled=false, type=link",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -16299,6 +16505,7 @@
         "children": [
           {
             "id": "2976:3372",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "24px",
               "height": "24px"
@@ -16307,6 +16514,7 @@
           },
           {
             "id": "3879:3759",
+            "name": "label",
             "cssStyle": {
               "width": "63.36px",
               "height": "14.758px"
@@ -16314,6 +16522,7 @@
             "children": [
               {
                 "id": "3879:3760",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.057px",
                   "height": "11.051px",
@@ -16323,6 +16532,7 @@
               },
               {
                 "id": "3879:3761",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.739px",
                   "height": "11.264px",
@@ -16332,6 +16542,7 @@
               },
               {
                 "id": "3879:3762",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -16341,6 +16552,7 @@
               },
               {
                 "id": "3879:3763",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -16350,6 +16562,7 @@
               },
               {
                 "id": "3879:3764",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.021px",
                   "height": "11.051px",
@@ -16359,6 +16572,7 @@
               },
               {
                 "id": "3879:3765",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "11.222px",
                   "height": "14.545px",
@@ -16370,6 +16584,7 @@
           },
           {
             "id": "2976:3374",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "24px",
               "height": "24px"
@@ -16380,6 +16595,7 @@
       },
       {
         "id": "2976:3375",
+        "name": "size=large, isDisabled=true, type=link",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -16391,6 +16607,7 @@
         "children": [
           {
             "id": "2976:3376",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "20px",
               "height": "20px"
@@ -16399,6 +16616,7 @@
           },
           {
             "id": "3879:3767",
+            "name": "label",
             "cssStyle": {
               "width": "63.36px",
               "height": "14.758px"
@@ -16406,6 +16624,7 @@
             "children": [
               {
                 "id": "3879:3768",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.057px",
                   "height": "11.051px",
@@ -16415,6 +16634,7 @@
               },
               {
                 "id": "3879:3769",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.739px",
                   "height": "11.264px",
@@ -16424,6 +16644,7 @@
               },
               {
                 "id": "3879:3770",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -16433,6 +16654,7 @@
               },
               {
                 "id": "3879:3771",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "6.768px",
                   "height": "13.677px",
@@ -16442,6 +16664,7 @@
               },
               {
                 "id": "3879:3772",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "10.021px",
                   "height": "11.051px",
@@ -16451,6 +16674,7 @@
               },
               {
                 "id": "3879:3773",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "11.222px",
                   "height": "14.545px",
@@ -16462,6 +16686,7 @@
           },
           {
             "id": "2976:3378",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "20px",
               "height": "20px"
@@ -16472,6 +16697,7 @@
       },
       {
         "id": "2976:3379",
+        "name": "size=default, isDisabled=false, type=link",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -16483,6 +16709,7 @@
         "children": [
           {
             "id": "2976:3380",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "16px",
               "height": "16px"
@@ -16491,6 +16718,7 @@
           },
           {
             "id": "3879:3775",
+            "name": "label",
             "cssStyle": {
               "width": "50.688px",
               "height": "11.807px"
@@ -16498,6 +16726,7 @@
             "children": [
               {
                 "id": "3879:3776",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.045px",
                   "height": "8.841px",
@@ -16507,6 +16736,7 @@
               },
               {
                 "id": "3879:3777",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.591px",
                   "height": "9.011px",
@@ -16516,6 +16746,7 @@
               },
               {
                 "id": "3879:3778",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -16525,6 +16756,7 @@
               },
               {
                 "id": "3879:3779",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -16534,6 +16766,7 @@
               },
               {
                 "id": "3879:3780",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.017px",
                   "height": "8.841px",
@@ -16543,6 +16776,7 @@
               },
               {
                 "id": "3879:3781",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.977px",
                   "height": "11.636px",
@@ -16554,6 +16788,7 @@
           },
           {
             "id": "2976:3382",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "16px",
               "height": "16px"
@@ -16564,6 +16799,7 @@
       },
       {
         "id": "2976:3383",
+        "name": "size=default, isDisabled=true, type=link",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -16575,6 +16811,7 @@
         "children": [
           {
             "id": "2976:3384",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "16px",
               "height": "16px"
@@ -16583,6 +16820,7 @@
           },
           {
             "id": "3879:3783",
+            "name": "label",
             "cssStyle": {
               "width": "50.688px",
               "height": "11.807px"
@@ -16590,6 +16828,7 @@
             "children": [
               {
                 "id": "3879:3784",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.045px",
                   "height": "8.841px",
@@ -16599,6 +16838,7 @@
               },
               {
                 "id": "3879:3785",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.591px",
                   "height": "9.011px",
@@ -16608,6 +16848,7 @@
               },
               {
                 "id": "3879:3786",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -16617,6 +16858,7 @@
               },
               {
                 "id": "3879:3787",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -16626,6 +16868,7 @@
               },
               {
                 "id": "3879:3788",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.017px",
                   "height": "8.841px",
@@ -16635,6 +16878,7 @@
               },
               {
                 "id": "3879:3789",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.977px",
                   "height": "11.636px",
@@ -16646,6 +16890,7 @@
           },
           {
             "id": "2976:3386",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "16px",
               "height": "16px"
@@ -16656,6 +16901,7 @@
       },
       {
         "id": "2976:3387",
+        "name": "size=small, isDisabled=false, type=link",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "6px 12px",
@@ -16666,6 +16912,7 @@
         "children": [
           {
             "id": "2976:3388",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "14px",
               "height": "14px"
@@ -16674,6 +16921,7 @@
           },
           {
             "id": "3879:3791",
+            "name": "label",
             "cssStyle": {
               "width": "44.352px",
               "height": "10.331px"
@@ -16681,6 +16929,7 @@
             "children": [
               {
                 "id": "3879:3792",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.04px",
                   "height": "7.736px",
@@ -16690,6 +16939,7 @@
               },
               {
                 "id": "3879:3793",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.517px",
                   "height": "7.885px",
@@ -16699,6 +16949,7 @@
               },
               {
                 "id": "3879:3794",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -16708,6 +16959,7 @@
               },
               {
                 "id": "3879:3795",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -16717,6 +16969,7 @@
               },
               {
                 "id": "3879:3796",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.015px",
                   "height": "7.736px",
@@ -16726,6 +16979,7 @@
               },
               {
                 "id": "3879:3797",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.855px",
                   "height": "10.182px",
@@ -16737,6 +16991,7 @@
           },
           {
             "id": "2976:3390",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "14px",
               "height": "14px"
@@ -16747,6 +17002,7 @@
       },
       {
         "id": "2976:3391",
+        "name": "size=small, isDisabled=true, type=link",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "6px 12px",
@@ -16757,6 +17013,7 @@
         "children": [
           {
             "id": "2976:3392",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "14px",
               "height": "14px"
@@ -16765,6 +17022,7 @@
           },
           {
             "id": "3879:3799",
+            "name": "label",
             "cssStyle": {
               "width": "44.352px",
               "height": "10.331px"
@@ -16772,6 +17030,7 @@
             "children": [
               {
                 "id": "3879:3800",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.04px",
                   "height": "7.736px",
@@ -16781,6 +17040,7 @@
               },
               {
                 "id": "3879:3801",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.517px",
                   "height": "7.885px",
@@ -16790,6 +17050,7 @@
               },
               {
                 "id": "3879:3802",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -16799,6 +17060,7 @@
               },
               {
                 "id": "3879:3803",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "4.738px",
                   "height": "9.574px",
@@ -16808,6 +17070,7 @@
               },
               {
                 "id": "3879:3804",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.015px",
                   "height": "7.736px",
@@ -16817,6 +17080,7 @@
               },
               {
                 "id": "3879:3805",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "7.855px",
                   "height": "10.182px",
@@ -16828,6 +17092,7 @@
           },
           {
             "id": "2976:3394",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "14px",
               "height": "14px"
@@ -16838,6 +17103,7 @@
       },
       {
         "id": "3860:3220",
+        "name": "size=default, isDisabled=false, type=warning",
         "cssStyle": {
           "display": "inline-flex",
           "padding": "8px 16px",
@@ -16850,6 +17116,7 @@
         "children": [
           {
             "id": "3860:3221",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "16px",
               "height": "16px"
@@ -16858,6 +17125,7 @@
           },
           {
             "id": "3879:3807",
+            "name": "label",
             "cssStyle": {
               "width": "50.688px",
               "height": "11.807px"
@@ -16865,6 +17133,7 @@
             "children": [
               {
                 "id": "3879:3808",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.045px",
                   "height": "8.841px",
@@ -16874,6 +17143,7 @@
               },
               {
                 "id": "3879:3809",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.591px",
                   "height": "9.011px",
@@ -16883,6 +17153,7 @@
               },
               {
                 "id": "3879:3810",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -16892,6 +17163,7 @@
               },
               {
                 "id": "3879:3811",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "5.415px",
                   "height": "10.941px",
@@ -16901,6 +17173,7 @@
               },
               {
                 "id": "3879:3812",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.017px",
                   "height": "8.841px",
@@ -16910,6 +17183,7 @@
               },
               {
                 "id": "3879:3813",
+                "name": "Vector",
                 "cssStyle": {
                   "width": "8.977px",
                   "height": "11.636px",
@@ -16921,6 +17195,7 @@
           },
           {
             "id": "3860:3223",
+            "name": "Button Icon",
             "cssStyle": {
               "width": "16px",
               "height": "16px"

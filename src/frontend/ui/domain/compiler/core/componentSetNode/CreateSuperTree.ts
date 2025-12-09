@@ -38,14 +38,14 @@ class CreateSuperTree {
     let superTree = this._convertSuperTreeNode(
       components[0],
       null,
-      components[0].figmaStyle!.name
+      components[0].name
     )!;
 
     for (let i = 1; i < components.length; i++) {
       const target = this._convertSuperTreeNode(
         components[i],
         null,
-        components[i].figmaStyle!.name
+        components[i].name
       )!;
 
       superTree = this._mergeTree(superTree, target);

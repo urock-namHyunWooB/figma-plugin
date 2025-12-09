@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { compileReactComponent } from "../utils/component-compiler";
 import FigmaCompiler from "@frontend/ui/domain/compiler";
 import taptapButtonSample from "../../../../test/fixtures/button/taptapButton_sample.json";
+import tadaButtonSample from "../../../../test/fixtures/button/tadaButton.json";
 
 export function TestComp() {
   const [tsxCode, setTsxCode] = useState<string>("");
@@ -15,7 +16,7 @@ export function TestComp() {
     async function compile() {
       if (codeRef.current) return;
       try {
-        codeRef.current = new FigmaCompiler(taptapButtonSample);
+        codeRef.current = new FigmaCompiler(tadaButtonSample);
         return;
         setTsxCode(codeRef.current);
 

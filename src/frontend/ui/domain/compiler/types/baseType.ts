@@ -56,9 +56,9 @@ export type RestLayoutAlign = "INHERIT" | "STRETCH" | "MIN" | "CENTER" | "MAX";
 
 export interface StyleTree {
   id: string;
+  name: string;
   cssStyle: { [p: string]: string };
   children: StyleTree[];
-  figmaStyle?: BaseStyleProperties;
 }
 
 export interface FigmaNodeData {

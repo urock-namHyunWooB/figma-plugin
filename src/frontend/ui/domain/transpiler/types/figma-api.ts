@@ -64,6 +64,7 @@ export interface DiffTree extends StyleTree {
 
 export interface StyleTree {
   id: string;
+  name: string;
   cssStyle: { [p: string]: string };
   children: StyleTree[];
   figmaStyle?: BaseStyleProperties;

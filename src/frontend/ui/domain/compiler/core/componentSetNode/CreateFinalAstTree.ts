@@ -49,8 +49,23 @@ class CreateFinalAstTree {
 
     tempAstTree = this.updateStyle(tempAstTree, variantTrees);
     tempAstTree = this.updateVisible(tempAstTree);
+    tempAstTree = this.updateProps(tempAstTree);
 
     debug.tree(tempAstTree);
+
+    return tempAstTree;
+  }
+
+  private updateProps(tempAstTree: TempAstTree) {
+    traverseBFS(tempAstTree, (node) => {
+      const componentPropertyReferences = this.specDataManager.getSpecById(
+        node.id
+      ).componentPropertyReferences;
+
+      if (componentPropertyReferences) {
+        node.props = { ...node.props, ...componentPropertyReferences };
+      }
+    });
 
     return tempAstTree;
   }
@@ -97,7 +112,7 @@ class CreateFinalAstTree {
      */
     targetTrees.forEach((targetTree) => {
       const pivotVariantName = pivotTree.name;
-      const targetVariantName = targetTree.figmaStyle!.name;
+      const targetVariantName = targetTree.name;
 
       if (!targetVariantName) {
         console.warn("targetVariantName is null", targetTree);
