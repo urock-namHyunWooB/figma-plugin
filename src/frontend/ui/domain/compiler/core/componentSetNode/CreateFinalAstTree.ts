@@ -5,6 +5,7 @@ import {
   FinalAstTree,
   StyleTree,
   StyleObject,
+  VisibleValue,
 } from "@compiler";
 import { PropsDef } from "@compiler/core/componentSetNode/RefineProps";
 import {
@@ -13,6 +14,7 @@ import {
 } from "@frontend/ui/domain/compiler/types/customType";
 import { findNodeBFS, traverseBFS } from "../../utils/traverse";
 import debug from "@compiler/manager/DebuggingManager";
+import { target } from "happy-dom/lib/PropertySymbol";
 
 /**
  * 슈퍼트리에 각 variant 트리를 diff 해서 슈퍼트리 노드 하나하나 값을 채워나간다.
@@ -39,13 +41,12 @@ class CreateFinalAstTree {
 
   private mergeVariantTrees(superTree: SuperTreeNode, refinedProps: PropsDef) {
     const specManager = this.specDataManager;
-    const tempAstTree = this.createTempAstTree(superTree, refinedProps);
+    let tempAstTree = this.createTempAstTree(superTree, refinedProps);
 
     const variantTrees = specManager.getRenderTree().children;
 
-    const mergedStyleTree = this.mergeTreeForStyle(tempAstTree, variantTrees);
-
-    debug.tree(mergedStyleTree);
+    tempAstTree = this.updateStyle(tempAstTree, variantTrees);
+    tempAstTree = this.updateVisible(tempAstTree);
 
     return tempAstTree;
   }
@@ -71,6 +72,7 @@ class CreateFinalAstTree {
           base: styleTree?.cssStyle || {},
           dynamic: [],
         },
+        visible: null,
         children,
       } as TempAstTree;
     };
@@ -84,7 +86,7 @@ class CreateFinalAstTree {
    * @param targetTrees
    * @private
    */
-  private mergeTreeForStyle(pivotTree: TempAstTree, targetTrees: StyleTree[]) {
+  private updateStyle(pivotTree: TempAstTree, targetTrees: StyleTree[]) {
     /**
      * targetTree 트리 순회하면서 pivotTree에 매칭(mergedNode) 되는 노드를 찾아서
      * 해당 노드에 스타일 diff 결괏값을 할당한다.
@@ -103,7 +105,6 @@ class CreateFinalAstTree {
             Object.values(merged).includes(targetNode.id)
           );
         });
-
         if (matchedPivotNode) {
           const diffStyle = this._getDiffStyle(
             matchedPivotNode,
@@ -117,6 +118,44 @@ class CreateFinalAstTree {
     });
 
     return pivotTree;
+  }
+
+  private updateVisible(pivotNode: TempAstTree) {
+    traverseBFS(pivotNode, (node, meta) => {
+      const visible = this._inferVisible(node);
+      node.visible = visible;
+    });
+
+    return pivotNode;
+  }
+
+  /**
+   * 1. 명시적 바인딩 확인
+   * componentPropertyReferences.visible을 확인
+   * name 값이 존재하면 {type:'prop', name: name}
+   *
+   * 2. 불리언 속성 추론
+   * variant 속성중 True/False 같은 불리언 속성을 갖고
+   * 해당 variant에서 True일때만 노드가 보이고 False 일땐 노드가 없다면
+   * {type: prop, name: variant name}
+   *
+   * 3. mergedNode로 추론
+   * mergedNode 값에 따라서 추론
+   */
+  private _inferVisible(targetNode: TempAstTree): VisibleValue | null {
+    const targetNodeData = this.specDataManager.getSpecById(targetNode.id);
+
+    if (targetNodeData.componentPropertyReferences?.visible) {
+      return {
+        type: "prop",
+        name: targetNodeData.componentPropertyReferences.visible,
+      };
+    }
+
+    const componentPropertyDefinitions =
+      this.specDataManager.getComponentPropertyDefinitions();
+
+    return null;
   }
 
   private _getDiffStyle(

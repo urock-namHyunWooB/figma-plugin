@@ -20,6 +20,8 @@ export default function useMessageHandler() {
       const msg = event.data.pluginMessage;
       const data = msg.data;
 
+      console.log(data);
+
       if (msg.type === MESSAGE_TYPES.ON_SELECTION_CHANGE) {
         console.log("ON_SELECTION_CHANGE", data);
 

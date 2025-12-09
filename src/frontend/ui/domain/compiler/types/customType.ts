@@ -45,6 +45,12 @@ type ReactiveValue<T> =
       cases: Array<{ condition: string; value: T }>;
     };
 
+// AST Node의 visible 속성 타입
+export type VisibleValue =
+  | { type: "static"; value: boolean } // 항상 보임 or 항상 숨김
+  | { type: "prop"; name: string } // 특정 Prop과 직접 연결됨 (예: props.showIcon)
+  | { type: "condition"; condition: ConditionNode }; // 복합 조건 (예: props.variant === 'hover')
+
 export type StyleObject = {
   base: Record<string, any>;
 
@@ -52,14 +58,10 @@ export type StyleObject = {
     condition: ConditionNode;
     style: Record<string, any>; // 예: { backgroundColor: 'blue' }
   }>;
-
-  visible: Array<{
-    condition: ConditionNode;
-    value: boolean;
-  }>;
 };
 
 export interface TempAstTree extends SuperTreeNode {
+  visible: VisibleValue | null;
   props: any;
 
   style: StyleObject;
