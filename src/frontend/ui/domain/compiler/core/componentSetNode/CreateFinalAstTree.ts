@@ -31,6 +31,10 @@ class CreateFinalAstTree {
     return this._finalAstTree;
   }
 
+  public get tempAstTree() {
+    return this._tempAstTree;
+  }
+
   constructor(
     specDataManager: SpecDataManager,
     superTree: SuperTreeNode,
@@ -39,6 +43,13 @@ class CreateFinalAstTree {
     this.specDataManager = specDataManager;
 
     this._tempAstTree = this.mergeVariantTrees(superTree, refinedProps);
+    // this._finalAstTree = this.createFinalAstTree(this._tempAstTree);
+  }
+
+  private createFinalAstTree(tempAstTree: TempAstTree): FinalAstTree {
+    // const finalAstTree: FinalAstTree = {};
+    //
+    // return finalAstTree;
   }
 
   private mergeVariantTrees(superTree: SuperTreeNode, refinedProps: PropsDef) {

@@ -1,5 +1,6 @@
 import { AbsoluteBoundingBox, SuperTreeNode } from "@compiler";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
+import debug from "@compiler/manager/DebuggingManager";
 
 class NodeMatcher {
   private specDataManager: SpecDataManager;
@@ -18,6 +19,11 @@ class NodeMatcher {
    * @param node2
    */
   public isSameNode(node1: SuperTreeNode, node2: SuperTreeNode) {
+    debug.debugger([node1.id, "15:12974", "15:12979"], () => {
+      if (node2.type === "FRAME") {
+        debugger;
+      }
+    });
     if (node1.type !== node2.type) return false;
     if (node1.id === node2.id) {
       console.warn("Something Wrong! Same node id: ", node1.id, node2.id);
@@ -30,7 +36,7 @@ class NodeMatcher {
      * 오토레이아웃이라면 구조적 동질성 및 레이아웃 규칙을 판단
      */
     if (node1Data.type === "FRAME" && node2Data.type === "FRAME") {
-      if (this.isAutoLayoutStructurallyEqual(node1Data, node2Data)) {
+      if (!this.isAutoLayoutStructurallyEqual(node1Data, node2Data)) {
         return false;
       }
     }
@@ -158,8 +164,7 @@ class NodeMatcher {
     const patternA = this._getChildPattern(nodeA);
     const patternB = this._getChildPattern(nodeB);
 
-    // 예: "IMAGE-TEXT-BUTTON" === "IMAGE-TEXT-BUTTON"
-    return patternA === patternB;
+    return patternA === patternB || patternA.length === patternB.length;
   }
 
   private _getChildPattern(node: FrameNode): string {

@@ -23,7 +23,6 @@ class ComponentSetCompiler {
     matcher: NodeMatcher
   ) {
     debug.point(1);
-    this.propsDef = this.extractPropsDef(renderTree, specDataManager, matcher);
 
     this.CreateSuperTree = new CreateSuperTree(
       renderTree,
@@ -31,6 +30,7 @@ class ComponentSetCompiler {
       matcher
     );
 
+    this.propsDef = this.extractPropsDef(renderTree, specDataManager, matcher);
     const RefindProps = (this.RefindProps = new RefineProps(
       renderTree,
       specDataManager

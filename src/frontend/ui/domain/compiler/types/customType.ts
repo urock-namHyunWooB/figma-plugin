@@ -61,16 +61,22 @@ export type StyleObject = {
 };
 
 export interface TempAstTree extends SuperTreeNode {
-  visible: VisibleValue | null;
+  id: string;
+  name: string;
+  type: string;
   props: any;
-
+  parent: TempAstTree | null;
+  visible: VisibleValue | null;
   style: StyleObject;
-
+  mergedNode: { id: string; name: string; variantName?: string | null }[];
   children: TempAstTree[];
 }
 
 export interface FinalAstTree {
+  id: string;
+  name: string;
+  type: string;
   props: any;
-  style: any;
+  style: StyleObject;
   children: FinalAstTree[];
 }
