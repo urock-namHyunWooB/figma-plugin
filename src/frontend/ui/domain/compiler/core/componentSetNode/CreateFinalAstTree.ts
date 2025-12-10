@@ -6,6 +6,7 @@ import {
   StyleTree,
   StyleObject,
   VisibleValue,
+  NewMergedNode,
 } from "@compiler";
 import { PropsDef } from "@compiler/core/componentSetNode/RefineProps";
 import {
@@ -58,11 +59,25 @@ class CreateFinalAstTree {
 
     const variantTrees = specManager.getRenderTree().children;
 
+    tempAstTree = this.updateMergedNode(tempAstTree);
     tempAstTree = this.updateStyle(tempAstTree, variantTrees);
     tempAstTree = this.updateVisible(tempAstTree);
     tempAstTree = this.updateProps(tempAstTree);
 
     debug.tree(tempAstTree);
+
+    return tempAstTree;
+  }
+
+  private updateMergedNode(tempAstTree: TempAstTree) {
+    traverseBFS(tempAstTree, (node, meta) => {
+      const newMergedNode = node.mergedNode.map((node) => {
+        const renderNode = this.specDataManager.getRenderTreeById(node.id);
+        return { ...node, ...renderNode };
+      });
+
+      node.mergedNode = newMergedNode;
+    });
 
     return tempAstTree;
   }

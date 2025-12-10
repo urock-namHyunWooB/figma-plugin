@@ -33,7 +33,6 @@ class CreateSuperTree {
    */
   private createSuperTree() {
     const components = this.renderTree.children;
-    // const superTreeRoot = this._convertSuperTreeNode(this.renderTree);
 
     let superTree = this._convertSuperTreeNode(
       components[0],

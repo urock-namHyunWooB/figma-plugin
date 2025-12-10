@@ -19,7 +19,7 @@ class NodeMatcher {
    * @param node2
    */
   public isSameNode(node1: SuperTreeNode, node2: SuperTreeNode) {
-    debug.debugger([node1.id, "716:526"]);
+    // debug.debugger([node2.id, "15:45"]);
     if (node1.type !== node2.type) return false;
     if (node1.id === node2.id) {
       console.warn("Something Wrong! Same node id: ", node1.id, node2.id);
@@ -82,18 +82,11 @@ class NodeMatcher {
     }
 
     /**
-     * //TODO 두개의 텍스트가 같은 역할군인지 비교하는 로직
+     * 1. 부모가 같고 이름이 같은지?
+     * 2. 텍스트 영역이 겹치는지? (디자인 시안상 절대로 텍스트는 겹치지 않음)
+     * 3. componentPropertyReferences, boundVariables이 같은걸 가리키고 있는지?
      */
     if (node1Data.type === "TEXT" && node2Data.type === "TEXT") {
-
-      // 1. constraints가 같아야 함
-
-      if (
-        !this._isSameConstraints(node1Data.constraints, node2Data.constraints)
-      ) {
-        return false;
-      }
-
       // 2. 텍스트 정렬에 따른 위치 비교 (부모 기준 상대 좌표로)
       if (node1.parent && node2.parent) {
         const parent1Data = this.specDataManager.getSpecById(node1.parent.id);
@@ -117,17 +110,9 @@ class NodeMatcher {
             parent2Data.absoluteBoundingBox
           );
 
-          // constraints 기반으로 텍스트 위치 비교
-          const isMatch = this._isTextPositionMatch(
-            relativeBox1,
-            relativeBox2,
-            node1Data.constraints?.horizontal,
-            node2Data.constraints?.horizontal,
-            node1Data.constraints?.vertical,
-            node2Data.constraints?.vertical
-          );
+          const iou = this._calculateIoU(relativeBox1, relativeBox2);
 
-          if (!isMatch) return false;
+          if (iou < 0.1) return false;
         }
       }
     }
@@ -233,102 +218,6 @@ class NodeMatcher {
     if (unionArea === 0) return 0;
 
     return intersectionArea / unionArea;
-  }
-
-  private _isSameConstraints(
-    c1?: { horizontal?: string; vertical?: string },
-    c2?: { horizontal?: string; vertical?: string }
-  ): boolean {
-    if (!c1 && !c2) return true;
-    if (!c1 || !c2) return false;
-
-    return c1.horizontal === c2.horizontal && c1.vertical === c2.vertical;
-  }
-
-  private getCenterPoint(box: AbsoluteBoundingBox): { x: number; y: number } {
-    return {
-      x: box.x + box.width / 2,
-      y: box.y + box.height / 2,
-    };
-  }
-
-  private _isNearCenter(
-    box1: AbsoluteBoundingBox,
-    box2: AbsoluteBoundingBox,
-    tolerance: number = 5 // 허용 오차 (픽셀)
-  ): boolean {
-    const center1 = this.getCenterPoint(box1);
-    const center2 = this.getCenterPoint(box2);
-
-    return Math.abs(center1.x - center2.x) <= tolerance;
-  }
-
-  /**
-   * constraints에 따른 기준점 좌표 계산
-   */
-  private _getTextAnchorPoint(
-    box: AbsoluteBoundingBox,
-    hConstraint?: "LEFT" | "CENTER" | "RIGHT" | string,
-    vConstraint?: "TOP" | "CENTER" | "BOTTOM" | string
-  ): { x: number; y: number } {
-    let x: number;
-    let y: number;
-
-    // 가로 constraints에 따른 X 기준점
-    switch (hConstraint) {
-      case "CENTER":
-        x = box.x + box.width / 2;
-        break;
-      case "RIGHT":
-        x = box.x + box.width;
-        break;
-      case "LEFT":
-      default:
-        x = box.x;
-        break;
-    }
-
-    // 세로 constraints에 따른 Y 기준점
-    switch (vConstraint) {
-      case "CENTER":
-        y = box.y + box.height / 2;
-        break;
-      case "BOTTOM":
-        y = box.y + box.height;
-        break;
-      case "TOP":
-      default:
-        y = box.y;
-        break;
-    }
-
-    return { x, y };
-  }
-
-  /**
-   * 텍스트 노드의 기준점이 같은 위치인지 비교 (constraints 기반)
-   */
-  private _isTextPositionMatch(
-    box1: AbsoluteBoundingBox,
-    box2: AbsoluteBoundingBox,
-    hConstraint1?: string,
-    hConstraint2?: string,
-    vConstraint1?: string,
-    vConstraint2?: string,
-    tolerance: number = 30
-  ): boolean {
-    // constraints가 다르면 비교 불가 → false
-    if (hConstraint1 !== hConstraint2 || vConstraint1 !== vConstraint2) {
-      return false;
-    }
-
-    const anchor1 = this._getTextAnchorPoint(box1, hConstraint1, vConstraint1);
-    const anchor2 = this._getTextAnchorPoint(box2, hConstraint2, vConstraint2);
-
-    return (
-      Math.abs(anchor1.x - anchor2.x) <= tolerance &&
-      Math.abs(anchor1.y - anchor2.y) <= tolerance
-    );
   }
 
   /**

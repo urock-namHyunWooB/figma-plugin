@@ -161,6 +161,19 @@ describe("ComponentSetCompiler", () => {
         );
         expect(iconNodes).toBe(1);
       });
+
+      test("ICON 다음에 Text 노드가 나온다.", () => {
+        const iconNodes = collectNodesByType(
+          createFinalAstTree.tempAstTree,
+          "INSTANCE"
+        );
+        const textNodes = collectNodesByType(
+          createFinalAstTree.tempAstTree,
+          "TEXT"
+        );
+
+        expect(iconNodes[0].nextSibling).toBe(textNodes[0]);
+      });
     });
   });
 });
