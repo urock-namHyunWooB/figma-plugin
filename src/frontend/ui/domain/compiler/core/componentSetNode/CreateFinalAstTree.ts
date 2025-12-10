@@ -41,20 +41,8 @@ class CreateFinalAstTree {
     superTree: SuperTreeNode,
     refinedProps: PropsDef
   ) {
-    this.specDataManager = specDataManager;
+    const specManager = (this.specDataManager = specDataManager);
 
-    this._tempAstTree = this.mergeVariantTrees(superTree, refinedProps);
-    // this._finalAstTree = this.createFinalAstTree(this._tempAstTree);
-  }
-
-  private createFinalAstTree(tempAstTree: TempAstTree): FinalAstTree {
-    // const finalAstTree: FinalAstTree = {};
-    //
-    // return finalAstTree;
-  }
-
-  private mergeVariantTrees(superTree: SuperTreeNode, refinedProps: PropsDef) {
-    const specManager = this.specDataManager;
     let tempAstTree = this.createTempAstTree(superTree, refinedProps);
 
     const variantTrees = specManager.getRenderTree().children;
@@ -64,9 +52,15 @@ class CreateFinalAstTree {
     tempAstTree = this.updateVisible(tempAstTree);
     tempAstTree = this.updateProps(tempAstTree);
 
-    debug.tree(tempAstTree);
+    this._tempAstTree = tempAstTree;
 
-    return tempAstTree;
+    debug.tree(tempAstTree);
+  }
+
+  private createFinalAstTree(tempAstTree: TempAstTree) {
+    // const finalAstTree: FinalAstTree = {};
+    //
+    // return finalAstTree;
   }
 
   private updateMergedNode(tempAstTree: TempAstTree) {

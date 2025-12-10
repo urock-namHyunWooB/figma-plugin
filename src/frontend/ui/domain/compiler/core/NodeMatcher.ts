@@ -47,37 +47,10 @@ class NodeMatcher {
       node1.parent &&
       node2.parent
     ) {
-      const parent1Data = this.specDataManager.getSpecById(node1.parent.id);
-      const parent2Data = this.specDataManager.getSpecById(node2.parent.id);
+      const iou = this.getIou(node1, node2);
 
-      // 부모 타입이 같고, 크기가 같은지 확인
-      if (
-        parent1Data?.absoluteBoundingBox &&
-        parent2Data?.absoluteBoundingBox &&
-        parent1Data.type === parent2Data.type &&
-        parent1Data.absoluteBoundingBox.width ===
-          parent2Data.absoluteBoundingBox.width &&
-        parent1Data.absoluteBoundingBox.height ===
-          parent2Data.absoluteBoundingBox.height
-      ) {
-        const nodeBox1 = node1Data.absoluteBoundingBox;
-        const nodeBox2 = node2Data.absoluteBoundingBox;
-
-        if (nodeBox1 && nodeBox2) {
-          // 부모 기준 상대 좌표로 변환
-          const relativeBox1 = this.getRelativeBoundingBox(
-            nodeBox1,
-            parent1Data.absoluteBoundingBox
-          );
-          const relativeBox2 = this.getRelativeBoundingBox(
-            nodeBox2,
-            parent2Data.absoluteBoundingBox
-          );
-
-          // IoU 계산
-          const iou = this._calculateIoU(relativeBox1, relativeBox2);
-          if (iou < 0.8) return false;
-        }
+      if (iou !== null && iou < 0.8) {
+        return false;
       }
     }
 
@@ -87,33 +60,10 @@ class NodeMatcher {
      * 3. componentPropertyReferences, boundVariables이 같은걸 가리키고 있는지?
      */
     if (node1Data.type === "TEXT" && node2Data.type === "TEXT") {
-      // 2. 텍스트 정렬에 따른 위치 비교 (부모 기준 상대 좌표로)
-      if (node1.parent && node2.parent) {
-        const parent1Data = this.specDataManager.getSpecById(node1.parent.id);
-        const parent2Data = this.specDataManager.getSpecById(node2.parent.id);
+      const iou = this.getIou(node1, node2);
 
-        const nodeBox1 = node1Data.absoluteBoundingBox;
-        const nodeBox2 = node2Data.absoluteBoundingBox;
-
-        if (
-          nodeBox1 &&
-          nodeBox2 &&
-          parent1Data?.absoluteBoundingBox &&
-          parent2Data?.absoluteBoundingBox
-        ) {
-          const relativeBox1 = this.getRelativeBoundingBox(
-            nodeBox1,
-            parent1Data.absoluteBoundingBox
-          );
-          const relativeBox2 = this.getRelativeBoundingBox(
-            nodeBox2,
-            parent2Data.absoluteBoundingBox
-          );
-
-          const iou = this._calculateIoU(relativeBox1, relativeBox2);
-
-          if (iou < 0.1) return false;
-        }
+      if (iou !== null && iou < 0.1) {
+        return false;
       }
     }
 
@@ -223,7 +173,7 @@ class NodeMatcher {
   /**
    * 부모 기준 상대 좌표로 변환
    */
-  private getRelativeBoundingBox(
+  public getRelativeBoundingBox(
     nodeBox: AbsoluteBoundingBox,
     parentBox: AbsoluteBoundingBox
   ): AbsoluteBoundingBox {
@@ -233,6 +183,48 @@ class NodeMatcher {
       width: nodeBox.width,
       height: nodeBox.height,
     };
+  }
+
+  public getIou(node1: SuperTreeNode, node2: SuperTreeNode) {
+    if (!node1.parent || !node2.parent) return null;
+
+    const parent1Data = this.specDataManager.getSpecById(node1.parent.id);
+    const parent2Data = this.specDataManager.getSpecById(node2.parent.id);
+
+    const node1Data = this.specDataManager.getSpecById(node1.id);
+    const node2Data = this.specDataManager.getSpecById(node2.id);
+
+    // 부모 타입이 같고, 크기가 같은지 확인
+    if (
+      parent1Data?.absoluteBoundingBox &&
+      parent2Data?.absoluteBoundingBox &&
+      parent1Data.type === parent2Data.type &&
+      parent1Data.absoluteBoundingBox.width ===
+        parent2Data.absoluteBoundingBox.width &&
+      parent1Data.absoluteBoundingBox.height ===
+        parent2Data.absoluteBoundingBox.height
+    ) {
+      const nodeBox1 = node1Data.absoluteBoundingBox;
+      const nodeBox2 = node2Data.absoluteBoundingBox;
+
+      if (nodeBox1 && nodeBox2) {
+        // 부모 기준 상대 좌표로 변환
+        const relativeBox1 = this.getRelativeBoundingBox(
+          nodeBox1,
+          parent1Data.absoluteBoundingBox
+        );
+        const relativeBox2 = this.getRelativeBoundingBox(
+          nodeBox2,
+          parent2Data.absoluteBoundingBox
+        );
+
+        // IoU 계산
+        const iou = this._calculateIoU(relativeBox1, relativeBox2);
+        return iou;
+      }
+    }
+
+    return null;
   }
 }
 

@@ -2,6 +2,7 @@ import { RenderTree, SuperTreeNode } from "@compiler";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import { getNodesAtDepth, traverseBFS } from "@compiler/utils/traverse";
+import debug from "@compiler/manager/DebuggingManager";
 
 //TODO 구조에 따라서 슈퍼트리, 슬롯 + 레이아웃 전략을 한다.
 class CreateSuperTree {
@@ -79,7 +80,7 @@ class CreateSuperTree {
       if (pivotMatchedNode) {
         pivotMatchedNode.mergedNode.push(...targetNode.mergedNode);
 
-        return; // 이미 존재하면 스킵
+        return;
       }
 
       // 2. targetNode의 부모와 매칭되는 pivotTree의 노드 찾기
@@ -102,8 +103,20 @@ class CreateSuperTree {
 
     // 순회 완료 후 한꺼번에 추가
     for (const { parent, node } of nodesToAdd) {
-      // node.parent = parent;
       parent.children.push(node);
+      //TODO parent 및 node 들을 정렬해야함.
+
+      const a = parent.children[0]!;
+      const b = parent.children[1]!;
+
+      const A = this.specDataManager.getSpecById(a.id);
+      const B = this.specDataManager.getSpecById(b.id);
+
+      const nodeBox1 = A.absoluteBoundingBox!;
+      const nodeBox2 = B.absoluteBoundingBox!;
+
+      const C = this.matcher.getRelativeBoundingBox(nodeBox1, nodeBox2);
+      console.log(C);
     }
 
     return pivotSuperTree;
