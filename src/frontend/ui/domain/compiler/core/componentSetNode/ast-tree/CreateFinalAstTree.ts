@@ -9,11 +9,8 @@ import {
   NewMergedNode,
 } from "@compiler";
 import { PropsDef } from "@compiler/core/componentSetNode/RefineProps";
-import {
-  ConditionNode,
-  BinaryOperator,
-} from "@frontend/ui/domain/compiler/types/customType";
-import { findNodeBFS, getRootNode, traverseBFS } from "../../utils/traverse";
+import { ConditionNode, BinaryOperator } from "@compiler/types/customType";
+import { findNodeBFS, getRootNode, traverseBFS } from "../../../utils/traverse";
 import debug from "@compiler/manager/DebuggingManager";
 import { target } from "happy-dom/lib/PropertySymbol";
 import helper from "@compiler/manager/HelperManager";
@@ -53,12 +50,39 @@ class CreateFinalAstTree {
     tempAstTree = this.updateProps(tempAstTree);
 
     this._tempAstTree = tempAstTree;
+    this._finalAstTree = this.createFinalAstTree(this.tempAstTree);
   }
 
-  private createFinalAstTree(tempAstTree: TempAstTree) {
-    // const finalAstTree: FinalAstTree = {};
-    //
-    // return finalAstTree;
+  private createFinalAstTree(tempAstTree: TempAstTree): FinalAstTree {
+    const convert = (
+      node: TempAstTree,
+      parent: FinalAstTree | null
+    ): FinalAstTree => {
+      const finalNode: FinalAstTree = {
+        id: node.id,
+        name: node.name,
+        type: node.type,
+        props: { ...node.props },
+        parent: parent,
+        visible: node.visible ?? { type: "static", value: true },
+        style: {
+          base: { ...node.style.base },
+          dynamic: node.style.dynamic.map((d) => ({
+            condition: d.condition,
+            style: { ...d.style },
+          })),
+        },
+        children: [],
+      };
+
+      finalNode.children = node.children.map((child) =>
+        convert(child, finalNode)
+      );
+
+      return finalNode;
+    };
+
+    return convert(tempAstTree, null);
   }
 
   private updateMergedNode(tempAstTree: TempAstTree) {

@@ -85,6 +85,8 @@ export interface FinalAstTree {
   name: string;
   type: string;
   props: any;
+  parent: FinalAstTree | null;
+  visible: VisibleValue;
   style: StyleObject;
   children: FinalAstTree[];
 }

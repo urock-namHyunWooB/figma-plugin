@@ -6,12 +6,15 @@ import airtableButtonMockData from "../fixtures/button/airtableButton.json";
 
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
-import { SuperTreeNode } from "@compiler";
-import CreateFinalAstTree from "@compiler/core/componentSetNode/CreateFinalAstTree";
+import { FinalAstTree, SuperTreeNode } from "@compiler";
+import CreateFinalAstTree from "@compiler/core/componentSetNode/ast-tree/CreateFinalAstTree";
 import CreateSuperTree from "@compiler/core/componentSetNode/super-tree/CreateSuperTree";
 import RefineProps from "@compiler/core/componentSetNode/RefineProps";
 
-function countNodesByType(node: SuperTreeNode, type: string): number {
+function countNodesByType(
+  node: SuperTreeNode | FinalAstTree,
+  type: string
+): number {
   let count = node.type === type ? 1 : 0;
   for (const child of node.children) {
     if (child) {
@@ -21,17 +24,14 @@ function countNodesByType(node: SuperTreeNode, type: string): number {
   return count;
 }
 
-function collectNodesByType(
-  node: SuperTreeNode,
-  type: string
-): SuperTreeNode[] {
-  const nodes: SuperTreeNode[] = [];
+function collectNodesByType(node: SuperTreeNode | FinalAstTree, type: string) {
+  const nodes: SuperTreeNode[] | FinalAstTree[] = [];
   if (node.type === type) {
-    nodes.push(node);
+    nodes.push(node as any);
   }
   for (const child of node.children) {
     if (child) {
-      nodes.push(...collectNodesByType(child, type));
+      nodes.push(...(collectNodesByType(child, type) as any));
     }
   }
   return nodes;
@@ -195,6 +195,173 @@ describe("ComponentSetCompiler", () => {
       test("ICON 다음에 Text 노드가 나온다.", () => {
         const textNode = collectNodesByType(
           createFinalAstTree.tempAstTree,
+          "TEXT"
+        )[0];
+        const parent = textNode?.parent;
+        expect(parent).toBeDefined();
+
+        const siblings = parent!.children.filter(
+          (child): child is SuperTreeNode =>
+            child !== undefined &&
+            (child.type === "INSTANCE" || child.type === "TEXT")
+        );
+
+        expect(siblings.length).toBeGreaterThanOrEqual(2);
+        expect(siblings[0]?.type).toBe("INSTANCE");
+        expect(siblings[1]?.type).toBe("TEXT");
+      });
+    });
+  });
+
+  describe("astTree 최종 ASTTree 테스트", () => {
+    describe("taptapButton_sample", () => {
+      const specDataManager = new SpecDataManager(
+        taptapButtonSampleMockData as any
+      );
+      const renderTree = specDataManager.getRenderTree();
+
+      const matcher = new NodeMatcher(specDataManager);
+      const createSuperTree = new CreateSuperTree(
+        renderTree,
+        specDataManager,
+        matcher
+      );
+
+      const RefindProps = new RefineProps(renderTree, specDataManager);
+
+      const createFinalAstTree = new CreateFinalAstTree(
+        specDataManager,
+        createSuperTree.getSuperTree(),
+        RefindProps.refinedProps
+      );
+
+      test("taptapButton_sample.json의 children중에 LINE 타입은 없어야 한다.", () => {
+        const lineNodes = countNodesByType(
+          createFinalAstTree.finalAstTree,
+          "LINE"
+        );
+        expect(lineNodes).toBe(0);
+      });
+
+      test("taptapButton_sample.json의 children중에 Text 타입은 1개", () => {
+        const textNodes = countNodesByType(
+          createFinalAstTree.finalAstTree,
+          "TEXT"
+        );
+        expect(textNodes).toBe(1);
+      });
+
+      test("taptapButton_sample.json의 children중에 ICON 타입은 두개여야 한다.", () => {
+        const iconNodes = countNodesByType(
+          createFinalAstTree.finalAstTree,
+          "INSTANCE"
+        );
+        expect(iconNodes).toBe(2);
+      });
+    });
+
+    describe("tadaButton", () => {
+      const specDataManager = new SpecDataManager(tadaButtonMockData as any);
+      const renderTree = specDataManager.getRenderTree();
+
+      const matcher = new NodeMatcher(specDataManager);
+      const createSuperTree = new CreateSuperTree(
+        renderTree,
+        specDataManager,
+        matcher
+      );
+
+      const RefindProps = new RefineProps(renderTree, specDataManager);
+
+      const createFinalAstTree = new CreateFinalAstTree(
+        specDataManager,
+        createSuperTree.getSuperTree(),
+        RefindProps.refinedProps
+      );
+
+      test("children중에 Text 타입은 하나여야 한다.", () => {
+        const textNodes = countNodesByType(
+          createFinalAstTree.finalAstTree,
+          "TEXT"
+        );
+        expect(textNodes).toBe(1);
+      });
+
+      test("children중에 ICON 타입은 두개여야 한다.", () => {
+        const iconNodes = collectNodesByType(
+          createFinalAstTree.finalAstTree,
+          "INSTANCE"
+        ).filter(
+          (node) =>
+            node.name.includes("Left Icon") || node.name.includes("Right Icon")
+        );
+
+        expect(iconNodes.length).toBe(2);
+      });
+
+      test("ICON - TEXT - ICON 순서 노드여야 한다. ", () => {
+        const textNode = collectNodesByType(
+          createFinalAstTree.finalAstTree,
+          "TEXT"
+        )[0];
+        const parent = textNode?.parent;
+        expect(parent).toBeDefined();
+
+        const siblings = parent!.children.filter(
+          (child): child is SuperTreeNode =>
+            child !== undefined &&
+            (child.type === "INSTANCE" || child.type === "TEXT")
+        );
+
+        expect(siblings.length).toBeGreaterThanOrEqual(3);
+        expect(siblings[0]?.type).toBe("INSTANCE");
+        expect(siblings[0]?.name).toContain("Left Icon");
+        expect(siblings[1]?.type).toBe("TEXT");
+        expect(siblings[2]?.type).toBe("INSTANCE");
+        expect(siblings[2]?.name).toContain("Right Icon");
+      });
+    });
+
+    describe("airtableButton", () => {
+      const specDataManager = new SpecDataManager(
+        airtableButtonMockData as any
+      );
+      const renderTree = specDataManager.getRenderTree();
+
+      const matcher = new NodeMatcher(specDataManager);
+      const createSuperTree = new CreateSuperTree(
+        renderTree,
+        specDataManager,
+        matcher
+      );
+
+      const RefindProps = new RefineProps(renderTree, specDataManager);
+
+      const createFinalAstTree = new CreateFinalAstTree(
+        specDataManager,
+        createSuperTree.getSuperTree(),
+        RefindProps.refinedProps
+      );
+
+      test("children중에 Text 타입은 하나여야 한다.", () => {
+        const textNodes = countNodesByType(
+          createFinalAstTree.finalAstTree,
+          "TEXT"
+        );
+        expect(textNodes).toBe(1);
+      });
+
+      test("children중에 ICON 타입은 1개여야 한다.", () => {
+        const iconNodes = countNodesByType(
+          createFinalAstTree.finalAstTree,
+          "INSTANCE"
+        );
+        expect(iconNodes).toBe(1);
+      });
+
+      test("ICON 다음에 Text 노드가 나온다.", () => {
+        const textNode = collectNodesByType(
+          createFinalAstTree.finalAstTree,
           "TEXT"
         )[0];
         const parent = textNode?.parent;
