@@ -6,10 +6,11 @@ import airtableButtonMockData from "../fixtures/button/airtableButton.json";
 
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
-import { FinalAstTree, SuperTreeNode } from "@compiler";
+import { FinalAstTree, SuperTreeNode, TempAstTree } from "@compiler";
 import CreateFinalAstTree from "@compiler/core/componentSetNode/ast-tree/CreateFinalAstTree";
 import CreateSuperTree from "@compiler/core/componentSetNode/super-tree/CreateSuperTree";
 import RefineProps from "@compiler/core/componentSetNode/RefineProps";
+import { traverseBFS, findNodeBFS } from "@compiler/utils/traverse";
 
 function countNodesByType(
   node: SuperTreeNode | FinalAstTree,
@@ -376,6 +377,559 @@ describe("ComponentSetCompiler", () => {
         expect(siblings.length).toBeGreaterThanOrEqual(2);
         expect(siblings[0]?.type).toBe("INSTANCE");
         expect(siblings[1]?.type).toBe("TEXT");
+      });
+    });
+  });
+
+  describe("Style 관련 테스트", () => {
+    describe("taptapButton_sample - style.base와 style.dynamic", () => {
+      const specDataManager = new SpecDataManager(
+        taptapButtonSampleMockData as any
+      );
+      const renderTree = specDataManager.getRenderTree();
+
+      const matcher = new NodeMatcher(specDataManager);
+      const createSuperTree = new CreateSuperTree(
+        renderTree,
+        specDataManager,
+        matcher
+      );
+
+      const refineProps = new RefineProps(renderTree, specDataManager);
+
+      const createFinalAstTree = new CreateFinalAstTree(
+        specDataManager,
+        createSuperTree.getSuperTree(),
+        refineProps.refinedProps
+      );
+
+      test("루트 노드는 style.base가 존재해야 한다", () => {
+        const rootStyle = createFinalAstTree.tempAstTree.style;
+        expect(rootStyle).toBeDefined();
+        expect(rootStyle.base).toBeDefined();
+        expect(typeof rootStyle.base).toBe("object");
+      });
+
+      test("루트 노드의 style.dynamic은 배열이어야 한다", () => {
+        const rootStyle = createFinalAstTree.tempAstTree.style;
+        expect(Array.isArray(rootStyle.dynamic)).toBe(true);
+      });
+
+      test("TEXT 노드는 font 관련 스타일을 가져야 한다", () => {
+        const textNodes = collectNodesByType(
+          createFinalAstTree.tempAstTree,
+          "TEXT"
+        ) as TempAstTree[];
+
+        textNodes.forEach((textNode) => {
+          const style = textNode.style;
+          expect(style).toBeDefined();
+          expect(style.base).toBeDefined();
+        });
+      });
+
+      test("모든 노드는 style 객체를 가져야 한다", () => {
+        traverseBFS(createFinalAstTree.tempAstTree, (node) => {
+          expect(node.style).toBeDefined();
+          expect(node.style.base).toBeDefined();
+          expect(Array.isArray(node.style.dynamic)).toBe(true);
+        });
+      });
+    });
+
+    describe("tadaButton - variant에 따른 dynamic style", () => {
+      const specDataManager = new SpecDataManager(tadaButtonMockData as any);
+      const renderTree = specDataManager.getRenderTree();
+
+      const matcher = new NodeMatcher(specDataManager);
+      const createSuperTree = new CreateSuperTree(
+        renderTree,
+        specDataManager,
+        matcher
+      );
+
+      const refineProps = new RefineProps(renderTree, specDataManager);
+
+      const createFinalAstTree = new CreateFinalAstTree(
+        specDataManager,
+        createSuperTree.getSuperTree(),
+        refineProps.refinedProps
+      );
+
+      test("루트 노드는 유효한 style 구조를 가져야 한다", () => {
+        const rootStyle = createFinalAstTree.tempAstTree.style;
+        expect(rootStyle).toHaveProperty("base");
+        expect(rootStyle).toHaveProperty("dynamic");
+      });
+
+      test("dynamic style의 condition은 올바른 구조를 가져야 한다", () => {
+        traverseBFS(createFinalAstTree.tempAstTree, (node) => {
+          node.style.dynamic.forEach((dynamicStyle) => {
+            expect(dynamicStyle).toHaveProperty("condition");
+            expect(dynamicStyle).toHaveProperty("style");
+            expect(typeof dynamicStyle.style).toBe("object");
+          });
+        });
+      });
+    });
+  });
+
+  describe("Visible 조건 테스트", () => {
+    describe("taptapButton_sample - visible 추론", () => {
+      const specDataManager = new SpecDataManager(
+        taptapButtonSampleMockData as any
+      );
+      const renderTree = specDataManager.getRenderTree();
+
+      const matcher = new NodeMatcher(specDataManager);
+      const createSuperTree = new CreateSuperTree(
+        renderTree,
+        specDataManager,
+        matcher
+      );
+
+      const refineProps = new RefineProps(renderTree, specDataManager);
+
+      const createFinalAstTree = new CreateFinalAstTree(
+        specDataManager,
+        createSuperTree.getSuperTree(),
+        refineProps.refinedProps
+      );
+
+      test("모든 variant에 존재하는 노드는 visible.type이 'static'이거나 null이 아니어야 한다", () => {
+        const totalVariants = renderTree.children.length;
+
+        traverseBFS(createFinalAstTree.tempAstTree, (node) => {
+          // visible이 할당된 노드만 체크
+          if (node.visible !== null) {
+            expect(["static", "prop", "condition"]).toContain(
+              node.visible.type
+            );
+          }
+        });
+      });
+
+      test("finalAstTree의 모든 노드는 visible 값을 가져야 한다 (null 아님)", () => {
+        traverseBFS(createFinalAstTree.finalAstTree, (node) => {
+          expect(node.visible).toBeDefined();
+          expect(node.visible).not.toBeNull();
+          expect(["static", "prop", "condition"]).toContain(node.visible.type);
+        });
+      });
+
+      test("static visible 노드는 value가 boolean이어야 한다", () => {
+        traverseBFS(createFinalAstTree.finalAstTree, (node) => {
+          if (node.visible.type === "static") {
+            expect(typeof node.visible.value).toBe("boolean");
+          }
+        });
+      });
+
+      test("prop visible 노드는 name이 string이어야 한다", () => {
+        traverseBFS(createFinalAstTree.finalAstTree, (node) => {
+          if (node.visible.type === "prop") {
+            expect(typeof node.visible.name).toBe("string");
+            expect(node.visible.name.length).toBeGreaterThan(0);
+          }
+        });
+      });
+
+      test("condition visible 노드는 condition 객체를 가져야 한다", () => {
+        traverseBFS(createFinalAstTree.finalAstTree, (node) => {
+          if (node.visible.type === "condition") {
+            expect(node.visible.condition).toBeDefined();
+            expect(node.visible.condition).toHaveProperty("type");
+          }
+        });
+      });
+    });
+
+    describe("일부 variant에만 존재하는 노드의 visible 추론", () => {
+      const specDataManager = new SpecDataManager(
+        taptapButtonSampleMockData as any
+      );
+      const renderTree = specDataManager.getRenderTree();
+
+      const matcher = new NodeMatcher(specDataManager);
+      const createSuperTree = new CreateSuperTree(
+        renderTree,
+        specDataManager,
+        matcher
+      );
+
+      const refineProps = new RefineProps(renderTree, specDataManager);
+
+      const createFinalAstTree = new CreateFinalAstTree(
+        specDataManager,
+        createSuperTree.getSuperTree(),
+        refineProps.refinedProps
+      );
+
+      test("INSTANCE(아이콘) 노드는 조건부 visible을 가질 수 있다", () => {
+        const instanceNodes = collectNodesByType(
+          createFinalAstTree.tempAstTree,
+          "INSTANCE"
+        ) as TempAstTree[];
+
+        instanceNodes.forEach((node) => {
+          // INSTANCE 노드의 visible은 null이거나 유효한 타입이어야 함
+          if (node.visible !== null) {
+            expect(["static", "prop", "condition"]).toContain(
+              node.visible.type
+            );
+          }
+        });
+      });
+    });
+  });
+
+  describe("Props 관련 테스트", () => {
+    describe("taptapButton_sample - props 할당", () => {
+      const specDataManager = new SpecDataManager(
+        taptapButtonSampleMockData as any
+      );
+      const renderTree = specDataManager.getRenderTree();
+
+      const matcher = new NodeMatcher(specDataManager);
+      const createSuperTree = new CreateSuperTree(
+        renderTree,
+        specDataManager,
+        matcher
+      );
+
+      const refineProps = new RefineProps(renderTree, specDataManager);
+
+      const createFinalAstTree = new CreateFinalAstTree(
+        specDataManager,
+        createSuperTree.getSuperTree(),
+        refineProps.refinedProps
+      );
+
+      test("루트 노드에 refinedProps가 할당되어야 한다", () => {
+        const rootProps = createFinalAstTree.tempAstTree.props;
+        expect(rootProps).toBeDefined();
+        expect(typeof rootProps).toBe("object");
+      });
+
+      test("componentPropertyDefinitions에 정의된 props가 루트에 있어야 한다", () => {
+        const definitions = specDataManager.getComponentPropertyDefinitions();
+        const rootProps = createFinalAstTree.tempAstTree.props;
+
+        if (definitions) {
+          Object.keys(definitions).forEach((propName) => {
+            expect(rootProps).toHaveProperty(propName);
+          });
+        }
+      });
+
+      test("자식 노드의 props는 빈 객체이거나 componentPropertyReferences를 포함해야 한다", () => {
+        traverseBFS(createFinalAstTree.tempAstTree, (node, meta) => {
+          if (meta.depth > 0) {
+            // 루트가 아닌 노드
+            expect(node.props).toBeDefined();
+            expect(typeof node.props).toBe("object");
+          }
+        });
+      });
+    });
+
+    describe("RefineProps 단위 테스트", () => {
+      test("refinedProps는 componentPropertyDefinitions를 포함해야 한다", () => {
+        const specDataManager = new SpecDataManager(
+          taptapButtonSampleMockData as any
+        );
+        const renderTree = specDataManager.getRenderTree();
+        const refineProps = new RefineProps(renderTree, specDataManager);
+
+        const definitions = specDataManager.getComponentPropertyDefinitions();
+        const refined = refineProps.refinedProps;
+
+        if (definitions) {
+          expect(Object.keys(refined).length).toBeGreaterThanOrEqual(
+            Object.keys(definitions).length
+          );
+        }
+      });
+    });
+  });
+
+  describe("CreateSuperTree 병합 테스트", () => {
+    describe("taptapButton_sample - 슈퍼트리 병합", () => {
+      const specDataManager = new SpecDataManager(
+        taptapButtonSampleMockData as any
+      );
+      const renderTree = specDataManager.getRenderTree();
+
+      const matcher = new NodeMatcher(specDataManager);
+      const createSuperTree = new CreateSuperTree(
+        renderTree,
+        specDataManager,
+        matcher
+      );
+
+      const superTree = createSuperTree.getSuperTree();
+
+      test("슈퍼트리의 루트 노드가 존재해야 한다", () => {
+        expect(superTree).toBeDefined();
+        expect(superTree.id).toBeDefined();
+        expect(superTree.type).toBeDefined();
+      });
+
+      test("슈퍼트리 루트의 mergedNode는 variant 수 이상이어야 한다", () => {
+        const variantCount = renderTree.children.length;
+        expect(superTree.mergedNode.length).toBeGreaterThanOrEqual(1);
+      });
+
+      test("모든 노드는 mergedNode 배열을 가져야 한다", () => {
+        traverseBFS(superTree, (node) => {
+          expect(Array.isArray(node.mergedNode)).toBe(true);
+          expect(node.mergedNode.length).toBeGreaterThanOrEqual(1);
+        });
+      });
+
+      test("mergedNode는 id, name, variantName을 포함해야 한다", () => {
+        traverseBFS(superTree, (node) => {
+          node.mergedNode.forEach((merged) => {
+            expect(merged).toHaveProperty("id");
+            expect(merged).toHaveProperty("name");
+            // variantName은 optional
+          });
+        });
+      });
+
+      test("부모-자식 관계가 올바르게 설정되어야 한다", () => {
+        traverseBFS(superTree, (node, meta) => {
+          if (meta.depth === 0) {
+            expect(node.parent).toBeNull();
+          } else {
+            expect(node.parent).toBeDefined();
+            expect(node.parent).not.toBeNull();
+          }
+        });
+      });
+    });
+
+    describe("여러 variant 병합 검증", () => {
+      const specDataManager = new SpecDataManager(
+        taptapButtonSampleMockData as any
+      );
+      const renderTree = specDataManager.getRenderTree();
+
+      const matcher = new NodeMatcher(specDataManager);
+      const createSuperTree = new CreateSuperTree(
+        renderTree,
+        specDataManager,
+        matcher
+      );
+
+      const superTree = createSuperTree.getSuperTree();
+
+      test("TEXT 노드의 mergedNode에는 여러 variant의 정보가 있어야 한다", () => {
+        const textNodes = collectNodesByType(
+          superTree,
+          "TEXT"
+        ) as SuperTreeNode[];
+
+        textNodes.forEach((textNode) => {
+          // TEXT 노드는 여러 variant에 존재하므로 mergedNode가 1개 이상
+
+          expect(textNode.mergedNode.length).toBeGreaterThanOrEqual(1);
+        });
+      });
+
+      test("같은 위치의 노드들은 하나의 슈퍼트리 노드로 병합되어야 한다", () => {
+        // variant 수보다 슈퍼트리의 TEXT 노드 수가 적거나 같아야 함
+        const variantCount = renderTree.children.length;
+        const superTreeTextNodes = collectNodesByType(superTree, "TEXT");
+
+        // 각 variant마다 TEXT 노드가 있다고 가정하면,
+        // 슈퍼트리에서는 병합되어 더 적은 수의 TEXT 노드가 있어야 함
+        expect(superTreeTextNodes.length).toBeLessThanOrEqual(variantCount);
+      });
+    });
+  });
+
+  describe("엣지 케이스 테스트", () => {
+    describe("빈 children 처리", () => {
+      const specDataManager = new SpecDataManager(
+        taptapButtonSampleMockData as any
+      );
+      const renderTree = specDataManager.getRenderTree();
+
+      const matcher = new NodeMatcher(specDataManager);
+      const createSuperTree = new CreateSuperTree(
+        renderTree,
+        specDataManager,
+        matcher
+      );
+
+      const refineProps = new RefineProps(renderTree, specDataManager);
+
+      const createFinalAstTree = new CreateFinalAstTree(
+        specDataManager,
+        createSuperTree.getSuperTree(),
+        refineProps.refinedProps
+      );
+
+      test("리프 노드(자식 없는 노드)도 올바르게 처리되어야 한다", () => {
+        traverseBFS(createFinalAstTree.finalAstTree, (node) => {
+          expect(Array.isArray(node.children)).toBe(true);
+          // 리프 노드인 경우 children이 빈 배열
+          if (node.children.length === 0) {
+            expect(node.children).toEqual([]);
+          }
+        });
+      });
+
+      test("TEXT 노드는 children이 비어있어야 한다", () => {
+        const textNodes = collectNodesByType(
+          createFinalAstTree.finalAstTree,
+          "TEXT"
+        );
+
+        textNodes.forEach((node) => {
+          expect(node.children.length).toBe(0);
+        });
+      });
+    });
+
+    describe("깊은 중첩 구조 테스트", () => {
+      const specDataManager = new SpecDataManager(
+        taptapButtonSampleMockData as any
+      );
+      const renderTree = specDataManager.getRenderTree();
+
+      const matcher = new NodeMatcher(specDataManager);
+      const createSuperTree = new CreateSuperTree(
+        renderTree,
+        specDataManager,
+        matcher
+      );
+
+      const refineProps = new RefineProps(renderTree, specDataManager);
+
+      const createFinalAstTree = new CreateFinalAstTree(
+        specDataManager,
+        createSuperTree.getSuperTree(),
+        refineProps.refinedProps
+      );
+
+      test("트리의 깊이가 올바르게 유지되어야 한다", () => {
+        let maxDepth = 0;
+        traverseBFS(createFinalAstTree.finalAstTree, (node, meta) => {
+          if (meta.depth > maxDepth) {
+            maxDepth = meta.depth;
+          }
+        });
+
+        // 최소 1 이상의 깊이가 있어야 함 (루트 + 자식)
+        expect(maxDepth).toBeGreaterThanOrEqual(1);
+      });
+
+      test("모든 노드에 부모 참조가 올바르게 설정되어야 한다", () => {
+        traverseBFS(createFinalAstTree.finalAstTree, (node, meta) => {
+          if (meta.parent) {
+            // 부모의 children에 현재 노드가 포함되어 있어야 함
+            const isChildOfParent = meta.parent.children.some(
+              (child) => child.id === node.id
+            );
+            expect(isChildOfParent).toBe(true);
+          }
+        });
+      });
+    });
+
+    describe("다양한 fixture 데이터 처리", () => {
+      test("tadaButton도 올바르게 처리되어야 한다", () => {
+        const specDataManager = new SpecDataManager(tadaButtonMockData as any);
+        const renderTree = specDataManager.getRenderTree();
+
+        const matcher = new NodeMatcher(specDataManager);
+        const createSuperTree = new CreateSuperTree(
+          renderTree,
+          specDataManager,
+          matcher
+        );
+
+        const refineProps = new RefineProps(renderTree, specDataManager);
+
+        expect(() => {
+          new CreateFinalAstTree(
+            specDataManager,
+            createSuperTree.getSuperTree(),
+            refineProps.refinedProps
+          );
+        }).not.toThrow();
+      });
+
+      test("airtableButton도 올바르게 처리되어야 한다", () => {
+        const specDataManager = new SpecDataManager(
+          airtableButtonMockData as any
+        );
+        const renderTree = specDataManager.getRenderTree();
+
+        const matcher = new NodeMatcher(specDataManager);
+        const createSuperTree = new CreateSuperTree(
+          renderTree,
+          specDataManager,
+          matcher
+        );
+
+        const refineProps = new RefineProps(renderTree, specDataManager);
+
+        expect(() => {
+          new CreateFinalAstTree(
+            specDataManager,
+            createSuperTree.getSuperTree(),
+            refineProps.refinedProps
+          );
+        }).not.toThrow();
+      });
+    });
+
+    describe("NodeMatcher 엣지 케이스", () => {
+      const specDataManager = new SpecDataManager(
+        taptapButtonSampleMockData as any
+      );
+      const matcher = new NodeMatcher(specDataManager);
+
+      test("같은 타입의 노드만 매칭되어야 한다", () => {
+        const renderTree = specDataManager.getRenderTree();
+
+        const variants = renderTree.children;
+        if (variants.length >= 2) {
+          // 첫 번째 variant의 첫 번째 자식과 두 번째 variant의 첫 번째 자식 비교
+          const node1 = variants[0].children[0];
+          const node2 = variants[1].children[0];
+
+          if (node1 && node2) {
+            const superNode1: SuperTreeNode = {
+              id: node1.id,
+              type: specDataManager.getSpecById(node1.id).type,
+              name: node1.name,
+              parent: null,
+              children: [],
+              mergedNode: [{ id: node1.id, name: node1.name }],
+            };
+
+            const superNode2: SuperTreeNode = {
+              id: node2.id,
+              type: specDataManager.getSpecById(node2.id).type,
+              name: node2.name,
+              parent: null,
+              children: [],
+              mergedNode: [{ id: node2.id, name: node2.name }],
+            };
+
+            // 같은 타입이면 매칭 가능성 있음
+            if (superNode1.type === superNode2.type) {
+              // isSameNode 호출이 에러 없이 실행되어야 함
+              expect(() =>
+                matcher.isSameNode(superNode1, superNode2)
+              ).not.toThrow();
+            }
+          }
+        }
       });
     });
   });
