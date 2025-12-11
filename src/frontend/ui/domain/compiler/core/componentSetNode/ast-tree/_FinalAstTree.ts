@@ -1,5 +1,6 @@
 import SpecDataManager from "@compiler/manager/SpecDataManager";
-import { FinalAstTree, TempAstTree } from "@compiler";
+import { FinalAstTree, StyleObject, TempAstTree } from "@compiler";
+import HelperManager from "@compiler/manager/HelperManager";
 
 class _FinalAstTree {
   private _finalAstTree: FinalAstTree;
@@ -10,6 +11,7 @@ class _FinalAstTree {
 
   constructor(specDataManager: SpecDataManager, tempAstTree: TempAstTree) {
     this._finalAstTree = this.createFinalAstTree(tempAstTree);
+    // HelperManager.deepCloneTree();
   }
 
   private createFinalAstTree(tempAstTree: TempAstTree): FinalAstTree {
@@ -24,13 +26,7 @@ class _FinalAstTree {
         props: { ...node.props },
         parent: parent,
         visible: node.visible ?? { type: "static", value: true },
-        style: {
-          base: { ...node.style.base },
-          dynamic: node.style.dynamic.map((d) => ({
-            condition: d.condition,
-            style: { ...d.style },
-          })),
-        },
+        style: this.updateStyle(node.style),
         children: [],
       };
 
@@ -42,6 +38,11 @@ class _FinalAstTree {
     };
 
     return convert(tempAstTree, null);
+  }
+
+  private updateStyle(style: StyleObject) {
+    //TODO
+    return style;
   }
 }
 

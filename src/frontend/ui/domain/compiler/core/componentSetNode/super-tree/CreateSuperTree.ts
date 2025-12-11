@@ -109,7 +109,6 @@ class CreateSuperTree {
     for (const { parent, node } of nodesToAdd) {
       parent.children.push(node);
 
-      //TODO parent의 자식요소 node 들을 순서에 맞게 정렬해야함.
       this.SortNodes.sortChildrenNodes(parent);
     }
 

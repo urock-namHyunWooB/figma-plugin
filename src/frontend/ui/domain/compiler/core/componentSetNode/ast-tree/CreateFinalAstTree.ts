@@ -3,6 +3,7 @@ import { SuperTreeNode } from "@compiler";
 import { PropsDef } from "@compiler/core/componentSetNode/RefineProps";
 import _TempAstTree from "@compiler/core/componentSetNode/ast-tree/_TempAstTree";
 import _FinalAstTree from "./_FinalAstTree";
+import HelperManager from "@compiler/manager/HelperManager";
 
 /**
  * 슈퍼트리에 각 variant 트리를 diff 해서 슈퍼트리 노드 하나하나 값을 채워나간다.
@@ -32,7 +33,7 @@ class CreateFinalAstTree {
 
     this._FinalAstTree = new _FinalAstTree(
       specDataManager,
-      this._TempAstTree.tempAstTree
+      HelperManager.deepCloneTree(this._TempAstTree.tempAstTree)
     );
   }
 }
