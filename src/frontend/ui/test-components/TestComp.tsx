@@ -17,7 +17,7 @@ export function TestComp() {
     async function compile() {
       if (codeRef.current) return;
       try {
-        codeRef.current = new FigmaCompiler(airtableButton);
+        codeRef.current = new FigmaCompiler(taptapButtonSample);
         return;
         setTsxCode(codeRef.current);
 

@@ -84,7 +84,13 @@ describe("ComponentSetCompiler", () => {
         expect(iconNodes).toBe(2);
       });
 
-      test("LINE Node가 순서가 제일 먼저 나와야 한다.", () => {});
+      test("LINE Node가 순서가 제일 먼저 나와야 한다.", () => {
+        const children = createFinalAstTree.tempAstTree.children;
+        const firstNonEmptyChild = children.find(
+          (child) => child !== undefined
+        );
+        expect(firstNonEmptyChild?.type).toBe("LINE");
+      });
     });
 
     describe("tadaButton", () => {
@@ -126,7 +132,27 @@ describe("ComponentSetCompiler", () => {
         expect(iconNodes.length).toBe(2);
       });
 
-      test("ICON - TEXT - ICON 순서 노드여야 한다. ", () => {});
+      test("ICON - TEXT - ICON 순서 노드여야 한다. ", () => {
+        const textNode = collectNodesByType(
+          createFinalAstTree.tempAstTree,
+          "TEXT"
+        )[0];
+        const parent = textNode?.parent;
+        expect(parent).toBeDefined();
+
+        const siblings = parent!.children.filter(
+          (child): child is SuperTreeNode =>
+            child !== undefined &&
+            (child.type === "INSTANCE" || child.type === "TEXT")
+        );
+
+        expect(siblings.length).toBeGreaterThanOrEqual(3);
+        expect(siblings[0]?.type).toBe("INSTANCE");
+        expect(siblings[0]?.name).toContain("Left Icon");
+        expect(siblings[1]?.type).toBe("TEXT");
+        expect(siblings[2]?.type).toBe("INSTANCE");
+        expect(siblings[2]?.name).toContain("Right Icon");
+      });
     });
 
     describe("airtableButton", () => {
@@ -166,7 +192,24 @@ describe("ComponentSetCompiler", () => {
         expect(iconNodes).toBe(1);
       });
 
-      test("ICON 다음에 Text 노드가 나온다.", () => {});
+      test("ICON 다음에 Text 노드가 나온다.", () => {
+        const textNode = collectNodesByType(
+          createFinalAstTree.tempAstTree,
+          "TEXT"
+        )[0];
+        const parent = textNode?.parent;
+        expect(parent).toBeDefined();
+
+        const siblings = parent!.children.filter(
+          (child): child is SuperTreeNode =>
+            child !== undefined &&
+            (child.type === "INSTANCE" || child.type === "TEXT")
+        );
+
+        expect(siblings.length).toBeGreaterThanOrEqual(2);
+        expect(siblings[0]?.type).toBe("INSTANCE");
+        expect(siblings[1]?.type).toBe("TEXT");
+      });
     });
   });
 });
