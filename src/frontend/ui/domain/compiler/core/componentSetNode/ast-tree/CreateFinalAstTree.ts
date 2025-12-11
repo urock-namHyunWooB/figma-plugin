@@ -1,20 +1,6 @@
 import SpecDataManager from "@compiler/manager/SpecDataManager";
-import {
-  TempAstTree,
-  SuperTreeNode,
-  FinalAstTree,
-  StyleTree,
-  StyleObject,
-  VisibleValue,
-  NewMergedNode,
-} from "@compiler";
+import { SuperTreeNode } from "@compiler";
 import { PropsDef } from "@compiler/core/componentSetNode/RefineProps";
-import { ConditionNode, BinaryOperator } from "@compiler/types/customType";
-import { findNodeBFS, getRootNode, traverseBFS } from "../../../utils/traverse";
-import debug from "@compiler/manager/DebuggingManager";
-import { target } from "happy-dom/lib/PropertySymbol";
-import helper from "@compiler/manager/HelperManager";
-import finder from "@compiler/manager/FinderManager";
 import _TempAstTree from "@compiler/core/componentSetNode/ast-tree/_TempAstTree";
 import _FinalAstTree from "./_FinalAstTree";
 

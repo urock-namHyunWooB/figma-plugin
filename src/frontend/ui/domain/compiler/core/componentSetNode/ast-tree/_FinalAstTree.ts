@@ -1,6 +1,5 @@
 import SpecDataManager from "@compiler/manager/SpecDataManager";
-import { FinalAstTree, SuperTreeNode, TempAstTree } from "@compiler";
-import { PropsDef } from "@compiler/core/componentSetNode/RefineProps";
+import { FinalAstTree, TempAstTree } from "@compiler";
 
 class _FinalAstTree {
   private _finalAstTree: FinalAstTree;

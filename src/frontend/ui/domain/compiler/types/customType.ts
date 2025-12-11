@@ -80,6 +80,9 @@ export interface TempAstTree extends SuperTreeNode {
   children: TempAstTree[];
 }
 
+/**
+ * TempAst애서 한번더 견고하게 가공된 형태
+ */
 export interface FinalAstTree {
   id: string;
   name: string;
