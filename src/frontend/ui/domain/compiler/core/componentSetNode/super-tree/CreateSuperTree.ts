@@ -3,6 +3,7 @@ import SpecDataManager from "@compiler/manager/SpecDataManager";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import { getNodesAtDepth, traverseBFS } from "@compiler/utils/traverse";
 import debug from "@compiler/manager/DebuggingManager";
+import _SortNodes from "@compiler/core/componentSetNode/super-tree/_SortNodes";
 
 //TODO 구조에 따라서 슈퍼트리, 슬롯 + 레이아웃 전략을 한다.
 class CreateSuperTree {
@@ -12,6 +13,8 @@ class CreateSuperTree {
 
   private superTree: SuperTreeNode;
 
+  private SortNodes: _SortNodes;
+
   constructor(
     renderTree: RenderTree,
     specDataManager: SpecDataManager,
@@ -20,6 +23,8 @@ class CreateSuperTree {
     this.renderTree = renderTree;
     this.specDataManager = specDataManager;
     this.matcher = matcher;
+
+    this.SortNodes = new _SortNodes(specDataManager);
 
     this.superTree = this.createSuperTree();
   }
@@ -65,7 +70,6 @@ class CreateSuperTree {
    * @private
    */
   private _mergeTree(pivotSuperTree: SuperTreeNode, targetTree: SuperTreeNode) {
-    // 추가할 노드들을 수집 (순회 중 변경 방지)
     const nodesToAdd: Array<{ parent: SuperTreeNode; node: SuperTreeNode }> =
       [];
 
@@ -104,19 +108,9 @@ class CreateSuperTree {
     // 순회 완료 후 한꺼번에 추가
     for (const { parent, node } of nodesToAdd) {
       parent.children.push(node);
-      //TODO parent 및 node 들을 정렬해야함.
 
-      const a = parent.children[0]!;
-      const b = parent.children[1]!;
-
-      const A = this.specDataManager.getSpecById(a.id);
-      const B = this.specDataManager.getSpecById(b.id);
-
-      const nodeBox1 = A.absoluteBoundingBox!;
-      const nodeBox2 = B.absoluteBoundingBox!;
-
-      const C = this.matcher.getRelativeBoundingBox(nodeBox1, nodeBox2);
-      console.log(C);
+      //TODO parent의 자식요소 node 들을 순서에 맞게 정렬해야함.
+      this.SortNodes.sortChildrenNodes(parent);
     }
 
     return pivotSuperTree;
@@ -125,7 +119,8 @@ class CreateSuperTree {
   private _convertSuperTreeNode(
     renderTree: RenderTree,
     parent: SuperTreeNode | null = null,
-    variantName: string | null = null
+    variantName: string | null = null,
+    originSiblingIndex: number = 0
   ): SuperTreeNode | undefined {
     const nodeData = this.specDataManager.getSpecById(renderTree.id);
     if (!nodeData) return;
@@ -134,7 +129,7 @@ class CreateSuperTree {
       id: renderTree.id,
       type: nodeData.type,
       name: nodeData.name,
-      parent,
+      parent: parent || null,
       children: [],
       mergedNode: [
         {
@@ -143,10 +138,13 @@ class CreateSuperTree {
           variantName,
         },
       ],
+      metaData: {
+        originSiblingIndex,
+      },
     };
 
-    node.children = renderTree.children.map((child) =>
-      this._convertSuperTreeNode(child, node, variantName)
+    node.children = renderTree.children.map((child, index) =>
+      this._convertSuperTreeNode(child, node, variantName, index)
     );
 
     return node;

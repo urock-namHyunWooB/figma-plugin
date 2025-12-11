@@ -3,7 +3,7 @@ import SpecDataManager from "@compiler/manager/SpecDataManager";
 import { toCamelCase } from "@compiler/utils/normalizeString";
 import { getNodesAtDepth, traverseBFS } from "@compiler/utils/traverse";
 import NodeMatcher from "@compiler/core/NodeMatcher";
-import CreateSuperTree from "./CreateSuperTree";
+import CreateSuperTree from "./super-tree/CreateSuperTree";
 import RefineProps from "@compiler/core/componentSetNode/RefineProps";
 import CreateFinalAstTree from "./CreateFinalAstTree";
 import debug from "@compiler/manager/DebuggingManager";
@@ -29,6 +29,8 @@ class ComponentSetCompiler {
       specDataManager,
       matcher
     );
+
+    console.log(this.CreateSuperTree.getSuperTree());
 
     this.propsDef = this.extractPropsDef(renderTree, specDataManager, matcher);
     const RefindProps = (this.RefindProps = new RefineProps(

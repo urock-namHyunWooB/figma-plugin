@@ -53,8 +53,6 @@ class CreateFinalAstTree {
     tempAstTree = this.updateProps(tempAstTree);
 
     this._tempAstTree = tempAstTree;
-
-    debug.tree(tempAstTree);
   }
 
   private createFinalAstTree(tempAstTree: TempAstTree) {
