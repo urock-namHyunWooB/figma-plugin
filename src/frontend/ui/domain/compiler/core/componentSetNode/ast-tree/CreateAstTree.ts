@@ -8,7 +8,7 @@ import HelperManager from "@compiler/manager/HelperManager";
 /**
  * 슈퍼트리에 각 variant 트리를 diff 해서 슈퍼트리 노드 하나하나 값을 채워나간다.
  */
-class CreateFinalAstTree {
+class CreateAstTree {
   private _TempAstTree: _TempAstTree;
   private _FinalAstTree: _FinalAstTree;
 
@@ -38,4 +38,4 @@ class CreateFinalAstTree {
   }
 }
 
-export default CreateFinalAstTree;
+export default CreateAstTree;

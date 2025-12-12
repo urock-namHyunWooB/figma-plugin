@@ -76,7 +76,7 @@ export interface TempAstTree extends SuperTreeNode {
   parent: TempAstTree | null;
   visible: VisibleValue | null;
   style: StyleObject;
-  mergedNode: { id: string; name: string; variantName?: string | null }[];
+  mergedNode: MergedNode[];
   children: TempAstTree[];
 }
 

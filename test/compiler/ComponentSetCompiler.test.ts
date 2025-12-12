@@ -7,7 +7,7 @@ import airtableButtonMockData from "../fixtures/button/airtableButton.json";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import { FinalAstTree, SuperTreeNode, TempAstTree } from "@compiler";
-import CreateFinalAstTree from "@compiler/core/componentSetNode/ast-tree/CreateFinalAstTree";
+import CreateAstTree from "@compiler/core/componentSetNode/ast-tree/CreateAstTree";
 import CreateSuperTree from "@compiler/core/componentSetNode/super-tree/CreateSuperTree";
 import RefineProps from "@compiler/core/componentSetNode/RefineProps";
 import { traverseBFS, findNodeBFS } from "@compiler/utils/traverse";
@@ -55,7 +55,7 @@ describe("ComponentSetCompiler", () => {
 
       const RefindProps = new RefineProps(renderTree, specDataManager);
 
-      const createFinalAstTree = new CreateFinalAstTree(
+      const createFinalAstTree = new CreateAstTree(
         specDataManager,
         createSuperTree.getSuperTree(),
         RefindProps.refinedProps
@@ -107,7 +107,7 @@ describe("ComponentSetCompiler", () => {
 
       const RefindProps = new RefineProps(renderTree, specDataManager);
 
-      const createFinalAstTree = new CreateFinalAstTree(
+      const createFinalAstTree = new CreateAstTree(
         specDataManager,
         createSuperTree.getSuperTree(),
         RefindProps.refinedProps
@@ -171,7 +171,7 @@ describe("ComponentSetCompiler", () => {
 
       const RefindProps = new RefineProps(renderTree, specDataManager);
 
-      const createFinalAstTree = new CreateFinalAstTree(
+      const createFinalAstTree = new CreateAstTree(
         specDataManager,
         createSuperTree.getSuperTree(),
         RefindProps.refinedProps
@@ -230,7 +230,7 @@ describe("ComponentSetCompiler", () => {
 
       const RefindProps = new RefineProps(renderTree, specDataManager);
 
-      const createFinalAstTree = new CreateFinalAstTree(
+      const createFinalAstTree = new CreateAstTree(
         specDataManager,
         createSuperTree.getSuperTree(),
         RefindProps.refinedProps
@@ -274,7 +274,7 @@ describe("ComponentSetCompiler", () => {
 
       const RefindProps = new RefineProps(renderTree, specDataManager);
 
-      const createFinalAstTree = new CreateFinalAstTree(
+      const createFinalAstTree = new CreateAstTree(
         specDataManager,
         createSuperTree.getSuperTree(),
         RefindProps.refinedProps
@@ -338,7 +338,7 @@ describe("ComponentSetCompiler", () => {
 
       const RefindProps = new RefineProps(renderTree, specDataManager);
 
-      const createFinalAstTree = new CreateFinalAstTree(
+      const createFinalAstTree = new CreateAstTree(
         specDataManager,
         createSuperTree.getSuperTree(),
         RefindProps.refinedProps
@@ -397,7 +397,7 @@ describe("ComponentSetCompiler", () => {
 
       const refineProps = new RefineProps(renderTree, specDataManager);
 
-      const createFinalAstTree = new CreateFinalAstTree(
+      const createFinalAstTree = new CreateAstTree(
         specDataManager,
         createSuperTree.getSuperTree(),
         refineProps.refinedProps
@@ -450,7 +450,7 @@ describe("ComponentSetCompiler", () => {
 
       const refineProps = new RefineProps(renderTree, specDataManager);
 
-      const createFinalAstTree = new CreateFinalAstTree(
+      const createFinalAstTree = new CreateAstTree(
         specDataManager,
         createSuperTree.getSuperTree(),
         refineProps.refinedProps
@@ -490,7 +490,7 @@ describe("ComponentSetCompiler", () => {
 
       const refineProps = new RefineProps(renderTree, specDataManager);
 
-      const createFinalAstTree = new CreateFinalAstTree(
+      const createFinalAstTree = new CreateAstTree(
         specDataManager,
         createSuperTree.getSuperTree(),
         refineProps.refinedProps
@@ -559,7 +559,7 @@ describe("ComponentSetCompiler", () => {
 
       const refineProps = new RefineProps(renderTree, specDataManager);
 
-      const createFinalAstTree = new CreateFinalAstTree(
+      const createFinalAstTree = new CreateAstTree(
         specDataManager,
         createSuperTree.getSuperTree(),
         refineProps.refinedProps
@@ -599,7 +599,7 @@ describe("ComponentSetCompiler", () => {
 
       const refineProps = new RefineProps(renderTree, specDataManager);
 
-      const createFinalAstTree = new CreateFinalAstTree(
+      const createFinalAstTree = new CreateAstTree(
         specDataManager,
         createSuperTree.getSuperTree(),
         refineProps.refinedProps
@@ -765,7 +765,7 @@ describe("ComponentSetCompiler", () => {
 
       const refineProps = new RefineProps(renderTree, specDataManager);
 
-      const createFinalAstTree = new CreateFinalAstTree(
+      const createFinalAstTree = new CreateAstTree(
         specDataManager,
         createSuperTree.getSuperTree(),
         refineProps.refinedProps
@@ -808,7 +808,7 @@ describe("ComponentSetCompiler", () => {
 
       const refineProps = new RefineProps(renderTree, specDataManager);
 
-      const createFinalAstTree = new CreateFinalAstTree(
+      const createFinalAstTree = new CreateAstTree(
         specDataManager,
         createSuperTree.getSuperTree(),
         refineProps.refinedProps
@@ -854,7 +854,7 @@ describe("ComponentSetCompiler", () => {
         const refineProps = new RefineProps(renderTree, specDataManager);
 
         expect(() => {
-          new CreateFinalAstTree(
+          new CreateAstTree(
             specDataManager,
             createSuperTree.getSuperTree(),
             refineProps.refinedProps
@@ -878,7 +878,7 @@ describe("ComponentSetCompiler", () => {
         const refineProps = new RefineProps(renderTree, specDataManager);
 
         expect(() => {
-          new CreateFinalAstTree(
+          new CreateAstTree(
             specDataManager,
             createSuperTree.getSuperTree(),
             refineProps.refinedProps

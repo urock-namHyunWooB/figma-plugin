@@ -1,5 +1,5 @@
 import SpecDataManager from "@compiler/manager/SpecDataManager";
-import { FinalAstTree, StyleObject, TempAstTree } from "@compiler";
+import { FinalAstTree, MergedNode, StyleObject, TempAstTree } from "@compiler";
 import HelperManager from "@compiler/manager/HelperManager";
 
 class _FinalAstTree {
@@ -10,7 +10,12 @@ class _FinalAstTree {
   }
 
   constructor(specDataManager: SpecDataManager, tempAstTree: TempAstTree) {
-    this._finalAstTree = this.createFinalAstTree(tempAstTree);
+    let finalAstTree = this.createFinalAstTree(tempAstTree);
+    finalAstTree = this.updateCleanupNodes(finalAstTree);
+    finalAstTree = this.updateStyle(finalAstTree);
+
+    this._finalAstTree = finalAstTree;
+
     // HelperManager.deepCloneTree();
   }
 
@@ -26,7 +31,7 @@ class _FinalAstTree {
         props: { ...node.props },
         parent: parent,
         visible: node.visible ?? { type: "static", value: true },
-        style: this.updateStyle(node.style),
+        style: node.style,
         children: [],
       };
 
@@ -40,10 +45,52 @@ class _FinalAstTree {
     return convert(tempAstTree, null);
   }
 
-  private updateStyle(style: StyleObject) {
-    //TODO
-    return style;
+  /**
+   * 불필요한 노드 삭제
+   * @param astTree
+   * @private
+   */
+  private updateCleanupNodes(astTree: FinalAstTree) {
+    return astTree;
   }
+
+  /**
+   * 최적의 스타일을 세팅한다.
+   * @param astTree
+   * @private
+   */
+  private updateStyle(astTree: FinalAstTree) {
+    //TODO
+    return astTree;
+  }
+
+  /**
+   * 메타 데이터 추가
+   * 유사한 태그 유추
+   * @param astTree
+   * @private
+   */
+  private updateMetaData(astTree: FinalAstTree) {}
+
+  /**
+   * visible 최적화
+   * @param astTree
+   * @private
+   */
+  private updateVisible(astTree: FinalAstTree) {}
+
+  /**
+   * Props 최적화
+   * @param astTree
+   * @private
+   */
+  private updateProps(astTree: FinalAstTree) {}
+
+  /**
+   * 노드 트리 구조 최적화
+   * @private
+   */
+  private updateStructure() {}
 }
 
 export default _FinalAstTree;
