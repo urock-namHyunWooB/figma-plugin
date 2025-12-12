@@ -1,22 +1,25 @@
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import { FinalAstTree, MergedNode, StyleObject, TempAstTree } from "@compiler";
 import HelperManager from "@compiler/manager/HelperManager";
+import { traverseTree } from "@figma/eslint-plugin-figma-plugins/dist/util";
+import { traverseBFS } from "@compiler/utils/traverse";
 
 class _FinalAstTree {
   private _finalAstTree: FinalAstTree;
+
+  private specDataManager: SpecDataManager;
 
   public get finalAstTree() {
     return this._finalAstTree;
   }
 
   constructor(specDataManager: SpecDataManager, tempAstTree: TempAstTree) {
+    this.specDataManager = specDataManager;
+
     let finalAstTree = this.createFinalAstTree(tempAstTree);
     finalAstTree = this.updateCleanupNodes(finalAstTree);
-    finalAstTree = this.updateStyle(finalAstTree);
 
     this._finalAstTree = finalAstTree;
-
-    // HelperManager.deepCloneTree();
   }
 
   private createFinalAstTree(tempAstTree: TempAstTree): FinalAstTree {
@@ -47,10 +50,30 @@ class _FinalAstTree {
 
   /**
    * 불필요한 노드 삭제
+   * 높이값이 0인 노드 삭제 (absoluteBoundingBox)
    * @param astTree
    * @private
    */
   private updateCleanupNodes(astTree: FinalAstTree) {
+    const nodesToRemove: FinalAstTree[] = [];
+
+    // 1. 삭제할 노드 수집
+    traverseBFS(astTree, (node, meta) => {
+      const targetSpec = this.specDataManager.getSpecById(node.id);
+      if (targetSpec.absoluteBoundingBox?.height === 0) {
+        nodesToRemove.push(node);
+      }
+    });
+
+    // 2. 수집된 노드들을 트리에서 제거
+    nodesToRemove.forEach((node) => {
+      if (node.parent) {
+        node.parent.children = node.parent.children.filter(
+          (child) => child !== node
+        );
+      }
+    });
+
     return astTree;
   }
 
