@@ -51,7 +51,6 @@ class CreateSuperTree {
       .reduce((superTree, target) => this._mergeTree(superTree, target));
 
     superTree = this.updateSquashByIou(superTree, components);
-    debugger;
     superTree = this.updateSquashFrameNode(superTree);
 
     return superTree;
@@ -176,7 +175,7 @@ class CreateSuperTree {
     });
 
     // 2. 같은 타입 내에서 겹치는 노드들 union
-    for (const [type, nodes] of nodesByType) {
+    for (const [_, nodes] of nodesByType) {
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const iou = this.matcher.getIou2(nodes[i], nodes[j]);
@@ -202,29 +201,6 @@ class CreateSuperTree {
     // 4. 원본 components로 방향 그래프 구축 (한 번만 호출)
     const { graphs } = buildOrderGraphFromComponents(components);
 
-    // ========== DEBUG 1: 스쿼시 대상 그룹들 확인 ==========
-    console.log("===== 스쿼시 대상 그룹들 =====");
-    for (const [rootId, groupNodes] of groups) {
-      if (groupNodes.length > 1) {
-        console.log(
-          `그룹 [${rootId}]:`,
-          groupNodes.map((n) => ({
-            id: n.id,
-            type: n.type,
-            name: n.name,
-            parentId: n.parent?.id,
-            parentName: n.parent?.name,
-          }))
-        );
-      }
-    }
-
-    // ========== DEBUG 2: 방향 그래프 확인 ==========
-    console.log("===== 방향 그래프 =====");
-    for (const [parentId, graph] of graphs) {
-      console.log(`부모 ${parentId}:`, graph.getEdges());
-    }
-
     // 5. 스쿼시 대상 그룹들 처리 (2개 이상인 그룹만)
     for (const [_, groupNodes] of groups) {
       if (groupNodes.length <= 1) continue;
@@ -249,18 +225,7 @@ class CreateSuperTree {
             { id: nodeB.id, parentId: nodeB.parent?.id || "" }
           );
 
-          // ========== DEBUG 3: 스쿼시 방향 결정 결과 ==========
-          console.log("===== 스쿼시 방향 결정 =====");
-          console.log(
-            `nodeA: ${nodeA.id} (${nodeA.type}, parent: ${nodeA.parent?.id})`
-          );
-          console.log(
-            `nodeB: ${nodeB.id} (${nodeB.type}, parent: ${nodeB.parent?.id})`
-          );
-          console.log("결과:", result);
-
           if (!result.canSquash) {
-            console.log("→ 스쿼시 불가, skip");
             continue;
           }
 
@@ -283,7 +248,11 @@ class CreateSuperTree {
               const getDepth = (node: SuperTreeNode): number => {
                 let depth = 0;
                 let current = node.parent;
+                const visited = new Set<string>();
                 while (current) {
+                  // 순환 참조 방지
+                  if (visited.has(current.id)) break;
+                  visited.add(current.id);
                   depth++;
                   current = current.parent;
                 }
@@ -314,11 +283,6 @@ class CreateSuperTree {
             }
           }
 
-          // ========== DEBUG 4: 스쿼시 실행 ==========
-          console.log(
-            `→ 스쿼시 실행: ${nodeToRemove.id}를 ${nodeToKeep.id}로 합침`
-          );
-
           // 실제 스쿼시 수행
           this.squashNode(nodeToRemove, nodeToKeep);
           squashedNodes.add(nodeToRemove.id);
@@ -347,25 +311,12 @@ class CreateSuperTree {
       }
     }
 
-    // 3. nodeToRemove의 children을 nodeToKeep으로 병합
-    // (동일한 자식이 있으면 재귀적으로 스쿼시, 없으면 추가)
-    for (const childToMove of nodeToRemove.children) {
-      if (!childToMove) continue;
-
-      // nodeToKeep의 children 중 동일한 노드 찾기
-      const matchingChild = nodeToKeep.children.find(
-        (keepChild) =>
-          keepChild && this.matcher.isSameNode(childToMove, keepChild)
-      );
-
-      if (matchingChild) {
-        // 동일한 자식이 있으면 재귀적으로 스쿼시
-        this.squashNode(childToMove, matchingChild);
-      } else {
-        // 동일한 자식이 없으면 nodeToKeep의 children에 추가
-        childToMove.parent = nodeToKeep;
-        nodeToKeep.children.push(childToMove);
-      }
+    // 3. nodeToRemove의 children이 있으면 nodeToKeep에 추가
+    // (단순히 이동만, 재귀 없음)
+    for (const child of nodeToRemove.children) {
+      if (!child) continue;
+      child.parent = nodeToKeep;
+      nodeToKeep.children.push(child);
     }
   }
 

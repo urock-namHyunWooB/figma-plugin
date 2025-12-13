@@ -86,7 +86,14 @@ class HelperManager {
   }
 
   public getRootComponentNode(node: SuperTreeNode) {
+    const visited = new Set<string>();
     while (node) {
+      // 무한루프 방지
+      if (visited.has(node.id)) {
+        return node; // 순환 참조 감지, 현재 노드 반환
+      }
+      visited.add(node.id);
+
       if (node.type === "COMPONENT") return node;
       node = node.parent as SuperTreeNode;
     }
