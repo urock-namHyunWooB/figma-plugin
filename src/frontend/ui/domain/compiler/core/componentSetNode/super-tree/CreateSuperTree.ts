@@ -40,21 +40,11 @@ class CreateSuperTree {
   private createSuperTree() {
     const components = this.renderTree.children;
 
-    let superTree = this._convertSuperTreeNode(
-      components[0],
-      null,
-      components[0].name
-    )!;
+    let superTree = components
+      .map((comp) => this._convertSuperTreeNode(comp, null, comp.name)!)
+      .reduce((superTree, target) => this._mergeTree(superTree, target));
 
-    for (let i = 1; i < components.length; i++) {
-      const target = this._convertSuperTreeNode(
-        components[i],
-        null,
-        components[i].name
-      )!;
-
-      superTree = this._mergeTree(superTree, target);
-    }
+    superTree = this.updateSquashNodes(superTree, components);
 
     return superTree;
   }
@@ -147,6 +137,18 @@ class CreateSuperTree {
     );
 
     return node;
+  }
+
+  private updateSquashNodes(
+    superTree: SuperTreeNode,
+    components: RenderTree[]
+  ) {
+    //components를 순회하면서 어떤 노드 다음에 어떤 노드가 오는지 방향 그래프로 저장
+    //방향 그래프를 기반으로 위상 정렬을 하고 그 결과를 superTree의 children에 적용
+    //그 후 다시 비슷한 노드를 합치는 작업을 한다.
+
+    //일단 모든 노드 형태를 트리형태로 그려보기
+    return superTree;
   }
 }
 

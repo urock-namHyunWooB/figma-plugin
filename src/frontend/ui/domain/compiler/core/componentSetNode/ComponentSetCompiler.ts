@@ -44,7 +44,8 @@ class ComponentSetCompiler {
       refinedProps
     );
 
-    console.log("finalAstTree", this.CreateFinalAstTree.finalAstTree);
+    debug.tree(this.CreateFinalAstTree.finalAstTree);
+    // console.log("finalAstTree", this.CreateFinalAstTree.finalAstTree);
   }
 
   private extractPropsDef(

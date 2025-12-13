@@ -435,6 +435,12 @@ describe("ComponentSetCompiler", () => {
           expect(Array.isArray(node.style.dynamic)).toBe(true);
         });
       });
+
+      test("Size가 Medium이면 fontSize는 14px이고 line-height는 22px이여야 한다.", () => {});
+
+      test("Size가 Small이면 fontSize는 12px이고 line-height는 18px이여야 한다.", () => {});
+
+      test("style dynamic에서 condition이 Size Small 조건 일때만 font-size: 12px, line-height: 18px 이여야 한다.", () => {});
     });
 
     describe("tadaButton - variant에 따른 dynamic style", () => {

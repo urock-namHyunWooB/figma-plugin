@@ -106,8 +106,9 @@ class _TempAstTree {
    */
   private updateStyle(pivotTree: TempAstTree, targetTrees: StyleTree[]) {
     /**
-     * targetTree 트리 순회하면서 pivotTree에 매칭(mergedNode) 되는 노드를 찾아서
+     * targetTree 트리 순회하면서 pivotTree에 mergedNode 된 노드들을 분석해서
      * 해당 노드에 스타일 diff 결괏값을 할당한다.
+     * (어떤 variant 일때 어떤 스타일이 바뀌는지 정보를 알기 위해서)
      */
     targetTrees.forEach((targetTree) => {
       const pivotVariantName = pivotTree.name;
