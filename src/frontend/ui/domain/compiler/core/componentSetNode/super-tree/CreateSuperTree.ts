@@ -361,7 +361,6 @@ class CreateSuperTree {
    * @private
    */
   private updateSquashFrameNode(superTree: SuperTreeNode) {
-    //TODO
     return superTree;
   }
 }

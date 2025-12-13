@@ -59,25 +59,6 @@ class SpecManager {
     return "div";
   }
 
-  /**
-   * 단일 SceneNode 기준 스펙과 구조 정보 반환
-   */
-
-  //TODO NodeSpec return 타입으로 정의해야함.
-  public async getNodeSpec(node: SceneNode): Promise<{
-    spec: any;
-    componentStructure: ComponentStructureData | null;
-    layoutTree: LayoutTreeNode | null;
-  }> {
-    const spec = await this.buildNodeSpecTree(node);
-
-    return {
-      spec,
-      componentStructure,
-      layoutTree,
-    };
-  }
-
   public async getComponentSetNodeSpec(
     nodeData: FigmaNodeData
   ): Promise<ComponentSetNodeSpec> {
@@ -291,7 +272,6 @@ class SpecManager {
 
   /**
    * 구조 배열에서 자식 개수가 가장 많은 구조를 찾기
-   * TODO 노드가 visible false 되어 있으면 없는 자식처리
    */
   private findStructureWithMostChildren(
     componentStructures: Array<{

@@ -83,7 +83,6 @@ class _FinalAstTree {
    * @private
    */
   private updateStyle(astTree: FinalAstTree) {
-    //TODO
     return astTree;
   }
 

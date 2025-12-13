@@ -194,7 +194,6 @@ class _TempAstTree {
         return { type: "prop", name: boolPropName };
       }
     }
-    //////
 
     // 3. mergedNode로 추론 (일부 variant에서만 존재하는 경우)
     const condition = this._inferConditionFromMergedNode(targetNode);

@@ -10,7 +10,6 @@ import type {
 import { SceneNode } from "@figma/plugin-typings/plugin-api-standalone";
 import { FigmaNodeData } from "@frontend/ui/domain/transpiler/types/figma-api";
 
-//TODO COMPONENT_SET node 타입이면 variantPatterns가 있음.
 export interface NodeSpec {
   metadata: {
     name: string;
