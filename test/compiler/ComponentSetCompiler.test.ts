@@ -252,6 +252,26 @@ describe("ComponentSetCompiler", () => {
         expect(textNodes).toBe(1);
       });
 
+      test("Text 타입은 1개이고 부모가 Frame 노드이다.", () => {
+        const textNodes = collectNodesByType(
+          createFinalAstTree.finalAstTree,
+          "TEXT"
+        );
+        expect(textNodes.length).toBe(1);
+
+        // TEXT 노드의 부모가 FRAME인지 확인
+        const frameNodes = collectNodesByType(
+          createFinalAstTree.finalAstTree,
+          "FRAME"
+        );
+
+        const frameWithTextChild = frameNodes.find((frame) =>
+          frame.children.some((child) => child?.type === "TEXT")
+        );
+
+        expect(frameWithTextChild).toBeDefined();
+      });
+
       test("ICON -TEXT - ICON 순서", () => {});
 
       test("taptapButton_sample.json의 children중에 ICON 타입은 두개여야 한다.", () => {

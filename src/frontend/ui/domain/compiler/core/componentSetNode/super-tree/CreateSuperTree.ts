@@ -4,7 +4,11 @@ import NodeMatcher from "@compiler/core/NodeMatcher";
 import { getNodesAtDepth, traverseBFS } from "@compiler/utils/traverse";
 import debug from "@compiler/manager/DebuggingManager";
 import _SortNodes from "@compiler/core/componentSetNode/super-tree/_SortNodes";
-import { UnionFind } from "../../../manager/HelperManager";
+import {
+  UnionFind,
+  buildOrderGraphFromComponents,
+  determineSquashStrategy,
+} from "../../../manager/HelperManager";
 
 //TODO 구조에 따라서 슈퍼트리, 슬롯 + 레이아웃 전략을 한다.
 class CreateSuperTree {
@@ -40,6 +44,7 @@ class CreateSuperTree {
    */
   private createSuperTree() {
     const components = this.renderTree.children;
+    // 1. 원본 components로 방향 그래프 구축
 
     let superTree = components
       .map((comp) => this._convertSuperTreeNode(comp, null, comp.name)!)
@@ -193,22 +198,102 @@ class CreateSuperTree {
       groups.get(root)!.push(node);
     }
 
-    // 4. 결과 확인 (2개 이상인 그룹만 = 스쿼시 대상)
-    for (const [rootId, groupNodes] of groups) {
-      if (groupNodes.length > 1) {
-        console.log(
-          `스쿼시 그룹 [${groupNodes[0].type}]:`,
-          groupNodes.map((n) => n.name).join(", ")
+    // 4. 원본 components로 방향 그래프 구축 (한 번만 호출)
+    const { graphs } = buildOrderGraphFromComponents(components);
+
+    // 5. 스쿼시 대상 그룹들 처리 (2개 이상인 그룹만)
+    for (const [_, groupNodes] of groups) {
+      if (groupNodes.length <= 1) continue;
+
+      // 대표 노드 선정 (첫 번째 노드를 기준으로)
+      let representative = groupNodes[0];
+
+      // 나머지 노드들을 대표에 합침
+      for (let i = 1; i < groupNodes.length; i++) {
+        const nodeToMerge = groupNodes[i];
+
+        // 스쿼시 방향 결정
+        const result = determineSquashStrategy(
+          graphs,
+          {
+            id: representative.id,
+            parentId: representative.parent?.id || "",
+          },
+          {
+            id: nodeToMerge.id,
+            parentId: nodeToMerge.parent?.id || "",
+          }
         );
-        console.log(groupNodes);
+
+        if (!result.canSquash) {
+          console.log("스쿼시 불가:", nodeToMerge.name, result.reason);
+          continue;
+        }
+
+        // 방향에 따라 스쿼시 수행
+        let nodeToKeep: SuperTreeNode;
+        let nodeToRemove: SuperTreeNode;
+
+        switch (result.direction) {
+          case "A_TO_B": // representative를 nodeToMerge로 합침
+            nodeToKeep = nodeToMerge;
+            nodeToRemove = representative;
+            representative = nodeToMerge; // 대표 변경
+            break;
+          case "B_TO_A": // nodeToMerge를 representative로 합침
+          case "BOTH_OK":
+          default:
+            nodeToKeep = representative;
+            nodeToRemove = nodeToMerge;
+            break;
+        }
+
+        // 실제 스쿼시 수행
+        this.squashNode(nodeToRemove, nodeToKeep);
       }
     }
 
-    /**
-     * 스쿼시 정책은 A,B에서 A를 B에 혹은 B를 A에 합칠때 위상 정렬이 깨지지 않는 쪽으로 합치면 된다.
-     */
-
     return superTree;
+  }
+
+  /**
+   * nodeToRemove를 nodeToKeep에 합칩니다.
+   * @param nodeToRemove - 제거될 노드 (합쳐지는 쪽)
+   * @param nodeToKeep - 유지될 노드 (합치는 쪽)
+   */
+  private squashNode(nodeToRemove: SuperTreeNode, nodeToKeep: SuperTreeNode) {
+    // 1. mergedNode 합치기
+    nodeToKeep.mergedNode.push(...nodeToRemove.mergedNode);
+
+    // 2. 부모의 children에서 제거
+    if (nodeToRemove.parent) {
+      const parent = nodeToRemove.parent;
+      const index = parent.children.indexOf(nodeToRemove);
+      if (index !== -1) {
+        parent.children.splice(index, 1);
+      }
+    }
+
+    // 3. nodeToRemove의 children을 nodeToKeep으로 병합
+    // (동일한 자식이 있으면 재귀적으로 스쿼시, 없으면 추가)
+    for (const childToMove of nodeToRemove.children) {
+      if (!childToMove) continue;
+
+      // nodeToKeep의 children 중 동일한 노드 찾기
+      const matchingChild = nodeToKeep.children.find(
+        (keepChild) =>
+          keepChild && this.matcher.isSameNode(childToMove, keepChild)
+      );
+
+      if (matchingChild) {
+        // 동일한 자식이 있으면 재귀적으로 스쿼시
+        this.squashNode(childToMove, matchingChild);
+      } else {
+        // 동일한 자식이 없으면 nodeToKeep의 children에 추가
+        childToMove.parent = nodeToKeep;
+        nodeToKeep.children.push(childToMove);
+      }
+    }
   }
 
   /**
