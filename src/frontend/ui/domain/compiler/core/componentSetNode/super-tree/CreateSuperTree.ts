@@ -139,13 +139,32 @@ class CreateSuperTree {
     return node;
   }
 
+  /**
+   * - node가 frame이라면 상위 요소 오토레이아웃과 frame 요소 오토레이아웃이 같다면 Frame을 상위 요소에 스쿼시
+   *
+   * - components를 순회하면서 어떤 노드 다음에 어떤 노드가 오는지 방향 그래프로 저장
+   * 방향 그래프를 기반으로 위상 정렬을 하고 그 결과를 superTree의 children에 적용
+   * 그 후 다시 비슷한 노드를 합치는 작업을 한다.
+   *
+   * 2. 모든 노드를 flat화 해서 겹치는 영역 노드끼리 스쿼시
+   */
   private updateSquashNodes(
     superTree: SuperTreeNode,
     components: RenderTree[]
   ) {
-    //components를 순회하면서 어떤 노드 다음에 어떤 노드가 오는지 방향 그래프로 저장
-    //방향 그래프를 기반으로 위상 정렬을 하고 그 결과를 superTree의 children에 적용
-    //그 후 다시 비슷한 노드를 합치는 작업을 한다.
+    const temp = [];
+    traverseBFS(superTree, (node, meta) => {
+      if (node.type === "TEXT") {
+        temp.push(node);
+      }
+    });
+
+    // debugger;
+    // console.log(this.matcher.getIou(temp[0], temp[1]));
+
+    // components.forEach((component) => {
+    //   console.log(component);
+    // });
 
     //일단 모든 노드 형태를 트리형태로 그려보기
     return superTree;

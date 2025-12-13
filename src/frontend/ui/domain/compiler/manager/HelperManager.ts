@@ -80,6 +80,15 @@ class HelperManager {
     };
     return clone(tree);
   }
+
+  public getRootComponentNode(node: SceneNode) {
+    while (node) {
+      if (node.type === "COMPONENT") return node;
+      node = node.parent as SceneNode;
+    }
+
+    return node;
+  }
 }
 
 const helper = new HelperManager();
