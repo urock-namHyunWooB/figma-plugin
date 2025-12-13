@@ -11,13 +11,14 @@ export function TestComp() {
     useState<React.ComponentType<any> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // @ts-ignore
   const codeRef = useRef();
 
   useEffect(() => {
     async function compile() {
       if (codeRef.current) return;
       try {
-        codeRef.current = new FigmaCompiler(tadaButtonSample);
+        codeRef.current = new FigmaCompiler(taptapButtonSample);
         return;
         setTsxCode(codeRef.current);
 
