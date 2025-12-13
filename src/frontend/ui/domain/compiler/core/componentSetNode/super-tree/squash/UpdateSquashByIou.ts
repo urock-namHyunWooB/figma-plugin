@@ -18,7 +18,21 @@ class UpdateSquashByIou {
   }
 
   public updateSquashByIou(superTree: SuperTreeNode, components: RenderTree[]) {
-    return superTree;
+    /**
+     * TODO 타입만 같다고 해서 스쿼시 하면 안된다.
+     * z-index가 동일하거나, 스쿼시해도 순서를 100% 보존할 수 있을 것
+     *
+     * componentKey(or componentId) + variantProps(있다면) + type 뿐 아니라
+     * 스타일 해시(fill/stroke/effect/opacity/blend/clip 등 핵심 렌더 속성)까지 완전 동일
+     *
+     * 겹침 판정은 단순 교집합이 아니라 IoU(Intersection over Union) 같은 비율 기준으로
+     * 예: IoU >= 0.95 처럼 “거의 동일 위치/크기”일 때만 (수치는 프로젝트에 맞게)
+     *
+     * Text는 별도 취급(폰트/라인하이트/정렬/오토리사이즈/베이스라인 때문에 합치면 잘 깨짐)
+     *
+     * 마스크/클립/블렌드가 조금이라도 끼면 스쿼시 금지
+     */
+
     const { nodesByType, nodeMap } = this.groupNodesByType(superTree);
 
     const squashGroups = this.findSquashGroups(nodesByType, nodeMap);
