@@ -159,12 +159,11 @@ class CreateSuperTree {
       }
     });
 
-    // debugger;
-    // console.log(this.matcher.getIou(temp[0], temp[1]));
+    const a = this.matcher.getIou2(temp[0], temp[1]);
 
-    // components.forEach((component) => {
-    //   console.log(component);
-    // });
+    components.forEach((component) => {
+      console.log(component);
+    });
 
     //일단 모든 노드 형태를 트리형태로 그려보기
     return superTree;

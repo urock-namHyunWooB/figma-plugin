@@ -1,6 +1,8 @@
 import { AbsoluteBoundingBox, SuperTreeNode } from "@compiler";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
-import debug from "@compiler/manager/DebuggingManager";
+import helper from "../manager/HelperManager";
+
+type Rect = { x1: number; y1: number; x2: number; y2: number };
 
 class NodeMatcher {
   private specDataManager: SpecDataManager;
@@ -19,7 +21,6 @@ class NodeMatcher {
    * @param node2
    */
   public isSameNode(node1: SuperTreeNode, node2: SuperTreeNode) {
-    // debug.debugger([node2.id, "15:45"]);
     if (node1.type !== node2.type) return false;
     if (node1.id === node2.id) {
       console.warn("Something Wrong! Same node id: ", node1.id, node2.id);
@@ -185,6 +186,11 @@ class NodeMatcher {
     };
   }
 
+  /**
+   * 같은 부모에서 겹치는 비율 확인
+   * @param node1
+   * @param node2
+   */
   public getIou(node1: SuperTreeNode, node2: SuperTreeNode) {
     if (!node1.parent || !node2.parent) return null;
 
@@ -225,6 +231,120 @@ class NodeMatcher {
     }
 
     return null;
+  }
+
+  /**
+   * Root Component 기준으로 겹치는지 비율 확인
+   * @param node1
+   * @param node2
+   */
+  public getIou2(node1: SuperTreeNode, node2: SuperTreeNode) {
+    if (!node1.parent || !node2.parent) return null;
+
+    const node1Data = this.specDataManager.getSpecById(node1.id);
+    const node2Data = this.specDataManager.getSpecById(node2.id);
+
+    const parent1Data = this.specDataManager.getSpecById(
+      helper.getRootComponentNode(node1).id
+    );
+    const parent2Data = this.specDataManager.getSpecById(
+      helper.getRootComponentNode(node2).id
+    );
+
+    /**
+     * 부모 두개를 노멀라이즈.
+     * - 부모가 매우 다를경우 (오토레이아웃 다름, 타입 다름) 이면 null 반환
+     */
+
+    if (parent1Data.type !== parent2Data.type) return null;
+    if (parent1Data.type === "FRAME" && parent2Data.type === "FRAME") {
+      if (parent1Data.layoutMode !== parent2Data.layoutMode) return null;
+    }
+
+    const node1BoundingBox = node1Data.absoluteBoundingBox;
+    const parent1BoundingBox = parent1Data.absoluteBoundingBox;
+
+    const node2BoundingBox = node2Data.absoluteBoundingBox;
+    const parent2BoundingBox = parent2Data.absoluteBoundingBox;
+
+    if (
+      !node1BoundingBox ||
+      !parent1BoundingBox ||
+      !node2BoundingBox ||
+      !parent2BoundingBox
+    )
+      return null;
+
+    const node1Rect: Rect = {
+      x1:
+        (node1BoundingBox.x - parent1BoundingBox.x) / parent1BoundingBox.width,
+      y1:
+        (node1BoundingBox.y - parent1BoundingBox.y) / parent1BoundingBox.height,
+      x2:
+        (node1BoundingBox.x + node1BoundingBox.width - parent1BoundingBox.x) /
+        parent1BoundingBox.width,
+      y2:
+        (node1BoundingBox.y + node1BoundingBox.height - parent1BoundingBox.y) /
+        parent1BoundingBox.height,
+    };
+
+    const node2Rect: Rect = {
+      x1:
+        (node2BoundingBox.x - parent2BoundingBox.x) / parent2BoundingBox.width,
+      y1:
+        (node2BoundingBox.y - parent2BoundingBox.y) / parent2BoundingBox.height,
+      x2:
+        (node2BoundingBox.x + node2BoundingBox.width - parent2BoundingBox.x) /
+        parent2BoundingBox.width,
+      y2:
+        (node2BoundingBox.y + node2BoundingBox.height - parent2BoundingBox.y) /
+        parent2BoundingBox.height,
+    };
+
+    const iou = this._iou(node1Rect, node2Rect);
+
+    return iou;
+  }
+
+  private _iou(a: Rect, b: Rect) {
+    const ix1 = Math.max(a.x1, b.x1);
+    const iy1 = Math.max(a.y1, b.y1);
+    const ix2 = Math.min(a.x2, b.x2);
+    const iy2 = Math.min(a.y2, b.y2);
+    const iw = Math.max(0, ix2 - ix1);
+    const ih = Math.max(0, iy2 - iy1);
+    const inter = iw * ih;
+
+    const areaA = Math.max(0, a.x2 - a.x1) * Math.max(0, a.y2 - a.y1);
+    const areaB = Math.max(0, b.x2 - b.x1) * Math.max(0, b.y2 - b.y1);
+    const uni = areaA + areaB - inter;
+    return uni <= 0 ? 0 : inter / uni;
+  }
+
+  private getBoundingBoxFromRootComponent(node: SceneNode) {
+    if (!node.parent)
+      return {
+        x: 0,
+        y: 0,
+      };
+
+    const rootBoundingBox = helper.getRootComponentNode(node);
+
+    if (
+      !rootBoundingBox ||
+      !node.absoluteBoundingBox ||
+      !rootBoundingBox.absoluteBoundingBox
+    )
+      return null;
+
+    return {
+      x: Math.abs(
+        rootBoundingBox.absoluteBoundingBox.x - node.absoluteBoundingBox.x
+      ),
+      y: Math.abs(
+        rootBoundingBox.absoluteBoundingBox.y - node.absoluteBoundingBox.y
+      ),
+    };
   }
 }
 

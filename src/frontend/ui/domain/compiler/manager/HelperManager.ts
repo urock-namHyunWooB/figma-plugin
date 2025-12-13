@@ -1,4 +1,4 @@
-import { ConditionNode } from "@compiler";
+import { ConditionNode, SuperTreeNode } from "@compiler";
 import { BinaryOperator, TempAstTree } from "@compiler/types/customType";
 
 class HelperManager {
@@ -81,10 +81,10 @@ class HelperManager {
     return clone(tree);
   }
 
-  public getRootComponentNode(node: SceneNode) {
+  public getRootComponentNode(node: SuperTreeNode) {
     while (node) {
       if (node.type === "COMPONENT") return node;
-      node = node.parent as SceneNode;
+      node = node.parent as SuperTreeNode;
     }
 
     return node;
