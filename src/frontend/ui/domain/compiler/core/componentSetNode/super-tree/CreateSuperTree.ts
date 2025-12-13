@@ -204,7 +204,9 @@ class CreateSuperTree {
       }
     }
 
-    //TODO 스쿼시 로직 짜야함.
+    /**
+     * 스쿼시 정책은 A,B에서 A를 B에 혹은 B를 A에 합칠때 위상 정렬이 깨지지 않는 쪽으로 합치면 된다.
+     */
 
     return superTree;
   }

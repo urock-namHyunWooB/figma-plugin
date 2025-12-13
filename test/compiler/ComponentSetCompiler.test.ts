@@ -1,16 +1,16 @@
 import { describe, expect } from "vitest";
-import taptapButtonSampleMockData from "../fixtures/button/taptapButton_sample.json";
 import tadaButtonMockData from "../fixtures/button/tadaButton.json";
+import taptapButtonSampleMockData from "../fixtures/button/taptapButton_sample.json";
 
 import airtableButtonMockData from "../fixtures/button/airtableButton.json";
 
-import NodeMatcher from "@compiler/core/NodeMatcher";
-import SpecDataManager from "@compiler/manager/SpecDataManager";
 import { FinalAstTree, SuperTreeNode, TempAstTree } from "@compiler";
+import NodeMatcher from "@compiler/core/NodeMatcher";
+import RefineProps from "@compiler/core/componentSetNode/RefineProps";
 import CreateAstTree from "@compiler/core/componentSetNode/ast-tree/CreateAstTree";
 import CreateSuperTree from "@compiler/core/componentSetNode/super-tree/CreateSuperTree";
-import RefineProps from "@compiler/core/componentSetNode/RefineProps";
-import { traverseBFS, findNodeBFS } from "@compiler/utils/traverse";
+import SpecDataManager from "@compiler/manager/SpecDataManager";
+import { traverseBFS } from "@compiler/utils/traverse";
 
 function countNodesByType(
   node: SuperTreeNode | FinalAstTree,
@@ -252,6 +252,8 @@ describe("ComponentSetCompiler", () => {
         expect(textNodes).toBe(1);
       });
 
+      test("ICON -TEXT - ICON 순서", () => {});
+
       test("taptapButton_sample.json의 children중에 ICON 타입은 두개여야 한다.", () => {
         const iconNodes = countNodesByType(
           createFinalAstTree.finalAstTree,
@@ -436,11 +438,98 @@ describe("ComponentSetCompiler", () => {
         });
       });
 
-      test("Size가 Medium이면 fontSize는 14px이고 line-height는 22px이여야 한다.", () => {});
+      test("Size가 Medium이면 fontSize는 14px이고 line-height는 22px이여야 한다.", () => {
+        const textNode = (collectNodesByType(
+          createFinalAstTree.tempAstTree,
+          "TEXT"
+        )[0] as TempAstTree | undefined)!;
 
-      test("Size가 Small이면 fontSize는 12px이고 line-height는 18px이여야 한다.", () => {});
+        const baseStyle: any = textNode.style.base;
+        expect(baseStyle.fontSize).toBe("14px");
+        expect(baseStyle.lineHeight ?? baseStyle["line-height"]).toBe("22px");
+      });
 
-      test("style dynamic에서 condition이 Size Small 조건 일때만 font-size: 12px, line-height: 18px 이여야 한다.", () => {});
+      test("Size가 Small이면 fontSize는 12px이고 line-height는 18px이여야 한다.", () => {
+        const textNodes = collectNodesByType(
+          createFinalAstTree.tempAstTree,
+          "TEXT"
+        ) as TempAstTree[];
+
+        const containsSizeSmall = (cond: any): boolean => {
+          if (!cond) return false;
+          // BinaryExpression with props.Size === 'Small'
+          if (cond.type === "BinaryExpression") {
+            const left = (cond as any).left;
+            const right = (cond as any).right;
+            const isSizeMember =
+              left?.type === "MemberExpression" &&
+              left?.property?.name === "Size";
+            const isSmall =
+              right?.type === "Literal" && right?.value === "Small";
+            return !!(isSizeMember && isSmall);
+          }
+          // Combined conditions (AND/OR) — check recursively using operator
+          if (
+            (cond as any).operator === "&&" ||
+            (cond as any).operator === "||"
+          ) {
+            return (
+              containsSizeSmall((cond as any).left) ||
+              containsSizeSmall((cond as any).right)
+            );
+          }
+          return false;
+        };
+
+        const hasSmallStyle = textNodes.some((node) =>
+          node.style.dynamic.some((d) => {
+            const style: any = d.style;
+            return (
+              containsSizeSmall(d.condition) &&
+              style?.fontSize === "12px" &&
+              (style.lineHeight === "18px" || style["line-height"] === "18px")
+            );
+          })
+        );
+
+        expect(hasSmallStyle).toBe(true);
+      });
+
+      test("style dynamic에서 condition이 Size Small 조건이 하나여야만 하고 해당 style은 font-size: 12px, line-height: 18px 이여야 한다.", () => {
+        const textNodes = collectNodesByType(
+          createFinalAstTree.tempAstTree,
+          "TEXT"
+        ) as TempAstTree[];
+
+        // Size Small 조건만 있는지 확인 (다른 조건과 결합되지 않은 순수한 Size === 'Small' 조건)
+        const isSizeSmallOnly = (cond: any): boolean => {
+          if (!cond) return false;
+          if (cond.type === "BinaryExpression") {
+            const left = (cond as any).left;
+            const right = (cond as any).right;
+            const isSizeMember =
+              left?.type === "MemberExpression" &&
+              left?.property?.name === "Size";
+            const isSmall =
+              right?.type === "Literal" && right?.value === "Small";
+            return !!(isSizeMember && isSmall);
+          }
+          return false;
+        };
+
+        // 모든 TEXT 노드에서 Size Small 조건만 가진 dynamic style 수집
+        const sizeSmallDynamicStyles = textNodes.flatMap((node) =>
+          node.style.dynamic.filter((d) => isSizeSmallOnly(d.condition))
+        );
+
+        // Size Small 조건이 정확히 하나여야 함
+        expect(sizeSmallDynamicStyles.length).toBe(1);
+
+        // 해당 style이 font-size: 12px, line-height: 18px이어야 함
+        const style: any = sizeSmallDynamicStyles[0].style;
+        expect(style.fontSize ?? style["font-size"]).toBe("12px");
+        expect(style.lineHeight ?? style["line-height"]).toBe("18px");
+      });
     });
 
     describe("tadaButton - variant에 따른 dynamic style", () => {
