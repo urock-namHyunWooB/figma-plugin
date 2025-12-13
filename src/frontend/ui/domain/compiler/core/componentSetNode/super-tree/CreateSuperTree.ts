@@ -147,12 +147,9 @@ class CreateSuperTree {
   }
 
   /**
-   *
-   * - components를 순회하면서 어떤 노드 다음에 어떤 노드가 오는지 방향 그래프로 저장
-   * 방향 그래프를 기반으로 위상 정렬을 하고 그 결과를 superTree의 children에 적용
-   * 그 후 다시 비슷한 노드를 합치는 작업을 한다.
-   *
-   * - 모든 노드를 부모 기준으로 같은 타입끼리 겹치면 스쿼시
+   * 모든 노드를 부모 기준으로 같은 타입끼리 겹치면 스쿼시
+   * - 스쿼시 기준은 스쿼시 해도 위상정렬이 깨지지 않는 방향
+   * - 순환그래프면 형제노드가 더 많거나 depth가 더 높은쪽으로
    */
   private updateSquashByIou(
     superTree: SuperTreeNode,
