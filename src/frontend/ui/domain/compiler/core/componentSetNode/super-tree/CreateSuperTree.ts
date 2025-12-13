@@ -51,6 +51,7 @@ class CreateSuperTree {
       .reduce((superTree, target) => this._mergeTree(superTree, target));
 
     superTree = this.updateSquashByIou(superTree, components);
+    debugger;
     superTree = this.updateSquashFrameNode(superTree);
 
     return superTree;
@@ -201,55 +202,127 @@ class CreateSuperTree {
     // 4. 원본 components로 방향 그래프 구축 (한 번만 호출)
     const { graphs } = buildOrderGraphFromComponents(components);
 
+    // ========== DEBUG 1: 스쿼시 대상 그룹들 확인 ==========
+    console.log("===== 스쿼시 대상 그룹들 =====");
+    for (const [rootId, groupNodes] of groups) {
+      if (groupNodes.length > 1) {
+        console.log(
+          `그룹 [${rootId}]:`,
+          groupNodes.map((n) => ({
+            id: n.id,
+            type: n.type,
+            name: n.name,
+            parentId: n.parent?.id,
+            parentName: n.parent?.name,
+          }))
+        );
+      }
+    }
+
+    // ========== DEBUG 2: 방향 그래프 확인 ==========
+    console.log("===== 방향 그래프 =====");
+    for (const [parentId, graph] of graphs) {
+      console.log(`부모 ${parentId}:`, graph.getEdges());
+    }
+
     // 5. 스쿼시 대상 그룹들 처리 (2개 이상인 그룹만)
     for (const [_, groupNodes] of groups) {
       if (groupNodes.length <= 1) continue;
 
-      // 대표 노드 선정 (첫 번째 노드를 기준으로)
-      let representative = groupNodes[0];
+      // 모든 노드 쌍에 대해 스쿼시 가능 여부 확인
+      const squashedNodes = new Set<string>(); // 이미 스쿼시된(제거된) 노드들
 
-      // 나머지 노드들을 대표에 합침
-      for (let i = 1; i < groupNodes.length; i++) {
-        const nodeToMerge = groupNodes[i];
+      for (let i = 0; i < groupNodes.length; i++) {
+        for (let j = i + 1; j < groupNodes.length; j++) {
+          const nodeA = groupNodes[i];
+          const nodeB = groupNodes[j];
 
-        // 스쿼시 방향 결정
-        const result = determineSquashStrategy(
-          graphs,
-          {
-            id: representative.id,
-            parentId: representative.parent?.id || "",
-          },
-          {
-            id: nodeToMerge.id,
-            parentId: nodeToMerge.parent?.id || "",
+          // 이미 스쿼시된 노드는 스킵
+          if (squashedNodes.has(nodeA.id) || squashedNodes.has(nodeB.id)) {
+            continue;
           }
-        );
 
-        if (!result.canSquash) {
-          console.log("스쿼시 불가:", nodeToMerge.name, result.reason);
-          continue;
+          // 스쿼시 방향 결정
+          const result = determineSquashStrategy(
+            graphs,
+            { id: nodeA.id, parentId: nodeA.parent?.id || "" },
+            { id: nodeB.id, parentId: nodeB.parent?.id || "" }
+          );
+
+          // ========== DEBUG 3: 스쿼시 방향 결정 결과 ==========
+          console.log("===== 스쿼시 방향 결정 =====");
+          console.log(
+            `nodeA: ${nodeA.id} (${nodeA.type}, parent: ${nodeA.parent?.id})`
+          );
+          console.log(
+            `nodeB: ${nodeB.id} (${nodeB.type}, parent: ${nodeB.parent?.id})`
+          );
+          console.log("결과:", result);
+
+          if (!result.canSquash) {
+            console.log("→ 스쿼시 불가, skip");
+            continue;
+          }
+
+          // 방향에 따라 스쿼시 수행
+          let nodeToKeep: SuperTreeNode;
+          let nodeToRemove: SuperTreeNode;
+
+          switch (result.direction) {
+            case "A_TO_B": // nodeA를 nodeB로 합침
+              nodeToKeep = nodeB;
+              nodeToRemove = nodeA;
+              break;
+            case "B_TO_A": // nodeB를 nodeA로 합침
+              nodeToKeep = nodeA;
+              nodeToRemove = nodeB;
+              break;
+            case "BOTH_OK":
+            default: {
+              // 1. depth가 더 깊은 쪽을 유지 (더 구체적인 위치)
+              const getDepth = (node: SuperTreeNode): number => {
+                let depth = 0;
+                let current = node.parent;
+                while (current) {
+                  depth++;
+                  current = current.parent;
+                }
+                return depth;
+              };
+              const depthA = getDepth(nodeA);
+              const depthB = getDepth(nodeB);
+
+              if (depthB > depthA) {
+                nodeToKeep = nodeB;
+                nodeToRemove = nodeA;
+              } else if (depthA > depthB) {
+                nodeToKeep = nodeA;
+                nodeToRemove = nodeB;
+              } else {
+                // depth가 같으면 sibling이 많은 쪽을 유지
+                const siblingCountA = nodeA.parent?.children.length || 0;
+                const siblingCountB = nodeB.parent?.children.length || 0;
+                if (siblingCountB > siblingCountA) {
+                  nodeToKeep = nodeB;
+                  nodeToRemove = nodeA;
+                } else {
+                  nodeToKeep = nodeA;
+                  nodeToRemove = nodeB;
+                }
+              }
+              break;
+            }
+          }
+
+          // ========== DEBUG 4: 스쿼시 실행 ==========
+          console.log(
+            `→ 스쿼시 실행: ${nodeToRemove.id}를 ${nodeToKeep.id}로 합침`
+          );
+
+          // 실제 스쿼시 수행
+          this.squashNode(nodeToRemove, nodeToKeep);
+          squashedNodes.add(nodeToRemove.id);
         }
-
-        // 방향에 따라 스쿼시 수행
-        let nodeToKeep: SuperTreeNode;
-        let nodeToRemove: SuperTreeNode;
-
-        switch (result.direction) {
-          case "A_TO_B": // representative를 nodeToMerge로 합침
-            nodeToKeep = nodeToMerge;
-            nodeToRemove = representative;
-            representative = nodeToMerge; // 대표 변경
-            break;
-          case "B_TO_A": // nodeToMerge를 representative로 합침
-          case "BOTH_OK":
-          default:
-            nodeToKeep = representative;
-            nodeToRemove = nodeToMerge;
-            break;
-        }
-
-        // 실제 스쿼시 수행
-        this.squashNode(nodeToRemove, nodeToKeep);
       }
     }
 
