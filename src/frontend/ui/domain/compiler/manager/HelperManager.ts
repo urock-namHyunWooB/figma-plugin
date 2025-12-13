@@ -91,6 +91,27 @@ class HelperManager {
   }
 }
 
+// Union-Find 헬퍼
+export class UnionFind {
+  private parent: Map<string, string> = new Map();
+
+  find(id: string): string {
+    if (!this.parent.has(id)) this.parent.set(id, id);
+    if (this.parent.get(id) !== id) {
+      this.parent.set(id, this.find(this.parent.get(id)!)); // 경로 압축
+    }
+    return this.parent.get(id)!;
+  }
+
+  union(id1: string, id2: string) {
+    const root1 = this.find(id1);
+    const root2 = this.find(id2);
+    if (root1 !== root2) {
+      this.parent.set(root2, root1);
+    }
+  }
+}
+
 const helper = new HelperManager();
 
 export default helper;
