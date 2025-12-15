@@ -1,5 +1,4 @@
 import { RenderTree, SuperTreeNode } from "@compiler";
-import { DirectedGraph, UnionFind } from "@compiler/manager/HelperManager";
 import { traverseBFS } from "@compiler/utils/traverse";
 import NodeMatcher from "../../../NodeMatcher";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
@@ -19,7 +18,8 @@ import SpecDataManager from "@compiler/manager/SpecDataManager";
  */
 
 class UpdateSquashByIou {
-  IOU_THRESHOLD = 0.5;
+  private static readonly INSTANCE_ID_PREFIX = "I";
+  private static readonly IOU_THRESHOLD = 0.5;
 
   private matcher: NodeMatcher;
   private specDataManager: SpecDataManager;
@@ -29,77 +29,97 @@ class UpdateSquashByIou {
     this.specDataManager = specDataManager;
   }
 
-  public updateSquashByIou(superTree: SuperTreeNode, components: RenderTree[]) {
+  public updateSquashByIou(
+    superTree: SuperTreeNode,
+    _components: RenderTree[]
+  ) {
     const { nodesByType } = this.groupNodesByType(superTree);
     const squashGroups = this.findSquashGroups(nodesByType);
 
-    const filteredSquashGroups = [];
-
-    for (const group of squashGroups) {
-      const a = this.specDataManager.getSpecById(group[0].id);
-      const b = this.specDataManager.getSpecById(group[1].id);
-
-      if (("isMask" in a && a.isMask) || ("isMask" in b && b.isMask)) {
-        continue;
-      }
-
-      /**
-       * Id가 I로 시작하면 해당 노드는 Instance 자식요소임
-       * 같은 인스턴스 자식요소 일때만 스쿼시 가능
-       */
-      if (a.id[0] === "I" || b.id[0] === "I") {
-        if (a.id[0] !== b.id[0]) {
-          continue;
-        }
-      }
-
-      /**
-       * 부모 요소중 mask가 있는지?
-       * Component node까지 부모 거슬러 올라가서 isMask가 있는지?
-       */
-      let isValid = true;
-      let parentA = group[0].parent;
-      let parentB = group[1].parent;
-
-      while (parentA || parentB) {
-        // isMask 체크 먼저 (COMPONENT의 isMask도 확인하기 위해)
-        if (
-          parentA &&
-          "isMask" in parentA.metaData.spec &&
-          parentA.metaData.spec.isMask
-        ) {
-          isValid = false;
-          break;
-        }
-
-        if (
-          parentB &&
-          "isMask" in parentB.metaData.spec &&
-          parentB.metaData.spec.isMask
-        ) {
-          isValid = false;
-          break;
-        }
-
-        if (parentA && parentA.type === "COMPONENT") {
-          parentA = null;
-        }
-        if (parentB && parentB.type === "COMPONENT") {
-          parentB = null;
-        }
-
-        parentA = parentA?.parent ?? null;
-        parentB = parentB?.parent ?? null;
-      }
-
-      if (isValid === false) continue;
-
-      filteredSquashGroups.push(group);
-    }
+    const filteredSquashGroups = squashGroups.filter((group) =>
+      this.isValidSquashGroup(group)
+    );
 
     console.log(filteredSquashGroups);
-
     return superTree;
+  }
+
+  /** 스쿼시 그룹이 유효한지 검증 */
+  private isValidSquashGroup(group: SuperTreeNode[]): boolean {
+    const [nodeA, nodeB] = group;
+    const specA = this.specDataManager.getSpecById(nodeA.id);
+    const specB = this.specDataManager.getSpecById(nodeB.id);
+
+    if (this.isMaskedSpec(specA) || this.isMaskedSpec(specB)) {
+      return false;
+    }
+
+    if (!this.isInstanceChildren(specA, specB)) {
+      return false;
+    }
+
+    if (this.hasParentWithMask(nodeA) || this.hasParentWithMask(nodeB)) {
+      return false;
+    }
+
+    if (this.isAncestorDescendant(nodeA, nodeB)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /** spec이 마스크인지 확인 */
+  private isMaskedSpec(spec: unknown): boolean {
+    return (
+      typeof spec === "object" &&
+      spec !== null &&
+      "isMask" in spec &&
+      (spec as { isMask?: boolean }).isMask === true
+    );
+  }
+
+  /**
+   * 인스턴스의 자식요소인지?
+   * 한쪽만 인스턴스 자식요소 이면 스쿼시 할 수 없음.
+   * */
+  private isInstanceChildren(
+    specA: { id: string },
+    specB: { id: string }
+  ): boolean {
+    const isInstanceA = specA.id.startsWith(
+      UpdateSquashByIou.INSTANCE_ID_PREFIX
+    );
+    const isInstanceB = specB.id.startsWith(
+      UpdateSquashByIou.INSTANCE_ID_PREFIX
+    );
+
+    // 둘 다 인스턴스가 아니면 OK
+    if (!isInstanceA && !isInstanceB) return true;
+
+    // 둘 다 인스턴스여야 OK
+    return isInstanceA && isInstanceB;
+  }
+
+  private isAncestorDescendant(nodeA: SuperTreeNode, nodeB: SuperTreeNode) {}
+
+  /** 부모 체인에 마스크가 있는지 확인 (COMPONENT 노드까지) */
+  private hasParentWithMask(node: SuperTreeNode): boolean {
+    let parent = node.parent;
+
+    while (parent) {
+      if (this.isMaskedSpec(parent.metaData.spec)) {
+        return true;
+      }
+
+      if (parent.type === "COMPONENT") {
+        break;
+      }
+
+      parent = parent.parent ?? null;
+    }
+
+    return false;
   }
 
   /** 타입별로 노드 그룹핑 */
@@ -125,7 +145,7 @@ class UpdateSquashByIou {
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const iou = this.matcher.getIou2(nodes[i], nodes[j]);
-          if (iou !== null && iou >= this.IOU_THRESHOLD) {
+          if (iou !== null && iou >= UpdateSquashByIou.IOU_THRESHOLD) {
             squashTarget.push([nodes[i], nodes[j]]);
           }
         }
