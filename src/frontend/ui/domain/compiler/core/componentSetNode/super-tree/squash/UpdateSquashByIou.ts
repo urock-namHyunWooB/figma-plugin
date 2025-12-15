@@ -40,6 +40,9 @@ class UpdateSquashByIou {
       this.isValidSquashGroup(group)
     );
 
+    this.createNodeSiblingGraph(_components);
+    //variant 그래프 자료구조
+
     console.log(filteredSquashGroups);
     return superTree;
   }
@@ -179,6 +182,40 @@ class UpdateSquashByIou {
 
     return squashTarget;
   }
+
+  private createNodeSiblingGraph(components: RenderTree[]) {
+    const A = {} as any;
+
+    for (const component of components) {
+      traverseBFS(component, (node, meta) => {
+        const { depth, index, parent } = meta;
+
+        const targetNode = this.specDataManager.getSpecById(node.id);
+
+        if (!A[targetNode.type + `:depth=${depth}:id:${node.id}`]) {
+          A[targetNode.type + `:depth=${depth}:id:${node.id}`] = [];
+        }
+
+        if (parent && parent.children[index + 1]) {
+          A[targetNode.type + `:depth=${depth}:id:${node.id}`].push(
+            parent.children[index + 1]
+          );
+        }
+      });
+    }
+
+    console.log(A);
+  }
+
+  /**
+   * 위상정렬 기반 스쿼시
+   * nodeA -> nodeB, nodeB -> nodeA 스쿼시 했을때 위상정렬이 깨지지 않아야 한다.
+   * 단 순환 그래프면 스쿼시 안함
+   * @param nodeA
+   * @param nodeB
+   * @private
+   */
+  private squashNodeByTopoSort(nodeA: SuperTreeNode, nodeB: SuperTreeNode) {}
 }
 
 export default UpdateSquashByIou;
