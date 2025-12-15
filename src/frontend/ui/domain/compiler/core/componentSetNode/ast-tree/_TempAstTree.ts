@@ -12,6 +12,7 @@ import SpecDataManager from "../../../manager/SpecDataManager";
 import { findNodeBFS, traverseBFS } from "@compiler/utils/traverse";
 import helper from "@compiler/manager/HelperManager";
 import { BinaryOperator } from "@compiler/types/customType";
+import debug from "@compiler/manager/DebuggingManager";
 
 class _TempAstTree {
   private _tempAstTree: TempAstTree;
@@ -31,6 +32,7 @@ class _TempAstTree {
     this._specDataManager = specDataManager;
     this._refinedProps = refinedProps;
     this._superTree = superTree;
+
     const variantTrees = specDataManager.getRenderTree().children;
     let tempAstTree = this.createTempAstTree(superTree, refinedProps);
 
@@ -39,6 +41,7 @@ class _TempAstTree {
     tempAstTree = this.updateVisible(tempAstTree);
     tempAstTree = this.updateProps(tempAstTree);
 
+    debug.tree(tempAstTree);
     this._tempAstTree = tempAstTree;
   }
 
@@ -131,7 +134,13 @@ class _TempAstTree {
             pivotVariantName,
             targetVariantName
           );
-          matchedPivotNode.style = diffStyle;
+
+          if (matchedPivotNode.style) {
+            matchedPivotNode.style.base = diffStyle.base;
+            matchedPivotNode.style.dynamic.push(...diffStyle.dynamic);
+          } else {
+            matchedPivotNode.style = diffStyle;
+          }
         }
       });
     });
