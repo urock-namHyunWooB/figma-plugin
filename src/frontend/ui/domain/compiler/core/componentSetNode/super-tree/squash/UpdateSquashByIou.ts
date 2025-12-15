@@ -222,11 +222,7 @@ class UpdateSquashByIou {
 
   /**
    * 위상정렬 기반 스쿼시
-   * nodeA -> nodeB, nodeB -> nodeA 스쿼시 했을때 위상정렬이 깨지지 않아야 한다.
-   * 단 순환 그래프면 스쿼시 안함
-   * @param nodeA
-   * @param nodeB
-   * @private
+   * 양방향(A→B, B→A) 스쿼시 가능성을 검증하고, 한쪽만 유효할 때만 수행
    */
   private squashNodeByTopoSort(
     superTree: SuperTreeNode,
@@ -234,46 +230,77 @@ class UpdateSquashByIou {
     nodeB: SuperTreeNode,
     siblingGraph: SiblingGraph
   ) {
-    const clonedSuperTree = helper.deepCloneTree(superTree) as SuperTreeNode;
-    const clonedNodeA = helper.findNodeById(clonedSuperTree, nodeA.id)!;
+    // 1. 양방향 스쿼시 가능성 검증
+    const canSquashAIntoB = this.validateSquashDirection(
+      superTree,
+      nodeA,
+      nodeB,
+      siblingGraph
+    );
+    const canSquashBIntoA = this.validateSquashDirection(
+      superTree,
+      nodeB,
+      nodeA,
+      siblingGraph
+    );
 
-    clonedNodeA.mergedNode = [...nodeA.mergedNode, ...nodeB.mergedNode];
+    // 2. 스쿼시 결정: 한쪽만 유효할 때만 수행
+    const bothValid = canSquashAIntoB.isValid && canSquashBIntoA.isValid;
+    const bothInvalid = !canSquashAIntoB.isValid && !canSquashBIntoA.isValid;
 
-    const resultA = this.validateTopologicalOrder(clonedNodeA, siblingGraph);
-
-    const clonedSuperTree2 = helper.deepCloneTree(superTree) as SuperTreeNode;
-    const clonedNodeB = helper.findNodeById(clonedSuperTree2, nodeB.id)!;
-
-    clonedNodeB.mergedNode = [...nodeA.mergedNode, ...nodeB.mergedNode];
-
-    const resultB = this.validateTopologicalOrder(clonedNodeB, siblingGraph);
-
-    if (
-      (resultA.isValid && resultB.isValid) ||
-      (!resultA.isValid && !resultB.isValid)
-    ) {
+    if (bothValid || bothInvalid) {
       return superTree;
     }
 
-    if (resultA.isValid) {
-      nodeA.mergedNode = [...nodeB.mergedNode, ...nodeA.mergedNode];
-      if (nodeB.parent) {
-        nodeB.parent.children = nodeB.parent.children.filter(
-          (child) => child !== nodeB
-        );
-      }
-    }
-
-    if (resultB.isValid) {
-      nodeB.mergedNode = [...nodeA.mergedNode, ...nodeB.mergedNode];
-      if (nodeA.parent) {
-        nodeA.parent.children = nodeA.parent.children.filter(
-          (child) => child !== nodeA
-        );
-      }
+    // 3. 유효한 방향으로 스쿼시 실행
+    if (canSquashAIntoB.isValid) {
+      this.performSquash(nodeA, nodeB);
+    } else {
+      this.performSquash(nodeB, nodeA);
     }
 
     return superTree;
+  }
+
+  /**
+   * 특정 방향으로 스쿼시했을 때 위상정렬이 유효한지 검증
+   * @param targetNode 스쿼시 대상 노드 (이 노드로 합침)
+   * @param sourceNode 스쿼시 소스 노드 (이 노드가 사라짐)
+   */
+  private validateSquashDirection(
+    superTree: SuperTreeNode,
+    targetNode: SuperTreeNode,
+    sourceNode: SuperTreeNode,
+    siblingGraph: SiblingGraph
+  ): { isValid: boolean; violations: any[] } {
+    const clonedTree = helper.deepCloneTree(superTree) as SuperTreeNode;
+    const clonedTarget = helper.findNodeById(clonedTree, targetNode.id)!;
+
+    clonedTarget.mergedNode = [
+      ...targetNode.mergedNode,
+      ...sourceNode.mergedNode,
+    ];
+
+    return this.validateTopologicalOrder(clonedTarget, siblingGraph);
+  }
+
+  /**
+   * 실제 스쿼시 수행: sourceNode를 targetNode로 병합
+   */
+  private performSquash(
+    targetNode: SuperTreeNode,
+    sourceNode: SuperTreeNode
+  ): void {
+    targetNode.mergedNode = [
+      ...sourceNode.mergedNode,
+      ...targetNode.mergedNode,
+    ];
+
+    if (sourceNode.parent) {
+      sourceNode.parent.children = sourceNode.parent.children.filter(
+        (child) => child !== sourceNode
+      );
+    }
   }
 
   private validateTopologicalOrder(

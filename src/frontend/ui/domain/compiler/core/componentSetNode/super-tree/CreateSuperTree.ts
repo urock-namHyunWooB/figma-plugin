@@ -38,6 +38,7 @@ class CreateSuperTree {
       .reduce((superTree, target) => this._mergeTree(superTree, target));
 
     superTree = this.UpdateSquashByIou.updateSquashByIou(superTree, components);
+    console.log(superTree);
     superTree = this.updateSquashFrameNode(superTree);
 
     this.superTree = superTree;
