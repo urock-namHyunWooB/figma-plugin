@@ -445,6 +445,7 @@ class _TempAstTree {
         const condition = helper.parseConditionToRecord(dynamic.condition);
         console.log(condition, dynamic.style);
       }
+      console.log(node.style.base);
       console.log("/////////////");
     });
 
