@@ -356,20 +356,6 @@ class UpdateSquashByIou {
     };
   }
 
-  /**
-   * SuperTreeNode에서 id + mergedNode들의 모든 id 수집
-   */
-  private collectAllIds(node: SuperTreeNode): Set<string> {
-    const ids = new Set<string>();
-    ids.add(node.id);
-
-    for (const merged of node.mergedNode) {
-      ids.add(merged.id);
-    }
-
-    return ids;
-  }
-
   private buildNodeKeyById(id: string): string {
     const spec = this.specDataManager.getSpecById(id);
     return `${spec.type}|${id}`;
