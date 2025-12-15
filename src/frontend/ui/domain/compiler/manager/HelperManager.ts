@@ -75,13 +75,19 @@ class HelperManager {
   }
 
   public deepCloneTree(tree: TempAstTree | SuperTreeNode): any {
-    // 순환 참조(parent) 제외하고 복사
-    const clone = (node: TempAstTree | SuperTreeNode): any => {
+    // 순환 참조(parent) 제외하고 복사 후, parent 관계 복원
+    const clone = (
+      node: TempAstTree | SuperTreeNode,
+      parentNode: any = null
+    ): any => {
       const { parent, children, ...rest } = node;
-      return {
+      const clonedNode: any = {
         ...JSON.parse(JSON.stringify(rest)), // deep clone (parent 제외)
-        children: children.map((child) => clone(child)),
+        parent: parentNode,
+        children: [],
       };
+      clonedNode.children = children.map((child) => clone(child, clonedNode));
+      return clonedNode;
     };
     return clone(tree);
   }
@@ -116,6 +122,22 @@ class HelperManager {
     });
 
     return foundNode;
+  }
+
+  public getSiblingIndex(node: SuperTreeNode) {
+    const parent = node.parent as SuperTreeNode;
+
+    if (!parent) return -1;
+    const index = parent.children.indexOf(node);
+    return index;
+  }
+
+  public getNextSiblingNode(node: SuperTreeNode) {
+    const parent = node.parent;
+    const index = this.getSiblingIndex(node);
+
+    if (!parent) return null;
+    return parent.children[index + 1];
   }
 }
 

@@ -18,22 +18,6 @@ import helper from "@compiler/manager/HelperManager";
  * 마스크/클립/블렌드가 조금이라도 끼면 스쿼시 금지
  */
 
-interface TopologicalViolation {
-  parentId: string; // 위반이 발생한 부모 노드
-  nodeAId: string; // siblingGraph에서 앞에 와야 하는 노드
-  nodeBId: string; // siblingGraph에서 뒤에 와야 하는 노드
-  actualOrder: {
-    // 실제 superTree에서의 순서
-    nodeAIndex: number;
-    nodeBIndex: number;
-  };
-}
-
-interface ValidationResult {
-  isValid: boolean;
-  violations: TopologicalViolation[];
-}
-
 type SiblingGraph = Map<string, RenderTree[]>;
 
 class UpdateSquashByIou {
@@ -247,9 +231,13 @@ class UpdateSquashByIou {
     nodeB: SuperTreeNode,
     siblingGraph: SiblingGraph
   ) {
-    nodeA.metaData.tempMergedNode = [...nodeA.mergedNode, ...nodeB.mergedNode];
+    const clonedSuperTree = helper.deepCloneTree(superTree) as SuperTreeNode;
 
-    const result = this.validateTopologicalOrder(nodeA, siblingGraph);
+    const clonedNodeA = helper.findNodeById(clonedSuperTree, nodeA.id)!;
+
+    clonedNodeA.mergedNode = [...nodeA.mergedNode, ...nodeB.mergedNode];
+
+    const result = this.validateTopologicalOrder(clonedNodeA, siblingGraph);
 
     console.log(result);
   }
@@ -257,18 +245,36 @@ class UpdateSquashByIou {
   private validateTopologicalOrder(
     superTree: SuperTreeNode,
     siblingGraph: SiblingGraph
-  ): ValidationResult {
-    const violations: TopologicalViolation[] = [];
+  ) {
+    const violations: any[] = [];
 
     traverseBFS(superTree, (node, meta) => {
-      const { depth, index } = meta;
-      node.metaData.tempMergedNode.forEach((value) => {
+      const { depth, index, parent } = meta;
+      node.mergedNode.forEach((value) => {
         const siblingData = siblingGraph.get(this.buildNodeKeyById(value.id));
         if (siblingData?.length) {
-          const nextSiblingNode = siblingData[0];
-          //현재 node의 index를 감지.
-          //부모에서 현재 node 다음에 오는 요소 찾기
-          //그 요소를 nextSiblingNode와 비교
+          const savedNextSiblingNodeData = siblingData[0];
+          const nextSiblingNode = helper.getNextSiblingNode(node);
+          if (nextSiblingNode) {
+            const sibilingDataNodeSpec = this.specDataManager.getSpecById(
+              savedNextSiblingNodeData.id
+            );
+            const nextSiblingNodeSpec = this.specDataManager.getSpecById(
+              nextSiblingNode.id
+            );
+
+            if (sibilingDataNodeSpec.type !== nextSiblingNodeSpec.type) {
+              violations.push({
+                targetNode: node,
+                detail: {
+                  invalidNode: this.specDataManager.getSpecById(value.id),
+
+                  savedNextSiblingNode: savedNextSiblingNodeData,
+                  factNextSiblingNode: nextSiblingNode,
+                },
+              });
+            }
+          }
         }
       });
     });
