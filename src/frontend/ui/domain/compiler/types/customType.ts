@@ -80,6 +80,13 @@ export interface TempAstTree extends SuperTreeNode {
   style: StyleObject;
   mergedNode: MergedNode[];
   children: TempAstTree[];
+
+  /**
+   * 조건부 래퍼 플래그
+   * true면 코드 생성 시 조건에 따라 Fragment로 대체됨
+   * 예: (condition) ? <Frame>...</Frame> : <>...</>
+   */
+  isConditionalWrapper?: boolean;
 }
 
 /**

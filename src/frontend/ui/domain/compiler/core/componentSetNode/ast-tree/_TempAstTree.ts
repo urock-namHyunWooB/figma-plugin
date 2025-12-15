@@ -37,15 +37,18 @@ class _TempAstTree {
     this._superTree = superTree;
 
     const variantTrees = specDataManager.getRenderTree().children;
+
     let tempAstTree = this.createTempAstTree(superTree, refinedProps);
 
     tempAstTree = this.updateMergedNode(tempAstTree);
     tempAstTree = this.updateStyle(tempAstTree, variantTrees);
     tempAstTree = this.updateNormalizeStyle(tempAstTree);
     tempAstTree = this.updateVisible(tempAstTree);
+    tempAstTree = this.updateConditionalWrapper(tempAstTree);
     tempAstTree = this.updateProps(tempAstTree);
 
     this._tempAstTree = tempAstTree;
+    debug.tree(tempAstTree);
   }
 
   private updateMergedNode(tempAstTree: TempAstTree) {
@@ -223,6 +226,35 @@ class _TempAstTree {
   }
 
   /**
+   * 조건부 래퍼 패턴을 감지합니다.
+   *
+   * 패턴: 부모가 조건부인데, 자식 중 항상 존재하는 노드가 있는 경우
+   * 예: Frame (visible: leftIcon || rightIcon)
+   *       └── Text (visible: static true)
+   *
+   * 이 경우 Frame은 "조건부 래퍼"로 표시되고,
+   * 코드 생성 시 조건에 따라 Fragment로 대체됩니다.
+   */
+  private updateConditionalWrapper(tempAstTree: TempAstTree) {
+    traverseBFS(tempAstTree, (node) => {
+      // 조건부 visible을 가진 노드만 검사
+      if (node.visible?.type !== "condition") return;
+
+      // 자식 중 "항상 존재"하는 노드가 있는지 확인
+      const hasAlwaysVisibleChild = node.children.some((child) => {
+        // static true이거나 null(명시적 바인딩으로 props에서 처리)
+        return child.visible?.type === "static" && child.visible.value === true;
+      });
+
+      if (hasAlwaysVisibleChild) {
+        node.isConditionalWrapper = true;
+      }
+    });
+
+    return tempAstTree;
+  }
+
+  /**
    * visible 조건을 추론합니다.
    *
    * 1. 명시적 바인딩 확인 → props.visible에서 처리하므로 null 반환
@@ -241,10 +273,10 @@ class _TempAstTree {
     }
 
     // 2. 모든 variant에서 존재하면 항상 보임
-    if (
-      targetNode.mergedNode.length ===
-      this._specDataManager.getRenderTree().children.length
-    ) {
+    const totalVariantCount =
+      this._specDataManager.getRenderTree().children.length;
+
+    if (targetNode.mergedNode.length === totalVariantCount) {
       return {
         type: "static",
         value: true,
@@ -345,8 +377,8 @@ class _TempAstTree {
   private _inferConditionFromMergedNode(
     targetNode: TempAstTree
   ): ConditionNode | null {
-    const totalVariantCount =
-      this._specDataManager.getRenderTree().children.length;
+    const allVariants = this._specDataManager.getRenderTree().children;
+    const totalVariantCount = allVariants.length;
 
     // 모든 variant에서 존재하면 조건 불필요
     if (targetNode.mergedNode.length >= totalVariantCount) {
@@ -356,13 +388,117 @@ class _TempAstTree {
     const definitions = this._specDataManager.getComponentPropertyDefinitions();
     if (!definitions) return null;
 
-    // 1. mergedNode의 variant name들에서 각 속성별 값 수집
+    // 1. 존재하는/존재하지 않는 variant 분리
+    const presentVariantNames = new Set(
+      targetNode.mergedNode.map((m) => m.variantName).filter(Boolean)
+    );
+
+    const absentVariants: Array<Record<string, string>> = [];
+    for (const variant of allVariants) {
+      if (!presentVariantNames.has(variant.name)) {
+        absentVariants.push(helper.parseVariantName(variant.name));
+      }
+    }
+
+    // 존재하지 않는 variant가 없으면 조건 불필요
+    if (absentVariants.length === 0) {
+      return null;
+    }
+
+    // 2. 전체 variant를 파싱해서 각 prop의 값 분포 확인
+    const allParsedVariants = allVariants.map((v) =>
+      helper.parseVariantName(v.name)
+    );
+
+    // 모든 variant에서 동일한 값을 가지는 prop 찾기 (이건 조건에서 제외해야 함)
+    const invariantProps = new Set<string>();
+    if (allParsedVariants.length > 0) {
+      const firstVariant = allParsedVariants[0];
+      for (const [propName, propValue] of Object.entries(firstVariant)) {
+        const allSameInAllVariants = allParsedVariants.every(
+          (v) => v[propName] === propValue
+        );
+        if (allSameInAllVariants) {
+          invariantProps.add(propName);
+        }
+      }
+    }
+
+    // 3. 존재하지 않는 variant들의 공통 prop 값 찾기
+    // (모든 absent variant에서 같은 값을 가지는 prop, 단 invariantProps는 제외)
+    const commonAbsentValues: Record<string, string> = {};
+
+    if (absentVariants.length > 0) {
+      const firstAbsent = absentVariants[0];
+
+      for (const [propName, propValue] of Object.entries(firstAbsent)) {
+        // 모든 variant에서 동일한 prop은 제외 (visible 결정 요소 아님)
+        if (invariantProps.has(propName)) continue;
+
+        // 모든 absent variant에서 이 prop이 같은 값인지 확인
+        const allSame = absentVariants.every(
+          (variant) => variant[propName] === propValue
+        );
+
+        if (allSame) {
+          commonAbsentValues[propName] = propValue;
+        }
+      }
+    }
+
+    // 공통점이 없으면 기존 로직으로 fallback
+    if (Object.keys(commonAbsentValues).length === 0) {
+      return this._inferConditionFromPresentVariants(targetNode, definitions);
+    }
+
+    // 3. 공통 absent 값의 반대 조건 생성 (OR로 연결)
+    // absent가 "Left Icon=False AND Right Icon=False"이면
+    // present는 "Left Icon=True OR Right Icon=True"
+    const orConditions: ConditionNode[] = [];
+
+    for (const [propName, absentValue] of Object.entries(commonAbsentValues)) {
+      const def = definitions[propName];
+      if (!def || !def.variantOptions) continue;
+
+      // 이 prop의 다른 값들 (absent가 아닌 값들)
+      const otherValues = def.variantOptions.filter((v) => v !== absentValue);
+
+      if (otherValues.length === 1) {
+        // 단일 값: props.LeftIcon === 'True'
+        orConditions.push(
+          helper.createBinaryCondition(propName, otherValues[0])
+        );
+      } else if (otherValues.length > 1) {
+        // 복수 값: props.Size === 'Large' || props.Size === 'Medium'
+        const multiConditions = otherValues.map((v) =>
+          helper.createBinaryCondition(propName, v)
+        );
+        orConditions.push(helper.combineWithOr(multiConditions));
+      }
+    }
+
+    if (orConditions.length === 0) return null;
+    if (orConditions.length === 1) return orConditions[0];
+
+    // 여러 prop의 조건은 OR로 연결
+    // (Left Icon=True) OR (Right Icon=True)
+    return helper.combineWithOr(orConditions);
+  }
+
+  /**
+   * 기존 로직: 존재하는 variant 기반으로 조건 추론 (fallback)
+   */
+  private _inferConditionFromPresentVariants(
+    targetNode: TempAstTree,
+    definitions: Record<string, any>
+  ): ConditionNode | null {
+    // mergedNode의 variant name들에서 각 속성별 값 수집
     const presentValues: Record<string, Set<string>> = {};
 
     for (const merged of targetNode.mergedNode) {
       const variantName = merged.variantName;
       if (!variantName) continue;
-      const parsed = helper.parseVariantName(variantName); // { Size: "Large", State: "Hover" }
+      const parsed = helper.parseVariantName(variantName);
 
       for (const [prop, value] of Object.entries(parsed)) {
         if (!presentValues[prop]) presentValues[prop] = new Set();
@@ -370,7 +506,7 @@ class _TempAstTree {
       }
     }
 
-    // 2. 전체 옵션 대비 일부 값에서만 존재하는 속성들 찾기
+    // 전체 옵션 대비 일부 값에서만 존재하는 속성들 찾기
     const conditions: ConditionNode[] = [];
 
     for (const [propName, def] of Object.entries(definitions)) {
@@ -382,11 +518,9 @@ class _TempAstTree {
 
       // 일부 옵션에서만 존재 → 조건 생성
       if (presentOptions.size === 1) {
-        // 단일 값: props.Left Icon === 'True'
         const value = [...presentOptions][0];
         conditions.push(helper.createBinaryCondition(propName, value));
-      } else {
-        // 복수 값: props.State === 'Hover' || props.State === 'Pressed'
+      } else if (presentOptions.size > 1) {
         const orConditions = [...presentOptions].map((v) =>
           helper.createBinaryCondition(propName, v)
         );
@@ -394,7 +528,6 @@ class _TempAstTree {
       }
     }
 
-    // 3. 조건들을 AND로 연결
     if (conditions.length === 0) return null;
     if (conditions.length === 1) return conditions[0];
 
