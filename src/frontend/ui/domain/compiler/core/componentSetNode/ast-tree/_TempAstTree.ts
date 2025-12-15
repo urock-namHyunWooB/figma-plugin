@@ -103,51 +103,113 @@ class _TempAstTree {
   }
 
   /**
-   * pivotTree와 targetTree 두 트리 diff해서 pivotTree style 적용
-   * @param pivotTree
-   * @param targetTrees
-   * @private
+   * 모든 variant의 스타일을 한번에 분석하여 pivotTree에 적용
+   * - 모든 variant에서 동일한 값 → base
+   * - variant별로 다른 값 → 각 조건의 dynamic
    */
   private updateStyle(pivotTree: TempAstTree, targetTrees: StyleTree[]) {
-    /**
-     * targetTree 트리 순회하면서 pivotTree에 mergedNode 된 노드들을 분석해서
-     * 해당 노드에 스타일 diff 결괏값을 할당한다.
-     * (어떤 variant 일때 어떤 스타일이 바뀌는지 정보를 알기 위해서)
-     */
-    targetTrees.forEach((targetTree) => {
-      const pivotVariantName = pivotTree.name;
-      const targetVariantName = targetTree.name;
+    traverseBFS(pivotTree, (pivotNode) => {
+      // 이 pivotNode에 매칭되는 모든 variant의 스타일 수집
+      const variantStyles: Array<{
+        variantName: string;
+        style: Record<string, any>;
+      }> = [];
 
-      if (!targetVariantName) {
-        console.warn("targetVariantName is null", targetTree);
+      for (const targetTree of targetTrees) {
+        const targetVariantName = targetTree.name;
+        if (!targetVariantName) {
+          console.warn("targetVariantName is null", targetTree);
+          continue;
+        }
+
+        // targetTree에서 pivotNode에 매칭되는 노드 찾기
+        const matchedTargetNode = findNodeBFS(targetTree, (targetNode) =>
+          pivotNode.mergedNode.some((merged) => merged.id === targetNode.id)
+        );
+
+        if (matchedTargetNode) {
+          variantStyles.push({
+            variantName: targetVariantName,
+            style: matchedTargetNode.cssStyle || {},
+          });
+        }
       }
 
-      traverseBFS(targetTree, (targetNode, targetMeta) => {
-        const matchedPivotNode = findNodeBFS(pivotTree, (pivotNode) => {
-          return pivotNode.mergedNode.some((merged) =>
-            Object.values(merged).includes(targetNode.id)
-          );
-        });
-
-        if (matchedPivotNode) {
-          const diffStyle = this._getDiffStyle(
-            matchedPivotNode,
-            targetNode,
-            pivotVariantName,
-            targetVariantName
-          );
-
-          if (matchedPivotNode.style) {
-            matchedPivotNode.style.base = diffStyle.base;
-            matchedPivotNode.style.dynamic.push(...diffStyle.dynamic);
-          } else {
-            matchedPivotNode.style = diffStyle;
-          }
-        }
-      });
+      // 모든 variant 스타일을 분석해서 base/dynamic 결정
+      if (variantStyles.length > 0) {
+        pivotNode.style = this._computeStyleFromVariants(variantStyles);
+      }
     });
 
     return pivotTree;
+  }
+
+  /**
+   * 여러 variant의 스타일을 분석하여 base와 dynamic을 계산합니다.
+   */
+  private _computeStyleFromVariants(
+    variantStyles: Array<{ variantName: string; style: Record<string, any> }>
+  ): StyleObject {
+    const base: Record<string, any> = {};
+    const dynamic: Array<{
+      condition: ConditionNode;
+      style: Record<string, any>;
+    }> = [];
+
+    if (variantStyles.length === 0) {
+      return { base, dynamic };
+    }
+
+    // 모든 스타일 키 수집
+    const allKeys = new Set<string>();
+    for (const vs of variantStyles) {
+      Object.keys(vs.style).forEach((k) => allKeys.add(k));
+    }
+
+    for (const key of allKeys) {
+      // 각 variant에서의 값 수집 (undefined면 해당 variant에 없는 것)
+      const valuesWithVariant = variantStyles.map((vs) => ({
+        variantName: vs.variantName,
+        value: vs.style[key],
+      }));
+
+      // 값이 있는 것들만 필터
+      const definedValues = valuesWithVariant.filter(
+        (v) => v.value !== undefined
+      );
+
+      if (definedValues.length === 0) continue;
+
+      const firstValue = definedValues[0].value;
+      const allSame =
+        definedValues.length === variantStyles.length &&
+        definedValues.every((v) => v.value === firstValue);
+
+      if (allSame) {
+        // 모든 variant에서 같은 값 → base에 추가
+        base[key] = firstValue;
+      } else {
+        // variant별로 다름 → 각 조건의 dynamic에 추가
+        for (const item of definedValues) {
+          const condition = this._parseVariantCondition(item.variantName);
+          if (!condition) continue;
+
+          // 해당 condition의 dynamic 항목 찾기 또는 생성
+          let existingDynamic = dynamic.find(
+            (d) => JSON.stringify(d.condition) === JSON.stringify(condition)
+          );
+
+          if (!existingDynamic) {
+            existingDynamic = { condition, style: {} };
+            dynamic.push(existingDynamic);
+          }
+
+          existingDynamic.style[key] = item.value;
+        }
+      }
+    }
+
+    return { base, dynamic };
   }
 
   private updateVisible(pivotNode: TempAstTree) {
@@ -235,103 +297,6 @@ class _TempAstTree {
       }
     }
     return node.mergedNode.length > 0; // True인 variant에서만 존재
-  }
-
-  private _getDiffStyle(
-    pivotNode: TempAstTree,
-    targetNode: StyleTree,
-    pivotVariantName: string,
-    targetVariantName: string
-  ) {
-    if (pivotNode.id === targetNode.id) {
-      return pivotNode.style;
-    }
-
-    const pivotCss = pivotNode.style.base;
-    const targetCss = targetNode.cssStyle;
-
-    const diff = this._diffStyle(
-      pivotCss,
-      targetCss,
-      pivotVariantName,
-      targetVariantName
-    );
-
-    return diff;
-  }
-
-  private _diffStyle(
-    pivotStyle: Record<string, any>,
-    targetStyle: Record<string, any>,
-    pivotVariantName: string,
-    targetVariantName: string
-  ) {
-    const diff: StyleObject = {
-      base: {},
-      dynamic: [],
-    };
-
-    const pivotCondition = this._parseVariantCondition(pivotVariantName);
-    const targetCondition = this._parseVariantCondition(targetVariantName);
-
-    const dynamicA: Record<string, any> = {};
-    const dynamicB: Record<string, any> = {};
-
-    const allKeys = new Set([
-      ...Object.keys(pivotStyle),
-      ...Object.keys(targetStyle),
-    ]);
-
-    allKeys.forEach((key) => {
-      const inPivot = Object.prototype.hasOwnProperty.call(pivotStyle, key);
-      const inTarget = Object.prototype.hasOwnProperty.call(targetStyle, key);
-      const pivotValue = pivotStyle[key];
-      const targetValue = targetStyle[key];
-
-      if (inPivot && inTarget) {
-        if (pivotValue === targetValue) {
-          /**
-           * 1. A,B 둘 다 있고 값도 같으면 base에 해당 style 넣기
-           */
-          diff.base[key] = pivotValue;
-        } else {
-          /**
-           * 2. A,B 둘다 있지만 값이 서로 다르면 base에 A값 넣고 dynamic에 B 넣기
-           * (A값은 Default로서 base에 유지, B값은 조건부 적용)
-           */
-          diff.base[key] = pivotValue;
-          dynamicB[key] = targetValue;
-        }
-      } else if (inPivot) {
-        /**
-         * 3. A에만 있으면 dynamic에 A에 넣기
-         * (B에는 없으므로, A 조건일 때만 적용되어야 함 -> base에서 제거됨)
-         */
-        dynamicA[key] = pivotValue;
-      } else if (inTarget) {
-        /**
-         * 4. B에만 있으면 dynamic에 B에 넣기
-         */
-        dynamicB[key] = targetValue;
-      }
-    });
-
-    // dynamic 스타일이 존재하는 경우에만 추가
-    if (Object.keys(dynamicA).length > 0 && pivotCondition) {
-      diff.dynamic.push({
-        condition: pivotCondition,
-        style: dynamicA,
-      });
-    }
-
-    if (Object.keys(dynamicB).length > 0 && targetCondition) {
-      diff.dynamic.push({
-        condition: targetCondition,
-        style: dynamicB,
-      });
-    }
-
-    return diff;
   }
 
   /**
@@ -437,19 +402,178 @@ class _TempAstTree {
     return helper.combineWithAnd(conditions);
   }
 
+  /**
+   * 복합 조건(Size && Disabled)을 개별 prop별 조건으로 분리합니다.
+   * 예: {Size: 'Large', Disabled: 'True'} → {height: 48px, background: yellow}
+   * 결과: Size === 'Large' → {height: 48px}, Disabled === 'True' → {background: yellow}
+   */
   private updateNormalizeStyle(tempAstTree: TempAstTree) {
     traverseBFS(tempAstTree, (node) => {
-      //TODO 결괏값 어떻게 나와야 하는지 먼저 정리하자.
+      const { base, dynamic } = node.style;
 
-      for (const dynamic of node.style.dynamic) {
-        const condition = helper.parseConditionToRecord(dynamic.condition);
-        console.log(condition, dynamic.style);
+      if (dynamic.length === 0) return;
+
+      // 1. 모든 dynamic 조건을 record 형태로 파싱
+      const parsedDynamics = dynamic.map((d) => ({
+        condition: helper.parseConditionToRecord(d.condition),
+        style: d.style,
+      }));
+
+      // 2. 모든 스타일 키 수집
+      const allStyleKeys = new Set<string>();
+      for (const d of parsedDynamics) {
+        Object.keys(d.style).forEach((k) => allStyleKeys.add(k));
       }
-      console.log(node.style.base);
+
+      // 3. 모든 prop 이름 수집
+      const allPropNames = new Set<string>();
+      for (const d of parsedDynamics) {
+        Object.keys(d.condition).forEach((k) => allPropNames.add(k));
+      }
+
+      // 4. 각 스타일 키에 대해 어떤 prop이 결정하는지 분석
+      const styleKeyToProp: Map<
+        string,
+        { propName: string; valueMap: Map<string, any> }
+      > = new Map();
+
+      for (const styleKey of allStyleKeys) {
+        const determinedBy = this._findDeterminingProp(
+          styleKey,
+          parsedDynamics,
+          allPropNames
+        );
+        if (determinedBy) {
+          styleKeyToProp.set(styleKey, determinedBy);
+        }
+      }
+
+      // 5. prop별로 조건을 그룹핑해서 새로운 dynamic 생성
+      const newDynamic: Array<{
+        condition: ConditionNode;
+        style: Record<string, any>;
+      }> = [];
+
+      // prop별, propValue별로 스타일 그룹핑
+      const propValueStyles: Map<
+        string,
+        Map<string, Record<string, any>>
+      > = new Map();
+
+      for (const [styleKey, { propName, valueMap }] of styleKeyToProp) {
+        if (!propValueStyles.has(propName)) {
+          propValueStyles.set(propName, new Map());
+        }
+        const propMap = propValueStyles.get(propName)!;
+
+        for (const [propValue, styleValue] of valueMap) {
+          if (!propMap.has(propValue)) {
+            propMap.set(propValue, {});
+          }
+          propMap.get(propValue)![styleKey] = styleValue;
+        }
+      }
+
+      // 조건 생성
+      for (const [propName, valueMap] of propValueStyles) {
+        for (const [propValue, style] of valueMap) {
+          if (Object.keys(style).length > 0) {
+            newDynamic.push({
+              condition: helper.createBinaryCondition(propName, propValue),
+              style,
+            });
+          }
+        }
+      }
+
+      // 6. 결정되지 않은 스타일 키는 원래 복합 조건 유지
+      const undeterminedKeys = [...allStyleKeys].filter(
+        (k) => !styleKeyToProp.has(k)
+      );
+
+      if (undeterminedKeys.length > 0) {
+        for (const d of dynamic) {
+          const undeterminedStyle: Record<string, any> = {};
+          for (const key of undeterminedKeys) {
+            if (d.style[key] !== undefined) {
+              undeterminedStyle[key] = d.style[key];
+            }
+          }
+          if (Object.keys(undeterminedStyle).length > 0) {
+            newDynamic.push({
+              condition: d.condition,
+              style: undeterminedStyle,
+            });
+          }
+        }
+      }
+
+      node.style = { base, dynamic: newDynamic };
+
+      // 디버깅용 로그
+      for (const d of newDynamic) {
+        const condition = helper.parseConditionToRecord(d.condition);
+        console.log(node, condition, d.style);
+      }
+      console.log("base:", base);
       console.log("/////////////");
     });
 
     return tempAstTree;
+  }
+
+  /**
+   * 특정 스타일 키가 어떤 prop에 의해 결정되는지 찾습니다.
+   * 같은 prop 값일 때 항상 같은 스타일 값이면 해당 prop이 결정합니다.
+   */
+  private _findDeterminingProp(
+    styleKey: string,
+    parsedDynamics: Array<{
+      condition: Record<string, string>;
+      style: Record<string, any>;
+    }>,
+    allPropNames: Set<string>
+  ): { propName: string; valueMap: Map<string, any> } | null {
+    for (const propName of allPropNames) {
+      // 이 prop의 각 값별로 스타일 값 수집
+      const propValueToStyleValues: Map<string, Set<any>> = new Map();
+
+      for (const d of parsedDynamics) {
+        const propValue = d.condition[propName];
+        const styleValue = d.style[styleKey];
+
+        if (propValue === undefined || styleValue === undefined) continue;
+
+        if (!propValueToStyleValues.has(propValue)) {
+          propValueToStyleValues.set(propValue, new Set());
+        }
+        propValueToStyleValues.get(propValue)!.add(styleValue);
+      }
+
+      // 각 prop 값에 대해 스타일 값이 하나뿐인지 확인
+      let allUnique = true;
+      const valueMap = new Map<string, any>();
+
+      for (const [propValue, styleValues] of propValueToStyleValues) {
+        if (styleValues.size !== 1) {
+          allUnique = false;
+          break;
+        }
+        valueMap.set(propValue, [...styleValues][0]);
+      }
+
+      // 이 prop이 스타일을 결정하고, 값이 서로 다른지 확인
+      if (allUnique && valueMap.size > 0) {
+        const uniqueStyleValues = new Set(valueMap.values());
+        // 모든 prop 값에서 스타일 값이 같으면 base로 가야 함 (이미 처리됨)
+        // 다른 값이 있어야 이 prop이 결정한다고 볼 수 있음
+        if (uniqueStyleValues.size > 1 || valueMap.size === 1) {
+          return { propName, valueMap };
+        }
+      }
+    }
+
+    return null;
   }
 }
 
