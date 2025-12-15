@@ -4,6 +4,9 @@ import HelperManager from "@compiler/manager/HelperManager";
 import { traverseTree } from "@figma/eslint-plugin-figma-plugins/dist/util";
 import { traverseBFS } from "@compiler/utils/traverse";
 
+/**
+ * 값을 목적에 맞게 가공하는 역할
+ */
 class _FinalAstTree {
   private _finalAstTree: FinalAstTree;
 
@@ -18,6 +21,7 @@ class _FinalAstTree {
 
     let finalAstTree = this.createFinalAstTree(tempAstTree);
     finalAstTree = this.updateCleanupNodes(finalAstTree);
+    finalAstTree = this.updateProps(finalAstTree);
 
     this._finalAstTree = finalAstTree;
   }
@@ -103,10 +107,14 @@ class _FinalAstTree {
 
   /**
    * Props 최적화
+   * 유효하지 않는 name을 가공
+   * props에 state 있으면 삭제하고 바인딩된 노드를 찾아서 수정한다.
    * @param astTree
    * @private
    */
-  private updateProps(astTree: FinalAstTree) {}
+  private updateProps(astTree: FinalAstTree) {
+    return astTree;
+  }
 
   /**
    * 노드 트리 구조 최적화

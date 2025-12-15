@@ -14,6 +14,9 @@ import helper from "@compiler/manager/HelperManager";
 import { BinaryOperator } from "@compiler/types/customType";
 import debug from "@compiler/manager/DebuggingManager";
 
+/**
+ * FinalAST 만들기 중간 단계로써 대략적인 값 세팅을 목적으로 한다.
+ */
 class _TempAstTree {
   private _tempAstTree: TempAstTree;
 
@@ -42,7 +45,6 @@ class _TempAstTree {
     tempAstTree = this.updateVisible(tempAstTree);
     tempAstTree = this.updateProps(tempAstTree);
 
-    debug.tree(tempAstTree);
     this._tempAstTree = tempAstTree;
   }
 
@@ -58,7 +60,6 @@ class _TempAstTree {
 
     return tempAstTree;
   }
-
   private updateProps(tempAstTree: TempAstTree) {
     traverseBFS(tempAstTree, (node) => {
       const componentPropertyReferences = this._specDataManager.getSpecById(
@@ -509,14 +510,6 @@ class _TempAstTree {
       }
 
       node.style = { base, dynamic: newDynamic };
-
-      // 디버깅용 로그
-      for (const d of newDynamic) {
-        const condition = helper.parseConditionToRecord(d.condition);
-        console.log(node, condition, d.style);
-      }
-      console.log("base:", base);
-      console.log("/////////////");
     });
 
     return tempAstTree;

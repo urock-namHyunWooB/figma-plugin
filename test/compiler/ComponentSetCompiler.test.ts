@@ -281,6 +281,8 @@ describe("ComponentSetCompiler", () => {
         );
         expect(iconNodes).toBe(2);
       });
+
+      test("props에 state는 없어야 한다.", () => {});
     });
 
     describe("tadaButton", () => {
