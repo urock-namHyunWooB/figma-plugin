@@ -54,6 +54,8 @@ export interface TraverseMeta<T> {
  *   }
  * });
  */
+
+//TODO root Node 외 자식을 처음 superTree로 넣어서 호출할때 parent가 안나오는 이슈 있음.
 export function traverseBFS<T extends TraversableNode>(
   node: T,
   callback: (node: T, meta: TraverseMeta<T>) => boolean | void

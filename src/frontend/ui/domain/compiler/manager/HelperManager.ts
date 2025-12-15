@@ -73,9 +73,9 @@ class HelperManager {
     } as unknown as ConditionNode;
   }
 
-  public deepCloneTree(tree: TempAstTree): any {
+  public deepCloneTree(tree: TempAstTree | SuperTreeNode): any {
     // 순환 참조(parent) 제외하고 복사
-    const clone = (node: TempAstTree): any => {
+    const clone = (node: TempAstTree | SuperTreeNode): any => {
       const { parent, children, ...rest } = node;
       return {
         ...JSON.parse(JSON.stringify(rest)), // deep clone (parent 제외)

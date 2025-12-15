@@ -2,6 +2,7 @@ import { RenderTree, SuperTreeNode } from "@compiler";
 import { traverseBFS } from "@compiler/utils/traverse";
 import NodeMatcher from "../../../NodeMatcher";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
+import helper from "@compiler/manager/HelperManager";
 /**
  * TODO 타입만 같다고 해서 스쿼시 하면 안된다.
  * z-index가 동일하거나, 스쿼시해도 순서를 100% 보존할 수 있을 것
@@ -16,6 +17,22 @@ import SpecDataManager from "@compiler/manager/SpecDataManager";
  *
  * 마스크/클립/블렌드가 조금이라도 끼면 스쿼시 금지
  */
+
+interface TopologicalViolation {
+  parentId: string; // 위반이 발생한 부모 노드
+  nodeAId: string; // siblingGraph에서 앞에 와야 하는 노드
+  nodeBId: string; // siblingGraph에서 뒤에 와야 하는 노드
+  actualOrder: {
+    // 실제 superTree에서의 순서
+    nodeAIndex: number;
+    nodeBIndex: number;
+  };
+}
+
+interface ValidationResult {
+  isValid: boolean;
+  violations: TopologicalViolation[];
+}
 
 type SiblingGraph = Map<string, RenderTree[]>;
 
@@ -47,7 +64,7 @@ class UpdateSquashByIou {
     filteredSquashGroups.forEach((group) => {
       const [nodeA, nodeB] = group;
 
-      this.squashNodeByTopoSort(nodeA, nodeB, siblingGraph);
+      this.squashNodeByTopoSort(superTree, nodeA, nodeB, siblingGraph);
     });
 
     return superTree;
@@ -225,11 +242,60 @@ class UpdateSquashByIou {
    * @private
    */
   private squashNodeByTopoSort(
+    superTree: SuperTreeNode,
     nodeA: SuperTreeNode,
     nodeB: SuperTreeNode,
     siblingGraph: SiblingGraph
   ) {
-    debugger;
+    nodeA.metaData.tempMergedNode = [...nodeA.mergedNode, ...nodeB.mergedNode];
+
+    const result = this.validateTopologicalOrder(nodeA, siblingGraph);
+
+    console.log(result);
+  }
+
+  private validateTopologicalOrder(
+    superTree: SuperTreeNode,
+    siblingGraph: SiblingGraph
+  ): ValidationResult {
+    const violations: TopologicalViolation[] = [];
+
+    traverseBFS(superTree, (node, meta) => {
+      const { depth, index } = meta;
+      node.metaData.tempMergedNode.forEach((value) => {
+        const siblingData = siblingGraph.get(this.buildNodeKeyById(value.id));
+        if (siblingData?.length) {
+          const nextSiblingNode = siblingData[0];
+          //현재 node의 index를 감지.
+          //부모에서 현재 node 다음에 오는 요소 찾기
+          //그 요소를 nextSiblingNode와 비교
+        }
+      });
+    });
+
+    return {
+      isValid: violations.length === 0,
+      violations,
+    };
+  }
+
+  /**
+   * SuperTreeNode에서 id + mergedNode들의 모든 id 수집
+   */
+  private collectAllIds(node: SuperTreeNode): Set<string> {
+    const ids = new Set<string>();
+    ids.add(node.id);
+
+    for (const merged of node.mergedNode) {
+      ids.add(merged.id);
+    }
+
+    return ids;
+  }
+
+  private buildNodeKeyById(id: string): string {
+    const spec = this.specDataManager.getSpecById(id);
+    return `${spec.type}|${id}`;
   }
 }
 

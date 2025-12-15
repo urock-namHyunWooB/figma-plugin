@@ -37,7 +37,7 @@ export type SuperTreeNode = {
   type: string;
   name: string;
   parent: SuperTreeNode | null;
-  children: (SuperTreeNode | undefined)[];
+  children: SuperTreeNode[];
 
   // 각 Variant에서 이 노드에 합쳐진 노드 정보
   mergedNode: MergedNode[];
