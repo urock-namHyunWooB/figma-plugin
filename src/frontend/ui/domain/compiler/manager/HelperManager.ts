@@ -143,6 +143,50 @@ class HelperManager {
     if (!parent) return null;
     return parent.children[index + 1];
   }
+
+  /**
+   * ConditionNode AST를 { propName: value } 형태로 파싱
+   *
+   * @example
+   * // 입력: props.Size === "Large" && props.Disabled === "True"
+   * // 출력: { Size: "Large", Disabled: "True" }
+   */
+  public parseConditionToRecord(
+    condition: ConditionNode
+  ): Record<string, string> {
+    const result: Record<string, string> = {};
+
+    const extract = (node: any) => {
+      if (node.type === "BinaryExpression") {
+        const operator = node.operator as string;
+
+        if (operator === "&&" || operator === "||") {
+          // 복합 조건: 좌우 재귀 탐색
+          extract(node.left);
+          extract(node.right);
+        } else if (operator === "===") {
+          // 단일 비교: props.X === "value"
+          const left = node.left;
+          const right = node.right;
+
+          if (
+            left.type === "MemberExpression" &&
+            left.object?.name === "props" &&
+            right.type === "Literal"
+          ) {
+            const propName = left.property?.name;
+            const propValue = right.value;
+            if (propName && propValue !== undefined) {
+              result[propName] = String(propValue);
+            }
+          }
+        }
+      }
+    };
+
+    extract(condition);
+    return result;
+  }
 }
 
 // Union-Find 헬퍼

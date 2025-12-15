@@ -38,6 +38,7 @@ class _TempAstTree {
 
     tempAstTree = this.updateMergedNode(tempAstTree);
     tempAstTree = this.updateStyle(tempAstTree, variantTrees);
+    tempAstTree = this.updateNormalizeStyle(tempAstTree);
     tempAstTree = this.updateVisible(tempAstTree);
     tempAstTree = this.updateProps(tempAstTree);
 
@@ -127,6 +128,7 @@ class _TempAstTree {
             Object.values(merged).includes(targetNode.id)
           );
         });
+
         if (matchedPivotNode) {
           const diffStyle = this._getDiffStyle(
             matchedPivotNode,
@@ -433,6 +435,20 @@ class _TempAstTree {
     if (conditions.length === 1) return conditions[0];
 
     return helper.combineWithAnd(conditions);
+  }
+
+  private updateNormalizeStyle(tempAstTree: TempAstTree) {
+    traverseBFS(tempAstTree, (node) => {
+      //TODO 결괏값 어떻게 나와야 하는지 먼저 정리하자.
+
+      for (const dynamic of node.style.dynamic) {
+        const condition = helper.parseConditionToRecord(dynamic.condition);
+        console.log(condition, dynamic.style);
+      }
+      console.log("/////////////");
+    });
+
+    return tempAstTree;
   }
 }
 
