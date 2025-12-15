@@ -278,11 +278,23 @@ class UpdateSquashByIou {
 
     const savedNext = savedSiblings[0];
     const actualNext = helper.getNextSiblingNode(node);
-    if (!actualNext) return null;
+
+    // 원래 다음 형제가 있었는데 현재는 없으면 위반
+    if (!actualNext) {
+      return {
+        targetNode: node,
+        detail: {
+          invalidNode: this.specDataManager.getSpecById(merged.id),
+          savedNextNode: savedNext,
+          actualNextNode: null,
+        },
+      };
+    }
 
     const savedType = this.specDataManager.getSpecById(savedNext.id).type;
     const actualType = this.specDataManager.getSpecById(actualNext.id).type;
-    if (savedType === actualType) return null;
+    if (savedType === actualType) {
+    }
 
     return {
       targetNode: node,
