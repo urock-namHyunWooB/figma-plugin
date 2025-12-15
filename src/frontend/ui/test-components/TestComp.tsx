@@ -18,8 +18,8 @@ export function TestComp() {
     async function compile() {
       if (codeRef.current) return;
       try {
-        // codeRef.current = new FigmaCompiler(taptapButtonSample);
-        codeRef.current = new FigmaCompiler(tadaButtonSample);
+        codeRef.current = new FigmaCompiler(taptapButtonSample);
+        // codeRef.current = new FigmaCompiler(tadaButtonSample);
 
         return;
         setTsxCode(codeRef.current);

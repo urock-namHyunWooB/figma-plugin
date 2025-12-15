@@ -101,7 +101,32 @@ class UpdateSquashByIou {
     return isInstanceA && isInstanceB;
   }
 
-  private isAncestorDescendant(nodeA: SuperTreeNode, nodeB: SuperTreeNode) {}
+  /**
+   * 조상-자식 관계인지 확인
+   * @param nodeA
+   * @param nodeB
+   */
+  private isAncestorDescendant(nodeA: SuperTreeNode, nodeB: SuperTreeNode) {
+    // nodeA가 nodeB의 조상인지 확인
+    let current: SuperTreeNode | null = nodeB.parent;
+    while (current) {
+      if (current.id === nodeA.id) {
+        return true;
+      }
+      current = current.parent;
+    }
+
+    // nodeB가 nodeA의 조상인지 확인
+    current = nodeA.parent;
+    while (current) {
+      if (current.id === nodeB.id) {
+        return true;
+      }
+      current = current.parent;
+    }
+
+    return false;
+  }
 
   /** 부모 체인에 마스크가 있는지 확인 (COMPONENT 노드까지) */
   private hasParentWithMask(node: SuperTreeNode): boolean {
