@@ -197,6 +197,9 @@ class UpdateSquashByIou {
       traverseBFS(component, (node, meta) => {
         const { depth, index, parent } = meta;
         const spec = this.specDataManager.getSpecById(node.id);
+        if (!spec) {
+          return;
+        }
         const nodeKey = this.buildNodeKey(spec.type, depth, node.id);
 
         if (!siblingGraph.has(nodeKey)) {
@@ -232,14 +235,13 @@ class UpdateSquashByIou {
     siblingGraph: SiblingGraph
   ) {
     const clonedSuperTree = helper.deepCloneTree(superTree) as SuperTreeNode;
-
     const clonedNodeA = helper.findNodeById(clonedSuperTree, nodeA.id)!;
 
     clonedNodeA.mergedNode = [...nodeA.mergedNode, ...nodeB.mergedNode];
 
     const result = this.validateTopologicalOrder(clonedNodeA, siblingGraph);
 
-    console.log(result);
+    console.log(result.isValid);
   }
 
   private validateTopologicalOrder(
@@ -293,7 +295,12 @@ class UpdateSquashByIou {
 
     const savedType = this.specDataManager.getSpecById(savedNext.id).type;
     const actualType = this.specDataManager.getSpecById(actualNext.id).type;
+
     if (savedType === actualType) {
+      const savedNextSpec = this.specDataManager.getSpecById(savedNext.id);
+      const actualNextSpec = this.specDataManager.getSpecById(actualNext.id);
+
+      return null;
     }
 
     return {

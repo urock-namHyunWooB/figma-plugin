@@ -20,6 +20,7 @@ export function TestComp() {
       try {
         codeRef.current = new FigmaCompiler(taptapButtonSample);
         // codeRef.current = new FigmaCompiler(tadaButtonSample);
+        // codeRef.current = new FigmaCompiler(airtableButton);
 
         return;
         setTsxCode(codeRef.current);
