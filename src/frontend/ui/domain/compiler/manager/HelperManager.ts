@@ -4,6 +4,7 @@ import {
   TempAstTree,
   RenderTree,
 } from "@compiler/types/customType";
+import { traverseBFS } from "../utils/traverse";
 
 class HelperManager {
   public findBooleanVariantProps(definitions: Record<string, any>): string[] {
@@ -99,6 +100,22 @@ class HelperManager {
     }
 
     return node;
+  }
+
+  public findNodeById(
+    tree: SuperTreeNode | TempAstTree,
+    id: string
+  ): SuperTreeNode | TempAstTree | null {
+    let foundNode: SuperTreeNode | TempAstTree | null = null;
+
+    traverseBFS(tree, (node) => {
+      if (node.id === id) {
+        foundNode = node;
+        return false; // 순회 중단
+      }
+    });
+
+    return foundNode;
   }
 }
 
