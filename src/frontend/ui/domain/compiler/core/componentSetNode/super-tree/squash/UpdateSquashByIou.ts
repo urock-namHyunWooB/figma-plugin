@@ -239,9 +239,41 @@ class UpdateSquashByIou {
 
     clonedNodeA.mergedNode = [...nodeA.mergedNode, ...nodeB.mergedNode];
 
-    const result = this.validateTopologicalOrder(clonedNodeA, siblingGraph);
+    const resultA = this.validateTopologicalOrder(clonedNodeA, siblingGraph);
 
-    console.log(result.isValid);
+    const clonedSuperTree2 = helper.deepCloneTree(superTree) as SuperTreeNode;
+    const clonedNodeB = helper.findNodeById(clonedSuperTree2, nodeB.id)!;
+
+    clonedNodeB.mergedNode = [...nodeA.mergedNode, ...nodeB.mergedNode];
+
+    const resultB = this.validateTopologicalOrder(clonedNodeB, siblingGraph);
+
+    if (
+      (resultA.isValid && resultB.isValid) ||
+      (!resultA.isValid && !resultB.isValid)
+    ) {
+      return superTree;
+    }
+
+    if (resultA.isValid) {
+      nodeA.mergedNode = [...nodeB.mergedNode, ...nodeA.mergedNode];
+      if (nodeB.parent) {
+        nodeB.parent.children = nodeB.parent.children.filter(
+          (child) => child !== nodeB
+        );
+      }
+    }
+
+    if (resultB.isValid) {
+      nodeB.mergedNode = [...nodeA.mergedNode, ...nodeB.mergedNode];
+      if (nodeA.parent) {
+        nodeA.parent.children = nodeA.parent.children.filter(
+          (child) => child !== nodeA
+        );
+      }
+    }
+
+    return superTree;
   }
 
   private validateTopologicalOrder(
