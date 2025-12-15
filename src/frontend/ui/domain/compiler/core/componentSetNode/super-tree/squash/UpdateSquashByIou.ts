@@ -17,6 +17,8 @@ import SpecDataManager from "@compiler/manager/SpecDataManager";
  * 마스크/클립/블렌드가 조금이라도 끼면 스쿼시 금지
  */
 
+type SiblingGraph = Map<string, RenderTree[]>;
+
 class UpdateSquashByIou {
   private static readonly INSTANCE_ID_PREFIX = "I";
   private static readonly IOU_THRESHOLD = 0.5;
@@ -40,10 +42,14 @@ class UpdateSquashByIou {
       this.isValidSquashGroup(group)
     );
 
-    this.createNodeSiblingGraph(_components);
-    //variant 그래프 자료구조
+    const siblingGraph = this.createNodeSiblingGraph(_components);
 
-    console.log(filteredSquashGroups);
+    filteredSquashGroups.forEach((group) => {
+      const [nodeA, nodeB] = group;
+
+      this.squashNodeByTopoSort(nodeA, nodeB, siblingGraph);
+    });
+
     return superTree;
   }
 
@@ -183,28 +189,31 @@ class UpdateSquashByIou {
     return squashTarget;
   }
 
-  private createNodeSiblingGraph(components: RenderTree[]) {
-    const A = {} as any;
+  private createNodeSiblingGraph(components: RenderTree[]): SiblingGraph {
+    const siblingGraph: SiblingGraph = new Map();
 
     for (const component of components) {
       traverseBFS(component, (node, meta) => {
         const { depth, index, parent } = meta;
+        const spec = this.specDataManager.getSpecById(node.id);
+        const nodeKey = this.buildNodeKey(spec.type, depth, node.id);
 
-        const targetNode = this.specDataManager.getSpecById(node.id);
-
-        if (!A[targetNode.type + `:depth=${depth}:id:${node.id}`]) {
-          A[targetNode.type + `:depth=${depth}:id:${node.id}`] = [];
+        if (!siblingGraph.has(nodeKey)) {
+          siblingGraph.set(nodeKey, []);
         }
 
-        if (parent && parent.children[index + 1]) {
-          A[targetNode.type + `:depth=${depth}:id:${node.id}`].push(
-            parent.children[index + 1]
-          );
+        const nextSibling = parent?.children[index + 1];
+        if (nextSibling) {
+          siblingGraph.get(nodeKey)!.push(nextSibling);
         }
       });
     }
 
-    console.log(A);
+    return siblingGraph;
+  }
+
+  private buildNodeKey(type: string, depth: number, id: string) {
+    return `${type}|${id}`;
   }
 
   /**
@@ -215,7 +224,13 @@ class UpdateSquashByIou {
    * @param nodeB
    * @private
    */
-  private squashNodeByTopoSort(nodeA: SuperTreeNode, nodeB: SuperTreeNode) {}
+  private squashNodeByTopoSort(
+    nodeA: SuperTreeNode,
+    nodeB: SuperTreeNode,
+    siblingGraph: SiblingGraph
+  ) {
+    debugger;
+  }
 }
 
 export default UpdateSquashByIou;
