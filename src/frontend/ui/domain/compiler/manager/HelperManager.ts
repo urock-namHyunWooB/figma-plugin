@@ -1,10 +1,11 @@
-import { ConditionNode, SuperTreeNode } from "@compiler";
+import { ConditionNode, FinalAstTree, SuperTreeNode } from "@compiler";
 import {
   BinaryOperator,
   TempAstTree,
   RenderTree,
 } from "@compiler/types/customType";
 import { traverseBFS } from "../utils/traverse";
+import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
 
 class HelperManager {
   public findBooleanVariantProps(definitions: Record<string, any>): string[] {
@@ -74,10 +75,10 @@ class HelperManager {
     } as unknown as ConditionNode;
   }
 
-  public deepCloneTree(tree: TempAstTree | SuperTreeNode): any {
+  public deepCloneTree(tree: TempAstTree | SuperTreeNode | FinalAstTree): any {
     // 순환 참조(parent) 제외하고 복사 후, parent 관계 복원
     const clone = (
-      node: TempAstTree | SuperTreeNode,
+      node: TempAstTree | SuperTreeNode | FinalAstTree,
       parentNode: any = null
     ): any => {
       const { parent, children, ...rest } = node;
@@ -86,7 +87,10 @@ class HelperManager {
         parent: parentNode,
         children: [],
       };
-      clonedNode.children = children.map((child) => clone(child, clonedNode));
+
+      clonedNode.children = children.map((child) =>
+        clone(child as any, clonedNode)
+      );
       return clonedNode;
     };
     return clone(tree);

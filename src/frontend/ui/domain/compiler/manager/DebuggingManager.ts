@@ -1,6 +1,7 @@
-import { ConditionNode, TempAstTree } from "@compiler";
+import { ConditionNode, FinalAstTree, TempAstTree } from "@compiler";
 import { traverseBFS } from "@compiler/utils/traverse";
 import helper from "./HelperManager";
+import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
 
 class DebuggingManager {
   private isDebugMode: boolean = false;
@@ -53,7 +54,7 @@ class DebuggingManager {
    * 트리를 순회해서 condition이 보이면 전부 conditionToString로 파싱한다.
    *
    */
-  public tree(tree: TempAstTree) {
+  public tree(tree: TempAstTree | FinalAstTree) {
     // 1. Deep clone (원본 수정 방지)
     const cloned = helper.deepCloneTree(tree);
 
