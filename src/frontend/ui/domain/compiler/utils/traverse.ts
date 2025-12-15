@@ -11,6 +11,8 @@ import { SuperTreeNode } from "@compiler";
  */
 export interface TraversableNode {
   children: (TraversableNode | undefined)[];
+  /** 부모 노드 (있으면 자동으로 사용됨) */
+  parent?: TraversableNode | null;
   [key: string]: any;
 }
 
@@ -27,10 +29,23 @@ export interface TraverseMeta<T> {
 }
 
 /**
+ * 시작 노드의 초기 메타데이터 옵션
+ */
+export interface TraverseOptions<T> {
+  /** 시작 노드의 부모 (미지정 시 node.parent 자동 사용, null로 명시하면 null) */
+  parent?: T | null;
+  /** 시작 노드의 인덱스 (기본값: 0) */
+  index?: number;
+  /** 시작 노드의 깊이 (기본값: 0) */
+  depth?: number;
+}
+
+/**
  * BFS(너비 우선 탐색)로 트리를 순회합니다.
  *
  * @param node 시작 노드 (루트)
  * @param callback 각 노드에 대해 실행할 콜백. false를 반환하면 순회 중단
+ * @param options 시작 노드의 초기 메타데이터 (부모, 인덱스, 깊이)
  *
  * @example
  * // 기본 사용
@@ -53,12 +68,15 @@ export interface TraverseMeta<T> {
  *     // 2번째 깊이의 노드만 처리
  *   }
  * });
+ *
+ * @example
+ * // 자식 노드부터 시작 (부모 정보 유지)
+ * traverseBFS(childNode, callback, { parent: parentNode, index: 1, depth: 1 });
  */
-
-//TODO root Node 외 자식을 처음 superTree로 넣어서 호출할때 parent가 안나오는 이슈 있음.
 export function traverseBFS<T extends TraversableNode>(
   node: T,
-  callback: (node: T, meta: TraverseMeta<T>) => boolean | void
+  callback: (node: T, meta: TraverseMeta<T>) => boolean | void,
+  options?: TraverseOptions<T>
 ): void {
   interface QueueItem {
     node: T;
@@ -67,7 +85,17 @@ export function traverseBFS<T extends TraversableNode>(
     index: number;
   }
 
-  const queue: QueueItem[] = [{ node, depth: 0, parent: null, index: 0 }];
+  // options.parent가 명시적으로 전달되면 사용, 아니면 노드의 parent 속성 자동 감지
+  const initialParent =
+    options?.parent !== undefined
+      ? options.parent
+      : ((node.parent as T | null) ?? null);
+  const initialIndex = options?.index ?? 0;
+  const initialDepth = options?.depth ?? 0;
+
+  const queue: QueueItem[] = [
+    { node, depth: initialDepth, parent: initialParent, index: initialIndex },
+  ];
 
   while (queue.length > 0) {
     const { node: current, depth, parent, index } = queue.shift()!;

@@ -250,6 +250,7 @@ class UpdateSquashByIou {
 
     traverseBFS(superTree, (node, meta) => {
       const { depth, index, parent } = meta;
+
       node.mergedNode.forEach((value) => {
         const siblingData = siblingGraph.get(this.buildNodeKeyById(value.id));
         if (siblingData?.length) {
