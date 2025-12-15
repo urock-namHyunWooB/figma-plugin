@@ -248,41 +248,49 @@ class UpdateSquashByIou {
   ) {
     const violations: any[] = [];
 
-    traverseBFS(superTree, (node, meta) => {
-      const { depth, index, parent } = meta;
-
-      node.mergedNode.forEach((value) => {
-        const siblingData = siblingGraph.get(this.buildNodeKeyById(value.id));
-        if (siblingData?.length) {
-          const savedNextSiblingNodeData = siblingData[0];
-          const nextSiblingNode = helper.getNextSiblingNode(node);
-          if (nextSiblingNode) {
-            const sibilingDataNodeSpec = this.specDataManager.getSpecById(
-              savedNextSiblingNodeData.id
-            );
-            const nextSiblingNodeSpec = this.specDataManager.getSpecById(
-              nextSiblingNode.id
-            );
-
-            if (sibilingDataNodeSpec.type !== nextSiblingNodeSpec.type) {
-              violations.push({
-                targetNode: node,
-                detail: {
-                  invalidNode: this.specDataManager.getSpecById(value.id),
-
-                  savedNextSiblingNode: savedNextSiblingNodeData,
-                  factNextSiblingNode: nextSiblingNode,
-                },
-              });
-            }
-          }
+    traverseBFS(superTree, (node) => {
+      for (const merged of node.mergedNode) {
+        const violation = this.checkSiblingViolation(
+          node,
+          merged,
+          siblingGraph
+        );
+        if (violation) {
+          violations.push(violation);
         }
-      });
+      }
     });
 
     return {
       isValid: violations.length === 0,
       violations,
+    };
+  }
+
+  /** 형제 노드 순서 위반 검사 */
+  private checkSiblingViolation(
+    node: SuperTreeNode,
+    merged: { id: string },
+    siblingGraph: SiblingGraph
+  ) {
+    const savedSiblings = siblingGraph.get(this.buildNodeKeyById(merged.id));
+    if (!savedSiblings?.length) return null;
+
+    const savedNext = savedSiblings[0];
+    const actualNext = helper.getNextSiblingNode(node);
+    if (!actualNext) return null;
+
+    const savedType = this.specDataManager.getSpecById(savedNext.id).type;
+    const actualType = this.specDataManager.getSpecById(actualNext.id).type;
+    if (savedType === actualType) return null;
+
+    return {
+      targetNode: node,
+      detail: {
+        invalidNode: this.specDataManager.getSpecById(merged.id),
+        savedNextNode: savedNext,
+        actualNextNode: actualNext,
+      },
     };
   }
 
