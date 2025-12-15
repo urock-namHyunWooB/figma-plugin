@@ -56,9 +56,9 @@ type ReactiveValue<T> =
     };
 
 // AST Node의 visible 속성 타입
+// 명시적 바인딩(props.visible)은 props에서 처리하므로 여기선 제외
 export type VisibleValue =
   | { type: "static"; value: boolean } // 항상 보임 or 항상 숨김
-  | { type: "prop"; name: string } // 특정 Prop과 직접 연결됨 (예: props.showIcon)
   | { type: "condition"; condition: ConditionNode }; // 복합 조건 (예: props.variant === 'hover')
 
 export type StyleObject = {

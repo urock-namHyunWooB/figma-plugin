@@ -223,30 +223,24 @@ class _TempAstTree {
   }
 
   /**
-   * 1. 명시적 바인딩 확인
-   * componentPropertyReferences.visible을 확인
-   * name 값이 존재하면 {type:'prop', name: name}
+   * visible 조건을 추론합니다.
    *
-   * 2. 불리언 속성 추론
-   * variant 속성중 True/False 같은 불리언 속성을 갖고
-   * 해당 variant에서 True일때만 노드가 보이고 False 일땐 노드가 없다면
-   * {type: prop, name: variant name}
-   *
-   * 3. mergedNode로 추론
-   * mergedNode 값에 따라서 추론
+   * 1. 명시적 바인딩 확인 → props.visible에서 처리하므로 null 반환
+   * 2. 모든 variant에서 존재 → { type: "static", value: true }
+   * 3. 불리언 prop으로 추론 → { type: "condition", condition }
+   * 4. mergedNode로 추론 → { type: "condition", condition }
    */
   private _inferVisible(targetNode: TempAstTree): VisibleValue | null {
     const componentPropertyDefinitions =
       this._specDataManager.getComponentPropertyDefinitions();
     const targetNodeData = this._specDataManager.getSpecById(targetNode.id);
 
+    // 1. 명시적 바인딩이 있으면 props.visible에서 처리 → null
     if (targetNodeData.componentPropertyReferences?.visible) {
-      return {
-        type: "prop",
-        name: targetNodeData.componentPropertyReferences.visible,
-      };
+      return null;
     }
 
+    // 2. 모든 variant에서 존재하면 항상 보임
     if (
       targetNode.mergedNode.length ===
       this._specDataManager.getRenderTree().children.length
@@ -259,17 +253,21 @@ class _TempAstTree {
 
     if (!componentPropertyDefinitions) return null;
 
-    //TODO 여기 로직 맞는지 검증 한번 해봐야함.
+    // 3. 불리언 prop으로 추론 (True일 때만 보이는 경우)
     const booleanProps = helper.findBooleanVariantProps(
       componentPropertyDefinitions
     );
     for (const boolPropName of booleanProps) {
       if (this._isVisibleOnlyWhenBooleanTrue(targetNode, boolPropName)) {
-        return { type: "prop", name: boolPropName };
+        // 불리언 조건으로 변환: props.boolPropName === 'True'
+        return {
+          type: "condition",
+          condition: helper.createBinaryCondition(boolPropName, "True"),
+        };
       }
     }
 
-    // 3. mergedNode로 추론 (일부 variant에서만 존재하는 경우)
+    // 4. mergedNode로 추론 (일부 variant에서만 존재하는 경우)
     const condition = this._inferConditionFromMergedNode(targetNode);
     if (condition) {
       return { type: "condition", condition };
