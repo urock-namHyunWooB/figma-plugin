@@ -160,6 +160,14 @@ class _FinalAstTree {
   }
 
   /**
+   * State prop을 pseudo-class 스타일로 변환합니다.
+   * Option C (하이브리드): 스타일 분석 후 최적 처리
+   *
+   * 1. State prop 이름 다양성 처리 (State, states, Disabled 등)
+   * 2. CSS pseudo로 변환 가능한 것 / 불가능한 것 구분
+   * 3. 복합 조건: 같은 스타일이면 base로, 다르면 State 제거 후 dynamic 유지
+   */
+  /**
    * Slot 후보 Props 찾기 (BOOLEAN 또는 True/False VARIANT)
    */
   private _findSlotCandidateProps(
@@ -542,6 +550,164 @@ class _FinalAstTree {
   }
 
   private _refineStateProp(astTree: FinalAstTree) {
+    // State → pseudo-class 매핑 (null: base, "keep": prop 유지)
+    const STATE_TO_PSEUDO: Record<string, string | null | "keep"> = {
+      // base로 이동
+      Default: null,
+      default: null,
+      // pseudo로 변환
+      Hover: ":hover",
+      hover: ":hover",
+      Pressed: ":active",
+      Active: ":active",
+      active: ":active",
+      Focused: ":focus",
+      Focus: ":focus",
+      focus: ":focus",
+      Disabled: ":disabled",
+      disabled: ":disabled",
+      disable: ":disabled",
+      // CSS로 변환 불가 → prop 유지
+      loading: "keep",
+      Loading: "keep",
+    };
+
+    // State prop 이름 후보들
+    const STATE_PROP_NAMES = ["state", "State", "states", "States"];
+
+    // 1. 루트 props에서 State prop 찾기 및 처리
+    let statePropName: string | null = null;
+    for (const name of STATE_PROP_NAMES) {
+      if (name in astTree.props) {
+        statePropName = name;
+        break;
+      }
+    }
+
+    // State prop이 있으면 제거 (단, keep 값만 있으면 유지)
+    if (statePropName) {
+      const stateProp = astTree.props[statePropName] as any;
+      const stateOptions =
+        typeof stateProp === "object" && stateProp?.variantOptions
+          ? stateProp.variantOptions
+          : [];
+      const hasKeepOnly =
+        stateOptions.length > 0 &&
+        stateOptions.every((v: string) => STATE_TO_PSEUDO[v] === "keep");
+
+      if (!hasKeepOnly) {
+        delete astTree.props[statePropName];
+      }
+    }
+
+    // State 조건 패턴 (props.state, props.State, props.states 등)
+    const stateConditionPattern =
+      /props\.(?:state|State|states|States)\s*===\s*['"](\w+)['"]/;
+
+    // 2. 모든 노드 순회하며 dynamic style 처리
+    traverseBFS(astTree, (node) => {
+      if (!node.style.dynamic || node.style.dynamic.length === 0) return;
+
+      const newDynamic: typeof node.style.dynamic = [];
+      const pseudo: Record<string, Record<string, any>> = {};
+
+      // 복합 조건에서 State 포함된 것들을 그룹핑 (스타일 비교용)
+      const stateComplexStyles: Array<{
+        condition: any;
+        style: Record<string, any>;
+        stateValue: string;
+      }> = [];
+
+      for (const dynamicStyle of node.style.dynamic) {
+        const conditionCode = generate(dynamicStyle.condition);
+
+        // State 단독 조건인지 확인
+        const stateOnlyMatch = conditionCode.match(
+          /^props\.(?:state|State|states|States)\s*===\s*['"](\w+)['"]$/
+        );
+
+        if (stateOnlyMatch) {
+          const stateValue = stateOnlyMatch[1];
+          const pseudoClass = STATE_TO_PSEUDO[stateValue];
+
+          if (pseudoClass === "keep") {
+            // loading 등 → dynamic 유지
+            newDynamic.push(dynamicStyle);
+          } else if (pseudoClass === null) {
+            // Default → base로 이동
+            node.style.base = { ...node.style.base, ...dynamicStyle.style };
+          } else if (pseudoClass) {
+            // Hover, Pressed 등 → pseudo로 이동
+            pseudo[pseudoClass] = {
+              ...(pseudo[pseudoClass] || {}),
+              ...dynamicStyle.style,
+            };
+          }
+          continue;
+        }
+
+        // 복합 조건에서 State 포함 여부 확인
+        const stateMatch = conditionCode.match(stateConditionPattern);
+
+        if (stateMatch) {
+          const stateValue = stateMatch[1];
+          stateComplexStyles.push({
+            condition: dynamicStyle.condition,
+            style: dynamicStyle.style,
+            stateValue,
+          });
+        } else {
+          // State 관련 없는 조건은 그대로 유지
+          newDynamic.push(dynamicStyle);
+        }
+      }
+
+      // 3. 복합 조건 처리: 스타일 비교
+      if (stateComplexStyles.length > 0) {
+        // 모든 복합 조건의 스타일이 동일한지 확인
+        const firstStyle = JSON.stringify(stateComplexStyles[0].style);
+        const allSameStyle = stateComplexStyles.every(
+          (s) => JSON.stringify(s.style) === firstStyle
+        );
+
+        if (allSameStyle) {
+          // 모두 같은 스타일 → base로 이동
+          node.style.base = {
+            ...node.style.base,
+            ...stateComplexStyles[0].style,
+          };
+        } else {
+          // 다른 스타일 → State 제거 후 dynamic 유지
+          for (const complexStyle of stateComplexStyles) {
+            const pseudoClass = STATE_TO_PSEUDO[complexStyle.stateValue];
+
+            if (pseudoClass === "keep") {
+              // loading 등은 그대로 유지
+              newDynamic.push({
+                condition: complexStyle.condition,
+                style: complexStyle.style,
+              });
+            } else if (pseudoClass && pseudoClass !== null) {
+              // pseudo로 이동 (조건 제거)
+              pseudo[pseudoClass] = {
+                ...(pseudo[pseudoClass] || {}),
+                ...complexStyle.style,
+              };
+            } else {
+              // Default → base로
+              node.style.base = { ...node.style.base, ...complexStyle.style };
+            }
+          }
+        }
+      }
+
+      // 결과 적용
+      node.style.dynamic = newDynamic;
+      if (Object.keys(pseudo).length > 0) {
+        node.style.pseudo = pseudo as any;
+      }
+    });
+
     return astTree;
   }
 

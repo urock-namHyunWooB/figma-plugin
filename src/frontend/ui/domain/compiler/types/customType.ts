@@ -61,6 +61,8 @@ export type VisibleValue =
   | { type: "static"; value: boolean } // 항상 보임 or 항상 숨김
   | { type: "condition"; condition: ConditionNode }; // 복합 조건 (예: props.variant === 'hover')
 
+export type PseudoClass = ":hover" | ":active" | ":focus" | ":disabled";
+
 export type StyleObject = {
   base: Record<string, any>;
 
@@ -68,6 +70,12 @@ export type StyleObject = {
     condition: ConditionNode;
     style: Record<string, any>; // 예: { backgroundColor: 'blue' }
   }>;
+
+  /**
+   * CSS pseudo-class 스타일
+   * State prop에서 변환됨 (Hover → :hover, Pressed → :active 등)
+   */
+  pseudo?: Partial<Record<PseudoClass, Record<string, any>>>;
 };
 
 export interface TempAstTree extends SuperTreeNode {
