@@ -134,6 +134,12 @@ class _FinalAstTree {
     return astTree;
   }
 
+  /**
+   * 모든 node 순회해서 props에 해당하는 유효하지 않는 name을 카멜케이스로 바꾼다.
+   * props, visible 탐색
+   * @param astTree
+   * @private
+   */
   private _normalizePropsName(astTree: FinalAstTree) {
     const propsHashMap = Object.entries(astTree.props)
       .map((value) => {
@@ -155,19 +161,17 @@ class _FinalAstTree {
         if (propsHashMap[value]) {
           propsHashMap[value].push(node.props);
         }
+      }
 
-        if (node.visible.type === "condition") {
-          const names = [
-            ...generate(node.visible.condition).matchAll(
-              /\.([A-Za-z_$][\w$]*)/g
-            ),
-          ].map((m) => m[1]);
+      if (node.visible.type === "condition") {
+        const names = [
+          ...generate(node.visible.condition).matchAll(/\.([A-Za-z_$][\w$]*)/g),
+        ].map((m) => m[1]);
 
-          for (const name of names) {
-            if (propsHashMap[name]) {
-              propsHashMap[name].push(node.visible);
-              break;
-            }
+        for (const name of names) {
+          if (propsHashMap[name]) {
+            propsHashMap[name].push(node.visible);
+            break;
           }
         }
       }
@@ -185,7 +189,6 @@ class _FinalAstTree {
           estraverse.traverse(value.condition, {
             enter(node) {
               if (node.type === "Identifier") {
-                console.log(toCamelCase(node.name));
                 node.name = toCamelCase(node.name);
               }
             },
@@ -195,8 +198,6 @@ class _FinalAstTree {
             value[key] = toCamelCase(value[key]);
           });
         }
-
-        console.log(value);
       });
     }
 
