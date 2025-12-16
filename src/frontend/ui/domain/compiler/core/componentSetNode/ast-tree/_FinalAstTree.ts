@@ -3,6 +3,12 @@ import { FinalAstTree, MergedNode, StyleObject, TempAstTree } from "@compiler";
 import HelperManager from "@compiler/manager/HelperManager";
 import { traverseTree } from "@figma/eslint-plugin-figma-plugins/dist/util";
 import { traverseBFS } from "@compiler/utils/traverse";
+import { toCamelCase } from "@compiler/utils/normalizeString";
+import { generate } from "astring";
+import { value } from "happy-dom/lib/PropertySymbol";
+
+import * as estraverse from "estraverse";
+import debug from "@compiler/manager/DebuggingManager";
 
 /**
  * 값을 목적에 맞게 가공하는 역할
@@ -113,6 +119,87 @@ class _FinalAstTree {
    * @private
    */
   private updateProps(astTree: FinalAstTree) {
+    astTree = this._normalizePropsName(astTree);
+    astTree = this._refineStateProp(astTree);
+  }
+
+  private _refineStateProp(astTree: FinalAstTree) {
+    traverseBFS(astTree, (node) => {
+      if (node.visible.type === "condition") {
+        // console.log(node.type, node.props, generate(node.visible.condition));
+      } else {
+        // console.log(node.type, node.props, node.visible);
+      }
+    });
+    return astTree;
+  }
+
+  private _normalizePropsName(astTree: FinalAstTree) {
+    const propsHashMap = Object.entries(astTree.props)
+      .map((value) => {
+        return value[0];
+      })
+      .reduce(
+        (acc, cur) => {
+          acc[cur] = [];
+          return acc;
+        },
+        {} as Record<string, any[]>
+      );
+
+    traverseBFS(astTree, (node) => {
+      for (const prop in node.props) {
+        if (node.type === "COMPONENT") continue;
+
+        const value = node.props[prop];
+        if (propsHashMap[value]) {
+          propsHashMap[value].push(node.props);
+        }
+
+        if (node.visible.type === "condition") {
+          const names = [
+            ...generate(node.visible.condition).matchAll(
+              /\.([A-Za-z_$][\w$]*)/g
+            ),
+          ].map((m) => m[1]);
+
+          for (const name of names) {
+            if (propsHashMap[name]) {
+              propsHashMap[name].push(node.visible);
+              break;
+            }
+          }
+        }
+      }
+    });
+
+    for (const propsKey in astTree.props) {
+      astTree.props[toCamelCase(propsKey)] = astTree.props[propsKey];
+      delete astTree.props[propsKey];
+    }
+
+    for (const propsKey in propsHashMap) {
+      propsHashMap[propsKey].forEach((value) => {
+        //visible condition 처리
+        if (value.type && value.condition) {
+          estraverse.traverse(value.condition, {
+            enter(node) {
+              if (node.type === "Identifier") {
+                console.log(toCamelCase(node.name));
+                node.name = toCamelCase(node.name);
+              }
+            },
+          });
+        } else {
+          Object.keys(value).forEach((key) => {
+            value[key] = toCamelCase(value[key]);
+          });
+        }
+
+        console.log(value);
+      });
+    }
+
     return astTree;
   }
 

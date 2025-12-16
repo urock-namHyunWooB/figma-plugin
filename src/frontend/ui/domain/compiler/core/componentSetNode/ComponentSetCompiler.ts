@@ -36,6 +36,7 @@ class ComponentSetCompiler {
       specDataManager
     ));
     const refinedProps = RefindProps.refinedProps;
+
     const superNodeTree = this.CreateSuperTree.getSuperTree();
 
     this.CreateFinalAstTree = new CreateAstTree(
@@ -43,9 +44,6 @@ class ComponentSetCompiler {
       superNodeTree,
       refinedProps
     );
-
-    debug.tree(this.CreateFinalAstTree.finalAstTree);
-    // console.log("finalAstTree", this.CreateFinalAstTree.finalAstTree);
   }
 
   private extractPropsDef(
