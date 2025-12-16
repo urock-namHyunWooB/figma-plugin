@@ -128,9 +128,13 @@ class _FinalAstTree {
   private _refineStateProp(astTree: FinalAstTree) {
     traverseBFS(astTree, (node) => {
       if (node.visible.type === "condition") {
-        console.log(node.type, node.props, generate(node.visible.condition));
+        console.log(
+          node.props,
+          node.style.dynamic.map((value) => generate(value.condition)),
+          generate(node.visible.condition)
+        );
       } else {
-        console.log(node.type, node.props, node.visible);
+        console.log(node.type, node.props, node.style, node.visible);
       }
     });
     return astTree;

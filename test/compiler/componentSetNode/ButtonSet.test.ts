@@ -1,10 +1,12 @@
 import { describe, test, expect } from "vitest";
+import { generate } from "astring";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import RefineProps from "@compiler/core/componentSetNode/RefineProps";
 import CreateAstTree from "@compiler/core/componentSetNode/ast-tree/CreateAstTree";
 import CreateSuperTree from "@compiler/core/componentSetNode/super-tree/CreateSuperTree";
 import { FinalAstTree, SuperTreeNode } from "@compiler";
+import { traverseBFS } from "@compiler/utils/traverse";
 
 // Vite의 import.meta.glob으로 모든 JSON 파일 동적 로드
 // @ts-ignore
@@ -88,10 +90,24 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
     });
   });
 
-  test("props에 state는 없어야 한다.", () => {
+  test("props에 state는 없어야 하고 모든노드에서 바인딩 된 state도 삭제 되어야 한다.", () => {
     const rootProps = createFinalAstTree.finalAstTree.props;
+
+    // 1. 루트 props에서 state 키 없어야 함
     expect(rootProps).not.toHaveProperty("state");
     expect(rootProps).not.toHaveProperty("State");
+    expect(rootProps).not.toHaveProperty("States");
+    expect(rootProps).not.toHaveProperty("states");
+
+    // 2. 모든 노드의 visible.condition에서 state 참조 없어야 함
+    const statePattern = /props\.(state|State|States|states)\b/i;
+
+    traverseBFS(createFinalAstTree.finalAstTree, (node) => {
+      if (node.visible.type === "condition") {
+        const conditionStr = generate(node.visible.condition);
+        expect(conditionStr).not.toMatch(statePattern);
+      }
+    });
   });
 
   test("props의 키는 카멜케이스로 유효한 형태여야 한다.", () => {
