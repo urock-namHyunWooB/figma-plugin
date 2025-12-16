@@ -128,9 +128,9 @@ class _FinalAstTree {
   private _refineStateProp(astTree: FinalAstTree) {
     traverseBFS(astTree, (node) => {
       if (node.visible.type === "condition") {
-        // console.log(node.type, node.props, generate(node.visible.condition));
+        console.log(node.type, node.props, generate(node.visible.condition));
       } else {
-        // console.log(node.type, node.props, node.visible);
+        console.log(node.type, node.props, node.visible);
       }
     });
     return astTree;
@@ -143,52 +143,48 @@ class _FinalAstTree {
    * @private
    */
   private _normalizePropsName(astTree: FinalAstTree) {
-    const propsHashMap = Object.entries(astTree.props)
-      .map((value) => {
-        return value[0];
-      })
-      .reduce(
-        (acc, cur) => {
-          acc[cur] = [];
-          return acc;
-        },
-        {} as Record<string, any[]>
-      );
+    const propKeys = Object.keys(astTree.props);
+    const propRefs: Record<string, any[]> = Object.fromEntries(
+      propKeys.map((key) => [key, []])
+    );
 
+    // 1. prop을 참조하는 노드 수집
     traverseBFS(astTree, (node) => {
-      for (const prop in node.props) {
-        if (node.type === "COMPONENT") continue;
+      if (node.type === "COMPONENT") return;
 
-        const value = node.props[prop];
-        if (propsHashMap[value]) {
-          propsHashMap[value].push(node.props);
+      // props 값에서 참조 수집
+      for (const key in node.props) {
+        const value = node.props[key];
+        if (propRefs[value]) {
+          propRefs[value].push(node.props);
         }
       }
 
+      // visible condition에서 참조 수집
       if (node.visible.type === "condition") {
-        const names = [
-          ...generate(node.visible.condition).matchAll(/\.([A-Za-z_$][\w$]*)/g),
-        ].map((m) => m[1]);
+        const code = generate(node.visible.condition);
+        const identifiers = [...code.matchAll(/\.([A-Za-z_$][\w$]*)/g)].map(
+          (m) => m[1]
+        );
 
-        for (const name of names) {
-          if (propsHashMap[name]) {
-            propsHashMap[name].push(node.visible);
-            break;
-          }
+        const matchedKey = identifiers.find((name) => propRefs[name]);
+        if (matchedKey) {
+          propRefs[matchedKey].push(node.visible);
         }
       }
     });
 
-    for (const propsKey in astTree.props) {
-      astTree.props[toCamelCase(propsKey)] = astTree.props[propsKey];
-      delete astTree.props[propsKey];
+    // 2. 루트 props 키를 camelCase로 변환
+    for (const key of propKeys) {
+      astTree.props[toCamelCase(key)] = astTree.props[key];
+      delete astTree.props[key];
     }
 
-    for (const propsKey in propsHashMap) {
-      propsHashMap[propsKey].forEach((value) => {
-        //visible condition 처리
-        if (value.type && value.condition) {
-          estraverse.traverse(value.condition, {
+    // 3. 수집된 참조들도 camelCase로 변환
+    for (const key in propRefs) {
+      for (const ref of propRefs[key]) {
+        if (ref.type === "condition" && ref.condition) {
+          estraverse.traverse(ref.condition, {
             enter(node) {
               if (node.type === "Identifier") {
                 node.name = toCamelCase(node.name);
@@ -196,11 +192,11 @@ class _FinalAstTree {
             },
           });
         } else {
-          Object.keys(value).forEach((key) => {
-            value[key] = toCamelCase(value[key]);
-          });
+          for (const k of Object.keys(ref)) {
+            ref[k] = toCamelCase(ref[k]);
+          }
         }
-      });
+      }
     }
 
     return astTree;
