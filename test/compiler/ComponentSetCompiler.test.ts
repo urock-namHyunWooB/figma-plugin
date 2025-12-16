@@ -1,6 +1,7 @@
 import { describe, expect } from "vitest";
 import tadaButtonMockData from "../fixtures/button/tadaButton.json";
 import taptapButtonSampleMockData from "../fixtures/button/taptapButton_sample.json";
+import urockButtonSampleMockData from "../fixtures/button/urockButton.json";
 
 import airtableButtonMockData from "../fixtures/button/airtableButton.json";
 
@@ -1051,6 +1052,63 @@ describe("astTree 최종 ASTTree 테스트", () => {
         "INSTANCE"
       );
       expect(iconNodes).toBe(1);
+    });
+
+    test("ICON 다음에 Text 노드가 나온다.", () => {
+      const textNode = collectNodesByType(
+        createFinalAstTree.finalAstTree,
+        "TEXT"
+      )[0];
+      const parent = textNode?.parent;
+      expect(parent).toBeDefined();
+
+      const siblings = parent!.children.filter(
+        (child): child is SuperTreeNode =>
+          child !== undefined &&
+          (child.type === "INSTANCE" || child.type === "TEXT")
+      );
+
+      expect(siblings.length).toBeGreaterThanOrEqual(2);
+      expect(siblings[0]?.type).toBe("INSTANCE");
+      expect(siblings[1]?.type).toBe("TEXT");
+    });
+  });
+
+  describe("urockButton", () => {
+    const specDataManager = new SpecDataManager(
+      urockButtonSampleMockData as any
+    );
+    const renderTree = specDataManager.getRenderTree();
+
+    const matcher = new NodeMatcher(specDataManager);
+    const createSuperTree = new CreateSuperTree(
+      renderTree,
+      specDataManager,
+      matcher
+    );
+
+    const RefindProps = new RefineProps(renderTree, specDataManager);
+
+    const createFinalAstTree = new CreateAstTree(
+      specDataManager,
+      createSuperTree.getSuperTree(),
+      RefindProps.refinedProps
+    );
+
+    test("children중에 Text 타입은 하나여야 한다.", () => {
+      const textNodes = countNodesByType(
+        createFinalAstTree.finalAstTree,
+        "TEXT"
+      );
+      expect(textNodes).toBe(1);
+    });
+
+    test("children중에 ICON 타입은 2개여야 한다.", () => {
+      const iconNodes = countNodesByType(
+        createFinalAstTree.finalAstTree,
+        "INSTANCE"
+      );
+      expect(iconNodes).toBe(2);
     });
 
     test("ICON 다음에 Text 노드가 나온다.", () => {

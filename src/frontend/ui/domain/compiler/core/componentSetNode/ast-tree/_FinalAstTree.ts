@@ -121,6 +121,8 @@ class _FinalAstTree {
   private updateProps(astTree: FinalAstTree) {
     astTree = this._normalizePropsName(astTree);
     astTree = this._refineStateProp(astTree);
+
+    return astTree;
   }
 
   private _refineStateProp(astTree: FinalAstTree) {

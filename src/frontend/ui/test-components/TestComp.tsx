@@ -4,6 +4,7 @@ import FigmaCompiler from "@frontend/ui/domain/compiler";
 import taptapButtonSample from "../../../../test/fixtures/button/taptapButton_sample.json";
 import tadaButtonSample from "../../../../test/fixtures/button/tadaButton.json";
 import airtableButton from "../../../../test/fixtures/button/airtableButton.json";
+import urockButton from "../../../../test/fixtures/button/urockButton.json";
 
 export function TestComp() {
   const [tsxCode, setTsxCode] = useState<string>("");
@@ -18,8 +19,9 @@ export function TestComp() {
     async function compile() {
       if (codeRef.current) return;
       try {
+        codeRef.current = new FigmaCompiler(urockButton);
         // codeRef.current = new FigmaCompiler(taptapButtonSample);
-        codeRef.current = new FigmaCompiler(tadaButtonSample);
+        // codeRef.current = new FigmaCompiler(tadaButtonSample);
         // codeRef.current = new FigmaCompiler(airtableButton);
 
         return;
