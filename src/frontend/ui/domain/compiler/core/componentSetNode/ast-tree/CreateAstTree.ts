@@ -32,8 +32,8 @@ class CreateAstTree {
       refinedProps
     );
 
-    console.log(this._TempAstTree.tempAstTree);
-    debug.tree(this._TempAstTree.tempAstTree);
+    // console.log(this._TempAstTree.tempAstTree);
+    // debug.tree(this._TempAstTree.tempAstTree);
 
     this._FinalAstTree = new _FinalAstTree(
       specDataManager,

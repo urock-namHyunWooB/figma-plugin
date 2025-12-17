@@ -5,6 +5,10 @@ import taptapButtonSample from "../../../../test/fixtures/button/taptapButton_sa
 import tadaButtonSample from "../../../../test/fixtures/button/tadaButton.json";
 import airtableButton from "../../../../test/fixtures/button/airtableButton.json";
 import urockButton from "../../../../test/fixtures/button/urockButton.json";
+import taptapButton from "../../../../test/fixtures/button/taptapButton.json";
+import dialogFixture from "../../../../test/fixtures/dialog.json";
+import paginationFixture from "../../../../test/fixtures/pagination.json";
+import selectsFixture from "../../../../test/fixtures/selects.json";
 
 export function TestComp() {
   const [tsxCode, setTsxCode] = useState<string>("");
@@ -20,23 +24,12 @@ export function TestComp() {
       if (codeRef.current) return;
       try {
         // codeRef.current = new FigmaCompiler(urockButton);
-        codeRef.current = new FigmaCompiler(taptapButtonSample);
+        // codeRef.current = new FigmaCompiler(taptapButtonSample);
         // codeRef.current = new FigmaCompiler(tadaButtonSample);
         // codeRef.current = new FigmaCompiler(airtableButton);
+        codeRef.current = new FigmaCompiler(taptapButton);
 
         return;
-        setTsxCode(codeRef.current);
-
-        // 컴파일해서 렌더링도 시도
-        try {
-          const Component = await compileReactComponent(code);
-          setCompiledComponent(() => Component);
-          setError(null);
-        } catch (compileError) {
-          setError(
-            compileError instanceof Error ? compileError.message : "컴파일 실패"
-          );
-        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "알 수 없는 오류");
       }
