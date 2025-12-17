@@ -23,24 +23,37 @@ export function TestComp() {
     async function compile() {
       if (codeRef.current) return;
       try {
-        // codeRef.current = new FigmaCompiler(urockButton);
-        // codeRef.current = new FigmaCompiler(taptapButtonSample);
-        codeRef.current = new FigmaCompiler(taptapButton);
-        // codeRef.current = new FigmaCompiler(tadaButtonSample);
-        // codeRef.current = new FigmaCompiler(urockButton);
-        // codeRef.current = new FigmaCompiler(airtableButton);
-        // codeRef.current = new FigmaCompiler(taptapButtonSample);
-        // codeRef.current = new FigmaCompiler(tadaButtonSample);
-        // codeRef.current = new FigmaCompiler(airtableButton);
-        // codeRef.current = new FigmaCompiler(taptapButton);
+        setError(null);
+        setTsxCode("");
+        setCompiledComponent(null);
 
-        return;
+        // 컴파일러 생성
+        const compiler = new FigmaCompiler(taptapButton);
+        // codeRef.current = new FigmaCompiler(urockButton);
+        // codeRef.current = new FigmaCompiler(taptapButtonSample);
+        // codeRef.current = new FigmaCompiler(tadaButtonSample);
+        // codeRef.current = new FigmaCompiler(airtableButton);
+
+        // 코드 생성
+        const generatedCode = compiler.getGeneratedCode("Button");
+        if (!generatedCode) {
+          throw new Error("코드 생성 실패");
+        }
+
+        setTsxCode(generatedCode);
+
+        // 컴포넌트 컴파일
+        const Component = await compileReactComponent(generatedCode);
+        setCompiledComponent(() => Component);
+
+        codeRef.current = compiler;
       } catch (err) {
         setError(err instanceof Error ? err.message : "알 수 없는 오류");
+        console.error("Compilation error:", err);
       }
     }
     compile();
-  }, [codeRef]);
+  }, []);
 
   return (
     <div style={{ padding: "20px", fontFamily: "monospace" }}>
@@ -71,7 +84,7 @@ export function TestComp() {
               backgroundColor: "#fff",
             }}
           >
-            <CompiledComponent text={"Test"} size={"small"} />
+            <CompiledComponent size={"Small"} />
           </div>
         </div>
       )}

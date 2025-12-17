@@ -9,27 +9,32 @@ let emotionCx: any = null;
 
 async function loadEmotion() {
   if (emotionModule) return emotionModule;
+  
+  // 생성된 코드는 @emotion/css를 사용하므로, @emotion/css를 먼저 로드
   try {
-    emotionModule = await import("@emotion/react");
-    emotionCss = emotionModule.css;
-    emotionJsx = emotionModule.jsx;
-    // @emotion/react에는 cx가 없을 수 있으므로 @emotion/css에서 가져오기 시도
+    const emotionCssModule = await import("@emotion/css");
+    emotionCss = emotionCssModule.css; // 클래스 이름 문자열을 반환하는 함수
+    emotionCx = emotionCssModule.cx;
+    
+    // @emotion/react도 로드 시도 (jsx runtime용)
     try {
-      const emotionCssModule = await import("@emotion/css");
-      emotionCx = emotionCssModule.cx;
+      emotionModule = await import("@emotion/react");
+      emotionJsx = emotionModule.jsx;
     } catch (e) {
-      // cx가 없으면 fallback
-      emotionCx = (...args: any[]) => args.filter(Boolean).join(" ");
-    }
-    return emotionModule;
-  } catch (e) {
-    // @emotion/react가 없으면 @emotion/css 시도
-    try {
-      const emotionCssModule = await import("@emotion/css");
-      emotionCss = emotionCssModule.css;
-      emotionCx = emotionCssModule.cx;
+      // @emotion/react가 없어도 @emotion/css만으로 작동 가능
       emotionJsx = null;
-      return emotionCssModule;
+    }
+    
+    return emotionCssModule;
+  } catch (e) {
+    // @emotion/css가 없으면 @emotion/react 시도
+    try {
+      emotionModule = await import("@emotion/react");
+      emotionCss = emotionModule.css;
+      emotionJsx = emotionModule.jsx;
+      // @emotion/react에는 cx가 없을 수 있으므로 fallback
+      emotionCx = (...args: any[]) => args.filter(Boolean).join(" ");
+      return emotionModule;
     } catch (e2) {
       // emotion이 설치되지 않은 경우 fallback
       emotionCss = (styles: any) => styles;

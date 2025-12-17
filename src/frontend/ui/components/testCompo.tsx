@@ -2,7 +2,6 @@ import React from "react";
 import { css, cx } from "@emotion/css";
 export interface ButtonProps {
   size?: "Large" | "Medium" | "Small";
-  state?: "Default" | "Disabled" | "Hover" | "Pressed";
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
 }
@@ -14,6 +13,7 @@ export default function Button(props: ButtonProps) {
       justifyContent: "center",
       alignItems: "center",
       borderRadius: "4px",
+      background: "var(--Primary-600, #15C5CE)",
     }),
     sizelargeSize: {
       Large: css({
@@ -25,20 +25,6 @@ export default function Button(props: ButtonProps) {
       }),
       Small: css({
         padding: "3px 4px",
-      }),
-    },
-    sizelargeState: {
-      Disabled: css({
-        background: "var(--Primary-300, #B0EBEC)",
-      }),
-      Pressed: css({
-        background: "var(--Primary-700, #00ABB6)",
-      }),
-      Hover: css({
-        background: "var(--Primary-500, #47CFD6)",
-      }),
-      Default: css({
-        background: "var(--Primary-600, #15C5CE)",
       }),
     },
     frame: css({
@@ -110,13 +96,7 @@ export default function Button(props: ButtonProps) {
     }),
   };
   return (
-    <div
-      className={cx(
-        styles.sizelarge,
-        styles.sizelargeSize[props.size],
-        styles.sizelargeState[props.state]
-      )}
-    >
+    <div className={cx(styles.sizelarge, styles.sizelargeSize[props.size])}>
       <div className={styles.frame}>
         {props.leftIcon}
         <span className={cx(styles.text, styles.textSize[props.size])} />
