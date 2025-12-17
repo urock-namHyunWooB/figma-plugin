@@ -5,6 +5,7 @@ import * as React from "react";
 let emotionModule: any = null;
 let emotionCss: any = null;
 let emotionJsx: any = null;
+let emotionCx: any = null;
 
 async function loadEmotion() {
   if (emotionModule) return emotionModule;
@@ -12,12 +13,30 @@ async function loadEmotion() {
     emotionModule = await import("@emotion/react");
     emotionCss = emotionModule.css;
     emotionJsx = emotionModule.jsx;
+    // @emotion/react에는 cx가 없을 수 있으므로 @emotion/css에서 가져오기 시도
+    try {
+      const emotionCssModule = await import("@emotion/css");
+      emotionCx = emotionCssModule.cx;
+    } catch (e) {
+      // cx가 없으면 fallback
+      emotionCx = (...args: any[]) => args.filter(Boolean).join(" ");
+    }
     return emotionModule;
   } catch (e) {
-    // emotion이 설치되지 않은 경우 fallback
-    emotionCss = (styles: any) => styles;
-    emotionJsx = null;
-    return null;
+    // @emotion/react가 없으면 @emotion/css 시도
+    try {
+      const emotionCssModule = await import("@emotion/css");
+      emotionCss = emotionCssModule.css;
+      emotionCx = emotionCssModule.cx;
+      emotionJsx = null;
+      return emotionCssModule;
+    } catch (e2) {
+      // emotion이 설치되지 않은 경우 fallback
+      emotionCss = (styles: any) => styles;
+      emotionCx = (...args: any[]) => args.filter(Boolean).join(" ");
+      emotionJsx = null;
+      return null;
+    }
   }
 }
 
@@ -38,11 +57,16 @@ export async function compileReactComponent(
     // export default ComponentName 형식 또는 export function ComponentName 형식 지원
     // 또는 function ComponentName ... export default ComponentName 형식 지원
     let componentName = "Component";
+    
+    // export default function ComponentName 형식을 먼저 체크 (function 키워드가 있으면 function을 캡처하지 않도록)
+    const exportDefaultFunctionMatch = code.match(/export\s+default\s+function\s+(\w+)\s*\(/);
     const exportDefaultMatch = code.match(/export\s+default\s+(\w+)/);
     const exportFunctionMatch = code.match(/export\s+function\s+(\w+)\s*\(/);
     const functionMatch = code.match(/function\s+(\w+)\s*\(/);
 
-    if (exportDefaultMatch) {
+    if (exportDefaultFunctionMatch) {
+      componentName = exportDefaultFunctionMatch[1];
+    } else if (exportDefaultMatch) {
       componentName = exportDefaultMatch[1];
     } else if (exportFunctionMatch) {
       componentName = exportFunctionMatch[1];
@@ -129,17 +153,20 @@ export async function compileReactComponent(
     const prevReact = (window as any).React;
     const prevUseState = (window as any).useState;
     const prevCss = (window as any).css;
+    const prevCx = (window as any).cx;
     const prevEmotionReact = (window as any).__EMOTION_REACT__;
 
     try {
       // emotion 모듈이 로드되었는지 확인
       const emotion = emotionModule;
       const cssFunction = emotionCss || ((styles: any) => styles);
+      const cxFunction = emotionCx || ((...args: any[]) => args.filter(Boolean).join(" "));
       const jsxFunction = emotionJsx;
 
       (window as any).React = React;
       (window as any).useState = React.useState;
       (window as any).css = cssFunction;
+      (window as any).cx = cxFunction;
 
       // emotion이 있으면 emotion의 jsx를 사용, 없으면 React.createElement 사용
       if (emotion && jsxFunction) {
@@ -193,6 +220,7 @@ export async function compileReactComponent(
         var React = window.React;
         var useState = window.useState;
         var css = window.css;
+        var cx = window.cx;
         ${emotionModule && emotionJsx ? "var jsx = window.jsx; var jsxs = window.jsxs;" : ""}
         
         ${transformedWithEmotion || transformed}
@@ -225,6 +253,11 @@ export async function compileReactComponent(
         (window as any).css = prevCss;
       } else {
         delete (window as any).css;
+      }
+      if (prevCx !== undefined) {
+        (window as any).cx = prevCx;
+      } else {
+        delete (window as any).cx;
       }
       if (prevEmotionReact !== undefined) {
         (window as any).__EMOTION_REACT__ = prevEmotionReact;
