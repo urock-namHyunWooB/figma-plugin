@@ -121,20 +121,19 @@ class _FinalAstTree {
   private updateProps(astTree: FinalAstTree) {
     astTree = this._normalizePropsName(astTree);
     astTree = this._refineStateProp(astTree);
+    astTree = this._refineComponentLikeProp(astTree);
 
+    return astTree;
+  }
+
+  private _refineComponentLikeProp(astTree: FinalAstTree) {
     return astTree;
   }
 
   private _refineStateProp(astTree: FinalAstTree) {
     traverseBFS(astTree, (node) => {
       if (node.visible.type === "condition") {
-        console.log(
-          node.props,
-          node.style.dynamic.map((value) => generate(value.condition)),
-          generate(node.visible.condition)
-        );
       } else {
-        console.log(node.type, node.props, node.style, node.visible);
       }
     });
     return astTree;

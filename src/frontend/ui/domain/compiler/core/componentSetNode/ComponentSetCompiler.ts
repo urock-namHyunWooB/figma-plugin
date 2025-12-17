@@ -40,13 +40,13 @@ class ComponentSetCompiler {
 
     const superNodeTree = this.CreateSuperTree.getSuperTree();
 
-    this.CreateFinalAstTree = new CreateAstTree(
+    const createFinalAstTree = (this.CreateFinalAstTree = new CreateAstTree(
       specDataManager,
       superNodeTree,
       refinedProps
-    );
+    ));
 
-    new ReactGenerator();
+    new ReactGenerator(createFinalAstTree.finalAstTree);
   }
 
   private extractPropsDef(
