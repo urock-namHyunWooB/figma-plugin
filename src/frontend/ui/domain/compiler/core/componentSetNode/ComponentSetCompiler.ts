@@ -7,6 +7,7 @@ import CreateSuperTree from "./super-tree/CreateSuperTree";
 import RefineProps from "@compiler/core/componentSetNode/RefineProps";
 import CreateAstTree from "./ast-tree/CreateAstTree";
 import debug from "@compiler/manager/DebuggingManager";
+import ReactGenerator from "@compiler/core/componentSetNode/react-generator/ReactGenerator";
 
 type PropsDef = Record<string, any>;
 
@@ -44,6 +45,8 @@ class ComponentSetCompiler {
       superNodeTree,
       refinedProps
     );
+
+    new ReactGenerator();
   }
 
   private extractPropsDef(
