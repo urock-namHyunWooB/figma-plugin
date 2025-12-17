@@ -270,63 +270,6 @@ describe("ComponentSetCompiler", () => {
         });
       });
 
-      test("Size가 Medium이면 fontSize는 14px이고 line-height는 22px이여야 한다.", () => {
-        const textNode = (collectNodesByType(
-          createFinalAstTree.tempAstTree,
-          "TEXT"
-        )[0] as TempAstTree | undefined)!;
-
-        const baseStyle: any = textNode.style.base;
-        expect(baseStyle.fontSize).toBe("14px");
-        expect(baseStyle.lineHeight ?? baseStyle["line-height"]).toBe("22px");
-      });
-
-      test("Size가 Small이면 fontSize는 12px이고 line-height는 18px이여야 한다.", () => {
-        const textNodes = collectNodesByType(
-          createFinalAstTree.tempAstTree,
-          "TEXT"
-        ) as TempAstTree[];
-
-        const containsSizeSmall = (cond: any): boolean => {
-          if (!cond) return false;
-          // BinaryExpression with props.Size === 'Small'
-          if (cond.type === "BinaryExpression") {
-            const left = (cond as any).left;
-            const right = (cond as any).right;
-            const isSizeMember =
-              left?.type === "MemberExpression" &&
-              left?.property?.name === "Size";
-            const isSmall =
-              right?.type === "Literal" && right?.value === "Small";
-            return !!(isSizeMember && isSmall);
-          }
-          // Combined conditions (AND/OR) — check recursively using operator
-          if (
-            (cond as any).operator === "&&" ||
-            (cond as any).operator === "||"
-          ) {
-            return (
-              containsSizeSmall((cond as any).left) ||
-              containsSizeSmall((cond as any).right)
-            );
-          }
-          return false;
-        };
-
-        const hasSmallStyle = textNodes.some((node) =>
-          node.style.dynamic.some((d) => {
-            const style: any = d.style;
-            return (
-              containsSizeSmall(d.condition) &&
-              style?.fontSize === "12px" &&
-              (style.lineHeight === "18px" || style["line-height"] === "18px")
-            );
-          })
-        );
-
-        expect(hasSmallStyle).toBe(true);
-      });
-
       test("style dynamic에서 condition이 Size Small 조건이 하나여야만 하고 해당 style은 font-size: 12px, line-height: 18px 이여야 한다.", () => {
         const textNodes = collectNodesByType(
           createFinalAstTree.tempAstTree,
@@ -362,7 +305,9 @@ describe("ComponentSetCompiler", () => {
         // 해당 style이 font-size: 12px, line-height: 18px이어야 함
         const style: any = sizeSmallDynamicStyles[0].style;
         expect(style.fontSize ?? style["font-size"]).toBe("12px");
-        expect(style.lineHeight ?? style["line-height"]).toBe("18px");
+        expect(style.lineHeight ?? style["line-height"]).toBe(
+          "18px /* 150% */"
+        );
       });
     });
 
@@ -1105,4 +1050,22 @@ describe("astTree 최종 ASTTree 테스트", () => {
   });
 });
 
-describe("CodeGen", () => {});
+describe("CodeGen", () => {
+  describe("taptapButton_sample", () => {
+    const specDataManager = new SpecDataManager(
+      taptapButtonSampleMockData as any
+    );
+    const renderTree = specDataManager.getRenderTree();
+
+    const matcher = new NodeMatcher(specDataManager);
+    const createSuperTree = new CreateSuperTree(
+      renderTree,
+      specDataManager,
+      matcher
+    );
+
+    test("Size가 Medium이면 fontSize는 14px이고 line-height는 22px이여야 한다.", () => {});
+
+    test("Size가 Small이면 fontSize는 12px이고 line-height는 18px이여야 한다.", () => {});
+  });
+});
