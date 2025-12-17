@@ -156,14 +156,14 @@ class _FinalAstTree {
       })
       .map(([key, value]: [string, any]) => ({ key, type: value.type }));
 
-    // 2. slot prop과 바인딩된 INSTANCE 노드 찾기
+    // 2. slot prop과 바인딩된 노드 찾기 (OR 조건 없는 단일 prop 매칭만)
     const slotBindings: Map<
       string,
       { propName: string; node: FinalAstTree; bindingType: string }
     > = new Map();
 
-    // 모든 INSTANCE 노드 수집 (위치 정보 포함)
-    const instanceNodes: {
+    // 모든 노드 수집 (위치 정보 포함)
+    const allNodes: {
       node: FinalAstTree;
       x: number;
       y: number;
@@ -171,22 +171,25 @@ class _FinalAstTree {
     }[] = [];
 
     traverseBFS(astTree, (node) => {
-      if (node.type === "INSTANCE") {
-        const targetSpec = this.specDataManager.getSpecById(node.id);
-        const box = targetSpec?.absoluteBoundingBox;
-        instanceNodes.push({
-          node,
-          x: box?.x ?? 0,
-          y: box?.y ?? 0,
-          normalizedName: node.name.toLowerCase().replace(/[_\s-]+/g, ""),
-        });
-      }
+      const targetSpec = this.specDataManager.getSpecById(node.id);
+      const box = targetSpec?.absoluteBoundingBox;
+      allNodes.push({
+        node,
+        x: box?.x ?? 0,
+        y: box?.y ?? 0,
+        normalizedName: node.name.toLowerCase().replace(/[_\s-]+/g, ""),
+      });
     });
 
-    // 패턴 A: visible condition 바인딩 확인
-    for (const { node } of instanceNodes) {
+    // 패턴 A: visible condition 바인딩 확인 (OR 조건 없는 단일 prop 매칭만)
+    for (const { node } of allNodes) {
       if (node.visible.type === "condition") {
         const conditionCode = generate(node.visible.condition);
+
+        // OR 조건이 있으면 제외 (복합 조건은 slot이 아님)
+        if (conditionCode.includes("||")) {
+          continue;
+        }
 
         for (const { key: propName } of slotCandidateProps) {
           const patterns = [
@@ -215,7 +218,7 @@ class _FinalAstTree {
     }
 
     // 패턴 B: 노드 이름 매칭 바인딩 확인 (아직 바인딩 안된 것만)
-    for (const { node, normalizedName } of instanceNodes) {
+    for (const { node, normalizedName } of allNodes) {
       if (node.visible.type === "static") {
         for (const { key: propName } of slotCandidateProps) {
           if (slotBindings.has(propName)) continue;
@@ -248,7 +251,7 @@ class _FinalAstTree {
     );
 
     if (leftProp || rightProp) {
-      // 아직 바인딩되지 않은 INSTANCE 노드 중 공통 키워드(icon 등)를 가진 것들 찾기
+      // 아직 바인딩되지 않은 노드 중 공통 키워드(icon 등)를 가진 것들 찾기
       const boundNodeIds = new Set(
         [...slotBindings.values()].map((b) => b.node.id)
       );
@@ -260,7 +263,7 @@ class _FinalAstTree {
       ]);
 
       if (keyword) {
-        const matchingUnboundNodes = instanceNodes
+        const matchingUnboundNodes = allNodes
           .filter(
             ({ node, normalizedName }) =>
               !boundNodeIds.has(node.id) && normalizedName.includes(keyword)
@@ -268,7 +271,7 @@ class _FinalAstTree {
           .sort((a, b) => a.x - b.x); // x 좌표로 정렬 (왼쪽 → 오른쪽)
 
         if (matchingUnboundNodes.length >= 2) {
-          // 가장 왼쪽 노드 → leftProp
+          // 노드가 2개 이상: 첫 번째와 마지막 노드를 left/right에 매칭
           if (leftProp) {
             const leftNode = matchingUnboundNodes[0];
             slotBindings.set(leftProp.key, {
@@ -278,7 +281,6 @@ class _FinalAstTree {
             });
           }
 
-          // 가장 오른쪽 노드 → rightProp
           if (rightProp) {
             const rightNode =
               matchingUnboundNodes[matchingUnboundNodes.length - 1];
@@ -289,22 +291,40 @@ class _FinalAstTree {
             });
           }
         } else if (matchingUnboundNodes.length === 1) {
-          // 노드가 1개뿐인 경우, 매칭되는 prop에 바인딩
+          // 노드가 1개: leftProp 우선, 없으면 rightProp 사용
           const singleNode = matchingUnboundNodes[0];
-          const propToUse = leftProp || rightProp;
-          if (propToUse) {
-            slotBindings.set(propToUse.key, {
-              propName: propToUse.key,
+          if (leftProp) {
+            slotBindings.set(leftProp.key, {
+              propName: leftProp.key,
+              node: singleNode.node,
+              bindingType: "keyword_matching",
+            });
+          } else if (rightProp) {
+            slotBindings.set(rightProp.key, {
+              propName: rightProp.key,
               node: singleNode.node,
               bindingType: "keyword_matching",
             });
           }
         }
+        // matchingUnboundNodes.length === 0인 경우는 아무것도 하지 않음 (이미 바인딩됨)
       }
     }
 
+    // [임시 로그] 최종 slot 바인딩 결과
+    console.log("\n=== [임시 로그] 최종 Slot 바인딩 결과 ===");
+    console.log(
+      "Slot candidate props:",
+      slotCandidateProps.map((p) => p.key)
+    );
+    console.log("Detected slots:");
+    for (const [propName, binding] of slotBindings) {
+      console.log(
+        `  ${propName} → "${binding.node.name}" (${binding.node.type}, ${binding.bindingType})`
+      );
+    }
+
     // 4. slot으로 확정된 props 변환
-    // TODO: props 타입 구조 확인 후 실제 변환 로직 구현
     for (const [propName, binding] of slotBindings) {
       const propDef = astTree.props[propName] as any;
       if (!propDef) continue;

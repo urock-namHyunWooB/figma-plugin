@@ -25,9 +25,13 @@ export function TestComp() {
       try {
         // codeRef.current = new FigmaCompiler(urockButton);
         // codeRef.current = new FigmaCompiler(taptapButtonSample);
+        // codeRef.current = new FigmaCompiler(taptapButton);
+        // codeRef.current = new FigmaCompiler(tadaButtonSample);
+        codeRef.current = new FigmaCompiler(urockButton);
+        // codeRef.current = new FigmaCompiler(airtableButton);
         // codeRef.current = new FigmaCompiler(tadaButtonSample);
         // codeRef.current = new FigmaCompiler(airtableButton);
-        codeRef.current = new FigmaCompiler(taptapButton);
+        // codeRef.current = new FigmaCompiler(taptapButton);
 
         return;
       } catch (err) {
