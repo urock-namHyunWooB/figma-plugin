@@ -62,9 +62,24 @@ export async function compileReactComponent(
       /import\s+.*?from\s+['"]@emotion\/react['"];?\s*/g,
       ""
     );
+    // @emotion/css import 제거
+    cleanedCode = cleanedCode.replace(
+      /import\s+.*?from\s+['"]@emotion\/css['"];?\s*/g,
+      ""
+    );
+    // 모든 import 문 제거 (남아있는 경우)
+    cleanedCode = cleanedCode.replace(
+      /import\s+.*?from\s+['"][^'"]+['"];?\s*/g,
+      ""
+    );
 
     // 3. export 문 제거/변환
-    // export default ComponentName 형식 제거 (여러 줄에 걸쳐 있을 수 있음)
+    // export default function ComponentName 형식을 function ComponentName으로 변환 (먼저 처리)
+    cleanedCode = cleanedCode.replace(
+      /export\s+default\s+function\s+(\w+)/g,
+      "function $1"
+    );
+    // export default ComponentName 형식 제거 (별도의 export default 문)
     cleanedCode = cleanedCode.replace(/export\s+default\s+\w+\s*;?\s*$/gm, "");
     // export function ComponentName 형식을 function ComponentName으로 변환
     cleanedCode = cleanedCode.replace(
@@ -78,8 +93,8 @@ export async function compileReactComponent(
     );
     // export const를 const로 변환
     cleanedCode = cleanedCode.replace(/export\s+const\s+(\w+)/g, "const $1");
-    // 기타 export 문 제거 (남아있는 경우)
-    cleanedCode = cleanedCode.replace(/export\s+/g, "");
+    // 기타 export 문 제거 (남아있는 경우, 단 default function은 이미 처리했으므로 제외)
+    cleanedCode = cleanedCode.replace(/export\s+(?!default\s+function)/g, "");
 
     // 4. Babel로 JSX → JavaScript 변환
     // emotion을 사용하려면 jsx runtime을 사용해야 하지만,

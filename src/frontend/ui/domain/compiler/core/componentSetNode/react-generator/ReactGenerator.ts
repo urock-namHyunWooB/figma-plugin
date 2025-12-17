@@ -630,9 +630,16 @@ class ReactGenerator {
       (variant) => {
         const cssCall = this._createCssCall(variant.style);
 
+        // 하이픈이나 특수문자가 포함된 경우 computed property 사용
+        const isValidIdentifier = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(variant.value);
+        const propertyName = isValidIdentifier
+          ? this.factory.createIdentifier(variant.value)
+          : this.factory.createStringLiteral(variant.value);
+
         return this.factory.createPropertyAssignment(
-          this.factory.createIdentifier(variant.value), // "Large", "Medium", etc.
-          cssCall
+          propertyName,
+          cssCall,
+          !isValidIdentifier // computed property로 설정
         );
       }
     );
@@ -830,6 +837,21 @@ class ReactGenerator {
   ): ts.FunctionDeclaration {
     const jsxTree = this.createJsxTree(this.astTree);
 
+    // JsxExpression을 return 문에서 사용할 수 있도록 변환
+    let returnExpression: ts.Expression;
+    if (ts.isJsxExpression(jsxTree)) {
+      // JsxExpression의 expression을 그대로 사용
+      if (jsxTree.expression) {
+        returnExpression = jsxTree.expression;
+      } else {
+        // expression이 없으면 null 반환
+        returnExpression = this.factory.createNull();
+      }
+    } else {
+      // JsxElement 또는 JsxSelfClosingElement는 그대로 사용
+      returnExpression = jsxTree;
+    }
+
     return this.factory.createFunctionDeclaration(
       [
         this.factory.createModifier(ts.SyntaxKind.ExportKeyword),
@@ -857,7 +879,7 @@ class ReactGenerator {
           // const styles = { ... };
           this.createStyleVariables(),
           // return <JSX>;
-          this.factory.createReturnStatement(jsxTree),
+          this.factory.createReturnStatement(returnExpression),
         ],
         true
       )

@@ -17,6 +17,7 @@ class ComponentSetCompiler {
   private CreateSuperTree: CreateSuperTree;
   private RefindProps: RefineProps;
   private CreateFinalAstTree: CreateAstTree;
+  private reactGenerator: ReactGenerator;
 
   constructor(
     renderTree: RenderTree,
@@ -46,8 +47,16 @@ class ComponentSetCompiler {
       refinedProps
     ));
 
-    const reactGenerator = new ReactGenerator(createFinalAstTree.finalAstTree);
-    reactGenerator.testCodeGeneration(); // 테스트용: 코드 생성 결과 확인
+    this.reactGenerator = new ReactGenerator(createFinalAstTree.finalAstTree);
+  }
+
+  /**
+   * 생성된 React 컴포넌트 코드를 반환
+   * @param componentName 컴포넌트 이름 (기본값: "Button")
+   * @returns 생성된 TypeScript/TSX 코드 문자열
+   */
+  public getGeneratedCode(componentName: string = "Button"): string {
+    return this.reactGenerator.generateComponentCode(componentName);
   }
 
   private extractPropsDef(

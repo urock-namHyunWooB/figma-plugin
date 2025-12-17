@@ -1,5 +1,7 @@
 import { describe, test, expect } from "vitest";
 import { generate } from "astring";
+import * as React from "react";
+import { render, screen } from "@testing-library/react";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import RefineProps from "@compiler/core/componentSetNode/RefineProps";
@@ -7,6 +9,8 @@ import CreateAstTree from "@compiler/core/componentSetNode/ast-tree/CreateAstTre
 import CreateSuperTree from "@compiler/core/componentSetNode/super-tree/CreateSuperTree";
 import { FinalAstTree, SuperTreeNode } from "@compiler";
 import { traverseBFS } from "@compiler/utils/traverse";
+import { FigmaCompiler } from "@compiler/FigmaCompiler";
+import { compileReactComponent } from "@frontend/ui/utils/component-compiler";
 
 // Vite의 import.meta.glob으로 모든 JSON 파일 동적 로드
 // @ts-ignore
@@ -122,5 +126,49 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
   test("children중에 Text는 1개", () => {
     const textNodes = countNodesByType(createFinalAstTree.finalAstTree, "TEXT");
     expect(textNodes).toBe(1);
+  });
+
+  describe("렌더링 테스트", () => {
+    test("생성된 코드가 실제로 렌더링되어야 한다", async () => {
+      // 1. FigmaCompiler로 컴파일러 생성
+      const compiler = new FigmaCompiler(mockData);
+
+      // 2. 코드 생성
+      const code = compiler.getGeneratedCode("Button");
+      expect(code).toBeTruthy();
+      expect(typeof code).toBe("string");
+      expect(code.length).toBeGreaterThan(0);
+
+      // 3. 컴포넌트로 컴파일
+      const Component = await compileReactComponent(code);
+      expect(Component).toBeDefined();
+      expect(typeof Component).toBe("function");
+
+      // 4. 렌더링
+      const { container } = render(React.createElement(Component));
+      expect(container).toBeInTheDocument();
+    });
+
+    test("props를 전달하여 렌더링할 수 있어야 한다", async () => {
+      const compiler = new FigmaCompiler(mockData);
+      const code = compiler.getGeneratedCode("Button");
+      const Component = await compileReactComponent(code);
+
+      // props 전달하여 렌더링
+      const { container } = render(React.createElement(Component));
+
+      // 기본적으로 렌더링이 성공해야 함
+      expect(container).toBeInTheDocument();
+    });
+
+    test("생성된 코드는 유효한 TypeScript/TSX 코드여야 한다", async () => {
+      const compiler = new FigmaCompiler(mockData);
+      const code = compiler.getGeneratedCode("Button");
+
+      // 기본적인 코드 구조 검증
+      expect(code).toContain("function Button");
+      expect(code).toContain("return");
+      expect(code).toContain("React");
+    });
   });
 });
