@@ -127,9 +127,6 @@ class _FinalAstTree {
   }
 
   private _refineComponentLikeProp(astTree: FinalAstTree) {
-    console.log("=== _refineComponentLikeProp Debug ===");
-    console.log("All props:", JSON.stringify(astTree.props, null, 2));
-
     // 1. Slot 후보 Props 찾기 (BOOLEAN 또는 True/False VARIANT)
     const slotCandidateProps = Object.entries(astTree.props)
       .filter(([key, value]: [string, any]) => {
@@ -150,8 +147,6 @@ class _FinalAstTree {
         return false;
       })
       .map(([key, value]: [string, any]) => ({ key, type: value.type }));
-
-    console.log("Step 1 - Slot candidate props:", slotCandidateProps);
 
     // 2. slot prop과 바인딩된 INSTANCE 노드 찾기
     const slotBindings: Map<
@@ -180,15 +175,10 @@ class _FinalAstTree {
       }
     });
 
-    console.log("\nStep 2 - Checking INSTANCE nodes:");
-
     // 패턴 A: visible condition 바인딩 확인
     for (const { node } of instanceNodes) {
       if (node.visible.type === "condition") {
         const conditionCode = generate(node.visible.condition);
-        console.log(
-          `\n  INSTANCE: "${node.name}" (condition: ${conditionCode})`
-        );
 
         for (const { key: propName } of slotCandidateProps) {
           const patterns = [
@@ -209,9 +199,6 @@ class _FinalAstTree {
                 node,
                 bindingType: "visible_condition",
               });
-              console.log(
-                `  ✅ [패턴A] "${node.name}" → ${propName} (visible condition)`
-              );
             }
             break;
           }
@@ -232,9 +219,6 @@ class _FinalAstTree {
               node,
               bindingType: "name_matching",
             });
-            console.log(
-              `  ✅ [패턴B-1] "${node.name}" → ${propName} (name matching)`
-            );
             break;
           }
         }
@@ -275,10 +259,6 @@ class _FinalAstTree {
           )
           .sort((a, b) => a.x - b.x); // x 좌표로 정렬 (왼쪽 → 오른쪽)
 
-        console.log(
-          `\n  [패턴C] 위치 기반 매칭 시도 (keyword: "${keyword}", nodes: ${matchingUnboundNodes.length}개)`
-        );
-
         if (matchingUnboundNodes.length >= 2) {
           // 가장 왼쪽 노드 → leftProp
           if (leftProp) {
@@ -288,9 +268,6 @@ class _FinalAstTree {
               node: leftNode.node,
               bindingType: "positional_left",
             });
-            console.log(
-              `  ✅ [패턴C] "${leftNode.node.name}" (x: ${leftNode.x}) → ${leftProp.key} (positional left)`
-            );
           }
 
           // 가장 오른쪽 노드 → rightProp
@@ -302,9 +279,6 @@ class _FinalAstTree {
               node: rightNode.node,
               bindingType: "positional_right",
             });
-            console.log(
-              `  ✅ [패턴C] "${rightNode.node.name}" (x: ${rightNode.x}) → ${rightProp.key} (positional right)`
-            );
           }
         } else if (matchingUnboundNodes.length === 1) {
           // 노드가 1개뿐인 경우, 매칭되는 prop에 바인딩
@@ -316,24 +290,9 @@ class _FinalAstTree {
               node: singleNode.node,
               bindingType: "keyword_matching",
             });
-            console.log(
-              `  ✅ [패턴C-단일] "${singleNode.node.name}" → ${propToUse.key} (keyword matching)`
-            );
           }
         }
       }
-    }
-
-    console.log("\n=== Final Slot Detection Result ===");
-    console.log(
-      "Slot candidate props:",
-      slotCandidateProps.map((p) => p.key)
-    );
-    console.log("Detected slots:");
-    for (const [propName, binding] of slotBindings) {
-      console.log(
-        `  ${propName} → "${binding.node.name}" (${binding.bindingType})`
-      );
     }
 
     // 4. slot으로 확정된 props 변환
