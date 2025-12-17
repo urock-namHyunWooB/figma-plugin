@@ -98,6 +98,19 @@ export interface TempAstTree extends SuperTreeNode {
 }
 
 /**
+ * 플랫폼 독립적인 시맨틱 역할
+ * 코드 생성기에서 플랫폼별 태그/위젯으로 변환됨
+ */
+export type SemanticRole =
+  | "root" // 루트 컴포넌트
+  | "container" // 레이아웃 컨테이너 (FRAME, GROUP)
+  | "text" // 텍스트 (TEXT)
+  | "button" // 버튼
+  | "icon" // 아이콘 (INSTANCE)
+  | "vector" // 벡터 그래픽 (VECTOR)
+  | "image"; // 이미지
+
+/**
  * TempAst애서 한번더 견고하게 가공된 형태
  */
 export interface FinalAstTree {
@@ -109,4 +122,11 @@ export interface FinalAstTree {
   visible: VisibleValue;
   style: StyleObject;
   children: FinalAstTree[];
+
+  /**
+   * 플랫폼 독립적인 시맨틱 역할
+   * React: div, span, button 등
+   * Flutter: Container, Text, ElevatedButton 등
+   */
+  semanticRole: SemanticRole;
 }

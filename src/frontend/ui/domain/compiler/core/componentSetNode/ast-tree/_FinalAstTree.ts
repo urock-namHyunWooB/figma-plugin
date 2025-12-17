@@ -48,6 +48,7 @@ class _FinalAstTree {
     let finalAstTree = this.createFinalAstTree(tempAstTree);
     finalAstTree = this.updateCleanupNodes(finalAstTree);
     finalAstTree = this.updateProps(finalAstTree);
+    finalAstTree = this.updateMetaData(finalAstTree);
 
     this._finalAstTree = finalAstTree;
   }
@@ -66,6 +67,7 @@ class _FinalAstTree {
         visible: node.visible ?? { type: "static", value: true },
         style: node.style,
         children: [],
+        semanticRole: "container", // 기본값, updateMetaData에서 정확한 값 할당
       };
 
       finalNode.children = node.children.map((child) =>
@@ -122,7 +124,53 @@ class _FinalAstTree {
    * @param astTree
    * @private
    */
-  private updateMetaData(astTree: FinalAstTree) {}
+  private updateMetaData(astTree: FinalAstTree) {
+    // 컴포넌트셋 이름으로 버튼 여부 추론
+    const renderTree = this.specDataManager.getRenderTree();
+    const componentSetName = (renderTree?.name || "").toLowerCase();
+    const isButtonComponent =
+      componentSetName.includes("button") || componentSetName.includes("btn");
+
+    // 각 노드에 semanticRole 할당
+    traverseBFS(astTree, (node) => {
+      // 루트 노드 (COMPONENT)
+      if (node.parent === null) {
+        node.semanticRole = isButtonComponent ? "button" : "root";
+        return;
+      }
+
+      // Figma 타입별 semanticRole 매핑
+      switch (node.type) {
+        case "TEXT":
+          node.semanticRole = "text";
+          break;
+
+        case "INSTANCE":
+          // INSTANCE는 보통 아이콘
+          node.semanticRole = "icon";
+          break;
+
+        case "VECTOR":
+          node.semanticRole = "vector";
+          break;
+
+        case "FRAME":
+        case "GROUP":
+        case "RECTANGLE":
+          node.semanticRole = "container";
+          break;
+
+        case "IMAGE":
+          node.semanticRole = "image";
+          break;
+
+        default:
+          node.semanticRole = "container";
+      }
+    });
+
+    return astTree;
+  }
 
   /**
    * visible 최적화
