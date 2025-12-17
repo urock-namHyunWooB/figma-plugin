@@ -429,11 +429,6 @@ class _FinalAstTree {
   }
 
   private _refineStateProp(astTree: FinalAstTree) {
-    traverseBFS(astTree, (node) => {
-      if (node.visible.type === "condition") {
-      } else {
-      }
-    });
     return astTree;
   }
 

@@ -29,6 +29,7 @@ export function TestComp() {
         // codeRef.current = new FigmaCompiler(tadaButtonSample);
         codeRef.current = new FigmaCompiler(urockButton);
         // codeRef.current = new FigmaCompiler(airtableButton);
+        // codeRef.current = new FigmaCompiler(taptapButtonSample);
         // codeRef.current = new FigmaCompiler(tadaButtonSample);
         // codeRef.current = new FigmaCompiler(airtableButton);
         // codeRef.current = new FigmaCompiler(taptapButton);
