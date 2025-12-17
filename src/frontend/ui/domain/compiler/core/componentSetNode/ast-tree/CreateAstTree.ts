@@ -39,6 +39,8 @@ class CreateAstTree {
       specDataManager,
       HelperManager.deepCloneTree(this._TempAstTree.tempAstTree)
     );
+
+    console.log(this._FinalAstTree.finalAstTree);
   }
 }
 

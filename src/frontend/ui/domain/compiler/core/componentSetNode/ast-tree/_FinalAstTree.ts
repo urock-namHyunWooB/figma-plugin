@@ -126,6 +126,14 @@ class _FinalAstTree {
     return astTree;
   }
 
+  /**
+   * ComponentLike 타입의 prop을 최적화한다.
+   * Slot 후보 Props 찾기
+   * Slot 바인딩 확인
+   * Slot 바인딩된 노드 처리
+   * @param astTree
+   * @returns
+   */
   private _refineComponentLikeProp(astTree: FinalAstTree) {
     // 1. Slot 후보 Props 찾기 (BOOLEAN 또는 True/False VARIANT)
     const slotCandidateProps = Object.entries(astTree.props)
