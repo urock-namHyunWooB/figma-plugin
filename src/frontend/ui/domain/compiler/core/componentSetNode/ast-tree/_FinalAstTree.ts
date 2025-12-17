@@ -1,5 +1,12 @@
 import SpecDataManager from "@compiler/manager/SpecDataManager";
-import { FinalAstTree, MergedNode, StyleObject, TempAstTree } from "@compiler";
+import {
+  FinalAstTree,
+  MergedNode,
+  StyleObject,
+  TempAstTree,
+  ConditionNode,
+  VisibleValue,
+} from "@compiler";
 import HelperManager from "@compiler/manager/HelperManager";
 import { traverseTree } from "@figma/eslint-plugin-figma-plugins/dist/util";
 import { traverseBFS } from "@compiler/utils/traverse";
@@ -380,9 +387,13 @@ class _FinalAstTree {
     astTree: FinalAstTree,
     slotBindings: Map<string, SlotBinding>
   ) {
+    const slotPropNames = new Set<string>();
+
     for (const [propName, binding] of slotBindings) {
       const propDef = astTree.props[propName] as any;
       if (!propDef) continue;
+
+      slotPropNames.add(propName);
 
       // prop 타입을 SLOT으로 변환
       (astTree.props as any)[propName] = {
@@ -400,7 +411,109 @@ class _FinalAstTree {
       // 노드를 slot 렌더링 노드로 표시
       (node as any).slotName = propName;
       (node as any).isSlot = true;
+
+      // 부모 노드의 visible condition에서 slot prop 관련 조건 제거
+      if (node.parent && node.parent.visible.type === "condition") {
+        node.parent.visible = this._removeSlotPropsFromCondition(
+          node.parent.visible.condition,
+          slotPropNames
+        );
+      }
     }
+  }
+
+  /**
+   * Condition에서 slot prop 관련 조건 제거
+   * 모든 조건이 제거되면 static: true 반환
+   */
+  private _removeSlotPropsFromCondition(
+    condition: ConditionNode,
+    slotPropNames: Set<string>
+  ): VisibleValue {
+    const cleaned = this._removePropsFromConditionNode(
+      condition,
+      slotPropNames
+    );
+
+    if (!cleaned) {
+      // 모든 조건이 제거된 경우
+      return { type: "static", value: true };
+    }
+
+    return { type: "condition", condition: cleaned };
+  }
+
+  /**
+   * ConditionNode에서 특정 prop 참조를 재귀적으로 제거
+   */
+  private _removePropsFromConditionNode(
+    node: any,
+    slotPropNames: Set<string>
+  ): ConditionNode | null {
+    if (!node || !node.type) return null;
+
+    if (node.type === "BinaryExpression") {
+      const operator = node.operator;
+
+      // props.X === "value" 형태인 경우, X가 slot prop이면 null 반환 (제거)
+      if (operator === "===") {
+        const left = node.left;
+        if (
+          left?.type === "MemberExpression" &&
+          left.object?.name === "props" &&
+          left.property?.name
+        ) {
+          const propName = left.property.name;
+          // 원본 이름, camelCase 변환된 이름, 소문자 변환 모두 확인
+          const camelPropName = toCamelCase(propName);
+          const lowerPropName = propName.toLowerCase();
+
+          // slotPropNames의 각 항목과 비교 (대소문자 무시)
+          for (const slotProp of slotPropNames) {
+            if (
+              slotProp === propName ||
+              slotProp === camelPropName ||
+              slotProp.toLowerCase() === lowerPropName ||
+              toCamelCase(slotProp) === camelPropName
+            ) {
+              return null; // 제거
+            }
+          }
+        }
+      }
+
+      // && 또는 || 연산자의 경우 좌우 재귀 처리
+      if (operator === "&&" || operator === "||") {
+        const left = this._removePropsFromConditionNode(
+          node.left,
+          slotPropNames
+        );
+        const right = this._removePropsFromConditionNode(
+          node.right,
+          slotPropNames
+        );
+
+        // 둘 다 null이면 전체 제거
+        if (!left && !right) return null;
+
+        // 한쪽만 null이면 다른 쪽만 반환
+        if (!left) return right!;
+        if (!right) return left;
+
+        // 둘 다 있으면 연산자 유지
+        return {
+          ...node,
+          left,
+          right,
+        } as ConditionNode;
+      }
+
+      // 다른 연산자는 그대로 유지
+      return node as ConditionNode;
+    }
+
+    // 다른 타입의 노드는 그대로 유지
+    return node as ConditionNode;
   }
 
   /**

@@ -46,7 +46,8 @@ class ComponentSetCompiler {
       refinedProps
     ));
 
-    new ReactGenerator(createFinalAstTree.finalAstTree);
+    const reactGenerator = new ReactGenerator(createFinalAstTree.finalAstTree);
+    reactGenerator.testCodeGeneration(); // 테스트용: 코드 생성 결과 확인
   }
 
   private extractPropsDef(

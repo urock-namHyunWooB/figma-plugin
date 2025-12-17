@@ -61,6 +61,7 @@
   "dependencies": {
     "@babel/standalone": "^7.28.5",
     "@emotion/babel-plugin": "^11.13.5",
+    "@emotion/css": "^11.13.5",
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.14.1",
     "astring": "^1.9.0",

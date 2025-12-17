@@ -1,154 +1,127 @@
-/** @jsxImportSource @emotion/react */
-import { css } from "@emotion/react";
-import styled from "@emotion/styled";
-import React, { ReactNode } from "react";
-
-// --- Types ---
-type ButtonSize = "Large" | "Medium" | "Small";
-type ButtonState = "Default" | "Hover" | "Pressed" | "Disabled";
-
-interface PrimaryButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  size?: ButtonSize;
-  buttonState?: ButtonState; // 'state'는 HTML 속성과 충돌 가능성이 있어 buttonState로 명명
-  leftIcon?: ReactNode;
-  rightIcon?: ReactNode;
-  text?: string;
+import React from "react";
+import { css, cx } from "@emotion/css";
+export interface ButtonProps {
+  size?: "Large" | "Medium" | "Small";
+  state?: "Default" | "Disabled" | "Hover" | "Pressed";
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 }
-
-// --- Design Tokens (from JSON) ---
-const COLORS = {
-  white: "#FFFFFF",
-  primary300: "#B0EBEC", // Disabled state background from JSON
-  primary500: "#2D0830", // Default state (유추/임의 설정, 필요시 수정)
-  primary600: "#65DE64", // Hover state
-  primary700: "#DAABE5", // Pressed state
-};
-
-// --- Styles Mixins ---
-
-// 1. Size & Typography Styles
-const getSizeStyles = (size: ButtonSize) => {
-  switch (size) {
-    case "Large":
-      return css`
-        padding: 8px;
-        font-size: 16px;
-        line-height: 24px; // 150%
-        min-width: 90px; // From Figma "Min Width" layer
-        height: 40px;
-      `;
-    case "Medium":
-      return css`
-        padding: 7px 8px;
-        font-size: 14px;
-        line-height: 22px; // 157.143%
-        min-width: 82px; // From Figma "Min Width" layer
-        height: 36px;
-      `;
-    default:
-      return css``;
-  }
-};
-
-// 2. State Styles (Colors & Interaction)
-const getStateStyles = (state: ButtonState) => {
-  switch (state) {
-    case "Disabled":
-      return css`
-        background-color: ${COLORS.primary300};
-        color: ${COLORS.white};
-        cursor: not-allowed;
-        pointer-events: none; // 클릭 방지
-      `;
-    case "Hover":
-      return css`
-        background-color: ${COLORS.primary600}; // 예시 색상
-        color: ${COLORS.white};
-        cursor: pointer;
-      `;
-    case "Pressed":
-      return css`
-        background-color: ${COLORS.primary700}; // 예시 색상
-        color: ${COLORS.white};
-        cursor: pointer;
-      `;
-    case "Default":
-    default:
-      return css`
-        background-color: ${COLORS.primary300}; // JSON 예시가 Disabled(Primary/300)만 있어 기본값으로 설정
-        /* 실제 Default 색상이 있다면 여기를 변경하세요. 예: COLORS.primary500 */
-        color: ${COLORS.white};
-        cursor: pointer;
-        &:hover {
-          opacity: 0.9;
-        }
-      `;
-  }
-};
-
-// --- Styled Components ---
-
-const StyledButton = styled.button<{
-  sizeVariant: ButtonSize;
-  stateVariant: ButtonState;
-}>`
-  /* Base Layout */
-  display: inline-flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: 4px; /* Icon과 Text 사이 간격 */
-
-  /* Borders & Radius */
-  border: none;
-  border-radius: 4px;
-
-  /* Typography Common */
-  font-family:
-    "PingFang SC",
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
-  font-weight: 500;
-  text-align: center;
-  white-space: nowrap;
-
-  /* Transition */
-  transition: all 0.2s ease-in-out;
-
-  /* Dynamic Styles */
-  ${({ sizeVariant }) => getSizeStyles(sizeVariant)}
-  ${({ stateVariant }) => getStateStyles(stateVariant)}
-`;
-
-export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
-  size = "Large",
-  buttonState = "Default",
-  leftIcon,
-  rightIcon,
-  text,
-  children,
-  ...props
-}) => {
-  // Figma 상 'Disabled' 상태가 주어졌을 때의 처리
-  const finalState = props.disabled ? "Disabled" : buttonState;
-
+export default function Button(props: ButtonProps) {
+  const styles = {
+    sizelarge: css({
+      display: "inline-flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      alignItems: "center",
+      borderRadius: "4px",
+    }),
+    sizelargeSize: {
+      Large: css({
+        padding: "8px",
+        border: "1px solid #000",
+      }),
+      Medium: css({
+        padding: "7px 8px",
+      }),
+      Small: css({
+        padding: "3px 4px",
+      }),
+    },
+    sizelargeState: {
+      Disabled: css({
+        background: "var(--Primary-300, #B0EBEC)",
+      }),
+      Pressed: css({
+        background: "var(--Primary-700, #00ABB6)",
+      }),
+      Hover: css({
+        background: "var(--Primary-500, #47CFD6)",
+      }),
+      Default: css({
+        background: "var(--Primary-600, #15C5CE)",
+      }),
+    },
+    frame: css({
+      display: "flex",
+      alignItems: "center",
+      gap: "4px",
+      justifyContent: "center",
+    }),
+    plusSize: {
+      Large: css({
+        width: "18px",
+        height: "18px",
+      }),
+      Medium: css({
+        width: "16px",
+        height: "16px",
+      }),
+      Small: css({
+        width: "14px",
+        height: "14px",
+      }),
+    },
+    text: css({
+      color: "var(--black-white-white, #FFF)",
+      textAlign: "center",
+      fontFamily: '"PingFang SC"',
+      fontStyle: "normal",
+      fontWeight: "500",
+    }),
+    textSize: {
+      Large: css({
+        fontSize: "16px",
+        lineHeight: "24px /* 150% */",
+      }),
+      Medium: css({
+        fontSize: "14px",
+        lineHeight: "22px /* 157.143% */",
+      }),
+      Small: css({
+        fontSize: "12px",
+        lineHeight: "18px /* 150% */",
+      }),
+    },
+    plus1: css({
+      width: "18px",
+      height: "18px",
+    }),
+    union: css({
+      fill: "var(--black-white-white, #FFF)",
+    }),
+    unionSize: {
+      Large: css({
+        width: "15px",
+        height: "15px",
+      }),
+      Medium: css({
+        width: "13.333px",
+        height: "13.333px",
+      }),
+      Small: css({
+        width: "11.667px",
+        height: "11.667px",
+      }),
+    },
+    union1: css({
+      width: "15px",
+      height: "15px",
+      fill: "var(--black-white-white, #FFF)",
+    }),
+  };
   return (
-    <StyledButton
-      sizeVariant={size}
-      stateVariant={finalState}
-      disabled={finalState === "Disabled"}
-      {...props}
+    <div
+      className={cx(
+        styles.sizelarge,
+        styles.sizelargeSize[props.size],
+        styles.sizelargeState[props.state]
+      )}
     >
-      {/* Left Icon Slot */}
-      {leftIcon && leftIcon}
-
-      {/* Text Content */}
-      <span>{children || text}</span>
-
-      {/* Right Icon Slot */}
-      {rightIcon && rightIcon}
-    </StyledButton>
+      <div className={styles.frame}>
+        {props.leftIcon}
+        <span className={cx(styles.text, styles.textSize[props.size])} />
+        {props.rightIcon}
+      </div>
+    </div>
   );
-};
+}
