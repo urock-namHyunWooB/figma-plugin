@@ -3,6 +3,7 @@ import useMessageHandler from "./useMessageHandler";
 
 import { TestComp } from "@frontend/ui/debug/TestComp";
 import Primary from "@frontend/ui/examples/taptapButton_styled";
+import Primary2 from "@frontend/ui/examples/taptapButton_styled2";
 
 function App() {
   const { selectionNodeData } = useMessageHandler();
@@ -18,6 +19,8 @@ function App() {
   return (
     <div>
       <Primary text="Button" />
+
+      <Primary2 text="Button" />
 
       <TestComp />
     </div>
