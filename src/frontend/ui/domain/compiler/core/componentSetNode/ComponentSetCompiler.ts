@@ -47,6 +47,8 @@ class ComponentSetCompiler {
       refinedProps
     ));
 
+    debug.tree(createFinalAstTree.finalAstTree);
+
     this.reactGenerator = new ReactGenerator(createFinalAstTree.finalAstTree);
   }
 

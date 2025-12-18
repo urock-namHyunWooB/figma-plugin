@@ -27,6 +27,7 @@ export function TestComp() {
         setTsxCode("");
         setCompiledComponent(null);
 
+        console.log("taptapButton");
         // 컴파일러 생성
         const compiler = new FigmaCompiler(taptapButton);
         // codeRef.current = new FigmaCompiler(urockButton);
