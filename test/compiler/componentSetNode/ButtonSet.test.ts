@@ -10,7 +10,7 @@ import CreateSuperTree from "@compiler/core/componentSetNode/super-tree/CreateSu
 import { FinalAstTree, SuperTreeNode } from "@compiler";
 import { traverseBFS } from "@compiler/utils/traverse";
 import { FigmaCompiler } from "@compiler/FigmaCompiler";
-import { compileReactComponent } from "@frontend/ui/utils/component-compiler";
+import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
 
 // Vite의 import.meta.glob으로 모든 JSON 파일 동적 로드
 // @ts-ignore
@@ -140,7 +140,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
       expect(code.length).toBeGreaterThan(0);
 
       // 3. 컴포넌트로 컴파일
-      const Component = await compileReactComponent(code);
+      const Component = await renderReactComponent(code);
       expect(Component).toBeDefined();
       expect(typeof Component).toBe("function");
 
@@ -152,7 +152,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
     test("props를 전달하여 렌더링할 수 있어야 한다", async () => {
       const compiler = new FigmaCompiler(mockData);
       const code = compiler.getGeneratedCode("Button");
-      const Component = await compileReactComponent(code);
+      const Component = await renderReactComponent(code);
 
       // props 전달하여 렌더링
       const { container } = render(React.createElement(Component));

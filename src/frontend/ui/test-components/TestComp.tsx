@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { compileReactComponent } from "../utils/component-compiler";
+
 import FigmaCompiler from "@frontend/ui/domain/compiler";
 import taptapButtonSample from "../../../../test/fixtures/button/taptapButton_sample.json";
 import tadaButtonSample from "../../../../test/fixtures/button/tadaButton.json";
