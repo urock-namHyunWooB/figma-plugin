@@ -38,7 +38,7 @@ class Engine {
 
     this.reactGenerator = new ReactGenerator(createFinalAstTree.finalAstTree);
 
-    // debug.tree(createFinalAstTree.finalAstTree);
+    debug.tree(createFinalAstTree.finalAstTree);
   }
 
   /**

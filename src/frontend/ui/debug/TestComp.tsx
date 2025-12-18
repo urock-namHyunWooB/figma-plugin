@@ -43,7 +43,6 @@ export function TestComp() {
   const { status, code, Component, error, compileMs, defaultProps } =
     useCompilerDebug(FIXTURES[fixtureKey].data);
 
-  console.log(defaultProps);
   return (
     <div style={{ padding: "20px", fontFamily: "monospace" }}>
       <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>

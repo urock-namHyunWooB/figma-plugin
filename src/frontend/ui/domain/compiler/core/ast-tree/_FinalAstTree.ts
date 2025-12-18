@@ -127,7 +127,10 @@ class _FinalAstTree {
   private updateMetaData(astTree: FinalAstTree) {
     // 컴포넌트셋 이름으로 버튼 여부 추론
     const renderTree = this.specDataManager.getRenderTree();
-    const componentSetName = (renderTree?.name || "").toLowerCase();
+    const componentSetName = this.specDataManager
+      .getDocument()
+      .name.toLowerCase();
+
     const isButtonComponent =
       componentSetName.toLowerCase().includes("button") ||
       componentSetName.toLowerCase().includes("btn");
@@ -879,14 +882,17 @@ class _FinalAstTree {
   }
 
   /**
-   * Button 전용으로 Component 유형을 둘러봐서 text 관련 노드가 있는데
+   * Button 전용으로 Component 유형을 둘러봐서 text 관련 노드가 있는지 확인
+   * text 관련 노드가 있고
    * props에 text가 없다면
    * props에 text 넣고
    * text 관련 노드에 해당 prop을 바인딩 해야한다.
    * @param astTree
    * @private
    */
-  private _refinePropsForButton(astTree: FinalAstTree) {}
+  private _refinePropsForButton(astTree: FinalAstTree) {
+    return astTree;
+  }
 }
 
 export default _FinalAstTree;

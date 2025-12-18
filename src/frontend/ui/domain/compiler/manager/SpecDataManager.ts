@@ -7,11 +7,19 @@ class SpecDataManager {
 
   private renderTreeHashMap: Record<string, RenderTree> = {};
 
+  private document: SceneNode;
+
   constructor(spec: FigmaNodeData) {
     this.spec = spec;
 
+    this.document = spec.info.document;
+
     this.recursiveAddSpec(spec.info.document);
     this.recursiveAddRenderTree(spec.styleTree);
+  }
+
+  public getDocument() {
+    return this.document;
   }
 
   public getSpecById(id: string) {
