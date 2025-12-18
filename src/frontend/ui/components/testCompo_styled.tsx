@@ -26,6 +26,7 @@ const PrimaryComponent = styled.button<Props>`
   }
 
   &:hover {
+    cursor: pointer;
     background: var(--Primary-500, #47cfd6);
   }
 
@@ -46,7 +47,7 @@ const PrimaryComponent = styled.button<Props>`
     }
   }}
 
-  &.Plus15_12975 {
+  & .Plus15_12975 {
     ${({ size }) => {
       switch (size) {
         case "Large":
@@ -68,7 +69,7 @@ const PrimaryComponent = styled.button<Props>`
     }}
   }
 
-    &.Plus15_12981 {
+  & .Plus15_12981 {
     ${({ size }) => {
       switch (size) {
         case "Large":
@@ -90,8 +91,8 @@ const PrimaryComponent = styled.button<Props>`
     }}
   }
 
-  &.Text15_12976 {
-    color: var(--black-white-white, #FFF);
+  & .Text15_12976 {
+    color: var(--black-white-white, #fff);
     text-align: center;
     font-family: '"PingFang SC"';
     font-style: normal;
@@ -116,6 +117,7 @@ const PrimaryComponent = styled.button<Props>`
           `;
       }
     }}
+  }
 `;
 
 function Primary(props: Props) {
