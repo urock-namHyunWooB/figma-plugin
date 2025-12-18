@@ -1,8 +1,8 @@
 import { useState } from "react";
 import useMessageHandler from "./useMessageHandler";
 
-import { TestComp } from "@frontend/ui/test-components/TestComp";
-import Primary from "@frontend/ui/components/testCompo_styled";
+import { TestComp } from "@frontend/ui/debug/TestComp";
+import Primary from "@frontend/ui/examples/taptapButton_styled";
 
 function App() {
   const { selectionNodeData } = useMessageHandler();
