@@ -1,6 +1,6 @@
 import { useState } from "react";
 import useMessageHandler from "./useMessageHandler";
-import ComponentPreview from "@frontend/ui/domain/code-preview/ComponentPreview";
+
 import { TestComp } from "@frontend/ui/test-components/TestComp";
 import Primary from "@frontend/ui/components/testCompo_styled";
 

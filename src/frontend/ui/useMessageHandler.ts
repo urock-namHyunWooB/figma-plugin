@@ -1,26 +1,24 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { MESSAGE_TYPES } from "../../backend/types/messages";
-import { ASTGenerator, TagMapper } from "./domain/transpiler";
-import { FigmaNodeData } from "./domain/transpiler/types/figma-api";
+import FigmaCompiler, { FigmaNodeData } from "./domain/compiler";
 
 export default function useMessageHandler() {
   const [selectionNodeData, setSelectionNodeData] =
     useState<FigmaNodeData | null>(null);
 
-  const astGeneratorRef = useRef<ASTGenerator | null>(null);
+  const astGeneratorRef = useRef<FigmaCompiler | null>(null);
 
   useLayoutEffect(() => {
     if (!astGeneratorRef.current) {
-      astGeneratorRef.current = new ASTGenerator(new TagMapper());
+      // astGeneratorRef.current = new FigmaCompiler(selectionNodeData);
     }
   }, []);
 
   useLayoutEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
       const msg = event.data.pluginMessage;
+      if (!msg) return;
       const data = msg.data;
-
-      console.log(data);
 
       if (msg.type === MESSAGE_TYPES.ON_SELECTION_CHANGE) {
         console.log("ON_SELECTION_CHANGE", data);

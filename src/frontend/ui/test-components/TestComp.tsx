@@ -1,68 +1,78 @@
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
-import FigmaCompiler from "@frontend/ui/domain/compiler";
 import taptapButtonSample from "../../../../test/fixtures/button/taptapButton_sample.json";
 import tadaButtonSample from "../../../../test/fixtures/button/tadaButton.json";
 import airtableButton from "../../../../test/fixtures/button/airtableButton.json";
 import urockButton from "../../../../test/fixtures/button/urockButton.json";
 import taptapButton from "../../../../test/fixtures/button/taptapButton.json";
-import dialogFixture from "../../../../test/fixtures/dialog.json";
-import paginationFixture from "../../../../test/fixtures/pagination.json";
-import selectsFixture from "../../../../test/fixtures/selects.json";
-import compiler from "@frontend/ui/domain/compiler";
-import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
+
+import type { FigmaNodeData } from "@compiler/types/baseType";
+import { useCompilerDebug } from "./useCompilerDebug";
 
 export function TestComp() {
-  const [tsxCode, setTsxCode] = useState<string>("");
-  const [CompiledComponent, setCompiledComponent] =
-    useState<React.ComponentType<any> | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const FIXTURES = useMemo(
+    () =>
+      ({
+        taptapButton: {
+          label: "taptapButton",
+          data: taptapButton as unknown as FigmaNodeData,
+        },
+        urockButton: {
+          label: "urockButton",
+          data: urockButton as unknown as FigmaNodeData,
+        },
+        taptapButtonSample: {
+          label: "taptapButton_sample",
+          data: taptapButtonSample as unknown as FigmaNodeData,
+        },
+        tadaButton: {
+          label: "tadaButton",
+          data: tadaButtonSample as unknown as FigmaNodeData,
+        },
+        airtableButton: {
+          label: "airtableButton",
+          data: airtableButton as unknown as FigmaNodeData,
+        },
+      }) as const,
+    []
+  );
 
-  // @ts-ignore
-  const codeRef = useRef();
+  type FixtureKey = keyof typeof FIXTURES;
+  const [fixtureKey, setFixtureKey] = useState<FixtureKey>("taptapButton");
 
-  useEffect(() => {
-    async function compile() {
-      if (codeRef.current) return;
-      try {
-        setError(null);
-        setTsxCode("");
-        setCompiledComponent(null);
+  const { status, code, Component, error, compileMs, defaultProps } =
+    useCompilerDebug(FIXTURES[fixtureKey].data);
 
-        // 컴파일러 생성
-        codeRef.current = new FigmaCompiler(taptapButton);
-        // codeRef.current = new FigmaCompiler(urockButton);
-        // codeRef.current = new FigmaCompiler(taptapButtonSample);
-        // codeRef.current = new FigmaCompiler(tadaButtonSample);
-        // codeRef.current = new FigmaCompiler(airtableButton);
-
-        // 코드 생성
-        // @ts-ignore
-        const generatedCode = codeRef.current!.getGeneratedCode();
-        console.log(generatedCode);
-
-        if (!generatedCode) {
-          throw new Error("코드 생성 실패");
-        }
-
-        setTsxCode(generatedCode);
-
-        // 컴포넌트 컴파일
-        const Component = await renderReactComponent(generatedCode);
-        setCompiledComponent(() => Component);
-
-        codeRef.current = compiler;
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "알 수 없는 오류");
-        console.error("Compilation error:", err);
-      }
-    }
-    compile();
-  }, []);
-
+  console.log(defaultProps);
   return (
     <div style={{ padding: "20px", fontFamily: "monospace" }}>
-      <h2>Transpile 결과</h2>
+      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+        <h2 style={{ margin: 0 }}>Transpile 결과</h2>
+
+        <label style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <span>Fixture</span>
+          <select
+            value={fixtureKey}
+            onChange={(e) => setFixtureKey(e.target.value as FixtureKey)}
+          >
+            {Object.entries(FIXTURES).map(([key, f]) => (
+              <option key={key} value={key}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div style={{ marginLeft: "auto", opacity: 0.8 }}>
+          {status === "compiling" && <span>Compiling...</span>}
+          {status === "ready" && (
+            <span>
+              Ready{typeof compileMs === "number" ? ` (${compileMs}ms)` : ""}
+            </span>
+          )}
+          {status === "error" && <span>Error</span>}
+        </div>
+      </div>
 
       {error && (
         <div
@@ -78,7 +88,7 @@ export function TestComp() {
         </div>
       )}
 
-      {CompiledComponent && (
+      {Component && (
         <div style={{ marginBottom: "30px" }}>
           <h3>렌더링 결과:</h3>
           <div
@@ -89,7 +99,7 @@ export function TestComp() {
               backgroundColor: "#fff",
             }}
           >
-            <CompiledComponent size={"Small"} />
+            <Component />
           </div>
         </div>
       )}
@@ -107,7 +117,7 @@ export function TestComp() {
             lineHeight: "1.4",
           }}
         >
-          {tsxCode || "로딩 중..."}
+          {code || (status === "compiling" ? "로딩 중..." : "")}
         </pre>
       </div>
     </div>
