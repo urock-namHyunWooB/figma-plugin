@@ -1077,5 +1077,17 @@ describe("CodeGen", () => {
     test("Size가 Small이면 fontSize는 12px이고 line-height는 18px이여야 한다.", () => {});
 
     test("Text color는 흰색이여야 한다.", () => {});
+
+    test("Left Icon과 Right Icon이 렌더링 되어야 한다.", () => {});
+
+    test("Text만 렌더링 되어 있을때 버튼 중앙에 있어야 한다.", () => {});
+
+    test("hover 하면 배경색이 바뀌어야 한다.", () => {});
+
+    test("기본 size는 Large이여야 한다.", () => {});
+
+    test("props로 text를 넘기면 text가 렌더링 되어야 한다.", () => {});
+
+    test("size마다 크기가 다르다.", () => {});
   });
 });

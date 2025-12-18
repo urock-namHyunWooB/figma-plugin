@@ -98,7 +98,7 @@ const PrimaryComponent = styled.button<Props>`
     font-style: normal;
     font-weight: 500;
 
-    ${({ size = "Large" }) => {
+    ${({ size }) => {
       switch (size) {
         case "Large":
           return css`
