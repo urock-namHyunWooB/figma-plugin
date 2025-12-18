@@ -47,8 +47,8 @@ class _FinalAstTree {
 
     let finalAstTree = this.createFinalAstTree(tempAstTree);
     finalAstTree = this.updateCleanupNodes(finalAstTree);
-    finalAstTree = this.updateProps(finalAstTree);
     finalAstTree = this.updateMetaData(finalAstTree);
+    finalAstTree = this.updateProps(finalAstTree);
 
     this._finalAstTree = finalAstTree;
   }
@@ -138,6 +138,7 @@ class _FinalAstTree {
     // 각 노드에 semanticRole 할당
     traverseBFS(astTree, (node) => {
       // 루트 노드 (COMPONENT)
+
       if (node.parent === null) {
         node.semanticRole = isButtonComponent ? "button" : "root";
         return;
@@ -891,6 +892,8 @@ class _FinalAstTree {
    * @private
    */
   private _refinePropsForButton(astTree: FinalAstTree) {
+    if (astTree.semanticRole === "button") {
+    }
     return astTree;
   }
 }
