@@ -176,5 +176,13 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
     test("Text는 무조건 하나 있어야 한다.", () => {});
 
     test("Props에 Icon을 넣을 수 있으면 Icon 넣고 렌더링이 되어야 한다.", () => {});
+
+    test("버튼으로서 기본 기능을 할 수 있어야 한다.", () => {});
+
+    test("폰트 패밀리가 잘 지정 되어야 한다.", () => {});
+
+    test("아이콘 크기 적용이 실제 아이콘에 잘 먹어야 한다.", () => {});
+
+    test("disabled 관련 속성이 있다면 해당 기능이 잘 적용 되어야 한다.", () => {});
   });
 });
