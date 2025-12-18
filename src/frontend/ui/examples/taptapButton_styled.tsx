@@ -1,5 +1,4 @@
 import React from "react";
-import { css } from "@emotion/react";
 import styled from "@emotion/styled";
 
 interface Props {
@@ -18,10 +17,10 @@ const PrimaryComponent = styled.button<Props>`
   justify-content: center;
 
   & .Frame_427318163 {
-  "display": "flex",
-  "align-items": "center",
-  "gap": "4px",
-  "justify-content": "center"
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
   }
 
   &:active {
@@ -38,64 +37,31 @@ const PrimaryComponent = styled.button<Props>`
   }
 
   ${({ size }) => {
-    switch (size) {
-      case "Large":
-        return css`
-          padding: 8px;
-        `;
-      case "Medium":
-        return css`
-          padding: 7px 8px;
-        `;
-      case "Small":
-        return css`
-          padding: 3px 4px;
-        `;
-    }
+    return (
+      {
+        Large: "padding: 8px;",
+        Medium: "padding: 7px 8px;",
+        Small: "padding: 3px 4px;",
+      }[size || "Large"] || ""
+    );
   }}
 
   & .Plus15_12975 {
-    ${({ size }) => {
-      switch (size) {
-        case "Large":
-          return css`
-            width: 18px;
-            height: 18px;
-          `;
-        case "Medium":
-          return css`
-            width: 16px;
-            height: 16px;
-          `;
-        case "Small":
-          return css`
-            width: 14px;
-            height: 14px;
-          `;
-      }
-    }}
+    ${({ size }) =>
+      ({
+        Large: "padding: 8px;",
+        Medium: "padding: 7px 8px;",
+        Small: "padding: 3px 4px;",
+      })[size || "Large"] || ""}
   }
 
   & .Plus15_12981 {
-    ${({ size }) => {
-      switch (size) {
-        case "Large":
-          return css`
-            width: 18px;
-            height: 18px;
-          `;
-        case "Medium":
-          return css`
-            width: 16px;
-            height: 16px;
-          `;
-        case "Small":
-          return css`
-            width: 14px;
-            height: 14px;
-          `;
-      }
-    }}
+    ${({ size }) =>
+      ({
+        Large: "padding: 8px;",
+        Medium: "padding: 7px 8px;",
+        Small: "padding: 3px 4px;",
+      })[size || "Large"] || ""}
   }
 
   & .Text15_12976 {
@@ -106,23 +72,13 @@ const PrimaryComponent = styled.button<Props>`
     font-weight: 500;
 
     ${({ size }) => {
-      switch (size) {
-        case "Large":
-          return css`
-            font-size: 16px;
-            line-height: 24px;
-          `;
-        case "Medium":
-          return css`
-            font-size: 14px;
-            line-height: 22px;
-          `;
-        case "Small":
-          return css`
-            font-size: 12px;
-            line-height: 18px;
-          `;
-      }
+      return (
+        {
+          Large: "font-size: 16px; line-height: 24px;",
+          Medium: "font-size: 14px; line-height: 22px;",
+          Small: "font-size: 12px; line-height: 18px;",
+        }[size || "Large"] || ""
+      );
     }}
   }
 `;
