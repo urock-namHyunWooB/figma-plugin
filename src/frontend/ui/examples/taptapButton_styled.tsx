@@ -17,6 +17,13 @@ const PrimaryComponent = styled.button<Props>`
   flex-direction: column;
   justify-content: center;
 
+  & .Frame_427318163 {
+  "display": "flex",
+  "align-items": "center",
+  "gap": "4px",
+  "justify-content": "center"
+  }
+
   &:active {
     background: var(--Primary-700, #00abb6);
   }
@@ -131,7 +138,7 @@ function Primary(props: Props) {
       text={text}
       className="PrimaryComponent"
     >
-      <div>
+      <div className="Frame_427318163">
         {leftIcon && <div className="Plus15_12975">{leftIcon}</div>}
         <span className="Text15_12976">{text}</span>
         {rightIcon && <div className="Plus15_12981">{rightIcon}</div>}

@@ -391,5 +391,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
       const button = screen.getByRole("button");
       expect((button as HTMLButtonElement).disabled).toBe(true);
     });
+
+    test("컴포넌트 이름은 ComponentSetNode 이름이여야 한다.", () => {});
   });
 });
