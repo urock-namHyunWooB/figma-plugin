@@ -129,7 +129,8 @@ class _FinalAstTree {
     const renderTree = this.specDataManager.getRenderTree();
     const componentSetName = (renderTree?.name || "").toLowerCase();
     const isButtonComponent =
-      componentSetName.includes("button") || componentSetName.includes("btn");
+      componentSetName.toLowerCase().includes("button") ||
+      componentSetName.toLowerCase().includes("btn");
 
     // 각 노드에 semanticRole 할당
     traverseBFS(astTree, (node) => {
@@ -190,6 +191,7 @@ class _FinalAstTree {
     astTree = this._normalizePropsName(astTree);
     astTree = this._refineStateProp(astTree);
     astTree = this._refineComponentLikeProp(astTree);
+    astTree = this._refinePropsForButton(astTree);
 
     return astTree;
   }
@@ -877,10 +879,14 @@ class _FinalAstTree {
   }
 
   /**
-   * 노드 트리 구조 최적화
+   * Button 전용으로 Component 유형을 둘러봐서 text 관련 노드가 있는데
+   * props에 text가 없다면
+   * props에 text 넣고
+   * text 관련 노드에 해당 prop을 바인딩 해야한다.
+   * @param astTree
    * @private
    */
-  private updateStructure() {}
+  private _refinePropsForButton(astTree: FinalAstTree) {}
 }
 
 export default _FinalAstTree;

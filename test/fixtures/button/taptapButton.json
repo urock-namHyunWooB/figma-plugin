@@ -16,7 +16,7 @@
   "info": {
     "document": {
       "id": "15:12968",
-      "name": "Primary",
+      "name": "PrimaryButton",
       "type": "COMPONENT_SET",
       "locked": true,
       "scrollBehavior": "SCROLLS",

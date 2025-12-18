@@ -16,7 +16,7 @@
   "info": {
     "document": {
       "id": "15:12968",
-      "name": "Primary",
+      "name": "PrimaryButton",
       "type": "COMPONENT_SET",
       "locked": true,
       "scrollBehavior": "SCROLLS",
@@ -24,37 +24,22 @@
         "Size": {
           "type": "VARIANT",
           "defaultValue": "Large",
-          "variantOptions": [
-            "Large",
-            "Medium",
-            "Small"
-          ]
+          "variantOptions": ["Large", "Medium", "Small"]
         },
         "State": {
           "type": "VARIANT",
           "defaultValue": "Default",
-          "variantOptions": [
-            "Default",
-            "Hover",
-            "Pressed",
-            "Disabled"
-          ]
+          "variantOptions": ["Default", "Hover", "Pressed", "Disabled"]
         },
         "Left Icon": {
           "type": "VARIANT",
           "defaultValue": "False",
-          "variantOptions": [
-            "False",
-            "True"
-          ]
+          "variantOptions": ["False", "True"]
         },
         "Right Icon": {
           "type": "VARIANT",
           "defaultValue": "False",
-          "variantOptions": [
-            "False",
-            "True"
-          ]
+          "variantOptions": ["False", "True"]
         }
       },
       "children": [
@@ -140,12 +125,8 @@
               "characters": "Text",
               "characterStyleOverrides": [],
               "styleOverrideTable": {},
-              "lineTypes": [
-                "NONE"
-              ],
-              "lineIndentations": [
-                0
-              ],
+              "lineTypes": ["NONE"],
+              "lineIndentations": [0],
               "style": {
                 "fontFamily": "PingFang SC",
                 "fontPostScriptName": "PingFangSC-Medium",
@@ -292,17 +273,11 @@
                   "overrides": [
                     {
                       "id": "15:12975",
-                      "overriddenFields": [
-                        "height",
-                        "preserveRatio",
-                        "width"
-                      ]
+                      "overriddenFields": ["height", "preserveRatio", "width"]
                     },
                     {
                       "id": "I15:12975;297:22915",
-                      "overriddenFields": [
-                        "inheritFillStyleId"
-                      ]
+                      "overriddenFields": ["inheritFillStyleId"]
                     }
                   ],
                   "children": [
@@ -434,12 +409,8 @@
                   "characters": "Text",
                   "characterStyleOverrides": [],
                   "styleOverrideTable": {},
-                  "lineTypes": [
-                    "NONE"
-                  ],
-                  "lineIndentations": [
-                    0
-                  ],
+                  "lineTypes": ["NONE"],
+                  "lineIndentations": [0],
                   "style": {
                     "fontFamily": "PingFang SC",
                     "fontPostScriptName": "PingFangSC-Medium",
@@ -683,12 +654,8 @@
                   "characters": "Text",
                   "characterStyleOverrides": [],
                   "styleOverrideTable": {},
-                  "lineTypes": [
-                    "NONE"
-                  ],
-                  "lineIndentations": [
-                    0
-                  ],
+                  "lineTypes": ["NONE"],
+                  "lineIndentations": [0],
                   "style": {
                     "fontFamily": "PingFang SC",
                     "fontPostScriptName": "PingFangSC-Medium",
@@ -724,17 +691,11 @@
                   "overrides": [
                     {
                       "id": "15:12981",
-                      "overriddenFields": [
-                        "height",
-                        "preserveRatio",
-                        "width"
-                      ]
+                      "overriddenFields": ["height", "preserveRatio", "width"]
                     },
                     {
                       "id": "I15:12981;297:22915",
-                      "overriddenFields": [
-                        "inheritFillStyleId"
-                      ]
+                      "overriddenFields": ["inheritFillStyleId"]
                     }
                   ],
                   "children": [
@@ -1036,12 +997,8 @@
               "characters": "Text",
               "characterStyleOverrides": [],
               "styleOverrideTable": {},
-              "lineTypes": [
-                "NONE"
-              ],
-              "lineIndentations": [
-                0
-              ],
+              "lineTypes": ["NONE"],
+              "lineIndentations": [0],
               "style": {
                 "fontFamily": "PingFang SC",
                 "fontPostScriptName": "PingFangSC-Medium",
@@ -1188,17 +1145,11 @@
                   "overrides": [
                     {
                       "id": "15:12988",
-                      "overriddenFields": [
-                        "height",
-                        "preserveRatio",
-                        "width"
-                      ]
+                      "overriddenFields": ["height", "preserveRatio", "width"]
                     },
                     {
                       "id": "I15:12988;297:22915",
-                      "overriddenFields": [
-                        "inheritFillStyleId"
-                      ]
+                      "overriddenFields": ["inheritFillStyleId"]
                     }
                   ],
                   "children": [
@@ -1330,12 +1281,8 @@
                   "characters": "Text",
                   "characterStyleOverrides": [],
                   "styleOverrideTable": {},
-                  "lineTypes": [
-                    "NONE"
-                  ],
-                  "lineIndentations": [
-                    0
-                  ],
+                  "lineTypes": ["NONE"],
+                  "lineIndentations": [0],
                   "style": {
                     "fontFamily": "PingFang SC",
                     "fontPostScriptName": "PingFangSC-Medium",
@@ -1579,12 +1526,8 @@
                   "characters": "Text",
                   "characterStyleOverrides": [],
                   "styleOverrideTable": {},
-                  "lineTypes": [
-                    "NONE"
-                  ],
-                  "lineIndentations": [
-                    0
-                  ],
+                  "lineTypes": ["NONE"],
+                  "lineIndentations": [0],
                   "style": {
                     "fontFamily": "PingFang SC",
                     "fontPostScriptName": "PingFangSC-Medium",
@@ -1620,17 +1563,11 @@
                   "overrides": [
                     {
                       "id": "15:12994",
-                      "overriddenFields": [
-                        "height",
-                        "preserveRatio",
-                        "width"
-                      ]
+                      "overriddenFields": ["height", "preserveRatio", "width"]
                     },
                     {
                       "id": "I15:12994;297:22915",
-                      "overriddenFields": [
-                        "inheritFillStyleId"
-                      ]
+                      "overriddenFields": ["inheritFillStyleId"]
                     }
                   ],
                   "children": [
@@ -1932,12 +1869,8 @@
               "characters": "Text",
               "characterStyleOverrides": [],
               "styleOverrideTable": {},
-              "lineTypes": [
-                "NONE"
-              ],
-              "lineIndentations": [
-                0
-              ],
+              "lineTypes": ["NONE"],
+              "lineIndentations": [0],
               "style": {
                 "fontFamily": "PingFang SC",
                 "fontPostScriptName": "PingFangSC-Medium",
@@ -2028,7 +1961,6 @@
           "effects": [],
           "interactions": []
         }
-
       ],
       "blendMode": "PASS_THROUGH",
       "clipsContent": true,
@@ -2055,10 +1987,7 @@
         "b": 0,
         "a": 0
       },
-      "strokeDashes": [
-        10,
-        5
-      ],
+      "strokeDashes": [10, 5],
       "absoluteBoundingBox": {
         "x": -2749,
         "y": -1985,
@@ -2149,7 +2078,6 @@
         "componentSetId": "15:12968",
         "documentationLinks": []
       }
-
     },
     "componentSets": {
       "15:12968": {
@@ -2620,7 +2548,6 @@
           }
         ]
       }
-
     ]
   }
 }
