@@ -5,13 +5,20 @@ import urockButtonSampleMockData from "../fixtures/button/urockButton.json";
 
 import airtableButtonMockData from "../fixtures/button/airtableButton.json";
 
-import { FinalAstTree, SuperTreeNode, TempAstTree } from "@compiler";
+import FigmaCompiler, {
+  FinalAstTree,
+  SuperTreeNode,
+  TempAstTree,
+} from "@compiler";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import RefineProps from "@compiler/core/componentSetNode/RefineProps";
 import CreateAstTree from "@compiler/core/componentSetNode/ast-tree/CreateAstTree";
 import CreateSuperTree from "@compiler/core/componentSetNode/super-tree/CreateSuperTree";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import { traverseBFS } from "@compiler/utils/traverse";
+import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
+import { render } from "@testing-library/react";
+import * as React from "react";
 
 function countNodesByType(
   node: SuperTreeNode | FinalAstTree,
@@ -1051,21 +1058,22 @@ describe("astTree 최종 ASTTree 테스트", () => {
 });
 
 describe("CodeGen", () => {
-  describe("taptapButton_sample", () => {
-    const specDataManager = new SpecDataManager(
-      taptapButtonSampleMockData as any
-    );
-    const renderTree = specDataManager.getRenderTree();
+  describe("taptapButton_sample", async () => {
+    const compiler = new FigmaCompiler(taptapButtonSampleMockData as any);
+    const code = compiler.getGeneratedCode();
 
-    const matcher = new NodeMatcher(specDataManager);
-    const createSuperTree = new CreateSuperTree(
-      renderTree,
-      specDataManager,
-      matcher
-    );
+    const Component = await renderReactComponent(code!);
+
+    const { container } = render(React.createElement(Component));
+
+    test("렌더링 기본적으로 성공해야함", () => {
+      expect(container).toBeInTheDocument();
+    });
 
     test("Size가 Medium이면 fontSize는 14px이고 line-height는 22px이여야 한다.", () => {});
 
     test("Size가 Small이면 fontSize는 12px이고 line-height는 18px이여야 한다.", () => {});
+
+    test("Text color는 흰색이여야 한다.", () => {});
   });
 });
