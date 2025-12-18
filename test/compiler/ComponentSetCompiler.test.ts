@@ -1,6 +1,8 @@
 import { describe, expect } from "vitest";
 import tadaButtonMockData from "../fixtures/button/tadaButton.json";
 import taptapButtonSampleMockData from "../fixtures/button/taptapButton_sample.json";
+import taptapButtonMockData from "../fixtures/button/taptapButton.json";
+
 import urockButtonSampleMockData from "../fixtures/button/urockButton.json";
 
 import airtableButtonMockData from "../fixtures/button/airtableButton.json";
@@ -1059,9 +1061,9 @@ describe("astTree 최종 ASTTree 테스트", () => {
 
 describe("CodeGen", () => {
   describe("taptapButton_sample", async () => {
-    const compiler = new FigmaCompiler(taptapButtonSampleMockData as any);
+    const compiler = new FigmaCompiler(taptapButtonMockData as any);
     const code = compiler.getGeneratedCode();
-
+    taptapButtonMockData;
     const Component = await renderReactComponent(code!);
 
     const { container } = render(React.createElement(Component));
