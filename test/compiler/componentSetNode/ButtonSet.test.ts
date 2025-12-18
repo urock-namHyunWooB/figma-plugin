@@ -395,5 +395,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
     });
 
     test("컴포넌트 이름은 ComponentSetNode 이름이여야 한다.", () => {});
+
+    test("컴포넌트 root 태그는 button 태그여야 한다.", () => {});
   });
 });
