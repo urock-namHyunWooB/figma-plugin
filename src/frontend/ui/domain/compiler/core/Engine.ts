@@ -1,30 +1,55 @@
 import FigmaCompiler, { RenderTree } from "@compiler";
-import ComponentSetCompiler from "@compiler/core/componentSetNode/ComponentSetCompiler";
+import ComponentSetCompiler from "@compiler/core/ComponentSetCompiler";
 import NodeMatcher from "@compiler/core/NodeMatcher";
+import debug from "@compiler/manager/DebuggingManager";
+import RefineProps from "@compiler/core/RefineProps";
+import CreateAstTree from "@compiler/core/ast-tree/CreateAstTree";
+import ReactGenerator from "@compiler/core/react-generator/ReactGenerator";
+import CreateSuperTree from "./super-tree/CreateSuperTree";
+import SpecDataManager from "@compiler/manager/SpecDataManager";
+import { toCamelCase } from "@compiler/utils/normalizeString";
 
 class Engine {
-  private componentSetCompiler?: ComponentSetCompiler;
+  private CreateSuperTree: CreateSuperTree;
+  private CreateFinalAstTree: CreateAstTree;
+  private reactGenerator: ReactGenerator;
 
   constructor(root: FigmaCompiler, renderTree: RenderTree) {
     const node = root.SpecDataManager.getSpecById(renderTree.id);
     const specManager = root.SpecDataManager;
+    const matcher = new NodeMatcher(specManager);
 
-    if (node.type === "COMPONENT_SET") {
-      this.componentSetCompiler = new ComponentSetCompiler(
-        renderTree,
-        specManager,
-        new NodeMatcher(specManager)
-      );
-    }
+    debug.point(1);
+
+    this.CreateSuperTree = new CreateSuperTree(
+      renderTree,
+      specManager,
+      matcher
+    );
+
+    const RefindProps = new RefineProps(renderTree, specManager);
+    const refinedProps = RefindProps.refinedProps;
+
+    const superNodeTree = this.CreateSuperTree.getSuperTree();
+
+    const createFinalAstTree = (this.CreateFinalAstTree = new CreateAstTree(
+      specManager,
+      superNodeTree,
+      refinedProps
+    ));
+
+    this.reactGenerator = new ReactGenerator(createFinalAstTree.finalAstTree);
+
+    // debug.tree(createFinalAstTree.finalAstTree);
   }
 
   /**
    * 생성된 React 컴포넌트 코드를 반환
    * @param componentName 컴포넌트 이름 (기본값: "Button")
-   * @returns 생성된 TypeScript/TSX 코드 문자열, 또는 null (COMPONENT_SET이 아닌 경우)
+   * @returns 생성된 TypeScript/TSX 코드 문자열
    */
-  public getGeneratedCode(componentName: string = "Button"): string | null {
-    return this.componentSetCompiler?.getGeneratedCode(componentName) || null;
+  public getGeneratedCode(componentName: string = "Button"): string {
+    return this.reactGenerator.generateComponentCode(componentName);
   }
 }
 

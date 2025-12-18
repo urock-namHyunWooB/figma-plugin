@@ -3,8 +3,8 @@ import SpecDataManager from "@compiler/manager/SpecDataManager";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import { getNodesAtDepth, traverseBFS } from "@compiler/utils/traverse";
 
-import _SortNodes from "@compiler/core/componentSetNode/super-tree/_SortNodes";
-import { UnionFind, DirectedGraph } from "../../../manager/HelperManager";
+import _SortNodes from "@compiler/core/super-tree/_SortNodes";
+import { UnionFind, DirectedGraph } from "../../manager/HelperManager";
 import UpdateSquashByIou from "./squash/UpdateSquashByIou";
 
 //TODO 구조에 따라서 슈퍼트리, 슬롯 + 레이아웃 전략을 한다.

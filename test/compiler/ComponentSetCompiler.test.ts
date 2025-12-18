@@ -14,9 +14,9 @@ import FigmaCompiler, {
   TempAstTree,
 } from "@compiler";
 import NodeMatcher from "@compiler/core/NodeMatcher";
-import RefineProps from "@compiler/core/componentSetNode/RefineProps";
-import CreateAstTree from "@compiler/core/componentSetNode/ast-tree/CreateAstTree";
-import CreateSuperTree from "@compiler/core/componentSetNode/super-tree/CreateSuperTree";
+import RefineProps from "@compiler/core/RefineProps";
+import CreateAstTree from "@compiler/core/ast-tree/CreateAstTree";
+import CreateSuperTree from "@compiler/core/super-tree/CreateSuperTree";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import { traverseBFS } from "@compiler/utils/traverse";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";

@@ -6,9 +6,9 @@ import {
   TempAstTree,
   VisibleValue,
 } from "@compiler";
-import { PropsDef } from "@compiler/core/componentSetNode/RefineProps";
+import { PropsDef } from "@compiler/core/RefineProps";
 
-import SpecDataManager from "../../../manager/SpecDataManager";
+import SpecDataManager from "../../manager/SpecDataManager";
 import { findNodeBFS, traverseBFS } from "@compiler/utils/traverse";
 import helper from "@compiler/manager/HelperManager";
 import { BinaryOperator } from "@compiler/types/customType";

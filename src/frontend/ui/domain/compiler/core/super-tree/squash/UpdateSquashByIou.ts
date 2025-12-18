@@ -1,6 +1,6 @@
 import { RenderTree, SiblingGraph, SuperTreeNode } from "@compiler";
 import { traverseBFS } from "@compiler/utils/traverse";
-import NodeMatcher from "../../../NodeMatcher";
+import NodeMatcher from "../../NodeMatcher";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import helper from "@compiler/manager/HelperManager";
 

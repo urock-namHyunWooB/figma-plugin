@@ -4,10 +4,10 @@ import { toCamelCase } from "@compiler/utils/normalizeString";
 import { getNodesAtDepth, traverseBFS } from "@compiler/utils/traverse";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import CreateSuperTree from "./super-tree/CreateSuperTree";
-import RefineProps from "@compiler/core/componentSetNode/RefineProps";
+import RefineProps from "@compiler/core/RefineProps";
 import CreateAstTree from "./ast-tree/CreateAstTree";
 import debug from "@compiler/manager/DebuggingManager";
-import ReactGenerator from "@compiler/core/componentSetNode/react-generator/ReactGenerator";
+import ReactGenerator from "@compiler/core/react-generator/ReactGenerator";
 
 type PropsDef = Record<string, any>;
 

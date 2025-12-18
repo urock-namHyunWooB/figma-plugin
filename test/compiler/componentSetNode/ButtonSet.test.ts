@@ -4,9 +4,9 @@ import * as React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import NodeMatcher from "@compiler/core/NodeMatcher";
-import RefineProps from "@compiler/core/componentSetNode/RefineProps";
-import CreateAstTree from "@compiler/core/componentSetNode/ast-tree/CreateAstTree";
-import CreateSuperTree from "@compiler/core/componentSetNode/super-tree/CreateSuperTree";
+import RefineProps from "@compiler/core/RefineProps";
+import CreateAstTree from "@compiler/core/ast-tree/CreateAstTree";
+import CreateSuperTree from "@compiler/core/super-tree/CreateSuperTree";
 import { FinalAstTree, SuperTreeNode } from "@compiler";
 import { traverseBFS } from "@compiler/utils/traverse";
 import { FigmaCompiler } from "@compiler/FigmaCompiler";
@@ -20,6 +20,7 @@ const fixtures = import.meta.glob("../../fixtures/button/*.json", {
 }) as Record<string, any>;
 
 // { "../../fixtures/button/xxx.json": data } → [["xxx", data], ...]
+// @ts-ignore
 const fixtureEntries = Object.entries(fixtures).map(([path, data]) => {
   const fileName = path.split("/").pop()!.replace(".json", "");
   return [fileName, data] as const;
@@ -139,6 +140,7 @@ function collectNodesByType(node: SuperTreeNode | FinalAstTree, type: string) {
   return nodes;
 }
 
+// @ts-ignore
 describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
   const specDataManager = new SpecDataManager(mockData as any);
   const renderTree = specDataManager.getRenderTree();
@@ -222,7 +224,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
       const compiler = new FigmaCompiler(mockData);
 
       // 2. 코드 생성
-      const code = compiler.getGeneratedCode("Button");
+      const code = compiler.getGeneratedCode("Button")!;
       expect(code).toBeTruthy();
       expect(typeof code).toBe("string");
       expect(code.length).toBeGreaterThan(0);
@@ -239,7 +241,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
     test("props를 전달하여 렌더링할 수 있어야 한다", async () => {
       const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button");
+      const code = compiler.getGeneratedCode("Button")!;
       const Component = await renderReactComponent(code);
 
       // props 전달하여 렌더링
@@ -261,7 +263,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
     test("props로 text를 넘기면 text가 렌더링 되어야 한다.", async () => {
       const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button");
+      const code = compiler.getGeneratedCode("Button")!;
       const Component = await renderReactComponent(code);
 
       const parsed = parsePropsFromInterface(code);
@@ -283,7 +285,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
     test("Text는 무조건 하나 있어야 한다.", async () => {
       const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button");
+      const code = compiler.getGeneratedCode("Button")!;
       const Component = await renderReactComponent(code);
 
       const parsed = parsePropsFromInterface(code);
@@ -301,7 +303,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
     test("Props에 Icon을 넣을 수 있으면 Icon 넣고 렌더링이 되어야 한다.", async () => {
       const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button");
+      const code = compiler.getGeneratedCode("Button")!;
       const Component = await renderReactComponent(code);
 
       const parsed = parsePropsFromInterface(code);
@@ -324,7 +326,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
     test("버튼으로서 기본 기능을 할 수 있어야 한다.", async () => {
       const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button");
+      const code = compiler.getGeneratedCode("Button")!;
       const Component = await renderReactComponent(code);
 
       const parsed = parsePropsFromInterface(code);
@@ -357,7 +359,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
     test("아이콘 크기 적용이 실제 아이콘에 잘 먹어야 한다.", async () => {
       const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button");
+      const code = compiler.getGeneratedCode("Button")!;
 
       const parsed = parsePropsFromInterface(code);
       const iconPropNames = pickReactNodePropNames(parsed);
@@ -373,7 +375,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
     test("disabled 관련 속성이 있다면 해당 기능이 잘 적용 되어야 한다.", async () => {
       const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button");
+      const code = compiler.getGeneratedCode("Button")!;
       const Component = await renderReactComponent(code);
 
       const parsed = parsePropsFromInterface(code);
