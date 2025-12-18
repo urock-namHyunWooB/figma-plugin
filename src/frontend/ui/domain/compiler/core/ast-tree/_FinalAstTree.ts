@@ -892,8 +892,21 @@ class _FinalAstTree {
    * @private
    */
   private _refinePropsForButton(astTree: FinalAstTree) {
-    if (astTree.semanticRole === "button") {
-    }
+    if (astTree.semanticRole !== "button") return astTree;
+
+    let isTextButton = false;
+    const textLickComponent = [];
+
+    traverseBFS(astTree, (node, meta) => {
+      if (node.semanticRole === "text") {
+        isTextButton = true;
+        textLickComponent.push(node);
+        return;
+      }
+    });
+
+    if (!isTextButton) return astTree;
+
     return astTree;
   }
 }
