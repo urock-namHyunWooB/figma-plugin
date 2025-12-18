@@ -895,17 +895,50 @@ class _FinalAstTree {
     if (astTree.semanticRole !== "button") return astTree;
 
     let isTextButton = false;
-    const textLickComponent = [];
+    const textLikeComponents: FinalAstTree[] = [];
 
-    traverseBFS(astTree, (node, meta) => {
+    traverseBFS(astTree, (node, _meta) => {
       if (node.semanticRole === "text") {
         isTextButton = true;
-        textLickComponent.push(node);
+        textLikeComponents.push(node);
         return;
       }
     });
 
     if (!isTextButton) return astTree;
+
+    // 버튼 내부에 text 노드가 있는데, 루트 props에 text 정의가 없으면 자동으로 생성한다.
+    // - type은 ReactGenerator에서 지원하는 "TEXT"로 설정
+    // - defaultValue는 첫 text 노드의 characters(없으면 node.name)를 사용
+    const hasTextPropAlready =
+      "text" in (astTree.props as any) || "label" in (astTree.props as any);
+
+    // 이미 text/label prop이 있으면 굳이 추가하지 않음 (기존 정의 우선)
+    const propNameToUse = "text";
+    if (!hasTextPropAlready) {
+      const firstTextNode = textLikeComponents[0];
+      const firstTextSpec = this.specDataManager.getSpecById(firstTextNode.id);
+
+      const defaultText =
+        (firstTextSpec as any)?.characters ??
+        (firstTextSpec as any)?.text ??
+        firstTextNode.name ??
+        "";
+
+      (astTree.props as any)[propNameToUse] = {
+        type: "TEXT",
+        defaultValue: defaultText,
+      };
+    }
+
+    // text 노드에 text prop을 바인딩한다.
+    // 이 프로젝트의 AST에서는 node.props 값이 "루트 prop key"를 문자열로 참조하는 패턴을 사용한다.
+    // 따라서 TEXT 노드의 characters를 props.text로 연결한다.
+    for (const textNode of textLikeComponents) {
+      // 이미 characters 바인딩이 있으면 유지
+      if ((textNode.props as any)?.characters) continue;
+      (textNode.props as any).characters = propNameToUse;
+    }
 
     return astTree;
   }
