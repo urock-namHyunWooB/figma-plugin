@@ -1,5 +1,4 @@
 import FigmaCompiler, { RenderTree } from "@compiler";
-import ComponentSetCompiler from "@compiler/core/ComponentSetCompiler";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import debug from "@compiler/manager/DebuggingManager";
 import RefineProps from "@compiler/core/RefineProps";
@@ -27,8 +26,7 @@ class Engine {
       matcher
     );
 
-    const RefindProps = new RefineProps(renderTree, specManager);
-    const refinedProps = RefindProps.refinedProps;
+    const refinedProps = new RefineProps(renderTree, specManager).refinedProps;
 
     const superNodeTree = this.CreateSuperTree.getSuperTree();
 
