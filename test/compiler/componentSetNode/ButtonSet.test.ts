@@ -170,5 +170,11 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
       expect(code).toContain("return");
       expect(code).toContain("React");
     });
+
+    test("props로 text를 넘기면 text가 렌더링 되어야 한다.", () => {});
+
+    test("Text는 무조건 하나 있어야 한다.", () => {});
+
+    test("Props에 Icon을 넣을 수 있으면 Icon 넣고 렌더링이 되어야 한다.", () => {});
   });
 });

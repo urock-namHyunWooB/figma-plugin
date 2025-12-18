@@ -9,6 +9,8 @@ import taptapButton from "../../../../test/fixtures/button/taptapButton.json";
 import dialogFixture from "../../../../test/fixtures/dialog.json";
 import paginationFixture from "../../../../test/fixtures/pagination.json";
 import selectsFixture from "../../../../test/fixtures/selects.json";
+import compiler from "@frontend/ui/domain/compiler";
+import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
 
 export function TestComp() {
   const [tsxCode, setTsxCode] = useState<string>("");
@@ -27,16 +29,18 @@ export function TestComp() {
         setTsxCode("");
         setCompiledComponent(null);
 
-        console.log("taptapButton");
         // 컴파일러 생성
-        const compiler = new FigmaCompiler(taptapButton);
+        codeRef.current = new FigmaCompiler(taptapButton);
         // codeRef.current = new FigmaCompiler(urockButton);
         // codeRef.current = new FigmaCompiler(taptapButtonSample);
         // codeRef.current = new FigmaCompiler(tadaButtonSample);
         // codeRef.current = new FigmaCompiler(airtableButton);
 
         // 코드 생성
-        const generatedCode = compiler.getGeneratedCode("Button");
+        // @ts-ignore
+        const generatedCode = codeRef.current!.getGeneratedCode();
+        console.log(generatedCode);
+
         if (!generatedCode) {
           throw new Error("코드 생성 실패");
         }
@@ -44,7 +48,7 @@ export function TestComp() {
         setTsxCode(generatedCode);
 
         // 컴포넌트 컴파일
-        const Component = await compileReactComponent(generatedCode);
+        const Component = await renderReactComponent(generatedCode);
         setCompiledComponent(() => Component);
 
         codeRef.current = compiler;

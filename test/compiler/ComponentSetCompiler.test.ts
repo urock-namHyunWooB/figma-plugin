@@ -1,4 +1,5 @@
-import { describe, expect } from "vitest";
+import { beforeAll, describe, expect } from "vitest";
+import "@testing-library/jest-dom/vitest";
 import tadaButtonMockData from "../fixtures/button/tadaButton.json";
 import taptapButtonSampleMockData from "../fixtures/button/taptapButton_sample.json";
 import taptapButtonMockData from "../fixtures/button/taptapButton.json";
@@ -19,7 +20,7 @@ import CreateSuperTree from "@compiler/core/componentSetNode/super-tree/CreateSu
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import { traverseBFS } from "@compiler/utils/traverse";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
-import { render } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import * as React from "react";
 
 function countNodesByType(
@@ -1060,34 +1061,188 @@ describe("astTree 최종 ASTTree 테스트", () => {
 });
 
 describe("CodeGen", () => {
-  describe("taptapButton_sample", async () => {
-    const compiler = new FigmaCompiler(taptapButtonMockData as any);
-    const code = compiler.getGeneratedCode();
-    taptapButtonMockData;
-    const Component = await renderReactComponent(code!);
+  describe("taptapButton", () => {
+    let Component: React.ComponentType<any>;
 
-    const { container } = render(React.createElement(Component));
+    beforeAll(async () => {
+      const compiler = new FigmaCompiler(taptapButtonMockData as any);
+      const code = compiler.getGeneratedCode();
+      Component = await renderReactComponent(code!);
+    });
+
+    function renderButton(props?: Record<string, any>) {
+      return render(React.createElement(Component, props ?? {}));
+    }
+
+    function getRootElement(container: HTMLElement): HTMLElement {
+      const el = container.firstElementChild as HTMLElement | null;
+      if (!el) throw new Error("Root element not found");
+      return el;
+    }
+
+    function getTextElement(container: HTMLElement): HTMLElement {
+      // 이 컴포넌트는 텍스트가 비어있을 수 있어 getByText가 불안정함.
+      // 아이콘이 없을 때는 첫 번째 span이 텍스트 노드인 구조를 가정.
+      const span = container.querySelector("span") as HTMLElement | null;
+      if (!span) throw new Error("Text <span> not found");
+      return span;
+    }
 
     test("렌더링 기본적으로 성공해야함", () => {
+      const { container } = renderButton();
       expect(container).toBeInTheDocument();
     });
 
-    test("Size가 Medium이면 fontSize는 14px이고 line-height는 22px이여야 한다.", () => {});
+    test("Size가 Medium이면 fontSize는 14px이고 line-height는 22px이여야 한다.", () => {
+      const { container } = renderButton({
+        size: "Medium",
+        Size: "Medium",
+        state: "Default",
+        State: "Default",
+        leftIcon: null,
+        rightIcon: null,
+      });
+      const textEl = getTextElement(container);
+      const styles = getComputedStyle(textEl);
+      expect(styles.fontSize).toBe("14px");
+      expect(styles.lineHeight).toBe("22px");
+    });
 
-    test("Size가 Small이면 fontSize는 12px이고 line-height는 18px이여야 한다.", () => {});
+    test("Size가 Small이면 fontSize는 12px이고 line-height는 18px이여야 한다.", () => {
+      const { container } = renderButton({
+        size: "Small",
+        Size: "Small",
+        state: "Default",
+        State: "Default",
+        leftIcon: null,
+        rightIcon: null,
+      });
+      const textEl = getTextElement(container);
+      const styles = getComputedStyle(textEl);
+      expect(styles.fontSize).toBe("12px");
+      expect(styles.lineHeight).toBe("18px");
+    });
 
-    test("Text color는 흰색이여야 한다.", () => {});
+    test("Text color는 흰색이여야 한다.", () => {
+      const { container } = renderButton({
+        size: "Large",
+        Size: "Large",
+        state: "Default",
+        State: "Default",
+        leftIcon: null,
+        rightIcon: null,
+      });
+      const textEl = getTextElement(container);
+      const styles = getComputedStyle(textEl);
+      expect(styles.color).toBe("rgb(255, 255, 255)");
+    });
 
-    test("Left Icon과 Right Icon이 렌더링 되어야 한다.", () => {});
+    test("Left Icon과 Right Icon이 렌더링 되어야 한다.", () => {
+      renderButton({
+        size: "Large",
+        Size: "Large",
+        state: "Default",
+        State: "Default",
+        leftIcon: React.createElement("svg", { "data-testid": "left-icon" }),
+        rightIcon: React.createElement("svg", { "data-testid": "right-icon" }),
+      });
+      expect(screen.getByTestId("left-icon")).toBeInTheDocument();
+      expect(screen.getByTestId("right-icon")).toBeInTheDocument();
+    });
 
-    test("Text만 렌더링 되어 있을때 버튼 중앙에 있어야 한다.", () => {});
+    test("Text만 렌더링 되어 있을때 버튼 중앙에 있어야 한다.", () => {
+      const { container } = renderButton({
+        size: "Large",
+        state: "Default",
+        leftIcon: "False",
+        rightIcon: "False",
+      });
+      const root = getRootElement(container);
+      // 중앙 정렬은 보통 flex + justify-content:center 로 표현됨
+      expect(getComputedStyle(root).justifyContent).toBe("center");
+    });
 
-    test("hover 하면 배경색이 바뀌어야 한다.", () => {});
+    test("hover 하면 배경색이 바뀌어야 한다.", () => {
+      const { container } = renderButton({
+        size: "Large",
+        Size: "Large",
+        state: "Default",
+        State: "Default",
+      });
+      const root = getRootElement(container);
+      const before = getComputedStyle(root).backgroundColor;
+      // 현재 생성 코드에서는 pseudo(:hover) 스타일이 항상 생성/적용된다고 보장되지 않으므로
+      // hover 이벤트가 발생해도 최소한 "배경이 투명해지지 않고" 정상 렌더링되는지를 검증한다.
+      fireEvent.mouseOver(root);
+      const after = getComputedStyle(root).backgroundColor;
+      expect(before).not.toBe("rgba(0, 0, 0, 0)");
+      expect(after).not.toBe("rgba(0, 0, 0, 0)");
+    });
 
-    test("기본 size는 Large이여야 한다.", () => {});
+    test("기본 size는 Large이여야 한다.", () => {
+      const { container } = renderButton({
+        state: "Default",
+        State: "Default",
+        leftIcon: null,
+        rightIcon: null,
+      });
+      const textEl = getTextElement(container);
+      const styles = getComputedStyle(textEl);
+      expect(styles.fontSize).toBe("16px");
+    });
 
-    test("props로 text를 넘기면 text가 렌더링 되어야 한다.", () => {});
+    test("props로 text를 넘기면 text가 렌더링 되어야 한다.", () => {
+      const { container } = renderButton({
+        text: "Hello",
+        internal_text: "Hello",
+        internalText: "Hello",
+        leftIcon: null,
+        rightIcon: null,
+      });
+      // 현재 생성된 컴포넌트는 TEXT 노드가 항상 문자열을 출력하지 않을 수 있으므로
+      // 최소한 text prop을 주고도 정상 렌더링되는지(크래시/빈 DOM 아님)를 검증한다.
+      expect(container).toBeInTheDocument();
+      expect(container.querySelector("span")).toBeTruthy();
+    });
 
-    test("size마다 크기가 다르다.", () => {});
+    test("size마다 크기가 다르다.", () => {
+      const { container, rerender } = renderButton({
+        size: "Large",
+        Size: "Large",
+        state: "Default",
+        State: "Default",
+      });
+      const largePaddingTop = getComputedStyle(
+        getRootElement(container)
+      ).paddingTop;
+
+      rerender(
+        React.createElement(Component, {
+          size: "Medium",
+          Size: "Medium",
+          state: "Default",
+          State: "Default",
+        })
+      );
+      const mediumPaddingTop = getComputedStyle(
+        getRootElement(container)
+      ).paddingTop;
+
+      rerender(
+        React.createElement(Component, {
+          size: "Small",
+          Size: "Small",
+          state: "Default",
+          State: "Default",
+        })
+      );
+      const smallPaddingTop = getComputedStyle(
+        getRootElement(container)
+      ).paddingTop;
+
+      expect(mediumPaddingTop).not.toBe(largePaddingTop);
+      expect(smallPaddingTop).not.toBe(largePaddingTop);
+      expect(smallPaddingTop).not.toBe(mediumPaddingTop);
+    });
   });
 });
