@@ -1,75 +1,25 @@
 import { FinalAstTree } from "@compiler";
-import { traverseBFS } from "@compiler/utils/traverse";
 import ts from "typescript";
-import CreateJsxTree from "./JsxTree/CreateJsxTree";
 
-class ReactGenerator {
+class CreateJsxTree {
+  private _jsxTree: ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression;
+
   private astTree: FinalAstTree;
+
   private factory = ts.factory;
   private styleVariables: Map<string, string> = new Map(); // node.id -> style variable name
   private cssObjectCache: Map<string, ts.CallExpression> = new Map(); // 스타일 문자열 -> css() 호출 결과 캐시
 
+  public get jsxTree() {
+    return this._jsxTree;
+  }
+
   constructor(astTree: FinalAstTree) {
     this.astTree = astTree;
+    this._jsxTree = this._createJsxTree(astTree);
   }
 
-  /**
-   * Props 인터페이스 생성
-   * astTree.props → ts.InterfaceDeclaration
-   */
-  public createPropsInterface(componentName: string): ts.InterfaceDeclaration {
-    const members: ts.TypeElement[] = [];
-
-    for (const [propName, propDef] of Object.entries(this.astTree.props)) {
-      const prop = propDef as any; // props는 실제로는 객체 타입
-      const typeNode = this._createPropTypeNode(prop);
-      const isOptional = prop.defaultValue !== undefined;
-
-      const propSig = this.factory.createPropertySignature(
-        undefined,
-        propName,
-        isOptional
-          ? this.factory.createToken(ts.SyntaxKind.QuestionToken)
-          : undefined,
-        typeNode
-      );
-
-      members.push(propSig);
-    }
-
-    const interfaceDeclaration = this.factory.createInterfaceDeclaration(
-      [this.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-      `${componentName}Props`,
-      undefined,
-      undefined,
-      members
-    );
-
-    return interfaceDeclaration;
-  }
-
-  /**
-   * 필요한 import 문들 생성
-   * - React (React.ReactNode 타입 사용)
-   * - emotion css (스타일링)
-   */
-  public createImports(): ts.ImportDeclaration[] {
-    const imports: ts.ImportDeclaration[] = [];
-
-    // React import: import React from "react";
-    imports.push(this._createReactImport());
-
-    // emotion css import: import { css, cx } from "@emotion/css";
-    imports.push(this._createEmotionCssImport());
-
-    return imports;
-  }
-
-  /**
-   * JSX 트리 생성 (재귀)
-   * FinalAstTree → ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression
-   */
-  public createJsxTree(
+  public _createJsxTree(
     node: FinalAstTree
   ): ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression {
     // 1. Slot 처리: Slot 노드는 props.slotName으로 참조
@@ -97,7 +47,7 @@ class ReactGenerator {
     // 4. Children 생성
     const children: ts.JsxChild[] = [];
     for (const child of node.children) {
-      const childJsx = new CreateJsxTree(child).jsxTree;
+      const childJsx = this._createJsxTree(child);
       // Visible 조건 처리
       if (child.visible.type === "condition") {
         const condition = this._convertEstreeToTsExpression(
@@ -136,184 +86,6 @@ class ReactGenerator {
     }
   }
 
-  /**
-   * 스타일 변수들 생성 (컴포넌트 함수 내부에서 사용할 스타일 상수)
-   * 모든 노드를 순회하며 스타일이 있는 노드의 스타일 변수 생성
-   */
-  public createStyleVariables(): ts.VariableStatement {
-    const styleProperties: ts.PropertyAssignment[] = [];
-
-    // 모든 노드를 순회하며 스타일 수집
-    traverseBFS(this.astTree, (node) => {
-      // 스타일 최적화: dynamic styles에서 공통 속성을 base로 이동
-      const optimized = this._optimizeStyles(node);
-      const baseStyle = optimized.base;
-      const dynamicStyles = optimized.dynamic;
-
-      // 스타일이 있는 경우만 처리
-      if (Object.keys(baseStyle).length === 0 && dynamicStyles.length === 0) {
-        return;
-      }
-
-      const baseStyleVarName = this._getStyleVariableName(node);
-
-      // 1. Base style 처리 (CSS 객체 캐싱 사용)
-      if (Object.keys(baseStyle).length > 0) {
-        const baseCssCall = this._createCssCall(baseStyle);
-
-        styleProperties.push(
-          this.factory.createPropertyAssignment(
-            this.factory.createIdentifier(baseStyleVarName),
-            baseCssCall
-          )
-        );
-      }
-
-      // 2. Dynamic styles를 prop별로 그룹핑하여 variant map 생성
-      const grouped = this._groupDynamicStylesByProp(dynamicStyles);
-
-      // 각 prop별로 variant style map 생성
-      for (const [propName, variants] of grouped.entries()) {
-        // 각 variant의 스타일을 머지 (같은 value를 가진 variant가 여러 개일 수 있음)
-        const mergedVariants = new Map<string, Record<string, any>>();
-
-        for (const variant of variants) {
-          if (!mergedVariants.has(variant.value)) {
-            mergedVariants.set(variant.value, {});
-          }
-          // 같은 value의 스타일들을 병합
-          Object.assign(mergedVariants.get(variant.value)!, variant.style);
-        }
-
-        // 머지된 variant들을 배열로 변환
-        const mergedArray = Array.from(mergedVariants.entries()).map(
-          ([value, style]) => ({ value, style })
-        );
-
-        if (mergedArray.length > 0) {
-          // 변수명 최적화: baseStyleVarName + PropName (첫 글자 대문자)
-          // 예: sizelarge + Size → sizelargeSize
-          const variantMapName = `${baseStyleVarName}${propName.charAt(0).toUpperCase() + propName.slice(1)}`;
-          const variantMap = this._createVariantStyleMap(
-            variantMapName,
-            mergedArray
-          );
-
-          styleProperties.push(variantMap);
-
-          // variant map 정보 저장 (나중에 className 결합 시 사용)
-          const variantMapKey = `${node.id}_variant_${propName}`;
-          (this.styleVariables as any).set(variantMapKey, {
-            varName: variantMapName,
-            propName: propName,
-          });
-        }
-      }
-    });
-
-    // styles 객체 생성
-    const stylesObject = this.factory.createObjectLiteralExpression(
-      styleProperties,
-      true
-    );
-
-    // const styles = { ... }
-    return this.factory.createVariableStatement(
-      undefined,
-      this.factory.createVariableDeclarationList(
-        [
-          this.factory.createVariableDeclaration(
-            this.factory.createIdentifier("styles"),
-            undefined,
-            undefined,
-            stylesObject
-          ),
-        ],
-        ts.NodeFlags.Const
-      )
-    );
-  }
-
-  /**
-   * Prop 정의를 TypeScript TypeNode로 변환
-   */
-  private _createPropTypeNode(propDef: any): ts.TypeNode {
-    // variantOptions가 있으면 유니온 타입으로 변환
-    if (propDef.variantOptions && propDef.variantOptions.length > 0) {
-      const literals = propDef.variantOptions.map((opt: string) =>
-        this.factory.createLiteralTypeNode(
-          this.factory.createStringLiteral(opt)
-        )
-      );
-      return this.factory.createUnionTypeNode(literals);
-    }
-
-    switch (propDef.type) {
-      case "SLOT":
-        // SLOT은 React.ReactNode 타입
-        return this.factory.createTypeReferenceNode(
-          this.factory.createQualifiedName(
-            this.factory.createIdentifier("React"),
-            "ReactNode"
-          ),
-          undefined
-        );
-      case "TEXT":
-        return this.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
-      case "VARIANT":
-        // variantOptions가 없으면 string으로 fallback
-        return this.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
-      case "BOOLEAN":
-        return this.factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
-      default:
-        return this.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
-    }
-  }
-
-  /**
-   * React import 문 생성: import React from "react";
-   */
-  private _createReactImport(): ts.ImportDeclaration {
-    return this.factory.createImportDeclaration(
-      undefined,
-      this.factory.createImportClause(
-        false,
-        this.factory.createIdentifier("React"),
-        undefined
-      ),
-      this.factory.createStringLiteral("react")
-    );
-  }
-
-  /**
-   * Emotion css import 문 생성: import { css, cx } from "@emotion/css";
-   */
-  private _createEmotionCssImport(): ts.ImportDeclaration {
-    return this.factory.createImportDeclaration(
-      undefined,
-      this.factory.createImportClause(
-        false,
-        undefined,
-        this.factory.createNamedImports([
-          this.factory.createImportSpecifier(
-            false,
-            undefined,
-            this.factory.createIdentifier("css")
-          ),
-          this.factory.createImportSpecifier(
-            false,
-            undefined,
-            this.factory.createIdentifier("cx")
-          ),
-        ])
-      ),
-      this.factory.createStringLiteral("@emotion/css")
-    );
-  }
-
-  /**
-   * 노드 타입에 따라 태그 이름 결정
-   */
   private _getTagName(node: FinalAstTree): string {
     if (node.type === "TEXT") return "span";
     if (node.type === "INSTANCE") {
@@ -832,96 +604,6 @@ class ReactGenerator {
   }
 
   /**
-   * 컴포넌트 함수 생성
-   * export default function ComponentName(props: Props) { ... }
-   */
-  public createComponentFunction(
-    componentName: string
-  ): ts.FunctionDeclaration {
-    const jsxTree = new CreateJsxTree(this.astTree).jsxTree;
-
-    // JsxExpression을 return 문에서 사용할 수 있도록 변환
-    let returnExpression: ts.Expression;
-    if (ts.isJsxExpression(jsxTree)) {
-      // JsxExpression의 expression을 그대로 사용
-      if (jsxTree.expression) {
-        returnExpression = jsxTree.expression;
-      } else {
-        // expression이 없으면 null 반환
-        returnExpression = this.factory.createNull();
-      }
-    } else {
-      // JsxElement 또는 JsxSelfClosingElement는 그대로 사용
-      returnExpression = jsxTree;
-    }
-
-    return this.factory.createFunctionDeclaration(
-      [
-        this.factory.createModifier(ts.SyntaxKind.ExportKeyword),
-        this.factory.createModifier(ts.SyntaxKind.DefaultKeyword),
-      ],
-      undefined,
-      componentName,
-      undefined,
-      [
-        this.factory.createParameterDeclaration(
-          undefined,
-          undefined,
-          this.factory.createIdentifier("props"),
-          undefined,
-          this.factory.createTypeReferenceNode(
-            this.factory.createIdentifier(`${componentName}Props`),
-            undefined
-          ),
-          undefined
-        ),
-      ],
-      undefined,
-      this.factory.createBlock(
-        [
-          // const styles = { ... };
-          this.createStyleVariables(),
-          // return <JSX>;
-          this.factory.createReturnStatement(returnExpression),
-        ],
-        true
-      )
-    );
-  }
-
-  /**
-   * SourceFile 생성 (모든 코드 합치기)
-   */
-  public buildSourceFile(componentName: string): ts.SourceFile {
-    const statements: ts.Statement[] = [
-      // Imports
-      ...this.createImports(),
-      // Props Interface
-      this.createPropsInterface(componentName),
-      // Component Function
-      this.createComponentFunction(componentName),
-    ];
-
-    return this.factory.createSourceFile(
-      statements,
-      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
-      ts.NodeFlags.None
-    );
-  }
-
-  /**
-   * 최종 코드 문자열 생성
-   */
-  public generateComponentCode(componentName: string): string {
-    const sourceFile = this.buildSourceFile(componentName);
-    const printer = ts.createPrinter({
-      newLine: ts.NewLineKind.LineFeed,
-      removeComments: false,
-    });
-    return printer.printFile(sourceFile);
-  }
-
-  /**
    * Dynamic styles에서 공통 속성을 추출하여 base style로 이동
    */
   private _optimizeStyles(node: FinalAstTree): {
@@ -978,119 +660,6 @@ class ReactGenerator {
 
     return { base: baseStyle, dynamic: optimizedDynamic };
   }
-
-  /**
-   * 테스트용: 생성되는 코드 문자열 확인 (전체 합쳐서)
-   */
-  public testCodeGeneration(): void {
-    console.log("=== 스타일 데이터 확인 ===\n");
-
-    // 모든 노드의 스타일 데이터 확인
-    traverseBFS(this.astTree, (node) => {
-      const baseStyle = node.style.base || {};
-      const dynamicStyles = node.style.dynamic || [];
-
-      if (Object.keys(baseStyle).length > 0 || dynamicStyles.length > 0) {
-        console.log(`\n[노드: ${node.name}]`);
-        console.log(`Base style:`, baseStyle);
-        console.log(`Dynamic styles 개수:`, dynamicStyles.length);
-
-        // 공통화 전
-        const allDynamicKeys = new Set<string>();
-        dynamicStyles.forEach((dynamic) => {
-          Object.keys(dynamic.style).forEach((key) => allDynamicKeys.add(key));
-        });
-
-        const commonInDynamic: Record<string, any> = {};
-        for (const key of allDynamicKeys) {
-          const firstValue = dynamicStyles[0]?.style[key];
-          if (
-            firstValue !== undefined &&
-            dynamicStyles.every((d) => d.style[key] === firstValue)
-          ) {
-            commonInDynamic[key] = firstValue;
-          }
-        }
-
-        if (Object.keys(commonInDynamic).length > 0) {
-          console.log(`⚠️ Dynamic styles에서 공통 속성 발견:`, commonInDynamic);
-        }
-
-        if (dynamicStyles.length > 0) {
-          dynamicStyles.forEach((dynamic, index) => {
-            console.log(`  Dynamic ${index}:`, {
-              condition: dynamic.condition,
-              style: dynamic.style,
-            });
-          });
-        }
-      }
-    });
-
-    console.log("\n=== 전체 컴포넌트 코드 ===\n");
-
-    // generateComponentCode 사용
-    const fullCode = this.generateComponentCode("Button");
-    console.log(fullCode);
-
-    console.log("\n=== 코드 생성 완료 ===");
-  }
-
-  /**
-   * 테스트용: ESTree 변환 결과 확인
-   */
-  public testEstreeConversion(): void {
-    console.log("=== ESTree 변환 테스트 시작 ===");
-
-    const collectConditions = (
-      node: FinalAstTree
-    ): Array<{ nodeName: string; condition: any }> => {
-      const conditions: Array<{ nodeName: string; condition: any }> = [];
-
-      if (node.visible.type === "condition") {
-        conditions.push({
-          nodeName: node.name,
-          condition: node.visible.condition,
-        });
-      }
-
-      for (const child of node.children) {
-        conditions.push(...collectConditions(child));
-      }
-
-      return conditions;
-    };
-
-    const conditions = collectConditions(this.astTree);
-    console.log(`조건 개수: ${conditions.length}`);
-
-    conditions.forEach(({ nodeName, condition }, index) => {
-      console.log(`\n[${index + 1}] 노드: ${nodeName}`);
-      console.log("ESTree 조건:", JSON.stringify(condition, null, 2));
-
-      try {
-        const tsExpression = this._convertEstreeToTsExpression(condition);
-        const sourceFile = ts.createSourceFile(
-          "test.ts",
-          "",
-          ts.ScriptTarget.Latest,
-          false,
-          ts.ScriptKind.TS
-        );
-        const printer = ts.createPrinter();
-        const code = printer.printNode(
-          ts.EmitHint.Expression,
-          tsExpression,
-          sourceFile
-        );
-        console.log("TypeScript Expression:", code);
-      } catch (error) {
-        console.error("변환 에러:", error);
-      }
-    });
-
-    console.log("\n=== ESTree 변환 테스트 종료 ===");
-  }
 }
 
-export default ReactGenerator;
+export default CreateJsxTree;

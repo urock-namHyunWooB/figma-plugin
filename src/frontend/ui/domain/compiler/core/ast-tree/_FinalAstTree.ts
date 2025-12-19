@@ -892,6 +892,7 @@ class _FinalAstTree {
    * @private
    */
   private _refinePropsForButton(astTree: FinalAstTree) {
+    //airButton props에 text 생겼는데 node에 바인딩이 안되어 있음.
     if (astTree.semanticRole !== "button") return astTree;
 
     let isTextButton = false;
