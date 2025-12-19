@@ -1,7 +1,6 @@
 import { ConditionNode, FinalAstTree, TempAstTree } from "@compiler";
-import { traverseBFS } from "@compiler/utils/traverse";
 import helper from "./HelperManager";
-import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
+import ts from "typescript";
 
 class DebuggingManager {
   private isDebugMode: boolean = false;
@@ -133,6 +132,74 @@ class DebuggingManager {
       return `"${(node as any).value}"`;
     }
     return JSON.stringify(node);
+  }
+
+  public tsNode(node: ts.Node | undefined | null) {
+    return this._debugNodeInfo(node);
+  }
+
+  private _debugNodeInfo(
+    node: ts.Node | undefined | null,
+    label: string = "Node"
+  ): void {
+    if (!node) {
+      console.log(`🔍 ${label}: null/undefined`);
+      return;
+    }
+
+    try {
+      const kindName = ts.SyntaxKind[node.kind] || `Unknown(${node.kind})`;
+      const code = this._debugPrintNode(node);
+
+      console.log(`\n🔍 ${label}`);
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      console.log("Kind:", kindName);
+      console.log("Code:", code);
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+    } catch (error) {
+      console.error(`🔍 ${label} - Error:`, error);
+      console.log("Node:", node);
+    }
+  }
+
+  /**
+   * 디버깅용: TypeScript AST 노드를 코드 문자열로 변환
+   * 노드 타입에 따라 적절한 EmitHint를 자동 선택
+   */
+  private _debugPrintNode(
+    node: ts.Node | undefined | null,
+    hint?: ts.EmitHint
+  ): string {
+    if (!node) {
+      return "null/undefined";
+    }
+
+    try {
+      const sourceFile = ts.createSourceFile(
+        "debug.tsx",
+        "",
+        ts.ScriptTarget.Latest,
+        false,
+        ts.ScriptKind.TSX
+      );
+      const printer = ts.createPrinter();
+
+      // 노드 타입에 따라 적절한 hint 자동 선택
+      let emitHint: ts.EmitHint;
+      if (hint !== undefined) {
+        emitHint = hint;
+      } else if (ts.isJsxAttribute(node) || ts.isJsxSpreadAttribute(node)) {
+        emitHint = ts.EmitHint.Unspecified;
+      } else if (ts.isExpression(node)) {
+        emitHint = ts.EmitHint.Expression;
+      } else {
+        emitHint = ts.EmitHint.Unspecified;
+      }
+
+      return printer.printNode(emitHint, node, sourceFile);
+    } catch (error) {
+      return `[Print Error: ${error}]`;
+    }
   }
 }
 

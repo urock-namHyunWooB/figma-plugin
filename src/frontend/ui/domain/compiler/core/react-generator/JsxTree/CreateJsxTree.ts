@@ -1,5 +1,6 @@
 import { FinalAstTree } from "@compiler";
 import ts from "typescript";
+import debug from "@compiler/manager/DebuggingManager";
 
 class CreateJsxTree {
   private _jsxTree: ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression;
@@ -17,38 +18,71 @@ class CreateJsxTree {
   constructor(astTree: FinalAstTree) {
     this.astTree = astTree;
     this._jsxTree = this._createJsxTree(astTree);
+    console.log(this._jsxTree);
   }
 
   public _createJsxTree(
     node: FinalAstTree
   ): ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression {
-    // 1. Slot 처리: Slot 노드는 props.slotName으로 참조
-    if ((node as any).isSlot) {
-      const slotName = (node as any).slotName;
-      return this.factory.createJsxExpression(
-        undefined,
-        this.factory.createPropertyAccessExpression(
-          this.factory.createIdentifier("props"),
-          this.factory.createIdentifier(slotName)
-        )
-      );
+    // Slot 노드는 props.slotName으로 참조 (children 없음)
+    const slotJsx = this._createSlotJsxExpression(node);
+    if (slotJsx) {
+      return slotJsx;
     }
 
-    // 2. 태그 이름 결정
+    // 일반 노드: 태그, 속성, children을 조합하여 JSX Element 생성
     const tagName = this._getTagName(node);
+    const attributes = this._createAttributes(node);
+    const children = this._createChildren(node);
 
-    // 3. Attributes 생성
+    debug.tsNode(attributes[0]);
+
+    return this._createJsxElement(tagName, attributes, children);
+  }
+
+  /**
+   * Slot 노드를 JSX Expression으로 변환
+   * Slot 노드는 props.slotName으로 참조됨
+   * Slot 노드는 children을 가질 수 없으므로 early return
+   */
+  private _createSlotJsxExpression(
+    node: FinalAstTree
+  ): ts.JsxExpression | null {
+    if (!(node as any).isSlot) {
+      return null;
+    }
+
+    const slotName = (node as any).slotName;
+    return this.factory.createJsxExpression(
+      undefined,
+      this.factory.createPropertyAccessExpression(
+        this.factory.createIdentifier("props"),
+        this.factory.createIdentifier(slotName)
+      )
+    );
+  }
+
+  /**
+   * 노드의 JSX Attributes 생성
+   */
+  private _createAttributes(node: FinalAstTree): ts.JsxAttributeLike[] {
     const attributes: ts.JsxAttributeLike[] = [];
     const styleAttr = this._createStyleAttribute(node);
     if (styleAttr) {
       attributes.push(styleAttr);
     }
+    return attributes;
+  }
 
-    // 4. Children 생성
+  /**
+   * 노드의 Children 생성 (재귀적, visible 조건 처리 포함)
+   */
+  private _createChildren(node: FinalAstTree): ts.JsxChild[] {
     const children: ts.JsxChild[] = [];
+
     for (const child of node.children) {
       const childJsx = this._createJsxTree(child);
-      // Visible 조건 처리
+
       if (child.visible.type === "condition") {
         const condition = this._convertEstreeToTsExpression(
           child.visible.condition
@@ -64,26 +98,37 @@ class CreateJsxTree {
       }
     }
 
-    // 5. JSX Element 생성
+    return children;
+  }
+
+  /**
+   * JSX Element 생성 (self-closing 또는 일반 element)
+   */
+  private _createJsxElement(
+    tagName: string,
+    attributes: ts.JsxAttributeLike[],
+    children: ts.JsxChild[]
+  ): ts.JsxElement | ts.JsxSelfClosingElement {
+    const tagIdentifier = this.factory.createIdentifier(tagName);
+    const jsxAttributes = this.factory.createJsxAttributes(attributes);
+
     if (children.length === 0) {
       return this.factory.createJsxSelfClosingElement(
-        this.factory.createIdentifier(tagName),
+        tagIdentifier,
         undefined,
-        this.factory.createJsxAttributes(attributes)
-      );
-    } else {
-      return this.factory.createJsxElement(
-        this.factory.createJsxOpeningElement(
-          this.factory.createIdentifier(tagName),
-          undefined,
-          this.factory.createJsxAttributes(attributes)
-        ),
-        children,
-        this.factory.createJsxClosingElement(
-          this.factory.createIdentifier(tagName)
-        )
+        jsxAttributes
       );
     }
+
+    return this.factory.createJsxElement(
+      this.factory.createJsxOpeningElement(
+        tagIdentifier,
+        undefined,
+        jsxAttributes
+      ),
+      children,
+      this.factory.createJsxClosingElement(tagIdentifier)
+    );
   }
 
   private _getTagName(node: FinalAstTree): string {
