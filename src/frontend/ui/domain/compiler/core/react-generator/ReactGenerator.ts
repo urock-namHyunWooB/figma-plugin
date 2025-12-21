@@ -30,27 +30,6 @@ class ReactGenerator {
   }
 
   /**
-   * SourceFile 생성 (모든 코드 합치기)
-   */
-  public buildSourceFile(componentName: string): ts.SourceFile {
-    const statements: ts.Statement[] = [
-      // Imports
-      ...this.GenerateImports.createImports(),
-      // Props Interface
-      this.GenerateInterface.createPropsInterface(componentName),
-      this.GenerateStyles.createStyleVariables(),
-      // Component Function
-      this.GenerateComponent.createComponentFunction(componentName),
-    ];
-
-    return this.factory.createSourceFile(
-      statements,
-      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
-      ts.NodeFlags.None
-    );
-  }
-
-  /**
    * 최종 코드 문자열 생성
    */
   public async generateComponentCode(componentName: string): Promise<string> {

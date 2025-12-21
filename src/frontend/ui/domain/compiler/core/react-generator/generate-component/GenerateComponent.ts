@@ -1,14 +1,22 @@
 import ts, { NodeFactory } from "typescript";
 import CreateJsxTree from "@compiler/core/react-generator/generate-component/jsx-tree/CreateJsxTree";
 import { FinalAstTree } from "@compiler";
+import CreateStyledComponent from "@compiler/core/react-generator/generate-component/styeld/CreateStyledComponent";
 
 class GenerateComponent {
   private factory: NodeFactory;
   private astTree: FinalAstTree;
+  private CreateStyledComponent: CreateStyledComponent;
 
   constructor(factory: NodeFactory, astTree: FinalAstTree) {
     this.factory = factory;
     this.astTree = astTree;
+
+    this.CreateStyledComponent = new CreateStyledComponent(factory, astTree);
+  }
+
+  public createStyledComponent() {
+    return this.CreateStyledComponent.createStyledComponentExample();
   }
   /**
    * 컴포넌트 함수 생성
