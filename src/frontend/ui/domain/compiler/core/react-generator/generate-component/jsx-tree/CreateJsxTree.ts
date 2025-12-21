@@ -18,7 +18,6 @@ class CreateJsxTree {
   constructor(astTree: FinalAstTree) {
     this.astTree = astTree;
     this._jsxTree = this._createJsxTree(astTree);
-    console.log(this._jsxTree);
   }
 
   public _createJsxTree(
@@ -34,8 +33,6 @@ class CreateJsxTree {
     const tagName = this._getTagName(node);
     const attributes = this._createAttributes(node);
     const children = this._createChildren(node);
-
-    debug.tsNode(attributes[0]);
 
     return this._createJsxElement(tagName, attributes, children);
   }
