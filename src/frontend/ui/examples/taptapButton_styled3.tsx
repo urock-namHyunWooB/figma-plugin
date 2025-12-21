@@ -92,7 +92,7 @@ const labelCss = ($size: Size) => css`
   line-height: ${textBySize[$size].lineHeight}px;
 `;
 
-function PrimaryButton(props: ButtonProps) {
+function Primary(props: ButtonProps) {
   const { size = "Large", leftIcon, rightIcon, text, ...buttonProps } = props;
 
   return (
@@ -106,4 +106,4 @@ function PrimaryButton(props: ButtonProps) {
   );
 }
 
-export default PrimaryButton;
+export default Primary;

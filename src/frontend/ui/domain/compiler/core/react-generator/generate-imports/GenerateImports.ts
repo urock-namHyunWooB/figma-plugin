@@ -13,7 +13,7 @@ class GenerateImports {
     imports.push(this._createReactImport());
 
     // emotion css import: import { css, cx } from "@emotion/css";
-    imports.push(this._createEmotionStyledImport());
+    imports.push(this._createEmotionCssImport());
 
     return imports;
   }
