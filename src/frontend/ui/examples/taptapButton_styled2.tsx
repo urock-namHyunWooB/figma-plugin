@@ -1,5 +1,5 @@
 import React from "react";
-import styled from "@emotion/styled";
+import { css } from "@emotion/react";
 
 type Size = "Large" | "Medium" | "Small";
 
@@ -10,33 +10,33 @@ interface Props {
   text: string;
 }
 
-const paddingBySize = {
-  Large: "padding: 8px;",
-  Medium: "padding: 7px 8px;",
-  Small: "padding: 3px 4px;",
+const paddingBySize: Record<Size, string> = {
+  Large: "8px",
+  Medium: "7px 8px",
+  Small: "3px 4px",
 };
 
-const iconBySize = {
-  Large: "width: 18px; height: 18px;",
-  Medium: "width: 16px; height: 16px;",
-  Small: "width: 14px; height: 14px;",
+const iconBySize: Record<Size, { w: number; h: number }> = {
+  Large: { w: 18, h: 18 },
+  Medium: { w: 16, h: 16 },
+  Small: { w: 14, h: 14 },
 };
 
-const textBySize = {
-  Large: "font-size: 16px; line-height: 24px;",
-  Medium: "font-size: 14px; line-height: 22px;",
-  Small: "font-size: 12px; line-height: 18px;",
+const textBySize: Record<Size, { fontSize: number; lineHeight: number }> = {
+  Large: { fontSize: 16, lineHeight: 24 },
+  Medium: { fontSize: 14, lineHeight: 22 },
+  Small: { fontSize: 12, lineHeight: 18 },
 };
 
-const PrimaryButton = styled.button<{ $size: Size }>`
+const primaryButtonCss = ($size: Size) => css`
   align-items: center;
   background: var(--Primary-600, #15c5ce);
   border-radius: 4px;
   display: inline-flex;
-  flex-direction: column;
+  flex-direction: column; /* 원본 유지 */
   justify-content: center;
 
-  ${({ $size }) => paddingBySize[$size]};
+  padding: ${paddingBySize[$size]};
 
   &:active {
     background: var(--Primary-700, #00abb6);
@@ -52,15 +52,17 @@ const PrimaryButton = styled.button<{ $size: Size }>`
   }
 `;
 
-const Content = styled.span`
+const contentCss = css`
   display: inline-flex;
   align-items: center;
   gap: 4px;
   justify-content: center;
 `;
 
-const IconSlot = styled.span<{ $size: Size }>`
-  ${({ $size }) => iconBySize[$size]};
+const iconSlotCss = ($size: Size) => css`
+  width: ${iconBySize[$size].w}px;
+  height: ${iconBySize[$size].h}px;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -79,27 +81,28 @@ const IconSlot = styled.span<{ $size: Size }>`
   }
 `;
 
-const Label = styled.span<{ $size: Size }>`
+const labelCss = ($size: Size) => css`
   color: var(--black-white-white, #fff);
   text-align: center;
-  font-family: '"PingFang SC"';
+  font-family: "PingFang SC";
   font-style: normal;
   font-weight: 500;
 
-  ${({ $size }) => textBySize[$size]};
+  font-size: ${textBySize[$size].fontSize}px;
+  line-height: ${textBySize[$size].lineHeight}px;
 `;
 
 function Primary(props: Props) {
-  const { size = "Large", leftIcon, rightIcon, text } = props;
+  const { size = "Large", leftIcon, rightIcon, text, ...buttonProps } = props;
 
   return (
-    <PrimaryButton $size={size}>
-      <Content>
-        {leftIcon && <IconSlot $size={size}>{leftIcon}</IconSlot>}
-        <Label $size={size}>{text}</Label>
-        {rightIcon && <IconSlot $size={size}>{rightIcon}</IconSlot>}
-      </Content>
-    </PrimaryButton>
+    <button css={primaryButtonCss(size)} {...buttonProps}>
+      <span css={contentCss}>
+        {leftIcon && <span css={iconSlotCss(size)}>{leftIcon}</span>}
+        <span css={labelCss(size)}>{text}</span>
+        {rightIcon && <span css={iconSlotCss(size)}>{rightIcon}</span>}
+      </span>
+    </button>
   );
 }
 
