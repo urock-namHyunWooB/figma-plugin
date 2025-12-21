@@ -10,6 +10,18 @@ class GenerateInterface {
     this.astTree = astTree;
   }
 
+  /**
+   * taptapButton,json
+   *
+   * type Size = "Large" | "Medium" | "Small";
+   *
+   * interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+   *   size?: Size;
+   *   leftIcon?: React.ReactNode;
+   *   rightIcon?: React.ReactNode;
+   *   text: string;
+   * }
+   */
   public createPropsInterface(componentName: string): ts.InterfaceDeclaration {
     const members: ts.TypeElement[] = [];
 

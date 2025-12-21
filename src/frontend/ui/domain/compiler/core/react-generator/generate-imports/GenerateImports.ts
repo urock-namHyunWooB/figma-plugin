@@ -54,11 +54,6 @@ class GenerateImports {
             undefined,
             this.factory.createIdentifier("css")
           ),
-          this.factory.createImportSpecifier(
-            false,
-            undefined,
-            this.factory.createIdentifier("cx")
-          ),
         ])
       ),
       this.factory.createStringLiteral("@emotion/css")
