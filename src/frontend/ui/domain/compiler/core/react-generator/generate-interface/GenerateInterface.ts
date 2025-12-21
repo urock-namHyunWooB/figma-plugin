@@ -23,6 +23,7 @@ class GenerateInterface {
    * }
    */
   public createPropsInterface(componentName: string): ts.InterfaceDeclaration {
+    //TODO root의 meta 데이터를 읽어서 extend 처리
     const members: ts.TypeElement[] = [];
 
     for (const [propName, propDef] of Object.entries(this.astTree.props)) {
