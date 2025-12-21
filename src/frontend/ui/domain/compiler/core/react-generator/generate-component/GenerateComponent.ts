@@ -16,7 +16,7 @@ class GenerateComponent {
   }
 
   public createStyledComponent() {
-    return this.CreateStyledComponent.createStyledComponentExample();
+    return this.CreateStyledComponent.createStyledComponent();
   }
   /**
    * 컴포넌트 함수 생성

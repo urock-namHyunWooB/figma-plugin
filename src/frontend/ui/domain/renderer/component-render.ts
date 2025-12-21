@@ -6,9 +6,10 @@ let emotionModule: any = null;
 let emotionCss: any = null;
 let emotionJsx: any = null;
 let emotionCx: any = null;
+let emotionStyled: any = null;
 
 async function loadEmotion() {
-  if (emotionModule) return emotionModule;
+  if (emotionModule && emotionStyled) return emotionModule;
 
   // 생성된 코드는 @emotion/css를 사용하므로, @emotion/css를 먼저 로드
   try {
@@ -20,9 +21,19 @@ async function loadEmotion() {
     try {
       emotionModule = await import("@emotion/react");
       emotionJsx = emotionModule.jsx;
+
+      // @emotion/styled 로드 시도 (styled component용)
+      try {
+        const styledModule = await import("@emotion/styled");
+        emotionStyled = styledModule.default;
+      } catch (e) {
+        // @emotion/styled가 없어도 @emotion/react만으로 작동 가능
+        emotionStyled = null;
+      }
     } catch (e) {
       // @emotion/react가 없어도 @emotion/css만으로 작동 가능
       emotionJsx = null;
+      emotionStyled = null;
     }
 
     return emotionCssModule;
@@ -34,12 +45,22 @@ async function loadEmotion() {
       emotionJsx = emotionModule.jsx;
       // @emotion/react에는 cx가 없을 수 있으므로 fallback
       emotionCx = (...args: any[]) => args.filter(Boolean).join(" ");
+
+      // @emotion/styled 로드 시도
+      try {
+        const styledModule = await import("@emotion/styled");
+        emotionStyled = styledModule.default;
+      } catch (e) {
+        emotionStyled = null;
+      }
+
       return emotionModule;
     } catch (e2) {
       // emotion이 설치되지 않은 경우 fallback
       emotionCss = (styles: any) => styles;
       emotionCx = (...args: any[]) => args.filter(Boolean).join(" ");
       emotionJsx = null;
+      emotionStyled = null;
       return null;
     }
   }
@@ -96,6 +117,11 @@ export async function renderReactComponent(
     // @emotion/css import 제거
     cleanedCode = cleanedCode.replace(
       /import\s+.*?from\s+['"]@emotion\/css['"];?\s*/g,
+      ""
+    );
+    // @emotion/styled import 제거
+    cleanedCode = cleanedCode.replace(
+      /import\s+.*?from\s+['"]@emotion\/styled['"];?\s*/g,
       ""
     );
     // 모든 import 문 제거 (남아있는 경우)
@@ -161,6 +187,7 @@ export async function renderReactComponent(
     const prevUseState = (window as any).useState;
     const prevCss = (window as any).css;
     const prevCx = (window as any).cx;
+    const prevStyled = (window as any).styled;
     const prevEmotionReact = (window as any).__EMOTION_REACT__;
 
     try {
@@ -175,6 +202,11 @@ export async function renderReactComponent(
       (window as any).useState = React.useState;
       (window as any).css = cssFunction;
       (window as any).cx = cxFunction;
+
+      // styled component 지원
+      if (emotionStyled) {
+        (window as any).styled = emotionStyled;
+      }
 
       // emotion이 있으면 emotion의 jsx를 사용, 없으면 React.createElement 사용
       if (emotion && jsxFunction) {
@@ -229,6 +261,7 @@ export async function renderReactComponent(
         var useState = window.useState;
         var css = window.css;
         var cx = window.cx;
+        ${emotionStyled ? "var styled = window.styled;" : ""}
         ${emotionModule && emotionJsx ? "var jsx = window.jsx; var jsxs = window.jsxs;" : ""}
         
         ${transformedWithEmotion || transformed}
@@ -266,6 +299,11 @@ export async function renderReactComponent(
         (window as any).cx = prevCx;
       } else {
         delete (window as any).cx;
+      }
+      if (prevStyled !== undefined) {
+        (window as any).styled = prevStyled;
+      } else {
+        delete (window as any).styled;
       }
       if (prevEmotionReact !== undefined) {
         (window as any).__EMOTION_REACT__ = prevEmotionReact;

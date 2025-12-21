@@ -4,11 +4,16 @@ import ts, { NodeFactory } from "typescript";
 import * as prettier from "prettier/standalone";
 import * as parserTypeScript from "prettier/plugins/typescript";
 import estreePlugin from "prettier/plugins/estree";
+import type { Options as PrettierOptions } from "prettier";
 
 import GenerateImports from "./generate-imports/GenerateImports";
 import GenerateStyles from "./generate-styles/GenerateStyles";
 import GenerateInterface from "./generate-interface/GenerateInterface";
 import GenerateComponent from "./generate-component/GenerateComponent";
+
+interface CodeSection {
+  statements: ts.Statement[];
+}
 
 class ReactGenerator {
   private astTree: FinalAstTree;
@@ -19,9 +24,28 @@ class ReactGenerator {
   private GenerateInterface: GenerateInterface;
   private GenerateComponent: GenerateComponent;
 
+  private readonly printer: ts.Printer;
+  private static readonly PRETTIER_CONFIG: PrettierOptions = {
+    parser: "typescript",
+    plugins: [estreePlugin, parserTypeScript],
+    semi: true,
+    trailingComma: "es5",
+    singleQuote: false,
+    printWidth: 80,
+    tabWidth: 2,
+    useTabs: false,
+    arrowParens: "always",
+    endOfLine: "lf",
+  };
+
   constructor(astTree: FinalAstTree) {
     this.astTree = astTree;
     const factory = (this.factory = ts.factory);
+
+    this.printer = ts.createPrinter({
+      newLine: ts.NewLineKind.LineFeed,
+      removeComments: true,
+    });
 
     this.GenerateImports = new GenerateImports(factory);
     this.GenerateStyles = new GenerateStyles(factory, astTree);
@@ -33,66 +57,69 @@ class ReactGenerator {
    * 최종 코드 문자열 생성
    */
   public async generateComponentCode(componentName: string): Promise<string> {
-    const printer = ts.createPrinter({
-      newLine: ts.NewLineKind.LineFeed,
-      removeComments: true,
-    });
+    const sections = this.createCodeSections(componentName);
+    const unformattedCode = this.printSections(sections);
+    return await this.formatCode(unformattedCode);
+  }
 
-    // 각 섹션을 개별 SourceFile로 생성
-    const importStatements = this.GenerateImports.createImports();
-    const interfaceStatement =
-      this.GenerateInterface.createPropsInterface(componentName);
-    const styleStatement = this.GenerateStyles.createStyleVariables();
-    const componentStatement =
-      this.GenerateComponent.createComponentFunction(componentName);
+  /**
+   * 각 코드 섹션 생성
+   */
+  private createCodeSections(componentName: string): CodeSection[] {
+    return [
+      {
+        statements: this.GenerateImports.createImports(),
+      },
+      {
+        statements: [
+          this.GenerateInterface.createPropsInterface(componentName),
+        ],
+      },
+      {
+        statements: [this.GenerateStyles.createStyleVariables()],
+      },
+      {
+        statements: [
+          this.GenerateComponent.createComponentFunction(componentName),
+        ],
+      },
+    ];
+  }
 
-    const importFile = this.factory.createSourceFile(
-      importStatements,
+  /**
+   * SourceFile을 생성하고 문자열로 변환
+   */
+  private createSourceFileFromStatements(
+    statements: ts.Statement[]
+  ): ts.SourceFile {
+    return this.factory.createSourceFile(
+      statements,
       this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
       ts.NodeFlags.None
     );
+  }
 
-    const interfaceFile = this.factory.createSourceFile(
-      [interfaceStatement],
-      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
-      ts.NodeFlags.None
-    );
+  /**
+   * 섹션들을 문자열로 변환하고 연결
+   */
+  private printSections(sections: CodeSection[]): string {
+    const printedSections = sections
+      .map((section) => {
+        const sourceFile = this.createSourceFileFromStatements(
+          section.statements
+        );
+        return this.printer.printFile(sourceFile);
+      })
+      .filter((section) => section.trim().length > 0);
 
-    const styleFile = this.factory.createSourceFile(
-      [styleStatement],
-      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
-      ts.NodeFlags.None
-    );
+    return printedSections.join("\n\n");
+  }
 
-    const componentFile = this.factory.createSourceFile(
-      [componentStatement],
-      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
-      ts.NodeFlags.None
-    );
-
-    // 각 섹션을 print하고 빈 줄로 연결
-    const sections = [
-      printer.printFile(importFile),
-      printer.printFile(interfaceFile),
-      printer.printFile(styleFile),
-      printer.printFile(componentFile),
-    ].filter((section) => section.trim().length > 0); // 빈 섹션 제거
-
-    const unformattedCode = sections.join("\n\n"); // 빈 줄로 연결
-
-    // Prettier standalone으로 포맷팅
-    return await prettier.format(unformattedCode, {
-      parser: "typescript",
-      plugins: [estreePlugin, parserTypeScript],
-      semi: true,
-      trailingComma: "es5",
-      singleQuote: false,
-      printWidth: 80,
-      tabWidth: 2,
-      useTabs: false,
-      arrowParens: "always",
-      endOfLine: "lf",
-    });
+  /**
+   * Prettier로 코드 포맷팅
+   */
+  private async formatCode(code: string): Promise<string> {
+    return await prettier.format(code, ReactGenerator.PRETTIER_CONFIG);
   }
 }
 
