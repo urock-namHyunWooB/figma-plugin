@@ -1,6 +1,9 @@
 import { FinalAstTree } from "@compiler";
 
 import ts, { NodeFactory } from "typescript";
+import * as prettier from "prettier/standalone";
+import * as parserTypeScript from "prettier/plugins/typescript";
+import estreePlugin from "prettier/plugins/estree";
 
 import GenerateImports from "./generate-imports/GenerateImports";
 import GenerateStyles from "./generate-styles/GenerateStyles";
@@ -50,13 +53,27 @@ class ReactGenerator {
   /**
    * 최종 코드 문자열 생성
    */
-  public generateComponentCode(componentName: string): string {
+  public async generateComponentCode(componentName: string): Promise<string> {
     const sourceFile = this.buildSourceFile(componentName);
     const printer = ts.createPrinter({
       newLine: ts.NewLineKind.LineFeed,
       removeComments: true,
     });
-    return printer.printFile(sourceFile);
+    const unformattedCode = printer.printFile(sourceFile);
+
+    // Prettier standalone으로 포맷팅
+    return await prettier.format(unformattedCode, {
+      parser: "typescript",
+      plugins: [estreePlugin, parserTypeScript],
+      semi: true,
+      trailingComma: "es5",
+      singleQuote: false,
+      printWidth: 80,
+      tabWidth: 2,
+      useTabs: false,
+      arrowParens: "always",
+      endOfLine: "lf",
+    });
   }
 }
 

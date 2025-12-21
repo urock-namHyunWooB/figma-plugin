@@ -46,8 +46,10 @@ class Engine {
    * @param componentName 컴포넌트 이름 (기본값: "Button")
    * @returns 생성된 TypeScript/TSX 코드 문자열
    */
-  public getGeneratedCode(componentName: string = "Button"): string {
-    return this.reactGenerator.generateComponentCode(componentName);
+  public async getGeneratedCode(
+    componentName: string = "Button"
+  ): Promise<string> {
+    return await this.reactGenerator.generateComponentCode(componentName);
   }
 }
 
