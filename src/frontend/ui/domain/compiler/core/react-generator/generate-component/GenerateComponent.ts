@@ -15,6 +15,9 @@ class GenerateComponent {
     this.CreateStyledComponent = new CreateStyledComponent(factory, astTree);
   }
 
+  /**
+   * AST 순회해서 styledComponent 만들고 더해서 조합된 root styled component도 리턴
+   */
   public createStyledComponent() {
     return this.CreateStyledComponent.createStyledComponent();
   }
