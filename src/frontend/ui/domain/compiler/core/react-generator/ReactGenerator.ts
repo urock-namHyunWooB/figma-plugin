@@ -75,7 +75,7 @@ class ReactGenerator {
           this.GenerateInterface.createPropsInterface(componentName),
         ],
       },
-      { statements: [this.GenerateComponent.createStyledComponent()] },
+
       {
         statements: [this.GenerateStyles.createStyleVariables()],
       },
