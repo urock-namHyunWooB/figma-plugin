@@ -54,12 +54,52 @@ class ReactGenerator {
    * 최종 코드 문자열 생성
    */
   public async generateComponentCode(componentName: string): Promise<string> {
-    const sourceFile = this.buildSourceFile(componentName);
     const printer = ts.createPrinter({
       newLine: ts.NewLineKind.LineFeed,
       removeComments: true,
     });
-    const unformattedCode = printer.printFile(sourceFile);
+
+    // 각 섹션을 개별 SourceFile로 생성
+    const importStatements = this.GenerateImports.createImports();
+    const interfaceStatement =
+      this.GenerateInterface.createPropsInterface(componentName);
+    const styleStatement = this.GenerateStyles.createStyleVariables();
+    const componentStatement =
+      this.GenerateComponent.createComponentFunction(componentName);
+
+    const importFile = this.factory.createSourceFile(
+      importStatements,
+      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+      ts.NodeFlags.None
+    );
+
+    const interfaceFile = this.factory.createSourceFile(
+      [interfaceStatement],
+      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+      ts.NodeFlags.None
+    );
+
+    const styleFile = this.factory.createSourceFile(
+      [styleStatement],
+      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+      ts.NodeFlags.None
+    );
+
+    const componentFile = this.factory.createSourceFile(
+      [componentStatement],
+      this.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+      ts.NodeFlags.None
+    );
+
+    // 각 섹션을 print하고 빈 줄로 연결
+    const sections = [
+      printer.printFile(importFile),
+      printer.printFile(interfaceFile),
+      printer.printFile(styleFile),
+      printer.printFile(componentFile),
+    ].filter((section) => section.trim().length > 0); // 빈 섹션 제거
+
+    const unformattedCode = sections.join("\n\n"); // 빈 줄로 연결
 
     // Prettier standalone으로 포맷팅
     return await prettier.format(unformattedCode, {
