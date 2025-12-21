@@ -68,13 +68,14 @@ class ReactGenerator {
   private createCodeSections(componentName: string): CodeSection[] {
     return [
       {
-        statements: this.GenerateImports.createImports(),
+        statements: [...this.GenerateImports.createImports()],
       },
       {
         statements: [
           this.GenerateInterface.createPropsInterface(componentName),
         ],
       },
+      { statements: [this.GenerateComponent.createStyledComponent()] },
       {
         statements: [this.GenerateStyles.createStyleVariables()],
       },
