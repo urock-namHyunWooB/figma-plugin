@@ -40,6 +40,40 @@ class GenerateInterface {
   }
 
   /**
+   * Props의 variant 타입 별칭 생성
+   * 예: type Size = "Large" | "Medium" | "Small";
+   */
+  public createPropTypeAliases(): ts.TypeAliasDeclaration[] {
+    const typeAliases: ts.TypeAliasDeclaration[] = [];
+
+    for (const [propName, propDef] of Object.entries(this.astTree.props)) {
+      const prop = propDef as any;
+      
+      // variantOptions가 있는 경우에만 타입 별칭 생성
+      if (prop.variantOptions && prop.variantOptions.length > 0) {
+        const typeName = this._capitalize(propName);
+        const literals = prop.variantOptions.map((opt: string) =>
+          this.factory.createLiteralTypeNode(
+            this.factory.createStringLiteral(opt)
+          )
+        );
+        const unionType = this.factory.createUnionTypeNode(literals);
+        
+        const typeAlias = this.factory.createTypeAliasDeclaration(
+          [this.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+          typeName,
+          undefined,
+          unionType
+        );
+        
+        typeAliases.push(typeAlias);
+      }
+    }
+
+    return typeAliases;
+  }
+
+  /**
    * rootElement 값에 따라 적절한 extends 타입을 생성
    * @param rootElement HTML 요소 이름 (예: "button", "input", "text", "div" 등)
    * @returns ExpressionWithTypeArguments 또는 null (extends가 필요없는 경우)
@@ -244,7 +278,9 @@ class GenerateInterface {
 
     for (const [propName, propDef] of Object.entries(this.astTree.props)) {
       const prop = propDef as any; // props는 실제로는 객체 타입
-      const typeNode = this._createPropTypeNode(prop);
+      // propName을 prop 객체에 추가하여 _createPropTypeNode에서 사용할 수 있도록 함
+      const propWithName = { ...prop, name: propName };
+      const typeNode = this._createPropTypeNode(propWithName);
       const isOptional = prop.defaultValue !== undefined;
 
       const propSig = this.factory.createPropertySignature(
@@ -281,14 +317,12 @@ class GenerateInterface {
    * Prop 정의를 TypeScript TypeNode로 변환
    */
   private _createPropTypeNode(propDef: any): ts.TypeNode {
-    // variantOptions가 있으면 유니온 타입으로 변환
+    // variantOptions가 있으면 타입 참조로 변환 (별도 타입 별칭 생성)
     if (propDef.variantOptions && propDef.variantOptions.length > 0) {
-      const literals = propDef.variantOptions.map((opt: string) =>
-        this.factory.createLiteralTypeNode(
-          this.factory.createStringLiteral(opt)
-        )
-      );
-      return this.factory.createUnionTypeNode(literals);
+      // propName을 대문자로 변환하여 타입 이름 생성 (예: "size" → "Size")
+      // propName은 _getPropsMember에서 전달되므로 여기서는 propDef.name 사용
+      const typeName = this._capitalize(propDef.name || "");
+      return this.factory.createTypeReferenceNode(typeName, undefined);
     }
 
     switch (propDef.type) {
@@ -311,6 +345,14 @@ class GenerateInterface {
       default:
         return this.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
     }
+  }
+
+  /**
+   * 첫 글자를 대문자로 변환
+   */
+  private _capitalize(str: string): string {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1);
   }
 }
 

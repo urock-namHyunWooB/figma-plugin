@@ -62,7 +62,7 @@ class ReactGenerator {
     const unformattedCode = this.printSections(sections);
     console.log(unformattedCode);
     const rtnVal = await this.formatCode(unformattedCode);
-    console.log(rtnVal);
+    // console.log(rtnVal);
     return rtnVal;
   }
 
@@ -76,6 +76,7 @@ class ReactGenerator {
       },
       {
         statements: [
+          ...this.GenerateInterface.createPropTypeAliases(),
           this.GenerateInterface.createPropsInterface(componentName),
         ],
       },

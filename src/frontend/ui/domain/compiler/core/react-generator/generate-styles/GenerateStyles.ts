@@ -37,10 +37,11 @@ class GenerateStyles {
       }
 
       // 2. CSS 함수 생성
-      // const cssVar = this._createCssFunction(node);
-      // if (cssVar) {
-      //   styleVariables.push(cssVar);
-      // }
+
+      const cssVar = this._createCssFunction(node);
+      if (cssVar) {
+        styleVariables.push(cssVar);
+      }
     });
 
     return styleVariables;
@@ -57,7 +58,7 @@ class GenerateStyles {
 
     for (const [propName, variants] of grouped.entries()) {
       // 변수명: node.name + "By" + propName (첫 글자 대문자)
-      const varName = `${this._normalizeName(node.name)}By${this._capitalize(propName)}`;
+      const varName = `${this._normalizeName(node.name)}By${this._capitalize(propName)}_${this._normalizeName(node.id)}`;
 
       // Record 객체 생성: { Large: { padding: "8px" }, ... }
       const recordEntries = variants.map((variant) => ({
@@ -125,7 +126,8 @@ class GenerateStyles {
     // 예: ${paddingBySize[$size]} 형태로 객체를 직접 보간
     if (hasDynamicStyle) {
       for (const [propName] of grouped.entries()) {
-        const recordVarName = `${this._normalizeName(node.name)}By${this._capitalize(propName)}`;
+        // _createRecordObjects에서 생성한 변수명과 일치시켜야 함
+        const recordVarName = `${this._normalizeName(node.name)}By${this._capitalize(propName)}_${this._normalizeName(node.id)}`;
         const paramIdentifier = this.kit.createIdentifier(`$${propName}`);
         const elementAccess = this.kit.createElementAccess(
           recordVarName,
@@ -199,7 +201,8 @@ class GenerateStyles {
         : taggedTemplate;
 
     // 5. const 변수 선언
-    const cssVarName = `${this._normalizeName(node.name)}Css`;
+    // node.id를 추가하여 중복 방지
+    const cssVarName = `${this._normalizeName(node.name)}Css_${this._normalizeName(node.id)}`;
     return this.kit.createConstVariable(cssVarName, arrowFunction);
   }
 
@@ -299,11 +302,20 @@ class GenerateStyles {
   private _styleObjectToExpression(
     style: Record<string, any>
   ): ts.ObjectLiteralExpression {
-    const properties = Object.entries(style).map(([key, value]) => ({
-      key,
-      value: this._valueToExpression(value),
-    }));
-    return this.kit.createObjectLiteral(properties);
+    const objectProperties = Object.entries(style).map(([key, value]) => {
+      // 하이픈이나 특수문자가 포함된 키는 문자열 리터럴로 처리
+      const isValidIdentifier = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key);
+      const propertyName: ts.PropertyName = isValidIdentifier
+        ? this.factory.createIdentifier(key)
+        : this.factory.createStringLiteral(key);
+
+      return this.factory.createPropertyAssignment(
+        propertyName,
+        this._valueToExpression(value)
+      );
+    });
+
+    return this.factory.createObjectLiteralExpression(objectProperties, false);
   }
 
   /**
@@ -311,7 +323,9 @@ class GenerateStyles {
    */
   private _valueToExpression(value: any): ts.Expression {
     if (typeof value === "string") {
-      return this.kit.createStringLiteral(value);
+      // CSS 주석 제거 (/* ... */ 형태)
+      const cleanedValue = value.replace(/\/\*[\s\S]*?\*\//g, "").trim();
+      return this.kit.createStringLiteral(cleanedValue);
     }
     if (typeof value === "number") {
       return this.kit.createNumericLiteral(value);
