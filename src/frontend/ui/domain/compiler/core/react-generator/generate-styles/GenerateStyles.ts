@@ -2,6 +2,7 @@ import ts, { NodeFactory } from "typescript";
 import { traverseBFS } from "@compiler/utils/traverse";
 import { FinalAstTree } from "../../../types/customType";
 import TypescriptNodeKitManager from "../../../manager/TypescriptNodeKitManager";
+import { toCamelCase } from "@compiler/utils/normalizeString";
 
 class GenerateStyles {
   private factory: NodeFactory;
@@ -311,8 +312,8 @@ class GenerateStyles {
       // 하이픈이나 특수문자가 포함된 키는 문자열 리터럴로 처리
       const isValidIdentifier = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key);
       const propertyName: ts.PropertyName = isValidIdentifier
-        ? this.factory.createIdentifier(key)
-        : this.factory.createStringLiteral(key);
+        ? this.factory.createIdentifier(toCamelCase(key))
+        : this.factory.createStringLiteral(toCamelCase(key));
 
       return this.factory.createPropertyAssignment(
         propertyName,

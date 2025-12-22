@@ -2,7 +2,7 @@ import React from "react";
 import { css } from "@emotion/react";
 
 export type Size = "Large" | "Medium" | "Small";
-export interface ButtonProps
+export interface PrimaryButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size;
   leftIcon?: React.ReactNode;
@@ -23,6 +23,16 @@ const PrimaryButtonCss__1512969 = ($size: Size) => css`
   border-radius: 4px;
   background: var(--Primary-600, #15c5ce);
   ${PrimaryButtonBySize__1512969[$size]}
+
+  :disabled {
+    background: var(--Primary-300, #b0ebec);
+  }
+  :active {
+    background: var(--Primary-700, #00abb6);
+  }
+  :hover {
+    background: var(--Primary-500, #47cfd6);
+  }
 `;
 const Frame427318163Css__1512974 = css`
   display: flex;
@@ -73,7 +83,7 @@ const UnionCss_I151298129722915 = css`
   ${""}
 `;
 
-export default function Button(props: ButtonProps) {
+export default function PrimaryButton(props: PrimaryButtonProps) {
   const {
     size = "Large",
     leftIcon = null,
@@ -82,12 +92,12 @@ export default function Button(props: ButtonProps) {
     ...restProps
   } = props;
   return (
-    <button css={PrimaryButtonCss__1512969(size)}>
+    <div css={PrimaryButtonCss__1512969(size)}>
       <div css={Frame427318163Css__1512974}>
         {props.leftIcon}
         <span css={TextCss__1512976(size)}>{text}</span>
         {props.rightIcon}
       </div>
-    </button>
+    </div>
   );
 }

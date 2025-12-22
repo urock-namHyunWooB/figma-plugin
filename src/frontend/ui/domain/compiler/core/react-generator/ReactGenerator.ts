@@ -38,9 +38,13 @@ class ReactGenerator {
     endOfLine: "lf",
   };
 
+  private _componentName: string;
+
   constructor(astTree: FinalAstTree) {
     this.astTree = astTree;
     const factory = (this.factory = ts.factory);
+
+    this._componentName = astTree.metaData.document.name ?? astTree.name;
 
     this.printer = ts.createPrinter({
       newLine: ts.NewLineKind.LineFeed,
@@ -69,6 +73,8 @@ class ReactGenerator {
    * 각 코드 섹션 생성
    */
   private createCodeSections(componentName: string): CodeSection[] {
+    componentName = this._componentName;
+
     return [
       {
         statements: [...this.GenerateImports.createImports()],

@@ -1,28 +1,25 @@
-/**
- * props 키를 camelCase로 변환
- * - "Size" → "size"
- * - "Left Icon" → "leftIcon"
- * - "Label#89:6" → "label"
- */
 export function toCamelCase(key: string) {
-  // # 이후 제거 (예: "Label#89:6" → "Label")
+  // 1) # 이후 제거 (예: "Label#89:6" → "Label")
   const hashIndex = key.indexOf("#");
-  const hasIdSuffix = hashIndex !== -1;
-  const cleanKey = hasIdSuffix ? key.slice(0, hashIndex) : key;
+  const cleanKey = hashIndex !== -1 ? key.slice(0, hashIndex) : key;
 
-  // 공백으로 분리 후 camelCase 변환
-  const words = cleanKey.split(" ").filter((w) => w.length > 0);
+  // 2) 단어 경계 정규화
+  // - 하이픈/언더스코어/공백/점/슬래시/콜론 등은 구분자로 처리
+  // - camelCase/PascalCase 경계도 분리: "FontSize" -> "Font Size"
+  const normalized = cleanKey
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2") // aB -> a B
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2") // URLValue -> URL Value
+    .replace(/[^a-zA-Z0-9]+/g, " "); // 나머지 특수문자 전부 공백으로
 
-  const camelKey = words
-    .map((word, index) => {
-      if (index === 0) {
-        // 첫 단어는 전부 소문자
-        return word.toLowerCase();
-      }
-      // 나머지 단어는 첫 글자만 대문자
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-    })
+  const words = normalized.split(" ").filter(Boolean);
+  if (words.length === 0) return "";
+
+  const first = words[0].toLowerCase();
+  const rest = words
+    .slice(1)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     .join("");
 
-  return camelKey;
+  return first + rest;
 }

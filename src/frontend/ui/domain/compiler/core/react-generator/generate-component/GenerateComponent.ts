@@ -6,13 +6,10 @@ import CreateStyledComponent from "@compiler/core/react-generator/generate-compo
 class GenerateComponent {
   private factory: NodeFactory;
   private astTree: FinalAstTree;
-  private CreateStyledComponent: CreateStyledComponent;
 
   constructor(factory: NodeFactory, astTree: FinalAstTree) {
     this.factory = factory;
     this.astTree = astTree;
-
-    this.CreateStyledComponent = new CreateStyledComponent(factory, astTree);
   }
   /**
    * 컴포넌트 함수 생성
