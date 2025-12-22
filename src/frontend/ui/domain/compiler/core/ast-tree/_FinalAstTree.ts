@@ -217,7 +217,7 @@ class _FinalAstTree {
    * Slot 후보 Props 찾기 → Slot 바인딩 확인 → Slot 바인딩된 노드 처리
    */
   private _refineComponentLikeProp(astTree: FinalAstTree) {
-    const slotCandidateProps = this._findSlotCandidateProps(astTree.props);
+    const slotCandidateProps = this._findSlotCandidateProps(astTree);
     console.log(slotCandidateProps);
 
     const allNodes = this._collectAllNodes(astTree);
@@ -227,14 +227,13 @@ class _FinalAstTree {
     return astTree;
   }
 
-  private _findSlotCandidateProps(
-    props: Record<string, any>
-  ): SlotCandidateProp[] {
+  private _findSlotCandidateProps(astTree: FinalAstTree): SlotCandidateProp[] {
+    const props = astTree.props;
     return Object.entries(props)
       .filter(([key, value]: [string, any]) => {
         // BOOLEAN 타입
         if (value.type === "BOOLEAN") {
-          return !this._isOnlyStyleChangeByBoolean(key);
+          return !this._isOnlyStyleChangeByBoolean(astTree, key);
         }
 
         // True/False VARIANT 타입 (대소문자 모두 처리)
@@ -993,9 +992,10 @@ class _FinalAstTree {
    * Boolean prop의 True/False 차이가 style만 바꾸는지 확인
    * @returns true면 style만 변경 (slot candidate 아님), false면 tree 구조 변경
    */
-  private _isOnlyStyleChangeByBoolean(boolPropKey: string): boolean {
-    const document = this.specDataManager.getDocument();
-
+  private _isOnlyStyleChangeByBoolean(
+    astTree: FinalAstTree,
+    boolPropKey: string
+  ): boolean {
     /**
      * TODO
      * taptapButton에서 leftIcon,rightIcon이 ReactNode로 되지 않는 이슈
@@ -1003,30 +1003,34 @@ class _FinalAstTree {
 
     // 모든 노드를 순회하면서 해당 Boolean prop이 visible에 바인딩된 노드가 있는지 확인
     const hasVisibleBinding = this._hasVisibleBindingToBoolean(
-      document,
+      astTree,
       boolPropKey
     );
 
     // visible 바인딩이 있으면 tree 변화 → false, 없으면 style만 변화 → true
-    return hasVisibleBinding;
+    return !hasVisibleBinding;
   }
 
   /**
    * 특정 Boolean prop이 어떤 노드의 visible에 바인딩되어 있는지 확인
    */
-  private _hasVisibleBindingToBoolean(node: any, boolPropKey: string): boolean {
-    // componentPropertyReferences.visible이 해당 prop을 참조하는지 확인
-    const visibleRef = node.componentPropertyReferences?.visible;
-    if (visibleRef) {
-      // "icon left#373:58" 같은 형태에서 prop 이름 추출
-      const refPropName = visibleRef.split("#")[0];
-      // 공백, 대소문자 무시 비교
-      if (
-        this._normalizeForComparison(refPropName) ===
-        this._normalizeForComparison(boolPropKey)
-      ) {
-        return true;
-      }
+  private _hasVisibleBindingToBoolean(
+    node: FinalAstTree,
+    boolPropKey: string
+  ): boolean {
+    // 케이스 1: componentPropertyReferences.visible
+    const visibleRef = node?.visible;
+    if (visibleRef && this._matchesBoolProp(visibleRef, boolPropKey)) {
+      return true;
+    }
+
+    // 케이스 2: props.visible (직접 바인딩)
+    const propsVisible = node.props?.visible;
+    if (
+      typeof propsVisible === "string" &&
+      this._matchesBoolProp(propsVisible, boolPropKey)
+    ) {
+      return true;
     }
 
     // children 순회
@@ -1039,6 +1043,18 @@ class _FinalAstTree {
     }
 
     return false;
+  }
+
+  /**
+   * prop 참조값이 해당 Boolean prop과 매칭되는지 확인
+   * "Left Icon#89:20" → "Left Icon" 추출 후 비교
+   */
+  private _matchesBoolProp(refValue: string, boolPropKey: string): boolean {
+    const refPropName = refValue.split("#")[0];
+    return (
+      this._normalizeForComparison(refPropName) ===
+      this._normalizeForComparison(boolPropKey)
+    );
   }
 
   private _normalizeForComparison(str: string): string {
