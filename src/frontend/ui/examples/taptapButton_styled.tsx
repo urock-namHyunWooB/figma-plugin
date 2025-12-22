@@ -11,10 +11,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const paddingBySize = {
-  Large: "8px",
-  Medium: "7px 8px",
-  Small: "3px 4px",
-} satisfies Record<Size, string>;
+  Large: { padding: "8px" },
+  Medium: { padding: "7px 8px" },
+  Small: { padding: "3px 4px" },
+};
 
 const iconBySize = {
   Large: { w: 18, h: 18 },
@@ -36,7 +36,7 @@ const primaryButtonCss = ($size: Size) => css`
   flex-direction: column; /* 원본 유지 */
   justify-content: center;
 
-  padding: ${paddingBySize[$size]};
+  ${paddingBySize[$size]}
 
   &:active {
     background: var(--Primary-700, #00abb6);
