@@ -12,6 +12,7 @@ class GenerateStyles {
   }
 
   public createStyleVariables(): ts.VariableStatement {
+    const styleVariables: ts.VariableDeclaration[] = [];
     traverseBFS(this.astTree, (node) => {
       /**
        * style의 base를 읽어서 name + Css 함수를 만든다.
@@ -44,8 +45,13 @@ class GenerateStyles {
        *   }
        * `
        */
+
+      this._createCssObject(node);
+      node.style.base;
     });
   }
+
+  private _createCssObject(node: FinalAstTree) {}
 }
 
 export default GenerateStyles;
