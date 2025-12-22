@@ -117,7 +117,7 @@ export interface FinalAstTree {
   id: string;
   name: string;
   type: string;
-  props: Record<string, string>;
+  props: Record<string, Record<string, any>>;
   parent: FinalAstTree | null;
   visible: VisibleValue;
   style: StyleObject;

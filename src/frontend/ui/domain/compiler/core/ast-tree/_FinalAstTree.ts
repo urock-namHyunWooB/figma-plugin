@@ -6,6 +6,7 @@ import {
   TempAstTree,
   ConditionNode,
   VisibleValue,
+  StyleTree,
 } from "@compiler";
 import HelperManager from "@compiler/manager/HelperManager";
 import { traverseTree } from "@figma/eslint-plugin-figma-plugins/dist/util";
@@ -16,6 +17,7 @@ import { value } from "happy-dom/lib/PropertySymbol";
 
 import * as estraverse from "estraverse";
 import debug from "@compiler/manager/DebuggingManager";
+import helper from "@compiler/manager/HelperManager";
 
 type SlotCandidateProp = { key: string; type: string };
 type SlotBinding = {
@@ -84,6 +86,7 @@ class _FinalAstTree {
   /**
    * 불필요한 노드 삭제
    * 높이값이 0인 노드 삭제 (absoluteBoundingBox)
+   * 그리는데 불필요한 노드 삭제(node.id가 I258:34208;250:78017 이런 형태)
    * @param astTree
    * @private
    */
@@ -94,6 +97,11 @@ class _FinalAstTree {
     traverseBFS(astTree, (node, meta) => {
       const targetSpec = this.specDataManager.getSpecById(node.id);
       if (targetSpec.absoluteBoundingBox?.height === 0) {
+        nodesToRemove.push(node);
+      }
+
+      const isInstance = node.id.startsWith("I");
+      if (isInstance) {
         nodesToRemove.push(node);
       }
     });
@@ -210,6 +218,7 @@ class _FinalAstTree {
    */
   private _refineComponentLikeProp(astTree: FinalAstTree) {
     const slotCandidateProps = this._findSlotCandidateProps(astTree.props);
+
     const allNodes = this._collectAllNodes(astTree);
     const slotBindings = this._findSlotBindings(slotCandidateProps, allNodes);
     this._convertPropsToSlots(astTree, slotBindings);
@@ -217,14 +226,6 @@ class _FinalAstTree {
     return astTree;
   }
 
-  /**
-   * State prop을 pseudo-class 스타일로 변환합니다.
-   * Option C (하이브리드): 스타일 분석 후 최적 처리
-   *
-   * 1. State prop 이름 다양성 처리 (State, states, Disabled 등)
-   * 2. CSS pseudo로 변환 가능한 것 / 불가능한 것 구분
-   * 3. 복합 조건: 같은 스타일이면 base로, 다르면 State 제거 후 dynamic 유지
-   */
   private _findSlotCandidateProps(
     props: Record<string, any>
   ): SlotCandidateProp[] {
@@ -232,13 +233,7 @@ class _FinalAstTree {
       .filter(([key, value]: [string, any]) => {
         // BOOLEAN 타입
         if (value.type === "BOOLEAN") {
-          /**
-           * TODO
-           * Boolean 타입이고 True와 False 차이가 node의 tree node를 바꾸지 않고
-           * style만 바꾼다면 false
-           */
-
-          return true;
+          return !this._isOnlyStyleChangeByBoolean(key);
         }
 
         // True/False VARIANT 타입 (대소문자 모두 처리)
@@ -782,7 +777,7 @@ class _FinalAstTree {
    */
   private _normalizePropsName(astTree: FinalAstTree) {
     const propKeys = Object.keys(astTree.props);
-    const propRefs: Record<string, any[]> = Object.fromEntries(
+    const propRefs: Record<string, Record<string, any>> = Object.fromEntries(
       propKeys.map((key) => [key, []])
     );
 
@@ -820,8 +815,11 @@ class _FinalAstTree {
 
     // 2. 루트 props 키를 camelCase로 변환
     for (const key of propKeys) {
-      astTree.props[toCamelCase(key)] = astTree.props[key];
-      delete astTree.props[key];
+      const camelKey = toCamelCase(key);
+      astTree.props[camelKey] = astTree.props[key];
+      if (key !== camelKey) {
+        delete astTree.props[key];
+      }
     }
 
     // 3. 수집된 참조들도 camelCase로 변환
@@ -955,21 +953,109 @@ class _FinalAstTree {
 
   /**
    * 어떤 타입인지 유추해서 노멀라이즈
-   *
+   * node props를 수집
+   * prop에서 type이 "VARIANT"이고
+   * variantOptions에 "TRUE", "FALSE"만 있다면 Boolean Type으로 반환
    * @param astTree
    * @private
    */
   private _normalizePropsType(astTree: FinalAstTree) {
     traverseBFS(astTree, (node) => {
-      /**
-       * TODO
-       * node props를 수집
-       * prop에서 type이 "VARIANT"이고
-       * variantOptions에 "TRUE", "FALSE"만 있다면 Boolean Type으로 반환
-       */
+      // 루트 props에서 Boolean 타입 변환
+      for (const [key, value] of Object.entries(node.props)) {
+        if (
+          typeof value === "object" &&
+          value.type === "VARIANT" &&
+          value.variantOptions?.length === 2
+        ) {
+          const options = value.variantOptions.map((o: string) =>
+            o.toLowerCase()
+          );
+          if (options.includes("true") && options.includes("false")) {
+            astTree.props[key] = {
+              ...value,
+              type: "BOOLEAN",
+              defaultValue: ["true", "True", "TRUE"].includes(
+                value.defaultValue
+              ),
+            };
+          }
+        }
+      }
     });
 
     return astTree;
+  }
+
+  /**
+   * Boolean prop의 True/False 차이가 style만 바꾸는지 확인
+   * @returns true면 style만 변경 (slot candidate 아님), false면 tree 구조 변경
+   */
+  private _isOnlyStyleChangeByBoolean(boolPropKey: string): boolean {
+    const document = this.specDataManager.getDocument();
+
+    // 모든 노드를 순회하면서 해당 Boolean prop이 visible에 바인딩된 노드가 있는지 확인
+    const hasVisibleBinding = this._hasVisibleBindingToBoolean(
+      document,
+      boolPropKey
+    );
+
+    // visible 바인딩이 있으면 tree 변화 → false, 없으면 style만 변화 → true
+    return !hasVisibleBinding;
+  }
+
+  /**
+   * 특정 Boolean prop이 어떤 노드의 visible에 바인딩되어 있는지 확인
+   */
+  private _hasVisibleBindingToBoolean(node: any, boolPropKey: string): boolean {
+    // componentPropertyReferences.visible이 해당 prop을 참조하는지 확인
+    const visibleRef = node.componentPropertyReferences?.visible;
+    if (visibleRef) {
+      // "icon left#373:58" 같은 형태에서 prop 이름 추출
+      const refPropName = visibleRef.split("#")[0];
+      // 공백, 대소문자 무시 비교
+      if (
+        this._normalizeForComparison(refPropName) ===
+        this._normalizeForComparison(boolPropKey)
+      ) {
+        return true;
+      }
+    }
+
+    // children 순회
+    if (node.children) {
+      for (const child of node.children) {
+        if (this._hasVisibleBindingToBoolean(child, boolPropKey)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private _normalizeForComparison(str: string): string {
+    return str.toLowerCase().replace(/[\s_-]+/g, "");
+  }
+
+  /**
+   * 두 tree의 구조가 동일한지 비교 (노드 개수 기준)
+   */
+  private _isSameTreeStructure(tree1: StyleTree, tree2: StyleTree): boolean {
+    const count1 = this._countNodes(tree1);
+    const count2 = this._countNodes(tree2);
+    return count1 === count2;
+  }
+
+  /**
+   * tree의 총 노드 개수 계산
+   */
+  private _countNodes(tree: StyleTree): number {
+    let count = 1;
+    for (const child of tree.children) {
+      count += this._countNodes(child);
+    }
+    return count;
   }
 }
 
