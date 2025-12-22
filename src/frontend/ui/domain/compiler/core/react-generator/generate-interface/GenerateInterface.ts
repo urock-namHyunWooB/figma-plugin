@@ -23,7 +23,223 @@ class GenerateInterface {
    * }
    */
   public createPropsInterface(componentName: string): ts.InterfaceDeclaration {
-    //TODO root의 meta 데이터를 읽어서 extend 처리
+    const semanticRol = this.astTree.semanticRole;
+
+    const members = this._getPropsMember();
+    const heritageClauses = this._getHeritageClauses(semanticRol);
+
+    const interfaceDeclaration = this.factory.createInterfaceDeclaration(
+      [this.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+      `${componentName}Props`,
+      undefined,
+      heritageClauses,
+      members
+    );
+
+    return interfaceDeclaration;
+  }
+
+  /**
+   * rootElement 값에 따라 적절한 extends 타입을 생성
+   * @param rootElement HTML 요소 이름 (예: "button", "input", "text", "div" 등)
+   * @returns ExpressionWithTypeArguments 또는 null (extends가 필요없는 경우)
+   */
+  public createExtendsType(
+    rootElement: string | null | undefined
+  ): ts.ExpressionWithTypeArguments | null {
+    if (!rootElement) {
+      return null;
+    }
+
+    const normalizedElement = rootElement.toLowerCase().trim();
+
+    // React 네임스페이스 접근
+    const reactNamespace = this.factory.createIdentifier("React");
+
+    switch (normalizedElement) {
+      case "button":
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "ButtonHTMLAttributes"
+          ),
+          [this.factory.createTypeReferenceNode("HTMLButtonElement", undefined)]
+        );
+
+      case "input":
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "InputHTMLAttributes"
+          ),
+          [this.factory.createTypeReferenceNode("HTMLInputElement", undefined)]
+        );
+
+      case "textarea":
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "TextareaHTMLAttributes"
+          ),
+          [
+            this.factory.createTypeReferenceNode(
+              "HTMLTextAreaElement",
+              undefined
+            ),
+          ]
+        );
+
+      case "select":
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "SelectHTMLAttributes"
+          ),
+          [this.factory.createTypeReferenceNode("HTMLSelectElement", undefined)]
+        );
+
+      case "a":
+      case "link":
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "AnchorHTMLAttributes"
+          ),
+          [this.factory.createTypeReferenceNode("HTMLAnchorElement", undefined)]
+        );
+
+      case "form":
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "FormHTMLAttributes"
+          ),
+          [this.factory.createTypeReferenceNode("HTMLFormElement", undefined)]
+        );
+
+      case "img":
+      case "image":
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "ImgHTMLAttributes"
+          ),
+          [this.factory.createTypeReferenceNode("HTMLImageElement", undefined)]
+        );
+
+      case "label":
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "LabelHTMLAttributes"
+          ),
+          [this.factory.createTypeReferenceNode("HTMLLabelElement", undefined)]
+        );
+
+      case "ul":
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "UListHTMLAttributes"
+          ),
+          [this.factory.createTypeReferenceNode("HTMLUListElement", undefined)]
+        );
+
+      case "ol":
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "OListHTMLAttributes"
+          ),
+          [this.factory.createTypeReferenceNode("HTMLOListElement", undefined)]
+        );
+
+      case "li":
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "LiHTMLAttributes"
+          ),
+          [this.factory.createTypeReferenceNode("HTMLLIElement", undefined)]
+        );
+
+      case "h1":
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "HTMLAttributes"
+          ),
+          [
+            this.factory.createTypeReferenceNode(
+              "HTMLHeadingElement",
+              undefined
+            ),
+          ]
+        );
+
+      case "h2":
+      case "h3":
+      case "h4":
+      case "h5":
+      case "h6":
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "HTMLAttributes"
+          ),
+          [
+            this.factory.createTypeReferenceNode(
+              "HTMLHeadingElement",
+              undefined
+            ),
+          ]
+        );
+
+      case "p":
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "HTMLAttributes"
+          ),
+          [
+            this.factory.createTypeReferenceNode(
+              "HTMLParagraphElement",
+              undefined
+            ),
+          ]
+        );
+
+      case "span":
+      case "text":
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "HTMLAttributes"
+          ),
+          [this.factory.createTypeReferenceNode("HTMLSpanElement", undefined)]
+        );
+
+      case "div":
+      case "section":
+      case "article":
+      case "header":
+      case "footer":
+      case "nav":
+      case "aside":
+      case "main":
+      default:
+        // 기본적으로 div로 처리
+        return this.factory.createExpressionWithTypeArguments(
+          this.factory.createPropertyAccessExpression(
+            reactNamespace,
+            "HTMLAttributes"
+          ),
+          [this.factory.createTypeReferenceNode("HTMLDivElement", undefined)]
+        );
+    }
+  }
+
+  private _getPropsMember() {
     const members: ts.TypeElement[] = [];
 
     for (const [propName, propDef] of Object.entries(this.astTree.props)) {
@@ -43,15 +259,22 @@ class GenerateInterface {
       members.push(propSig);
     }
 
-    const interfaceDeclaration = this.factory.createInterfaceDeclaration(
-      [this.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-      `${componentName}Props`,
-      undefined,
-      undefined,
-      members
-    );
+    return members;
+  }
 
-    return interfaceDeclaration;
+  private _getHeritageClauses(semanticRol: string | null | undefined) {
+    let heritageClauses: ts.HeritageClause[] | undefined = undefined;
+    const extendsType = this.createExtendsType(semanticRol);
+
+    if (extendsType) {
+      heritageClauses = [
+        this.factory.createHeritageClause(ts.SyntaxKind.ExtendsKeyword, [
+          extendsType,
+        ]),
+      ];
+    }
+
+    return heritageClauses;
   }
 
   /**
