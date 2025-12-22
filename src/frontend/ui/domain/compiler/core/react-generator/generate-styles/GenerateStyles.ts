@@ -37,10 +37,10 @@ class GenerateStyles {
       }
 
       // 2. CSS 함수 생성
-      const cssVar = this._createCssFunction(node);
-      if (cssVar) {
-        styleVariables.push(cssVar);
-      }
+      // const cssVar = this._createCssFunction(node);
+      // if (cssVar) {
+      //   styleVariables.push(cssVar);
+      // }
     });
 
     return styleVariables;
@@ -52,6 +52,7 @@ class GenerateStyles {
    */
   private _createRecordObjects(node: FinalAstTree): ts.VariableStatement[] {
     const statements: ts.VariableStatement[] = [];
+
     const grouped = this._groupDynamicStylesByProp(node.style.dynamic || []);
 
     for (const [propName, variants] of grouped.entries()) {
@@ -125,9 +126,24 @@ class GenerateStyles {
     if (hasDynamicStyle) {
       for (const [propName] of grouped.entries()) {
         const recordVarName = `${this._normalizeName(node.name)}By${this._capitalize(propName)}`;
+        const paramIdentifier = this.kit.createIdentifier(`$${propName}`);
         const elementAccess = this.kit.createElementAccess(
           recordVarName,
-          this.kit.createIdentifier(`$${propName}`)
+          paramIdentifier
+        );
+
+        // 디버깅: 생성된 Expression 확인
+        const printer = ts.createPrinter();
+        const sourceFile = ts.createSourceFile(
+          "temp.ts",
+          "",
+          ts.ScriptTarget.Latest,
+          true
+        );
+        const elementAccessText = printer.printNode(
+          ts.EmitHint.Expression,
+          elementAccess,
+          sourceFile
         );
 
         // 객체를 직접 보간 (emotion이 CSS로 변환)
@@ -156,9 +172,24 @@ class GenerateStyles {
     // 3. CSS tagged template 생성
     // cssHead가 비어있고 spans도 비어있으면 최소한의 공백이라도 넣어야 함
     const finalHead = cssHead || " ";
+
     const taggedTemplate = this.kit.createCssTaggedTemplate(
       finalHead,
       templateSpans
+    );
+
+    // 디버깅: 생성된 템플릿 확인
+    const printer = ts.createPrinter();
+    const sourceFile = ts.createSourceFile(
+      "temp.ts",
+      "",
+      ts.ScriptTarget.Latest,
+      true
+    );
+    const templateText = printer.printNode(
+      ts.EmitHint.Expression,
+      taggedTemplate,
+      sourceFile
     );
 
     // 4. 화살표 함수 생성

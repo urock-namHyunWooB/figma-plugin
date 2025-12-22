@@ -125,21 +125,78 @@ class TypescriptNodeKitManager {
     // rawText는 템플릿 리터럴에서 실제로 나타나는 문자열 (이스케이프 처리된 형태)
     // 일반적으로 text와 동일하지만, 특수 문자가 있을 경우 다를 수 있음
     const templateHead = this.factory.createTemplateHead(safeHead, safeHead);
-    
+
+    // spans가 비어있으면 빈 TemplateTail을 가진 더미 span을 만들어야 함
+    // TypeScript의 createTemplateExpression은 spans 배열이 비어있을 때 템플릿을 닫지 않음
+    if (spans.length === 0) {
+      // 빈 문자열 리터럴을 사용하여 더미 span 생성 (실제로는 사용되지 않음)
+      // 빈 문자열은 CSS에서 무시되므로 안전함
+      const dummyExpr = this.factory.createStringLiteral("");
+      const templateTail = this.factory.createTemplateTail("", "");
+      const dummySpan = this.factory.createTemplateSpan(
+        dummyExpr,
+        templateTail
+      );
+
+      const templateExpression = this.factory.createTemplateExpression(
+        templateHead,
+        [dummySpan]
+      );
+
+      // 디버깅: spans가 비어있을 때 생성된 템플릿 확인
+      const printer = ts.createPrinter();
+      const sourceFile = ts.createSourceFile(
+        "temp.ts",
+        "",
+        ts.ScriptTarget.Latest,
+        true
+      );
+      const templateText = printer.printNode(
+        ts.EmitHint.Expression,
+        templateExpression,
+        sourceFile
+      );
+
+      return templateExpression;
+    }
+
     const templateSpans = spans.map((span, index) => {
       const isLast = index === spans.length - 1;
+
       // tail이 빈 문자열이면 빈 문자열로 유지 (TypeScript는 빈 tail을 허용함)
       // 하지만 실제로는 호출하는 쪽에서 최소한 개행이라도 넣어주는 것이 안전
       const safeTail = span.tail;
-      return this.factory.createTemplateSpan(
+
+      const templateSpan = this.factory.createTemplateSpan(
         span.expr,
         isLast
           ? this.factory.createTemplateTail(safeTail, safeTail)
           : this.factory.createTemplateMiddle(safeTail, safeTail)
       );
+
+      return templateSpan;
     });
 
-    return this.factory.createTemplateExpression(templateHead, templateSpans);
+    const templateExpression = this.factory.createTemplateExpression(
+      templateHead,
+      templateSpans
+    );
+
+    // 디버깅: 최종 템플릿 확인
+    const printer = ts.createPrinter();
+    const sourceFile = ts.createSourceFile(
+      "temp.ts",
+      "",
+      ts.ScriptTarget.Latest,
+      true
+    );
+    const templateText = printer.printNode(
+      ts.EmitHint.Expression,
+      templateExpression,
+      sourceFile
+    );
+
+    return templateExpression;
   }
 
   /**
@@ -325,7 +382,27 @@ class TypescriptNodeKitManager {
         : object;
     const keyExpr =
       typeof key === "string" ? this.factory.createStringLiteral(key) : key;
-    return this.factory.createElementAccessExpression(objectExpr, keyExpr);
+
+    const elementAccess = this.factory.createElementAccessExpression(
+      objectExpr,
+      keyExpr
+    );
+
+    // 디버깅: 생성된 Element access 확인
+    const printer = ts.createPrinter();
+    const sourceFile = ts.createSourceFile(
+      "temp.ts",
+      "",
+      ts.ScriptTarget.Latest,
+      true
+    );
+    const elementAccessText = printer.printNode(
+      ts.EmitHint.Expression,
+      elementAccess,
+      sourceFile
+    );
+
+    return elementAccess;
   }
 
   // ==================== Object Literals ====================

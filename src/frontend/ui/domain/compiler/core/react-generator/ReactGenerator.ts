@@ -60,6 +60,7 @@ class ReactGenerator {
     const sections = this.createCodeSections(componentName);
 
     const unformattedCode = this.printSections(sections);
+    console.log(unformattedCode);
     const rtnVal = await this.formatCode(unformattedCode);
     console.log(rtnVal);
     return rtnVal;
