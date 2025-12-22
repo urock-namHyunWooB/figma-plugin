@@ -230,10 +230,16 @@ class _FinalAstTree {
   ): SlotCandidateProp[] {
     return Object.entries(props)
       .filter(([key, value]: [string, any]) => {
-        //key 이름 앞에 is가 들어가 있으면 return false
-
         // BOOLEAN 타입
-        if (value.type === "BOOLEAN") return true;
+        if (value.type === "BOOLEAN") {
+          /**
+           * TODO
+           * Boolean 타입이고 True와 False 차이가 node의 tree node를 바꾸지 않고
+           * style만 바꾼다면 false
+           */
+
+          return true;
+        }
 
         // True/False VARIANT 타입 (대소문자 모두 처리)
         if (value.type === "VARIANT") {
@@ -956,10 +962,10 @@ class _FinalAstTree {
   private _normalizePropsType(astTree: FinalAstTree) {
     traverseBFS(astTree, (node) => {
       /**
+       * TODO
        * node props를 수집
        * prop에서 type이 "VARIANT"이고
-       * variantOptions에 "TRUE", "FALSE"만 있고
-       * 이름 앞에 is가 들어있다면 해당 prop은 Boolean 타입으로 변환.
+       * variantOptions에 "TRUE", "FALSE"만 있다면 Boolean Type으로 반환
        */
     });
 

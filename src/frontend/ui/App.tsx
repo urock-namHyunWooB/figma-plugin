@@ -18,7 +18,7 @@ function App() {
 
   return (
     <div>
-      <Primary text="Button" size={"Small"} />
+      <Primary text="Button" size={"Medium"} />
 
       <Primary2 text="Button" />
 

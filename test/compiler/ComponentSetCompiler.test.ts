@@ -1066,7 +1066,8 @@ describe("CodeGen", () => {
 
     beforeAll(async () => {
       const compiler = new FigmaCompiler(taptapButtonMockData as any);
-      const code = compiler.getGeneratedCode();
+      const code = await compiler.getGeneratedCode();
+
       Component = await renderReactComponent(code!);
     });
 
@@ -1096,14 +1097,13 @@ describe("CodeGen", () => {
     test("Size가 Medium이면 fontSize는 14px이고 line-height는 22px이여야 한다.", () => {
       const { container } = renderButton({
         size: "Medium",
-        Size: "Medium",
-        state: "Default",
-        State: "Default",
         leftIcon: null,
         rightIcon: null,
+        text: "111",
       });
       const textEl = getTextElement(container);
       const styles = getComputedStyle(textEl);
+
       expect(styles.fontSize).toBe("14px");
       expect(styles.lineHeight).toBe("22px");
     });
