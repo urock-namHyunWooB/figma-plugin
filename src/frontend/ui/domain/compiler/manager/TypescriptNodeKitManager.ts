@@ -120,14 +120,22 @@ class TypescriptNodeKitManager {
     head: string,
     spans: Array<{ expr: ts.Expression; tail: string }>
   ): ts.TemplateExpression {
-    const templateHead = this.factory.createTemplateHead(head);
+    // head가 빈 문자열이면 최소한의 공백이라도 넣어야 함
+    const safeHead = head || " ";
+    // rawText는 템플릿 리터럴에서 실제로 나타나는 문자열 (이스케이프 처리된 형태)
+    // 일반적으로 text와 동일하지만, 특수 문자가 있을 경우 다를 수 있음
+    const templateHead = this.factory.createTemplateHead(safeHead, safeHead);
+    
     const templateSpans = spans.map((span, index) => {
       const isLast = index === spans.length - 1;
+      // tail이 빈 문자열이면 빈 문자열로 유지 (TypeScript는 빈 tail을 허용함)
+      // 하지만 실제로는 호출하는 쪽에서 최소한 개행이라도 넣어주는 것이 안전
+      const safeTail = span.tail;
       return this.factory.createTemplateSpan(
         span.expr,
         isLast
-          ? this.factory.createTemplateTail(span.tail)
-          : this.factory.createTemplateMiddle(span.tail)
+          ? this.factory.createTemplateTail(safeTail, safeTail)
+          : this.factory.createTemplateMiddle(safeTail, safeTail)
       );
     });
 

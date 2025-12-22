@@ -1,4 +1,4 @@
-import ts, { NodeFactory, factory } from "typescript";
+import ts, { NodeFactory } from "typescript";
 import { traverseBFS } from "@compiler/utils/traverse";
 import { FinalAstTree } from "../../../types/customType";
 import TypescriptNodeKitManager from "../../../manager/TypescriptNodeKitManager";
@@ -14,81 +14,334 @@ class GenerateStyles {
     this.kit = new TypescriptNodeKitManager(this.factory);
   }
 
-  public createStyleVariables(): ts.VariableStatement {
-    const styleVariables: ts.VariableDeclaration[] = [];
+  public createStyleVariables(): ts.VariableStatement[] {
+    const styleVariables: ts.VariableStatement[] = [];
 
     traverseBFS(this.astTree, (node) => {
-      /**
-       * style의 base를 읽어서 name + Css 함수를 만든다.
-       * style의 dynamic을 읽어서 props에 해당하는 name + By + props유형 = {[값]: [style 값]}을 만든다.
-       *
-       * ex)
-       * const primaryButtonBySize = {Large: {padding: 8px} }
-       *
-       * const primaryButtonCss = {$size: Size} => css`
-       *  align-items: center;
-       *   background: var(--Primary-600, #15c5ce);
-       *   border-radius: 4px;
-       *   display: inline-flex;
-       *   flex-direction: column;
-       *   justify-content: center;
-       *
-       *   ${paddingBySize[$size]}
-       *
-       *   &:active {
-       *     background: var(--Primary-700, #00abb6);
-       *   }
-       *
-       *   &:disabled {
-       *     background: var(--Primary-300, #b0ebec);
-       *   }
-       *
-       *   &:hover {
-       *     cursor: pointer;
-       *     background: var(--Primary-500, #47cfd6);
-       *   }
-       * `
-       */
+      // 스타일이 없는 노드는 스킵
+      const hasBaseStyle =
+        node.style.base && Object.keys(node.style.base).length > 0;
+      const hasDynamicStyle =
+        node.style.dynamic && node.style.dynamic.length > 0;
+      const hasPseudoStyle =
+        node.style.pseudo && Object.keys(node.style.pseudo).length > 0;
 
-      styleVariables.push(this._createCssObject(node));
-      node.style.base;
+      if (!hasBaseStyle && !hasDynamicStyle && !hasPseudoStyle) {
+        return;
+      }
+
+      // 1. Dynamic 스타일에서 Record 객체 생성 (variant map)
+      if (hasDynamicStyle) {
+        const recordVars = this._createRecordObjects(node);
+        styleVariables.push(...recordVars);
+      }
+
+      // 2. CSS 함수 생성
+      const cssVar = this._createCssFunction(node);
+      if (cssVar) {
+        styleVariables.push(cssVar);
+      }
     });
+
+    return styleVariables;
   }
 
-  private _createCssObject(node: FinalAstTree) {
-    // 1. dynamic 스타일에서 Record 객체 생성
-    if (node.style.dynamic && node.style.dynamic.length > 0) {
-      // dynamic을 variant별로 그룹화
-      const variantMap = new Map<string, Record<string, any>>();
+  /**
+   * Dynamic styles를 prop별로 그룹화하여 Record 객체 생성
+   * 예: const primaryButtonBySize = { Large: { padding: "8px" }, ... }
+   */
+  private _createRecordObjects(node: FinalAstTree): ts.VariableStatement[] {
+    const statements: ts.VariableStatement[] = [];
+    const grouped = this._groupDynamicStylesByProp(node.style.dynamic || []);
 
-      node.style.dynamic.forEach(({ condition, style }) => {
-        // condition에서 variant 값 추출 (예: props.size === "Large")
-        // ... 조건 파싱 로직 ...
-        const variantValue = "Large"; // 예시
-        variantMap.set(variantValue, style);
-      });
+    for (const [propName, variants] of grouped.entries()) {
+      // 변수명: node.name + "By" + propName (첫 글자 대문자)
+      const varName = `${this._normalizeName(node.name)}By${this._capitalize(propName)}`;
 
       // Record 객체 생성: { Large: { padding: "8px" }, ... }
-      const recordEntries = Array.from(variantMap.entries()).map(
-        ([key, value]) => ({
-          key,
-          value: this.kit.createObjectLiteral(
-            Object.entries(value).map(([k, v]) => ({
-              key: k,
-              value: this.kit.createStringLiteral(String(v)), // 또는 적절한 타입 변환
-            }))
-          ),
-        })
-      );
+      const recordEntries = variants.map((variant) => ({
+        key: variant.value,
+        value: this._styleObjectToExpression(variant.style),
+      }));
 
       const recordObject = this.kit.createRecordObject(recordEntries);
-
-      // 변수명: node.name + "By" + propType (예: "primaryButtonBySize")
-      const varName = `${node.name}BySize`;
       const recordVar = this.kit.createConstVariable(varName, recordObject);
-
-      return recordVar;
+      statements.push(recordVar);
     }
+
+    return statements;
+  }
+
+  /**
+   * CSS 함수 생성
+   * 예: const primaryButtonCss = ($size: Size) => css`...`
+   */
+  private _createCssFunction(node: FinalAstTree): ts.VariableStatement | null {
+    const hasBaseStyle =
+      node.style.base && Object.keys(node.style.base).length > 0;
+    const hasDynamicStyle = node.style.dynamic && node.style.dynamic.length > 0;
+    const hasPseudoStyle =
+      node.style.pseudo && Object.keys(node.style.pseudo).length > 0;
+
+    if (!hasBaseStyle && !hasDynamicStyle && !hasPseudoStyle) {
+      return null;
+    }
+
+    // 1. 파라미터 생성 (dynamic이 있으면 prop 파라미터 추가)
+    const params: ts.ParameterDeclaration[] = [];
+    const grouped = hasDynamicStyle
+      ? this._groupDynamicStylesByProp(node.style.dynamic || [])
+      : new Map();
+
+    for (const [propName] of grouped.entries()) {
+      // prop 이름을 타입으로 변환 (예: "size" → "Size")
+      const typeName = this._capitalize(propName);
+      const param = this.kit.createParameter(
+        `$${propName}`,
+        this.kit.createTypeReference(typeName)
+      );
+      params.push(param);
+    }
+
+    // 2. CSS 템플릿 생성
+    const templateSpans: Array<{ expr: ts.Expression; tail: string }> = [];
+    let cssHead = "";
+
+    // Base 스타일
+    if (hasBaseStyle) {
+      cssHead = this._styleObjectToCssString(node.style.base || {});
+      // cssHead 끝에 개행 추가 (템플릿 보간 전에 빈 줄을 위해)
+      // 단, cssHead가 비어있지 않을 때만 추가
+      if (cssHead && (hasDynamicStyle || hasPseudoStyle)) {
+        // cssHead가 이미 개행으로 끝나지 않으면 추가
+        if (!cssHead.endsWith("\n")) {
+          cssHead += "\n";
+        }
+      }
+    }
+
+    // Dynamic 스타일 보간 추가
+    // 예: ${paddingBySize[$size]} 형태로 객체를 직접 보간
+    if (hasDynamicStyle) {
+      for (const [propName] of grouped.entries()) {
+        const recordVarName = `${this._normalizeName(node.name)}By${this._capitalize(propName)}`;
+        const elementAccess = this.kit.createElementAccess(
+          recordVarName,
+          this.kit.createIdentifier(`$${propName}`)
+        );
+
+        // 객체를 직접 보간 (emotion이 CSS로 변환)
+        // tail은 최소한 개행이라도 있어야 함 (빈 문자열이면 문제 발생)
+        const tail = hasPseudoStyle ? "\n\n" : "\n";
+        templateSpans.push({
+          expr: elementAccess,
+          tail,
+        });
+      }
+    }
+
+    // Pseudo 스타일 추가
+    if (hasPseudoStyle) {
+      const pseudoCss = this._pseudoStyleToCssString(node.style.pseudo || {});
+      if (templateSpans.length > 0) {
+        // 마지막 span의 tail에 pseudo 스타일 추가
+        const lastSpan = templateSpans[templateSpans.length - 1];
+        lastSpan.tail = lastSpan.tail + pseudoCss;
+      } else {
+        // 보간이 없으면 head에 추가
+        cssHead = cssHead ? cssHead + "\n" + pseudoCss : pseudoCss;
+      }
+    }
+
+    // 3. CSS tagged template 생성
+    // cssHead가 비어있고 spans도 비어있으면 최소한의 공백이라도 넣어야 함
+    const finalHead = cssHead || " ";
+    const taggedTemplate = this.kit.createCssTaggedTemplate(
+      finalHead,
+      templateSpans
+    );
+
+    // 4. 화살표 함수 생성
+    const arrowFunction =
+      params.length > 0
+        ? this.kit.createArrowFunction(params, taggedTemplate)
+        : taggedTemplate;
+
+    // 5. const 변수 선언
+    const cssVarName = `${this._normalizeName(node.name)}Css`;
+    return this.kit.createConstVariable(cssVarName, arrowFunction);
+  }
+
+  /**
+   * Dynamic styles를 prop별로 그룹핑
+   */
+  private _groupDynamicStylesByProp(
+    dynamicStyles: Array<{ condition: any; style: Record<string, any> }>
+  ): Map<string, Array<{ value: string; style: Record<string, any> }>> {
+    const grouped = new Map<
+      string,
+      Array<{ value: string; style: Record<string, any> }>
+    >();
+
+    for (const dynamicStyle of dynamicStyles) {
+      const extracted = this._extractPropAndValue(dynamicStyle.condition);
+      if (!extracted) continue; // 추출 불가능한 조건은 스킵
+
+      if (!grouped.has(extracted.prop)) {
+        grouped.set(extracted.prop, []);
+      }
+
+      grouped.get(extracted.prop)!.push({
+        value: extracted.value,
+        style: dynamicStyle.style,
+      });
+    }
+
+    return grouped;
+  }
+
+  /**
+   * ESTree 조건에서 prop 이름과 값 추출
+   * props.Size === "Large" → { prop: "size", value: "Large" }
+   */
+  private _extractPropAndValue(condition: any): {
+    prop: string;
+    value: string;
+  } | null {
+    if (!condition || condition.type !== "BinaryExpression") {
+      return null;
+    }
+
+    // props.X === "value" 형태만 처리
+    if (
+      condition.operator === "===" &&
+      condition.left?.type === "MemberExpression" &&
+      condition.left.object?.name === "props" &&
+      condition.right?.type === "Literal"
+    ) {
+      const propName = condition.left.property?.name;
+      const propValue = condition.right.value;
+
+      if (propName && propValue !== undefined) {
+        // prop 이름을 camelCase로 변환 (예: "Size" → "size")
+        const camelPropName =
+          propName.charAt(0).toLowerCase() + propName.slice(1);
+        return {
+          prop: camelPropName,
+          value: String(propValue),
+        };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * 스타일 객체를 CSS 문자열로 변환
+   */
+  private _styleObjectToCssString(style: Record<string, any>): string {
+    return Object.entries(style)
+      .map(([key, value]) => {
+        const cssKey = this._camelToKebab(key);
+        return `  ${cssKey}: ${this._formatCssValue(value)};`;
+      })
+      .join("\n");
+  }
+
+  /**
+   * Pseudo 스타일을 CSS 문자열로 변환
+   */
+  private _pseudoStyleToCssString(
+    pseudo: Record<string, Record<string, any>>
+  ): string {
+    return Object.entries(pseudo)
+      .map(([pseudoClass, styles]) => {
+        const cssContent = this._styleObjectToCssString(styles);
+        return `\n  ${pseudoClass} {\n${cssContent}\n  }`;
+      })
+      .join("");
+  }
+
+  /**
+   * 스타일 객체를 TypeScript Expression으로 변환
+   */
+  private _styleObjectToExpression(
+    style: Record<string, any>
+  ): ts.ObjectLiteralExpression {
+    const properties = Object.entries(style).map(([key, value]) => ({
+      key,
+      value: this._valueToExpression(value),
+    }));
+    return this.kit.createObjectLiteral(properties);
+  }
+
+  /**
+   * 값을 TypeScript Expression으로 변환
+   */
+  private _valueToExpression(value: any): ts.Expression {
+    if (typeof value === "string") {
+      return this.kit.createStringLiteral(value);
+    }
+    if (typeof value === "number") {
+      return this.kit.createNumericLiteral(value);
+    }
+    if (typeof value === "boolean") {
+      return this.kit.createBooleanLiteral(value);
+    }
+    if (value === null || value === undefined) {
+      return this.kit.createNull();
+    }
+    // 객체나 배열인 경우
+    if (typeof value === "object") {
+      if (Array.isArray(value)) {
+        // 배열은 간단히 처리 (필요시 확장)
+        return this.kit.createNull();
+      }
+      // 중첩 객체
+      const properties = Object.entries(value).map(([key, val]) => ({
+        key,
+        value: this._valueToExpression(val),
+      }));
+      return this.kit.createObjectLiteral(properties);
+    }
+    return this.kit.createNull();
+  }
+
+  /**
+   * CSS 값 포맷팅
+   */
+  private _formatCssValue(value: any): string {
+    if (typeof value === "string") {
+      return value;
+    }
+    if (typeof value === "number") {
+      return `${value}px`;
+    }
+    return String(value);
+  }
+
+  /**
+   * camelCase를 kebab-case로 변환
+   */
+  private _camelToKebab(str: string): string {
+    return str.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
+  }
+
+  /**
+   * 첫 글자를 대문자로 변환
+   */
+  private _capitalize(str: string): string {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  /**
+   * 노드 이름을 변수명으로 정규화
+   */
+  private _normalizeName(name: string): string {
+    return name
+      .replace(/\s+/g, "")
+      .replace(/[^a-zA-Z0-9_$]/g, "")
+      .replace(/^[0-9]/, "_$&"); // 숫자로 시작하면 앞에 _ 추가
   }
 }
 

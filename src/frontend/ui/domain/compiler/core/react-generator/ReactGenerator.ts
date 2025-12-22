@@ -58,8 +58,11 @@ class ReactGenerator {
    */
   public async generateComponentCode(componentName: string): Promise<string> {
     const sections = this.createCodeSections(componentName);
+
     const unformattedCode = this.printSections(sections);
-    return await this.formatCode(unformattedCode);
+    const rtnVal = await this.formatCode(unformattedCode);
+    console.log(rtnVal);
+    return rtnVal;
   }
 
   /**
@@ -77,7 +80,7 @@ class ReactGenerator {
       },
 
       {
-        statements: [this.GenerateStyles.createStyleVariables()],
+        statements: this.GenerateStyles.createStyleVariables(),
       },
       {
         statements: [
