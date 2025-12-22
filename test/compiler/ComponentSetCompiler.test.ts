@@ -1101,6 +1101,7 @@ describe("CodeGen", () => {
         rightIcon: null,
         text: "111",
       });
+
       const textEl = getTextElement(container);
       const styles = getComputedStyle(textEl);
 

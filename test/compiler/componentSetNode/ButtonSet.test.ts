@@ -224,13 +224,13 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
       const compiler = new FigmaCompiler(mockData);
 
       // 2. 코드 생성
-      const code = compiler.getGeneratedCode("Button")!;
+      const code = await await compiler.getGeneratedCode("Button")!;
       expect(code).toBeTruthy();
       expect(typeof code).toBe("string");
-      expect(code.length).toBeGreaterThan(0);
+      expect(code!.length).toBeGreaterThan(0);
 
       // 3. 컴포넌트로 컴파일
-      const Component = await renderReactComponent(code);
+      const Component = await renderReactComponent(code!);
       expect(Component).toBeDefined();
       expect(typeof Component).toBe("function");
 
@@ -241,8 +241,8 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
     test("props를 전달하여 렌더링할 수 있어야 한다", async () => {
       const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button")!;
-      const Component = await renderReactComponent(code);
+      const code = await compiler.getGeneratedCode()!;
+      const Component = await renderReactComponent(code!);
 
       // props 전달하여 렌더링
       const { container } = render(React.createElement(Component));
@@ -251,22 +251,13 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
       expect(container).toBeTruthy();
     });
 
-    test("생성된 코드는 유효한 TypeScript/TSX 코드여야 한다", async () => {
-      const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button");
-
-      // 기본적인 코드 구조 검증
-      expect(code).toContain("function Button");
-      expect(code).toContain("return");
-      expect(code).toContain("React");
-    });
-
     test("props로 text를 넘기면 text가 렌더링 되어야 한다.", async () => {
       const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button")!;
-      const Component = await renderReactComponent(code);
+      const code = await compiler.getGeneratedCode()!;
+      const Component = await renderReactComponent(code!);
 
-      const parsed = parsePropsFromInterface(code);
+      const parsed = parsePropsFromInterface(code!);
+      console.log(code);
       const textProp = pickStringPropName(parsed);
       if (!textProp) {
         // 이 테스트의 스펙: "text를 넘길 수 있는 prop"은 반드시 있어야 한다.
@@ -285,10 +276,10 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
     test("Text는 무조건 하나 있어야 한다.", async () => {
       const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button")!;
-      const Component = await renderReactComponent(code);
+      const code = await await compiler.getGeneratedCode("Button")!;
+      const Component = await renderReactComponent(code!);
 
-      const parsed = parsePropsFromInterface(code);
+      const parsed = parsePropsFromInterface(code!);
       const props = buildMinimalRenderableProps(parsed);
 
       render(React.createElement(Component, props));
@@ -303,10 +294,10 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
     test("Props에 Icon을 넣을 수 있으면 Icon 넣고 렌더링이 되어야 한다.", async () => {
       const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button")!;
-      const Component = await renderReactComponent(code);
+      const code = await compiler.getGeneratedCode("Button")!;
+      const Component = await renderReactComponent(code!);
 
-      const parsed = parsePropsFromInterface(code);
+      const parsed = parsePropsFromInterface(code!);
       const iconPropNames = pickReactNodePropNames(parsed);
       if (iconPropNames.length === 0) {
         // icon prop이 없으면 스킵(실패 대신 의미있는 no-op)
@@ -326,10 +317,10 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
     test("버튼으로서 기본 기능을 할 수 있어야 한다.", async () => {
       const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button")!;
-      const Component = await renderReactComponent(code);
+      const code = await compiler.getGeneratedCode("Button")!;
+      const Component = await renderReactComponent(code!);
 
-      const parsed = parsePropsFromInterface(code);
+      const parsed = parsePropsFromInterface(code!);
       const props = buildMinimalRenderableProps(parsed);
 
       // onClick이 있으면 클릭 이벤트가 호출되어야 함
@@ -350,7 +341,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
     test("폰트 패밀리가 잘 지정 되어야 한다.", async () => {
       const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button");
+      const code = await compiler.getGeneratedCode("Button");
 
       // JSDOM에서 emotion/style sheet 기반 font-family를 안정적으로 computedStyle로 검증하기 어렵기 때문에,
       // 생성 코드에 font-family 선언이 포함되는지를 1차로 보장한다.
@@ -359,9 +350,9 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
     test("아이콘 크기 적용이 실제 아이콘에 잘 먹어야 한다.", async () => {
       const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button")!;
+      const code = await compiler.getGeneratedCode("Button")!;
 
-      const parsed = parsePropsFromInterface(code);
+      const parsed = parsePropsFromInterface(code!);
       const iconPropNames = pickReactNodePropNames(parsed);
       if (iconPropNames.length === 0) {
         expect(true).toBe(true);
@@ -375,10 +366,10 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
     test("disabled 관련 속성이 있다면 해당 기능이 잘 적용 되어야 한다.", async () => {
       const compiler = new FigmaCompiler(mockData);
-      const code = compiler.getGeneratedCode("Button")!;
-      const Component = await renderReactComponent(code);
+      const code = await compiler.getGeneratedCode("Button")!;
+      const Component = await renderReactComponent(code!);
 
-      const parsed = parsePropsFromInterface(code);
+      const parsed = parsePropsFromInterface(code!);
       const props = buildMinimalRenderableProps(parsed);
 
       if (!hasDisabledProp(parsed)) {

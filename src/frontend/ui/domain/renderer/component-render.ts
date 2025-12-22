@@ -13,7 +13,7 @@ async function loadEmotion() {
 
   // 생성된 코드는 @emotion/css를 사용하므로, @emotion/css를 먼저 로드
   try {
-    const emotionCssModule = await import("@emotion/css");
+    const emotionCssModule = await import("@emotion/react");
     emotionCss = emotionCssModule.css; // 클래스 이름 문자열을 반환하는 함수
     emotionCx = emotionCssModule.cx;
 
