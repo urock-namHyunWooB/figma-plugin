@@ -87,6 +87,7 @@ class _FinalAstTree {
    * 불필요한 노드 삭제
    * 높이값이 0인 노드 삭제 (absoluteBoundingBox)
    * 그리는데 불필요한 노드 삭제(node.id가 I258:34208;250:78017 이런 형태)
+   * visible이 false인 것들
    * @param astTree
    * @private
    */
@@ -102,6 +103,11 @@ class _FinalAstTree {
 
       const isInstance = node.id.startsWith("I");
       if (isInstance) {
+        nodesToRemove.push(node);
+      }
+
+      const spec = this.specDataManager.getSpecById(node.id);
+      if (spec.visible === false) {
         nodesToRemove.push(node);
       }
     });
@@ -998,7 +1004,7 @@ class _FinalAstTree {
   ): boolean {
     /**
      * TODO
-     * taptapButton에서 leftIcon,rightIcon이 ReactNode로 되지 않는 이슈
+     * tadaButton에서 disabled가 ReactNode로 판정되는 이슈
      */
 
     // 모든 노드를 순회하면서 해당 Boolean prop이 visible에 바인딩된 노드가 있는지 확인
@@ -1018,19 +1024,25 @@ class _FinalAstTree {
     node: FinalAstTree,
     boolPropKey: string
   ): boolean {
-    // 케이스 1: componentPropertyReferences.visible
-    const visibleRef = node?.visible;
-    if (visibleRef && this._matchesBoolProp(visibleRef, boolPropKey)) {
-      return true;
+    if (node.visible.type === "condition") {
+      // 케이스 1: visible.type === "condition"인 경우
+      // condition AST에서 해당 prop을 참조하는지 확인
+      const code = generate(node.visible.condition);
+      // "props.LeftIcon" 또는 "props['Left Icon']" 패턴 확인
+      if (
+        node.type === "INSTANCE" &&
+        this._conditionReferencesProp(code, boolPropKey)
+      ) {
+        return true;
+      }
     }
 
-    // 케이스 2: props.visible (직접 바인딩)
+    // 케이스 2: props.visible (직접 바인딩 - 문자열 참조)
     const propsVisible = node.props?.visible;
-    if (
-      typeof propsVisible === "string" &&
-      this._matchesBoolProp(propsVisible, boolPropKey)
-    ) {
-      return true;
+    if (typeof propsVisible === "string") {
+      if (this._matchesBoolProp(propsVisible, boolPropKey)) {
+        return true;
+      }
     }
 
     // children 순회
@@ -1039,6 +1051,29 @@ class _FinalAstTree {
         if (this._hasVisibleBindingToBoolean(child, boolPropKey)) {
           return true;
         }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * condition 코드가 특정 prop을 참조하는지 확인
+   */
+  private _conditionReferencesProp(code: string, propKey: string): boolean {
+    const normalizedPropKey = this._normalizeForComparison(propKey);
+
+    // "props.XXX" 패턴에서 prop 이름 추출
+    const propMatches = [
+      ...code.matchAll(/props\.([^=!<>\s\]]+(?:\s+[^=!<>\s\]]+)*)/g),
+      ...code.matchAll(/props\['([^']+)'\]/g),
+      ...code.matchAll(/props\["([^"]+)"\]/g),
+    ];
+
+    for (const match of propMatches) {
+      const extractedProp = match[1].trim();
+      if (this._normalizeForComparison(extractedProp) === normalizedPropKey) {
+        return true;
       }
     }
 
