@@ -205,7 +205,12 @@ class CreateJsxTree {
    * 예: SizeLargeStateDisabledLeftIconFalseRightIconFalseCss__1512969
    */
   private _getCssVariableName(node: FinalAstTree): string {
-    const normalizedName = this._normalizeName(node.name);
+    let nodeName = node.name;
+
+    if (!node.parent && node.metaData.document) {
+      nodeName = node.metaData.document.name;
+    }
+    const normalizedName = this._normalizeName(nodeName);
     const normalizedId = this._normalizeName(node.id);
     return `${normalizedName}Css_${normalizedId}`;
   }

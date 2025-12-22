@@ -1,109 +1,93 @@
 import React from "react";
 import { css } from "@emotion/react";
 
-type Size = "Large" | "Medium" | "Small";
-
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export type Size = "Large" | "Medium" | "Small";
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
-  text: string;
+  text?: string;
 }
 
-const paddingBySize = {
+const PrimaryButtonBySize__1512969 = {
   Large: { padding: "8px" },
   Medium: { padding: "7px 8px" },
   Small: { padding: "3px 4px" },
 };
-
-const iconBySize = {
-  Large: { w: 18, h: 18 },
-  Medium: { w: 16, h: 16 },
-  Small: { w: 14, h: 14 },
-} as const satisfies Record<Size, { w: number; h: number }>;
-
-const textBySize = {
-  Large: { fontSize: 16, lineHeight: 24 },
-  Medium: { fontSize: 14, lineHeight: 22 },
-  Small: { fontSize: 12, lineHeight: 18 },
-} satisfies Record<Size, { fontSize: number; lineHeight: number }>;
-
-const primaryButtonCss = ($size: Size) => css`
-  align-items: center;
-  background: var(--Primary-600, #15c5ce);
-  border-radius: 4px;
+const PrimaryButtonCss__1512969 = ($size: Size) => css`
   display: inline-flex;
-  flex-direction: column; /* 원본 유지 */
+  flex-direction: column;
   justify-content: center;
-
-  ${paddingBySize[$size]}
-
-  &:active {
-    background: var(--Primary-700, #00abb6);
-  }
-
-  &:disabled {
-    background: var(--Primary-300, #b0ebec);
-  }
-
-  &:hover {
-    cursor: pointer;
-    background: var(--Primary-500, #47cfd6);
-  }
+  align-items: center;
+  border-radius: 4px;
+  background: var(--Primary-600, #15c5ce);
+  ${PrimaryButtonBySize__1512969[$size]}
 `;
-
-const contentCss = css`
-  display: inline-flex;
+const Frame427318163Css__1512974 = css`
+  display: flex;
   align-items: center;
   gap: 4px;
   justify-content: center;
+  ${""}
 `;
-
-const iconSlotCss = ($size: Size) => css`
-  width: ${iconBySize[$size].w}px;
-  height: ${iconBySize[$size].h}px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-
-  & > svg,
-  & > img {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-
-  & > * {
-    max-width: 100%;
-    max-height: 100%;
-  }
+const PlusBySize__1512975 = {
+  Large: { width: "18px", height: "18px" },
+  Medium: { width: "16px", height: "16px" },
+  Small: { width: "14px", height: "14px" },
+};
+const PlusCss__1512975 = ($size: Size) => css`
+  ${PlusBySize__1512975[$size]}
 `;
-
-const labelCss = ($size: Size) => css`
+const TextBySize__1512976 = {
+  Large: { fontSize: "16px", lineHeight: "24px" },
+  Medium: { fontSize: "14px", lineHeight: "22px" },
+  Small: { fontSize: "12px", lineHeight: "18px" },
+};
+const TextCss__1512976 = ($size: Size) => css`
   color: var(--black-white-white, #fff);
   text-align: center;
   font-family: "PingFang SC";
   font-style: normal;
   font-weight: 500;
-
-  font-size: ${textBySize[$size].fontSize}px;
-  line-height: ${textBySize[$size].lineHeight}px;
+  ${TextBySize__1512976[$size]}
+`;
+const PlusCss__1512981 = css`
+  width: 18px;
+  height: 18px;
+  ${""}
+`;
+const UnionBySize_I151297529722915 = {
+  Large: { width: "15px", height: "15px" },
+  Medium: { width: "13.333px", height: "13.333px" },
+  Small: { width: "11.667px", height: "11.667px" },
+};
+const UnionCss_I151297529722915 = ($size: Size) => css`
+  fill: var(--black-white-white, #fff);
+  ${UnionBySize_I151297529722915[$size]}
+`;
+const UnionCss_I151298129722915 = css`
+  width: 15px;
+  height: 15px;
+  fill: var(--black-white-white, #fff);
+  ${""}
 `;
 
-function PrimaryButton(props: ButtonProps) {
-  const { size = "Large", leftIcon, rightIcon, text, ...buttonProps } = props;
-
+export default function Button(props: ButtonProps) {
+  const {
+    size = "Large",
+    leftIcon = null,
+    rightIcon = null,
+    text = "Text",
+    ...restProps
+  } = props;
   return (
-    <button css={primaryButtonCss(size)} {...buttonProps}>
-      <span css={contentCss}>
-        {leftIcon ? <span css={iconSlotCss(size)}>{leftIcon}</span> : null}
-        <span css={labelCss(size)}>{text}</span>
-        {rightIcon ? <span css={iconSlotCss(size)}>{rightIcon}</span> : null}
-      </span>
+    <button css={PrimaryButtonCss__1512969(size)}>
+      <div css={Frame427318163Css__1512974}>
+        {props.leftIcon}
+        <span css={TextCss__1512976(size)}>{text}</span>
+        {props.rightIcon}
+      </div>
     </button>
   );
 }
-
-export default PrimaryButton;

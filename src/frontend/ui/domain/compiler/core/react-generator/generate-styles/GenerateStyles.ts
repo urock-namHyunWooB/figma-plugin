@@ -37,7 +37,6 @@ class GenerateStyles {
       }
 
       // 2. CSS 함수 생성
-
       const cssVar = this._createCssFunction(node);
       if (cssVar) {
         styleVariables.push(cssVar);
@@ -53,12 +52,16 @@ class GenerateStyles {
    */
   private _createRecordObjects(node: FinalAstTree): ts.VariableStatement[] {
     const statements: ts.VariableStatement[] = [];
-
     const grouped = this._groupDynamicStylesByProp(node.style.dynamic || []);
 
     for (const [propName, variants] of grouped.entries()) {
-      // 변수명: node.name + "By" + propName (첫 글자 대문자)
-      const varName = `${this._normalizeName(node.name)}By${this._capitalize(propName)}_${this._normalizeName(node.id)}`;
+      let nodeName = node.name;
+
+      if (!node.parent && node.metaData.document) {
+        nodeName = node.metaData.document.name;
+      }
+
+      const varName = `${this._normalizeName(nodeName)}By${this._capitalize(propName)}_${this._normalizeName(node.id)}`;
 
       // Record 객체 생성: { Large: { padding: "8px" }, ... }
       const recordEntries = variants.map((variant) => ({
@@ -72,6 +75,10 @@ class GenerateStyles {
     }
 
     return statements;
+  }
+
+  private _lowerCaseFirstLetter(str: string): string {
+    return str.charAt(0).toLowerCase() + str.slice(1);
   }
 
   /**
@@ -127,7 +134,14 @@ class GenerateStyles {
     if (hasDynamicStyle) {
       for (const [propName] of grouped.entries()) {
         // _createRecordObjects에서 생성한 변수명과 일치시켜야 함
-        const recordVarName = `${this._normalizeName(node.name)}By${this._capitalize(propName)}_${this._normalizeName(node.id)}`;
+
+        let nodeName = node.name;
+
+        if (!node.parent && node.metaData.document) {
+          nodeName = node.metaData.document.name;
+        }
+
+        const recordVarName = `${this._normalizeName(nodeName)}By${this._capitalize(propName)}_${this._normalizeName(node.id)}`;
         const paramIdentifier = this.kit.createIdentifier(`$${propName}`);
         const elementAccess = this.kit.createElementAccess(
           recordVarName,
@@ -180,29 +194,20 @@ class GenerateStyles {
       templateSpans
     );
 
-    // 디버깅: 생성된 템플릿 확인
-    const printer = ts.createPrinter();
-    const sourceFile = ts.createSourceFile(
-      "temp.ts",
-      "",
-      ts.ScriptTarget.Latest,
-      true
-    );
-    const templateText = printer.printNode(
-      ts.EmitHint.Expression,
-      taggedTemplate,
-      sourceFile
-    );
-
     // 4. 화살표 함수 생성
     const arrowFunction =
       params.length > 0
         ? this.kit.createArrowFunction(params, taggedTemplate)
         : taggedTemplate;
 
+    let nodeName = node.name;
+
+    if (!node.parent && node.metaData.document) {
+      nodeName = node.metaData.document.name;
+    }
     // 5. const 변수 선언
     // node.id를 추가하여 중복 방지
-    const cssVarName = `${this._normalizeName(node.name)}Css_${this._normalizeName(node.id)}`;
+    const cssVarName = `${this._normalizeName(nodeName)}Css_${this._normalizeName(node.id)}`;
     return this.kit.createConstVariable(cssVarName, arrowFunction);
   }
 

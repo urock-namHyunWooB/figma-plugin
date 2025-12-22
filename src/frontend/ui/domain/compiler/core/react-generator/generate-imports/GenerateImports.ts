@@ -56,7 +56,7 @@ class GenerateImports {
           ),
         ])
       ),
-      this.factory.createStringLiteral("@emotion/css")
+      this.factory.createStringLiteral("@emotion/react")
     );
   }
 }
