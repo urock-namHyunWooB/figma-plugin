@@ -14,13 +14,6 @@ class GenerateComponent {
 
     this.CreateStyledComponent = new CreateStyledComponent(factory, astTree);
   }
-
-  /**
-   * AST 순회해서 styledComponent 만들고 더해서 조합된 root styled component도 리턴
-   */
-  public createStyledComponent() {
-    return this.CreateStyledComponent.createStyledComponent();
-  }
   /**
    * 컴포넌트 함수 생성
    * export default function ComponentName(props: Props) { ... }
@@ -44,6 +37,9 @@ class GenerateComponent {
       // JsxElement 또는 JsxSelfClosingElement는 그대로 사용
       returnExpression = jsxTree;
     }
+
+    // Props 구조 분해 생성
+    const destructuringStatement = this._createPropsDestructuring();
 
     return this.factory.createFunctionDeclaration(
       [
@@ -69,12 +65,103 @@ class GenerateComponent {
       undefined,
       this.factory.createBlock(
         [
+          // const { size = "Large", ...restProps } = props;
+          ...(destructuringStatement ? [destructuringStatement] : []),
           // return <JSX>;
           this.factory.createReturnStatement(returnExpression),
         ],
         true
       )
     );
+  }
+
+  /**
+   * Props 구조 분해 선언 생성
+   * const { size = "Large", leftIcon, rightIcon, text, ...restProps } = props;
+   */
+  private _createPropsDestructuring(): ts.VariableStatement | null {
+    const props = this.astTree.props;
+    if (!props || Object.keys(props).length === 0) {
+      return null;
+    }
+
+    const bindingElements: ts.BindingElement[] = [];
+    const propNames: string[] = [];
+
+    for (const [propName, propDef] of Object.entries(props)) {
+      const prop = propDef as any;
+      propNames.push(propName);
+
+      // 기본값이 있는 경우
+      if (prop.defaultValue !== undefined) {
+        const defaultValue = this._valueToExpression(prop.defaultValue);
+        const bindingElement = this.factory.createBindingElement(
+          undefined,
+          undefined,
+          this.factory.createIdentifier(propName),
+          defaultValue
+        );
+        bindingElements.push(bindingElement);
+      } else {
+        // 기본값이 없는 경우
+        const bindingElement = this.factory.createBindingElement(
+          undefined,
+          undefined,
+          this.factory.createIdentifier(propName),
+          undefined
+        );
+        bindingElements.push(bindingElement);
+      }
+    }
+
+    // 나머지 props를 위한 rest element
+    const restElement = this.factory.createBindingElement(
+      this.factory.createToken(ts.SyntaxKind.DotDotDotToken),
+      undefined,
+      this.factory.createIdentifier("restProps"),
+      undefined
+    );
+    bindingElements.push(restElement);
+
+    // Object binding pattern 생성
+    const bindingPattern =
+      this.factory.createObjectBindingPattern(bindingElements);
+
+    // const { ... } = props;
+    return this.factory.createVariableStatement(
+      undefined,
+      this.factory.createVariableDeclarationList(
+        [
+          this.factory.createVariableDeclaration(
+            bindingPattern,
+            undefined,
+            undefined,
+            this.factory.createIdentifier("props")
+          ),
+        ],
+        ts.NodeFlags.Const
+      )
+    );
+  }
+
+  /**
+   * 값을 TypeScript Expression으로 변환
+   */
+  private _valueToExpression(value: any): ts.Expression {
+    if (typeof value === "string") {
+      return this.factory.createStringLiteral(value);
+    }
+    if (typeof value === "number") {
+      return this.factory.createNumericLiteral(value);
+    }
+    if (typeof value === "boolean") {
+      return value ? this.factory.createTrue() : this.factory.createFalse();
+    }
+    if (value === null) {
+      return this.factory.createNull();
+    }
+    // 기본값은 문자열로 변환
+    return this.factory.createStringLiteral(String(value));
   }
 }
 

@@ -48,7 +48,7 @@ class GenerateInterface {
 
     for (const [propName, propDef] of Object.entries(this.astTree.props)) {
       const prop = propDef as any;
-      
+
       // variantOptions가 있는 경우에만 타입 별칭 생성
       if (prop.variantOptions && prop.variantOptions.length > 0) {
         const typeName = this._capitalize(propName);
@@ -58,14 +58,14 @@ class GenerateInterface {
           )
         );
         const unionType = this.factory.createUnionTypeNode(literals);
-        
+
         const typeAlias = this.factory.createTypeAliasDeclaration(
           [this.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
           typeName,
           undefined,
           unionType
         );
-        
+
         typeAliases.push(typeAlias);
       }
     }

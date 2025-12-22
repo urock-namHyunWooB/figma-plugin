@@ -86,11 +86,20 @@ const UnionCss_I151298129722915 = css`
 `;
 
 export default function Button(props: ButtonProps) {
+  const {
+    size = "Large",
+    leftIcon = null,
+    rightIcon = null,
+    text = "Text",
+    ...restProps
+  } = props;
   return (
-    <div className={cx(styles.sizelarge, styles.sizelargeSize[props.size])}>
-      <div className={styles.frame}>
+    <div
+      css={SizeLargeStateDisabledLeftIconFalseRightIconFalseCss__1512969(size)}
+    >
+      <div css={Frame427318163Css__1512974}>
         {props.leftIcon}
-        <span className={cx(styles.text, styles.textSize[props.size])} />
+        <span css={TextCss__1512976(size)}>{text}</span>
         {props.rightIcon}
       </div>
     </div>

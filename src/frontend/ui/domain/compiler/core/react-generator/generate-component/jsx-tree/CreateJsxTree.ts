@@ -32,7 +32,19 @@ class CreateJsxTree {
     // 일반 노드: 태그, 속성, children을 조합하여 JSX Element 생성
     const tagName = this._getTagName(node);
     const attributes = this._createAttributes(node);
-    const children = this._createChildren(node);
+    let children = this._createChildren(node);
+
+    // TEXT 노드이고 node.props.characters에 prop 이름이 바인딩되어 있으면 텍스트 내용 추가
+    if (node.type === "TEXT" && (node.props as any)?.characters) {
+      const propName = (node.props as any).characters;
+      // props.text를 참조하는 JSX Expression 생성 (구조 분해된 변수 사용)
+      const textExpression = this.factory.createJsxExpression(
+        undefined,
+        this.factory.createIdentifier(propName)
+      );
+      // children 앞에 텍스트 추가
+      children = [textExpression, ...children];
+    }
 
     return this._createJsxElement(tagName, attributes, children);
   }
@@ -138,82 +150,78 @@ class CreateJsxTree {
   }
 
   /**
-   * Style 속성 생성 (base + variant style maps)
+   * Style 속성 생성 (css prop 사용)
+   * GenerateStyles에서 생성한 CSS 함수 변수를 참조
    */
   private _createStyleAttribute(node: FinalAstTree): ts.JsxAttribute | null {
-    // 스타일 최적화: dynamic styles에서 공통 속성을 base로 이동
-    const optimized = this._optimizeStyles(node);
-    const baseStyle = optimized.base;
-    const dynamicStyles = optimized.dynamic;
+    const hasBaseStyle =
+      node.style.base && Object.keys(node.style.base).length > 0;
+    const hasDynamicStyle = node.style.dynamic && node.style.dynamic.length > 0;
+    const hasPseudoStyle =
+      node.style.pseudo && Object.keys(node.style.pseudo).length > 0;
 
     // 스타일이 없는 경우
-    if (Object.keys(baseStyle).length === 0 && dynamicStyles.length === 0) {
+    if (!hasBaseStyle && !hasDynamicStyle && !hasPseudoStyle) {
       return null;
     }
 
-    const baseStyleVarName = this._getStyleVariableName(node);
-    const classNameParts: ts.Expression[] = [];
+    // CSS 함수 변수명 생성 (GenerateStyles와 동일한 로직)
+    const cssVarName = this._getCssVariableName(node);
 
-    // 1. Base style 추가
-    if (Object.keys(baseStyle).length > 0) {
-      const baseStyleReference = this.factory.createPropertyAccessExpression(
-        this.factory.createIdentifier("styles"),
-        this.factory.createIdentifier(baseStyleVarName)
-      );
-      classNameParts.push(baseStyleReference);
-    }
+    // Dynamic style이 있으면 함수 호출, 없으면 변수 참조
+    let cssExpression: ts.Expression;
 
-    // 2. Dynamic styles를 prop별로 그룹핑하여 variant map 참조
-    const grouped = this._groupDynamicStylesByProp(dynamicStyles);
+    if (hasDynamicStyle) {
+      // Dynamic styles를 prop별로 그룹핑
+      const grouped = this._groupDynamicStylesByProp(node.style.dynamic || []);
 
-    for (const [propName] of grouped.entries()) {
-      // variant map 이름: {baseStyleVarName}{PropName} (Styles 접미사 제거)
-      const variantMapName = `${baseStyleVarName}${propName.charAt(0).toUpperCase() + propName.slice(1)}`;
+      // 파라미터 생성 (구조 분해된 변수 사용)
+      const args: ts.Expression[] = [];
+      for (const [propName] of grouped.entries()) {
+        // props.size 대신 size 사용 (구조 분해됨)
+        const propIdentifier = this.factory.createIdentifier(propName);
+        args.push(propIdentifier);
+      }
 
-      // styles.{variantMapName}[props.{propName}]
-      const variantMapAccess = this.factory.createPropertyAccessExpression(
-        this.factory.createIdentifier("styles"),
-        this.factory.createIdentifier(variantMapName)
-      );
-
-      const propAccess = this.factory.createPropertyAccessExpression(
-        this.factory.createIdentifier("props"),
-        this.factory.createIdentifier(propName)
-      );
-
-      const variantStyleAccess = this.factory.createElementAccessExpression(
-        variantMapAccess,
-        propAccess
-      );
-
-      classNameParts.push(variantStyleAccess);
-    }
-
-    // 3. cx 함수를 사용하여 className 결합
-    // cx(styles.base, styles.sizeStyles[props.size], styles.stateStyles[props.state])
-    let classNameExpression: ts.Expression;
-
-    if (classNameParts.length === 1) {
-      // 단일 스타일만 있는 경우
-      classNameExpression = classNameParts[0];
-    } else {
-      // cx 함수 호출: cx(style1, style2, ...)
-      const cxIdentifier = this.factory.createIdentifier("cx");
-      classNameExpression = this.factory.createCallExpression(
-        cxIdentifier,
+      // CSS 함수 호출: cssVarName(props.size, ...)
+      cssExpression = this.factory.createCallExpression(
+        this.factory.createIdentifier(cssVarName),
         undefined,
-        classNameParts
+        args
       );
+    } else {
+      // Dynamic style이 없으면 변수 참조: cssVarName
+      cssExpression = this.factory.createIdentifier(cssVarName);
     }
 
     return this.factory.createJsxAttribute(
-      this.factory.createIdentifier("className"),
-      this.factory.createJsxExpression(undefined, classNameExpression)
+      this.factory.createIdentifier("css"),
+      this.factory.createJsxExpression(undefined, cssExpression)
     );
   }
 
   /**
-   * 노드의 스타일 변수 이름 생성 (짧고 의미있는 이름)
+   * 노드의 CSS 함수 변수명 생성 (GenerateStyles와 동일한 로직)
+   * 예: SizeLargeStateDisabledLeftIconFalseRightIconFalseCss__1512969
+   */
+  private _getCssVariableName(node: FinalAstTree): string {
+    const normalizedName = this._normalizeName(node.name);
+    const normalizedId = this._normalizeName(node.id);
+    return `${normalizedName}Css_${normalizedId}`;
+  }
+
+  /**
+   * 노드 이름을 변수명으로 정규화
+   */
+  private _normalizeName(name: string): string {
+    return name
+      .replace(/\s+/g, "")
+      .replace(/[^a-zA-Z0-9_$]/g, "")
+      .replace(/^[0-9]/, "_$&"); // 숫자로 시작하면 앞에 _ 추가
+  }
+
+  /**
+   * 노드의 스타일 변수 이름 생성 (짧고 의미있는 이름) - 사용하지 않음, 호환성 유지
    */
   private _getStyleVariableName(node: FinalAstTree): string {
     if (this.styleVariables.has(node.id)) {
