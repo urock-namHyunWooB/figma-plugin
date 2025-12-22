@@ -196,6 +196,7 @@ class _FinalAstTree {
    */
   private updateProps(astTree: FinalAstTree) {
     astTree = this._normalizePropsName(astTree);
+    astTree = this._normalizePropsType(astTree);
     astTree = this._refineStateProp(astTree);
     astTree = this._refineComponentLikeProp(astTree);
     astTree = this._refinePropsForButton(astTree);
@@ -224,14 +225,13 @@ class _FinalAstTree {
    * 2. CSS pseudo로 변환 가능한 것 / 불가능한 것 구분
    * 3. 복합 조건: 같은 스타일이면 base로, 다르면 State 제거 후 dynamic 유지
    */
-  /**
-   * Slot 후보 Props 찾기 (BOOLEAN 또는 True/False VARIANT)
-   */
   private _findSlotCandidateProps(
     props: Record<string, any>
   ): SlotCandidateProp[] {
     return Object.entries(props)
       .filter(([key, value]: [string, any]) => {
+        //key 이름 앞에 is가 들어가 있으면 return false
+
         // BOOLEAN 타입
         if (value.type === "BOOLEAN") return true;
 
@@ -943,6 +943,25 @@ class _FinalAstTree {
       if ((textNode.props as any)?.characters) continue;
       (textNode.props as any).characters = propNameToUse;
     }
+
+    return astTree;
+  }
+
+  /**
+   * 어떤 타입인지 유추해서 노멀라이즈
+   *
+   * @param astTree
+   * @private
+   */
+  private _normalizePropsType(astTree: FinalAstTree) {
+    traverseBFS(astTree, (node) => {
+      /**
+       * node props를 수집
+       * prop에서 type이 "VARIANT"이고
+       * variantOptions에 "TRUE", "FALSE"만 있고
+       * 이름 앞에 is가 들어있다면 해당 prop은 Boolean 타입으로 변환.
+       */
+    });
 
     return astTree;
   }

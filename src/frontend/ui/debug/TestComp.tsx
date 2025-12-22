@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import taptapButtonSample from "../../../../test/fixtures/button/taptapButton_sample.json";
 import tadaButtonSample from "../../../../test/fixtures/button/tadaButton.json";
@@ -37,11 +37,28 @@ export function TestComp() {
     []
   );
 
+  const STORAGE_KEY = "testComp.fixtureKey";
+
   type FixtureKey = keyof typeof FIXTURES;
-  const [fixtureKey, setFixtureKey] = useState<FixtureKey>("taptapButton");
+  const [fixtureKey, setFixtureKey] = useState<FixtureKey>(() => {
+    if (typeof window === "undefined") return "taptapButton";
+
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+
+    if (saved && saved in FIXTURES) {
+      return saved as FixtureKey;
+    }
+
+    return "taptapButton";
+  });
 
   const { status, code, Component, error, compileMs, defaultProps } =
     useCompilerDebug(FIXTURES[fixtureKey].data);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(STORAGE_KEY, fixtureKey);
+  }, [fixtureKey]);
 
   return (
     <div style={{ padding: "20px", fontFamily: "monospace" }}>
