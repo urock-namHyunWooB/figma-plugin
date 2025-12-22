@@ -218,6 +218,7 @@ class _FinalAstTree {
    */
   private _refineComponentLikeProp(astTree: FinalAstTree) {
     const slotCandidateProps = this._findSlotCandidateProps(astTree.props);
+    console.log(slotCandidateProps);
 
     const allNodes = this._collectAllNodes(astTree);
     const slotBindings = this._findSlotBindings(slotCandidateProps, allNodes);
@@ -995,6 +996,11 @@ class _FinalAstTree {
   private _isOnlyStyleChangeByBoolean(boolPropKey: string): boolean {
     const document = this.specDataManager.getDocument();
 
+    /**
+     * TODO
+     * taptapButton에서 leftIcon,rightIcon이 ReactNode로 되지 않는 이슈
+     */
+
     // 모든 노드를 순회하면서 해당 Boolean prop이 visible에 바인딩된 노드가 있는지 확인
     const hasVisibleBinding = this._hasVisibleBindingToBoolean(
       document,
@@ -1002,7 +1008,7 @@ class _FinalAstTree {
     );
 
     // visible 바인딩이 있으면 tree 변화 → false, 없으면 style만 변화 → true
-    return !hasVisibleBinding;
+    return hasVisibleBinding;
   }
 
   /**
