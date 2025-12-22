@@ -68,6 +68,7 @@ class _FinalAstTree {
         style: node.style,
         children: [],
         semanticRole: "container", // 기본값, updateMetaData에서 정확한 값 할당
+        metaData: {},
       };
 
       finalNode.children = node.children.map((child) =>
@@ -134,6 +135,8 @@ class _FinalAstTree {
     const isButtonComponent =
       componentSetName.toLowerCase().includes("button") ||
       componentSetName.toLowerCase().includes("btn");
+
+    astTree.metaData.document = this.specDataManager.getDocument();
 
     // 각 노드에 semanticRole 할당
     traverseBFS(astTree, (node) => {

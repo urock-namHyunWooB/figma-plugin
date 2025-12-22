@@ -129,4 +129,5 @@ export interface FinalAstTree {
    * Flutter: Container, Text, ElevatedButton 등
    */
   semanticRole: SemanticRole;
+  metaData: any;
 }

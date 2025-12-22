@@ -170,6 +170,10 @@ class GenerateStyles {
    * 노드의 스타일 변수 이름 생성 (짧고 의미있는 이름)
    */
   private _getStyleVariableName(node: FinalAstTree): string {
+    if (node.metaData.document) {
+      return node.metaData.document.name;
+    }
+
     if (this.styleVariables.has(node.id)) {
       return this.styleVariables.get(node.id)!;
     }
