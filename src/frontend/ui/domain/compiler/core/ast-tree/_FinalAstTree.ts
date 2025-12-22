@@ -777,7 +777,7 @@ class _FinalAstTree {
    */
   private _normalizePropsName(astTree: FinalAstTree) {
     const propKeys = Object.keys(astTree.props);
-    const propRefs: Record<string, Record<string, any>> = Object.fromEntries(
+    const propRefs: Record<string, any[]> = Object.fromEntries(
       propKeys.map((key) => [key, []])
     );
 
@@ -788,7 +788,8 @@ class _FinalAstTree {
       // props 값에서 참조 수집
       for (const key in node.props) {
         const value = node.props[key];
-        if (propRefs[value]) {
+        // value가 문자열인 경우에만 (참조값)
+        if (typeof value === "string" && propRefs[value]) {
           propRefs[value].push(node.props);
         }
       }
