@@ -48,8 +48,8 @@ class ReactGenerator {
     });
 
     this.GenerateImports = new GenerateImports(factory);
-    this.GenerateStyles = new GenerateStyles(factory, astTree);
     this.GenerateInterface = new GenerateInterface(factory, astTree);
+    this.GenerateStyles = new GenerateStyles(factory, astTree);
     this.GenerateComponent = new GenerateComponent(factory, astTree);
   }
 

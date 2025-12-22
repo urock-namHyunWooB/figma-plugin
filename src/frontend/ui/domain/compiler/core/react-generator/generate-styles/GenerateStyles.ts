@@ -8,6 +8,7 @@ class GenerateStyles {
 
   private factory: NodeFactory;
   private astTree: FinalAstTree;
+
   constructor(factory: NodeFactory, astTree: FinalAstTree) {
     this.factory = factory;
     this.astTree = astTree;
