@@ -256,22 +256,43 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
       const code = await compiler.getGeneratedCode()!;
       const Component = await renderReactComponent(code!);
 
-      const parsed = parsePropsFromInterface(code!);
-      console.log(code);
-      const textProp = pickStringPropName(parsed);
-      if (!textProp) {
-        // 이 테스트의 스펙: "text를 넘길 수 있는 prop"은 반드시 있어야 한다.
-        // 없으면 fixture/컴파일 결과가 버튼 요구사항을 만족하지 못한 것이므로 fail.
+      // 인터페이스 파싱 없이 알려진 text prop 후보들을 직접 시도
+      const TEXT_PROP_CANDIDATES = [
+        "text",
+        "label",
+        "title",
+        "children",
+        "value",
+        "name",
+      ];
+      const TEST_VALUE = "HELLO_TEXT_PROP";
+
+      let foundTextProp: string | null = null;
+
+      for (const propName of TEXT_PROP_CANDIDATES) {
+        const { container, unmount } = render(
+          React.createElement(Component, { [propName]: TEST_VALUE })
+        );
+
+        if (container.textContent?.includes(TEST_VALUE)) {
+          foundTextProp = propName;
+          unmount();
+          break;
+        }
+        unmount();
+      }
+
+      if (!foundTextProp) {
         throw new Error(
           "Button props에 text로 사용할 string prop이 없습니다. (예: text/label/title/children 등)"
         );
       }
 
-      const props = buildMinimalRenderableProps(parsed);
-      props[textProp] = "HELLO_TEXT_PROP";
-
-      render(React.createElement(Component, props));
-      expect(screen.getByText("HELLO_TEXT_PROP")).toBeTruthy();
+      // 최종 확인: 찾은 prop으로 렌더링해서 값이 반영되는지 검증
+      const { container } = render(
+        React.createElement(Component, { [foundTextProp]: TEST_VALUE })
+      );
+      expect(container.textContent).toContain(TEST_VALUE);
     });
 
     test("Text는 무조건 하나 있어야 한다.", async () => {
