@@ -10,6 +10,7 @@ import GenerateImports from "./generate-imports/GenerateImports";
 import GenerateStyles from "./generate-styles/GenerateStyles";
 import GenerateInterface from "./generate-interface/GenerateInterface";
 import GenerateComponent from "./generate-component/GenerateComponent";
+import { normalizeName } from "@compiler/utils/stringUtils";
 
 interface CodeSection {
   statements: ts.Statement[];
@@ -45,6 +46,7 @@ class ReactGenerator {
     const factory = (this.factory = ts.factory);
 
     this._componentName = astTree.metaData.document.name ?? astTree.name;
+    this._componentName = normalizeName(this._componentName);
 
     this.printer = ts.createPrinter({
       newLine: ts.NewLineKind.LineFeed,
@@ -64,8 +66,9 @@ class ReactGenerator {
     const sections = this.createCodeSections(componentName);
 
     const unformattedCode = this.printSections(sections);
+    console.log(unformattedCode);
     const rtnVal = await this.formatCode(unformattedCode);
-    console.log(rtnVal);
+    // console.log(rtnVal);
     return rtnVal;
   }
 

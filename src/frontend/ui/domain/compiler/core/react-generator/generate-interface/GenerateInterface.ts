@@ -1,5 +1,6 @@
 import ts, { NodeFactory } from "typescript";
 import { FinalAstTree } from "@compiler";
+import { capitalize } from "@compiler/utils/stringUtils";
 
 class GenerateInterface {
   private factory: NodeFactory;
@@ -51,7 +52,7 @@ class GenerateInterface {
 
       // variantOptions가 있는 경우에만 타입 별칭 생성
       if (prop.variantOptions && prop.variantOptions.length > 0) {
-        const typeName = this._capitalize(propName);
+        const typeName = capitalize(propName);
         const literals = prop.variantOptions.map((opt: string) =>
           this.factory.createLiteralTypeNode(
             this.factory.createStringLiteral(opt)
@@ -321,7 +322,7 @@ class GenerateInterface {
     if (propDef.variantOptions && propDef.variantOptions.length > 0) {
       // propName을 대문자로 변환하여 타입 이름 생성 (예: "size" → "Size")
       // propName은 _getPropsMember에서 전달되므로 여기서는 propDef.name 사용
-      const typeName = this._capitalize(propDef.name || "");
+      const typeName = capitalize(propDef.name || "");
       return this.factory.createTypeReferenceNode(typeName, undefined);
     }
 
@@ -345,14 +346,6 @@ class GenerateInterface {
       default:
         return this.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
     }
-  }
-
-  /**
-   * 첫 글자를 대문자로 변환
-   */
-  private _capitalize(str: string): string {
-    if (!str) return str;
-    return str.charAt(0).toUpperCase() + str.slice(1);
   }
 }
 

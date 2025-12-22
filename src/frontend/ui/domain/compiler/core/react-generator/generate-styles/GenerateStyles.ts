@@ -3,6 +3,7 @@ import { traverseBFS } from "@compiler/utils/traverse";
 import { FinalAstTree } from "../../../types/customType";
 import TypescriptNodeKitManager from "../../../manager/TypescriptNodeKitManager";
 import { toCamelCase } from "@compiler/utils/normalizeString";
+import { capitalize, normalizeName } from "@compiler/utils/stringUtils";
 
 class GenerateStyles {
   private factory: NodeFactory;
@@ -62,7 +63,7 @@ class GenerateStyles {
         nodeName = node.metaData.document.name;
       }
 
-      const varName = `${this._normalizeName(nodeName)}By${this._capitalize(propName)}_${this._normalizeName(node.id)}`;
+      const varName = `${normalizeName(nodeName)}By${capitalize(propName)}_${normalizeName(node.id)}`;
 
       // Record 객체 생성: { Large: { padding: "8px" }, ... }
       const recordEntries = variants.map((variant) => ({
@@ -105,7 +106,7 @@ class GenerateStyles {
 
     for (const [propName] of grouped.entries()) {
       // prop 이름을 타입으로 변환 (예: "size" → "Size")
-      const typeName = this._capitalize(propName);
+      const typeName = capitalize(propName);
       const param = this.kit.createParameter(
         `$${propName}`,
         this.kit.createTypeReference(typeName)
@@ -142,7 +143,7 @@ class GenerateStyles {
           nodeName = node.metaData.document.name;
         }
 
-        const recordVarName = `${this._normalizeName(nodeName)}By${this._capitalize(propName)}_${this._normalizeName(node.id)}`;
+        const recordVarName = `${normalizeName(nodeName)}By${capitalize(propName)}_${normalizeName(node.id)}`;
         const paramIdentifier = this.kit.createIdentifier(`$${propName}`);
         const elementAccess = this.kit.createElementAccess(
           recordVarName,
@@ -208,7 +209,7 @@ class GenerateStyles {
     }
     // 5. const 변수 선언
     // node.id를 추가하여 중복 방지
-    const cssVarName = `${this._normalizeName(nodeName)}Css_${this._normalizeName(node.id)}`;
+    const cssVarName = `${normalizeName(nodeName)}Css_${normalizeName(node.id)}`;
     return this.kit.createConstVariable(cssVarName, arrowFunction);
   }
 
@@ -376,23 +377,6 @@ class GenerateStyles {
    */
   private _camelToKebab(str: string): string {
     return str.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
-  }
-
-  /**
-   * 첫 글자를 대문자로 변환
-   */
-  private _capitalize(str: string): string {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  }
-
-  /**
-   * 노드 이름을 변수명으로 정규화
-   */
-  private _normalizeName(name: string): string {
-    return name
-      .replace(/\s+/g, "")
-      .replace(/[^a-zA-Z0-9_$]/g, "")
-      .replace(/^[0-9]/, "_$&"); // 숫자로 시작하면 앞에 _ 추가
   }
 }
 
