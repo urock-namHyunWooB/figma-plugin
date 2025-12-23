@@ -76,11 +76,31 @@ class CreateJsxTree {
    */
   private _createAttributes(node: FinalAstTree): ts.JsxAttributeLike[] {
     const attributes: ts.JsxAttributeLike[] = [];
+
     const styleAttr = this._createStyleAttribute(node);
     if (styleAttr) {
       attributes.push(styleAttr);
     }
+
+    // 루트 노드이고 네이티브 HTML 요소인 경우 {...restProps} 추가
+    if (node.parent === null && this._isNativeHtmlElement(node)) {
+      const restPropsSpread = this.factory.createJsxSpreadAttribute(
+        this.factory.createIdentifier("restProps")
+      );
+      attributes.push(restPropsSpread);
+    }
+
     return attributes;
+  }
+
+  /**
+   * 노드가 네이티브 HTML 요소인지 확인
+   * (컴포넌트가 아닌 실제 HTML 태그인지)
+   */
+  private _isNativeHtmlElement(node: FinalAstTree): boolean {
+    const tagName = this._getTagName(node);
+    // PascalCase로 시작하면 컴포넌트, 소문자로 시작하면 네이티브 HTML
+    return tagName.charAt(0) === tagName.charAt(0).toLowerCase();
   }
 
   /**
