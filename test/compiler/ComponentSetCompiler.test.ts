@@ -7,6 +7,7 @@ import taptapButtonMockData from "../fixtures/button/taptapButton.json";
 import urockButtonSampleMockData from "../fixtures/button/urockButton.json";
 
 import airtableButtonMockData from "../fixtures/button/airtableButton.json";
+import urockChipsMockData from "../fixtures/chip/urockChips.json";
 
 import FigmaCompiler, {
   FinalAstTree,
@@ -1292,11 +1293,38 @@ describe("CodeGen", () => {
        * }
        * 이 경우 type이 겹치는데 customType으로 이름이 변경된다.
        */
+      const compiler = new FigmaCompiler(urockButtonSampleMockData as any);
+      const code = await compiler.getGeneratedCode();
+
+      // type이 customType으로 변경되었는지 확인
+      expect(code).toContain("customType");
+      // 원래 type prop이 interface에 직접 정의되어 있지 않아야 함
+      // (customType으로 변경되었으므로)
+      expect(code).toMatch(/customType\??:/);
     });
 
-    test("customType이 outlined_blue일때 배경색은 #F7F9FE 이다.", async () => {});
+    test("customType이 outlined_blue일때 배경색은 #F7F9FE 이다.", async () => {
+      const { container } = renderButton({
+        customType: "outlined_blue",
+      });
+      const root = getRootElement(container);
+      const styles = getComputedStyle(root);
+      // 배경색 확인 (#F7F9FE = rgb(247, 249, 254))
+      expect(styles.backgroundColor).toBe("rgb(247, 249, 254)");
+    });
 
-    test("customType이 icon-outlined-red 일 때 텍스트는 없어야 한다", async () => {});
+    test("customType이 icon-outlined-red 일 때 텍스트는 없어야 한다", async () => {
+      const { container } = renderButton({
+        customType: "icon-outlined-red",
+      });
+      // 텍스트 span이 없거나 비어있어야 함
+      const spans = container.querySelectorAll("span");
+      const hasVisibleText = Array.from(spans).some(
+        (span) => span.textContent && span.textContent.trim() !== ""
+      );
+      // icon-only 타입이므로 텍스트가 없어야 함
+      expect(hasVisibleText).toBe(false);
+    });
   });
 
   describe("tadaButton", () => {
@@ -1332,16 +1360,77 @@ describe("CodeGen", () => {
       expect(container).toBeInTheDocument();
     });
 
-    test("prop에서 nativeProp과 겹치는 prop이 있으면 custom prop으로 이름이 변경된다.", () => {
-      //disabled가 customDisabled로 변해야힘.
+    test("prop에서 nativeProp과 겹치는 prop이 있으면 custom prop으로 이름이 변경된다.", async () => {
+      // disabled가 customDisabled로 변해야 함
+      const compiler = new FigmaCompiler(tadaButtonMockData as any);
+      const code = await compiler.getGeneratedCode();
+
+      // disabled가 customDisabled로 변경되었는지 확인
+      expect(code).toContain("customDisabled");
+      // interface에서 customDisabled가 정의되어 있어야 함
+      expect(code).toMatch(/customDisabled\??:/);
     });
 
-    test("props에서 customDisabled는 boolean이다", () => {});
+    test("props에서 customDisabled는 boolean이다", async () => {
+      const compiler = new FigmaCompiler(tadaButtonMockData as any);
+      const code = await compiler.getGeneratedCode();
 
-    test("disabled의 타입값은 Boolean이다", () => {});
+      // customDisabled가 boolean 타입으로 정의되어 있는지 확인
+      // interface에서 customDisabled?: boolean 형태여야 함
+      expect(code).toMatch(/customDisabled\??:\s*boolean/);
+    });
+
+    test("disabled의 타입값은 Boolean이다", async () => {
+      const compiler = new FigmaCompiler(tadaButtonMockData as any);
+      const propDefs = compiler.getPropsDefinition();
+
+      // customDisabled prop을 찾아서 타입이 BOOLEAN인지 확인
+      const disabledProp = propDefs.find(
+        (prop) =>
+          prop.name === "customDisabled" ||
+          prop.name === "disabled" ||
+          prop.name.toLowerCase().includes("disabled")
+      );
+
+      expect(disabledProp).toBeDefined();
+      expect(disabledProp?.type).toBe("BOOLEAN");
+    });
   });
 
   describe("urockChips", () => {
-    test("기본 렌더링 되어야 한다.", () => {});
+    let Component: React.ComponentType<any>;
+
+    beforeAll(async () => {
+      const compiler = new FigmaCompiler(urockChipsMockData as any);
+      const code = await compiler.getGeneratedCode();
+
+      Component = await renderReactComponent(code!);
+    });
+
+    function renderChip(props?: Record<string, any>) {
+      return render(React.createElement(Component, props ?? {}));
+    }
+
+    function getRootElement(container: HTMLElement): HTMLElement {
+      const el = container.firstElementChild as HTMLElement | null;
+      if (!el) throw new Error("Root element not found");
+      return el;
+    }
+
+    test("기본 렌더링 되어야 한다.", () => {
+      const { container } = renderChip();
+      expect(container).toBeInTheDocument();
+      expect(getRootElement(container)).toBeTruthy();
+    });
+
+    test("prop color가 cyan이면 배경색은 #AEF2F6 이다", () => {
+      const { container } = renderChip({
+        color: "cyan",
+      });
+      const root = getRootElement(container);
+      const styles = getComputedStyle(root);
+      // 배경색 확인 (#AEF2F6 = rgb(174, 242, 246))
+      expect(styles.backgroundColor).toBe("rgb(174, 242, 246)");
+    });
   });
 });
