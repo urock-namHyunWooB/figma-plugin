@@ -1362,11 +1362,6 @@ class _FinalAstTree {
     astTree: FinalAstTree,
     boolPropKey: string
   ): boolean {
-    /**
-     * TODO
-     * tadaButton에서 disabled가 ReactNode로 판정되는 이슈
-     */
-
     // 모든 노드를 순회하면서 해당 Boolean prop이 visible에 바인딩된 노드가 있는지 확인
     const hasVisibleBinding = this._hasVisibleBindingToBoolean(
       astTree,

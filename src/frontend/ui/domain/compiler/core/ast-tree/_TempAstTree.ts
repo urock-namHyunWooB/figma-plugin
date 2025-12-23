@@ -111,6 +111,7 @@ class _TempAstTree {
    * - variant별로 다른 값 → 각 조건의 dynamic
    */
   private updateStyle(pivotTree: TempAstTree, targetTrees: StyleTree[]) {
+    //TODO urockButton | mergedNode에서 각 css를 비교해서 style을 결정
     traverseBFS(pivotTree, (pivotNode) => {
       // 이 pivotNode에 매칭되는 모든 variant의 스타일 수집
       const variantStyles: Array<{
@@ -126,8 +127,20 @@ class _TempAstTree {
         }
 
         // targetTree에서 pivotNode에 매칭되는 노드 찾기
+        // Figma 인스턴스 노드 ID: I{variant_id};{suffix} 형태
+        // 같은 노드라도 variant별로 prefix가 다르므로 suffix로 비교
         const matchedTargetNode = findNodeBFS(targetTree, (targetNode) =>
-          pivotNode.mergedNode.some((merged) => merged.id === targetNode.id)
+          pivotNode.mergedNode.some((merged) => {
+            // 전체 ID 일치
+            if (merged.id === targetNode.id) return true;
+
+            // 인스턴스 노드의 경우 suffix 비교 (세미콜론 이후 부분)
+            const mergedSuffix = merged.id.split(";").slice(1).join(";");
+            const targetSuffix = targetNode.id.split(";").slice(1).join(";");
+            return (
+              mergedSuffix && targetSuffix && mergedSuffix === targetSuffix
+            );
+          })
         );
 
         if (matchedTargetNode) {

@@ -7,7 +7,7 @@ import taptapButtonMockData from "../fixtures/button/taptapButton.json";
 import urockButtonSampleMockData from "../fixtures/button/urockButton.json";
 
 import airtableButtonMockData from "../fixtures/button/airtableButton.json";
-import urockChipsMockData from "../fixtures/chip/urockChips.json";
+import urockChipsMockData from "../fixtures/chip/urock-chips.json";
 
 import FigmaCompiler, {
   FinalAstTree,

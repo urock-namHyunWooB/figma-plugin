@@ -5,6 +5,8 @@ import tadaButtonSample from "../../../../test/fixtures/button/tadaButton.json";
 import airtableButton from "../../../../test/fixtures/button/airtableButton.json";
 import urockButton from "../../../../test/fixtures/button/urockButton.json";
 import taptapButton from "../../../../test/fixtures/button/taptapButton.json";
+import urockChips from "../../../../test/fixtures/chip/urock-chips.json";
+import airtableSelectButton from "../../../../test/fixtures/select-button/airtable-select-button.json";
 
 import type { FigmaNodeData } from "@compiler/types/baseType";
 import { useCompilerDebug } from "./useCompilerDebug";
@@ -32,6 +34,14 @@ export function TestComp() {
         airtableButton: {
           label: "airtableButton",
           data: airtableButton as unknown as FigmaNodeData,
+        },
+        urockChips: {
+          label: "urockChips",
+          data: urockChips as unknown as FigmaNodeData,
+        },
+        airtableSelectButton: {
+          label: "airtableSelectButton",
+          data: airtableSelectButton as unknown as FigmaNodeData,
         },
       }) as const,
     []
