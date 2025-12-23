@@ -16,7 +16,7 @@
   "info": {
     "document": {
       "id": "15:12968",
-      "name": "PrimaryButton",
+      "name": "Primary",
       "type": "COMPONENT_SET",
       "locked": true,
       "scrollBehavior": "SCROLLS",
@@ -29,7 +29,7 @@
         "State": {
           "type": "VARIANT",
           "defaultValue": "Default",
-          "variantOptions": ["Default", "Hover", "Pressed", "Disabled"]
+          "variantOptions": ["Default", "Disabled", "Hover", "Pressed"]
         },
         "Left Icon": {
           "type": "VARIANT",
@@ -1180,8 +1180,8 @@
                       "absoluteBoundingBox": {
                         "x": -1932.1666259765625,
                         "y": -1435.6666259765625,
-                        "width": 13.333333969116211,
-                        "height": 13.333333969116211
+                        "width": 13.333333015441895,
+                        "height": 13.333333015441895
                       },
                       "absoluteRenderBounds": {
                         "x": -1932.1666259765625,
@@ -1598,8 +1598,8 @@
                       "absoluteBoundingBox": {
                         "x": -1899.1666259765625,
                         "y": -1057.6666259765625,
-                        "width": 13.333333969116211,
-                        "height": 13.333333969116211
+                        "width": 13.333333015441895,
+                        "height": 13.333333015441895
                       },
                       "absoluteRenderBounds": {
                         "x": -1899.1666259765625,
@@ -3796,8 +3796,8 @@
                       "absoluteBoundingBox": {
                         "x": -2173.166748046875,
                         "y": -1435.6666259765625,
-                        "width": 13.333333969116211,
-                        "height": 13.333333969116211
+                        "width": 13.333333015441895,
+                        "height": 13.333333015441895
                       },
                       "absoluteRenderBounds": {
                         "x": -2173.166748046875,
@@ -4214,8 +4214,8 @@
                       "absoluteBoundingBox": {
                         "x": -2140.166748046875,
                         "y": -1057.6666259765625,
-                        "width": 13.333333969116211,
-                        "height": 13.333333969116211
+                        "width": 13.333333015441895,
+                        "height": 13.333333015441895
                       },
                       "absoluteRenderBounds": {
                         "x": -2140.166748046875,
@@ -6491,8 +6491,8 @@
                       "absoluteBoundingBox": {
                         "x": -2412.166748046875,
                         "y": -1435.6666259765625,
-                        "width": 13.333333969116211,
-                        "height": 13.333333969116211
+                        "width": 13.333333015441895,
+                        "height": 13.333333015441895
                       },
                       "absoluteRenderBounds": {
                         "x": -2412.166748046875,
@@ -6927,8 +6927,8 @@
                       "absoluteBoundingBox": {
                         "x": -2379.166748046875,
                         "y": -1057.6666259765625,
-                        "width": 13.333333969116211,
-                        "height": 13.333333969116211
+                        "width": 13.333333015441895,
+                        "height": 13.333333015441895
                       },
                       "absoluteRenderBounds": {
                         "x": -2379.166748046875,
@@ -9264,8 +9264,8 @@
                       "absoluteBoundingBox": {
                         "x": -2653.166748046875,
                         "y": -1435.6666259765625,
-                        "width": 13.333333969116211,
-                        "height": 13.333333969116211
+                        "width": 13.333333015441895,
+                        "height": 13.333333015441895
                       },
                       "absoluteRenderBounds": {
                         "x": -2653.166748046875,
@@ -9700,8 +9700,8 @@
                       "absoluteBoundingBox": {
                         "x": -2620.166748046875,
                         "y": -1057.6666259765625,
-                        "width": 13.333333969116211,
-                        "height": 13.333333969116211
+                        "width": 13.333333015441895,
+                        "height": 13.333333015441895
                       },
                       "absoluteRenderBounds": {
                         "x": -2620.166748046875,
@@ -12333,6 +12333,7 @@
           "justify-content": "center",
           "align-items": "center",
           "border-radius": "4px",
+          "border": "1px solid #000",
           "background": "var(--Primary-500, #47CFD6)"
         },
         "children": [

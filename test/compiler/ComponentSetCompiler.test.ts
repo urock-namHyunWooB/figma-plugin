@@ -1280,7 +1280,7 @@ describe("CodeGen", () => {
       expect(container).toBeInTheDocument();
     });
 
-    test("prop에서 nativeProp과 겹치는 prop이 있으면 custom prop으로 이름이 변경된다.", () => {
+    test("prop에서 nativeProp과 겹치는 prop이 있으면 custom prop으로 이름이 변경된다.", async () => {
       /**
        * export interface BtnProps
        *   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -1294,7 +1294,9 @@ describe("CodeGen", () => {
        */
     });
 
-    test("");
+    test("customType이 outlined_blue일때 배경색은 #F7F9FE 이다.", async () => {});
+
+    test("customType이 icon-outlined-red 일 때 텍스트는 없어야 한다", async () => {});
   });
 
   describe("tadaButton", () => {
@@ -1335,5 +1337,11 @@ describe("CodeGen", () => {
     });
 
     test("props에서 customDisabled는 boolean이다", () => {});
+
+    test("disabled의 타입값은 Boolean이다", () => {});
+  });
+
+  describe("urockChips", () => {
+    test("기본 렌더링 되어야 한다.", () => {});
   });
 });
