@@ -135,21 +135,48 @@ class _FinalAstTree {
   }
 
   /**
+   * 버튼 컴포넌트인지 추론
+   * 1. 속성 기반: disabled, state, pressed, loading 같은 버튼 특성 prop 존재 여부
+   * 2. interactions 기반: 클릭 인터랙션 존재 여부
+   * 3. 이름 기반 (백업): 이름에 button, btn 포함 여부
+   */
+  private _isButtonComponent(): boolean {
+    const propDefs = this.specDataManager.getComponentPropertyDefinitions();
+    const document = this.specDataManager.getDocument();
+
+    // 1. 속성 기반: disabled, state 같은 버튼 특성 prop 존재 여부
+    const buttonPropNames = ["disabled", "state", "pressed", "loading"];
+    const hasButtonProps =
+      propDefs &&
+      Object.keys(propDefs).some((key) =>
+        buttonPropNames.includes(key.toLowerCase())
+      );
+
+    // 2. interactions 기반: 클릭 인터랙션 존재 여부
+    const hasClickInteraction =
+      "interactions" in document &&
+      Array.isArray(document.interactions) &&
+      document.interactions.some(
+        (i: any) =>
+          i.trigger?.type === "ON_CLICK" || i.trigger?.type === "ON_TAP"
+      );
+
+    // 3. 이름 기반 (백업)
+    const nameContainsButton =
+      document.name.toLowerCase().includes("button") ||
+      document.name.toLowerCase().includes("btn");
+
+    return !!(hasButtonProps || hasClickInteraction || nameContainsButton);
+  }
+
+  /**
    * 메타 데이터 추가
    * 유사한 태그 유추
    * @param astTree
    * @private
    */
   private updateMetaData(astTree: FinalAstTree) {
-    // 컴포넌트셋 이름으로 버튼 여부 추론
-    const renderTree = this.specDataManager.getRenderTree();
-    const componentSetName = this.specDataManager
-      .getDocument()
-      .name.toLowerCase();
-
-    const isButtonComponent =
-      componentSetName.toLowerCase().includes("button") ||
-      componentSetName.toLowerCase().includes("btn");
+    const isButtonComponent = this._isButtonComponent();
 
     astTree.metaData.document = this.specDataManager.getDocument();
 
@@ -1240,7 +1267,6 @@ class _FinalAstTree {
    * @private
    */
   private _refinePropsForButton(astTree: FinalAstTree) {
-    //airButton props에 text 생겼는데 node에 바인딩이 안되어 있음.
     if (astTree.semanticRole !== "button") return astTree;
 
     let isTextButton = false;
