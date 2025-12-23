@@ -33,7 +33,6 @@ export class FigmaPlugin {
 
     figma.on("selectionchange", async () => {
       const data = await this.getNodeData([...figma.currentPage.selection]);
-      console.log(data);
 
       figma.ui.postMessage({
         type: MESSAGE_TYPES.ON_SELECTION_CHANGE,
