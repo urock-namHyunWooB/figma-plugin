@@ -7,36 +7,6 @@ class DebuggingManager {
 
   constructor(isDebugMode: boolean) {
     this.isDebugMode = isDebugMode;
-
-    /**
-     * 키보드 d + 숫자 1 누르면 로컬스토리지에 debugPoint + 숫자 토글
-     */
-
-    let isDKeyPressed = false;
-
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "d") {
-        isDKeyPressed = true;
-        return;
-      }
-
-      // d가 눌린 상태에서 숫자 키(1-9) 입력 시
-      if (isDKeyPressed && e.key >= "1" && e.key <= "9") {
-        const num = e.key;
-        const key = `debugPoint${num}`;
-        const current = localStorage.getItem(key);
-        const newValue = current === "true" ? "false" : "true";
-
-        localStorage.setItem(key, newValue);
-        console.log(`🐛 ${key} toggled to: ${newValue}`);
-      }
-    });
-
-    window.addEventListener("keyup", (e) => {
-      if (e.key === "d") {
-        isDKeyPressed = false;
-      }
-    });
   }
 
   public log(target: any) {
@@ -58,16 +28,6 @@ class DebuggingManager {
     const cloned = helper.deepCloneTree(tree);
 
     return this.log(this.transformConditions(cloned));
-  }
-
-  /**
-   * 디버깅 포인트를 만듬.
-   * localstorage에 값을 참조해서 실행.
-   */
-  public point(number: number) {
-    if (window.localStorage.getItem(`debugPoint${number}`) === "true") {
-      debugger;
-    }
   }
 
   private transformConditions(obj: any): any {
@@ -97,24 +57,6 @@ class DebuggingManager {
     }
 
     return obj;
-  }
-
-  public debugger(target: any[] | [[]], onMatch?: () => void) {
-    if (isOneDArray(target)) {
-      const pivot = target[0];
-
-      for (let i = 1; i < target.length; i++) {
-        const t = target[i];
-
-        if (pivot === t) {
-          if (onMatch) {
-            onMatch?.();
-          } else {
-            debugger;
-          }
-        }
-      }
-    }
   }
 
   private conditionToString(node: ConditionNode | null): string {

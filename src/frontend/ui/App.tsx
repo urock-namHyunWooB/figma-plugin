@@ -1,30 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useMessageHandler from "./useMessageHandler";
 
-import { TestComp } from "@frontend/ui/debug/TestComp";
-import Primary from "@frontend/ui/examples/taptapButton_styled";
-import Primary2 from "@frontend/ui/examples/taptapButton_styled2";
+import FigmaCompiler from "@compiler";
 
 function App() {
   const { selectionNodeData } = useMessageHandler();
 
-  const [activeTab, setActiveTab] = useState<"settings" | "preview">(
-    "settings"
-  );
+  useEffect(() => {
+    if (!selectionNodeData) return;
+    const figmaCompiler = new FigmaCompiler(selectionNodeData);
+    figmaCompiler.getGeneratedCode().then((code) => console.log(code));
+  }, [selectionNodeData]);
 
-  const handleClose = () => {
-    parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
-  };
-
-  return (
-    <div>
-      <Primary text="Button" size={"Medium"} />
-
-      <Primary2 text="Button" />
-
-      <TestComp />
-    </div>
-  );
+  return <div>dd</div>;
 }
 
 export default App;

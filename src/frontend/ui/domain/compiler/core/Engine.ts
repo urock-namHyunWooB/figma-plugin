@@ -18,8 +18,6 @@ class Engine {
     const specManager = root.SpecDataManager;
     const matcher = new NodeMatcher(specManager);
 
-    debug.point(1);
-
     this.CreateSuperTree = new CreateSuperTree(
       renderTree,
       specManager,

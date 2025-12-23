@@ -24,8 +24,6 @@ class ComponentSetCompiler {
     specDataManager: SpecDataManager,
     matcher: NodeMatcher
   ) {
-    debug.point(1);
-
     this.CreateSuperTree = new CreateSuperTree(
       renderTree,
       specDataManager,
