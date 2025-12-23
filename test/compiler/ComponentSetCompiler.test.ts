@@ -1294,4 +1294,44 @@ describe("CodeGen", () => {
        */
     });
   });
+
+  describe("tadaButton", () => {
+    let Component: React.ComponentType<any>;
+
+    beforeAll(async () => {
+      const compiler = new FigmaCompiler(tadaButtonMockData as any);
+      const code = await compiler.getGeneratedCode();
+
+      Component = await renderReactComponent(code!);
+    });
+
+    function renderButton(props?: Record<string, any>) {
+      return render(React.createElement(Component, props ?? {}));
+    }
+
+    function getRootElement(container: HTMLElement): HTMLElement {
+      const el = container.firstElementChild as HTMLElement | null;
+      if (!el) throw new Error("Root element not found");
+      return el;
+    }
+
+    function getTextElement(container: HTMLElement): HTMLElement {
+      // 이 컴포넌트는 텍스트가 비어있을 수 있어 getByText가 불안정함.
+      // 아이콘이 없을 때는 첫 번째 span이 텍스트 노드인 구조를 가정.
+      const span = container.querySelector("span") as HTMLElement | null;
+      if (!span) throw new Error("Text <span> not found");
+      return span;
+    }
+
+    test("렌더링 기본적으로 성공해야함", () => {
+      const { container } = renderButton();
+      expect(container).toBeInTheDocument();
+    });
+
+    test("prop에서 nativeProp과 겹치는 prop이 있으면 custom prop으로 이름이 변경된다.", () => {
+      //disabled가 customDisabled로 변해야힘.
+    });
+
+    test("props에서 customDisabled는 boolean이다", () => {});
+  });
 });

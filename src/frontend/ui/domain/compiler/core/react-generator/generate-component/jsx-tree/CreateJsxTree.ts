@@ -23,6 +23,7 @@ class CreateJsxTree {
   public _createJsxTree(
     node: FinalAstTree
   ): ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression {
+    debugger;
     // Slot 노드는 props.slotName으로 참조 (children 없음)
     const slotJsx = this._createSlotJsxExpression(node);
     if (slotJsx) {

@@ -7,6 +7,7 @@ import {
   ConditionNode,
   VisibleValue,
   StyleTree,
+  SemanticRole,
 } from "@compiler";
 import HelperManager from "@compiler/manager/HelperManager";
 import { traverseTree } from "@figma/eslint-plugin-figma-plugins/dist/util";
@@ -107,7 +108,7 @@ class _FinalAstTree {
       }
 
       const spec = this.specDataManager.getSpecById(node.id);
-      if (spec.visible === false) {
+      if (spec.visible === false && !spec.componentPropertyReferences) {
         nodesToRemove.push(node);
       }
     });
@@ -223,13 +224,225 @@ class _FinalAstTree {
    * prop에서 native 속성과 겹치는 prop이 있으면 custom prop으로 이름이 변경된다.
    * native는 semanticRole로 판단
    * @param astTree
+   * @param customPrefix - 충돌 시 사용할 prefix (기본값: "custom")
    * @private
    */
-  private _refinePropsForNativeAttr(astTree: FinalAstTree) {
+  private _refinePropsForNativeAttr(
+    astTree: FinalAstTree,
+    customPrefix: string = "custom"
+  ) {
     const semanticRole = astTree.semanticRole;
     const props = astTree.props;
+    const propKeys = Object.keys(props);
+
+    // 충돌하는 prop 이름 찾기 및 변경
+    const renameMap: Record<string, string> = {};
+
+    for (const propKey of propKeys) {
+      const isNative = this._isNativeAttribute(propKey, semanticRole);
+
+      if (isNative) {
+        // 네이티브 속성과 충돌 → custom prefix 추가
+        const newPropKey = `${customPrefix}${
+          propKey.charAt(0).toUpperCase() + propKey.slice(1)
+        }`;
+
+        // renameMap에 여러 버전의 이름을 모두 매핑 (대소문자 변형)
+        // 1. 원본 이름 (camelCase)
+        renameMap[propKey] = newPropKey;
+
+        // 2. 대문자 시작 버전 (PascalCase) - condition에서 사용될 수 있음
+        const pascalCaseName =
+          propKey.charAt(0).toUpperCase() + propKey.slice(1);
+        renameMap[pascalCaseName] = newPropKey;
+
+        // 3. 소문자 버전
+        renameMap[propKey.toLowerCase()] = newPropKey;
+
+        // props 객체에서 이름 변경
+        props[newPropKey] = props[propKey];
+        delete props[propKey];
+      }
+    }
+
+    // 이름이 변경된 prop이 있으면 전체 트리를 순회하며 참조 업데이트
+    if (Object.keys(renameMap).length > 0) {
+      this._updatePropReferences(astTree, renameMap);
+    }
 
     return astTree;
+  }
+
+  /**
+   * semanticRole에 해당하는 HTML 태그 이름 반환
+   * @param semanticRole
+   * @private
+   */
+  private _getHtmlTagForSemanticRole(semanticRole: SemanticRole): string {
+    const tagMap: Record<SemanticRole, string> = {
+      button: "button",
+      text: "span",
+      image: "img",
+      container: "div",
+      root: "div",
+      vector: "svg",
+      icon: "span",
+    };
+
+    return tagMap[semanticRole] || "div";
+  }
+
+  /**
+   * prop 이름이 네이티브 HTML 속성인지 체크
+   * @param propKey
+   * @param semanticRole
+   * @private
+   */
+  private _isNativeAttribute(
+    propKey: string,
+    semanticRole: SemanticRole
+  ): boolean {
+    // React 이벤트 핸들러 체크 (onClick, onChange 등)
+    if (propKey.startsWith("on") && propKey.length > 2) {
+      const thirdChar = propKey.charAt(2);
+      if (thirdChar === thirdChar.toUpperCase()) {
+        return true;
+      }
+    }
+
+    // React 특수 속성
+    const reactSpecialProps = [
+      "key",
+      "ref",
+      "className",
+      "dangerouslySetInnerHTML",
+      "children",
+    ];
+    if (reactSpecialProps.includes(propKey)) {
+      return true;
+    }
+
+    // DOM 속성 체크 (브라우저 환경에서만 가능)
+    if (typeof document !== "undefined") {
+      try {
+        const tagName = this._getHtmlTagForSemanticRole(semanticRole);
+        const element = document.createElement(tagName);
+
+        // 속성 이름을 소문자로 변환하여 체크 (HTML 속성은 대소문자 구분 안함)
+        const lowerPropKey = propKey.toLowerCase();
+
+        // element에 해당 속성이 존재하는지 체크
+        if (lowerPropKey in element) {
+          return true;
+        }
+
+        // ARIA 속성 체크 (aria-*)
+        if (propKey.startsWith("aria")) {
+          return true;
+        }
+
+        // data 속성 체크 (data-*)
+        if (propKey.startsWith("data")) {
+          return true;
+        }
+      } catch (e) {
+        // createElement 실패 시 안전하게 처리
+        console.warn(`Failed to create element for tag: ${semanticRole}`, e);
+      }
+    }
+
+    // 브라우저 환경이 아니거나 체크 실패 시 - 흔한 HTML 속성만 하드코딩으로 체크
+    const commonNativeAttrs = [
+      "id",
+      "class",
+      "style",
+      "title",
+      "hidden",
+      "tabindex",
+      "disabled",
+      "value",
+      "type",
+      "name",
+      "placeholder",
+      "checked",
+      "selected",
+      "readonly",
+      "required",
+      "multiple",
+      "accept",
+      "autocomplete",
+      "autofocus",
+      "form",
+      "href",
+      "src",
+      "alt",
+      "width",
+      "height",
+    ];
+
+    return commonNativeAttrs.includes(propKey.toLowerCase());
+  }
+
+  /**
+   * 트리 전체를 순회하며 이름이 변경된 prop 참조를 업데이트
+   * @param astTree
+   * @param renameMap - { oldName: newName }
+   * @private
+   */
+  private _updatePropReferences(
+    astTree: FinalAstTree,
+    renameMap: Record<string, string>
+  ) {
+    traverseBFS(astTree, (node) => {
+      // 노드의 props에서 참조 업데이트
+      for (const key in node.props) {
+        const value = node.props[key] as any;
+        // 값이 문자열이고 renameMap에 있으면 업데이트 (다른 prop을 참조하는 경우)
+        if (typeof value === "string" && renameMap[value]) {
+          (node.props as any)[key] = renameMap[value];
+        }
+      }
+
+      // visible condition에서 prop 이름 업데이트
+      if (node.visible.type === "condition") {
+        this._updateConditionPropNames(node.visible.condition, renameMap);
+      }
+
+      // dynamic style에서 prop 이름 업데이트
+      if (node.style.dynamic && node.style.dynamic.length > 0) {
+        for (const dynamicStyle of node.style.dynamic) {
+          this._updateConditionPropNames(dynamicStyle.condition, renameMap);
+        }
+      }
+    });
+  }
+
+  /**
+   * condition AST에서 prop 이름을 renameMap에 따라 업데이트
+   * @param condition
+   * @param renameMap
+   * @private
+   */
+  private _updateConditionPropNames(
+    condition: any,
+    renameMap: Record<string, string>
+  ) {
+    estraverse.traverse(condition, {
+      enter(node: any) {
+        // MemberExpression: props.XXX 형태
+        if (
+          node.type === "MemberExpression" &&
+          node.object?.type === "Identifier" &&
+          node.object?.name === "props" &&
+          node.property?.type === "Identifier"
+        ) {
+          const propName = node.property.name;
+          if (renameMap[propName]) {
+            node.property.name = renameMap[propName];
+          }
+        }
+      },
+    });
   }
 
   /**

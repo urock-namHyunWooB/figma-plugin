@@ -2,7 +2,7 @@ import React from "react";
 import { css } from "@emotion/react";
 
 export type Size = "L" | "M" | "S";
-export type Type =
+export type CustomType =
   | "filled"
   | "filled-red"
   | "icon-filled"
@@ -15,14 +15,13 @@ export type Type =
   | "outlined_red"
   | "text"
   | "text-black";
-
 export interface BtnProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size;
-  type?: Type;
   text?: string;
   iconLeft?: React.ReactNode;
   iconRight?: React.ReactNode;
+  customType?: CustomType;
 }
 
 const btnBySize__4139411 = {
@@ -30,8 +29,7 @@ const btnBySize__4139411 = {
   M: { height: "40px", gap: "2px" },
   S: { height: "28px" },
 };
-
-const btnByType__4139411 = {
+const btnByCustomType__4139411 = {
   filled: {
     boxShadow:
       "-1px 5px var(--Number-scope-Blur-blur-14, 14px) 0 rgba(98, 140, 245, 0.16)",
@@ -75,8 +73,7 @@ const btnByType__4139411 = {
     opacity: "0.7",
   },
 };
-
-const btnCss__4139411 = ($size: Size, $type: Type) => css`
+const btnCss__4139411 = ($size: Size, $customType: CustomType) => css`
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -87,7 +84,7 @@ const btnCss__4139411 = ($size: Size, $type: Type) => css`
   backdrop-filter: blur(20px);
   ${btnBySize__4139411[$size]}
 
-  ${btnByType__4139411[$type]}
+  ${btnByCustomType__4139411[$customType]}
 
 
   :hover {
@@ -173,14 +170,14 @@ const icon_arrowCss__4139414 = css`
 export default function Btn(props: BtnProps) {
   const {
     size = "L",
-    type = "filled",
     text = "button",
     iconLeft = null,
     iconRight = null,
+    customType = "filled",
     ...restProps
   } = props;
   return (
-    <div css={btnCss__4139411(size, type)}>
+    <div css={btnCss__4139411(size, customType)}>
       {props.iconLeft}
       {(props.states === "active" ||
         props.states === "disable" ||
