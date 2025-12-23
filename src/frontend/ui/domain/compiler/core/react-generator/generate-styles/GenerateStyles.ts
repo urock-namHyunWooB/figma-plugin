@@ -51,12 +51,19 @@ class GenerateStyles {
   /**
    * Dynamic styles를 prop별로 그룹화하여 Record 객체 생성
    * 예: const primaryButtonBySize = { Large: { padding: "8px" }, ... }
+   * Boolean prop은 Record 대신 삼항 연산자로 처리하므로 제외
    */
   private _createRecordObjects(node: FinalAstTree): ts.VariableStatement[] {
     const statements: ts.VariableStatement[] = [];
     const grouped = this._groupDynamicStylesByProp(node.style.dynamic || []);
 
     for (const [propName, variants] of grouped.entries()) {
+      // Boolean prop은 Record 객체를 생성하지 않음 (삼항 연산자로 직접 처리)
+      const propDef = this.astTree.props[propName];
+      if (propDef?.type === "BOOLEAN") {
+        continue;
+      }
+
       let nodeName = node.name;
 
       if (!node.parent && node.metaData.document) {
@@ -100,12 +107,40 @@ class GenerateStyles {
       ? this._groupDynamicStylesByProp(node.style.dynamic || [])
       : new Map();
 
+    // 루트 컴포넌트의 Props 인터페이스 이름 사용 (모든 노드에서 동일)
+    const rootComponentName =
+      this.astTree.metaData.document?.name || this.astTree.name;
+    const propsInterfaceName = `${normalizeName(rootComponentName)}Props`;
+
     for (const [propName] of grouped.entries()) {
-      // prop 이름을 타입으로 변환 (예: "size" → "Size")
-      const typeName = capitalize(propName);
+      // IndexedAccessType 사용: ComponentProps["propName"]
+      const indexedType = this.kit.createIndexedAccessType(
+        propsInterfaceName,
+        propName
+      );
+
+      // 기본값 가져오기
+      const propDef = this.astTree.props[propName];
+      let initializer: ts.Expression | undefined;
+
+      if (propDef?.defaultValue !== undefined) {
+        if (propDef.type === "BOOLEAN") {
+          initializer =
+            propDef.defaultValue === true
+              ? this.factory.createTrue()
+              : this.factory.createFalse();
+        } else if (typeof propDef.defaultValue === "string") {
+          initializer = this.factory.createStringLiteral(propDef.defaultValue);
+        } else if (typeof propDef.defaultValue === "number") {
+          initializer = this.factory.createNumericLiteral(propDef.defaultValue);
+        }
+      }
+
       const param = this.kit.createParameter(
         `$${propName}`,
-        this.kit.createTypeReference(typeName)
+        indexedType,
+        false,
+        initializer
       );
       params.push(param);
     }
@@ -129,42 +164,60 @@ class GenerateStyles {
 
     // Dynamic 스타일 보간 추가
     // 예: ${paddingBySize[$size]} 형태로 객체를 직접 보간
+    // Boolean prop은 삼항 연산자로 직접 스타일 객체를 보간
     if (hasDynamicStyle) {
-      for (const [propName] of grouped.entries()) {
-        // _createRecordObjects에서 생성한 변수명과 일치시켜야 함
+      for (const [propName, variants] of grouped.entries()) {
+        // Boolean prop인지 확인 (루트의 props에서 타입 체크)
+        const propDef = this.astTree.props[propName];
+        const isBooleanProp = propDef?.type === "BOOLEAN";
 
-        let nodeName = node.name;
+        let expr: ts.Expression;
 
-        if (!node.parent && node.metaData.document) {
-          nodeName = node.metaData.document.name;
+        if (isBooleanProp) {
+          // Boolean prop: 삼항 연산자로 직접 스타일 객체 생성
+          // $customDisabled ? { background: "..." } : { background: "..." }
+          const paramIdentifier = this.kit.createIdentifier(`$${propName}`);
+
+          // True/False 스타일 찾기
+          const trueVariant = variants.find(
+            (v: { value: string; style: Record<string, any> }) =>
+              v.value === "True"
+          );
+          const falseVariant = variants.find(
+            (v: { value: string; style: Record<string, any> }) =>
+              v.value === "False"
+          );
+
+          const trueStyle = trueVariant
+            ? this._styleObjectToExpression(trueVariant.style)
+            : this.factory.createObjectLiteralExpression([]);
+          const falseStyle = falseVariant
+            ? this._styleObjectToExpression(falseVariant.style)
+            : this.factory.createObjectLiteralExpression([]);
+
+          expr = this.factory.createConditionalExpression(
+            paramIdentifier,
+            undefined,
+            trueStyle,
+            undefined,
+            falseStyle
+          );
+        } else {
+          // 일반 prop: Record 객체 인덱싱
+          let nodeName = node.name;
+          if (!node.parent && node.metaData.document) {
+            nodeName = node.metaData.document.name;
+          }
+          const recordVarName = `${normalizeName(nodeName)}By${capitalize(propName)}_${normalizeName(node.id)}`;
+          const indexExpression = this.kit.createIdentifier(`$${propName}`);
+          expr = this.kit.createElementAccess(recordVarName, indexExpression);
         }
-
-        const recordVarName = `${normalizeName(nodeName)}By${capitalize(propName)}_${normalizeName(node.id)}`;
-        const paramIdentifier = this.kit.createIdentifier(`$${propName}`);
-        const elementAccess = this.kit.createElementAccess(
-          recordVarName,
-          paramIdentifier
-        );
-
-        // 디버깅: 생성된 Expression 확인
-        const printer = ts.createPrinter();
-        const sourceFile = ts.createSourceFile(
-          "temp.ts",
-          "",
-          ts.ScriptTarget.Latest,
-          true
-        );
-        const elementAccessText = printer.printNode(
-          ts.EmitHint.Expression,
-          elementAccess,
-          sourceFile
-        );
 
         // 객체를 직접 보간 (emotion이 CSS로 변환)
         // tail은 최소한 개행이라도 있어야 함 (빈 문자열이면 문제 발생)
         const tail = hasPseudoStyle ? "\n\n" : "\n";
         templateSpans.push({
-          expr: elementAccess,
+          expr,
           tail,
         });
       }

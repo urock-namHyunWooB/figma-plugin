@@ -16,13 +16,9 @@ const ButtonSolidPrimaryBySize__873027 = {
   Medium: { height: "40px", padding: "11px 20px" },
   Small: { padding: "8px 14px" },
 };
-const ButtonSolidPrimaryByCustomDisabled__873027 = {
-  False: { background: "var(--Primary-Normal, #FFC400)" },
-  True: { background: "var(--Primary-Alternative, #FFE799)" },
-};
 const ButtonSolidPrimaryCss__873027 = (
-  $size: Size,
-  $customDisabled: CustomDisabled
+  $size: ButtonSolidPrimaryProps["size"] = "Large",
+  $customDisabled: ButtonSolidPrimaryProps["customDisabled"] = false
 ) => css`
   display: inline-flex;
   justify-content: center;
@@ -30,7 +26,9 @@ const ButtonSolidPrimaryCss__873027 = (
   gap: 6px;
   border-radius: 6px;
   ${ButtonSolidPrimaryBySize__873027[$size]}
-  ${ButtonSolidPrimaryByCustomDisabled__873027[$customDisabled]}
+  ${$customDisabled
+    ? { background: "var(--Primary-Alternative, #FFE799)" }
+    : { background: "var(--Primary-Normal, #FFC400)" }}
 `;
 const ContentsCss__892908 = css`
   display: flex;
@@ -51,21 +49,22 @@ const LeftIconCss__25834208 = css`
   align-items: center;
   ${""}
 `;
-const LabelByCustomDisabled__873015 = {
-  False: { color: "var(--Semantic-Static-Black, var(--Static-Black, #000))" },
-  True: { color: "var(--Semantic-Label-Weak, var(--Label-Weak, #A6A9AB))" },
-};
 const LabelBySize__873015 = {
   Large: { fontSize: "16px", lineHeight: "20px" },
   Medium: { fontSize: "14px", lineHeight: "18px" },
   Small: { fontSize: "12px", lineHeight: "16px" },
 };
-const LabelCss__873015 = ($customDisabled: CustomDisabled, $size: Size) => css`
+const LabelCss__873015 = (
+  $customDisabled: ButtonSolidPrimaryProps["customDisabled"] = false,
+  $size: ButtonSolidPrimaryProps["size"] = "Large"
+) => css`
   text-align: center;
   font-family: Pretendard;
   font-style: normal;
   font-weight: 500;
-  ${LabelByCustomDisabled__873015[$customDisabled]}
+  ${$customDisabled
+    ? { color: "var(--Semantic-Label-Weak, var(--Label-Weak, #A6A9AB))" }
+    : { color: "var(--Semantic-Static-Black, var(--Static-Black, #000))" }}
   ${LabelBySize__873015[$size]}
 `;
 const RightIconCss__25834623 = css`

@@ -565,7 +565,8 @@ class TypescriptNodeKitManager {
   createParameter(
     name: string,
     type?: ts.TypeNode,
-    isOptional: boolean = false
+    isOptional: boolean = false,
+    initializer?: ts.Expression
   ): ts.ParameterDeclaration {
     return this.factory.createParameterDeclaration(
       undefined,
@@ -575,7 +576,7 @@ class TypescriptNodeKitManager {
         ? this.factory.createToken(ts.SyntaxKind.QuestionToken)
         : undefined,
       type,
-      undefined
+      initializer
     );
   }
 
@@ -644,6 +645,22 @@ class TypescriptNodeKitManager {
     return this.factory.createTypeReferenceNode(
       this.createQualifiedName(namespace, typeName),
       typeArguments
+    );
+  }
+
+  /**
+   * Indexed access type 생성
+   * InterfaceName["propertyName"]
+   */
+  createIndexedAccessType(
+    interfaceName: string,
+    propertyName: string
+  ): ts.IndexedAccessTypeNode {
+    return this.factory.createIndexedAccessTypeNode(
+      this.factory.createTypeReferenceNode(interfaceName),
+      this.factory.createLiteralTypeNode(
+        this.factory.createStringLiteral(propertyName)
+      )
     );
   }
 
