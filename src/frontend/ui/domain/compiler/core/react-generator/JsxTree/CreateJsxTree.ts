@@ -131,12 +131,33 @@ class CreateJsxTree {
   }
 
   private _getTagName(node: FinalAstTree): string {
-    if (node.type === "TEXT") return "span";
-    if (node.type === "INSTANCE") {
-      // INSTANCE는 컴포넌트 이름 사용 (공백 제거, PascalCase로 변환?)
-      return node.name.replace(/\s+/g, "");
+    // semanticRole을 우선적으로 고려하여 적절한 HTML 태그 결정
+    const semanticRole = node.semanticRole;
+
+    switch (semanticRole) {
+      case "button":
+        return "button";
+      case "text":
+        return "span";
+      case "image":
+        return "img";
+      case "vector":
+        return "svg";
+      case "icon":
+        // INSTANCE는 실제 컴포넌트 이름을 사용할 수도 있음
+        if (node.type === "INSTANCE") {
+          return node.name.replace(/\s+/g, "");
+        }
+        return "span";
+      case "container":
+      case "root":
+      default:
+        // INSTANCE 타입은 컴포넌트로 처리
+        if (node.type === "INSTANCE") {
+          return node.name.replace(/\s+/g, "");
+        }
+        return "div";
     }
-    return "div";
   }
 
   /**
