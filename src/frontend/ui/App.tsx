@@ -84,6 +84,11 @@ function App() {
       return;
     }
 
+    if (selectionNodeData.info.document.type !== "COMPONENT_SET") {
+      console.warn("Only supports components");
+      return;
+    }
+
     const figmaCompiler = new FigmaCompiler(selectionNodeData);
     const name = figmaCompiler.getComponentName();
     setComponentName(name);

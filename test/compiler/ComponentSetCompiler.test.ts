@@ -1293,6 +1293,8 @@ describe("CodeGen", () => {
        * 이 경우 type이 겹치는데 customType으로 이름이 변경된다.
        */
     });
+
+    test("");
   });
 
   describe("tadaButton", () => {
