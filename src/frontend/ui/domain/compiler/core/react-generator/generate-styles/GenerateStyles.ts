@@ -79,10 +79,6 @@ class GenerateStyles {
     return statements;
   }
 
-  private _lowerCaseFirstLetter(str: string): string {
-    return str.charAt(0).toLowerCase() + str.slice(1);
-  }
-
   /**
    * CSS 함수 생성
    * 예: const primaryButtonCss = ($size: Size) => css`...`

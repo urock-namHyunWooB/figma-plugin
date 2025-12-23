@@ -24,6 +24,7 @@ class GenerateInterface {
    * }
    */
   public createPropsInterface(componentName: string): ts.InterfaceDeclaration {
+    componentName = capitalize(componentName);
     const semanticRol = this.astTree.semanticRole;
 
     const members = this._getPropsMember();

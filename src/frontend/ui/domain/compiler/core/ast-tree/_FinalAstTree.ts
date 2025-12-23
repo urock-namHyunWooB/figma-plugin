@@ -211,9 +211,23 @@ class _FinalAstTree {
   private updateProps(astTree: FinalAstTree) {
     astTree = this._normalizePropsName(astTree);
     astTree = this._normalizePropsType(astTree);
+    astTree = this._refinePropsForNativeAttr(astTree);
     astTree = this._refineStateProp(astTree);
     astTree = this._refineComponentLikeProp(astTree);
     astTree = this._refinePropsForButton(astTree);
+
+    return astTree;
+  }
+
+  /**
+   * prop에서 native 속성과 겹치는 prop이 있으면 custom prop으로 이름이 변경된다.
+   * native는 semanticRole로 판단
+   * @param astTree
+   * @private
+   */
+  private _refinePropsForNativeAttr(astTree: FinalAstTree) {
+    const semanticRole = astTree.semanticRole;
+    const props = astTree.props;
 
     return astTree;
   }

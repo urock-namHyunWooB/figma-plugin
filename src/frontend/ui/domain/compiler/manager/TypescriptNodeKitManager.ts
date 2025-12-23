@@ -416,7 +416,7 @@ class TypescriptNodeKitManager {
   ): ts.ObjectLiteralExpression {
     const objectProperties = properties.map((prop) =>
       this.factory.createPropertyAssignment(
-        this.factory.createIdentifier(prop.key),
+        this.factory.createStringLiteral(prop.key),
         prop.value
       )
     );
