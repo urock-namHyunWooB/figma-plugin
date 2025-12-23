@@ -2,14 +2,13 @@ import React from "react";
 import { css } from "@emotion/react";
 
 export type Size = "Large" | "Medium" | "Small";
-export type CustomDisabled = "False" | "True";
 export interface ButtonSolidPrimaryProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   label?: string;
-  leftIcon?: boolean;
-  rightIcon?: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
   size?: Size;
-  customDisabled?: CustomDisabled;
+  customDisabled?: boolean;
 }
 
 const ButtonSolidPrimaryBySize__873027 = {
@@ -46,6 +45,12 @@ const ContentsCss__892972 = css`
   gap: 6px;
   ${""}
 `;
+const LeftIconCss__25834208 = css`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  ${""}
+`;
 const LabelByCustomDisabled__873015 = {
   False: { color: "var(--Semantic-Static-Black, var(--Static-Black, #000))" },
   True: { color: "var(--Semantic-Label-Weak, var(--Label-Weak, #A6A9AB))" },
@@ -63,23 +68,34 @@ const LabelCss__873015 = ($customDisabled: CustomDisabled, $size: Size) => css`
   ${LabelByCustomDisabled__873015[$customDisabled]}
   ${LabelBySize__873015[$size]}
 `;
+const RightIconCss__25834623 = css`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  ${""}
+`;
 
 export default function ButtonSolidPrimary(props: ButtonSolidPrimaryProps) {
   const {
     label = "Label",
-    leftIcon = false,
-    rightIcon = false,
+    leftIcon = null,
+    rightIcon = null,
     size = "Large",
     customDisabled = false,
     ...restProps
   } = props;
   return (
-    <div css={ButtonSolidPrimaryCss__873027(size, customDisabled)}>
+    <button
+      css={ButtonSolidPrimaryCss__873027(size, customDisabled)}
+      {...restProps}
+    >
       <div css={ContentsCss__892908}>
         <div css={ContentsCss__892972}>
+          {props.leftIcon}
           <span css={LabelCss__873015(customDisabled, size)}>{label}</span>
+          {props.rightIcon}
         </div>
       </div>
-    </div>
+    </button>
   );
 }

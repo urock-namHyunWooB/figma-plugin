@@ -6,8 +6,6 @@ import { useComponentRenderer } from "./hooks/useComponentRenderer";
 import { PropController } from "./components/PropController";
 import { CodeViewer } from "./components/CodeViewer";
 
-import tadaButtonSample from "../../../test/fixtures/button/tadaButton.json";
-
 const appContainerStyle = css`
   display: flex;
   flex-direction: column;
@@ -67,7 +65,6 @@ const bottomSectionStyle = css`
 `;
 
 function App() {
-  //TODO 프로덕트, 개발 구분해서 개발이면 TestComp 컴포넌트 나오게. (라우터로 해도 됨)
   const { selectionNodeData } = useMessageHandler();
 
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
