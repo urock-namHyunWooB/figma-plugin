@@ -15,7 +15,6 @@ async function loadEmotion() {
   try {
     const emotionCssModule = await import("@emotion/react");
     emotionCss = emotionCssModule.css; // 클래스 이름 문자열을 반환하는 함수
-    emotionCx = emotionCssModule.cx;
 
     // @emotion/react도 로드 시도 (jsx runtime용)
     try {

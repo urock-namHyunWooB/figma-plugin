@@ -56,6 +56,13 @@ class Engine {
   ): Promise<string> {
     return await this.reactGenerator.generateComponentCode(componentName);
   }
+
+  /**
+   * FinalAstTree 반환 (props 정보 추출용)
+   */
+  public getFinalAstTree() {
+    return this.CreateFinalAstTree.finalAstTree;
+  }
 }
 
 export default Engine;
