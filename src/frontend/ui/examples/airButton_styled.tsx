@@ -1,13 +1,17 @@
 import React from "react";
 import { css } from "@emotion/react";
 
+export type Size = "default" | "large" | "small";
+export type CustomType = "danger" | "default" | "primary" | "secondary";
 export interface AIRButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  size?: Size;
   icon?: React.ReactNode;
+  customType?: CustomType;
   text?: string;
 }
 
-const AIRButtonByType__3087 = {
+const AIRButtonByCustomType__3087 = {
   default: { background: "var(--Light-gray-2, #F2F2F2)" },
   primary: { background: "var(--blueBright, #2D7FF9)" },
   danger: { background: "var(--red, #EF3061)" },
@@ -15,17 +19,17 @@ const AIRButtonByType__3087 = {
 const AIRButtonBySize__3087 = {
   default: { width: "94.5px", height: "32px", justifyContent: "center" },
 };
-const AIRButtonCss__3087 = ($type: Type, $size: Size) => css`
+const AIRButtonCss__3087 = ($customType: CustomType, $size: Size) => css`
   align-items: center;
   border-radius: 3px;
-  ${AIRButtonByType__3087[$type]}
+  ${AIRButtonByCustomType__3087[$customType]}
   ${AIRButtonBySize__3087[$size]}
 `;
 const IconBySize__71113871 = { default: { flexShrink: "0" } };
 const IconCss__71113871 = ($size: Size) => css`
   ${IconBySize__71113871[$size]}
 `;
-const LabelByType__1545 = {
+const LabelByCustomType__1545 = {
   default: { color: "var(--Dark, #333)" },
   primary: { color: "var(--White, #FFF)" },
   danger: { color: "var(--White, #FFF)" },
@@ -36,23 +40,26 @@ const LabelBySize__1545 = {
   small: { fontSize: "13px", lineHeight: "18px" },
   large: { fontSize: "15px", lineHeight: "18px" },
 };
-const LabelCss__1545 = ($type: Type, $size: Size) => css`
+const LabelCss__1545 = ($customType: CustomType, $size: Size) => css`
   font-family: "SF Pro Text";
   font-style: normal;
   font-weight: 600;
-  ${LabelByType__1545[$type]}
+  ${LabelByCustomType__1545[$customType]}
   ${LabelBySize__1545[$size]}
-`;
-const VectorCss_I71113871911059 = css`
-  ${""}
 `;
 
 export default function AIRButton(props: AIRButtonProps) {
-  const { icon = null, text = "Default", ...restProps } = props;
+  const {
+    size = "default",
+    icon = null,
+    customType = "default",
+    text = "Default",
+    ...restProps
+  } = props;
   return (
-    <div css={AIRButtonCss__3087(type, size)}>
+    <button css={AIRButtonCss__3087(customType, size)} {...restProps}>
       {props.icon}
-      <span css={LabelCss__1545(type, size)}>{text}</span>
-    </div>
+      <span css={LabelCss__1545(customType, size)}>{text}</span>
+    </button>
   );
 }

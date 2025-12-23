@@ -895,8 +895,47 @@ class _FinalAstTree {
     const stateConditionPattern =
       /props\.(?:state|State|states|States)\s*===\s*['"](\w+)['"]/;
 
-    // 2. 모든 노드 순회하며 dynamic style 처리
+    // 2. 모든 노드 순회하며 dynamic style과 visible condition 처리
     traverseBFS(astTree, (node) => {
+      // 2-1. visible condition 처리
+      if (node.visible.type === "condition") {
+        const conditionCode = generate(node.visible.condition);
+
+        // State 단독 조건인지 확인
+        const stateOnlyMatch = conditionCode.match(
+          /^props\.(?:state|State|states|States)\s*===\s*['"](\w+)['"]$/
+        );
+
+        if (stateOnlyMatch) {
+          const stateValue = stateOnlyMatch[1];
+          const pseudoClass = STATE_TO_PSEUDO[stateValue];
+
+          if (pseudoClass === "keep") {
+            // loading 등 → condition 유지
+            // (이미 condition이므로 아무것도 하지 않음)
+          } else {
+            // Default, Hover, Pressed 등 → visible: true (항상 보임)
+            // CSS나 pseudo-class로 처리할 수 없으므로 항상 보이게 변경
+            node.visible = { type: "static", value: true };
+          }
+        } else if (conditionCode.match(stateConditionPattern)) {
+          // 복합 조건에 state가 포함된 경우
+          // state 부분을 제거한 새로운 조건 생성
+          const newCondition = this._removeStateFromCondition(
+            node.visible.condition,
+            STATE_PROP_NAMES
+          );
+
+          if (newCondition) {
+            node.visible = { type: "condition", condition: newCondition };
+          } else {
+            // 조건이 모두 제거되면 항상 보임
+            node.visible = { type: "static", value: true };
+          }
+        }
+      }
+
+      // 2-2. dynamic style 처리
       if (!node.style.dynamic || node.style.dynamic.length === 0) return;
 
       const newDynamic: typeof node.style.dynamic = [];
@@ -1000,6 +1039,74 @@ class _FinalAstTree {
     });
 
     return astTree;
+  }
+
+  /**
+   * condition에서 state prop 참조를 제거
+   * @param condition
+   * @param statePropNames
+   * @private
+   */
+  private _removeStateFromCondition(
+    condition: any,
+    statePropNames: string[]
+  ): any | null {
+    if (!condition || !condition.type) return null;
+
+    if (condition.type === "BinaryExpression") {
+      const operator = condition.operator;
+
+      // props.state === "value" 형태인 경우, state prop이면 null 반환 (제거)
+      if (operator === "===") {
+        const left = condition.left;
+        if (
+          left?.type === "MemberExpression" &&
+          left.object?.name === "props" &&
+          left.property?.name
+        ) {
+          const propName = left.property.name;
+          // statePropNames 중 하나와 매칭되면 제거
+          const lowerPropName = propName.toLowerCase();
+          if (
+            statePropNames.some((name) => name.toLowerCase() === lowerPropName)
+          ) {
+            return null;
+          }
+        }
+      }
+
+      // && 또는 || 연산자의 경우 좌우 재귀 처리
+      if (operator === "&&" || operator === "||") {
+        const left = this._removeStateFromCondition(
+          condition.left,
+          statePropNames
+        );
+        const right = this._removeStateFromCondition(
+          condition.right,
+          statePropNames
+        );
+
+        // 둘 다 null이면 전체 제거
+        if (!left && !right) return null;
+
+        // 한쪽만 null이면 다른 쪽만 반환
+        if (!left) return right;
+        if (!right) return left;
+
+        // 둘 다 있으면 연산자 유지
+        return {
+          ...condition,
+          left,
+          right,
+        };
+      }
+
+      // 다른 연산자는 그대로 유지
+      return condition;
+    }
+
+    // 다른 타입의 노드는 그대로 유지
+    return condition;
   }
 
   /**

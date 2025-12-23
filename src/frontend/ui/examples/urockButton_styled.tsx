@@ -177,15 +177,10 @@ export default function Btn(props: BtnProps) {
     ...restProps
   } = props;
   return (
-    <div css={btnCss__4139411(size, customType)}>
+    <button css={btnCss__4139411(size, customType)} {...restProps}>
       {props.iconLeft}
-      {(props.states === "active" ||
-        props.states === "disable" ||
-        props.states === "hover" ||
-        props.states === "loading") && (
-        <span css={buttonCss__4139413(size)}>{text}</span>
-      )}
+      <span css={buttonCss__4139413(size)}>{text}</span>
       {props.iconRight}
-    </div>
+    </button>
   );
 }
