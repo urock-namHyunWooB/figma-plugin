@@ -14,6 +14,14 @@ import helper from "@compiler/manager/HelperManager";
 import { BinaryOperator } from "@compiler/types/customType";
 import debug from "@compiler/manager/DebuggingManager";
 
+type Variant = Record<string, string>;
+type Data = Record<string, Variant>;
+
+type Group = {
+  varyKey: string; // 이 키만 달라질 수 있음
+  fixed: Record<string, string>; // 나머지 키들은 고정(같음)
+  items: Array<{ id: string; value: Variant }>;
+};
 /**
  * FinalAST 만들기 중간 단계로써 대략적인 값 세팅을 목적으로 한다.
  */
@@ -106,148 +114,232 @@ class _TempAstTree {
   }
 
   private updateStyle2(pivotTree: TempAstTree, targetTrees: StyleTree[]) {
+    const variantProps = new Map<string, Record<string, string>>();
+
     traverseBFS(pivotTree, (pivotNode) => {
       /**
        * mergedNode에서 variant마다 하나만 다르고 다른건 다 똑같은걸 찾는다.
        * 비교해서 다른 style을 찾는다.
        * varaint별로 다른 style을 맵핑
-       *
-       *
        */
-    });
 
-    return pivotTree;
-  }
+      const items = pivotNode.mergedNode.reduce(
+        (acc: Record<string, any>, value) => {
+          acc[value.id] = this._parseVariantProps(value.name);
 
-  /**
-   * 모든 variant의 스타일을 한번에 분석하여 pivotTree에 적용
-   * - 모든 variant에서 동일한 값 → base
-   * - variant별로 다른 값 → 각 조건의 dynamic
-   */
-  private updateStyle(pivotTree: TempAstTree, targetTrees: StyleTree[]) {
-    //TODO urockButton | mergedNode에서 각 css를 비교해서 style을 결정
+          return acc;
+        },
+        {}
+      );
 
-    /**
-     * urockButton
-     * filled = background: "var(--Color-primary-01, #628CF5)"
-     * filled-red = background:"var(--Color-state-error, #FF8484)"
-     *
-     *
-     */
-    traverseBFS(pivotTree, (pivotNode) => {
-      // 이 pivotNode에 매칭되는 모든 variant의 스타일 수집
       const variantStyles: Array<{
         variantName: string;
         style: Record<string, any>;
       }> = [];
 
-      for (const targetTree of targetTrees) {
-        const targetVariantName = targetTree.name;
-        if (!targetVariantName) {
-          console.warn("targetVariantName is null", targetTree);
-          continue;
-        }
+      const variantPropStyleMap: Record<
+        string,
+        Record<string, Record<string, string>>
+      > = {};
 
-        // targetTree에서 pivotNode에 매칭되는 노드 찾기
-        // Figma 인스턴스 노드 ID: I{variant_id};{suffix} 형태
-        // 같은 노드라도 variant별로 prefix가 다르므로 suffix로 비교
-        const matchedTargetNode = findNodeBFS(targetTree, (targetNode) =>
-          pivotNode.mergedNode.some((merged) => {
-            // 전체 ID 일치
-            if (merged.id === targetNode.id) return true;
-
-            // 인스턴스 노드의 경우 suffix 비교 (세미콜론 이후 부분)
-            const mergedSuffix = merged.id.split(";").slice(1).join(";");
-            const targetSuffix = targetNode.id.split(";").slice(1).join(";");
-            return (
-              mergedSuffix && targetSuffix && mergedSuffix === targetSuffix
-            );
-          })
+      Object.entries(pivotTree.props).forEach(([key, value]) => {
+        const groups = this._groupBySingleVaryKey(items).filter(
+          (value) => value.varyKey === key
         );
 
-        if (matchedTargetNode) {
-          variantStyles.push({
-            variantName: targetVariantName,
-            style: matchedTargetNode.cssStyle || {},
+        variantPropStyleMap[key] = {};
+
+        for (let i = 0; i < groups.length; i++) {
+          const group = groups[i];
+
+          group.items.forEach((item) => {
+            variantPropStyleMap[key][item.value[key]] =
+              this._specDataManager.getRenderTreeById(item.id).cssStyle;
           });
         }
-      }
+      });
 
-      // 모든 variant 스타일을 분석해서 base/dynamic 결정
-      if (variantStyles.length > 0) {
-        pivotNode.style = this._computeStyleFromVariants(variantStyles);
-      }
+      console.log(variantPropStyleMap);
+
+      const bb = Object.entries(variantPropStyleMap)
+        .map(([key, value]) => {
+          if (Object.keys(value).length === 0) return;
+          return { variantName: key, style: value };
+        })
+        .filter((value) => value !== undefined);
+
+      pivotNode.style = this._computeBaseStyleFromVariants(bb);
+
+      variantProps.set(pivotNode.id, items);
     });
 
     return pivotTree;
   }
 
-  /**
-   * 여러 variant의 스타일을 분석하여 base와 dynamic을 계산합니다.
-   */
-  private _computeStyleFromVariants(
-    variantStyles: Array<{ variantName: string; style: Record<string, any> }>
-  ): StyleObject {
-    const base: Record<string, any> = {};
-    const dynamic: Array<{
-      condition: ConditionNode;
-      style: Record<string, any>;
-    }> = [];
+  private _groupBySingleVaryKey(data: Data): Group[] {
+    const ids = Object.keys(data);
+    if (ids.length === 0) return [];
 
-    if (variantStyles.length === 0) {
-      return { base, dynamic };
-    }
+    // 모든 키를 모아 정렬(시그니처 안정화)
+    const allKeys = Array.from(
+      new Set(ids.flatMap((id) => Object.keys(data[id] ?? {})))
+    ).sort();
 
-    // 모든 스타일 키 수집
-    const allKeys = new Set<string>();
-    for (const vs of variantStyles) {
-      Object.keys(vs.style).forEach((k) => allKeys.add(k));
-    }
+    const groupsMap = new Map<string, Group>();
 
-    for (const key of allKeys) {
-      // 각 variant에서의 값 수집 (undefined면 해당 variant에 없는 것)
-      const valuesWithVariant = variantStyles.map((vs) => ({
-        variantName: vs.variantName,
-        value: vs.style[key],
-      }));
+    for (const varyKey of allKeys) {
+      for (const id of ids) {
+        const v = data[id];
+        if (!v) continue;
 
-      // 값이 있는 것들만 필터
-      const definedValues = valuesWithVariant.filter(
-        (v) => v.value !== undefined
-      );
+        // varyKey를 제외한 나머지 키-값으로 fixed + signature 생성
+        const fixedEntries = allKeys
+          .filter((k) => k !== varyKey)
+          .map((k) => [k, v[k] ?? "__MISSING__"] as const);
 
-      if (definedValues.length === 0) continue;
+        const fixed = Object.fromEntries(fixedEntries) as Record<
+          string,
+          string
+        >;
+        const sig = fixedEntries.map(([k, val]) => `${k}=${val}`).join("|");
 
-      const firstValue = definedValues[0].value;
-      const allSame =
-        definedValues.length === variantStyles.length &&
-        definedValues.every((v) => v.value === firstValue);
-
-      if (allSame) {
-        // 모든 variant에서 같은 값 → base에 추가
-        base[key] = firstValue;
-      } else {
-        // variant별로 다름 → 각 조건의 dynamic에 추가
-        for (const item of definedValues) {
-          const condition = this._parseVariantCondition(item.variantName);
-          if (!condition) continue;
-
-          // 해당 condition의 dynamic 항목 찾기 또는 생성
-          let existingDynamic = dynamic.find(
-            (d) => JSON.stringify(d.condition) === JSON.stringify(condition)
-          );
-
-          if (!existingDynamic) {
-            existingDynamic = { condition, style: {} };
-            dynamic.push(existingDynamic);
-          }
-
-          existingDynamic.style[key] = item.value;
-        }
+        const mapKey = `${varyKey}::${sig}`;
+        const g = groupsMap.get(mapKey) ?? { varyKey, fixed, items: [] };
+        g.items.push({ id, value: v });
+        groupsMap.set(mapKey, g);
       }
     }
 
-    return { base, dynamic };
+    // 최소 2개 이상 모인 것만 “그룹”으로 인정
+    return [...groupsMap.values()].filter((g) => g.items.length >= 2);
+  }
+
+  private _parseVariantProps(variantName: string): Record<string, string> {
+    const props: Record<string, string> = {};
+    const pairs = variantName.split(",").map((s) => s.trim());
+
+    for (const pair of pairs) {
+      const [key, value] = pair.split("=").map((s) => s.trim());
+      if (key && value) {
+        props[key] = value;
+      }
+    }
+
+    return props;
+  }
+
+  private _rec(
+    acc: any,
+    answerCount: number,
+    count: number,
+    allNodes: any,
+    cache: any = {}
+  ) {
+    if (count > answerCount) return;
+
+    //캐시에 없는거 순회
+    for (const node of allNodes) {
+      if (cache[node.id]) continue;
+      cache[node.id] = true;
+    }
+  }
+
+  /**
+   * 여러 variant의 스타일을 분석하여 base를 얻는다.
+   */
+  private _computeBaseStyleFromVariants(
+    variantStyles: Array<{ variantName: string; style: Record<string, any> }>
+  ): StyleObject {
+    const base: Record<string, any> = {};
+    const dynamicMap = new Map<
+      string,
+      { condition: ConditionNode; style: Record<string, any> }
+    >();
+
+    // 1) 네 데이터(축 -> 옵션맵)를 옵션(leaf) 단위로 펼치기
+    const leaves: Array<{ condText: string; style: Record<string, any> }> = [];
+
+    for (const vs of variantStyles) {
+      if (!vs?.style || Object.keys(vs.style).length === 0) continue;
+
+      // "Text#373:0" 같은 suffix 제거(있어도 무방)
+      const axis = vs.variantName.split("#")[0].trim();
+
+      const values = Object.values(vs.style);
+      const looksLikeOptionMap = values.some(
+        (v) => v && typeof v === "object" && !Array.isArray(v)
+      );
+
+      if (looksLikeOptionMap) {
+        // 옵션맵: { L: {...}, M: {...} } 형태
+        for (const [optionRaw, styleObj] of Object.entries(vs.style)) {
+          if (
+            !styleObj ||
+            typeof styleObj !== "object" ||
+            Array.isArray(styleObj)
+          )
+            continue;
+
+          const option = String(optionRaw).split("#")[0].trim();
+          leaves.push({
+            condText: `${axis}=${option}`, // 예: "size=L"
+            style: styleObj as Record<string, any>,
+          });
+        }
+      } else {
+        // 혹시 leaf style({height:"..", padding:".."})로 들어오는 경우 대응
+        leaves.push({
+          condText: axis,
+          style: vs.style,
+        });
+      }
+    }
+
+    if (leaves.length === 0) return { base, dynamic: [] };
+
+    // 2) base = 모든 leaf 스타일에서 공통으로 동일한 값인 속성만(intersection)
+    const allKeys = new Set<string>();
+    for (const leaf of leaves) {
+      Object.keys(leaf.style).forEach((k) => allKeys.add(k));
+    }
+
+    for (const key of allKeys) {
+      const first = leaves[0].style[key];
+      if (first === undefined) continue;
+
+      let ok = true;
+      for (let i = 1; i < leaves.length; i++) {
+        const v = leaves[i].style[key];
+        if (v === undefined || v !== first) {
+          ok = false;
+          break;
+        }
+      }
+      if (ok) base[key] = first;
+    }
+
+    // 3) dynamic = 각 leaf 스타일에서 base에 포함된 공통 속성은 제거하고 조건별로 저장
+    for (const leaf of leaves) {
+      const condition = this._parseVariantCondition(leaf.condText);
+      if (!condition) continue;
+
+      const diff: Record<string, any> = {};
+      for (const [k, v] of Object.entries(leaf.style)) {
+        if (base[k] === v) continue;
+        diff[k] = v;
+      }
+      // if (Object.keys(diff).length === 0) continue;
+
+      const key = leaf.condText; // 조건 문자열을 stable key로 사용
+      const existing = dynamicMap.get(key);
+      if (existing) {
+        Object.assign(existing.style, diff);
+      } else {
+        dynamicMap.set(key, { condition, style: diff });
+      }
+    }
+
+    return { base, dynamic: Array.from(dynamicMap.values()) };
   }
 
   private updateVisible(pivotNode: TempAstTree) {
