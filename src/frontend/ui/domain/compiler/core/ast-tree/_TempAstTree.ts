@@ -13,6 +13,7 @@ import { findNodeBFS, traverseBFS } from "@compiler/utils/traverse";
 import helper from "@compiler/manager/HelperManager";
 import { BinaryOperator } from "@compiler/types/customType";
 import debug from "@compiler/manager/DebuggingManager";
+import { dy } from "happy-dom/lib/PropertySymbol";
 
 type Variant = Record<string, string>;
 type Data = Record<string, Variant>;
@@ -114,8 +115,6 @@ class _TempAstTree {
   }
 
   private updateStyle2(pivotTree: TempAstTree, targetTrees: StyleTree[]) {
-    const variantProps = new Map<string, Record<string, string>>();
-
     traverseBFS(pivotTree, (pivotNode) => {
       /**
        * mergedNode에서 variant마다 하나만 다르고 다른건 다 똑같은걸 찾는다.
@@ -125,55 +124,48 @@ class _TempAstTree {
 
       const items = pivotNode.mergedNode.reduce(
         (acc: Record<string, any>, value) => {
-          acc[value.id] = this._parseVariantProps(value.name);
+          acc[value.id] = {
+            ...this._parseVariantProps(value.name),
+            css: this._specDataManager.getRenderTreeById(value.id).cssStyle,
+          };
 
           return acc;
         },
         {}
       );
 
-      const variantStyles: Array<{
-        variantName: string;
-        style: Record<string, any>;
-      }> = [];
-
-      const variantPropStyleMap: Record<
-        string,
-        Record<string, Record<string, string>>
-      > = {};
+      const variantStyleMap: Record<string, Group[]> = {};
 
       Object.entries(pivotTree.props).forEach(([key, value]) => {
         const groups = this._groupBySingleVaryKey(items).filter(
           (value) => value.varyKey === key
         );
 
-        variantPropStyleMap[key] = {};
-
-        for (let i = 0; i < groups.length; i++) {
-          const group = groups[i];
-
-          group.items.forEach((item) => {
-            variantPropStyleMap[key][item.value[key]] =
-              this._specDataManager.getRenderTreeById(item.id).cssStyle;
-          });
-        }
+        variantStyleMap[key] = groups;
       });
 
-      console.log(variantPropStyleMap);
-
-      const bb = Object.entries(variantPropStyleMap)
-        .map(([key, value]) => {
-          if (Object.keys(value).length === 0) return;
-          return { variantName: key, style: value };
-        })
-        .filter((value) => value !== undefined);
-
-      pivotNode.style = this._computeBaseStyleFromVariants(bb);
-
-      variantProps.set(pivotNode.id, items);
+      pivotNode.style = this._computeStyle(variantStyleMap);
     });
 
     return pivotTree;
+  }
+
+  private _computeStyle(variantStyleMap: Record<string, Group[]>): StyleObject {
+    const dynamic: Record<string, any> = {};
+
+    Object.entries(variantStyleMap).forEach(([key, groups]) => {
+      if (groups.length === 0) return;
+
+      groups.forEach((group) => {
+        console.log(group.varyKey, group.fixed);
+
+        group.items.forEach((item) => {
+          console.log(item.value[group.varyKey], item.value.css);
+        });
+      });
+    });
+
+    return { base: {}, dynamic: [] };
   }
 
   private _groupBySingleVaryKey(data: Data): Group[] {
