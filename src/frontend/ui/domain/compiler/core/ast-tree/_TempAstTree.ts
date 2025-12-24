@@ -153,17 +153,30 @@ class _TempAstTree {
   private _computeStyle(variantStyleMap: Record<string, Group[]>): StyleObject {
     const dynamic: Record<string, any> = {};
 
+    const aa = {} as any;
+
     Object.entries(variantStyleMap).forEach(([key, groups]) => {
       if (groups.length === 0) return;
 
       groups.forEach((group) => {
-        console.log(group.varyKey, group.fixed);
+        if (!aa[group.varyKey]) {
+          aa[group.varyKey] = [];
+        }
 
-        group.items.forEach((item) => {
-          console.log(item.value[group.varyKey], item.value.css);
+        const bb = group.items.map((item) => {
+          const { value } = item;
+
+          return {
+            variant: { [group.varyKey]: value[group.varyKey] },
+            css: value.css,
+          };
         });
+
+        aa[group.varyKey].push(bb);
       });
     });
+
+    console.log(aa);
 
     return { base: {}, dynamic: [] };
   }
