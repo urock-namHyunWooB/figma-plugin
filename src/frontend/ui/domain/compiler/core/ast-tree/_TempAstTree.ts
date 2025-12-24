@@ -41,7 +41,7 @@ class _TempAstTree {
     let tempAstTree = this.createTempAstTree(superTree, refinedProps);
 
     tempAstTree = this.updateMergedNode(tempAstTree);
-    tempAstTree = this.updateStyle(tempAstTree, variantTrees);
+    tempAstTree = this.updateStyle2(tempAstTree, variantTrees);
     tempAstTree = this.updateNormalizeStyle(tempAstTree);
     tempAstTree = this.updateVisible(tempAstTree);
     tempAstTree = this.updateConditionalWrapper(tempAstTree);
@@ -105,6 +105,20 @@ class _TempAstTree {
     return convert(superTree, true);
   }
 
+  private updateStyle2(pivotTree: TempAstTree, targetTrees: StyleTree[]) {
+    traverseBFS(pivotTree, (pivotNode) => {
+      /**
+       * mergedNode에서 variant마다 하나만 다르고 다른건 다 똑같은걸 찾는다.
+       * 비교해서 다른 style을 찾는다.
+       * varaint별로 다른 style을 맵핑
+       *
+       *
+       */
+    });
+
+    return pivotTree;
+  }
+
   /**
    * 모든 variant의 스타일을 한번에 분석하여 pivotTree에 적용
    * - 모든 variant에서 동일한 값 → base
@@ -112,6 +126,14 @@ class _TempAstTree {
    */
   private updateStyle(pivotTree: TempAstTree, targetTrees: StyleTree[]) {
     //TODO urockButton | mergedNode에서 각 css를 비교해서 style을 결정
+
+    /**
+     * urockButton
+     * filled = background: "var(--Color-primary-01, #628CF5)"
+     * filled-red = background:"var(--Color-state-error, #FF8484)"
+     *
+     *
+     */
     traverseBFS(pivotTree, (pivotNode) => {
       // 이 pivotNode에 매칭되는 모든 variant의 스타일 수집
       const variantStyles: Array<{
