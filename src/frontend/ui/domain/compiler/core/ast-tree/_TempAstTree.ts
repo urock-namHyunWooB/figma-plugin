@@ -190,12 +190,14 @@ class _TempAstTree {
      */
 
     Object.entries(variantGroups).forEach(([key, value]) => {
-      const aa = value.map((group) => {
+      const mergedStyles = value.map((group) => {
         return this._mergeStyle(group);
       });
 
-      const result = this._validateVariants(aa);
-      console.log(result);
+      console.log(mergedStyles);
+
+      // const result = this._validateVariants(aa);
+      // console.log(result);
     });
 
     return { base: {}, dynamic: [] };
@@ -203,6 +205,7 @@ class _TempAstTree {
 
   private _validateVariants(
     bb: {
+      mergedNodes: any[];
       mergedIds: string[];
       mergedNames: string[];
       base: Record<string, any>;
@@ -211,18 +214,95 @@ class _TempAstTree {
         style: Record<string, any>;
       }[];
     }[]
-  ) {}
+  ) {
+    // dynamic 배열을 비교 가능한 문자열로 변환하는 함수
+    const dynamicToKey = (
+      dynamic: {
+        variant: Record<string, string>;
+        style: Record<string, any>;
+      }[]
+    ): string => {
+      // variant를 정렬하여 일관된 문자열 생성
+      const sortedDynamic = dynamic
+        .map((item) => {
+          // variant 정렬
+          const sortedVariantEntries = Object.entries(item.variant).sort(
+            ([a], [b]) => a.localeCompare(b)
+          );
+          const variantKey = sortedVariantEntries
+            .map(([key, value]) => `${key}=${value}`)
+            .join("|");
+
+          // style 정렬 (깊은 복사 후 정렬)
+          const sortedStyleEntries = Object.entries(item.style).sort(
+            ([a], [b]) => a.localeCompare(b)
+          );
+          const styleKey = JSON.stringify(
+            Object.fromEntries(sortedStyleEntries)
+          );
+
+          return `${variantKey}:${styleKey}`;
+        })
+        .sort()
+        .join("||");
+      return sortedDynamic;
+    };
+
+    // dynamic이 같은 요소들을 그룹화
+    const grouped = new Map<string, typeof bb>();
+    bb.forEach((item) => {
+      const key = dynamicToKey(item.dynamic);
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+      grouped.get(key)!.push(item);
+    });
+
+    // 그룹화된 요소들을 합쳐서 반환
+    const result = Array.from(grouped.values()).map((group) => {
+      if (group.length === 1) {
+        return group[0];
+      }
+
+      // 여러 요소를 합치기
+      const merged = {
+        mergedNodes: [] as any[],
+        mergedIds: [] as string[],
+        mergedNames: [] as string[],
+        base: group[0].base, // base는 첫 번째 것을 사용 (모두 같을 것으로 예상)
+        dynamic: group[0].dynamic, // dynamic은 모두 같으므로 첫 번째 것을 사용
+      };
+
+      // mergedIds와 mergedNames 합치기
+      group.forEach((item) => {
+        merged.mergedNodes.push(...item.mergedNodes);
+        merged.mergedIds.push(...item.mergedIds);
+        merged.mergedNames.push(...item.mergedNames);
+      });
+
+      return merged;
+    });
+
+    return result;
+  }
 
   private _mergeStyle(
     group: Array<{ id: string; variant: Record<string, string>; css: any }>
   ): {
+    mergedNodes: any[];
     mergedIds: string[];
     mergedNames: string[];
     base: Record<string, any>;
     dynamic: { variant: Record<string, string>; style: Record<string, any> }[];
   } {
     if (group.length === 0)
-      return { mergedIds: [], base: {}, dynamic: [], mergedNames: [] };
+      return {
+        mergedIds: [],
+        base: {},
+        dynamic: [],
+        mergedNames: [],
+        mergedNodes: [],
+      };
 
     const toStringName = (object: Record<string, string>) => {
       // 키를 정렬하여 일관된 문자열 생성
@@ -234,7 +314,9 @@ class _TempAstTree {
 
     const mergedIds = group.map((item) => item.id);
     const mergedNames = group.map((item) => toStringName(item.variant));
-
+    const mergedNodes = group.map((item) =>
+      this._specDataManager.getRenderTreeById(item.id)
+    );
     const base: Record<string, any> = {};
 
     const dynamic = new Map<
@@ -271,6 +353,7 @@ class _TempAstTree {
     });
 
     return {
+      mergedNodes,
       mergedIds,
       base,
       dynamic: Array.from(dynamic.values()),
