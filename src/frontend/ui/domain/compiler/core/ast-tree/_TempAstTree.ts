@@ -16,7 +16,6 @@ import debug from "@compiler/manager/DebuggingManager";
 import { dy } from "happy-dom/lib/PropertySymbol";
 import { logDOM } from "@testing-library/dom";
 
-import hash from "stable-hash";
 import { isForInitializer } from "typescript";
 
 type Variant = Record<string, string>;
@@ -189,18 +188,61 @@ class _TempAstTree {
      * 추출할 수 없는 경우도 판단해야 한다. (디자이너에게 피드백)
      */
 
-    const variantStyleCssMap = {};
+    const variantStyleCssMap: Record<
+      string,
+      {
+        variant: Record<string, string>;
+        style: {
+          base: Record<string, string>[];
+          dynamic: { name: string; style: Record<string, any>; id: string }[];
+        };
+      }
+    > = {};
 
     Object.entries(variantGroups).forEach(([key, value]) => {
       const mergedStyles = value.map((group) => {
         return this._mergeStyle(group);
       });
 
-      console.log(mergedStyles);
+      mergedStyles.forEach((item) => {
+        item.dynamic.forEach((dynamicItem, index) => {
+          if (!variantStyleCssMap[this._toStringName(dynamicItem.variant)]) {
+            variantStyleCssMap[this._toStringName(dynamicItem.variant)] = {
+              variant: dynamicItem.variant,
+              style: {
+                base: [],
+                dynamic: [
+                  {
+                    name: dynamicItem.name,
+                    style: dynamicItem.style,
+                    id: dynamicItem.id,
+                  },
+                ],
+              },
+            };
+          } else {
+            variantStyleCssMap[
+              this._toStringName(dynamicItem.variant)
+            ].style.dynamic.push({
+              name: dynamicItem.name,
+              style: dynamicItem.style,
+              id: dynamicItem.id,
+            });
+          }
+
+          variantStyleCssMap[
+            this._toStringName(dynamicItem.variant)
+          ].style.base.push(item.base);
+        });
+      });
+
+      //base
 
       // const result = this._validateVariants(aa);
       // console.log(result);
     });
+
+    console.log(variantStyleCssMap);
 
     return { base: {}, dynamic: [] };
   }
@@ -295,7 +337,12 @@ class _TempAstTree {
     mergedIds: string[];
     mergedNames: string[];
     base: Record<string, any>;
-    dynamic: { variant: Record<string, string>; style: Record<string, any> }[];
+    dynamic: {
+      id: string;
+      variant: Record<string, string>;
+      style: Record<string, any>;
+      name: string;
+    }[];
   } {
     if (group.length === 0)
       return {
@@ -323,12 +370,23 @@ class _TempAstTree {
 
     const dynamic = new Map<
       string,
-      { variant: Record<string, string>; style: Record<string, any> }
+      {
+        variant: Record<string, string>;
+        style: Record<string, any>;
+        name: string;
+        id: string;
+      }
     >();
 
     group.forEach((item) => {
       const key = toStringName(item.variant);
-      dynamic.set(key, { variant: item.variant, style: {} });
+
+      dynamic.set(key, {
+        id: item.id,
+        variant: item.variant,
+        style: {},
+        name: this._specDataManager.getSpecById(item.id).name,
+      });
     });
 
     Object.entries(group[0].css).forEach(([key, value]) => {
