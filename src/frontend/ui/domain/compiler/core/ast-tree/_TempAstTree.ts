@@ -14,6 +14,7 @@ import helper from "@compiler/manager/HelperManager";
 import { BinaryOperator } from "@compiler/types/customType";
 import debug from "@compiler/manager/DebuggingManager";
 import { dy } from "happy-dom/lib/PropertySymbol";
+import { logDOM } from "@testing-library/dom";
 
 type Variant = Record<string, string>;
 type Data = Record<string, Variant>;
@@ -153,7 +154,7 @@ class _TempAstTree {
   private _computeStyle(variantStyleMap: Record<string, Group[]>): StyleObject {
     const variantGroups: Record<
       string,
-      Array<Array<{ variant: Record<string, string>; css: any }>>
+      Array<Array<{ id: string; variant: Record<string, string>; css: any }>>
     > = {};
 
     Object.entries(variantStyleMap).forEach(([_key, groups]) => {
@@ -168,7 +169,9 @@ class _TempAstTree {
           const { value } = item;
 
           return {
+            id: item.id,
             variant: { [group.varyKey]: value[group.varyKey] },
+            name: this._specDataManager.getSpecById(item.id).name,
             css: value.css,
           };
         });
@@ -177,9 +180,73 @@ class _TempAstTree {
       });
     });
 
+    /**
+     * TODO
+     * variantGroups에서 나온 각 variant 별로 어떤 값만 다른지 정확히 추출해야한다.
+     * 추출할 수 없는 경우도 판단해야 한다. (디자이너에게 피드백)
+     */
+
     console.log(variantGroups);
 
+    // Object.entries(B).forEach(([key, value]) => {
+    //   console.log(value);
+    //
+    //   /**
+    //    * value 순회하면서 diff를 분석해서 최종 스타일을 결정한다. (dynamic)
+    //    * value별로 diff가 똑같아야 이상적이다.
+    //    * value별로 diff가 다르다면 이상한 노드를 감지해야 한다.
+    //    */
+    //
+    //   // value.reduce((acc, curr) => {}, { base: {}, dynamic: []})
+    // });
+
     return { base: {}, dynamic: [] };
+  }
+
+  private _mergeStyle(value: any) {}
+
+  /**
+   * 두 cssStyle 객체를 비교하여 차이점을 반환합니다.
+   * @param style1 첫 번째 cssStyle 객체
+   * @param style2 두 번째 cssStyle 객체
+   * @returns diff 결과 객체
+   */
+  private _diffCssStyle(
+    style1: Record<string, string>,
+    style2: Record<string, string>
+  ): {
+    added: Record<string, string>; // style2에만 있는 키
+    removed: Record<string, string>; // style1에만 있는 키
+    changed: Record<string, { from: string; to: string }>; // 값이 변경된 키
+    common: Record<string, string>; // 양쪽에 있고 값이 같은 키
+  } {
+    const added: Record<string, string> = {};
+    const removed: Record<string, string> = {};
+    const changed: Record<string, { from: string; to: string }> = {};
+    const common: Record<string, string> = {};
+
+    const allKeys = new Set([...Object.keys(style1), ...Object.keys(style2)]);
+
+    for (const key of allKeys) {
+      const value1 = style1[key];
+      const value2 = style2[key];
+
+      if (value1 === undefined && value2 !== undefined) {
+        // style2에만 있는 키
+        added[key] = value2;
+      } else if (value1 !== undefined && value2 === undefined) {
+        // style1에만 있는 키
+        removed[key] = value1;
+      } else if (value1 !== value2) {
+        // 값이 다른 키
+        changed[key] = { from: value1, to: value2 };
+      } else {
+        // 값이 같은 키
+        common[key] = value1;
+      }
+    }
+
+    return { added, removed, changed, common };
   }
 
   private _groupBySingleVaryKey(data: Data): Group[] {
