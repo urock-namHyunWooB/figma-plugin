@@ -183,6 +183,8 @@ class _TempAstTree {
      * variantGroups으로 판단.
      */
 
+    console.log(variantGroups);
+
     return { base: {}, dynamic: [] };
   }
 
@@ -409,9 +411,12 @@ class _TempAstTree {
     if (ids.length === 0) return [];
 
     // 모든 키를 모아 정렬(시그니처 안정화)
+    // css 키는 variant prop이 아니므로 제외
     const allKeys = Array.from(
       new Set(ids.flatMap((id) => Object.keys(data[id] ?? {})))
-    ).sort();
+    )
+      .filter((k) => k !== "css") // css는 variant prop이 아니므로 제외
+      .sort();
 
     const groupsMap = new Map<string, Group>();
 
@@ -421,9 +426,15 @@ class _TempAstTree {
         if (!v) continue;
 
         // varyKey를 제외한 나머지 키-값으로 fixed + signature 생성
+        // css는 이미 allKeys에서 제외되었음
         const fixedEntries = allKeys
           .filter((k) => k !== varyKey)
-          .map((k) => [k, v[k] ?? "__MISSING__"] as const);
+          .map((k) => {
+            const val = v[k];
+            // 값이 string이 아닌 경우(예: 객체)는 제외
+            return typeof val === "string" ? ([k, val] as const) : null;
+          })
+          .filter((entry): entry is [string, string] => entry !== null);
 
         const fixed = Object.fromEntries(fixedEntries) as Record<
           string,
@@ -438,7 +449,7 @@ class _TempAstTree {
       }
     }
 
-    // 최소 2개 이상 모인 것만 “그룹”으로 인정
+    // 최소 2개 이상 모인 것만 "그룹"으로 인정
     return [...groupsMap.values()].filter((g) => g.items.length >= 2);
   }
 
