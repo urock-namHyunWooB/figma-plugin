@@ -187,9 +187,11 @@ class _TempAstTree {
      */
 
     Object.entries(variantGroups).forEach(([key, value]) => {
-      value.map((group) => {
+      const aa = value.map((group) => {
         return this._mergeStyle(group);
       });
+
+      const result = this._validateVariants(aa);
     });
 
     // Object.entries(B).forEach(([key, value]) => {
@@ -207,10 +209,21 @@ class _TempAstTree {
     return { base: {}, dynamic: [] };
   }
 
+  private _validateVariants(
+    bb: {
+      mergedIds: string[];
+      base: Record<string, any>;
+      dynamic: {
+        variant: Record<string, string>;
+        style: Record<string, any>;
+      }[];
+    }[]
+  ) {}
+
   private _mergeStyle(
     group: Array<{ id: string; variant: Record<string, string>; css: any }>
   ): {
-    mergedIds: [];
+    mergedIds: string[];
     base: Record<string, any>;
     dynamic: { variant: Record<string, string>; style: Record<string, any> }[];
   } {
@@ -220,19 +233,22 @@ class _TempAstTree {
 
     const base: Record<string, any> = {};
 
-    const dynamic = new Map();
+    const dynamic = new Map<
+      string,
+      { variant: Record<string, string>; style: Record<string, any> }
+    >();
 
     const toStringName = (object: Record<string, string>) => {
-      let rtnVal = "";
-      Object.entries(object).forEach(([key, value]) => {
-        rtnVal += `${key}=${value}`;
-      });
-
-      return rtnVal;
+      // 키를 정렬하여 일관된 문자열 생성
+      const sortedEntries = Object.entries(object).sort(([a], [b]) =>
+        a.localeCompare(b)
+      );
+      return sortedEntries.map(([key, value]) => `${key}=${value}`).join("|");
     };
 
     group.forEach((item) => {
-      dynamic.set(toStringName(item.variant), { style: {} });
+      const key = toStringName(item.variant);
+      dynamic.set(key, { variant: item.variant, style: {} });
     });
 
     Object.entries(group[0].css).forEach(([key, value]) => {
@@ -249,14 +265,16 @@ class _TempAstTree {
         base[key] = value;
       } else {
         for (const item of group) {
-          if (item.css[key] && dynamic.get(toStringName(item.variant))) {
-            dynamic.get(toStringName(item.variant)).style[key] = item.css[key];
+          const variantKey = toStringName(item.variant);
+          const dynamicEntry = dynamic.get(variantKey);
+          if (item.css[key] && dynamicEntry) {
+            dynamicEntry.style[key] = item.css[key];
           }
         }
       }
     });
 
-    return { mergedIds, base, dynamic };
+    return { mergedIds, base, dynamic: Array.from(dynamic.values()) };
   }
 
   /**
