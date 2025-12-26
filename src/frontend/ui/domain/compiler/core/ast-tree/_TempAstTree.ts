@@ -131,26 +131,43 @@ class _TempAstTree {
         {}
       );
 
+      // variant props만 추출 (css 제외)
+      const variantPropsOnly: Record<string, Variant> = {};
+      Object.entries(items).forEach(([id, item]) => {
+        const { css: _css, ...variantProps } = item;
+        variantPropsOnly[id] = variantProps as Variant;
+      });
+
       const variantStyleMap: Record<string, Group[]> = {};
 
       Object.entries(pivotTree.props).forEach(([key, value]) => {
-        const groups = this._groupBySingleVaryKey(items).filter(
+        const groups = this._groupBySingleVaryKey(variantPropsOnly).filter(
           (value) => value.varyKey === key
         );
 
         variantStyleMap[key] = groups;
       });
 
-      pivotNode.style = this._computeStyle(variantStyleMap);
+      pivotNode.style = this._computeStyle(variantStyleMap, items);
     });
 
     return pivotTree;
   }
 
-  private _computeStyle(variantStyleMap: Record<string, Group[]>): StyleObject {
+  private _computeStyle(
+    variantStyleMap: Record<string, Group[]>,
+    items: Record<string, any>
+  ): StyleObject {
     const variantGroups: Record<
       string,
-      Array<Array<{ id: string; variant: Record<string, string>; css: any }>>
+      Array<
+        Array<{
+          id: string;
+          variant: Record<string, string>;
+          css: any;
+          name: string;
+        }>
+      >
     > = {};
 
     Object.entries(variantStyleMap).forEach(([_key, groups]) => {
@@ -163,12 +180,14 @@ class _TempAstTree {
 
         const variantItems = group.items.map((item) => {
           const { value } = item;
+          // items에서 css 가져오기 (variant props에는 css가 없으므로)
+          const itemWithCss = items[item.id];
 
           return {
             id: item.id,
             variant: { [group.varyKey]: value[group.varyKey] },
             name: this._specDataManager.getSpecById(item.id).name,
-            css: value.css,
+            css: itemWithCss?.css,
           };
         });
 
