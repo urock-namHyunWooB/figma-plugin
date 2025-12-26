@@ -211,24 +211,7 @@ class _TempAstTree {
         style: Record<string, any>;
       }[];
     }[]
-  ) {
-    const baseDynamicHash = hash(bb[0].dynamic);
-
-    const diffTarget = [];
-
-    const diffDynamic = [];
-
-    for (let i = 1; i < bb.length; i++) {
-      const target = bb[i];
-
-      if (hash(target.dynamic) !== baseDynamicHash) {
-        diffTarget.push(target);
-        diffDynamic.push(target.dynamic);
-      }
-    }
-
-    return diffTarget;
-  }
+  ) {}
 
   private _mergeStyle(
     group: Array<{ id: string; variant: Record<string, string>; css: any }>
