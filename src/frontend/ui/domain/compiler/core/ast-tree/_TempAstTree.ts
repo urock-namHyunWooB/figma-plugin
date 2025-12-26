@@ -214,7 +214,49 @@ class _TempAstTree {
     base: Record<string, any>;
     dynamic: { variant: Record<string, string>; style: Record<string, any> }[];
   } {
-    return {};
+    if (group.length === 0) return { mergedIds: [], base: {}, dynamic: [] };
+
+    const mergedIds = group.map((item) => item.id);
+
+    const base: Record<string, any> = {};
+
+    const dynamic = new Map();
+
+    const toStringName = (object: Record<string, string>) => {
+      let rtnVal = "";
+      Object.entries(object).forEach(([key, value]) => {
+        rtnVal += `${key}=${value}`;
+      });
+
+      return rtnVal;
+    };
+
+    group.forEach((item) => {
+      dynamic.set(toStringName(item.variant), { style: {} });
+    });
+
+    Object.entries(group[0].css).forEach(([key, value]) => {
+      let isBase = true;
+
+      for (const item of group) {
+        if (item.css[key] !== value) {
+          isBase = false;
+          break;
+        }
+      }
+
+      if (isBase) {
+        base[key] = value;
+      } else {
+        for (const item of group) {
+          if (item.css[key] && dynamic.get(toStringName(item.variant))) {
+            dynamic.get(toStringName(item.variant)).style[key] = item.css[key];
+          }
+        }
+      }
+    });
+
+    return { mergedIds, base, dynamic };
   }
 
   /**
