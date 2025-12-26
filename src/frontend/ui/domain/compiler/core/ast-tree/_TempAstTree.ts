@@ -189,17 +189,6 @@ class _TempAstTree {
      * 추출할 수 없는 경우도 판단해야 한다. (디자이너에게 피드백)
      */
 
-    Object.entries(variantGroups).forEach(([key, value]) => {
-      const mergedStyles = value.map((group) => {
-        return this._mergeStyle(group);
-      });
-
-      console.log(mergedStyles);
-
-      // const result = this._validateVariants(aa);
-      // console.log(result);
-    });
-
     return { base: {}, dynamic: [] };
   }
 
@@ -1054,6 +1043,14 @@ class _TempAstTree {
 
     return null;
   }
+
+  private _toStringName = (object: Record<string, string>) => {
+    // 키를 정렬하여 일관된 문자열 생성
+    const sortedEntries = Object.entries(object).sort(([a], [b]) =>
+      a.localeCompare(b)
+    );
+    return sortedEntries.map(([key, value]) => `${key}=${value}`).join("|");
+  };
 }
 
 export default _TempAstTree;
