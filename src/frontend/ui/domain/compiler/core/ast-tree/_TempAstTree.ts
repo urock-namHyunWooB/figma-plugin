@@ -16,6 +16,9 @@ import debug from "@compiler/manager/DebuggingManager";
 import { dy } from "happy-dom/lib/PropertySymbol";
 import { logDOM } from "@testing-library/dom";
 
+import hash from "stable-hash";
+import { isForInitializer } from "typescript";
+
 type Variant = Record<string, string>;
 type Data = Record<string, Variant>;
 
@@ -192,19 +195,8 @@ class _TempAstTree {
       });
 
       const result = this._validateVariants(aa);
+      console.log(result);
     });
-
-    // Object.entries(B).forEach(([key, value]) => {
-    //   console.log(value);
-    //
-    //   /**
-    //    * value 순회하면서 diff를 분석해서 최종 스타일을 결정한다. (dynamic)
-    //    * value별로 diff가 똑같아야 이상적이다.
-    //    * value별로 diff가 다르다면 이상한 노드를 감지해야 한다.
-    //    */
-    //
-    //   // value.reduce((acc, curr) => {}, { base: {}, dynamic: []})
-    // });
 
     return { base: {}, dynamic: [] };
   }
@@ -212,31 +204,42 @@ class _TempAstTree {
   private _validateVariants(
     bb: {
       mergedIds: string[];
+      mergedNames: string[];
       base: Record<string, any>;
       dynamic: {
         variant: Record<string, string>;
         style: Record<string, any>;
       }[];
     }[]
-  ) {}
+  ) {
+    const baseDynamicHash = hash(bb[0].dynamic);
+
+    const diffTarget = [];
+
+    const diffDynamic = [];
+
+    for (let i = 1; i < bb.length; i++) {
+      const target = bb[i];
+
+      if (hash(target.dynamic) !== baseDynamicHash) {
+        diffTarget.push(target);
+        diffDynamic.push(target.dynamic);
+      }
+    }
+
+    return diffTarget;
+  }
 
   private _mergeStyle(
     group: Array<{ id: string; variant: Record<string, string>; css: any }>
   ): {
     mergedIds: string[];
+    mergedNames: string[];
     base: Record<string, any>;
     dynamic: { variant: Record<string, string>; style: Record<string, any> }[];
   } {
-    if (group.length === 0) return { mergedIds: [], base: {}, dynamic: [] };
-
-    const mergedIds = group.map((item) => item.id);
-
-    const base: Record<string, any> = {};
-
-    const dynamic = new Map<
-      string,
-      { variant: Record<string, string>; style: Record<string, any> }
-    >();
+    if (group.length === 0)
+      return { mergedIds: [], base: {}, dynamic: [], mergedNames: [] };
 
     const toStringName = (object: Record<string, string>) => {
       // 키를 정렬하여 일관된 문자열 생성
@@ -245,6 +248,16 @@ class _TempAstTree {
       );
       return sortedEntries.map(([key, value]) => `${key}=${value}`).join("|");
     };
+
+    const mergedIds = group.map((item) => item.id);
+    const mergedNames = group.map((item) => toStringName(item.variant));
+
+    const base: Record<string, any> = {};
+
+    const dynamic = new Map<
+      string,
+      { variant: Record<string, string>; style: Record<string, any> }
+    >();
 
     group.forEach((item) => {
       const key = toStringName(item.variant);
@@ -274,7 +287,12 @@ class _TempAstTree {
       }
     });
 
-    return { mergedIds, base, dynamic: Array.from(dynamic.values()) };
+    return {
+      mergedIds,
+      base,
+      dynamic: Array.from(dynamic.values()),
+      mergedNames,
+    };
   }
 
   /**

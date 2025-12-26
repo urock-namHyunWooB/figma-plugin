@@ -478,7 +478,6 @@ class _FinalAstTree {
    */
   private _refineComponentLikeProp(astTree: FinalAstTree) {
     const slotCandidateProps = this._findSlotCandidateProps(astTree);
-    console.log(slotCandidateProps);
 
     const allNodes = this._collectAllNodes(astTree);
     const slotBindings = this._findSlotBindings(slotCandidateProps, allNodes);
