@@ -119,12 +119,6 @@ class _TempAstTree {
 
   private updateStyle2(pivotTree: TempAstTree, targetTrees: StyleTree[]) {
     traverseBFS(pivotTree, (pivotNode) => {
-      /**
-       * mergedNode에서 variant마다 하나만 다르고 다른건 다 똑같은걸 찾는다.
-       * 비교해서 다른 style을 찾는다.
-       * varaint별로 다른 style을 맵핑
-       */
-
       const items = pivotNode.mergedNode.reduce(
         (acc: Record<string, any>, value) => {
           acc[value.id] = {
@@ -186,63 +180,8 @@ class _TempAstTree {
      * TODO
      * variantGroups에서 나온 각 variant 별로 어떤 값만 다른지 정확히 추출해야한다.
      * 추출할 수 없는 경우도 판단해야 한다. (디자이너에게 피드백)
+     * variantGroups으로 판단.
      */
-
-    const variantStyleCssMap: Record<
-      string,
-      {
-        variant: Record<string, string>;
-        style: {
-          base: Record<string, string>[];
-          dynamic: { name: string; style: Record<string, any>; id: string }[];
-        };
-      }
-    > = {};
-
-    Object.entries(variantGroups).forEach(([key, value]) => {
-      const mergedStyles = value.map((group) => {
-        return this._mergeStyle(group);
-      });
-
-      mergedStyles.forEach((item) => {
-        item.dynamic.forEach((dynamicItem, index) => {
-          if (!variantStyleCssMap[this._toStringName(dynamicItem.variant)]) {
-            variantStyleCssMap[this._toStringName(dynamicItem.variant)] = {
-              variant: dynamicItem.variant,
-              style: {
-                base: [],
-                dynamic: [
-                  {
-                    name: dynamicItem.name,
-                    style: dynamicItem.style,
-                    id: dynamicItem.id,
-                  },
-                ],
-              },
-            };
-          } else {
-            variantStyleCssMap[
-              this._toStringName(dynamicItem.variant)
-            ].style.dynamic.push({
-              name: dynamicItem.name,
-              style: dynamicItem.style,
-              id: dynamicItem.id,
-            });
-          }
-
-          variantStyleCssMap[
-            this._toStringName(dynamicItem.variant)
-          ].style.base.push(item.base);
-        });
-      });
-
-      //base
-
-      // const result = this._validateVariants(aa);
-      // console.log(result);
-    });
-
-    console.log(variantStyleCssMap);
 
     return { base: {}, dynamic: [] };
   }
