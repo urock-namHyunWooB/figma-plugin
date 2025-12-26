@@ -186,7 +186,11 @@ class _TempAstTree {
      * 추출할 수 없는 경우도 판단해야 한다. (디자이너에게 피드백)
      */
 
-    console.log(variantGroups);
+    Object.entries(variantGroups).forEach(([key, value]) => {
+      value.map((group) => {
+        return this._mergeStyle(group);
+      });
+    });
 
     // Object.entries(B).forEach(([key, value]) => {
     //   console.log(value);
@@ -203,7 +207,15 @@ class _TempAstTree {
     return { base: {}, dynamic: [] };
   }
 
-  private _mergeStyle(value: any) {}
+  private _mergeStyle(
+    group: Array<{ id: string; variant: Record<string, string>; css: any }>
+  ): {
+    mergedIds: [];
+    base: Record<string, any>;
+    dynamic: { variant: Record<string, string>; style: Record<string, any> }[];
+  } {
+    return {};
+  }
 
   /**
    * 두 cssStyle 객체를 비교하여 차이점을 반환합니다.
