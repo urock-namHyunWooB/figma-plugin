@@ -189,7 +189,18 @@ class _TempAstTree {
      * 추출할 수 없는 경우도 판단해야 한다. (디자이너에게 피드백)
      */
 
-    console.log(variantGroups);
+    const variantStyleCssMap = {};
+
+    Object.entries(variantGroups).forEach(([key, value]) => {
+      const mergedStyles = value.map((group) => {
+        return this._mergeStyle(group);
+      });
+
+      console.log(mergedStyles);
+
+      // const result = this._validateVariants(aa);
+      // console.log(result);
+    });
 
     return { base: {}, dynamic: [] };
   }
