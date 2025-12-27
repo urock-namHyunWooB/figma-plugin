@@ -14,6 +14,7 @@ import { traverseBFS } from "@compiler/utils/traverse";
 import helper from "@compiler/manager/HelperManager";
 import { BinaryOperator } from "@compiler/types/customType";
 import { diff } from "deep-object-diff";
+import UpdateStyle from "@compiler/core/ast-tree/style/UpdateStyle";
 
 type Variant = Record<string, string>;
 type Data = Record<string, Variant>;
@@ -53,12 +54,18 @@ class _TempAstTree {
     this._refinedProps = refinedProps;
     this._superTree = superTree;
 
+    const updateStyle = new UpdateStyle(
+      specDataManager,
+      superTree,
+      refinedProps
+    ).updateStyle;
+
     const variantTrees = specDataManager.getRenderTree().children;
 
     let tempAstTree = this.createTempAstTree(superTree, refinedProps);
 
     tempAstTree = this.updateMergedNode(tempAstTree);
-    tempAstTree = this.updateStyle2(tempAstTree, variantTrees);
+    tempAstTree = this.updateStyle2(tempAstTree);
     tempAstTree = this.updateNormalizeStyle(tempAstTree);
     tempAstTree = this.updateVisible(tempAstTree);
     tempAstTree = this.updateConditionalWrapper(tempAstTree);
@@ -122,7 +129,7 @@ class _TempAstTree {
     return convert(superTree, true);
   }
 
-  private updateStyle2(pivotTree: TempAstTree, targetTrees: StyleTree[]) {
+  private updateStyle2(pivotTree: TempAstTree) {
     traverseBFS(pivotTree, (pivotNode) => {
       const items = pivotNode.mergedNode.reduce(
         (acc: Record<string, any>, value) => {
