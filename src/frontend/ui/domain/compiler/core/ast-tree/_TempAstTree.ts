@@ -1,5 +1,6 @@
 import {
   ConditionNode,
+  DynamicVariants,
   StyleObject,
   StyleTree,
   SuperTreeNode,
@@ -237,7 +238,7 @@ class _TempAstTree {
 
     const variantResult = this._convertVariantStyle(variantStyle);
 
-    console.log(variantResult);
+    console.log(variantResult.dynamicVariants);
 
     return { base: variantResult.base, dynamic: [] };
   }
@@ -245,20 +246,7 @@ class _TempAstTree {
   private _convertVariantStyle(variantStyle: Record<string, any>) {
     const variantMap: {
       base: Record<string, string>;
-      dynamicVariants: Record<
-        string,
-        {
-          style: {
-            base: Record<string, string>;
-            dynamic: {
-              variantName: string;
-              base: Record<string, string>;
-              dynamic: [];
-              report: [];
-            }[];
-          };
-        }
-      >;
+      dynamicVariants: DynamicVariants;
     } = {
       base: {},
       dynamicVariants: {},

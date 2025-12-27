@@ -63,6 +63,21 @@ export type VisibleValue =
 
 export type PseudoClass = ":hover" | ":active" | ":focus" | ":disabled";
 
+export type DynamicVariants = Record<
+  string,
+  {
+    style: {
+      base: Record<string, string>;
+      dynamic: {
+        variantName: string;
+        base: Record<string, string>;
+        dynamic: [];
+        report: [];
+      }[];
+    };
+  }
+>;
+
 export type StyleObject = {
   base: Record<string, any>;
 
