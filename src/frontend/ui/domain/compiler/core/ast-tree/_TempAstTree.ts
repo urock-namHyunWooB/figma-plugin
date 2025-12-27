@@ -268,6 +268,8 @@ class _TempAstTree {
         };
       }
 
+      variantMap.dynamicVariants[_key].style.dynamic.push(value);
+
       const baseStyle = variantMap.base;
 
       const baseCss = value.base;
