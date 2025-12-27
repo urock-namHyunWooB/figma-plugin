@@ -230,15 +230,15 @@ class _TempAstTree {
 
     const variantStyle: Record<string, any> = {};
 
+    const allReport: FeedbackReport[] = [];
+
     Object.entries(L).forEach(([key, value]) => {
       const { base, dynamic, report } = this._convertVariantItems(value);
-
+      allReport.push(...report);
       variantStyle[key] = { base, dynamic, report };
     });
 
     const variantResult = this._convertVariantStyle(variantStyle);
-
-    console.log(variantResult.dynamicVariants);
 
     return { base: variantResult.base, dynamic: [] };
   }
