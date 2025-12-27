@@ -235,9 +235,11 @@ class _TempAstTree {
       variantStyle[key] = { base, dynamic, report };
     });
 
-    this._convertVariantStyle(variantStyle);
+    const variantResult = this._convertVariantStyle(variantStyle);
 
-    return { base: {}, dynamic: [] };
+    console.log(variantResult);
+
+    return { base: variantResult.base, dynamic: [] };
   }
 
   private _convertVariantStyle(variantStyle: Record<string, any>) {
@@ -340,7 +342,7 @@ class _TempAstTree {
       }
     });
 
-    console.log(variantMap);
+    return variantMap;
   }
 
   private _convertVariantItems(
