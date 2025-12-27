@@ -240,6 +240,8 @@ class _TempAstTree {
 
     const variantResult = this._convertVariantStyle(variantStyle);
 
+    console.log(variantResult);
+
     return { base: variantResult.base, dynamic: [] };
   }
 
@@ -329,6 +331,8 @@ class _TempAstTree {
         dynamicStyle[dynamicItem].base = newBase;
       }
     });
+
+    //TODO 중복 제거 해야함.
 
     return variantMap;
   }
