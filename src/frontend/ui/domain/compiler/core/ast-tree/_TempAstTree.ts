@@ -54,11 +54,7 @@ class _TempAstTree {
     this._refinedProps = refinedProps;
     this._superTree = superTree;
 
-    const updateStyle = new UpdateStyle(
-      specDataManager,
-      superTree,
-      refinedProps
-    ).updateStyle;
+    const updateStyle = new UpdateStyle(specDataManager).updateStyle;
 
     const variantTrees = specDataManager.getRenderTree().children;
 

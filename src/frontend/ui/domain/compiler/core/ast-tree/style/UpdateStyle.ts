@@ -28,16 +28,9 @@ type Group = {
 
 class UpdateStyle {
   private _specDataManager: SpecDataManager;
-  private _refinedProps: PropsDef;
-  private _superTree: SuperTreeNode;
-  constructor(
-    specDataManager: SpecDataManager,
-    superTree: SuperTreeNode,
-    refinedProps: PropsDef
-  ) {
+
+  constructor(specDataManager: SpecDataManager) {
     this._specDataManager = specDataManager;
-    this._refinedProps = refinedProps;
-    this._superTree = superTree;
   }
 
   public updateStyle(pivotTree: TempAstTree) {
@@ -263,8 +256,6 @@ class UpdateStyle {
         dynamicStyle[dynamicItem].base = newBase;
       }
     });
-
-    //TODO 중복 제거 해야함.
 
     return variantMap;
   }
