@@ -223,7 +223,7 @@ class _TempAstTree {
     const variantStyle = {};
 
     Object.entries(L).forEach(([key, value]) => {
-      if (key === "Size=large") {
+      if (key === "size=L") {
         debugger;
       }
       const { base, dynamic } = this._convertVariantItems(value);
@@ -244,33 +244,56 @@ class _TempAstTree {
       name: string;
     }[]
   ) {
-    const base: any = {};
-    const dynamic: { id: string; name: string; css: Record<string, string> }[] =
-      [];
+    // 1. 빈 배열 예외 처리
+    if (!items || items.length === 0) {
+      return { base: {}, dynamic: [] };
+    }
 
+    const base: Record<string, any> = {};
+
+    // 원본 훼손 방지를 위해 items를 얕은 복사(또는 필요시 깊은 복사)하여 사용하거나
+    // 아래처럼 로직을 구성하여 새 객체를 만들어야 합니다.
+
+    // 2. 기준 아이템 (첫 번째 아이템)
     const pivotItem = items[0];
+    const pivotCssKeys = Object.keys(pivotItem.css);
 
-    Object.entries(pivotItem.css).forEach(([key, value], index) => {
-      for (const item of items) {
-        if (item.css[key] !== value) return;
-      }
-
-      for (const item of items) {
-        delete item.css[key];
-      }
-
-      base[key] = value;
+    // 3. 공통 속성(Base) 식별
+    // 첫 번째 아이템의 키를 순회하며 모든 아이템이 동일한 값을 가졌는지 확인
+    const commonKeys = pivotCssKeys.filter((key) => {
+      const value = pivotItem.css[key];
+      return items.every((item) => item.css[key] === value);
     });
 
-    for (const item of items) {
-      if (Object.keys(item.css).length === 0) continue;
+    // 4. Base 객체 생성
+    commonKeys.forEach((key) => {
+      base[key] = pivotItem.css[key];
+    });
 
-      dynamic.push(item);
-    }
+    // 5. Dynamic 배열 생성 (원본 수정 없이 새로운 객체 반환)
+    const dynamic = items
+      .map((item) => {
+        // 현재 아이템의 css에서 commonKeys에 해당하는 속성을 제외한 새 객체 생성
+        const remainingCss: Record<string, any> = {};
+
+        Object.entries(item.css).forEach(([key, value]) => {
+          if (!base.hasOwnProperty(key)) {
+            // 공통 속성이 아닌 경우만 추가
+            remainingCss[key] = value;
+          }
+        });
+
+        // css가 비어있지 않다면 반환할 객체 구성
+        // (원한다면 css가 빈 경우 null을 리턴하고 filter로 걸러낼 수도 있음)
+        return {
+          ...item,
+          css: remainingCss,
+        };
+      })
+      .filter((item) => Object.keys(item.css).length > 0); // css가 빈 객체면 제외
 
     return { base, dynamic };
   }
-
   private _validateVariants(
     bb: {
       mergedNodes: any[];
