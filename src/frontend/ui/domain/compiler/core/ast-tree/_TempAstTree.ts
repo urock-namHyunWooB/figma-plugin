@@ -9,14 +9,9 @@ import {
 import { PropsDef } from "@compiler/core/RefineProps";
 
 import SpecDataManager from "../../manager/SpecDataManager";
-import { findNodeBFS, traverseBFS } from "@compiler/utils/traverse";
+import { traverseBFS } from "@compiler/utils/traverse";
 import helper from "@compiler/manager/HelperManager";
 import { BinaryOperator } from "@compiler/types/customType";
-import debug from "@compiler/manager/DebuggingManager";
-import { dy } from "happy-dom/lib/PropertySymbol";
-import { logDOM } from "@testing-library/dom";
-
-import { isForInitializer } from "typescript";
 
 type Variant = Record<string, string>;
 type Data = Record<string, Variant>;
@@ -204,7 +199,76 @@ class _TempAstTree {
 
     console.log(variantGroups);
 
+    const L: Record<
+      string,
+      {
+        id: string;
+        variant: Record<string, string>;
+        css: any;
+        name: string;
+      }[]
+    > = {};
+
+    Object.entries(variantGroups).forEach(([key, groups]) => {
+      groups.forEach((group) => {
+        group.forEach((item) => {
+          if (!L[this._toStringName(item.variant)]) {
+            L[this._toStringName(item.variant)] = [];
+          }
+          L[this._toStringName(item.variant)].push(item);
+        });
+      });
+    });
+
+    const variantStyle = {};
+
+    Object.entries(L).forEach(([key, value]) => {
+      if (key === "Size=large") {
+        debugger;
+      }
+      const { base, dynamic } = this._convertVariantItems(value);
+
+      variantStyle[key] = { base, dynamic };
+    });
+
+    console.log(variantStyle);
+
     return { base: {}, dynamic: [] };
+  }
+
+  private _convertVariantItems(
+    items: {
+      id: string;
+      variant: Record<string, string>;
+      css: any;
+      name: string;
+    }[]
+  ) {
+    const base: any = {};
+    const dynamic: { id: string; name: string; css: Record<string, string> }[] =
+      [];
+
+    const pivotItem = items[0];
+
+    Object.entries(pivotItem.css).forEach(([key, value], index) => {
+      for (const item of items) {
+        if (item.css[key] !== value) return;
+      }
+
+      for (const item of items) {
+        delete item.css[key];
+      }
+
+      base[key] = value;
+    });
+
+    for (const item of items) {
+      if (Object.keys(item.css).length === 0) continue;
+
+      dynamic.push(item);
+    }
+
+    return { base, dynamic };
   }
 
   private _validateVariants(
