@@ -16,6 +16,14 @@ import { BinaryOperator } from "@compiler/types/customType";
 type Variant = Record<string, string>;
 type Data = Record<string, Variant>;
 
+type FeedbackReport = {
+  key: string;
+  type: "MISSING_PROP" | "VALUE_MISMATCH";
+  message: string;
+  itemIds: string[];
+  itemNames: string[]; // 추가된 필드: 사람이 읽기 쉬운 이름 목록
+};
+
 type Group = {
   varyKey: string; // 이 키만 달라질 수 있음
   fixed: Record<string, string>; // 나머지 키들은 고정(같음)
@@ -197,8 +205,6 @@ class _TempAstTree {
      * variantGroups으로 판단.
      */
 
-    console.log(variantGroups);
-
     const L: Record<
       string,
       {
@@ -220,20 +226,70 @@ class _TempAstTree {
       });
     });
 
-    const variantStyle = {};
+    const variantStyle: Record<string, any> = {};
 
     Object.entries(L).forEach(([key, value]) => {
-      if (key === "size=L") {
-        debugger;
-      }
-      const { base, dynamic } = this._convertVariantItems(value);
+      const { base, dynamic, report } = this._convertVariantItems(value);
 
-      variantStyle[key] = { base, dynamic };
+      variantStyle[key] = { base, dynamic, report };
     });
 
-    console.log(variantStyle);
+    this._convertVariantStyle(variantStyle);
 
     return { base: {}, dynamic: [] };
+  }
+
+  private _convertVariantStyle(variantStyle: Record<string, any>) {
+    const variantMap: {
+      base: Record<string, string>;
+      dynamicVariants: Record<
+        string,
+        {
+          style: {
+            base: Record<string, string>;
+            dynamic: {
+              variant: Record<string, string>;
+              style: Record<string, any>;
+            }[];
+          };
+        }
+      >;
+    } = {
+      base: {},
+      dynamicVariants: {},
+    };
+
+    console.log(variantStyle);
+    Object.entries(variantStyle).forEach(([key, value]) => {
+      const _key = key.split("=")[0];
+      if (!variantMap.dynamicVariants[_key]) {
+        variantMap.dynamicVariants[_key] = {
+          style: { base: {}, dynamic: [] },
+        };
+      }
+
+      const baseStyle = variantMap.base;
+
+      const baseCss = value.base;
+
+      Object.entries(baseCss).forEach(([k, v]) => {
+        let flag = true;
+
+        for (const variantStyleKey in variantStyle) {
+          const target = variantStyle[variantStyleKey];
+          if (target.base[k] !== v) {
+            flag = false;
+            break;
+          }
+        }
+
+        if (flag) {
+          baseStyle[k] = v as string;
+        }
+      });
+    });
+
+    console.log(variantMap);
   }
 
   private _convertVariantItems(
@@ -241,59 +297,140 @@ class _TempAstTree {
       id: string;
       variant: Record<string, string>;
       css: any;
-      name: string;
+      name: string; // name 속성이 필수라고 가정
     }[]
   ) {
-    // 1. 빈 배열 예외 처리
+    // 1. 방어 코드
     if (!items || items.length === 0) {
-      return { base: {}, dynamic: [] };
+      return { base: {}, dynamic: [], report: [] };
     }
 
     const base: Record<string, any> = {};
+    const report: FeedbackReport[] = [];
+    const totalCount = items.length;
 
-    // 원본 훼손 방지를 위해 items를 얕은 복사(또는 필요시 깊은 복사)하여 사용하거나
-    // 아래처럼 로직을 구성하여 새 객체를 만들어야 합니다.
+    // 2. 합의 임계값 설정
+    let consensusThreshold: number;
+    if (totalCount <= 2) {
+      consensusThreshold = totalCount;
+    } else if (totalCount === 3) {
+      consensusThreshold = 2;
+    } else {
+      consensusThreshold = Math.ceil(totalCount * 0.7);
+    }
 
-    // 2. 기준 아이템 (첫 번째 아이템)
-    const pivotItem = items[0];
-    const pivotCssKeys = Object.keys(pivotItem.css);
-
-    // 3. 공통 속성(Base) 식별
-    // 첫 번째 아이템의 키를 순회하며 모든 아이템이 동일한 값을 가졌는지 확인
-    const commonKeys = pivotCssKeys.filter((key) => {
-      const value = pivotItem.css[key];
-      return items.every((item) => item.css[key] === value);
+    // 3. 모든 아이템의 CSS 키 수집
+    const allCssKeys = new Set<string>();
+    items.forEach((item) => {
+      if (item.css) {
+        Object.keys(item.css).forEach((k) => allCssKeys.add(k));
+      }
     });
 
-    // 4. Base 객체 생성
-    commonKeys.forEach((key) => {
-      base[key] = pivotItem.css[key];
-    });
+    // 4. 각 키별 통계 분석
+    allCssKeys.forEach((key) => {
+      // 통계 저장 구조에 names 배열 추가
+      const valueStats: Record<
+        string,
+        {
+          count: number;
+          ids: string[];
+          names: string[]; // 이름 저장용
+          originalValue: any;
+        }
+      > = {};
 
-    // 5. Dynamic 배열 생성 (원본 수정 없이 새로운 객체 반환)
-    const dynamic = items
-      .map((item) => {
-        // 현재 아이템의 css에서 commonKeys에 해당하는 속성을 제외한 새 객체 생성
-        const remainingCss: Record<string, any> = {};
+      const missingIds: string[] = [];
+      const missingNames: string[] = []; // 누락된 아이템 이름 저장용
 
-        Object.entries(item.css).forEach(([key, value]) => {
-          if (!base.hasOwnProperty(key)) {
-            // 공통 속성이 아닌 경우만 추가
-            remainingCss[key] = value;
+      items.forEach((item) => {
+        const val = item.css?.[key];
+
+        if (val === undefined || val === null) {
+          missingIds.push(item.id);
+          missingNames.push(item.name); // 이름 수집
+        } else {
+          const strVal = String(val);
+          if (!valueStats[strVal]) {
+            valueStats[strVal] = {
+              count: 0,
+              ids: [],
+              names: [],
+              originalValue: val,
+            };
           }
+          valueStats[strVal].count++;
+          valueStats[strVal].ids.push(item.id);
+          valueStats[strVal].names.push(item.name); // 이름 수집
+        }
+      });
+
+      const sortedStats = Object.values(valueStats).sort(
+        (a, b) => b.count - a.count
+      );
+      if (sortedStats.length === 0) return;
+
+      const dominantStat = sortedStats[0];
+      const dominantCount = dominantStat.count;
+      const dominantValue = dominantStat.originalValue;
+
+      // A. 100% 일치 -> Base 승격
+      if (dominantCount === totalCount) {
+        base[key] = dominantValue;
+        return;
+      }
+
+      // B. 임계값 이상 합의됨 -> 피드백 생성
+      if (dominantCount >= consensusThreshold) {
+        // B-1. 속성 누락 경고
+        if (missingIds.length > 0) {
+          report.push({
+            key,
+            type: "MISSING_PROP",
+            message: `'${key}' 속성이 대다수(${dominantCount}개)에 존재하지만, 다음 아이템들에서 누락되었습니다: ${missingNames.join(", ")}`,
+            itemIds: missingIds,
+            itemNames: missingNames, // 결과 포함
+          });
+        }
+
+        // B-2. 값 불일치 경고
+        const mismatchIds: string[] = [];
+        const mismatchNames: string[] = []; // 불일치 이름 수집
+
+        sortedStats.slice(1).forEach((stat) => {
+          mismatchIds.push(...stat.ids);
+          mismatchNames.push(...stat.names);
         });
 
-        // css가 비어있지 않다면 반환할 객체 구성
-        // (원한다면 css가 빈 경우 null을 리턴하고 filter로 걸러낼 수도 있음)
-        return {
-          ...item,
-          css: remainingCss,
-        };
-      })
-      .filter((item) => Object.keys(item.css).length > 0); // css가 빈 객체면 제외
+        if (mismatchIds.length > 0) {
+          report.push({
+            key,
+            type: "VALUE_MISMATCH",
+            message: `'${key}' 속성값이 대다수(${String(dominantValue)})와 다릅니다. 확인 필요: ${mismatchNames.join(", ")}`,
+            itemIds: mismatchIds,
+            itemNames: mismatchNames, // 결과 포함
+          });
+        }
+      }
+    });
 
-    return { base, dynamic };
+    // 5. Dynamic 객체 생성
+    const dynamic = items.map((item) => {
+      const remainingCss: Record<string, any> = {};
+      const itemCss = item.css || {};
+
+      Object.entries(itemCss).forEach(([key, value]) => {
+        if (!base.hasOwnProperty(key)) {
+          remainingCss[key] = value;
+        }
+      });
+
+      return { ...item, css: remainingCss };
+    });
+
+    return { base, dynamic, report };
   }
+
   private _validateVariants(
     bb: {
       mergedNodes: any[];
