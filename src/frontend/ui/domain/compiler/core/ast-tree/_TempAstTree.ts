@@ -12,6 +12,7 @@ import SpecDataManager from "../../manager/SpecDataManager";
 import { traverseBFS } from "@compiler/utils/traverse";
 import helper from "@compiler/manager/HelperManager";
 import { BinaryOperator } from "@compiler/types/customType";
+import { diff } from "deep-object-diff";
 
 type Variant = Record<string, string>;
 type Data = Record<string, Variant>;
@@ -248,8 +249,10 @@ class _TempAstTree {
           style: {
             base: Record<string, string>;
             dynamic: {
-              variant: Record<string, string>;
-              style: Record<string, any>;
+              variantName: string;
+              base: Record<string, string>;
+              dynamic: [];
+              report: [];
             }[];
           };
         }
@@ -259,19 +262,21 @@ class _TempAstTree {
       dynamicVariants: {},
     };
 
-    console.log(variantStyle);
     Object.entries(variantStyle).forEach(([key, value]) => {
+      //기초적인 형태 만들기
       const _key = key.split("=")[0];
       if (!variantMap.dynamicVariants[_key]) {
         variantMap.dynamicVariants[_key] = {
           style: { base: {}, dynamic: [] },
         };
       }
+      variantMap.dynamicVariants[_key].style.dynamic.push({
+        variantName: key,
+        ...value,
+      });
 
-      variantMap.dynamicVariants[_key].style.dynamic.push(value);
-
+      //baseCss 만들기
       const baseStyle = variantMap.base;
-
       const baseCss = value.base;
 
       Object.entries(baseCss).forEach(([k, v]) => {
@@ -289,6 +294,50 @@ class _TempAstTree {
           baseStyle[k] = v as string;
         }
       });
+    });
+
+    //variant 마다 base 세팅하기
+    Object.entries(variantMap.dynamicVariants).forEach(([key, value]) => {
+      const dynamicStyle = value.style.dynamic;
+
+      if (dynamicStyle.length === 0) return;
+      if (dynamicStyle.length === 1) {
+        value.style.base = dynamicStyle[0].base;
+        return;
+      }
+
+      const pivotBase = dynamicStyle[0].base;
+
+      const memory: any = {};
+
+      for (const dynamicItem in dynamicStyle) {
+        const targetBase = dynamicStyle[dynamicItem].base;
+
+        const diffResult = diff(pivotBase, targetBase);
+
+        Object.entries(diffResult).forEach(([k, v]) => {
+          if (!memory[k]) {
+            memory[k] = 0;
+          }
+
+          memory[k]++;
+        });
+      }
+
+      const filteredMemory = Object.entries(memory)
+        .filter(([k, v]) => {
+          return v === dynamicStyle.length - 1;
+        })
+        .map(([k, v]) => k);
+
+      for (const dynamicItem in dynamicStyle) {
+        const newBase = filteredMemory.reduce((acc, style) => {
+          acc[style] = dynamicStyle[dynamicItem].base[style];
+
+          return acc;
+        }, {});
+        dynamicStyle[dynamicItem].base = newBase;
+      }
     });
 
     console.log(variantMap);
