@@ -14,27 +14,27 @@ type CssStyle = Record<string, string>;
 type VariantProps = Record<string, string>;
 
 /** Variant ID와 props 매핑 */
-type VariantPropsMap = Record<string, VariantProps>;
+type VariantPropsById = Record<string, VariantProps>;
 
-/** 아이템의 variant props와 CSS를 포함하는 타입 */
-type ItemWithCss = {
+/** 스타일이 포함된 Variant 아이템 */
+type VariantItem = {
   id: string;
   variant: VariantProps;
   css: CssStyle;
   name: string;
 };
 
-/** 피드백 리포트 타입 */
-type FeedbackReport = {
-  key: string;
+/** 디자이너 피드백 리포트 */
+type DesignFeedback = {
+  cssKey: string;
   type: "MISSING_PROP" | "VALUE_MISMATCH";
   message: string;
   itemIds: string[];
   itemNames: string[];
 };
 
-/** CSS 값 통계 정보 */
-type CssValueStats = {
+/** CSS 값별 통계 정보 */
+type CssValueStatistics = {
   count: number;
   ids: string[];
   names: string[];
@@ -44,16 +44,62 @@ type CssValueStats = {
 /** Variant 그룹 (같은 fixed props를 가진 아이템들의 묶음) */
 type VariantGroup = {
   varyKey: string;
-  fixed: VariantProps;
-  items: Array<{ id: string; value: VariantProps }>;
+  fixedProps: VariantProps;
+  items: Array<{ id: string; props: VariantProps }>;
 };
 
-/** Variant 스타일 결과 */
-type VariantStyleResult = {
-  base: CssStyle;
-  dynamic: ItemWithCss[];
-  report: FeedbackReport[];
+/** 스타일 추출 결과 */
+type ExtractedStyleResult = {
+  baseStyle: CssStyle;
+  dynamicItems: VariantItem[];
+  feedbacks: DesignFeedback[];
 };
+
+/** CSS 키 분석 결과 */
+type CssKeyAnalysis = {
+  statisticsByValue: Record<string, CssValueStatistics>;
+  missingItemIds: string[];
+  missingItemNames: string[];
+  sortedStatistics: CssValueStatistics[];
+  dominantStatistics: CssValueStatistics | undefined;
+  dominantCount: number;
+  dominantValue: string;
+};
+
+// ============================================================
+// Helper Functions (순수 함수)
+// ============================================================
+
+/** 배열을 키 기준으로 그룹화하여 각 값을 배열로 수집 */
+const groupByKey = <T, K extends string>(
+  items: T[],
+  getKey: (item: T) => K
+): Record<K, T[]> =>
+  items.reduce(
+    (grouped, item) => ({
+      ...grouped,
+      [getKey(item)]: [...(grouped[getKey(item)] ?? []), item],
+    }),
+    {} as Record<K, T[]>
+  );
+
+/** 배열을 키 기준으로 그룹화하고 값을 변환하여 수집 */
+const groupByKeyWithTransform = <T, K extends string, V>(
+  items: T[],
+  getKey: (item: T) => K,
+  transform: (item: T) => V
+): Record<K, V[]> =>
+  items.reduce(
+    (grouped, item) => ({
+      ...grouped,
+      [getKey(item)]: [...(grouped[getKey(item)] ?? []), transform(item)],
+    }),
+    {} as Record<K, V[]>
+  );
+
+// ============================================================
+// UpdateStyle Class
+// ============================================================
 
 class UpdateStyle {
   private _specDataManager: SpecDataManager;
@@ -62,292 +108,391 @@ class UpdateStyle {
     this._specDataManager = specDataManager;
   }
 
-  public updateStyle(pivotTree: TempAstTree) {
+  // ============================================================
+  // Public Methods
+  // ============================================================
+
+  public updateStyle(pivotTree: TempAstTree): TempAstTree {
     traverseBFS(pivotTree, (pivotNode) => {
-      const items = pivotNode.mergedNode.reduce(
-        (itemsMap: Record<string, any>, mergedItem) => {
-          itemsMap[mergedItem.id] = {
-            ...this._parseVariantProps(mergedItem.name),
-            css: this._specDataManager.getRenderTreeById(mergedItem.id)
-              .cssStyle,
-          };
+      const itemsWithStyle = this._buildItemsWithStyle(pivotNode.mergedNode);
+      const variantPropsById = this._extractVariantPropsOnly(itemsWithStyle);
+      const variantGroups = this._groupByVaryKey(variantPropsById);
 
-          return itemsMap;
-        },
-        {}
+      const groupsByPropKey = Object.fromEntries(
+        Object.keys(pivotTree.props).map((propKey) => [
+          propKey,
+          variantGroups.filter((group) => group.varyKey === propKey),
+        ])
       );
 
-      // variant props만 추출 (css 제외)
-      const variantPropsOnly: VariantPropsMap = Object.fromEntries(
-        Object.entries(items).map(([id, item]) => {
-          const { css: _css, ...variantProps } = item;
-          return [id, variantProps as VariantProps];
-        })
+      pivotNode.style = this._computeOptimizedStyle(
+        groupsByPropKey,
+        itemsWithStyle
       );
-
-      const allGroups = this._groupBySingleVaryKey(variantPropsOnly);
-
-      const variantStyleMap: Record<string, VariantGroup[]> =
-        Object.fromEntries(
-          Object.keys(pivotTree.props).map((propKey) => [
-            propKey,
-            allGroups.filter((group) => group.varyKey === propKey),
-          ])
-        );
-
-      pivotNode.style = this._computeStyle(variantStyleMap, items);
     });
 
     return pivotTree;
   }
 
-  private _parseVariantProps(variantName: string): VariantProps {
+  // ============================================================
+  // Style Building Methods
+  // ============================================================
+
+  private _buildItemsWithStyle(
+    mergedNodes: Array<{ id: string; name: string }>
+  ): Record<string, { css: CssStyle } & VariantProps> {
     return Object.fromEntries(
-      variantName
-        .split(",")
-        .map((pair) => pair.trim())
-        .map((pair) => pair.split("=").map((s) => s.trim()))
-        .filter(([key, value]) => key && value)
+      mergedNodes.map((node) => {
+        const variantProps = this._parseVariantName(node.name);
+        const css = this._specDataManager.getRenderTreeById(node.id).cssStyle;
+        return [node.id, { ...variantProps, css }] as const;
+      })
+    ) as Record<string, { css: CssStyle } & VariantProps>;
+  }
+
+  private _parseVariantName(variantName: string): VariantProps {
+    const keyValuePairs = variantName
+      .split(",")
+      .map((pair) => pair.trim())
+      .map((pair) => pair.split("=").map((s) => s.trim()))
+      .filter(([key, value]) => key && value);
+
+    return Object.fromEntries(keyValuePairs);
+  }
+
+  private _extractVariantPropsOnly(
+    itemsWithStyle: Record<string, { css: CssStyle } & VariantProps>
+  ): VariantPropsById {
+    return Object.fromEntries(
+      Object.entries(itemsWithStyle).map(([id, item]) => {
+        const { css: _css, ...variantProps } = item;
+        return [id, variantProps as VariantProps];
+      })
     );
   }
 
-  private _computeStyle(
-    variantStyleMap: Record<string, VariantGroup[]>,
-    items: Record<string, { css: CssStyle } & VariantProps>
+  // ============================================================
+  // Style Computation (선언형)
+  // ============================================================
+
+  private _computeOptimizedStyle(
+    groupsByPropKey: Record<string, VariantGroup[]>,
+    itemsWithStyle: Record<string, { css: CssStyle } & VariantProps>
   ): StyleObject {
-    // variantStyleMap의 모든 그룹을 varyKey별로 재구성
-    const variantGroups = this._buildVariantGroups(variantStyleMap, items);
-
-    // variantGroups를 평탄화하여 variantKey별로 아이템 매핑
-    const variantItemsMap = this._flattenToVariantItemsMap(variantGroups);
-
-    // 각 variant별 스타일 결과 계산
-    const variantStyle: Record<string, VariantStyleResult> = Object.fromEntries(
-      Object.entries(variantItemsMap).map(([variantKey, itemsWithCss]) => [
-        variantKey,
-        this._convertVariantItems(itemsWithCss),
-      ])
+    const itemsByVaryKey = this._transformGroupsToVariantItems(
+      groupsByPropKey,
+      itemsWithStyle
     );
 
-    const variantResult = this._convertVariantStyle(variantStyle);
+    const itemsByVariantKey = this._flattenAndGroupByVariantKey(itemsByVaryKey);
 
-    return { base: variantResult.base, dynamic: [] };
+    const styleResultByVariant = this._computeStyleResults(itemsByVariantKey);
+
+    const optimizedResult = this._optimizeStyles(styleResultByVariant);
+
+    return { base: optimizedResult.commonBaseStyle, dynamic: [] };
   }
 
-  private _buildVariantGroups(
-    variantStyleMap: Record<string, VariantGroup[]>,
-    items: Record<string, { css: CssStyle } & VariantProps>
-  ): Record<string, ItemWithCss[][]> {
-    const nonEmptyGroups = Object.values(variantStyleMap)
+  private _transformGroupsToVariantItems(
+    groupsByPropKey: Record<string, VariantGroup[]>,
+    itemsWithStyle: Record<string, { css: CssStyle } & VariantProps>
+  ): Record<string, VariantItem[][]> {
+    const allGroups = Object.values(groupsByPropKey)
       .flat()
       .filter((group) => group.items.length > 0);
 
-    return nonEmptyGroups.reduce<Record<string, ItemWithCss[][]>>(
-      (acc, group) => {
-        const variantItems: ItemWithCss[] = group.items.map((groupItem) => ({
-          id: groupItem.id,
-          variant: { [group.varyKey]: groupItem.value[group.varyKey] },
-          name: this._specDataManager.getSpecById(groupItem.id).name,
-          css: items[groupItem.id]?.css ?? {},
-        }));
+    const groupedByVaryKey = groupByKeyWithTransform(
+      allGroups,
+      (group) => group.varyKey,
+      (group) => this._mapGroupToVariantItems(group, itemsWithStyle)
+    );
 
-        if (!acc[group.varyKey]) {
-          acc[group.varyKey] = [];
-        }
-        acc[group.varyKey].push(variantItems);
+    return groupedByVaryKey;
+  }
 
-        return acc;
-      },
-      {}
+  private _mapGroupToVariantItems(
+    group: VariantGroup,
+    itemsWithStyle: Record<string, { css: CssStyle } & VariantProps>
+  ): VariantItem[] {
+    return group.items.map((groupItem) => ({
+      id: groupItem.id,
+      variant: { [group.varyKey]: groupItem.props[group.varyKey] },
+      name: this._specDataManager.getSpecById(groupItem.id).name,
+      css: itemsWithStyle[groupItem.id]?.css ?? {},
+    }));
+  }
+
+  private _flattenAndGroupByVariantKey(
+    itemsByVaryKey: Record<string, VariantItem[][]>
+  ): Record<string, VariantItem[]> {
+    const allVariantItems = Object.values(itemsByVaryKey).flat(2);
+
+    return groupByKey(allVariantItems, (item) =>
+      this._serializeVariantProps(item.variant)
     );
   }
 
-  private _flattenToVariantItemsMap(
-    variantGroups: Record<string, ItemWithCss[][]>
-  ): Record<string, ItemWithCss[]> {
-    const allItems = Object.values(variantGroups).flat(2);
-
-    return allItems.reduce<Record<string, ItemWithCss[]>>((acc, item) => {
-      const variantKey = this._serializeVariantProps(item.variant);
-      if (!acc[variantKey]) {
-        acc[variantKey] = [];
-      }
-      acc[variantKey].push(item);
-      return acc;
-    }, {});
+  private _computeStyleResults(
+    itemsByVariantKey: Record<string, VariantItem[]>
+  ): Record<string, ExtractedStyleResult> {
+    return Object.fromEntries(
+      Object.entries(itemsByVariantKey).map(([variantKey, items]) => [
+        variantKey,
+        this._extractStyleResult(items),
+      ])
+    );
   }
 
-  private _convertVariantStyle(
-    variantStyle: Record<string, VariantStyleResult>
-  ) {
-    // 1. Dynamic variants 구조 생성
-    const dynamicVariants = this._buildDynamicVariants(variantStyle);
+  // ============================================================
+  // Style Optimization (선언형)
+  // ============================================================
 
-    // 2. 모든 variant에 공통인 CSS 속성 추출
-    const globalBase = this._extractCommonBaseStyles(variantStyle);
+  private _optimizeStyles(
+    styleResultByVariant: Record<string, ExtractedStyleResult>
+  ): { commonBaseStyle: CssStyle; dynamicVariants: DynamicVariants } {
+    const dynamicVariants =
+      this._structureDynamicVariants(styleResultByVariant);
+    const commonBaseStyle = this._findCommonBaseStyles(styleResultByVariant);
+    const optimizedDynamicVariants =
+      this._extractVaryingStylesOnly(dynamicVariants);
 
-    // 3. 각 variant의 base 스타일 최적화
-    this._optimizeVariantBaseStyles(dynamicVariants);
-
-    return { base: globalBase, dynamicVariants };
+    return { commonBaseStyle, dynamicVariants: optimizedDynamicVariants };
   }
 
-  private _buildDynamicVariants(
-    variantStyle: Record<string, VariantStyleResult>
+  private _structureDynamicVariants(
+    styleResultByVariant: Record<string, ExtractedStyleResult>
   ): DynamicVariants {
-    return Object.entries(variantStyle).reduce<DynamicVariants>(
-      (acc, [variantKey, styleResult]) => {
-        const propName = variantKey.split("=")[0];
+    const entries = Object.entries(styleResultByVariant);
 
-        if (!acc[propName]) {
-          acc[propName] = { style: { base: {}, dynamic: [] } };
-        }
-
-        acc[propName].style.dynamic.push({
-          variantName: variantKey,
-          base: styleResult.base,
-          dynamic: [] as [],
-          report: [] as [],
-        });
-
-        return acc;
-      },
-      {}
+    const groupedByPropName = groupByKeyWithTransform(
+      entries,
+      ([variantKey]) => variantKey.split("=")[0],
+      ([variantKey, styleResult]) => ({
+        variantName: variantKey,
+        base: styleResult.baseStyle,
+        dynamic: [] as [],
+        report: [] as [],
+      })
     );
-  }
-
-  private _extractCommonBaseStyles(
-    variantStyle: Record<string, VariantStyleResult>
-  ): CssStyle {
-    const allStyleResults = Object.values(variantStyle);
-    if (allStyleResults.length === 0) return {};
-
-    const firstBase = allStyleResults[0].base;
 
     return Object.fromEntries(
-      Object.entries(firstBase).filter(([cssProperty, cssValue]) =>
-        allStyleResults.every(
-          (styleResult) => styleResult.base[cssProperty] === cssValue
-        )
-      )
+      Object.entries(groupedByPropName).map(([propName, dynamicStyles]) => [
+        propName,
+        { style: { base: {}, dynamic: dynamicStyles } },
+      ])
     );
   }
 
-  private _optimizeVariantBaseStyles(dynamicVariants: DynamicVariants): void {
-    Object.values(dynamicVariants).forEach((variantEntry) => {
-      const dynamicStyle = variantEntry.style.dynamic;
+  private _findCommonBaseStyles(
+    styleResultByVariant: Record<string, ExtractedStyleResult>
+  ): CssStyle {
+    const allStyleResults = Object.values(styleResultByVariant);
+    if (allStyleResults.length === 0) return {};
 
-      if (dynamicStyle.length === 0) return;
-      if (dynamicStyle.length === 1) {
-        variantEntry.style.base = dynamicStyle[0].base;
-        return;
-      }
+    const firstBaseStyle = allStyleResults[0].baseStyle;
 
-      const pivotBase = dynamicStyle[0].base;
+    const commonEntries = Object.entries(firstBaseStyle).filter(
+      ([cssKey, cssValue]) =>
+        allStyleResults.every((result) => result.baseStyle[cssKey] === cssValue)
+    );
 
-      // 각 CSS 키가 몇 번 다른지 계산
-      const diffCountMap = dynamicStyle.reduce<Record<string, number>>(
-        (acc, dynamicItem) => {
-          const diffResult = diff(pivotBase, dynamicItem.base);
-          Object.keys(diffResult).forEach((cssKey) => {
-            acc[cssKey] = (acc[cssKey] ?? 0) + 1;
-          });
-          return acc;
+    return Object.fromEntries(commonEntries);
+  }
+
+  private _extractVaryingStylesOnly(
+    dynamicVariants: DynamicVariants
+  ): DynamicVariants {
+    return Object.fromEntries(
+      Object.entries(dynamicVariants).map(([propName, variantEntry]) => [
+        propName,
+        {
+          style: {
+            base: this._computeVariantBaseStyle(variantEntry.style.dynamic),
+            dynamic: this._filterToVaryingStyles(variantEntry.style.dynamic),
+          },
         },
-        {}
-      );
-
-      // 모든 variant에서 다른 CSS 키만 필터링
-      const varyingCssKeys = Object.entries(diffCountMap)
-        .filter(([_cssKey, count]) => count === dynamicStyle.length - 1)
-        .map(([cssKey]) => cssKey);
-
-      // 각 dynamic 아이템의 base를 varying 키만 포함하도록 업데이트
-      dynamicStyle.forEach((item, index) => {
-        dynamicStyle[index].base = Object.fromEntries(
-          varyingCssKeys.map((cssKey) => [cssKey, item.base[cssKey]])
-        );
-      });
-    });
-  }
-
-  private _groupBySingleVaryKey(data: VariantPropsMap): VariantGroup[] {
-    const ids = Object.keys(data);
-    if (ids.length === 0) return [];
-
-    // 모든 키를 모아 정렬(시그니처 안정화)
-    // css 키는 variant prop이 아니므로 제외
-    const allPropKeys = Array.from(
-      new Set(ids.flatMap((itemId) => Object.keys(data[itemId] ?? {})))
-    )
-      .filter((propKey) => propKey !== "css") // css는 variant prop이 아니므로 제외
-      .sort();
-
-    const groupsMap = new Map<string, VariantGroup>();
-
-    for (const varyKey of allPropKeys) {
-      for (const itemId of ids) {
-        const variantProps = data[itemId];
-        if (!variantProps) continue;
-
-        // varyKey를 제외한 나머지 키-값으로 fixed + signature 생성
-        // css는 이미 allPropKeys에서 제외되었음
-        const fixedEntries = allPropKeys
-          .filter((propKey) => propKey !== varyKey)
-          .map((propKey) => {
-            const propValue = variantProps[propKey];
-            // 값이 string이 아닌 경우(예: 객체)는 제외
-            return typeof propValue === "string"
-              ? ([propKey, propValue] as const)
-              : null;
-          })
-          .filter((entry): entry is [string, string] => entry !== null);
-
-        const fixed = Object.fromEntries(fixedEntries) as VariantProps;
-        const signature = fixedEntries
-          .map(([propKey, propValue]) => `${propKey}=${propValue}`)
-          .join("|");
-
-        const groupKey = `${varyKey}::${signature}`;
-        const group = groupsMap.get(groupKey) ?? { varyKey, fixed, items: [] };
-        group.items.push({ id: itemId, value: variantProps });
-        groupsMap.set(groupKey, group);
-      }
-    }
-
-    // 최소 2개 이상 모인 것만 "그룹"으로 인정
-    return [...groupsMap.values()].filter((group) => group.items.length >= 2);
-  }
-
-  private _serializeVariantProps = (variantProps: VariantProps): string => {
-    // 키를 정렬하여 일관된 문자열 생성
-    const sortedEntries = Object.entries(variantProps).sort(([keyA], [keyB]) =>
-      keyA.localeCompare(keyB)
+      ])
     );
-    return sortedEntries
-      .map(([propKey, propValue]) => `${propKey}=${propValue}`)
-      .join("|");
-  };
+  }
 
-  private _convertVariantItems(items: ItemWithCss[]): VariantStyleResult {
+  private _computeVariantBaseStyle(
+    dynamicStyles: Array<{ base: CssStyle }>
+  ): CssStyle {
+    if (dynamicStyles.length <= 1) {
+      return dynamicStyles[0]?.base ?? {};
+    }
+    return {};
+  }
+
+  private _filterToVaryingStyles(
+    dynamicStyles: Array<{
+      variantName: string;
+      base: CssStyle;
+      dynamic: [];
+      report: [];
+    }>
+  ): Array<{ variantName: string; base: CssStyle; dynamic: []; report: [] }> {
+    if (dynamicStyles.length <= 1) return dynamicStyles;
+
+    const referenceBase = dynamicStyles[0].base;
+    const changedCssKeys = this._findChangedCssKeys(
+      referenceBase,
+      dynamicStyles
+    );
+
+    return dynamicStyles.map((style) => ({
+      ...style,
+      base: Object.fromEntries(
+        changedCssKeys.map((cssKey) => [cssKey, style.base[cssKey]])
+      ),
+    }));
+  }
+
+  private _findChangedCssKeys(
+    referenceBase: CssStyle,
+    dynamicStyles: Array<{ base: CssStyle }>
+  ): string[] {
+    const diffCounts = dynamicStyles.reduce<Record<string, number>>(
+      (counts, style) => {
+        const diffResult = diff(referenceBase, style.base);
+        return Object.keys(diffResult).reduce(
+          (acc, cssKey) => ({
+            ...acc,
+            [cssKey]: (acc[cssKey] ?? 0) + 1,
+          }),
+          counts
+        );
+      },
+      {}
+    );
+
+    return Object.entries(diffCounts)
+      .filter(([_, count]) => count === dynamicStyles.length - 1)
+      .map(([cssKey]) => cssKey);
+  }
+
+  // ============================================================
+  // Variant Grouping (선언형)
+  // ============================================================
+
+  private _groupByVaryKey(variantPropsById: VariantPropsById): VariantGroup[] {
+    const itemIds = Object.keys(variantPropsById);
+    if (itemIds.length === 0) return [];
+
+    const allPropKeys = this._collectAllPropKeys(variantPropsById, itemIds);
+    const allGroupCandidates = this._generateAllGroupCandidates(
+      allPropKeys,
+      itemIds,
+      variantPropsById
+    );
+
+    return this._mergeAndFilterGroups(allGroupCandidates);
+  }
+
+  private _collectAllPropKeys(
+    variantPropsById: VariantPropsById,
+    itemIds: string[]
+  ): string[] {
+    const allKeys = itemIds.flatMap((id) =>
+      Object.keys(variantPropsById[id] ?? {})
+    );
+
+    return [...new Set(allKeys)].filter((key) => key !== "css").sort();
+  }
+
+  private _generateAllGroupCandidates(
+    allPropKeys: string[],
+    itemIds: string[],
+    variantPropsById: VariantPropsById
+  ): Array<{ groupKey: string; group: VariantGroup }> {
+    return allPropKeys.flatMap((varyKey) =>
+      itemIds
+        .filter((id) => variantPropsById[id])
+        .map((id) =>
+          this._createGroupCandidate(
+            varyKey,
+            id,
+            variantPropsById[id],
+            allPropKeys
+          )
+        )
+    );
+  }
+
+  private _createGroupCandidate(
+    varyKey: string,
+    itemId: string,
+    variantProps: VariantProps,
+    allPropKeys: string[]
+  ): { groupKey: string; group: VariantGroup } {
+    const fixedEntries = allPropKeys
+      .filter((key) => key !== varyKey)
+      .map((key) => {
+        const value = variantProps[key];
+        return typeof value === "string" ? ([key, value] as const) : null;
+      })
+      .filter((entry): entry is [string, string] => entry !== null);
+
+    const fixedProps = Object.fromEntries(fixedEntries) as VariantProps;
+    const signature = fixedEntries
+      .map(([key, value]) => `${key}=${value}`)
+      .join("|");
+    const groupKey = `${varyKey}::${signature}`;
+
+    return {
+      groupKey,
+      group: {
+        varyKey,
+        fixedProps,
+        items: [{ id: itemId, props: variantProps }],
+      },
+    };
+  }
+
+  private _mergeAndFilterGroups(
+    candidates: Array<{ groupKey: string; group: VariantGroup }>
+  ): VariantGroup[] {
+    const mergedGroups = candidates.reduce<Map<string, VariantGroup>>(
+      (groupsMap, { groupKey, group }) => {
+        const existing = groupsMap.get(groupKey);
+        if (existing) {
+          existing.items.push(...group.items);
+        } else {
+          groupsMap.set(groupKey, { ...group });
+        }
+        return groupsMap;
+      },
+      new Map()
+    );
+
+    return [...mergedGroups.values()].filter(
+      (group) => group.items.length >= 2
+    );
+  }
+
+  // ============================================================
+  // Style Extraction (선언형)
+  // ============================================================
+
+  private _extractStyleResult(items: VariantItem[]): ExtractedStyleResult {
     if (!items || items.length === 0) {
-      return { base: {}, dynamic: [], report: [] };
+      return { baseStyle: {}, dynamicItems: [], feedbacks: [] };
     }
 
     const totalCount = items.length;
     const consensusThreshold = this._calculateConsensusThreshold(totalCount);
     const allCssKeys = this._collectAllCssKeys(items);
 
-    const { base, report } = this._analyzeAndExtractBaseStyles(
+    const { baseStyle, feedbacks } = this._analyzeAndExtractBase(
       items,
       allCssKeys,
       totalCount,
       consensusThreshold
     );
 
-    const dynamicItems = this._createDynamicItems(items, base);
+    const dynamicItems = this._createDynamicItems(items, baseStyle);
 
-    return { base, dynamic: dynamicItems, report };
+    return { baseStyle, dynamicItems, feedbacks };
   }
 
   private _calculateConsensusThreshold(totalCount: number): number {
@@ -356,122 +501,118 @@ class UpdateStyle {
     return Math.ceil(totalCount * 0.7);
   }
 
-  private _collectAllCssKeys(items: ItemWithCss[]): Set<string> {
-    return new Set(
-      items.flatMap((item) => (item.css ? Object.keys(item.css) : []))
-    );
+  private _collectAllCssKeys(items: VariantItem[]): string[] {
+    return [...new Set(items.flatMap((item) => Object.keys(item.css ?? {})))];
   }
 
-  private _analyzeAndExtractBaseStyles(
-    items: ItemWithCss[],
-    allCssKeys: Set<string>,
+  private _analyzeAndExtractBase(
+    items: VariantItem[],
+    allCssKeys: string[],
     totalCount: number,
     consensusThreshold: number
-  ): { base: CssStyle; report: FeedbackReport[] } {
-    const base: CssStyle = {};
-    const report: FeedbackReport[] = [];
+  ): { baseStyle: CssStyle; feedbacks: DesignFeedback[] } {
+    const analysisResults = allCssKeys.map((cssKey) => ({
+      cssKey,
+      analysis: this._analyzeCssKey(items, cssKey),
+    }));
 
-    allCssKeys.forEach((cssKey) => {
-      const analysis = this._analyzeCssKeyStats(items, cssKey);
-
-      if (analysis.sortedStats.length === 0) return;
-
-      const { dominantCount, dominantValue } = analysis;
-
-      // 100% 일치 -> Base 승격
-      if (dominantCount === totalCount) {
-        base[cssKey] = dominantValue;
-        return;
-      }
-
-      // 임계값 이상 합의됨 -> 피드백 생성
-      if (dominantCount >= consensusThreshold) {
-        const feedbacks = this._generateFeedbackReports(
-          cssKey,
-          dominantCount,
-          dominantValue,
-          analysis
-        );
-        report.push(...feedbacks);
-      }
-    });
-
-    return { base, report };
-  }
-
-  private _analyzeCssKeyStats(items: ItemWithCss[], cssKey: string) {
-    const valueStats: Record<string, CssValueStats> = {};
-    const missingItemIds: string[] = [];
-    const missingItemNames: string[] = [];
-
-    items.forEach((item) => {
-      const cssValue = item.css?.[cssKey];
-
-      if (cssValue === undefined || cssValue === null) {
-        missingItemIds.push(item.id);
-        missingItemNames.push(item.name);
-      } else {
-        const valueKey = String(cssValue);
-        if (!valueStats[valueKey]) {
-          valueStats[valueKey] = {
-            count: 0,
-            ids: [],
-            names: [],
-            originalValue: cssValue,
-          };
-        }
-        valueStats[valueKey].count++;
-        valueStats[valueKey].ids.push(item.id);
-        valueStats[valueKey].names.push(item.name);
-      }
-    });
-
-    const sortedStats = Object.values(valueStats).sort(
-      (statA, statB) => statB.count - statA.count
+    const baseStyle = Object.fromEntries(
+      analysisResults
+        .filter(({ analysis }) => analysis.dominantCount === totalCount)
+        .map(({ cssKey, analysis }) => [cssKey, analysis.dominantValue])
     );
 
-    const dominantStat = sortedStats[0];
+    const feedbacks = analysisResults
+      .filter(
+        ({ analysis }) =>
+          analysis.dominantCount >= consensusThreshold &&
+          analysis.dominantCount < totalCount
+      )
+      .flatMap(({ cssKey, analysis }) =>
+        this._generateFeedbacks(cssKey, analysis)
+      );
+
+    return { baseStyle, feedbacks };
+  }
+
+  private _analyzeCssKey(items: VariantItem[], cssKey: string): CssKeyAnalysis {
+    const { statisticsByValue, missingItemIds, missingItemNames } =
+      items.reduce<{
+        statisticsByValue: Record<string, CssValueStatistics>;
+        missingItemIds: string[];
+        missingItemNames: string[];
+      }>(
+        (acc, item) => {
+          const cssValue = item.css?.[cssKey];
+
+          if (cssValue === undefined || cssValue === null) {
+            return {
+              ...acc,
+              missingItemIds: [...acc.missingItemIds, item.id],
+              missingItemNames: [...acc.missingItemNames, item.name],
+            };
+          }
+
+          const valueKey = String(cssValue);
+          const existing = acc.statisticsByValue[valueKey];
+
+          return {
+            ...acc,
+            statisticsByValue: {
+              ...acc.statisticsByValue,
+              [valueKey]: {
+                count: (existing?.count ?? 0) + 1,
+                ids: [...(existing?.ids ?? []), item.id],
+                names: [...(existing?.names ?? []), item.name],
+                originalValue: cssValue,
+              },
+            },
+          };
+        },
+        { statisticsByValue: {}, missingItemIds: [], missingItemNames: [] }
+      );
+
+    const sortedStatistics = Object.values(statisticsByValue).sort(
+      (a, b) => b.count - a.count
+    );
+    const dominantStatistics = sortedStatistics[0];
 
     return {
-      valueStats,
+      statisticsByValue,
       missingItemIds,
       missingItemNames,
-      sortedStats,
-      dominantStat,
-      dominantCount: dominantStat?.count ?? 0,
-      dominantValue: dominantStat?.originalValue ?? "",
+      sortedStatistics,
+      dominantStatistics,
+      dominantCount: dominantStatistics?.count ?? 0,
+      dominantValue: dominantStatistics?.originalValue ?? "",
     };
   }
 
-  private _generateFeedbackReports(
+  private _generateFeedbacks(
     cssKey: string,
-    dominantCount: number,
-    dominantValue: string,
-    analysis: ReturnType<typeof this._analyzeCssKeyStats>
-  ): FeedbackReport[] {
-    const feedbacks: FeedbackReport[] = [];
+    analysis: CssKeyAnalysis
+  ): DesignFeedback[] {
+    const feedbacks: DesignFeedback[] = [];
 
-    // 속성 누락 경고
     if (analysis.missingItemIds.length > 0) {
       feedbacks.push({
-        key: cssKey,
+        cssKey,
         type: "MISSING_PROP",
-        message: `'${cssKey}' 속성이 대다수(${dominantCount}개)에 존재하지만, 다음 아이템들에서 누락되었습니다: ${analysis.missingItemNames.join(", ")}`,
+        message: `'${cssKey}' 속성이 대다수(${analysis.dominantCount}개)에 존재하지만, 다음 아이템들에서 누락되었습니다: ${analysis.missingItemNames.join(", ")}`,
         itemIds: analysis.missingItemIds,
         itemNames: analysis.missingItemNames,
       });
     }
 
-    // 값 불일치 경고
-    const mismatchStats = analysis.sortedStats.slice(1);
-    const mismatchItemIds = mismatchStats.flatMap((stat) => stat.ids);
-    const mismatchItemNames = mismatchStats.flatMap((stat) => stat.names);
+    const mismatchStatistics = analysis.sortedStatistics.slice(1);
+    const mismatchItemIds = mismatchStatistics.flatMap((stat) => stat.ids);
+    const mismatchItemNames = mismatchStatistics.flatMap((stat) => stat.names);
 
     if (mismatchItemIds.length > 0) {
       feedbacks.push({
-        key: cssKey,
+        cssKey,
         type: "VALUE_MISMATCH",
-        message: `'${cssKey}' 속성값이 대다수(${String(dominantValue)})와 다릅니다. 확인 필요: ${mismatchItemNames.join(", ")}`,
+        message: `'${cssKey}' 속성값이 대다수(${analysis.dominantValue})와 다릅니다. 확인 필요: ${mismatchItemNames.join(", ")}`,
         itemIds: mismatchItemIds,
         itemNames: mismatchItemNames,
       });
@@ -481,15 +622,28 @@ class UpdateStyle {
   }
 
   private _createDynamicItems(
-    items: ItemWithCss[],
-    base: CssStyle
-  ): ItemWithCss[] {
+    items: VariantItem[],
+    baseStyle: CssStyle
+  ): VariantItem[] {
     return items.map((item) => ({
       ...item,
       css: Object.fromEntries(
-        Object.entries(item.css || {}).filter(([cssKey]) => !(cssKey in base))
+        Object.entries(item.css ?? {}).filter(
+          ([cssKey]) => !(cssKey in baseStyle)
+        )
       ),
     }));
+  }
+
+  // ============================================================
+  // Utility Methods
+  // ============================================================
+
+  private _serializeVariantProps(variantProps: VariantProps): string {
+    return Object.entries(variantProps)
+      .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+      .map(([key, value]) => `${key}=${value}`)
+      .join("|");
   }
 }
 
