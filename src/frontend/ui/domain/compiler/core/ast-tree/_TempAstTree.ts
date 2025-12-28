@@ -54,14 +54,12 @@ class _TempAstTree {
     this._refinedProps = refinedProps;
     this._superTree = superTree;
 
-    const updateStyle = new UpdateStyle(specDataManager).updateStyle;
-
     const variantTrees = specDataManager.getRenderTree().children;
 
     let tempAstTree = this.createTempAstTree(superTree, refinedProps);
 
     tempAstTree = this.updateMergedNode(tempAstTree);
-    tempAstTree = this.updateStyle2(tempAstTree);
+    tempAstTree = new UpdateStyle(specDataManager).updateStyle(tempAstTree);
     tempAstTree = this.updateNormalizeStyle(tempAstTree);
     tempAstTree = this.updateVisible(tempAstTree);
     tempAstTree = this.updateConditionalWrapper(tempAstTree);
