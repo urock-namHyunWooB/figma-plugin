@@ -112,6 +112,10 @@ class UpdateStyle {
   // Public Methods
   // ============================================================
 
+  /**
+   * AST 트리의 모든 노드에 최적화된 스타일을 계산하여 할당합니다.
+   * 각 노드의 variant들을 분석하여 공통 base 스타일과 dynamic 스타일을 분리합니다.
+   */
   public updateStyle(pivotTree: TempAstTree): TempAstTree {
     traverseBFS(pivotTree, (pivotNode) => {
       const itemsWithStyle = this._buildItemsWithStyle(pivotNode.mergedNode);
@@ -138,6 +142,7 @@ class UpdateStyle {
   // Style Building Methods
   // ============================================================
 
+  /** mergedNode 배열에서 각 아이템의 variant props와 CSS 스타일을 추출합니다. */
   private _buildItemsWithStyle(
     mergedNodes: Array<{ id: string; name: string }>
   ): Record<string, { css: CssStyle } & VariantProps> {
@@ -150,6 +155,7 @@ class UpdateStyle {
     ) as Record<string, { css: CssStyle } & VariantProps>;
   }
 
+  /** "size=Large, state=Default" 형식의 문자열을 { size: "Large", state: "Default" } 객체로 파싱합니다. */
   private _parseVariantName(variantName: string): VariantProps {
     const keyValuePairs = variantName
       .split(",")
@@ -160,6 +166,7 @@ class UpdateStyle {
     return Object.fromEntries(keyValuePairs);
   }
 
+  /** 아이템에서 CSS를 제외한 순수 variant props만 추출합니다. */
   private _extractVariantPropsOnly(
     itemsWithStyle: Record<string, { css: CssStyle } & VariantProps>
   ): VariantPropsById {
@@ -175,6 +182,7 @@ class UpdateStyle {
   // Style Computation (선언형)
   // ============================================================
 
+  /** 그룹별 variant를 분석하여 최적화된 StyleObject를 생성합니다. */
   private _computeOptimizedStyle(
     groupsByPropKey: Record<string, VariantGroup[]>,
     itemsWithStyle: Record<string, { css: CssStyle } & VariantProps>
@@ -193,6 +201,7 @@ class UpdateStyle {
     return { base: optimizedResult.commonBaseStyle, dynamic: [] };
   }
 
+  /** VariantGroup들을 varyKey 기준으로 그룹화하고 VariantItem 배열로 변환합니다. */
   private _transformGroupsToVariantItems(
     groupsByPropKey: Record<string, VariantGroup[]>,
     itemsWithStyle: Record<string, { css: CssStyle } & VariantProps>
@@ -210,6 +219,7 @@ class UpdateStyle {
     return groupedByVaryKey;
   }
 
+  /** VariantGroup의 아이템들을 VariantItem 배열로 매핑합니다. */
   private _mapGroupToVariantItems(
     group: VariantGroup,
     itemsWithStyle: Record<string, { css: CssStyle } & VariantProps>
@@ -222,6 +232,7 @@ class UpdateStyle {
     }));
   }
 
+  /** 중첩된 VariantItem 배열을 평탄화하고 variant key 기준으로 재그룹화합니다. */
   private _flattenAndGroupByVariantKey(
     itemsByVaryKey: Record<string, VariantItem[][]>
   ): Record<string, VariantItem[]> {
@@ -232,6 +243,7 @@ class UpdateStyle {
     );
   }
 
+  /** 각 variant key에 대해 스타일 추출 결과를 계산합니다. */
   private _computeStyleResults(
     itemsByVariantKey: Record<string, VariantItem[]>
   ): Record<string, ExtractedStyleResult> {
@@ -247,6 +259,7 @@ class UpdateStyle {
   // Style Optimization (선언형)
   // ============================================================
 
+  /** 스타일 결과를 최적화하여 공통 base와 varying 스타일을 분리합니다. */
   private _optimizeStyles(
     styleResultByVariant: Record<string, ExtractedStyleResult>
   ): { commonBaseStyle: CssStyle; dynamicVariants: DynamicVariants } {
@@ -259,6 +272,7 @@ class UpdateStyle {
     return { commonBaseStyle, dynamicVariants: optimizedDynamicVariants };
   }
 
+  /** 스타일 결과를 DynamicVariants 구조로 변환합니다. */
   private _structureDynamicVariants(
     styleResultByVariant: Record<string, ExtractedStyleResult>
   ): DynamicVariants {
@@ -283,6 +297,7 @@ class UpdateStyle {
     );
   }
 
+  /** 모든 variant에 공통으로 존재하는 CSS 속성을 추출합니다. */
   private _findCommonBaseStyles(
     styleResultByVariant: Record<string, ExtractedStyleResult>
   ): CssStyle {
@@ -299,6 +314,7 @@ class UpdateStyle {
     return Object.fromEntries(commonEntries);
   }
 
+  /** DynamicVariants에서 variant 간 실제로 다른 스타일만 남깁니다. */
   private _extractVaryingStylesOnly(
     dynamicVariants: DynamicVariants
   ): DynamicVariants {
@@ -315,6 +331,7 @@ class UpdateStyle {
     );
   }
 
+  /** dynamic 스타일이 1개 이하면 그대로 base로 사용합니다. */
   private _computeVariantBaseStyle(
     dynamicStyles: Array<{ base: CssStyle }>
   ): CssStyle {
@@ -324,6 +341,7 @@ class UpdateStyle {
     return {};
   }
 
+  /** variant 간 실제로 값이 다른 CSS 속성만 필터링합니다. */
   private _filterToVaryingStyles(
     dynamicStyles: Array<{
       variantName: string;
@@ -348,6 +366,7 @@ class UpdateStyle {
     }));
   }
 
+  /** 기준 base와 비교하여 모든 variant에서 값이 다른 CSS 키를 찾습니다. */
   private _findChangedCssKeys(
     referenceBase: CssStyle,
     dynamicStyles: Array<{ base: CssStyle }>
@@ -375,6 +394,7 @@ class UpdateStyle {
   // Variant Grouping (선언형)
   // ============================================================
 
+  /** variant props를 분석하여 단일 vary key 기준으로 그룹화합니다. */
   private _groupByVaryKey(variantPropsById: VariantPropsById): VariantGroup[] {
     const itemIds = Object.keys(variantPropsById);
     if (itemIds.length === 0) return [];
@@ -389,6 +409,7 @@ class UpdateStyle {
     return this._mergeAndFilterGroups(allGroupCandidates);
   }
 
+  /** 모든 아이템에서 사용된 prop key를 수집합니다 (css 제외). */
   private _collectAllPropKeys(
     variantPropsById: VariantPropsById,
     itemIds: string[]
@@ -400,6 +421,7 @@ class UpdateStyle {
     return [...new Set(allKeys)].filter((key) => key !== "css").sort();
   }
 
+  /** 모든 (varyKey, itemId) 조합에 대해 그룹 후보를 생성합니다. */
   private _generateAllGroupCandidates(
     allPropKeys: string[],
     itemIds: string[],
@@ -419,6 +441,7 @@ class UpdateStyle {
     );
   }
 
+  /** 단일 아이템에 대한 그룹 후보를 생성합니다 (groupKey와 초기 그룹 구조). */
   private _createGroupCandidate(
     varyKey: string,
     itemId: string,
@@ -449,6 +472,7 @@ class UpdateStyle {
     };
   }
 
+  /** 같은 groupKey를 가진 후보들을 병합하고, 2개 이상의 아이템을 가진 그룹만 반환합니다. */
   private _mergeAndFilterGroups(
     candidates: Array<{ groupKey: string; group: VariantGroup }>
   ): VariantGroup[] {
@@ -474,6 +498,7 @@ class UpdateStyle {
   // Style Extraction (선언형)
   // ============================================================
 
+  /** 아이템들의 CSS를 분석하여 base 스타일, dynamic 아이템, 피드백을 추출합니다. */
   private _extractStyleResult(items: VariantItem[]): ExtractedStyleResult {
     if (!items || items.length === 0) {
       return { baseStyle: {}, dynamicItems: [], feedbacks: [] };
@@ -495,16 +520,19 @@ class UpdateStyle {
     return { baseStyle, dynamicItems, feedbacks };
   }
 
+  /** 아이템 개수에 따른 합의 임계값을 계산합니다 (70% 이상 일치 시 합의). */
   private _calculateConsensusThreshold(totalCount: number): number {
     if (totalCount <= 2) return totalCount;
     if (totalCount === 3) return 2;
     return Math.ceil(totalCount * 0.7);
   }
 
+  /** 모든 아이템에서 사용된 CSS 키를 수집합니다. */
   private _collectAllCssKeys(items: VariantItem[]): string[] {
     return [...new Set(items.flatMap((item) => Object.keys(item.css ?? {})))];
   }
 
+  /** 각 CSS 키를 분석하여 base 스타일과 디자이너 피드백을 추출합니다. */
   private _analyzeAndExtractBase(
     items: VariantItem[],
     allCssKeys: string[],
@@ -535,6 +563,7 @@ class UpdateStyle {
     return { baseStyle, feedbacks };
   }
 
+  /** 특정 CSS 키에 대한 값 분포를 분석합니다 (통계, 누락, 지배적 값 등). */
   private _analyzeCssKey(items: VariantItem[], cssKey: string): CssKeyAnalysis {
     const { statisticsByValue, missingItemIds, missingItemNames } =
       items.reduce<{
@@ -588,6 +617,7 @@ class UpdateStyle {
     };
   }
 
+  /** 분석 결과를 바탕으로 디자이너에게 전달할 피드백을 생성합니다. */
   private _generateFeedbacks(
     cssKey: string,
     analysis: CssKeyAnalysis
@@ -621,6 +651,7 @@ class UpdateStyle {
     return feedbacks;
   }
 
+  /** base에 포함되지 않은 CSS만 남긴 dynamic 아이템들을 생성합니다. */
   private _createDynamicItems(
     items: VariantItem[],
     baseStyle: CssStyle
@@ -639,6 +670,7 @@ class UpdateStyle {
   // Utility Methods
   // ============================================================
 
+  /** variant props를 정렬된 "key=value|key=value" 형식의 문자열로 직렬화합니다. */
   private _serializeVariantProps(variantProps: VariantProps): string {
     return Object.entries(variantProps)
       .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
