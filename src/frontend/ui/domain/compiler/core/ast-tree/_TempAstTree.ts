@@ -60,6 +60,7 @@ class _TempAstTree {
 
     tempAstTree = this.updateMergedNode(tempAstTree);
     tempAstTree = new UpdateStyle(specDataManager).updateStyle(tempAstTree);
+    // tempAstTree = this.updateStyle2(tempAstTree);
     tempAstTree = this.updateNormalizeStyle(tempAstTree);
     tempAstTree = this.updateVisible(tempAstTree);
     tempAstTree = this.updateConditionalWrapper(tempAstTree);
@@ -92,6 +93,18 @@ class _TempAstTree {
     });
 
     return tempAstTree;
+  }
+
+  private _buildDynamicStyleArray(
+    dynamicVariants: DynamicVariants
+  ): StyleObject["dynamic"] {
+    return Object.values(dynamicVariants)
+      .flatMap((entry) => entry.style.dynamic)
+      .filter((item) => Object.keys(item.base).length > 0)
+      .map((item) => ({
+        condition: this._parseVariantCondition(item.variantName),
+        style: item.base,
+      }));
   }
 
   private createTempAstTree(
@@ -202,7 +215,7 @@ class _TempAstTree {
     });
 
     /**
-     * TODO
+
      * variantGroups에서 나온 각 variant 별로 어떤 값만 다른지 정확히 추출해야한다.
      * 추출할 수 없는 경우도 판단해야 한다. (디자이너에게 피드백)
      * variantGroups으로 판단.
@@ -241,9 +254,10 @@ class _TempAstTree {
 
     const variantResult = this._convertVariantStyle(variantStyle);
 
-    console.log(variantResult);
-
-    return { base: variantResult.base, dynamic: [] };
+    return {
+      base: variantResult.base,
+      dynamic: this._buildDynamicStyleArray(variantResult.dynamicVariants),
+    };
   }
 
   private _convertVariantStyle(variantStyle: Record<string, any>) {
@@ -332,8 +346,6 @@ class _TempAstTree {
         dynamicStyle[dynamicItem].base = newBase;
       }
     });
-
-    //TODO 중복 제거 해야함.
 
     return variantMap;
   }

@@ -1,4 +1,10 @@
-import { DynamicVariants, StyleObject, TempAstTree } from "@compiler";
+import {
+  ConditionNode,
+  DynamicVariants,
+  StyleObject,
+  TempAstTree,
+} from "@compiler";
+import { BinaryOperator } from "@compiler/types/customType";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import { traverseBFS } from "@compiler/utils/traverse";
 import { diff } from "deep-object-diff";
@@ -108,10 +114,6 @@ class UpdateStyle {
     this._specDataManager = specDataManager;
   }
 
-  // ============================================================
-  // Public Methods
-  // ============================================================
-
   /**
    * AST 트리의 모든 노드에 최적화된 스타일을 계산하여 할당합니다.
    * 각 노드의 variant들을 분석하여 공통 base 스타일과 dynamic 스타일을 분리합니다.
@@ -198,7 +200,49 @@ class UpdateStyle {
 
     const optimizedResult = this._optimizeStyles(styleResultByVariant);
 
-    return { base: optimizedResult.commonBaseStyle, dynamic: [] };
+    /**
+     * TODO
+     * optimizedResult에서 중복된 variant를 삭제해야한다.
+     */
+
+    return {
+      base: optimizedResult.commonBaseStyle,
+      dynamic: this._buildDynamicStyleArray(optimizedResult.dynamicVariants),
+    };
+  }
+
+  /** DynamicVariants를 StyleObject.dynamic 배열로 변환합니다. */
+  private _buildDynamicStyleArray(
+    dynamicVariants: DynamicVariants
+  ): StyleObject["dynamic"] {
+    return Object.values(dynamicVariants)
+      .flatMap((entry) => entry.style.dynamic)
+      .filter((item) => Object.keys(item.base).length > 0)
+      .map((item) => ({
+        condition: this._parseVariantCondition(item.variantName),
+        style: item.base,
+      }));
+  }
+
+  /** "Size=Large" 형태의 variantName을 ConditionNode AST로 변환합니다. */
+  private _parseVariantCondition(variantName: string): ConditionNode {
+    const [key, value] = variantName.split("=").map((s) => s.trim());
+    return {
+      type: "BinaryExpression",
+      operator: "===" as BinaryOperator,
+      left: {
+        type: "MemberExpression",
+        object: { type: "Identifier", name: "props" },
+        property: { type: "Identifier", name: key },
+        computed: false,
+        optional: false,
+      },
+      right: {
+        type: "Literal",
+        value: value,
+        raw: `'${value}'`,
+      },
+    } as ConditionNode;
   }
 
   /** VariantGroup들을 varyKey 기준으로 그룹화하고 VariantItem 배열로 변환합니다. */
