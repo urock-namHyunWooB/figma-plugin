@@ -146,11 +146,17 @@ class UpdateStyle {
 
   /** mergedNode 배열에서 각 아이템의 variant props와 CSS 스타일을 추출합니다. */
   private _buildItemsWithStyle(
-    mergedNodes: Array<{ id: string; name: string }>
+    mergedNodes: Array<{
+      id: string;
+      name: string;
+      variantName?: string | null;
+    }>
   ): Record<string, { css: CssStyle } & VariantProps> {
     return Object.fromEntries(
       mergedNodes.map((node) => {
-        const variantProps = this._parseVariantName(node.name);
+        const variantProps = this._parseVariantName(
+          node.variantName ?? node.name
+        );
         const css = this._specDataManager.getRenderTreeById(node.id).cssStyle;
         return [node.id, { ...variantProps, css }] as const;
       })
