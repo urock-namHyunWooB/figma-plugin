@@ -202,6 +202,14 @@ class UpdateStyle {
       itemsWithStyle
     );
 
+    /**
+     * TODO
+     * 아래의 방법은 하나가 모두 같은 variant를 모아둬서 동일한 css를 추출하는 방법이다.
+     * 하지만 이 방법은 하나의 variant가 다른 variant로 인해서 변하지 않는다는 가정하에 성립하는 조건.
+     *
+     * itemsByVaryKey를 다시 분석해서 base, dynamic을 다시 옳게 구하자.
+     */
+
     const itemsByVariantKey = this._flattenAndGroupByVariantKey(itemsByVaryKey);
 
     const styleResultByVariant = this._computeStyleResults(itemsByVariantKey);
