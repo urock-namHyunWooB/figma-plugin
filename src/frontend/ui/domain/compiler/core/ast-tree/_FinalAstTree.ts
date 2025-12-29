@@ -867,8 +867,8 @@ class _FinalAstTree {
   }
 
   private _refineStateProp(astTree: FinalAstTree) {
-    // State → pseudo-class 매핑 (null: base, "keep": prop 유지)
-    const STATE_TO_PSEUDO: Record<string, string | null | "keep"> = {
+    // State → pseudo-class 매핑 (null: base, undefined: unresolved)
+    const STATE_TO_PSEUDO: Record<string, string | null> = {
       // base로 이동
       Default: null,
       default: null,
@@ -884,9 +884,6 @@ class _FinalAstTree {
       Disabled: ":disabled",
       disabled: ":disabled",
       disable: ":disabled",
-      // CSS로 변환 불가 → prop 유지
-      loading: "keep",
-      Loading: "keep",
     };
 
     // State prop 이름 후보들
@@ -936,8 +933,8 @@ class _FinalAstTree {
           const stateValue = stateOnlyMatch[1];
           const pseudoClass = STATE_TO_PSEUDO[stateValue];
 
-          if (pseudoClass === "keep") {
-            // loading 등 → condition 유지
+          if (pseudoClass === undefined) {
+            // loading 등 CSS 변환 불가 → condition 유지 (런타임 처리 필요)
             // (이미 condition이므로 아무것도 하지 않음)
           } else {
             // Default, Hover, Pressed 등 → visible: true (항상 보임)
@@ -961,11 +958,13 @@ class _FinalAstTree {
         }
       }
 
-      // 2-2. dynamic style 처리
-      if (!node.style.dynamic || node.style.dynamic.length === 0) return;
+      if (!node.style.dynamic || node.style.dynamic.length === 0)
+        // 2-2. dynamic style 처리
+        return;
 
       const newDynamic: typeof node.style.dynamic = [];
       const pseudo: Record<string, Record<string, any>> = {};
+      const unresolved: typeof node.style.dynamic = [];
 
       // 복합 조건에서 State 포함된 것들을 그룹핑 (스타일 비교용)
       const stateComplexStyles: Array<{
@@ -986,13 +985,13 @@ class _FinalAstTree {
           const stateValue = stateOnlyMatch[1];
           const pseudoClass = STATE_TO_PSEUDO[stateValue];
 
-          if (pseudoClass === "keep") {
-            // loading 등 → dynamic 유지
-            newDynamic.push(dynamicStyle);
+          if (pseudoClass === undefined) {
+            // loading 등 CSS 변환 불가 → unresolved로 이동
+            unresolved.push(dynamicStyle);
           } else if (pseudoClass === null) {
             // Default → base로 이동
             node.style.base = { ...node.style.base, ...dynamicStyle.style };
-          } else if (pseudoClass) {
+          } else {
             // Hover, Pressed 등 → pseudo로 이동
             pseudo[pseudoClass] = {
               ...(pseudo[pseudoClass] || {}),
@@ -1037,13 +1036,13 @@ class _FinalAstTree {
           for (const complexStyle of stateComplexStyles) {
             const pseudoClass = STATE_TO_PSEUDO[complexStyle.stateValue];
 
-            if (pseudoClass === "keep") {
-              // loading 등은 그대로 유지
-              newDynamic.push({
+            if (pseudoClass === undefined) {
+              // loading 등 CSS 변환 불가 → unresolved로 이동
+              unresolved.push({
                 condition: complexStyle.condition,
                 style: complexStyle.style,
               });
-            } else if (pseudoClass && pseudoClass !== null) {
+            } else if (pseudoClass !== null) {
               // pseudo로 이동 (조건 제거)
               pseudo[pseudoClass] = {
                 ...(pseudo[pseudoClass] || {}),
@@ -1061,6 +1060,9 @@ class _FinalAstTree {
       node.style.dynamic = newDynamic;
       if (Object.keys(pseudo).length > 0) {
         node.style.pseudo = pseudo as any;
+      }
+      if (unresolved.length > 0) {
+        node.style.unresolved = unresolved;
       }
     });
 

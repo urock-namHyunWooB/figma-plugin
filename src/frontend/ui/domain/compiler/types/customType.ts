@@ -91,6 +91,15 @@ export type StyleObject = {
    * State prop에서 변환됨 (Hover → :hover, Pressed → :active 등)
    */
   pseudo?: Partial<Record<PseudoClass, Record<string, any>>>;
+
+  /**
+   * CSS로 변환 불가능한 조건부 스타일
+   * 런타임에서 JS로 처리 필요 (예: props.states === 'loading')
+   */
+  unresolved?: Array<{
+    condition: ConditionNode;
+    style: Record<string, any>;
+  }>;
 };
 
 export interface TempAstTree extends SuperTreeNode {
