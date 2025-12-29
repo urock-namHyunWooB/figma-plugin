@@ -109,6 +109,7 @@ const groupByKeyWithTransform = <T, K extends string, V>(
 
 class UpdateStyle {
   private _specDataManager: SpecDataManager;
+  private _reports: DesignFeedback[] = [];
 
   constructor(specDataManager: SpecDataManager) {
     this._specDataManager = specDataManager;
@@ -203,6 +204,11 @@ class UpdateStyle {
     const itemsByVariantKey = this._flattenAndGroupByVariantKey(itemsByVaryKey);
 
     const styleResultByVariant = this._computeStyleResults(itemsByVariantKey);
+
+    // feedbacks 추출해서 _reports에 추가
+    for (const result of Object.values(styleResultByVariant)) {
+      this._reports.push(...result.feedbacks);
+    }
 
     const optimizedResult = this._optimizeStyles(styleResultByVariant);
 
