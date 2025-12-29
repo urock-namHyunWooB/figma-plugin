@@ -213,11 +213,6 @@ class UpdateStyle {
 
     const optimizedResult = this._optimizeStyles(styleResultByVariant);
 
-    /**
-     * TODO
-     * optimizedResult에서 중복된 variant를 삭제해야한다.
-     */
-
     return {
       base: optimizedResult.commonBaseStyle,
       dynamic: this._buildDynamicStyleArray(optimizedResult.dynamicVariants),
@@ -228,13 +223,81 @@ class UpdateStyle {
   private _buildDynamicStyleArray(
     dynamicVariants: DynamicVariants
   ): StyleObject["dynamic"] {
-    return Object.values(dynamicVariants)
-      .flatMap((entry) => entry.style.dynamic)
-      .filter((item) => Object.keys(item.base).length > 0)
-      .map((item) => ({
-        condition: this._parseVariantCondition(item.variantName),
-        style: item.base,
-      }));
+    const result: StyleObject["dynamic"] = [];
+
+    /**
+     * TODO
+     * 중복된 variant를 삭제해야한다.
+     */
+
+    const allItems = Object.values(dynamicVariants).flatMap(
+      (entry) => entry.style.dynamic
+    );
+
+    for (const item of allItems) {
+      // 1. 단일 조건 (item.base가 있을 때)
+      if (Object.keys(item.base).length > 0) {
+        result.push({
+          condition: this._parseVariantCondition(item.variantName),
+          style: item.base,
+        });
+      }
+
+      // 2. 복합 조건 (item.dynamic 각 아이템)
+      if (item.dynamic && item.dynamic.length > 0) {
+        for (const dynamicItem of item.dynamic) {
+          // css가 비어있으면 스킵
+          if (!dynamicItem.css || Object.keys(dynamicItem.css).length === 0) {
+            continue;
+          }
+
+          // name: "size=L, type=outlined_blue, states=default" 파싱
+          const compoundCondition = this._parseCompoundCondition(
+            dynamicItem.name
+          );
+
+          result.push({
+            condition: compoundCondition,
+            style: dynamicItem.css,
+          });
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /** "size=L, type=outlined_blue, states=default" 형태의 복합 조건을 AND 조건으로 변환합니다. */
+  private _parseCompoundCondition(name: string): ConditionNode {
+    const pairs = name
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.includes("="));
+
+    if (pairs.length === 0) {
+      // 빈 조건이면 항상 true (Literal true)
+      return {
+        type: "Literal",
+        value: true,
+        raw: "true",
+      } as ConditionNode;
+    }
+
+    if (pairs.length === 1) {
+      // 단일 조건
+      return this._parseVariantCondition(pairs[0]);
+    }
+
+    // 복합 조건: AND로 연결
+    const conditions = pairs.map((pair) => this._parseVariantCondition(pair));
+
+    // 조건들을 AND로 연결 (좌결합)
+    return conditions.reduce((left, right) => ({
+      type: "LogicalExpression",
+      operator: "&&",
+      left,
+      right,
+    })) as ConditionNode;
   }
 
   /** "Size=Large" 형태의 variantName을 ConditionNode AST로 변환합니다. */

@@ -1,6 +1,7 @@
 import type {
   Expression,
   BinaryExpression,
+  LogicalExpression,
   MemberExpression,
   Literal,
   UnaryExpression,
@@ -16,6 +17,7 @@ export type { BinaryOperator };
 
 export type ConditionNode =
   | BinaryExpression
+  | LogicalExpression
   | UnaryExpression
   | MemberExpression
   | Literal;
