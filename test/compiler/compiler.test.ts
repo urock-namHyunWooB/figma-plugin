@@ -1313,14 +1313,14 @@ describe("compiler 테스트", () => {
         expect(code).toMatch(/customType\??:/);
       });
 
-      test("customType이 outlined_blue일때 배경색은 #F7F9FE 이다.", async () => {
+      test("customType이 outlined_blue일때 테두리색은 #F7F9FE 이다.", async () => {
         const { container } = renderButton({
           customType: "outlined_blue",
         });
         const root = getRootElement(container);
         const styles = getComputedStyle(root);
         // 배경색 확인 (#F7F9FE = rgb(247, 249, 254))
-        expect(styles.backgroundColor).toBe("rgb(247, 249, 254)");
+        expect(styles.borderColor).toBe("rgb(247, 249, 254)");
       });
 
       test("customType이 icon-outlined-red 일 때 텍스트는 없어야 한다", async () => {

@@ -71,8 +71,8 @@ export type DynamicVariants = Record<
       dynamic: {
         variantName: string;
         base: Record<string, string>;
-        dynamic: [];
-        report: [];
+        dynamic: any[];
+        report: any[];
       }[];
     };
   }

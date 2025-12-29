@@ -138,6 +138,7 @@ class UpdateStyle {
       );
     });
 
+    console.log(this._reports);
     return pivotTree;
   }
 
@@ -323,6 +324,7 @@ class UpdateStyle {
       this._structureDynamicVariants(styleResultByVariant);
 
     const commonBaseStyle = this._findCommonBaseStyles(styleResultByVariant);
+
     const optimizedDynamicVariants =
       this._extractVaryingStylesOnly(dynamicVariants);
 
@@ -341,8 +343,8 @@ class UpdateStyle {
       ([variantKey, styleResult]) => ({
         variantName: variantKey,
         base: styleResult.baseStyle,
-        dynamic: [] as [],
-        report: [] as [],
+        dynamic: styleResult.dynamicItems,
+        report: styleResult.feedbacks,
       })
     );
 
