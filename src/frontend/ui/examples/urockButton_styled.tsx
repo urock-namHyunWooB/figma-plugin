@@ -25,11 +25,46 @@ export interface BtnProps
 }
 
 const btnBySize__4139411 = { L: { borderRadius: "12px" } };
-const btnCss__4139411 = ($size: btnProps["size"] = "L") => css`
+const btnByCustomType__4139411 = {
+  "icon-filled": {
+    background: "var(--Color-primary-01, #628CF5)",
+    boxShadow:
+      "-1px 5px var(--Number-scope-Blur-blur-14, 14px) 0 rgba(98, 140, 245, 0.16)",
+  },
+  "icon-filled-red": {
+    background: "var(--Color-state-error, #FF8484)",
+    boxShadow:
+      "-1px 5px var(--Number-scope-Blur-blur-14, 14px) 0 rgba(248, 177, 177, 0.16)",
+  },
+  "icon-outlined-black": {
+    background: "var(--Color-bg-00, #FFF)",
+    boxShadow:
+      "0 10px var(--Number-scope-Blur-blur-6, 6px) 0 rgba(0, 0, 0, 0.01), 0 4px var(--Number-scope-Blur-blur-4, 4px) 0 rgba(0, 0, 0, 0.02), 0 1px var(--Number-scope-Blur-blur-2, 2px) 0 rgba(0, 0, 0, 0.02)",
+    border: "2px solid var(--Color-line-01, #EDEDED)",
+    backdropFilter: "blur(20px)",
+  },
+  "icon-outlined-blue": {
+    background: "var(--Color-bg-03, #F7F9FE)",
+    boxShadow:
+      "-1px 5px var(--Number-scope-Blur-blur-14, 14px) 0 rgba(98, 140, 245, 0.16)",
+    border: "2px solid var(--Color-line-03, #93B0F8)",
+  },
+  "icon-outlined-red": {
+    background: "var(--Color-bg-00, #FFF)",
+    boxShadow:
+      "-1px 5px var(--Number-scope-Blur-blur-14, 14px) 0 rgba(248, 177, 177, 0.16)",
+    border: "2px solid var(--Color-state-error, #FF8484)",
+  },
+};
+const btnCss__4139411 = (
+  $size: btnProps["size"] = "L",
+  $customType: btnProps["customType"] = "filled"
+) => css`
   display: inline-flex;
   justify-content: center;
   align-items: center;
   ${btnBySize__4139411[$size]}
+  ${btnByCustomType__4139411[$customType]}
 `;
 const icon_arrowBySize__4139412 = {
   L: { width: "24px", height: "24px" },
@@ -41,38 +76,20 @@ const icon_arrowCss__4139412 = ($size: btnProps["size"] = "L") => css`
 `;
 const buttonBySize__4139413 = {
   L: { lineHeight: "136%" },
-  M: { lineHeight: "148%" },
+  M: {
+    lineHeight: "148%",
+    fontFamily: "var(--Typography-Font-Famaily-pretendard-text, Pretendard)",
+    fontSize: "var(--Typography-Font-Size-fontSize-16px, 16px)",
+    fontWeight: "var(--Typography-Font-Weight-semibold-600, 600)",
+    letterSpacing:
+      "var(--Typography-Letter-Spacing-latterSpacing-neg0_5px, -0.5px)",
+  },
   S: { lineHeight: "140%" },
 };
 const buttonCss__4139413 = ($size: btnProps["size"] = "L") => css`
   text-align: center;
   font-style: normal;
   ${buttonBySize__4139413[$size]}
-
-  :hover {
-    font-family: var(--Typography-Font-Famaily-pretendard-text, Pretendard);
-    font-weight: var(--Typography-Font-Weight-semibold-600, 600);
-    letter-spacing: var(
-      --Typography-Letter-Spacing-latterSpacing-neg0_5px,
-      -0.5px
-    );
-  }
-  :active {
-    font-family: var(--Typography-Font-Famaily-pretendard-text, Pretendard);
-    font-weight: var(--Typography-Font-Weight-semibold-600, 600);
-    letter-spacing: var(
-      --Typography-Letter-Spacing-latterSpacing-neg0_5px,
-      -0.5px
-    );
-  }
-  :disabled {
-    font-family: var(--Typography-Font-Famaily-pretendard-text, Pretendard);
-    font-weight: var(--Typography-Font-Weight-semibold-600, 600);
-    letter-spacing: var(
-      --Typography-Letter-Spacing-latterSpacing-neg0_5px,
-      -0.5px
-    );
-  }
 `;
 const icon_arrowCss__4139414 = css`
   width: 24px;
@@ -90,7 +107,7 @@ export default function Btn(props: BtnProps) {
     ...restProps
   } = props;
   return (
-    <button css={btnCss__4139411(size)} {...restProps}>
+    <button css={btnCss__4139411(size, customType)} {...restProps}>
       {props.iconLeft}
       <span css={buttonCss__4139413(size)}>{text}</span>
       {props.iconRight}

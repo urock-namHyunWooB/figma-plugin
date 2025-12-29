@@ -321,6 +321,7 @@ class UpdateStyle {
   ): { commonBaseStyle: CssStyle; dynamicVariants: DynamicVariants } {
     const dynamicVariants =
       this._structureDynamicVariants(styleResultByVariant);
+
     const commonBaseStyle = this._findCommonBaseStyles(styleResultByVariant);
     const optimizedDynamicVariants =
       this._extractVaryingStylesOnly(dynamicVariants);
@@ -375,26 +376,50 @@ class UpdateStyle {
     dynamicVariants: DynamicVariants
   ): DynamicVariants {
     return Object.fromEntries(
-      Object.entries(dynamicVariants).map(([propName, variantEntry]) => [
-        propName,
-        {
-          style: {
-            base: this._computeVariantBaseStyle(variantEntry.style.dynamic),
-            dynamic: this._filterToVaryingStyles(variantEntry.style.dynamic),
+      Object.entries(dynamicVariants).map(([propName, variantEntry]) => {
+        const commonBase = this._computeVariantBaseStyle(
+          variantEntry.style.dynamic
+        );
+        const commonKeys = Object.keys(commonBase);
+
+        // 각 variant에서 공통 스타일 제거
+        const filteredDynamic = variantEntry.style.dynamic.map((style) => ({
+          ...style,
+          base: Object.fromEntries(
+            Object.entries(style.base).filter(
+              ([key]) => !commonKeys.includes(key)
+            )
+          ),
+        }));
+
+        return [
+          propName,
+          {
+            style: {
+              base: commonBase,
+              dynamic: filteredDynamic,
+            },
           },
-        },
-      ])
+        ];
+      })
     );
   }
 
-  /** dynamic 스타일이 1개 이하면 그대로 base로 사용합니다. */
+  /** 모든 variant에 공통으로 존재하는 CSS 속성을 추출합니다. */
   private _computeVariantBaseStyle(
     dynamicStyles: Array<{ base: CssStyle }>
   ): CssStyle {
-    if (dynamicStyles.length <= 1) {
-      return dynamicStyles[0]?.base ?? {};
-    }
-    return {};
+    if (dynamicStyles.length === 0) return {};
+    if (dynamicStyles.length === 1) return dynamicStyles[0].base ?? {};
+
+    // 첫 번째 스타일을 기준으로 모든 variant에 공통인 속성 찾기
+    const firstBase = dynamicStyles[0].base;
+    const commonEntries = Object.entries(firstBase).filter(
+      ([cssKey, cssValue]) =>
+        dynamicStyles.every((style) => style.base[cssKey] === cssValue)
+    );
+
+    return Object.fromEntries(commonEntries);
   }
 
   /** variant 간 실제로 값이 다른 CSS 속성만 필터링합니다. */
