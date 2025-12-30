@@ -8,6 +8,8 @@ import { BinaryOperator } from "@compiler/types/customType";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import { traverseBFS } from "@compiler/utils/traverse";
 import { diff } from "deep-object-diff";
+import { toStringName } from "@compiler/utils/stringUtils";
+import { removeCommonShallow } from "@compiler/utils/objectUtils";
 
 // ============================================================
 // Type Definitions
@@ -210,7 +212,18 @@ class UpdateStyle {
      * itemsByVaryKey를 다시 분석해서 base, dynamic을 다시 옳게 구하자.
      */
 
-    const itemsByVariantKey = this._flattenAndGroupByVariantKey(itemsByVaryKey);
+    /**
+     * itemsByVaryKey에서 각 variant 별로 다른 css key를 저장
+     *
+     * itemsByVariantKey에서 variant 별로 다른 css key만 취한다.
+     */
+
+    const cssItemsByVaryKey = this._filterToVaryingStyles2(itemsByVaryKey);
+
+    const itemsByVariantKey =
+      this._flattenAndGroupByVariantKey2(itemsByVaryKey);
+
+    //key별로 분류
 
     const styleResultByVariant = this._computeStyleResults(itemsByVariantKey);
 
@@ -361,6 +374,38 @@ class UpdateStyle {
   }
 
   /** 중첩된 VariantItem 배열을 평탄화하고 variant key 기준으로 재그룹화합니다. */
+  private _flattenAndGroupByVariantKey2(
+    itemsByVaryKey: Record<string, VariantItem[][]>
+  ): Record<string, VariantItem[]> {
+    const rtnObj: Record<string, Record<string, string>[]> = {};
+    const allVariantItems = Object.values(itemsByVaryKey).flat(2);
+
+    allVariantItems.forEach((item) => {
+      if (!rtnObj[toStringName(item.variant)]) {
+        rtnObj[toStringName(item.variant)] = [];
+      }
+
+      const omitKeys = [
+        "display",
+        "align-items",
+        "justify-content",
+        "border-radius",
+      ] as const;
+
+      const next = Object.fromEntries(
+        Object.entries(item.css).filter(([k]) => !omitKeys.includes(k as any))
+      );
+
+      rtnObj[toStringName(item.variant)].push({
+        ...next,
+        variantName: item.name,
+      });
+    });
+
+    return rtnObj;
+  }
+
+  /** 중첩된 VariantItem 배열을 평탄화하고 variant key 기준으로 재그룹화합니다. */
   private _flattenAndGroupByVariantKey(
     itemsByVaryKey: Record<string, VariantItem[][]>
   ): Record<string, VariantItem[]> {
@@ -493,6 +538,47 @@ class UpdateStyle {
     );
 
     return Object.fromEntries(commonEntries);
+  }
+
+  private _filterToVaryingStyles2(
+    itemsByVaryKey: Record<string, VariantItem[][]>
+  ) {
+    const rtn: Record<string, Record<string, any>[]> = {};
+    //itemsByVaryKey에서 각 variant 별로 다른 css key를 저장
+    //{size: [{gap: 4}]} 이런식으로 저장.
+
+    Object.entries(itemsByVaryKey).forEach(([variantKey, items]) => {
+      rtn[variantKey] = [];
+
+      if (items.length === 0) return;
+
+      items.forEach((item) => {
+        if (item.length === 0) return;
+        if (item.length === 1)
+          return rtn[variantKey].push({
+            ...item[0].css,
+            variantKey: item[0].name,
+          });
+
+        const diffResult: Record<string, any>[] = [];
+
+        const itemCsses = item.map((item) => ({
+          ...item.css,
+          variantKey: item.name,
+        }));
+
+        const result = removeCommonShallow(...itemCsses);
+        diffResult.push(...result);
+
+        rtn[variantKey].push(diffResult);
+      });
+    });
+
+    /**
+     * TODO
+     * rtn 보고 각 variant 일반화 해서 중복된걸 삭제하는 로직을 짜본다.
+     */
+    console.log(rtn);
   }
 
   /** variant 간 실제로 값이 다른 CSS 속성만 필터링합니다. */
