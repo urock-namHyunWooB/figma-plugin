@@ -10,6 +10,7 @@ import airtableSelectButton from "../../../../test/fixtures/select-button/airtab
 
 import type { FigmaNodeData } from "@compiler/types/baseType";
 import { useCompilerDebug } from "./useCompilerDebug";
+import ErrorBoundary from "@frontend/ui/components/ErrorBoundary";
 
 export function TestComp() {
   const FIXTURES = useMemo(
@@ -115,19 +116,21 @@ export function TestComp() {
       )}
 
       {Component && (
-        <div style={{ marginBottom: "30px" }}>
-          <h3>렌더링 결과:</h3>
-          <div
-            style={{
-              padding: "20px",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-              backgroundColor: "#fff",
-            }}
-          >
-            <Component />
+        <ErrorBoundary>
+          <div style={{ marginBottom: "30px" }}>
+            <h3>렌더링 결과:</h3>
+            <div
+              style={{
+                padding: "20px",
+                border: "1px solid #ddd",
+                borderRadius: "4px",
+                backgroundColor: "#fff",
+              }}
+            >
+              <Component />
+            </div>
           </div>
-        </div>
+        </ErrorBoundary>
       )}
 
       <div style={{ marginBottom: "30px" }}>

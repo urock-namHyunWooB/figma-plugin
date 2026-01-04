@@ -30,14 +30,31 @@ class CreateSuperTree {
     this.SortNodes = new _SortNodes(specDataManager);
     this.UpdateSquashByIou = new UpdateSquashByIou(matcher, specDataManager);
 
-    const components = this.renderTree.children;
-    // 1. 원본 components로 방향 그래프 구축
+    const rootNodeData = specDataManager.getSpecById(renderTree.id);
+    const isComponentSet = rootNodeData?.type === "COMPONENT_SET";
 
-    let superTree = components
-      .map((comp) => this._convertSuperTreeNode(comp, null, comp.name)!)
-      .reduce((superTree, target) => this._mergeTree(superTree, target));
+    let superTree: SuperTreeNode;
 
-    superTree = this.UpdateSquashByIou.updateSquashByIou(superTree, components);
+    if (isComponentSet) {
+      // COMPONENT_SET: children(각 variant)을 합쳐서 하나의 트리로
+      const components = this.renderTree.children;
+      superTree = components
+        .map((comp) => this._convertSuperTreeNode(comp, null, comp.name)!)
+        .reduce((superTree, target) => this._mergeTree(superTree, target));
+
+      superTree = this.UpdateSquashByIou.updateSquashByIou(
+        superTree,
+        components
+      );
+    } else {
+      // COMPONENT, FRAME, INSTANCE 등: renderTree 자체를 루트로
+      superTree = this._convertSuperTreeNode(
+        renderTree,
+        null,
+        renderTree.name
+      )!;
+    }
+
     superTree = this.updateSquashFrameNode(superTree);
 
     this.superTree = superTree;

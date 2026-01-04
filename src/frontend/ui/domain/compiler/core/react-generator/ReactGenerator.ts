@@ -131,9 +131,15 @@ class ReactGenerator {
 
   /**
    * Prettier로 코드 포맷팅
+   * 포맷팅 실패 시 원본 코드 반환
    */
   private async formatCode(code: string): Promise<string> {
-    return await prettier.format(code, ReactGenerator.PRETTIER_CONFIG);
+    try {
+      return await prettier.format(code, ReactGenerator.PRETTIER_CONFIG);
+    } catch (error) {
+      console.warn("Prettier formatting failed, returning unformatted code:", error);
+      return code;
+    }
   }
 }
 

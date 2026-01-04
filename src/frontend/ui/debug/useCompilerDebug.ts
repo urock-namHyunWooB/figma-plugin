@@ -120,6 +120,7 @@ export function useCompilerDebug(spec: FigmaNodeData) {
           },
         });
       } catch (err) {
+        console.error("err");
         if (!isMounted) return;
         if (compileId !== compileIdRef.current) return;
 

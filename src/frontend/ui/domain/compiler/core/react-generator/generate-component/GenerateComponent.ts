@@ -63,7 +63,7 @@ class GenerateComponent {
       this.factory.createBlock(
         [
           // const { size = "Large", ...restProps } = props;
-          ...(destructuringStatement ? [destructuringStatement] : []),
+          destructuringStatement,
           // return <JSX>;
           this.factory.createReturnStatement(returnExpression),
         ],
@@ -75,12 +75,10 @@ class GenerateComponent {
   /**
    * Props 구조 분해 선언 생성
    * const { size = "Large", leftIcon, rightIcon, text, ...restProps } = props;
+   * props가 비어있어도 restProps는 항상 생성
    */
-  private _createPropsDestructuring(): ts.VariableStatement | null {
-    const props = this.astTree.props;
-    if (!props || Object.keys(props).length === 0) {
-      return null;
-    }
+  private _createPropsDestructuring(): ts.VariableStatement {
+    const props = this.astTree.props || {};
 
     const bindingElements: ts.BindingElement[] = [];
     const propNames: string[] = [];

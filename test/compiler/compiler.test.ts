@@ -5,6 +5,7 @@ import taptapButtonSampleMockData from "../fixtures/button/taptapButton_sample.j
 import taptapButtonMockData from "../fixtures/button/taptapButton.json";
 
 import urockButtonSampleMockData from "../fixtures/button/urockButton.json";
+import tadaButtonComponentMockData from "../fixtures/tada-button-component.json";
 
 import airtableButtonMockData from "../fixtures/button/airtableButton.json";
 import urockChipsMockData from "../fixtures/chip/urock-chips.json";
@@ -1486,5 +1487,50 @@ describe("compiler 테스트", () => {
 
   describe("예외 테스트", () => {
     test("컴파일이 실패해도 앱이 죽으면 안된다. ", () => {});
+  });
+
+  describe("INSTANCE 노드 처리", () => {
+    describe("tadaButtonComponent (INSTANCE)", () => {
+      let compiler: FigmaCompiler;
+      let code: string | null;
+
+      beforeAll(async () => {
+        compiler = new FigmaCompiler(tadaButtonComponentMockData as any);
+        code = await compiler.getGeneratedCode("Badge");
+      });
+
+      test("코드가 생성되어야 한다", () => {
+        expect(code).not.toBeNull();
+        expect(code).toBeDefined();
+      });
+
+      test("유효한 JSX 태그 이름이어야 한다 (특수문자 없음)", () => {
+        // <Badge/Push /> 같은 잘못된 태그가 없어야 함
+        expect(code).not.toMatch(/<[A-Za-z]+\/[A-Za-z]+/);
+        // 유효한 컴포넌트 태그가 있어야 함
+        expect(code).toMatch(/return.*<[A-Z][A-Za-z]*/);
+      });
+
+      test("children이 렌더링되어야 한다 (Container, Text)", () => {
+        // Container div가 있어야 함
+        expect(code).toMatch(/<div|<span/);
+      });
+
+      test("스타일이 적용되어야 한다", () => {
+        // css prop 또는 style이 적용되어야 함
+        expect(code).toMatch(/css=|style=/);
+      });
+
+      test("restProps가 정상적으로 구조분해되어야 한다", () => {
+        expect(code).toContain("...restProps");
+        expect(code).toContain("const {");
+      });
+
+      test("렌더링이 성공해야 한다", async () => {
+        const Component = await renderReactComponent(code!);
+        const { container } = render(React.createElement(Component, {}));
+        expect(container.firstElementChild).toBeTruthy();
+      });
+    });
   });
 });
