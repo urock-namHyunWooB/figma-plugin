@@ -611,13 +611,6 @@ class _TempAstTree {
     const totalVariantCount =
       this._specDataManager.getRenderTree().children.length;
 
-    // DEBUG: 텍스트 노드 확인
-    if (targetNode.name === "button" || targetNode.type === "TEXT") {
-      console.log(`=== _inferVisible DEBUG for "${targetNode.name}" ===`);
-      console.log(`mergedNode.length: ${targetNode.mergedNode.length}`);
-      console.log(`totalVariantCount: ${totalVariantCount}`);
-    }
-
     if (targetNode.mergedNode.length === totalVariantCount) {
       return {
         type: "static",
@@ -721,13 +714,6 @@ class _TempAstTree {
   ): ConditionNode | null {
     const allVariants = this._specDataManager.getRenderTree().children;
     const totalVariantCount = allVariants.length;
-
-    // urockButton 디버깅
-    if (targetNode.name === "button" && totalVariantCount === 114) {
-      console.log(`=== _inferConditionFromMergedNode for UROCK button ===`);
-      console.log(`mergedNode.length: ${targetNode.mergedNode.length}`);
-      console.log(`totalVariantCount: ${totalVariantCount}`);
-    }
 
     // 모든 variant에서 존재하면 조건 불필요
     if (targetNode.mergedNode.length >= totalVariantCount) {

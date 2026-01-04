@@ -298,6 +298,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
     test("Text는 무조건 하나 있어야 한다.", async () => {
       const compiler = new FigmaCompiler(mockData);
       const code = await await compiler.getGeneratedCode("Button")!;
+      
       const Component = await renderReactComponent(code!);
 
       const parsed = parsePropsFromInterface(code!);

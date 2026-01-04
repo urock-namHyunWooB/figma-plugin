@@ -634,9 +634,20 @@ class CreateJsxTree {
   }
 
   /**
-   * MemberExpression 변환 (예: props.size, props['Left Icon'])
+   * MemberExpression 변환 (예: props.size → size)
+   * props 객체를 참조하는 경우, 구조 분해된 변수를 직접 사용
    */
   private _convertMemberExpression(node: any): ts.Expression {
+    // props.X 형태인 경우, 구조 분해된 변수 X를 직접 사용
+    if (
+      node.object?.type === "Identifier" &&
+      node.object?.name === "props" &&
+      !node.computed
+    ) {
+      const propertyName = node.property.name || node.property;
+      return this.factory.createIdentifier(propertyName);
+    }
+
     const object = this._convertEstreeToTsExpression(node.object);
 
     // computed가 true면 bracket notation (props['Left Icon']), false면 dot notation (props.size)
