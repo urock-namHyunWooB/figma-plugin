@@ -568,6 +568,12 @@ class CreateJsxTree {
       case "Identifier":
         return this._convertIdentifier(estreeNode);
 
+      case "CallExpression":
+        return this._convertCallExpression(estreeNode);
+
+      case "ArrayExpression":
+        return this._convertArrayExpression(estreeNode);
+
       default:
         console.warn(
           `Unknown ESTree node type: ${estreeNode.type}`,
@@ -689,6 +695,27 @@ class CreateJsxTree {
 
     // 기본값
     return this.factory.createStringLiteral(String(value));
+  }
+
+  /**
+   * CallExpression 변환 (예: ["a", "b"].includes(prop))
+   */
+  private _convertCallExpression(node: any): ts.CallExpression {
+    const callee = this._convertEstreeToTsExpression(node.callee);
+    const args = (node.arguments || []).map((arg: any) =>
+      this._convertEstreeToTsExpression(arg)
+    );
+    return this.factory.createCallExpression(callee, undefined, args);
+  }
+
+  /**
+   * ArrayExpression 변환 (예: ["a", "b", "c"])
+   */
+  private _convertArrayExpression(node: any): ts.ArrayLiteralExpression {
+    const elements = (node.elements || []).map((el: any) =>
+      this._convertEstreeToTsExpression(el)
+    );
+    return this.factory.createArrayLiteralExpression(elements);
   }
 
   /**

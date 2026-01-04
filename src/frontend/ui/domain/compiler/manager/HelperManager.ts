@@ -56,6 +56,46 @@ class HelperManager {
     })) as unknown as ConditionNode;
   }
 
+  /**
+   * 배열 기반 includes 조건 생성
+   * ["filled", "outlined"].includes(props.customType)
+   * → 이후 CreateJsxTree에서 props.X를 X로 변환
+   */
+  public createIncludesCondition(
+    propName: string,
+    values: string[]
+  ): ConditionNode {
+    return {
+      type: "CallExpression",
+      callee: {
+        type: "MemberExpression",
+        object: {
+          type: "ArrayExpression",
+          elements: values.map((v) => ({
+            type: "Literal",
+            value: v,
+            raw: `"${v}"`,
+          })),
+        },
+        property: { type: "Identifier", name: "includes" },
+        computed: false,
+        optional: false,
+      },
+      arguments: [
+        {
+          // props.propName 형태로 생성 (createBinaryCondition과 동일)
+          // CreateJsxTree에서 props.X를 X로 변환함
+          type: "MemberExpression",
+          object: { type: "Identifier", name: "props" },
+          property: { type: "Identifier", name: propName },
+          computed: false,
+          optional: false,
+        },
+      ],
+      optional: false,
+    } as unknown as ConditionNode;
+  }
+
   public createBinaryCondition(propName: string, value: string): ConditionNode {
     return {
       type: "BinaryExpression",

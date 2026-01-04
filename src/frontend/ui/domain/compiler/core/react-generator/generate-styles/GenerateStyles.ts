@@ -42,6 +42,11 @@ class GenerateStyles {
     const styleVariables: ts.VariableStatement[] = [];
 
     traverseBFS(this.astTree, (node) => {
+      // Slot 노드는 CSS 생성 스킵 (사용자가 전달하는 컴포넌트이므로)
+      if ((node as any).isSlot) {
+        return;
+      }
+
       // 스타일이 없는 노드는 스킵
       const hasBaseStyle =
         node.style.base && Object.keys(node.style.base).length > 0;

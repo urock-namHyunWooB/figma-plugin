@@ -823,11 +823,10 @@ class _TempAstTree {
           helper.createBinaryCondition(propName, otherValues[0])
         );
       } else if (otherValues.length > 1) {
-        // 복수 값: props.Size === 'Large' || props.Size === 'Medium'
-        const multiConditions = otherValues.map((v) =>
-          helper.createBinaryCondition(propName, v)
+        // 복수 값: 배열 기반 includes 조건 사용
+        orConditions.push(
+          helper.createIncludesCondition(propName, otherValues)
         );
-        orConditions.push(helper.combineWithOr(multiConditions));
       }
     }
 
@@ -872,7 +871,7 @@ class _TempAstTree {
         (v: string) => !v.startsWith(commonPrefix)
       );
 
-      // present values가 있으면 OR 조건 생성
+      // present values가 있으면 조건 생성
       if (
         presentValues.length > 0 &&
         presentValues.length < def.variantOptions.length
@@ -880,10 +879,8 @@ class _TempAstTree {
         if (presentValues.length === 1) {
           return helper.createBinaryCondition(propName, presentValues[0]);
         } else {
-          const orConditions = presentValues.map((v: string) =>
-            helper.createBinaryCondition(propName, v)
-          );
-          return helper.combineWithOr(orConditions);
+          // 여러 값이면 배열 기반 includes 조건 사용
+          return helper.createIncludesCondition(propName, presentValues);
         }
       }
     }
@@ -961,10 +958,10 @@ class _TempAstTree {
         const value = [...presentOptions][0];
         conditions.push(helper.createBinaryCondition(propName, value));
       } else if (presentOptions.size > 1) {
-        const orConditions = [...presentOptions].map((v) =>
-          helper.createBinaryCondition(propName, v)
+        // 여러 값이면 배열 기반 includes 조건 사용
+        conditions.push(
+          helper.createIncludesCondition(propName, [...presentOptions])
         );
-        conditions.push(helper.combineWithOr(orConditions));
       }
     }
 

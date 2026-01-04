@@ -20,6 +20,7 @@ export type ConditionNode =
   | LogicalExpression
   | UnaryExpression
   | MemberExpression
+  | CallExpression
   | Literal;
 
 export type RenderTree = StyleTree;
