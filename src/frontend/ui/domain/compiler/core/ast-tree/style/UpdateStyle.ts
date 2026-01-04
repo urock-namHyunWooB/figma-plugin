@@ -218,7 +218,7 @@ class UpdateStyle {
      * itemsByVariantKey에서 variant 별로 다른 css key만 취한다.
      */
 
-    const cssItemsByVaryKey = this._filterToVaryingStyles2(itemsByVaryKey);
+    this._filterToVaryingStyles2(itemsByVaryKey);
 
     const itemsByVariantKey =
       this._flattenAndGroupByVariantKey2(itemsByVaryKey);
@@ -377,12 +377,13 @@ class UpdateStyle {
   private _flattenAndGroupByVariantKey2(
     itemsByVaryKey: Record<string, VariantItem[][]>
   ): Record<string, VariantItem[]> {
-    const rtnObj: Record<string, Record<string, string>[]> = {};
+    const rtnObj: Record<string, VariantItem[]> = {};
     const allVariantItems = Object.values(itemsByVaryKey).flat(2);
 
     allVariantItems.forEach((item) => {
-      if (!rtnObj[toStringName(item.variant)]) {
-        rtnObj[toStringName(item.variant)] = [];
+      const variantKey = toStringName(item.variant);
+      if (!rtnObj[variantKey]) {
+        rtnObj[variantKey] = [];
       }
 
       const omitKeys = [
@@ -392,13 +393,15 @@ class UpdateStyle {
         "border-radius",
       ] as const;
 
-      const next = Object.fromEntries(
+      const filteredCss = Object.fromEntries(
         Object.entries(item.css).filter(([k]) => !omitKeys.includes(k as any))
       );
 
-      rtnObj[toStringName(item.variant)].push({
-        ...next,
-        variantName: item.name,
+      rtnObj[variantKey].push({
+        id: item.id,
+        variant: item.variant,
+        css: filteredCss,
+        name: item.name,
       });
     });
 
