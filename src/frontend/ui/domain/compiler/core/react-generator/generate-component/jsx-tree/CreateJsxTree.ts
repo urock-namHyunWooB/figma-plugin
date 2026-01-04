@@ -209,13 +209,14 @@ class CreateJsxTree {
     // CSS 함수 변수명 생성 (GenerateStyles와 동일한 로직)
     const cssVarName = this._getCssVariableName(node);
 
-    // Dynamic style이 있으면 함수 호출, 없으면 변수 참조
+    // Dynamic styles를 prop별로 그룹핑
+    const grouped = this._groupDynamicStylesByProp(node.style.dynamic || []);
+
+    // grouped.size > 0 이면 함수 호출, 아니면 변수 참조
+    // (GenerateStyles.ts의 params.length > 0 로직과 동일하게 맞춤)
     let cssExpression: ts.Expression;
 
-    if (hasDynamicStyle) {
-      // Dynamic styles를 prop별로 그룹핑
-      const grouped = this._groupDynamicStylesByProp(node.style.dynamic || []);
-
+    if (grouped.size > 0) {
       // 파라미터 생성 (구조 분해된 변수 사용)
       const args: ts.Expression[] = [];
       for (const [propName] of grouped.entries()) {
@@ -231,7 +232,7 @@ class CreateJsxTree {
         args
       );
     } else {
-      // Dynamic style이 없으면 변수 참조: cssVarName
+      // grouped가 비어있으면 변수 참조: cssVarName
       cssExpression = this.factory.createIdentifier(cssVarName);
     }
 

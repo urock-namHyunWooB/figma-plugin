@@ -366,7 +366,8 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
       // JSDOM에서 emotion/style sheet 기반 font-family를 안정적으로 computedStyle로 검증하기 어렵기 때문에,
       // 생성 코드에 font-family 선언이 포함되는지를 1차로 보장한다.
-      expect(code).toMatch(/font-family\s*:/);
+      // CSS-in-JS는 camelCase(fontFamily) 또는 kebab-case(font-family) 모두 사용 가능
+      expect(code).toMatch(/font-family\s*:|fontFamily\s*:/);
     });
 
     test("아이콘 크기 적용이 실제 아이콘에 잘 먹어야 한다.", async () => {

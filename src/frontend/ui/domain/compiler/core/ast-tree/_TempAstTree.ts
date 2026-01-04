@@ -611,6 +611,13 @@ class _TempAstTree {
     const totalVariantCount =
       this._specDataManager.getRenderTree().children.length;
 
+    // DEBUG: 텍스트 노드 확인
+    if (targetNode.name === "button" || targetNode.type === "TEXT") {
+      console.log(`=== _inferVisible DEBUG for "${targetNode.name}" ===`);
+      console.log(`mergedNode.length: ${targetNode.mergedNode.length}`);
+      console.log(`totalVariantCount: ${totalVariantCount}`);
+    }
+
     if (targetNode.mergedNode.length === totalVariantCount) {
       return {
         type: "static",
@@ -715,6 +722,13 @@ class _TempAstTree {
     const allVariants = this._specDataManager.getRenderTree().children;
     const totalVariantCount = allVariants.length;
 
+    // urockButton 디버깅
+    if (targetNode.name === "button" && totalVariantCount === 114) {
+      console.log(`=== _inferConditionFromMergedNode for UROCK button ===`);
+      console.log(`mergedNode.length: ${targetNode.mergedNode.length}`);
+      console.log(`totalVariantCount: ${totalVariantCount}`);
+    }
+
     // 모든 variant에서 존재하면 조건 불필요
     if (targetNode.mergedNode.length >= totalVariantCount) {
       return null;
@@ -781,7 +795,18 @@ class _TempAstTree {
       }
     }
 
-    // 공통점이 없으면 기존 로직으로 fallback
+    // 먼저 prefix 패턴 확인 (icon-* 같은 케이스)
+    // absent variants의 특정 prop에서 공통 prefix가 있는지 확인
+    const prefixCondition = this._inferConditionFromCommonPrefix(
+      absentVariants,
+      definitions,
+      invariantProps
+    );
+    if (prefixCondition) {
+      return prefixCondition;
+    }
+
+    // 공통점이 없으면 fallback
     if (Object.keys(commonAbsentValues).length === 0) {
       return this._inferConditionFromPresentVariants(targetNode, definitions);
     }
@@ -818,6 +843,89 @@ class _TempAstTree {
     // 여러 prop의 조건은 OR로 연결
     // (Left Icon=True) OR (Right Icon=True)
     return helper.combineWithOr(orConditions);
+  }
+
+  /**
+   * absent variants에서 공통 prefix를 찾아 조건 생성
+   * 예: icon-filled, icon-outlined-red → "icon-" prefix
+   * → !props.type.startsWith("icon-") 또는 OR 조건으로 변환
+   */
+  private _inferConditionFromCommonPrefix(
+    absentVariants: Array<Record<string, string>>,
+    definitions: Record<string, any>,
+    invariantProps: Set<string>
+  ): ConditionNode | null {
+    if (absentVariants.length < 2) return null;
+
+    // 각 prop에 대해 공통 prefix 찾기
+    for (const [propName, def] of Object.entries(definitions)) {
+      if (invariantProps.has(propName)) continue;
+      if (!def.variantOptions || def.variantOptions.length === 0) continue;
+
+      // absent variants의 해당 prop 값들
+      const absentValues = absentVariants
+        .map((v) => v[propName])
+        .filter((v): v is string => !!v);
+
+      if (absentValues.length < 2) continue;
+
+      // 공통 prefix 찾기
+      const commonPrefix = this._findCommonPrefix(absentValues);
+      if (!commonPrefix || commonPrefix.length < 2) continue;
+
+      // prefix로 시작하지 않는 값들 (present values)
+      const presentValues = def.variantOptions.filter(
+        (v: string) => !v.startsWith(commonPrefix)
+      );
+
+      // present values가 있으면 OR 조건 생성
+      if (presentValues.length > 0 && presentValues.length < def.variantOptions.length) {
+        if (presentValues.length === 1) {
+          return helper.createBinaryCondition(propName, presentValues[0]);
+        } else {
+          const orConditions = presentValues.map((v: string) =>
+            helper.createBinaryCondition(propName, v)
+          );
+          return helper.combineWithOr(orConditions);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * 문자열 배열에서 공통 prefix를 찾습니다.
+   * 예: ["icon-filled", "icon-outlined-red"] → "icon-"
+   */
+  private _findCommonPrefix(strings: string[]): string {
+    if (strings.length === 0) return "";
+    if (strings.length === 1) return strings[0];
+
+    const first = strings[0];
+    let prefixLength = 0;
+
+    for (let i = 0; i < first.length; i++) {
+      const char = first[i];
+      if (strings.every((s) => s[i] === char)) {
+        prefixLength = i + 1;
+      } else {
+        break;
+      }
+    }
+
+    // 최소한 구분자(-, _)까지 포함된 prefix만 유효
+    const prefix = first.substring(0, prefixLength);
+    const lastSeparatorIndex = Math.max(
+      prefix.lastIndexOf("-"),
+      prefix.lastIndexOf("_")
+    );
+
+    if (lastSeparatorIndex > 0) {
+      return prefix.substring(0, lastSeparatorIndex + 1);
+    }
+
+    return "";
   }
 
   /**

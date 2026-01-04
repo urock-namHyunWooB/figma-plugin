@@ -28,6 +28,7 @@ type VariantPropsById = Record<string, VariantProps>;
 type VariantItem = {
   id: string;
   variant: VariantProps;
+  fullProps: VariantProps; // 전체 variant props (size, type, states 등 모두 포함)
   css: CssStyle;
   name: string;
 };
@@ -232,7 +233,13 @@ class UpdateStyle {
       this._reports.push(...result.feedbacks);
     }
 
-    const optimizedResult = this._optimizeStyles(styleResultByVariant);
+    // 모든 VariantItem 수집 (대표 스타일 계산용)
+    const allVariantItems = Object.values(itemsByVariantKey).flat();
+
+    const optimizedResult = this._optimizeStyles(
+      styleResultByVariant,
+      allVariantItems
+    );
 
     return {
       base: optimizedResult.commonBaseStyle,
@@ -368,6 +375,7 @@ class UpdateStyle {
     return group.items.map((groupItem) => ({
       id: groupItem.id,
       variant: { [group.varyKey]: groupItem.props[group.varyKey] },
+      fullProps: groupItem.props, // 전체 props 저장
       name: this._specDataManager.getSpecById(groupItem.id).name,
       css: itemsWithStyle[groupItem.id]?.css ?? {},
     }));
@@ -386,21 +394,11 @@ class UpdateStyle {
         rtnObj[variantKey] = [];
       }
 
-      const omitKeys = [
-        "display",
-        "align-items",
-        "justify-content",
-        "border-radius",
-      ] as const;
-
-      const filteredCss = Object.fromEntries(
-        Object.entries(item.css).filter(([k]) => !omitKeys.includes(k as any))
-      );
-
       rtnObj[variantKey].push({
         id: item.id,
         variant: item.variant,
-        css: filteredCss,
+        fullProps: item.fullProps,
+        css: item.css,
         name: item.name,
       });
     });
@@ -437,10 +435,13 @@ class UpdateStyle {
 
   /** 스타일 결과를 최적화하여 공통 base와 varying 스타일을 분리합니다. */
   private _optimizeStyles(
-    styleResultByVariant: Record<string, ExtractedStyleResult>
+    styleResultByVariant: Record<string, ExtractedStyleResult>,
+    allVariantItems: VariantItem[]
   ): { commonBaseStyle: CssStyle; dynamicVariants: DynamicVariants } {
-    const dynamicVariants =
-      this._structureDynamicVariants(styleResultByVariant);
+    const dynamicVariants = this._structureDynamicVariants(
+      styleResultByVariant,
+      allVariantItems
+    );
 
     const commonBaseStyle = this._findCommonBaseStyles(styleResultByVariant);
 
@@ -452,19 +453,32 @@ class UpdateStyle {
 
   /** 스타일 결과를 DynamicVariants 구조로 변환합니다. */
   private _structureDynamicVariants(
-    styleResultByVariant: Record<string, ExtractedStyleResult>
+    styleResultByVariant: Record<string, ExtractedStyleResult>,
+    allVariantItems: VariantItem[]
   ): DynamicVariants {
     const entries = Object.entries(styleResultByVariant);
 
     const groupedByPropName = groupByKeyWithTransform(
       entries,
       ([variantKey]) => variantKey.split("=")[0],
-      ([variantKey, styleResult]) => ({
-        variantName: variantKey,
-        base: styleResult.baseStyle,
-        dynamic: styleResult.dynamicItems,
-        report: styleResult.feedbacks,
-      })
+      ([variantKey, styleResult]) => {
+        // variantKey 파싱: "type=outlined_blue" → propName: "type", propValue: "outlined_blue"
+        const [propName, propValue] = variantKey.split("=");
+
+        // 대표 스타일 계산 (defaultValue 조합 기준)
+        const representativeStyle = this._getRepresentativeStyle(
+          propName,
+          propValue,
+          allVariantItems
+        );
+
+        return {
+          variantName: variantKey,
+          base: representativeStyle, // styleResult.baseStyle 대신 대표 스타일 사용
+          dynamic: styleResult.dynamicItems,
+          report: styleResult.feedbacks,
+        };
+      }
     );
 
     return Object.fromEntries(
@@ -919,6 +933,73 @@ class UpdateStyle {
       .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
       .map(([key, value]) => `${key}=${value}`)
       .join("|");
+  }
+
+  /** componentPropertyDefinitions에서 각 variant prop의 defaultValue를 추출합니다. */
+  private _getDefaultValues(): VariantProps {
+    const definitions = this._specDataManager.getComponentPropertyDefinitions();
+    if (!definitions) return {};
+
+    return Object.fromEntries(
+      Object.entries(definitions)
+        .filter(
+          ([_, def]) =>
+            def.type === "VARIANT" && "defaultValue" in def && def.defaultValue
+        )
+        .map(([propName, def]) => [propName, def.defaultValue as string])
+    );
+  }
+
+  /** 주어진 아이템들에서 특정 fullProps 조건과 일치하는 아이템을 찾습니다. */
+  private _findItemByFullProps(
+    items: VariantItem[],
+    targetProps: VariantProps
+  ): VariantItem | undefined {
+    return items.find((item) =>
+      Object.entries(targetProps).every(
+        ([key, value]) => item.fullProps[key] === value
+      )
+    );
+  }
+
+  /** 특정 prop 값에 대한 대표 스타일을 추출합니다. (defaultValue 조합 기준) */
+  private _getRepresentativeStyle(
+    propName: string,
+    propValue: string,
+    allItems: VariantItem[]
+  ): CssStyle {
+    const defaultValues = this._getDefaultValues();
+
+    // 대표 조건: 현재 prop만 원하는 값으로, 나머지는 defaultValue
+    const targetProps: VariantProps = {
+      ...defaultValues,
+      [propName]: propValue,
+    };
+
+    // 대표 아이템 찾기
+    const representativeItem = this._findItemByFullProps(allItems, targetProps);
+
+    if (representativeItem) {
+      return representativeItem.css;
+    }
+
+    // fallback: 해당 prop 값을 가진 첫 번째 아이템
+    const fallbackItem = allItems.find(
+      (item) => item.fullProps[propName] === propValue
+    );
+
+    if (fallbackItem) {
+      this._reports.push({
+        cssKey: propName,
+        type: "VALUE_MISMATCH",
+        message: `'${propName}=${propValue}'의 기본값 조합을 찾을 수 없어 첫 번째 아이템을 사용합니다.`,
+        itemIds: [fallbackItem.id],
+        itemNames: [fallbackItem.name],
+      });
+      return fallbackItem.css;
+    }
+
+    return {};
   }
 }
 

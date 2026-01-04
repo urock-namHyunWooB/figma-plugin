@@ -24,7 +24,6 @@ export interface BtnProps
   customType?: CustomType;
 }
 
-const btnBySize__4139411 = { L: { borderRadius: "12px" } };
 const btnByCustomType__4139411 = {
   "icon-filled": {
     background: "var(--Color-primary-01, #628CF5)",
@@ -56,15 +55,29 @@ const btnByCustomType__4139411 = {
     border: "2px solid var(--Color-state-error, #FF8484)",
   },
 };
-const btnCss__4139411 = (
-  $size: btnProps["size"] = "L",
-  $customType: btnProps["customType"] = "filled"
-) => css`
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  ${btnBySize__4139411[$size]}
+const btnCss__4139411 = ($customType: btnProps["customType"] = "filled") => css`
+  height: 28px;
+  padding: 4px 8px;
+  gap: 2px;
   ${btnByCustomType__4139411[$customType]}
+
+  :hover {
+    height: 28px;
+    padding: 4px 8px;
+    gap: 2px;
+    opacity: 0.7;
+  }
+  :active {
+    height: 28px;
+    padding: 4px 8px;
+    gap: 2px;
+    opacity: 0.8;
+  }
+  :disabled {
+    height: 28px;
+    padding: 4px 8px;
+    gap: 2px;
+  }
 `;
 const icon_arrowBySize__4139412 = {
   L: { width: "24px", height: "24px" },
@@ -107,7 +120,7 @@ export default function Btn(props: BtnProps) {
     ...restProps
   } = props;
   return (
-    <button css={btnCss__4139411(size, customType)} {...restProps}>
+    <button css={btnCss__4139411(customType)} {...restProps}>
       {props.iconLeft}
       <span css={buttonCss__4139413(size)}>{text}</span>
       {props.iconRight}
