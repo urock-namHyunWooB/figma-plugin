@@ -15,7 +15,6 @@ export type CustomType =
   | "outlined_red"
   | "text"
   | "text-black";
-
 export interface BtnProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size;
@@ -25,12 +24,12 @@ export interface BtnProps
   customType?: CustomType;
 }
 
-const btnBySize__4139411 = {
+const btnSizeStyles = {
   L: { height: "56px", padding: "16px 28px", gap: "4px", borderRadius: "12px" },
   M: { height: "40px", padding: "8px 12px", gap: "2px", borderRadius: "10px" },
   S: { height: "28px", padding: "4px 8px", borderRadius: "8px" },
 };
-const btnByCustomType__4139411 = {
+const btnCustomTypeStyles = {
   filled: {
     background: "var(--Color-primary-01, #628CF5)",
     boxShadow:
@@ -90,7 +89,7 @@ const btnByCustomType__4139411 = {
     border: "2px solid var(--Color-state-error, #FF8484)",
   },
 };
-const btnCss__4139411 = (
+const btnCss = (
   $size: BtnProps["size"] = "L",
   $customType: BtnProps["customType"] = "filled"
 ) => css`
@@ -98,9 +97,9 @@ const btnCss__4139411 = (
   justify-content: center;
   align-items: center;
   backdrop-filter: blur(20px);
-  ${btnBySize__4139411[$size]}
+  ${btnSizeStyles[$size]}
 
-  ${btnByCustomType__4139411[$customType]}
+  ${btnCustomTypeStyles[$customType]}
 
 
   :hover {
@@ -112,15 +111,15 @@ const btnCss__4139411 = (
     backdrop-filter: blur(20px);
   }
 `;
-const icon_arrowBySize__4139412 = {
+const icon_arrowSizeStyles = {
   L: { width: "24px", height: "24px" },
   M: { width: "20px", height: "20px" },
   S: { width: "16px", height: "16px" },
 };
-const icon_arrowCss__4139412 = ($size: BtnProps["size"] = "L") => css`
-  ${icon_arrowBySize__4139412[$size]}
+const icon_arrowCss = ($size: BtnProps["size"] = "L") => css`
+  ${icon_arrowSizeStyles[$size]}
 `;
-const buttonBySize__4139413 = {
+const buttonSizeStyles = {
   L: {
     fontFamily: "var(--Typography-Font-Famaily-pretendard-text, Pretendard)",
     fontSize: "var(--Typography-Font-Size-fontSize-18px, 18px)",
@@ -145,7 +144,7 @@ const buttonBySize__4139413 = {
     letterSpacing: "-0.5px",
   },
 };
-const buttonByCustomType__4139413 = {
+const buttonCustomTypeStyles = {
   filled: { color: "var(--Color-text-00, #FFF)" },
   "filled-red": { color: "var(--Color-text-00, #FFF)" },
   outlined_black: { color: "var(--Color-text-03-high, #1A1A1A)" },
@@ -154,16 +153,16 @@ const buttonByCustomType__4139413 = {
   text: { color: "var(--Color-text-04-primary, #4978EB)" },
   "text-black": { color: "var(--Color-text-03-high, #1A1A1A)" },
 };
-const buttonCss__4139413 = (
+const buttonCss = (
   $size: BtnProps["size"] = "L",
   $customType: BtnProps["customType"] = "filled"
 ) => css`
   text-align: center;
   font-style: normal;
-  ${buttonBySize__4139413[$size]}
-  ${buttonByCustomType__4139413[$customType]}
+  ${buttonSizeStyles[$size]}
+  ${buttonCustomTypeStyles[$customType]}
 `;
-const icon_arrowCss__4139414 = css`
+const icon_arrowCss_2 = css`
   width: 24px;
   height: 24px;
 `;
@@ -178,7 +177,7 @@ export default function Btn(props: BtnProps) {
     ...restProps
   } = props;
   return (
-    <button css={btnCss__4139411(size, customType)} {...restProps}>
+    <button css={btnCss(size, customType)} {...restProps}>
       {iconLeft}
       {(customType === "filled" ||
         customType === "filled-red" ||
@@ -187,7 +186,7 @@ export default function Btn(props: BtnProps) {
         customType === "outlined_red" ||
         customType === "text" ||
         customType === "text-black") && (
-        <span css={buttonCss__4139413(size, customType)}>{text}</span>
+        <span css={buttonCss(size, customType)}>{text}</span>
       )}
       {iconRight}
     </button>

@@ -240,18 +240,21 @@ class CreateJsxTree {
   }
 
   /**
-   * 노드의 CSS 함수 변수명 생성 (GenerateStyles와 동일한 로직)
-   * 예: SizeLargeStateDisabledLeftIconFalseRightIconFalseCss__1512969
+   * 노드의 CSS 함수 변수명 가져오기
+   * GenerateStyles에서 생성한 이름을 AST에서 참조
    */
   private _getCssVariableName(node: FinalAstTree): string {
-    let nodeName = node.name;
+    // AST에 저장된 변수명 사용 (GenerateStyles에서 생성)
+    if (node.generatedNames?.cssVarName) {
+      return node.generatedNames.cssVarName;
+    }
 
+    // fallback: 기존 로직 (generatedNames가 없는 경우)
+    let nodeName = node.name;
     if (!node.parent && node.metaData.document) {
       nodeName = node.metaData.document.name;
     }
-    const normalizedName = this._normalizeName(nodeName);
-    const normalizedId = this._normalizeName(node.id);
-    return `${normalizedName}Css_${normalizedId}`;
+    return `${this._normalizeName(nodeName)}Css`;
   }
 
   /**

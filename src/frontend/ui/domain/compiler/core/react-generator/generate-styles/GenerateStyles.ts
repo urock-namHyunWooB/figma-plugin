@@ -78,7 +78,7 @@ class GenerateStyles {
 
   /**
    * Dynamic styles를 prop별로 그룹화하여 Record 객체 생성
-   * 예: const primaryButtonBySize = { Large: { padding: "8px" }, ... }
+   * 예: const btnSizeStyles = { L: { padding: "8px" }, ... }
    * Boolean prop은 Record 대신 삼항 연산자로 처리하므로 제외
    */
   private _createRecordObjects(node: FinalAstTree): ts.VariableStatement[] {
@@ -92,15 +92,17 @@ class GenerateStyles {
         continue;
       }
 
-      let nodeName = node.name;
+      const nodeName = this._getNodeBaseName(node);
+      // 변수명 생성: btnSizeStyles (중복 시 btnSizeStyles_2)
+      const baseName = `${normalizeName(nodeName)}${capitalize(propName)}Styles`;
+      const varName = this._generateUniqueVarName(baseName);
 
-      if (!node.parent && node.metaData.document) {
-        nodeName = node.metaData.document.name;
+      // AST에 Record 변수명 저장
+      if (node.generatedNames) {
+        node.generatedNames.recordVarNames[propName] = varName;
       }
 
-      const varName = `${normalizeName(nodeName)}By${capitalize(propName)}_${normalizeName(node.id)}`;
-
-      // Record 객체 생성: { Large: { padding: "8px" }, ... }
+      // Record 객체 생성: { L: { padding: "8px" }, ... }
       const recordEntries = variants.map((variant) => ({
         key: variant.value,
         value: this._styleObjectToExpression(variant.style),
@@ -232,12 +234,9 @@ class GenerateStyles {
             falseStyle
           );
         } else {
-          // 일반 prop: Record 객체 인덱싱
-          let nodeName = node.name;
-          if (!node.parent && node.metaData.document) {
-            nodeName = node.metaData.document.name;
-          }
-          const recordVarName = `${normalizeName(nodeName)}By${capitalize(propName)}_${normalizeName(node.id)}`;
+          // 일반 prop: Record 객체 인덱싱 (AST에 저장된 변수명 사용)
+          const recordVarName =
+            node.generatedNames?.recordVarNames[propName] || `${propName}Styles`;
           const indexExpression = this.kit.createIdentifier(`$${propName}`);
           expr = this.kit.createElementAccess(recordVarName, indexExpression);
         }
@@ -280,14 +279,17 @@ class GenerateStyles {
         ? this.kit.createArrowFunction(params, taggedTemplate)
         : taggedTemplate;
 
-    let nodeName = node.name;
-
-    if (!node.parent && node.metaData.document) {
-      nodeName = node.metaData.document.name;
-    }
     // 5. const 변수 선언
-    // node.id를 추가하여 중복 방지
-    const cssVarName = `${normalizeName(nodeName)}Css_${normalizeName(node.id)}`;
+    // CSS 변수명 생성: btnCss (중복 시 btnCss_2)
+    const nodeName = this._getNodeBaseName(node);
+    const baseCssName = `${normalizeName(nodeName)}Css`;
+    const cssVarName = this._generateUniqueVarName(baseCssName);
+
+    // AST에 CSS 변수명 저장
+    if (node.generatedNames) {
+      node.generatedNames.cssVarName = cssVarName;
+    }
+
     return this.kit.createConstVariable(cssVarName, arrowFunction);
   }
 
