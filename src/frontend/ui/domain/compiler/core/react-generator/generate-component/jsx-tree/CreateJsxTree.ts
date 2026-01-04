@@ -1,6 +1,5 @@
 import { FinalAstTree } from "@compiler";
 import ts from "typescript";
-import debug from "@compiler/manager/DebuggingManager";
 
 class CreateJsxTree {
   private _jsxTree: ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression;
@@ -500,7 +499,7 @@ class CreateJsxTree {
       (variant) => {
         const cssCall = this._createCssCall(variant.style);
 
-        // 하이픈이나 특수문자가 포함된 경우 computed property 사용
+        // 하이픈이나 특수문자가 포함된 경우 문자열 리터럴 사용
         const isValidIdentifier = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(
           variant.value
         );
@@ -508,11 +507,7 @@ class CreateJsxTree {
           ? this.factory.createIdentifier(variant.value)
           : this.factory.createStringLiteral(variant.value);
 
-        return this.factory.createPropertyAssignment(
-          propertyName,
-          cssCall,
-          !isValidIdentifier // computed property로 설정
-        );
+        return this.factory.createPropertyAssignment(propertyName, cssCall);
       }
     );
 

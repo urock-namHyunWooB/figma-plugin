@@ -2,7 +2,6 @@ import {
   ConditionNode,
   DynamicVariants,
   StyleObject,
-  StyleTree,
   SuperTreeNode,
   TempAstTree,
   VisibleValue,
@@ -54,8 +53,6 @@ class _TempAstTree {
     this._refinedProps = refinedProps;
     this._superTree = superTree;
 
-    const variantTrees = specDataManager.getRenderTree().children;
-
     let tempAstTree = this.createTempAstTree(superTree, refinedProps);
 
     tempAstTree = this.updateMergedNode(tempAstTree);
@@ -70,7 +67,7 @@ class _TempAstTree {
   }
 
   private updateMergedNode(tempAstTree: TempAstTree) {
-    traverseBFS(tempAstTree, (node, meta) => {
+    traverseBFS(tempAstTree, (node, _meta) => {
       const newMergedNode = node.mergedNode.map((node) => {
         const renderNode = this._specDataManager.getRenderTreeById(node.id);
         return { ...node, ...renderNode };
@@ -104,7 +101,15 @@ class _TempAstTree {
       .map((item) => ({
         condition: this._parseVariantCondition(item.variantName),
         style: item.base,
-      }));
+      }))
+      .filter(
+        (
+          item
+        ): item is {
+          condition: ConditionNode;
+          style: Record<string, string>;
+        } => item.condition !== null
+      );
   }
 
   private createTempAstTree(
@@ -159,9 +164,9 @@ class _TempAstTree {
 
       const variantStyleMap: Record<string, Group[]> = {};
 
-      Object.entries(pivotTree.props).forEach(([key, value]) => {
+      Object.entries(pivotTree.props).forEach(([key, _value]) => {
         const groups = this._groupBySingleVaryKey(variantPropsOnly).filter(
-          (value) => value.varyKey === key
+          (group) => group.varyKey === key
         );
 
         variantStyleMap[key] = groups;
@@ -231,7 +236,7 @@ class _TempAstTree {
       }[]
     > = {};
 
-    Object.entries(variantGroups).forEach(([key, groups]) => {
+    Object.entries(variantGroups).forEach(([_key, groups]) => {
       groups.forEach((group) => {
         group.forEach((item) => {
           if (!L[this._toStringName(item.variant)]) {
@@ -305,7 +310,7 @@ class _TempAstTree {
     });
 
     //variant 마다 base 세팅하기
-    Object.entries(variantMap.dynamicVariants).forEach(([key, value]) => {
+    Object.entries(variantMap.dynamicVariants).forEach(([_key, value]) => {
       const dynamicStyle = value.style.dynamic;
 
       if (dynamicStyle.length === 0) return;
@@ -323,7 +328,7 @@ class _TempAstTree {
 
         const diffResult = diff(pivotBase, targetBase);
 
-        Object.entries(diffResult).forEach(([k, v]) => {
+        Object.entries(diffResult).forEach(([k, _v]) => {
           if (!memory[k]) {
             memory[k] = 0;
           }
@@ -333,17 +338,20 @@ class _TempAstTree {
       }
 
       const filteredMemory = Object.entries(memory)
-        .filter(([k, v]) => {
+        .filter(([_k, v]) => {
           return v === dynamicStyle.length - 1;
         })
-        .map(([k, v]) => k);
+        .map(([k, _v]) => k);
 
       for (const dynamicItem in dynamicStyle) {
-        const newBase = filteredMemory.reduce((acc, style) => {
-          acc[style] = dynamicStyle[dynamicItem].base[style];
+        const newBase = filteredMemory.reduce(
+          (acc: Record<string, any>, style) => {
+            acc[style] = dynamicStyle[dynamicItem].base[style];
 
-          return acc;
-        }, {});
+            return acc;
+          },
+          {}
+        );
         dynamicStyle[dynamicItem].base = newBase;
       }
     });
@@ -479,7 +487,7 @@ class _TempAstTree {
       const itemCss = item.css || {};
 
       Object.entries(itemCss).forEach(([key, value]) => {
-        if (!base.hasOwnProperty(key)) {
+        if (!Object.prototype.hasOwnProperty.call(base, key)) {
           remainingCss[key] = value;
         }
       });
@@ -552,7 +560,7 @@ class _TempAstTree {
   }
 
   private updateVisible(pivotNode: TempAstTree) {
-    traverseBFS(pivotNode, (node, meta) => {
+    traverseBFS(pivotNode, (node, _meta) => {
       const visible = this._inferVisible(node);
       node.visible = visible;
     });
@@ -865,7 +873,10 @@ class _TempAstTree {
       );
 
       // present values가 있으면 OR 조건 생성
-      if (presentValues.length > 0 && presentValues.length < def.variantOptions.length) {
+      if (
+        presentValues.length > 0 &&
+        presentValues.length < def.variantOptions.length
+      ) {
         if (presentValues.length === 1) {
           return helper.createBinaryCondition(propName, presentValues[0]);
         } else {
