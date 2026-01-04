@@ -9,11 +9,33 @@ class GenerateStyles {
   private factory: NodeFactory;
   private astTree: FinalAstTree;
   private kit: TypescriptNodeKitManager;
+  /** 변수명 중복 추적용 Map (baseName → 사용 횟수) */
+  private usedNames: Map<string, number> = new Map();
 
   constructor(factory: NodeFactory, astTree: FinalAstTree) {
     this.factory = factory;
     this.astTree = astTree;
     this.kit = new TypescriptNodeKitManager(this.factory);
+  }
+
+  /**
+   * 중복을 피하는 고유한 변수명 생성
+   * 첫 번째는 suffix 없이, 두 번째부터 _2, _3...
+   */
+  private _generateUniqueVarName(baseName: string): string {
+    const count = this.usedNames.get(baseName) || 0;
+    this.usedNames.set(baseName, count + 1);
+    return count === 0 ? baseName : `${baseName}_${count + 1}`;
+  }
+
+  /**
+   * 노드의 기본 이름 가져오기 (루트는 문서 이름 사용)
+   */
+  private _getNodeBaseName(node: FinalAstTree): string {
+    if (!node.parent && node.metaData.document) {
+      return node.metaData.document.name;
+    }
+    return node.name;
   }
 
   public createStyleVariables(): ts.VariableStatement[] {
@@ -31,6 +53,12 @@ class GenerateStyles {
       if (!hasBaseStyle && !hasDynamicStyle && !hasPseudoStyle) {
         return;
       }
+
+      // generatedNames 초기화
+      node.generatedNames = {
+        cssVarName: "",
+        recordVarNames: {},
+      };
 
       // 1. Dynamic 스타일에서 Record 객체 생성 (variant map)
       if (hasDynamicStyle) {
@@ -110,7 +138,8 @@ class GenerateStyles {
     // 루트 컴포넌트의 Props 인터페이스 이름 사용 (모든 노드에서 동일)
     const rootComponentName =
       this.astTree.metaData.document?.name || this.astTree.name;
-    const propsInterfaceName = `${normalizeName(rootComponentName)}Props`;
+    // PascalCase로 변환하여 인터페이스 이름과 일치시킴 (btn → Btn → BtnProps)
+    const propsInterfaceName = `${capitalize(normalizeName(rootComponentName))}Props`;
 
     for (const [propName] of grouped.entries()) {
       // IndexedAccessType 사용: ComponentProps["propName"]
@@ -281,10 +310,23 @@ class GenerateStyles {
         grouped.set(extracted.prop, []);
       }
 
-      grouped.get(extracted.prop)!.push({
-        value: extracted.value,
-        style: dynamicStyle.style,
-      });
+      const propVariants = grouped.get(extracted.prop)!;
+      // 같은 value가 이미 있으면 스타일 병합, 없으면 새로 추가
+      const existingVariant = propVariants.find(
+        (v) => v.value === extracted.value
+      );
+      if (existingVariant) {
+        // 스타일 병합 (기존 스타일에 새 스타일 덮어쓰기)
+        existingVariant.style = {
+          ...existingVariant.style,
+          ...dynamicStyle.style,
+        };
+      } else {
+        propVariants.push({
+          value: extracted.value,
+          style: dynamicStyle.style,
+        });
+      }
     }
 
     return grouped;

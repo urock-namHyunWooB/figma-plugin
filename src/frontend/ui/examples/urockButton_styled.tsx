@@ -15,6 +15,7 @@ export type CustomType =
   | "outlined_red"
   | "text"
   | "text-black";
+
 export interface BtnProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size;
@@ -45,6 +46,7 @@ const btnByCustomType__4139411 = {
     boxShadow:
       "0 10px var(--Number-scope-Blur-blur-6, 6px) 0 rgba(0, 0, 0, 0.01), 0 4px var(--Number-scope-Blur-blur-4, 4px) 0 rgba(0, 0, 0, 0.02), 0 1px var(--Number-scope-Blur-blur-2, 2px) 0 rgba(0, 0, 0, 0.02)",
     border: "2px solid var(--Color-line-01, #EDEDED)",
+    backdropFilter: "blur(20px)",
   },
   outlined_blue: {
     background: "var(--Color-bg-03, #F7F9FE)",
@@ -67,6 +69,7 @@ const btnByCustomType__4139411 = {
     boxShadow:
       "0 10px var(--Number-scope-Blur-blur-6, 6px) 0 rgba(0, 0, 0, 0.01), 0 4px var(--Number-scope-Blur-blur-4, 4px) 0 rgba(0, 0, 0, 0.02), 0 1px var(--Number-scope-Blur-blur-2, 2px) 0 rgba(0, 0, 0, 0.02)",
     border: "2px solid var(--Color-line-01, #EDEDED)",
+    backdropFilter: "blur(20px)",
   },
   "icon-outlined-blue": {
     background: "var(--Color-bg-03, #F7F9FE)",
@@ -86,12 +89,10 @@ const btnByCustomType__4139411 = {
       "-1px 5px var(--Number-scope-Blur-blur-14, 14px) 0 rgba(248, 177, 177, 0.16)",
     border: "2px solid var(--Color-state-error, #FF8484)",
   },
-  outlined_black: { backdropFilter: "blur(20px)" },
-  "icon-outlined-black": { backdropFilter: "blur(20px)" },
 };
 const btnCss__4139411 = (
-  $size: btnProps["size"] = "L",
-  $customType: btnProps["customType"] = "filled"
+  $size: BtnProps["size"] = "L",
+  $customType: BtnProps["customType"] = "filled"
 ) => css`
   display: inline-flex;
   justify-content: center;
@@ -116,7 +117,7 @@ const icon_arrowBySize__4139412 = {
   M: { width: "20px", height: "20px" },
   S: { width: "16px", height: "16px" },
 };
-const icon_arrowCss__4139412 = ($size: btnProps["size"] = "L") => css`
+const icon_arrowCss__4139412 = ($size: BtnProps["size"] = "L") => css`
   ${icon_arrowBySize__4139412[$size]}
 `;
 const buttonBySize__4139413 = {
@@ -154,8 +155,8 @@ const buttonByCustomType__4139413 = {
   "text-black": { color: "var(--Color-text-03-high, #1A1A1A)" },
 };
 const buttonCss__4139413 = (
-  $size: btnProps["size"] = "L",
-  $customType: btnProps["customType"] = "filled"
+  $size: BtnProps["size"] = "L",
+  $customType: BtnProps["customType"] = "filled"
 ) => css`
   text-align: center;
   font-style: normal;
@@ -165,7 +166,6 @@ const buttonCss__4139413 = (
 const icon_arrowCss__4139414 = css`
   width: 24px;
   height: 24px;
-  ${""}
 `;
 
 export default function Btn(props: BtnProps) {
@@ -179,7 +179,7 @@ export default function Btn(props: BtnProps) {
   } = props;
   return (
     <button css={btnCss__4139411(size, customType)} {...restProps}>
-      {props.iconLeft}
+      {iconLeft}
       {(customType === "filled" ||
         customType === "filled-red" ||
         customType === "outlined_black" ||
@@ -189,7 +189,7 @@ export default function Btn(props: BtnProps) {
         customType === "text-black") && (
         <span css={buttonCss__4139413(size, customType)}>{text}</span>
       )}
-      {props.iconRight}
+      {iconRight}
     </button>
   );
 }

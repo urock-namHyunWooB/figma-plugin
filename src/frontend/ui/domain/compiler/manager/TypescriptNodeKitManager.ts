@@ -230,6 +230,17 @@ class TypescriptNodeKitManager {
     head: string,
     spans: Array<{ expr: ts.Expression; tail: string }> = []
   ): ts.TaggedTemplateExpression {
+    // spans가 비어있으면 보간 없는 템플릿 리터럴 사용 (${""}  방지)
+    if (spans.length === 0) {
+      const noSubstitutionTemplate =
+        this.factory.createNoSubstitutionTemplateLiteral(head, head);
+      return this.factory.createTaggedTemplateExpression(
+        this.factory.createIdentifier("css"),
+        undefined,
+        noSubstitutionTemplate
+      );
+    }
+
     const template = this.createTemplateLiteral(head, spans);
     return this.createTaggedTemplate("css", template);
   }

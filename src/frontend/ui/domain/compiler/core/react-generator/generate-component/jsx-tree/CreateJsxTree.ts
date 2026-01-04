@@ -50,7 +50,7 @@ class CreateJsxTree {
 
   /**
    * Slot 노드를 JSX Expression으로 변환
-   * Slot 노드는 props.slotName으로 참조됨
+   * Slot 노드는 구조 분해된 변수를 직접 참조
    * Slot 노드는 children을 가질 수 없으므로 early return
    */
   private _createSlotJsxExpression(
@@ -61,12 +61,10 @@ class CreateJsxTree {
     }
 
     const slotName = (node as any).slotName;
+    // 구조 분해된 변수를 직접 참조 (props.iconLeft 대신 iconLeft)
     return this.factory.createJsxExpression(
       undefined,
-      this.factory.createPropertyAccessExpression(
-        this.factory.createIdentifier("props"),
-        this.factory.createIdentifier(slotName)
-      )
+      this.factory.createIdentifier(slotName)
     );
   }
 

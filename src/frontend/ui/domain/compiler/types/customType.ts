@@ -137,6 +137,17 @@ export type SemanticRole =
   | "image"; // 이미지
 
 /**
+ * 코드 생성 시 사용되는 변수명들
+ * GenerateStyles에서 생성하고 CreateJsxTree에서 참조
+ */
+export interface GeneratedNames {
+  /** CSS 함수/변수명 (예: btnCss, buttonCss_2) */
+  cssVarName: string;
+  /** prop별 Record 객체 변수명 (예: { size: "btnSizeStyles", customType: "btnTypeStyles" }) */
+  recordVarNames: Record<string, string>;
+}
+
+/**
  * TempAst애서 한번더 견고하게 가공된 형태
  */
 export interface FinalAstTree {
@@ -156,4 +167,10 @@ export interface FinalAstTree {
    */
   semanticRole: SemanticRole;
   metaData: any;
+
+  /**
+   * 코드 생성 시 사용되는 변수명들
+   * GenerateStyles에서 생성하고 CreateJsxTree에서 참조
+   */
+  generatedNames?: GeneratedNames;
 }
