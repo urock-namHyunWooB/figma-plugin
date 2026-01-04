@@ -85,6 +85,7 @@ class GenerateStyles {
    * Dynamic styles를 prop별로 그룹화하여 Record 객체 생성
    * 예: const btnSizeStyles = { L: { padding: "8px" }, ... }
    * Boolean prop은 Record 대신 삼항 연산자로 처리하므로 제외
+   * 모든 가능한 variant 값을 포함하여 타입 안전성 보장
    */
   private _createRecordObjects(node: FinalAstTree): ts.VariableStatement[] {
     const statements: ts.VariableStatement[] = [];
@@ -107,11 +108,29 @@ class GenerateStyles {
         node.generatedNames.recordVarNames[propName] = varName;
       }
 
-      // Record 객체 생성: { L: { padding: "8px" }, ... }
-      const recordEntries = variants.map((variant) => ({
-        key: variant.value,
-        value: this._styleObjectToExpression(variant.style),
-      }));
+      // 모든 가능한 variant 값 가져오기 (타입 안전성을 위해)
+      const allOptions = (propDef as any)?.variantOptions || [];
+
+      // Record 객체 생성: 모든 옵션에 대해 스타일 또는 빈 객체 할당
+      const recordEntries = allOptions.map((option: string) => {
+        const existingVariant = variants.find((v) => v.value === option);
+        return {
+          key: option,
+          value: existingVariant
+            ? this._styleObjectToExpression(existingVariant.style)
+            : this._styleObjectToExpression({}), // 스타일 없으면 빈 객체
+        };
+      });
+
+      // options가 없는 경우 fallback (기존 동작 유지)
+      if (recordEntries.length === 0) {
+        variants.forEach((variant) => {
+          recordEntries.push({
+            key: variant.value,
+            value: this._styleObjectToExpression(variant.style),
+          });
+        });
+      }
 
       const recordObject = this.kit.createRecordObject(recordEntries);
       const recordVar = this.kit.createConstVariable(varName, recordObject);
@@ -149,34 +168,19 @@ class GenerateStyles {
     const propsInterfaceName = `${capitalize(normalizeName(rootComponentName))}Props`;
 
     for (const [propName] of grouped.entries()) {
-      // IndexedAccessType 사용: ComponentProps["propName"]
-      const indexedType = this.kit.createIndexedAccessType(
+      // NonNullable IndexedAccessType 사용: NonNullable<ComponentProps["propName"]>
+      // optional prop에서 undefined를 제외하여 인덱싱 타입 에러 방지
+      const indexedType = this.kit.createNonNullableIndexedAccessType(
         propsInterfaceName,
         propName
       );
 
-      // 기본값 가져오기
-      const propDef = this.astTree.props[propName];
-      let initializer: ts.Expression | undefined;
-
-      if (propDef?.defaultValue !== undefined) {
-        if (propDef.type === "BOOLEAN") {
-          initializer =
-            propDef.defaultValue === true
-              ? this.factory.createTrue()
-              : this.factory.createFalse();
-        } else if (typeof propDef.defaultValue === "string") {
-          initializer = this.factory.createStringLiteral(propDef.defaultValue);
-        } else if (typeof propDef.defaultValue === "number") {
-          initializer = this.factory.createNumericLiteral(propDef.defaultValue);
-        }
-      }
-
+      // 기본값은 컴포넌트의 props 구조분해에서 관리하므로 CSS 함수에서는 제거
       const param = this.kit.createParameter(
         `$${propName}`,
         indexedType,
         false,
-        initializer
+        undefined // 기본값 없음
       );
       params.push(param);
     }
@@ -241,7 +245,8 @@ class GenerateStyles {
         } else {
           // 일반 prop: Record 객체 인덱싱 (AST에 저장된 변수명 사용)
           const recordVarName =
-            node.generatedNames?.recordVarNames[propName] || `${propName}Styles`;
+            node.generatedNames?.recordVarNames[propName] ||
+            `${propName}Styles`;
           const indexExpression = this.kit.createIdentifier(`$${propName}`);
           expr = this.kit.createElementAccess(recordVarName, indexExpression);
         }

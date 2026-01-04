@@ -1313,6 +1313,45 @@ describe("compiler 테스트", () => {
         expect(code).toMatch(/customType\??:/);
       });
 
+      test("스타일 Record 객체에 모든 customType 값이 포함되어야 한다.", async () => {
+        const compiler = new FigmaCompiler(urockButtonSampleMockData as any);
+        const code = await compiler.getGeneratedCode();
+
+        // 모든 customType 값이 스타일 Record에 포함되어야 함
+        const allCustomTypes = [
+          "filled",
+          "filled-red",
+          "icon-filled",
+          "icon-filled-red",
+          "icon-outlined-black",
+          "icon-outlined-blue",
+          "icon-outlined-red",
+          "outlined_black",
+          "outlined_blue",
+          "outlined_red",
+          "text",
+          "text-black",
+        ];
+
+        // btnCustomTypeStyles에 모든 키가 있어야 함
+        // - 포함: 따옴표 필요 ("filled-red":)
+        // _ 포함 또는 일반: 따옴표 불필요 (outlined_black:)
+        const missingTypes: string[] = [];
+        for (const type of allCustomTypes) {
+          const quotedPattern = `"${type}":`;
+          const unquotedPattern = `${type}:`;
+          // 둘 중 하나가 있으면 통과
+          if (!code!.includes(quotedPattern) && !code!.includes(unquotedPattern)) {
+            missingTypes.push(type);
+          }
+        }
+
+        if (missingTypes.length > 0) {
+          console.log("Missing types:", missingTypes);
+        }
+        expect(missingTypes).toHaveLength(0);
+      });
+
       test("customType이 outlined_blue일때 배경색은 #F7F9FE 이다.", async () => {
         const { container } = renderButton({
           customType: "outlined_blue",

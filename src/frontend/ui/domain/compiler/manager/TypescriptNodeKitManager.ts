@@ -675,6 +675,19 @@ class TypescriptNodeKitManager {
     );
   }
 
+  /**
+   * NonNullable indexed access type 생성
+   * NonNullable<InterfaceName["propertyName"]>
+   * optional prop에서 undefined를 제외한 타입
+   */
+  createNonNullableIndexedAccessType(
+    interfaceName: string,
+    propertyName: string
+  ): ts.TypeReferenceNode {
+    const indexedType = this.createIndexedAccessType(interfaceName, propertyName);
+    return this.factory.createTypeReferenceNode("NonNullable", [indexedType]);
+  }
+
   // ==================== Expressions ====================
 
   /**
