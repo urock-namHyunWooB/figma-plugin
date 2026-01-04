@@ -259,7 +259,6 @@ class _TempAstTree {
 
     const variantResult = this._convertVariantStyle(variantStyle);
 
-    console.log("allReport", allReport);
     return {
       base: variantResult.base,
       dynamic: this._buildDynamicStyleArray(variantResult.dynamicVariants),

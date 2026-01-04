@@ -141,7 +141,6 @@ class UpdateStyle {
       );
     });
 
-    console.log(this._reports);
     return pivotTree;
   }
 

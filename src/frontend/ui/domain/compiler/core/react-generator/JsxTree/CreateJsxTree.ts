@@ -18,7 +18,6 @@ class CreateJsxTree {
   constructor(astTree: FinalAstTree) {
     this.astTree = astTree;
     this._jsxTree = this._createJsxTree(astTree);
-    console.log(this._jsxTree);
   }
 
   public _createJsxTree(

@@ -82,30 +82,29 @@ function App() {
       return;
     }
 
-    if (selectionNodeData.info.document.type !== "COMPONENT_SET") {
-      console.warn("Only supports components");
-      return;
+    try {
+      const figmaCompiler = new FigmaCompiler(selectionNodeData);
+      const name = figmaCompiler.getComponentName();
+      setComponentName(name);
+
+      // Props 정의 가져오기
+      const props = figmaCompiler.getPropsDefinition();
+      setPropDefinitions(props);
+
+      // Props 초기값 설정
+      const initialValues: Record<string, any> = {};
+      props.forEach((prop) => {
+        initialValues[prop.name] = prop.defaultValue;
+      });
+      setPropValues(initialValues);
+
+      // 코드 생성
+      figmaCompiler.getGeneratedCode(name).then((code) => {
+        setGeneratedCode(code);
+      });
+    } catch (e) {
+      console.error(e);
     }
-
-    const figmaCompiler = new FigmaCompiler(selectionNodeData);
-    const name = figmaCompiler.getComponentName();
-    setComponentName(name);
-
-    // Props 정의 가져오기
-    const props = figmaCompiler.getPropsDefinition();
-    setPropDefinitions(props);
-
-    // Props 초기값 설정
-    const initialValues: Record<string, any> = {};
-    props.forEach((prop) => {
-      initialValues[prop.name] = prop.defaultValue;
-    });
-    setPropValues(initialValues);
-
-    // 코드 생성
-    figmaCompiler.getGeneratedCode(name).then((code) => {
-      setGeneratedCode(code);
-    });
   }, [selectionNodeData]);
 
   // 동적 컴포넌트 렌더러
