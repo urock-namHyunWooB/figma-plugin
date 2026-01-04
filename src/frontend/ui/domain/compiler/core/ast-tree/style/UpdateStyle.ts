@@ -590,12 +590,6 @@ class UpdateStyle {
         rtn[variantKey].push(diffResult);
       });
     });
-
-    /**
-     * TODO
-     * rtn 보고 각 variant 일반화 해서 중복된걸 삭제하는 로직을 짜본다.
-     */
-    console.log(rtn);
   }
 
   /** variant 간 실제로 값이 다른 CSS 속성만 필터링합니다. */
