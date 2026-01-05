@@ -11,6 +11,7 @@ import GenerateStyles from "./generate-styles/GenerateStyles";
 import GenerateInterface from "./generate-interface/GenerateInterface";
 import GenerateComponent from "./generate-component/GenerateComponent";
 import { capitalize, normalizeName } from "@compiler/utils/stringUtils";
+import { ArraySlot } from "@compiler/core/ArraySlotDetector";
 
 interface CodeSection {
   statements: ts.Statement[];
@@ -19,6 +20,7 @@ interface CodeSection {
 class ReactGenerator {
   private astTree: FinalAstTree;
   private factory: NodeFactory;
+  private arraySlots: ArraySlot[];
 
   private GenerateImports: GenerateImports;
   private GenerateStyles: GenerateStyles;
@@ -41,8 +43,9 @@ class ReactGenerator {
 
   private _componentName: string;
 
-  constructor(astTree: FinalAstTree) {
+  constructor(astTree: FinalAstTree, arraySlots: ArraySlot[] = []) {
     this.astTree = astTree;
+    this.arraySlots = arraySlots;
     const factory = (this.factory = ts.factory);
 
     this._componentName = astTree.metaData.document.name ?? astTree.name;
@@ -53,10 +56,42 @@ class ReactGenerator {
       removeComments: true,
     });
 
-    this.GenerateImports = new GenerateImports(factory);
-    this.GenerateInterface = new GenerateInterface(factory, astTree);
+    // AST에서 사용된 외부 컴포넌트 목록 수집
+    const externalComponents = this._collectExternalComponents(astTree);
+
+    this.GenerateImports = new GenerateImports(factory, externalComponents);
+    this.GenerateInterface = new GenerateInterface(factory, astTree, arraySlots);
     this.GenerateStyles = new GenerateStyles(factory, astTree);
-    this.GenerateComponent = new GenerateComponent(factory, astTree);
+    this.GenerateComponent = new GenerateComponent(factory, astTree, arraySlots);
+  }
+
+  /**
+   * AST에서 사용된 외부 컴포넌트 목록 수집
+   * externalComponent가 있는 노드들을 찾아서 componentName 중복 제거
+   */
+  private _collectExternalComponents(
+    astTree: FinalAstTree
+  ): { componentName: string; componentSetId: string }[] {
+    const componentsMap = new Map<string, string>(); // componentSetId → componentName
+
+    const traverse = (node: FinalAstTree) => {
+      if (node.externalComponent) {
+        const { componentSetId, componentName } = node.externalComponent;
+        if (!componentsMap.has(componentSetId)) {
+          componentsMap.set(componentSetId, componentName);
+        }
+      }
+      node.children.forEach(traverse);
+    };
+
+    traverse(astTree);
+
+    return Array.from(componentsMap.entries()).map(
+      ([componentSetId, componentName]) => ({
+        componentSetId,
+        componentName,
+      })
+    );
   }
 
   /**
@@ -76,7 +111,8 @@ class ReactGenerator {
    * 각 코드 섹션 생성
    */
   private createCodeSections(componentName: string): CodeSection[] {
-    componentName = this._componentName;
+    // 전달된 componentName 우선 사용, 없으면 AST에서 추출한 이름 사용
+    componentName = componentName || this._componentName;
 
     return [
       {
@@ -90,7 +126,7 @@ class ReactGenerator {
       },
 
       {
-        statements: this.GenerateStyles.createStyleVariables(),
+        statements: this.GenerateStyles.createStyleVariables(componentName),
       },
       {
         statements: [

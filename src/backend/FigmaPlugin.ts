@@ -92,6 +92,15 @@ export class FigmaPlugin {
 
     const styleTree = await this._makeStyleTree(selectedNode);
 
+    // INSTANCE의 mainComponent 수집
+    const dependencies = await this._collectDependencies(selectedNode);
+
+    // 이미지 URL 수집
+    const imageUrls = await this._collectImageUrls(selectedNode);
+
+    // VECTOR SVG 수집
+    const vectorSvgs = await this._collectVectorSvgs(selectedNode);
+
     const nodeData: FigmaNodeData = {
       pluginData: (() => {
         const keys = selectedNode.getPluginDataKeys();
@@ -104,9 +113,166 @@ export class FigmaPlugin {
       })(),
       info: figmaNodeInfo,
       styleTree: styleTree || null,
+      dependencies:
+        Object.keys(dependencies).length > 0 ? dependencies : undefined,
+      imageUrls:
+        Object.keys(imageUrls).length > 0 ? imageUrls : undefined,
+      vectorSvgs:
+        Object.keys(vectorSvgs).length > 0 ? vectorSvgs : undefined,
     };
 
     return nodeData;
+  }
+
+  /**
+   * 노드 트리를 순회하며 VECTOR 노드를 SVG로 export
+   */
+  private async _collectVectorSvgs(
+    node: SceneNode
+  ): Promise<Record<string, string>> {
+    const vectorSvgs: Record<string, string> = {};
+
+    await this._traverseAndCollectVectors(node, vectorSvgs);
+
+    return vectorSvgs;
+  }
+
+  /**
+   * 노드 트리를 순회하며 VECTOR 수집
+   */
+  private async _traverseAndCollectVectors(
+    node: SceneNode,
+    vectorSvgs: Record<string, string>
+  ): Promise<void> {
+    // VECTOR 노드인 경우 SVG로 export
+    if (node.type === "VECTOR" || node.type === "LINE" || node.type === "STAR" || 
+        node.type === "ELLIPSE" || node.type === "POLYGON") {
+      try {
+        const svgBytes = await node.exportAsync({ format: "SVG" });
+        const svgString = String.fromCharCode(...svgBytes);
+        vectorSvgs[node.id] = svgString;
+      } catch (e) {
+        console.error(`Failed to export SVG: ${node.id}`, e);
+      }
+    }
+
+    // 자식 노드 탐색
+    if ("children" in node && node.children) {
+      for (const child of node.children) {
+        await this._traverseAndCollectVectors(child, vectorSvgs);
+      }
+    }
+  }
+
+  /**
+   * 노드 트리를 순회하며 이미지를 수집하고 data URL로 변환
+   */
+  private async _collectImageUrls(
+    node: SceneNode
+  ): Promise<Record<string, string>> {
+    const imageUrls: Record<string, string> = {};
+    const visited = new Set<string>(); // 중복 방지
+
+    await this._traverseAndCollectImages(node, imageUrls, visited);
+
+    return imageUrls;
+  }
+
+  /**
+   * 노드 트리를 순회하며 이미지 수집
+   */
+  private async _traverseAndCollectImages(
+    node: SceneNode,
+    imageUrls: Record<string, string>,
+    visited: Set<string>
+  ): Promise<void> {
+    // fills에서 이미지 찾기
+    if ("fills" in node && Array.isArray(node.fills)) {
+      for (const fill of node.fills) {
+        if (fill.type === "IMAGE" && fill.imageHash && !visited.has(fill.imageHash)) {
+          visited.add(fill.imageHash);
+          
+          try {
+            const image = figma.getImageByHash(fill.imageHash);
+            if (image) {
+              const bytes = await image.getBytesAsync();
+              const base64 = figma.base64Encode(bytes);
+              // MIME 타입 추론 (PNG가 기본)
+              const mimeType = "image/png";
+              imageUrls[fill.imageHash] = `data:${mimeType};base64,${base64}`;
+            }
+          } catch (e) {
+            console.error(`Failed to get image: ${fill.imageHash}`, e);
+          }
+        }
+      }
+    }
+
+    // 자식 노드 탐색
+    if ("children" in node && node.children) {
+      for (const child of node.children) {
+        await this._traverseAndCollectImages(child, imageUrls, visited);
+      }
+    }
+  }
+
+  /**
+   * INSTANCE 노드의 원본 컴포넌트(mainComponent) 데이터를 수집
+   */
+  private async _collectDependencies(
+    node: SceneNode
+  ): Promise<Record<string, FigmaNodeData>> {
+    const deps: Record<string, FigmaNodeData> = {};
+    const visited = new Set<string>(); // 순환 참조 방지
+
+    await this._traverseAndCollect(node, deps, visited);
+
+    return deps;
+  }
+
+  /**
+   * 노드 트리를 순회하며 INSTANCE의 mainComponent 데이터 수집
+   */
+  private async _traverseAndCollect(
+    node: SceneNode,
+    deps: Record<string, FigmaNodeData>,
+    visited: Set<string>
+  ): Promise<void> {
+    // INSTANCE 노드인 경우 mainComponent 비동기로 가져오기
+    if (node.type === "INSTANCE") {
+      const mainComponent = await node.getMainComponentAsync();
+
+      if (mainComponent) {
+        const componentId = mainComponent.id;
+
+        // 이미 수집했거나 순환 참조인 경우 스킵
+        if (!deps[componentId] && !visited.has(componentId)) {
+          visited.add(componentId);
+
+          // mainComponent의 데이터 수집
+          const componentInfo = (await mainComponent.exportAsync({
+            format: "JSON_REST_V1",
+          })) as FigmaRestApiResponse;
+          const componentStyleTree = await this._makeStyleTree(mainComponent);
+
+          deps[componentId] = {
+            pluginData: [],
+            info: componentInfo,
+            styleTree: componentStyleTree,
+          };
+
+          // mainComponent의 자식도 재귀 탐색 (중첩 INSTANCE 처리)
+          await this._traverseAndCollect(mainComponent, deps, visited);
+        }
+      }
+    }
+
+    // 자식 노드 탐색
+    if ("children" in node && node.children) {
+      for (const child of node.children) {
+        await this._traverseAndCollect(child, deps, visited);
+      }
+    }
   }
 
   private async _makeStyleTree(node: SceneNode): Promise<StyleTree | null> {

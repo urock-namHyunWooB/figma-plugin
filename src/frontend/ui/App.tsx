@@ -5,6 +5,7 @@ import FigmaCompiler, { PropDefinition } from "@compiler";
 import { useComponentRenderer } from "./hooks/useComponentRenderer";
 import { PropController } from "./components/PropController";
 import { CodeViewer } from "./components/CodeViewer";
+import ErrorBoundary from "@frontend/ui/components/ErrorBoundary";
 
 const appContainerStyle = css`
   display: flex;
@@ -71,11 +72,15 @@ function App() {
   const [propDefinitions, setPropDefinitions] = useState<PropDefinition[]>([]);
   const [propValues, setPropValues] = useState<Record<string, any>>({});
   const [componentName, setComponentName] = useState<string>("");
+  const [errorBoundaryKey, setErrorBoundaryKey] = useState(0);
 
   // FigmaCompiler로 코드 생성
   useEffect(() => {
+    // selectionNodeData가 변경될 때마다 상태 리셋
+    setErrorBoundaryKey((prev) => prev + 1);
+    setGeneratedCode(null);
+
     if (!selectionNodeData) {
-      setGeneratedCode(null);
       setPropDefinitions([]);
       setPropValues({});
       setComponentName("");
@@ -103,7 +108,7 @@ function App() {
         setGeneratedCode(code);
       });
     } catch (e) {
-      console.error(e);
+      console.error("FigmaCompiler error:", e);
     }
   }, [selectionNodeData]);
 
@@ -126,19 +131,21 @@ function App() {
           Preview {componentName && `- ${componentName}`}
         </div>
 
-        <div css={previewContainerStyle}>
-          {isLoading && <span css={emptyPreviewStyle}>Loading...</span>}
+        <ErrorBoundary key={errorBoundaryKey}>
+          <div css={previewContainerStyle}>
+            {isLoading && <span css={emptyPreviewStyle}>Loading...</span>}
 
-          {error && <div css={errorStyle}>Error: {error}</div>}
+            {error && <div css={errorStyle}>Error: {error}</div>}
 
-          {!isLoading && !error && Component && <Component {...propValues} />}
+            {!isLoading && !error && Component && <Component {...propValues} />}
 
-          {!isLoading && !error && !Component && (
-            <span css={emptyPreviewStyle}>
-              Select a component in Figma to preview
-            </span>
-          )}
-        </div>
+            {!isLoading && !error && !Component && (
+              <span css={emptyPreviewStyle}>
+                Select a component in Figma to preview
+              </span>
+            )}
+          </div>
+        </ErrorBoundary>
 
         {propDefinitions.length > 0 && (
           <PropController

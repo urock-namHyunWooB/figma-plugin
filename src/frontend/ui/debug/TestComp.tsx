@@ -2,15 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 
 import taptapButtonSample from "../../../../test/fixtures/button/taptapButton_sample.json";
 import tadaButtonSample from "../../../../test/fixtures/button/tadaButton.json";
+import groupNode01 from "../../../../test/fixtures/any/group-node-01.json";
 import airtableButton from "../../../../test/fixtures/button/airtableButton.json";
 import urockButton from "../../../../test/fixtures/button/urockButton.json";
 import taptapButton from "../../../../test/fixtures/button/taptapButton.json";
 import urockChips from "../../../../test/fixtures/chip/urock-chips.json";
 import airtableSelectButton from "../../../../test/fixtures/select-button/airtable-select-button.json";
+import tadaButtonComponent from "../../../../test/fixtures/tada-button-component.json";
 
 import type { FigmaNodeData } from "@compiler/types/baseType";
 import { useCompilerDebug } from "./useCompilerDebug";
 import ErrorBoundary from "@frontend/ui/components/ErrorBoundary";
+import CodeViewer from "@frontend/ui/components/CodeViewer";
 
 export function TestComp() {
   const FIXTURES = useMemo(
@@ -43,6 +46,14 @@ export function TestComp() {
         airtableSelectButton: {
           label: "airtableSelectButton",
           data: airtableSelectButton as unknown as FigmaNodeData,
+        },
+        tadaButtonComponent: {
+          label: "tadaButtonComponent",
+          data: tadaButtonComponent as unknown as FigmaNodeData,
+        },
+        groupNode01: {
+          label: "groupNode01",
+          data: groupNode01 as unknown as FigmaNodeData,
         },
       }) as const,
     []
@@ -135,19 +146,20 @@ export function TestComp() {
 
       <div style={{ marginBottom: "30px" }}>
         <h3>생성된 TSX 코드:</h3>
-        <pre
-          style={{
-            backgroundColor: "#f5f5f5",
-            padding: "15px",
-            borderRadius: "4px",
-            overflow: "auto",
-            maxHeight: "400px",
-            fontSize: "12px",
-            lineHeight: "1.4",
-          }}
-        >
-          {code || (status === "compiling" ? "로딩 중..." : "")}
-        </pre>
+        <CodeViewer code={code} />
+        {/*<pre*/}
+        {/*  style={{*/}
+        {/*    backgroundColor: "#f5f5f5",*/}
+        {/*    padding: "15px",*/}
+        {/*    borderRadius: "4px",*/}
+        {/*    overflow: "auto",*/}
+        {/*    maxHeight: "400px",*/}
+        {/*    fontSize: "12px",*/}
+        {/*    lineHeight: "1.4",*/}
+        {/*  }}*/}
+        {/*>*/}
+        {/*  {code || (status === "compiling" ? "로딩 중..." : "")}*/}
+        {/*</pre>*/}
       </div>
     </div>
   );

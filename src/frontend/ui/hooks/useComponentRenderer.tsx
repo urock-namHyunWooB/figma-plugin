@@ -43,16 +43,22 @@ export function useComponentRenderer(
   );
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [prevCode, setPrevCode] = useState<string | null>(null);
+
+  // code가 변경되면 즉시 Component와 error를 null로 설정 (렌더링 중에 실행)
+  // React batching으로 인해 useEffect만으로는 이전 Component가 남아있을 수 있음
+  if (code !== prevCode) {
+    setComponent(null);
+    setError(null);
+    setPrevCode(code);
+  }
 
   useEffect(() => {
     if (!code) {
-      setComponent(null);
-      setError(null);
       return;
     }
 
     setIsLoading(true);
-    setError(null);
 
     renderReactComponent(code)
       .then((compiledComponent) => {

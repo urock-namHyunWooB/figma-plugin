@@ -1,0 +1,252 @@
+{
+  "pluginData": [],
+  "info": {
+    "document": {
+      "id": "6452:8804",
+      "name": "HomeIndicator",
+      "type": "INSTANCE",
+      "scrollBehavior": "SCROLLS",
+      "componentId": "6452:8023",
+      "componentProperties": {
+        "Dark Mode": {
+          "value": "False",
+          "type": "VARIANT",
+          "boundVariables": {}
+        }
+      },
+      "overrides": [
+        {
+          "id": "6452:8804",
+          "overriddenFields": ["height", "width"]
+        }
+      ],
+      "children": [
+        {
+          "id": "I6452:8804;79741:205388",
+          "name": "Home Indicator",
+          "type": "RECTANGLE",
+          "scrollBehavior": "SCROLLS",
+          "blendMode": "PASS_THROUGH",
+          "fills": [
+            {
+              "blendMode": "NORMAL",
+              "type": "SOLID",
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              }
+            }
+          ],
+          "strokes": [],
+          "strokeWeight": 0,
+          "strokeAlign": "CENTER",
+          "styles": {
+            "fill": "6452:8020"
+          },
+          "cornerRadius": 100,
+          "cornerSmoothing": 0,
+          "absoluteBoundingBox": {
+            "x": -3675,
+            "y": 413,
+            "width": 134,
+            "height": 5
+          },
+          "absoluteRenderBounds": {
+            "x": -3675,
+            "y": 413,
+            "width": 134,
+            "height": 5
+          },
+          "constraints": {
+            "vertical": "BOTTOM",
+            "horizontal": "CENTER"
+          },
+          "effects": [],
+          "interactions": []
+        }
+      ],
+      "blendMode": "PASS_THROUGH",
+      "clipsContent": false,
+      "background": [],
+      "fills": [],
+      "strokes": [],
+      "strokeWeight": 1,
+      "strokeAlign": "INSIDE",
+      "backgroundColor": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "absoluteBoundingBox": {
+        "x": -3805,
+        "y": 392,
+        "width": 393,
+        "height": 34
+      },
+      "absoluteRenderBounds": {
+        "x": -3805,
+        "y": 392,
+        "width": 393,
+        "height": 34
+      },
+      "constraints": {
+        "vertical": "BOTTOM",
+        "horizontal": "CENTER"
+      },
+      "effects": [],
+      "interactions": []
+    },
+    "components": {
+      "6452:8023": {
+        "key": "de751488bf567b0d56e85fa671ba8d9160aa4d1b",
+        "name": "Dark Mode=False",
+        "description": "",
+        "remote": true,
+        "componentSetId": "6452:8022",
+        "documentationLinks": []
+      }
+    },
+    "componentSets": {
+      "6452:8022": {
+        "key": "d5f06b41cbe23cf47ebbfbf5caf63411c3d46bc0",
+        "name": "HomeIndicator",
+        "description": "",
+        "remote": true
+      }
+    },
+    "schemaVersion": 0,
+    "styles": {
+      "6452:8020": {
+        "key": "894132debc2b26d69aae4d329c3f8a51209dfeef",
+        "name": "Label Color/Light/Primary",
+        "styleType": "FILL",
+        "remote": true,
+        "description": ""
+      }
+    }
+  },
+  "styleTree": {
+    "id": "6452:8804",
+    "name": "HomeIndicator",
+    "cssStyle": {
+      "display": "flex",
+      "width": "393px",
+      "height": "34px",
+      "padding": "21px 129px 8px 130px",
+      "justify-content": "center",
+      "align-items": "center"
+    },
+    "children": [
+      {
+        "id": "I6452:8804;79741:205388",
+        "name": "Home Indicator",
+        "cssStyle": {
+          "width": "134px",
+          "height": "5px",
+          "flex-shrink": "0",
+          "border-radius": "100px",
+          "background": "var(--Label-Color-Light-Primary, #000)"
+        },
+        "children": []
+      }
+    ]
+  },
+  "dependencies": {
+    "6452:8023": {
+      "pluginData": [],
+      "info": {
+        "document": {
+          "id": "6452:8023",
+          "name": "Dark Mode=False",
+          "type": "COMPONENT",
+          "scrollBehavior": "SCROLLS",
+          "children": [],
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": false,
+          "background": [],
+          "fills": [],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "backgroundColor": {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          "absoluteBoundingBox": {
+            "x": 32,
+            "y": 32,
+            "width": 390,
+            "height": 34
+          },
+          "absoluteRenderBounds": {
+            "x": 32,
+            "y": 32,
+            "width": 390,
+            "height": 34
+          },
+          "constraints": {
+            "vertical": "TOP",
+            "horizontal": "LEFT"
+          },
+          "layoutAlign": "INHERIT",
+          "layoutGrow": 0,
+          "layoutSizingHorizontal": "FIXED",
+          "layoutSizingVertical": "FIXED",
+          "effects": [],
+          "interactions": []
+        },
+        "components": {
+          "6452:8023": {
+            "key": "de751488bf567b0d56e85fa671ba8d9160aa4d1b",
+            "name": "Dark Mode=False",
+            "description": "",
+            "remote": true,
+            "componentSetId": "6452:8022",
+            "documentationLinks": []
+          }
+        },
+        "componentSets": {
+          "6452:8022": {
+            "key": "d5f06b41cbe23cf47ebbfbf5caf63411c3d46bc0",
+            "name": "HomeIndicator",
+            "description": "",
+            "remote": true
+          }
+        },
+        "schemaVersion": 0,
+        "styles": {}
+      },
+      "styleTree": {
+        "id": "6452:8023",
+        "name": "Dark Mode=False",
+        "cssStyle": {
+          "display": "flex",
+          "width": "390px",
+          "height": "34px",
+          "padding": "21px 128px 8px 128px",
+          "justify-content": "center",
+          "align-items": "center"
+        },
+        "children": [
+          {
+            "id": "6452:8024",
+            "name": "Home Indicator",
+            "cssStyle": {
+              "width": "134px",
+              "height": "5px",
+              "flex-shrink": "0",
+              "border-radius": "100px",
+              "background": "var(--Label-Color-Light-Primary, #000)"
+            },
+            "children": []
+          }
+        ]
+      }
+    }
+  }
+}

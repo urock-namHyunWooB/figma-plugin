@@ -174,4 +174,24 @@ export interface FinalAstTree {
    * GenerateStyles에서 생성하고 CreateJsxTree에서 참조
    */
   generatedNames?: GeneratedNames;
+
+  /**
+   * INSTANCE 노드가 참조하는 외부 컴포넌트 정보
+   * 이 필드가 있으면 children은 무시되고 외부 컴포넌트로 렌더링됨
+   */
+  externalComponent?: ExternalComponentRef;
 }
+
+/**
+ * 외부 컴포넌트 참조 정보
+ * INSTANCE 노드가 별도 컴포넌트로 렌더링될 때 사용
+ */
+export interface ExternalComponentRef {
+  /** 원본 컴포넌트 ID (dependencies의 key) */
+  componentId: string;
+  /** ComponentSet ID (같은 ComponentSet은 하나의 컴포넌트로 통합) */
+  componentSetId: string;
+  /** 정규화된 컴포넌트 이름 (예: "SelectButton") */
+  componentName: string;
+  /** INSTANCE에서 전달하는 props (예: { size: "default", selected: "false" }) */
+  props: Record<string, string>;

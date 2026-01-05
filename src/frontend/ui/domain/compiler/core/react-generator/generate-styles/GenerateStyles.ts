@@ -11,6 +11,8 @@ class GenerateStyles {
   private kit: TypescriptNodeKitManager;
   /** 변수명 중복 추적용 Map (baseName → 사용 횟수) */
   private usedNames: Map<string, number> = new Map();
+  /** 루트 노드에 사용할 컴포넌트 이름 (외부에서 전달) */
+  private componentName: string | undefined;
 
   constructor(factory: NodeFactory, astTree: FinalAstTree) {
     this.factory = factory;
@@ -29,21 +31,49 @@ class GenerateStyles {
   }
 
   /**
-   * 노드의 기본 이름 가져오기 (루트는 문서 이름 사용)
+   * 노드의 기본 이름 가져오기
+   * - 루트: 외부에서 전달된 componentName 우선, 없으면 문서 이름 사용
+   * - 숫자만 있는 이름: semanticRole 사용 (text, button 등)
+   * - 그 외: 노드 이름 사용
    */
   private _getNodeBaseName(node: FinalAstTree): string {
-    if (!node.parent && node.metaData.document) {
-      return node.metaData.document.name;
+    // 루트 노드: componentName 우선 사용 (variant 이름 대신 컴포넌트 이름)
+    if (!node.parent) {
+      if (this.componentName) {
+        return this.componentName;
+      }
+      if (node.metaData.document) {
+        return node.metaData.document.name;
+      }
     }
+
+    // 노드 이름이 숫자만 있으면 semanticRole 사용
+    const isNumericOnly = /^[0-9]+$/.test(node.name);
+    if (isNumericOnly && node.semanticRole) {
+      // semanticRole이 container면 부모 이름 + role 조합
+      if (node.semanticRole === "container" && node.parent) {
+        const parentName = this._getNodeBaseName(node.parent);
+        return `${parentName}Child`;
+      }
+      return node.semanticRole;
+    }
+
     return node.name;
   }
 
-  public createStyleVariables(): ts.VariableStatement[] {
+  public createStyleVariables(componentName?: string): ts.VariableStatement[] {
+    // 외부에서 전달된 컴포넌트 이름 저장 (루트 노드 CSS 이름에 사용)
+    this.componentName = componentName;
     const styleVariables: ts.VariableStatement[] = [];
 
     traverseBFS(this.astTree, (node) => {
       // Slot 노드는 CSS 생성 스킵 (사용자가 전달하는 컴포넌트이므로)
       if ((node as any).isSlot) {
+        return;
+      }
+
+      // externalComponent가 있는 노드는 CSS 생성 스킵 (외부 컴포넌트로 렌더링됨)
+      if (node.externalComponent) {
         return;
       }
 

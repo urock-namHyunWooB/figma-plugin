@@ -7,16 +7,24 @@ import ReactGenerator from "@compiler/core/react-generator/ReactGenerator";
 import CreateSuperTree from "./super-tree/CreateSuperTree";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import { toCamelCase } from "@compiler/utils/normalizeString";
+import ArraySlotDetector, { ArraySlot } from "@compiler/core/ArraySlotDetector";
 
 class Engine {
   private CreateSuperTree: CreateSuperTree;
   private CreateFinalAstTree: CreateAstTree;
   private reactGenerator: ReactGenerator;
+  private arraySlots: ArraySlot[];
 
   constructor(root: FigmaCompiler, renderTree: RenderTree) {
     const node = root.SpecDataManager.getSpecById(renderTree.id);
     const specManager = root.SpecDataManager;
     const matcher = new NodeMatcher(specManager);
+
+    // 배열 슬롯 감지
+    const arraySlotDetector = new ArraySlotDetector(
+      root.SpecDataManager.getSpec()
+    );
+    this.arraySlots = arraySlotDetector.detect();
 
     this.CreateSuperTree = new CreateSuperTree(
       renderTree,
@@ -34,7 +42,10 @@ class Engine {
       refinedProps
     ));
 
-    this.reactGenerator = new ReactGenerator(createFinalAstTree.finalAstTree);
+    this.reactGenerator = new ReactGenerator(
+      createFinalAstTree.finalAstTree,
+      this.arraySlots
+    );
   }
 
   /**

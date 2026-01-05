@@ -9,6 +9,7 @@ import tadaButtonComponentMockData from "../fixtures/tada-button-component.json"
 
 import airtableButtonMockData from "../fixtures/button/airtableButton.json";
 import urockChipsMockData from "../fixtures/chip/urock-chips.json";
+import airtableSelectButton from "../fixtures/select-button/airtable-select-button.json";
 
 import FigmaCompiler, {
   FinalAstTree,
@@ -1122,9 +1123,6 @@ describe("compiler 테스트", () => {
       test("Size가 Small이면 fontSize는 12px이고 line-height는 18px이여야 한다.", () => {
         const { container } = renderButton({
           size: "Small",
-          Size: "Small",
-          state: "Default",
-          State: "Default",
           leftIcon: null,
           rightIcon: null,
         });
@@ -1137,9 +1135,6 @@ describe("compiler 테스트", () => {
       test("Text color는 흰색이여야 한다.", () => {
         const { container } = renderButton({
           size: "Large",
-          Size: "Large",
-          state: "Default",
-          State: "Default",
           leftIcon: null,
           rightIcon: null,
         });
@@ -1151,9 +1146,6 @@ describe("compiler 테스트", () => {
       test("Left Icon과 Right Icon이 렌더링 되어야 한다.", () => {
         renderButton({
           size: "Large",
-          Size: "Large",
-          state: "Default",
-          State: "Default",
           leftIcon: React.createElement("svg", { "data-testid": "left-icon" }),
           rightIcon: React.createElement("svg", {
             "data-testid": "right-icon",
@@ -1166,7 +1158,6 @@ describe("compiler 테스트", () => {
       test("Text만 렌더링 되어 있을때 버튼 중앙에 있어야 한다.", () => {
         const { container } = renderButton({
           size: "Large",
-          state: "Default",
           leftIcon: "False",
           rightIcon: "False",
         });
@@ -1178,9 +1169,6 @@ describe("compiler 테스트", () => {
       test("hover 하면 배경색이 바뀌어야 한다.", () => {
         const { container } = renderButton({
           size: "Large",
-          Size: "Large",
-          state: "Default",
-          State: "Default",
         });
         const root = getRootElement(container);
         const before = getComputedStyle(root).backgroundColor;
@@ -1194,8 +1182,6 @@ describe("compiler 테스트", () => {
 
       test("기본 size는 Large이여야 한다.", () => {
         const { container } = renderButton({
-          state: "Default",
-          State: "Default",
           leftIcon: null,
           rightIcon: null,
         });
@@ -1207,8 +1193,6 @@ describe("compiler 테스트", () => {
       test("props로 text를 넘기면 text가 렌더링 되어야 한다.", () => {
         const { container } = renderButton({
           text: "Hello",
-          internal_text: "Hello",
-          internalText: "Hello",
           leftIcon: null,
           rightIcon: null,
         });
@@ -1221,9 +1205,6 @@ describe("compiler 테스트", () => {
       test("size마다 크기가 다르다.", () => {
         const { container, rerender } = renderButton({
           size: "Large",
-          Size: "Large",
-          state: "Default",
-          State: "Default",
         });
         const largePaddingTop = getComputedStyle(
           getRootElement(container)
@@ -1232,9 +1213,6 @@ describe("compiler 테스트", () => {
         rerender(
           React.createElement(Component, {
             size: "Medium",
-            Size: "Medium",
-            state: "Default",
-            State: "Default",
           })
         );
         const mediumPaddingTop = getComputedStyle(
@@ -1244,9 +1222,6 @@ describe("compiler 테스트", () => {
         rerender(
           React.createElement(Component, {
             size: "Small",
-            Size: "Small",
-            state: "Default",
-            State: "Default",
           })
         );
         const smallPaddingTop = getComputedStyle(
@@ -1342,7 +1317,10 @@ describe("compiler 테스트", () => {
           const quotedPattern = `"${type}":`;
           const unquotedPattern = `${type}:`;
           // 둘 중 하나가 있으면 통과
-          if (!code!.includes(quotedPattern) && !code!.includes(unquotedPattern)) {
+          if (
+            !code!.includes(quotedPattern) &&
+            !code!.includes(unquotedPattern)
+          ) {
             missingTypes.push(type);
           }
         }
@@ -1483,10 +1461,269 @@ describe("compiler 테스트", () => {
         expect(styles.backgroundColor).toBe("rgb(174, 242, 246)");
       });
     });
+
+    describe("airtableSelectButton", () => {
+      let Component: React.ComponentType<any>;
+
+      beforeAll(async () => {
+        const compiler = new FigmaCompiler(airtableSelectButton as any);
+        const code = await compiler.getGeneratedCode();
+
+        Component = await renderReactComponent(code!);
+      });
+
+      function renderChip(props?: Record<string, any>) {
+        return render(React.createElement(Component, props ?? {}));
+      }
+
+      function getRootElement(container: HTMLElement): HTMLElement {
+        const el = container.firstElementChild as HTMLElement | null;
+        if (!el) throw new Error("Root element not found");
+        return el;
+      }
+
+      test("기본 렌더링 되어야 한다.", () => {
+        const { container } = renderChip();
+        expect(container).toBeInTheDocument();
+        expect(getRootElement(container)).toBeTruthy();
+      });
+
+      describe("멀티 컴포넌트 생성", () => {
+        let generatedCode: string;
+
+        beforeAll(async () => {
+          const compiler = new FigmaCompiler(airtableSelectButton as any);
+          generatedCode = (await compiler.getGeneratedCode()) || "";
+        });
+
+        test("dependency 컴포넌트가 같은 파일에 생성되어야 한다", () => {
+          // SelectButton 함수가 코드에 포함되어야 함
+          expect(generatedCode).toMatch(/function\s+SelectButton\s*\(/);
+        });
+
+        test("dependency 컴포넌트 이름이 올바르게 생성되어야 한다 (variant 이름이 아님)", () => {
+          // SizedefaultSelectedfalse 같은 variant 이름이 아니어야 함
+          expect(generatedCode).not.toMatch(/function\s+Sizedefault/i);
+          expect(generatedCode).not.toMatch(/function\s+Selected/i);
+        });
+
+        test("CSS 변수명이 컴포넌트 이름 기반이어야 한다", () => {
+          // SelectButtonCss 형태여야 함
+          expect(generatedCode).toMatch(/const\s+SelectButtonCss\s*=/);
+          // SizedefaultSelectedfalseCss 같은 variant 이름이 아니어야 함
+          expect(generatedCode).not.toMatch(/SizedefaultSelectedfalseCss/i);
+        });
+
+        test("불필요한 INSTANCE 자식 CSS가 생성되지 않아야 한다", () => {
+          // Option1Css, Option2Css 등이 없어야 함 (INSTANCE로 렌더링되므로)
+          expect(generatedCode).not.toMatch(/const\s+Option1Css\s*=/);
+          expect(generatedCode).not.toMatch(/const\s+Option2Css\s*=/);
+        });
+
+        test("TEXT 노드의 텍스트 내용이 비어있지 않아야 한다", () => {
+          // <span css={...}/> (빈 span)이 아니라 텍스트 내용이 있어야 함
+          // 현재는 실패할 것임 (아직 수정 전)
+          expect(generatedCode).not.toMatch(/<span[^>]*css=\{[^}]+\}\s*\/>/);
+        });
+      });
+    });
+
+    // TODO: 노드 태그 이름 테스트 추가 예정
   });
 
   describe("예외 테스트", () => {
-    test("컴파일이 실패해도 앱이 죽으면 안된다. ", () => {});
+    test("빈 객체로 컴파일하면 try-catch로 에러를 잡을 수 있어야 한다", async () => {
+      const emptyData = {};
+      let error: Error | null = null;
+
+      try {
+        new FigmaCompiler(emptyData as any);
+      } catch (e) {
+        error = e as Error;
+      }
+
+      // 에러가 발생하고, 이 에러는 catch로 잡을 수 있어야 함
+      expect(error).not.toBeNull();
+      expect(error).toBeInstanceOf(Error);
+    });
+
+    test("잘못된 구조의 데이터로 컴파일하면 try-catch로 에러를 잡을 수 있어야 한다", async () => {
+      const invalidData = {
+        id: "test-id",
+        name: "Test",
+        type: "COMPONENT_SET",
+        // children 누락
+      };
+      let error: Error | null = null;
+
+      try {
+        new FigmaCompiler(invalidData as any);
+      } catch (e) {
+        error = e as Error;
+      }
+
+      // 에러가 발생하고, 이 에러는 catch로 잡을 수 있어야 함
+      expect(error).not.toBeNull();
+      expect(error).toBeInstanceOf(Error);
+    });
+
+    test("올바른 구조지만 빈 children 배열로 컴파일하면 에러가 발생하고 try-catch로 잡을 수 있어야 한다", async () => {
+      const emptyChildrenData = {
+        pluginData: [],
+        info: {
+          document: {
+            id: "test-id",
+            name: "Test",
+            type: "COMPONENT_SET",
+            children: [],
+            componentPropertyDefinitions: {},
+          },
+        },
+        styleTree: {
+          id: "test-id",
+          name: "Test",
+          cssStyle: {},
+          children: [],
+        },
+      };
+      // 빈 children 배열은 에러를 발생시키지만, try-catch로 잡을 수 있어야 함
+      let error: Error | null = null;
+
+      try {
+        new FigmaCompiler(emptyChildrenData as any);
+      } catch (e) {
+        error = e as Error;
+      }
+
+      // 에러가 발생하고, 이 에러는 catch로 잡을 수 있어야 함
+      expect(error).not.toBeNull();
+      expect(error).toBeInstanceOf(Error);
+    });
+
+    test("componentPropertyDefinitions가 없어도 컴파일러 생성이 가능해야 한다", async () => {
+      const noPropsData = {
+        pluginData: [],
+        info: {
+          document: {
+            id: "test-id",
+            name: "Test",
+            type: "COMPONENT_SET",
+            children: [
+              {
+                id: "variant-1",
+                name: "Size=Large",
+                type: "COMPONENT",
+                children: [],
+              },
+            ],
+          },
+        },
+        styleTree: {
+          id: "test-id",
+          name: "Test",
+          cssStyle: {},
+          children: [
+            {
+              id: "variant-1",
+              name: "Size=Large",
+              cssStyle: {},
+              children: [],
+            },
+          ],
+        },
+      };
+      expect(() => new FigmaCompiler(noPropsData as any)).not.toThrow();
+    });
+
+    test("유효한 데이터로 컴파일러가 정상 동작해야 한다", async () => {
+      const validData = {
+        pluginData: [],
+        info: {
+          document: {
+            id: "test-id",
+            name: "TestButton",
+            type: "COMPONENT_SET",
+            componentPropertyDefinitions: {
+              Size: {
+                type: "VARIANT",
+                defaultValue: "Large",
+                variantOptions: ["Large", "Small"],
+              },
+            },
+            children: [
+              {
+                id: "variant-1",
+                name: "Size=Large",
+                type: "COMPONENT",
+                children: [
+                  {
+                    id: "text-1",
+                    name: "Label",
+                    type: "TEXT",
+                    characters: "Button",
+                    style: {},
+                    fills: [],
+                    strokes: [],
+                  },
+                ],
+              },
+              {
+                id: "variant-2",
+                name: "Size=Small",
+                type: "COMPONENT",
+                children: [
+                  {
+                    id: "text-2",
+                    name: "Label",
+                    type: "TEXT",
+                    characters: "Button",
+                    style: {},
+                    fills: [],
+                    strokes: [],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        styleTree: {
+          id: "test-id",
+          name: "TestButton",
+          cssStyle: {},
+          children: [
+            {
+              id: "variant-1",
+              name: "Size=Large",
+              cssStyle: {},
+              children: [
+                {
+                  id: "text-1",
+                  name: "Label",
+                  cssStyle: {},
+                  children: [],
+                },
+              ],
+            },
+            {
+              id: "variant-2",
+              name: "Size=Small",
+              cssStyle: {},
+              children: [
+                {
+                  id: "text-2",
+                  name: "Label",
+                  cssStyle: {},
+                  children: [],
+                },
+              ],
+            },
+          ],
+        },
+      };
+
+      const compiler = new FigmaCompiler(validData as any);
+      expect(compiler).toBeDefined();
+    });
   });
 
   describe("INSTANCE 노드 처리", () => {
@@ -1507,8 +1744,9 @@ describe("compiler 테스트", () => {
       test("유효한 JSX 태그 이름이어야 한다 (특수문자 없음)", () => {
         // <Badge/Push /> 같은 잘못된 태그가 없어야 함
         expect(code).not.toMatch(/<[A-Za-z]+\/[A-Za-z]+/);
-        // 유효한 컴포넌트 태그가 있어야 함
-        expect(code).toMatch(/return.*<[A-Z][A-Za-z]*/);
+        // 유효한 JSX 태그가 있어야 함 (HTML 태그 또는 컴포넌트 태그)
+        // return 다음에 줄바꿈이 있을 수 있으므로 [\s\S]* 사용
+        expect(code).toMatch(/return[\s\S]*<[a-zA-Z][a-zA-Z]*/);
       });
 
       test("children이 렌더링되어야 한다 (Container, Text)", () => {

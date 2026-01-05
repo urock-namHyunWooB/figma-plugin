@@ -68,6 +68,21 @@ export interface FigmaNodeData {
   }[];
   info: FigmaRestApiResponse;
   styleTree: StyleTree;
+  /**
+   * INSTANCE 노드가 참조하는 원본 컴포넌트 데이터
+   * key: componentId, value: 원본 컴포넌트의 FigmaNodeData
+   */
+  dependencies?: Record<string, FigmaNodeData>;
+  /**
+   * 이미지 URL 맵
+   * key: imageRef (Figma 이미지 해시), value: 실제 이미지 URL
+   */
+  imageUrls?: Record<string, string>;
+  /**
+   * VECTOR SVG 맵
+   * key: nodeId, value: SVG 문자열
+   */
+  vectorSvgs?: Record<string, string>;
 }
 
 /**

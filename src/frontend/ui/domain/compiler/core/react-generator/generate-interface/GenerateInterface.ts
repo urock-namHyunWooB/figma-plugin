@@ -1,14 +1,21 @@
 import ts, { NodeFactory } from "typescript";
 import { FinalAstTree } from "@compiler";
 import { capitalize } from "@compiler/utils/stringUtils";
+import { ArraySlot, ArraySlotItemProp } from "@compiler/core/ArraySlotDetector";
 
 class GenerateInterface {
   private factory: NodeFactory;
   private astTree: FinalAstTree;
+  private arraySlots: ArraySlot[];
 
-  constructor(factory: NodeFactory, astTree: FinalAstTree) {
+  constructor(
+    factory: NodeFactory,
+    astTree: FinalAstTree,
+    arraySlots: ArraySlot[] = []
+  ) {
     this.factory = factory;
     this.astTree = astTree;
+    this.arraySlots = arraySlots;
   }
 
   /**
@@ -282,9 +289,16 @@ class GenerateInterface {
   private _getPropsMember() {
     const members: ts.TypeElement[] = [];
 
+    // 배열 슬롯과 연관된 prop 이름들 (제거 대상)
+    const arraySlotRelatedProps = this._getArraySlotRelatedProps();
+
     for (const [propName, propDef] of Object.entries(this.astTree.props)) {
-      const prop = propDef as any; // props는 실제로는 객체 타입
-      // propName을 prop 객체에 추가하여 _createPropTypeNode에서 사용할 수 있도록 함
+      // 배열 슬롯과 연관된 prop은 건너뛰기 (예: "options" → "2 options" | "3 options")
+      if (arraySlotRelatedProps.has(propName.toLowerCase())) {
+        continue;
+      }
+
+      const prop = propDef as any;
       const propWithName = { ...prop, name: propName };
       const typeNode = this._createPropTypeNode(propWithName);
       const isOptional = prop.defaultValue !== undefined;
@@ -301,7 +315,90 @@ class GenerateInterface {
       members.push(propSig);
     }
 
+    // 배열 슬롯 props 추가 (중복 제거)
+    const processedSlotNames = new Set<string>();
+    for (const slot of this.arraySlots) {
+      // 동일한 slotName은 한 번만 추가
+      if (processedSlotNames.has(slot.slotName)) {
+        continue;
+      }
+      processedSlotNames.add(slot.slotName);
+
+      const arrayTypeNode = this._createArraySlotTypeNode(slot);
+      const propSig = this.factory.createPropertySignature(
+        undefined,
+        slot.slotName,
+        undefined, // 배열 슬롯은 필수
+        arrayTypeNode
+      );
+      members.push(propSig);
+    }
+
     return members;
+  }
+
+  /**
+   * 배열 슬롯과 연관된 prop 이름들 추출
+   * 예: slotName이 "options"이고 variant에 "Options"가 있으면 "options" 반환
+   */
+  private _getArraySlotRelatedProps(): Set<string> {
+    const relatedProps = new Set<string>();
+
+    for (const slot of this.arraySlots) {
+      // slotName과 일치하는 prop 찾기
+      relatedProps.add(slot.slotName.toLowerCase());
+    }
+
+    return relatedProps;
+  }
+
+  /**
+   * 배열 슬롯의 타입 노드 생성
+   * Array<{ size?: Size; selected?: boolean; ... }>
+   */
+  private _createArraySlotTypeNode(slot: ArraySlot): ts.TypeNode {
+    // 아이템 타입의 프로퍼티들 생성
+    const itemProperties: ts.TypeElement[] = slot.itemProps.map((prop) => {
+      const typeNode = this._createItemPropTypeNode(prop);
+
+      return this.factory.createPropertySignature(
+        undefined,
+        prop.name,
+        this.factory.createToken(ts.SyntaxKind.QuestionToken), // 모든 아이템 prop은 optional
+        typeNode
+      );
+    });
+
+    // 객체 타입 리터럴 생성: { size?: Size; selected?: boolean; }
+    const objectType = this.factory.createTypeLiteralNode(itemProperties);
+
+    // Array<...> 타입 참조 생성
+    return this.factory.createTypeReferenceNode("Array", [objectType]);
+  }
+
+  /**
+   * 배열 아이템의 prop 타입 노드 생성
+   */
+  private _createItemPropTypeNode(prop: ArraySlotItemProp): ts.TypeNode {
+    switch (prop.type) {
+      case "VARIANT":
+        if (prop.values && prop.values.length > 0) {
+          // 유니온 타입 생성: "value1" | "value2" | ...
+          const literals = prop.values.map((v) =>
+            this.factory.createLiteralTypeNode(
+              this.factory.createStringLiteral(v)
+            )
+          );
+          return this.factory.createUnionTypeNode(literals);
+        }
+        return this.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
+      case "BOOLEAN":
+        return this.factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
+      case "TEXT":
+        return this.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
+      default:
+        return this.factory.createKeywordTypeNode(ts.SyntaxKind.AnyKeyword);
+    }
   }
 
   private _getHeritageClauses(semanticRol: string | null | undefined) {

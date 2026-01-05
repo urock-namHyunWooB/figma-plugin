@@ -2,14 +2,21 @@ import ts, { NodeFactory } from "typescript";
 import CreateJsxTree from "@compiler/core/react-generator/generate-component/jsx-tree/CreateJsxTree";
 import { FinalAstTree } from "@compiler";
 import CreateStyledComponent from "@compiler/core/react-generator/generate-component/styeld/CreateStyledComponent";
+import { ArraySlot } from "@compiler/core/ArraySlotDetector";
 
 class GenerateComponent {
   private factory: NodeFactory;
   private astTree: FinalAstTree;
+  private arraySlots: ArraySlot[];
 
-  constructor(factory: NodeFactory, astTree: FinalAstTree) {
+  constructor(
+    factory: NodeFactory,
+    astTree: FinalAstTree,
+    arraySlots: ArraySlot[] = []
+  ) {
     this.factory = factory;
     this.astTree = astTree;
+    this.arraySlots = arraySlots;
   }
   /**
    * 컴포넌트 함수 생성
@@ -18,7 +25,7 @@ class GenerateComponent {
   public createComponentFunction(
     componentName: string
   ): ts.FunctionDeclaration {
-    const jsxTree = new CreateJsxTree(this.astTree).jsxTree;
+    const jsxTree = new CreateJsxTree(this.astTree, this.arraySlots).jsxTree;
 
     // JsxExpression을 return 문에서 사용할 수 있도록 변환
     let returnExpression: ts.Expression;
@@ -80,11 +87,20 @@ class GenerateComponent {
   private _createPropsDestructuring(): ts.VariableStatement {
     const props = this.astTree.props || {};
 
+    // 배열 슬롯 이름 수집 (중복 제거)
+    const arraySlotNames = new Set(this.arraySlots.map((slot) => slot.slotName));
+
     const bindingElements: ts.BindingElement[] = [];
     const propNames: string[] = [];
 
     for (const [propName, propDef] of Object.entries(props)) {
       const prop = propDef as any;
+
+      // 배열 슬롯과 연관된 prop은 건너뛰기
+      if (arraySlotNames.has(propName.toLowerCase())) {
+        continue;
+      }
+
       propNames.push(propName);
 
       // 기본값이 있는 경우
@@ -107,6 +123,18 @@ class GenerateComponent {
         );
         bindingElements.push(bindingElement);
       }
+    }
+
+    // 배열 슬롯 props 추가 (기본값: 빈 배열)
+    for (const slotName of arraySlotNames) {
+      propNames.push(slotName);
+      const bindingElement = this.factory.createBindingElement(
+        undefined,
+        undefined,
+        this.factory.createIdentifier(slotName),
+        this.factory.createArrayLiteralExpression([]) // 기본값: []
+      );
+      bindingElements.push(bindingElement);
     }
 
     // 나머지 props를 위한 rest element

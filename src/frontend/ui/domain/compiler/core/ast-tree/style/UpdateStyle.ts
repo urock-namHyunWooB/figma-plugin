@@ -199,6 +199,19 @@ class UpdateStyle {
     groupsByPropKey: Record<string, VariantGroup[]>,
     itemsWithStyle: Record<string, { css: CssStyle } & VariantProps>
   ): StyleObject {
+    // variant가 없는 경우 (INSTANCE, FRAME 등): 첫 번째 아이템의 CSS를 base로 사용
+    const hasNoVariants = Object.values(groupsByPropKey).every(
+      (groups) => groups.length === 0
+    );
+
+    if (hasNoVariants) {
+      const firstItem = Object.values(itemsWithStyle)[0];
+      return {
+        base: firstItem?.css || {},
+        dynamic: [],
+      };
+    }
+
     const itemsByVaryKey = this._transformGroupsToVariantItems(
       groupsByPropKey,
       itemsWithStyle

@@ -1,27 +1,65 @@
 import { FinalAstTree } from "@compiler";
 import ts from "typescript";
+import { ArraySlot } from "@compiler/core/ArraySlotDetector";
+import SvgToJsx from "./SvgToJsx";
 
 class CreateJsxTree {
   private _jsxTree: ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression;
 
   private astTree: FinalAstTree;
+  private arraySlots: ArraySlot[];
 
   private factory = ts.factory;
   private styleVariables: Map<string, string> = new Map(); // node.id -> style variable name
   private cssObjectCache: Map<string, ts.CallExpression> = new Map(); // 스타일 문자열 -> css() 호출 결과 캐시
 
+  // originalKey → propName 매핑 (INSTANCE의 componentProperties 참조용)
+  private originalKeyToPropName: Map<string, string> = new Map();
+
+  // 배열 슬롯 부모 ID → ArraySlot 매핑
+  private arraySlotByParentId: Map<string, ArraySlot> = new Map();
+
   public get jsxTree() {
     return this._jsxTree;
   }
 
-  constructor(astTree: FinalAstTree) {
+  constructor(astTree: FinalAstTree, arraySlots: ArraySlot[] = []) {
     this.astTree = astTree;
+    this.arraySlots = arraySlots;
+    this._buildArraySlotMapping();
+    this._buildOriginalKeyMapping();
     this._jsxTree = this._createJsxTree(astTree);
+  }
+
+  /**
+   * 배열 슬롯 부모 ID → ArraySlot 매핑 빌드
+   */
+  private _buildArraySlotMapping(): void {
+    for (const slot of this.arraySlots) {
+      this.arraySlotByParentId.set(slot.parentId, slot);
+    }
+  }
+
+  /**
+   * originalKey → propName 매핑 빌드
+   * INSTANCE의 componentProperties 참조를 새 prop 이름으로 변환하기 위함
+   */
+  private _buildOriginalKeyMapping(): void {
+    for (const [propName, propDef] of Object.entries(this.astTree.props)) {
+      if ((propDef as any)?.originalKey) {
+        this.originalKeyToPropName.set((propDef as any).originalKey, propName);
+      }
+    }
   }
 
   public _createJsxTree(
     node: FinalAstTree
   ): ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression {
+    // 외부 컴포넌트 참조인 경우 (INSTANCE → 별도 컴포넌트로 렌더링)
+    if (node.externalComponent) {
+      return this._createExternalComponentJsx(node);
+    }
+
     // Slot 노드는 props.slotName으로 참조 (children 없음)
     const slotJsx = this._createSlotJsxExpression(node);
     if (slotJsx) {
@@ -33,19 +71,85 @@ class CreateJsxTree {
     const attributes = this._createAttributes(node);
     let children = this._createChildren(node);
 
-    // TEXT 노드이고 node.props.characters에 prop 이름이 바인딩되어 있으면 텍스트 내용 추가
-    if (node.type === "TEXT" && (node.props as any)?.characters) {
-      const propName = (node.props as any).characters;
-      // props.text를 참조하는 JSX Expression 생성 (구조 분해된 변수 사용)
-      const textExpression = this.factory.createJsxExpression(
-        undefined,
-        this.factory.createIdentifier(propName)
-      );
-      // children 앞에 텍스트 추가
-      children = [textExpression, ...children];
+    // TEXT 노드 텍스트 내용 처리
+    if (node.type === "TEXT") {
+      if ((node.props as any)?.characters) {
+        // props.characters가 있으면 prop 참조 (동적 텍스트)
+        const rawPropName = (node.props as any).characters;
+        // originalKey → propName 매핑 사용 (INSTANCE의 경우)
+        // 매핑이 없으면 기존 정규화 방식 사용 (COMPONENT_SET의 경우)
+        const propName =
+          this.originalKeyToPropName.get(rawPropName) ||
+          this._normalizeName(rawPropName);
+        // props.text를 참조하는 JSX Expression 생성 (구조 분해된 변수 사용)
+        const textExpression = this.factory.createJsxExpression(
+          undefined,
+          this.factory.createIdentifier(propName)
+        );
+        // children 앞에 텍스트 추가
+        children = [textExpression, ...children];
+      } else if (node.metaData.characters) {
+        // metaData.characters가 있으면 고정 텍스트 (단일 COMPONENT 등)
+        const textLiteral = this.factory.createJsxText(
+          node.metaData.characters as string,
+          false
+        );
+        children = [textLiteral, ...children];
+      }
+    }
+
+    // VECTOR 노드: vectorSvg가 있으면 dangerouslySetInnerHTML로 렌더링
+    if (node.semanticRole === "vector" && node.metaData.vectorSvg) {
+      return this._createVectorSvgElement(node, attributes);
     }
 
     return this._createJsxElement(tagName, attributes, children);
+  }
+
+  /**
+   * 외부 컴포넌트(INSTANCE)를 JSX로 변환
+   * <SelectButton size={size} selected="false" />
+   */
+  private _createExternalComponentJsx(
+    node: FinalAstTree
+  ): ts.JsxSelfClosingElement {
+    const extComp = node.externalComponent!;
+
+    // 컴포넌트 이름 (PascalCase)
+    const tagIdentifier = this.factory.createIdentifier(extComp.componentName);
+
+    // props를 JSX 속성으로 변환
+    const attributes: ts.JsxAttributeLike[] = [];
+
+    for (const [propName, propValue] of Object.entries(extComp.props)) {
+      // 부모 컴포넌트의 같은 이름 prop이 있으면 변수 참조, 없으면 문자열 리터럴
+      const parentHasSameProp = propName in this.astTree.props;
+
+      let valueExpression: ts.Expression;
+      if (parentHasSameProp) {
+        // 부모 prop을 그대로 전달: size={size}
+        valueExpression = this.factory.createIdentifier(propName);
+      } else {
+        // 고정값으로 전달: selected="false"
+        valueExpression = this.factory.createStringLiteral(propValue);
+      }
+
+      const jsxAttr = this.factory.createJsxAttribute(
+        this.factory.createIdentifier(propName),
+        parentHasSameProp
+          ? this.factory.createJsxExpression(undefined, valueExpression)
+          : this.factory.createStringLiteral(propValue)
+      );
+
+      attributes.push(jsxAttr);
+    }
+
+    // Self-closing element: <SelectButton ... />
+    return this.factory.createJsxSelfClosingElement(
+      tagIdentifier,
+      undefined,
+      this.factory.createJsxAttributes(attributes)
+    );
   }
 
   /**
@@ -106,6 +210,15 @@ class CreateJsxTree {
   private _createChildren(node: FinalAstTree): ts.JsxChild[] {
     const children: ts.JsxChild[] = [];
 
+    // 배열 슬롯인지 확인
+    const arraySlot = this.arraySlotByParentId.get(node.id);
+    if (arraySlot) {
+      // 배열 슬롯: .map() 형태로 렌더링
+      const mapExpression = this._createArraySlotMapExpression(node, arraySlot);
+      children.push(mapExpression);
+      return children;
+    }
+
     for (const child of node.children) {
       const childJsx = this._createJsxTree(child);
 
@@ -125,6 +238,125 @@ class CreateJsxTree {
     }
 
     return children;
+  }
+
+  /**
+   * 배열 슬롯을 .map() 형태로 렌더링
+   * {slotName.map((item, index) => <ComponentName key={index} {...item} />)}
+   */
+  private _createArraySlotMapExpression(
+    _node: FinalAstTree,
+    slot: ArraySlot
+  ): ts.JsxExpression {
+    const factory = this.factory;
+
+    // 아이템 컴포넌트 이름 추출 (externalComponent에서 가져오거나 인스턴스 이름에서 유추)
+    const firstInstance = slot.instances[0];
+    const componentName = this._inferComponentNameFromSlot(slot);
+
+    // props 속성들 생성: size={item.size}, selected={item.selected}, ...
+    const attributes: ts.JsxAttributeLike[] = [];
+
+    // key={index} 추가
+    attributes.push(
+      factory.createJsxAttribute(
+        factory.createIdentifier("key"),
+        factory.createJsxExpression(undefined, factory.createIdentifier("index"))
+      )
+    );
+
+    // item의 각 prop을 JSX attribute로 변환
+    for (const prop of slot.itemProps) {
+      const propAccess = factory.createPropertyAccessExpression(
+        factory.createIdentifier("item"),
+        factory.createIdentifier(prop.name)
+      );
+      attributes.push(
+        factory.createJsxAttribute(
+          factory.createIdentifier(prop.name),
+          factory.createJsxExpression(undefined, propAccess)
+        )
+      );
+    }
+
+    // <ComponentName key={index} size={item.size} ... />
+    const jsxElement = factory.createJsxSelfClosingElement(
+      factory.createIdentifier(componentName),
+      undefined,
+      factory.createJsxAttributes(attributes)
+    );
+
+    // (item, index) => <ComponentName ... />
+    const arrowFunction = factory.createArrowFunction(
+      undefined,
+      undefined,
+      [
+        factory.createParameterDeclaration(
+          undefined,
+          undefined,
+          factory.createIdentifier("item")
+        ),
+        factory.createParameterDeclaration(
+          undefined,
+          undefined,
+          factory.createIdentifier("index")
+        ),
+      ],
+      undefined,
+      factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+      jsxElement
+    );
+
+    // slotName.map(...)
+    const mapCall = factory.createCallExpression(
+      factory.createPropertyAccessExpression(
+        factory.createIdentifier(slot.slotName),
+        factory.createIdentifier("map")
+      ),
+      undefined,
+      [arrowFunction]
+    );
+
+    // {slotName.map(...)}
+    return factory.createJsxExpression(undefined, mapCall);
+  }
+
+  /**
+   * 배열 슬롯에서 컴포넌트 이름 추론
+   * AST에서 externalComponent.componentName을 찾거나, slot의 정보에서 유추
+   */
+  private _inferComponentNameFromSlot(slot: ArraySlot): string {
+    // AST에서 해당 slot의 첫 번째 인스턴스 노드를 찾아서 externalComponent.componentName 사용
+    const firstInstanceId = slot.instances[0]?.id;
+    if (firstInstanceId) {
+      const instanceNode = this._findNodeById(this.astTree, firstInstanceId);
+      if (instanceNode?.externalComponent?.componentName) {
+        return instanceNode.externalComponent.componentName;
+      }
+    }
+
+    // fallback: slot.componentSetId가 있으면 해당 정보에서 유추
+    // (이 경우는 AST에 externalComponent가 없는 경우)
+    return "Item";
+  }
+
+  /**
+   * AST에서 특정 ID의 노드 찾기
+   */
+  private _findNodeById(
+    node: FinalAstTree,
+    targetId: string
+  ): FinalAstTree | null {
+    if (node.id === targetId) {
+      return node;
+    }
+    for (const child of node.children) {
+      const found = this._findNodeById(child, targetId);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
   }
 
   /**
@@ -157,9 +389,66 @@ class CreateJsxTree {
     );
   }
 
+  /**
+   * VECTOR 노드를 JSX SVG Element로 렌더링
+   * SVG 문자열을 파싱하여 React JSX로 변환
+   */
+  private _createVectorSvgElement(
+    node: FinalAstTree,
+    attributes: ts.JsxAttributeLike[]
+  ): ts.JsxElement | ts.JsxSelfClosingElement {
+    const svgString = node.metaData.vectorSvg as string;
+
+    // SVG 문자열을 JSX AST로 변환
+    const svgToJsx = new SvgToJsx();
+    const svgJsx = svgToJsx.convert(svgString);
+
+    if (svgJsx) {
+      // 성공적으로 변환된 경우: css 속성 병합
+      if (ts.isJsxSelfClosingElement(svgJsx)) {
+        // Self-closing SVG 요소에 css 속성 추가
+        const existingAttrs = svgJsx.attributes.properties;
+        const mergedAttrs = [...attributes, ...Array.from(existingAttrs)];
+        return this.factory.createJsxSelfClosingElement(
+          svgJsx.tagName,
+          undefined,
+          this.factory.createJsxAttributes(mergedAttrs)
+        );
+      } else if (ts.isJsxElement(svgJsx)) {
+        // 일반 SVG 요소에 css 속성 추가
+        const existingAttrs = svgJsx.openingElement.attributes.properties;
+        const mergedAttrs = [...attributes, ...Array.from(existingAttrs)];
+        return this.factory.createJsxElement(
+          this.factory.createJsxOpeningElement(
+            svgJsx.openingElement.tagName,
+            undefined,
+            this.factory.createJsxAttributes(mergedAttrs)
+          ),
+          svgJsx.children,
+          svgJsx.closingElement
+        );
+      }
+    }
+
+    // 변환 실패 시 fallback: 빈 svg 태그
+    return this.factory.createJsxSelfClosingElement(
+      this.factory.createIdentifier("svg"),
+      undefined,
+      this.factory.createJsxAttributes(attributes)
+    );
+  }
+
   private _getTagName(node: FinalAstTree): string {
     // semanticRole을 우선적으로 고려하여 적절한 HTML 태그 결정
     const semanticRole = node.semanticRole;
+
+    // 루트 노드는 항상 HTML 요소로 (자기 자신 참조 방지)
+    const isRootNode = node.parent === null;
+
+    // INSTANCE 타입: 루트면 div, 자식이면 컴포넌트 이름
+    if (node.type === "INSTANCE") {
+      return isRootNode ? "div" : this._normalizeName(node.name);
+    }
 
     switch (semanticRole) {
       case "button":
@@ -171,18 +460,10 @@ class CreateJsxTree {
       case "vector":
         return "svg";
       case "icon":
-        // INSTANCE는 실제 컴포넌트 이름을 사용할 수도 있음
-        if (node.type === "INSTANCE") {
-          return node.name.replace(/\s+/g, "");
-        }
         return "span";
       case "container":
       case "root":
       default:
-        // INSTANCE 타입은 컴포넌트로 처리
-        if (node.type === "INSTANCE") {
-          return node.name.replace(/\s+/g, "");
-        }
         return "div";
     }
   }
@@ -258,13 +539,16 @@ class CreateJsxTree {
   }
 
   /**
-   * 노드 이름을 변수명으로 정규화
+   * 노드 이름을 변수명으로 정규화 (첫 글자 소문자)
    */
   private _normalizeName(name: string): string {
-    return name
+    const normalized = name
       .replace(/\s+/g, "")
       .replace(/[^a-zA-Z0-9_$]/g, "")
       .replace(/^[0-9]/, "_$&"); // 숫자로 시작하면 앞에 _ 추가
+
+    // 첫 글자 소문자 (camelCase)
+    return normalized.charAt(0).toLowerCase() + normalized.slice(1);
   }
 
   /**

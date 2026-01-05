@@ -52,6 +52,7 @@ class _FinalAstTree {
     finalAstTree = this.updateCleanupNodes(finalAstTree);
     finalAstTree = this.updateMetaData(finalAstTree);
     finalAstTree = this.updateProps(finalAstTree);
+    finalAstTree = this.updateExternalComponents(finalAstTree);
 
     this._finalAstTree = finalAstTree;
   }
@@ -95,6 +96,9 @@ class _FinalAstTree {
   private updateCleanupNodes(astTree: FinalAstTree) {
     const nodesToRemove: FinalAstTree[] = [];
 
+    // 루트가 INSTANCE인 경우, 자식 노드들을 삭제하지 않음
+    const isRootInstance = astTree.type === "INSTANCE";
+
     // 1. 삭제할 노드 수집
     traverseBFS(astTree, (node, meta) => {
       const targetSpec = this.specDataManager.getSpecById(node.id);
@@ -102,8 +106,9 @@ class _FinalAstTree {
         nodesToRemove.push(node);
       }
 
-      const isInstance = node.id.startsWith("I");
-      if (isInstance) {
+      // INSTANCE 내부 노드 정리: 루트가 INSTANCE가 아닐 때만 I로 시작하는 노드 삭제
+      const isInstanceChild = node.id.startsWith("I");
+      if (isInstanceChild && !isRootInstance) {
         nodesToRemove.push(node);
       }
 
@@ -193,6 +198,11 @@ class _FinalAstTree {
       switch (node.type) {
         case "TEXT":
           node.semanticRole = "text";
+          // TEXT 노드의 characters 저장 (고정 텍스트용)
+          const textSpec = this.specDataManager.getSpecById(node.id);
+          if (textSpec && "characters" in textSpec) {
+            node.metaData.characters = (textSpec as any).characters;
+          }
           break;
 
         case "INSTANCE":
@@ -201,7 +211,16 @@ class _FinalAstTree {
           break;
 
         case "VECTOR":
+        case "LINE":
+        case "STAR":
+        case "ELLIPSE":
+        case "POLYGON":
           node.semanticRole = "vector";
+          // vectorSvg 데이터가 있으면 metaData에 저장
+          const vectorSvg = this.specDataManager.getVectorSvgByNodeId(node.id);
+          if (vectorSvg) {
+            node.metaData.vectorSvg = vectorSvg;
+          }
           break;
 
         case "FRAME":
@@ -1470,6 +1489,100 @@ class _FinalAstTree {
       count += this._countNodes(child);
     }
     return count;
+  }
+
+  /**
+   * INSTANCE 노드를 외부 컴포넌트 참조로 변환
+   * dependencies가 있는 INSTANCE 노드는 externalComponent 필드가 설정되고 children이 비워짐
+   */
+  private updateExternalComponents(astTree: FinalAstTree): FinalAstTree {
+    const dependencies = this.specDataManager.getDependencies();
+
+    // dependencies가 없으면 처리할 필요 없음
+    if (!dependencies || Object.keys(dependencies).length === 0) {
+      return astTree;
+    }
+
+    // ComponentSet별 그룹핑 정보 가져오기
+    const groupedDeps =
+      this.specDataManager.getDependenciesGroupedByComponentSet();
+
+    // componentId → { componentSetId, componentName } 매핑 생성
+    const componentIdToInfo = new Map<
+      string,
+      { componentSetId: string; componentName: string }
+    >();
+
+    for (const [componentSetId, group] of Object.entries(groupedDeps)) {
+      const componentName = this._normalizeComponentName(group.componentSetName);
+      for (const variant of group.variants) {
+        const componentId = variant.info.document.id;
+        componentIdToInfo.set(componentId, { componentSetId, componentName });
+      }
+    }
+
+    // 트리 순회하며 INSTANCE 노드 처리
+    const processNode = (node: FinalAstTree): void => {
+      // 루트 노드는 처리하지 않음 (자기 자신을 컴포넌트로 렌더링하면 안 됨)
+      if (node.parent === null) {
+        node.children.forEach(processNode);
+        return;
+      }
+
+      // INSTANCE 노드이고 componentId가 있는 경우
+      if (node.type === "INSTANCE") {
+        const spec = this.specDataManager.getSpecById(node.id);
+        const componentId = (spec as any)?.componentId;
+
+        if (componentId && componentIdToInfo.has(componentId)) {
+          const info = componentIdToInfo.get(componentId)!;
+
+          // componentProperties에서 props 추출
+          const componentProperties = (spec as any)?.componentProperties || {};
+          const props: Record<string, string> = {};
+
+          for (const [key, value] of Object.entries(componentProperties)) {
+            const propValue = (value as any)?.value;
+            if (propValue !== undefined) {
+              // prop 이름을 camelCase로 변환
+              const propName = toCamelCase(key);
+              props[propName] = propValue;
+            }
+          }
+
+          // externalComponent 필드 설정
+          node.externalComponent = {
+            componentId,
+            componentSetId: info.componentSetId,
+            componentName: info.componentName,
+            props,
+          };
+
+          // children 비우기 (외부 컴포넌트로 렌더링되므로)
+          node.children = [];
+
+          return; // 자식 처리 불필요
+        }
+      }
+
+      // 자식 노드 처리
+      node.children.forEach(processNode);
+    };
+
+    processNode(astTree);
+
+    return astTree;
+  }
+
+  /**
+   * 컴포넌트 이름 정규화 (PascalCase, 특수문자 제거)
+   */
+  private _normalizeComponentName(name: string): string {
+    return name
+      .replace(/[^a-zA-Z0-9\s]/g, "") // 특수문자 제거
+      .split(/\s+/) // 공백으로 분리
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // PascalCase
+      .join("");
   }
 }
 
