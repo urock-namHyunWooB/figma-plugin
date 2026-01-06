@@ -25,7 +25,7 @@ export class FigmaPlugin {
    */
   async initialize(): Promise<void> {
     // UI 표시
-    figma.showUI(__html__, { width: 800, height: 600 });
+    figma.showUI(__html__, { width: 400, height: 600 });
 
     figma.ui.onmessage = async (msg) => {
       await this.handleMessage(msg);
@@ -115,10 +115,8 @@ export class FigmaPlugin {
       styleTree: styleTree || null,
       dependencies:
         Object.keys(dependencies).length > 0 ? dependencies : undefined,
-      imageUrls:
-        Object.keys(imageUrls).length > 0 ? imageUrls : undefined,
-      vectorSvgs:
-        Object.keys(vectorSvgs).length > 0 ? vectorSvgs : undefined,
+      imageUrls: Object.keys(imageUrls).length > 0 ? imageUrls : undefined,
+      vectorSvgs: Object.keys(vectorSvgs).length > 0 ? vectorSvgs : undefined,
     };
 
     return nodeData;
@@ -145,8 +143,13 @@ export class FigmaPlugin {
     vectorSvgs: Record<string, string>
   ): Promise<void> {
     // VECTOR 노드인 경우 SVG로 export
-    if (node.type === "VECTOR" || node.type === "LINE" || node.type === "STAR" || 
-        node.type === "ELLIPSE" || node.type === "POLYGON") {
+    if (
+      node.type === "VECTOR" ||
+      node.type === "LINE" ||
+      node.type === "STAR" ||
+      node.type === "ELLIPSE" ||
+      node.type === "POLYGON"
+    ) {
       try {
         const svgBytes = await node.exportAsync({ format: "SVG" });
         const svgString = String.fromCharCode(...svgBytes);
@@ -189,9 +192,13 @@ export class FigmaPlugin {
     // fills에서 이미지 찾기
     if ("fills" in node && Array.isArray(node.fills)) {
       for (const fill of node.fills) {
-        if (fill.type === "IMAGE" && fill.imageHash && !visited.has(fill.imageHash)) {
+        if (
+          fill.type === "IMAGE" &&
+          fill.imageHash &&
+          !visited.has(fill.imageHash)
+        ) {
           visited.add(fill.imageHash);
-          
+
           try {
             const image = figma.getImageByHash(fill.imageHash);
             if (image) {

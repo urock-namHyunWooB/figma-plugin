@@ -1546,6 +1546,10 @@ class _FinalAstTree {
             if (propValue !== undefined) {
               // prop 이름을 camelCase로 변환
               const propName = toCamelCase(key);
+              
+              // 빈 문자열이면 스킵 (안전장치: 특수문자만 있고 숫자도 없는 경우)
+              if (!propName) continue;
+              
               props[propName] = propValue;
             }
           }
