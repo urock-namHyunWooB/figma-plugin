@@ -59,6 +59,7 @@ class _TempAstTree {
     tempAstTree = new UpdateStyle(specDataManager).updateStyle(tempAstTree);
     // tempAstTree = this.updateStyle2(tempAstTree);
     tempAstTree = this.updateNormalizeStyle(tempAstTree);
+    tempAstTree = this.updatePositionStyles(tempAstTree);
     tempAstTree = this.updateVisible(tempAstTree);
     tempAstTree = this.updateConditionalWrapper(tempAstTree);
     tempAstTree = this.updateProps(tempAstTree);
@@ -556,6 +557,95 @@ class _TempAstTree {
     }
 
     return props;
+  }
+
+  /**
+   * 오토레이아웃이 아닌 컨테이너의 자식들에게 position 스타일을 추가합니다.
+   * 
+   * - GROUP 노드는 항상 absolute positioning
+   * - FRAME 노드는 layoutMode가 없거나 "NONE"이면 absolute positioning
+   * - COMPONENT_SET은 제외 (여러 variant의 위치를 병합하면 안됨)
+   */
+  private updatePositionStyles(tempAstTree: TempAstTree): TempAstTree {
+    // 재귀적으로 처리 (부모 → 자식 순서)
+    const processNode = (node: TempAstTree, parentSpec: any | null) => {
+      const nodeSpec = this._specDataManager.getSpecById(node.id);
+      
+      // 부모가 오토레이아웃이 아닌 경우 position 스타일 추가
+      if (parentSpec && this._shouldApplyAbsolutePosition(parentSpec, nodeSpec)) {
+        const parentBox = parentSpec.absoluteBoundingBox;
+        const nodeBox = nodeSpec?.absoluteBoundingBox;
+        
+        if (parentBox && nodeBox) {
+          const left = nodeBox.x - parentBox.x;
+          const top = nodeBox.y - parentBox.y;
+          
+          // 기존 스타일에 position 추가 (이미 있으면 덮어쓰지 않음)
+          if (!node.style.base["position"]) {
+            node.style.base["position"] = "absolute";
+          }
+          if (!node.style.base["left"]) {
+            node.style.base["left"] = `${left}px`;
+          }
+          if (!node.style.base["top"]) {
+            node.style.base["top"] = `${top}px`;
+          }
+        }
+      }
+      
+      // 현재 노드가 absolute positioning 컨테이너인 경우 relative 추가
+      if (this._isAbsolutePositioningContainer(nodeSpec) && node.children.length > 0) {
+        if (!node.style.base["position"]) {
+          node.style.base["position"] = "relative";
+        }
+      }
+      
+      // 자식들 처리
+      for (const child of node.children) {
+        processNode(child, nodeSpec);
+      }
+    };
+    
+    // 루트부터 시작 (루트의 부모는 null)
+    processNode(tempAstTree, null);
+    
+    return tempAstTree;
+  }
+  
+  /**
+   * 부모가 absolute positioning을 사용하는 컨테이너인지 확인
+   */
+  private _isAbsolutePositioningContainer(spec: any): boolean {
+    if (!spec) return false;
+    
+    const type = spec.type;
+    
+    // COMPONENT_SET은 제외
+    if (type === "COMPONENT_SET") return false;
+    
+    // GROUP은 항상 absolute positioning
+    if (type === "GROUP") return true;
+    
+    // FRAME, COMPONENT, INSTANCE는 layoutMode가 없거나 NONE이면 absolute
+    if (type === "FRAME" || type === "COMPONENT" || type === "INSTANCE") {
+      const layoutMode = spec.layoutMode;
+      return !layoutMode || layoutMode === "NONE";
+    }
+    
+    return false;
+  }
+  
+  /**
+   * 자식 노드에 absolute position을 적용해야 하는지 확인
+   */
+  private _shouldApplyAbsolutePosition(parentSpec: any, childSpec: any): boolean {
+    if (!parentSpec || !childSpec) return false;
+    
+    // visible이 false인 노드는 제외
+    if (childSpec.visible === false) return false;
+    
+    // 부모가 absolute positioning 컨테이너인지 확인
+    return this._isAbsolutePositioningContainer(parentSpec);
   }
 
   private updateVisible(pivotNode: TempAstTree) {
