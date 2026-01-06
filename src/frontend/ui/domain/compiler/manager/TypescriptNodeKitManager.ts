@@ -224,16 +224,21 @@ class TypescriptNodeKitManager {
 
   /**
    * css`...` tagged template 생성
-   * css`content`
+   * css`
+   *   content
+   * `
    */
   createCssTaggedTemplate(
     head: string,
     spans: Array<{ expr: ts.Expression; tail: string }> = []
   ): ts.TaggedTemplateExpression {
+    // head 앞에 개행 추가하여 css` 다음에 줄바꿈이 오도록 함
+    const formattedHead = "\n" + head;
+
     // spans가 비어있으면 보간 없는 템플릿 리터럴 사용 (${""}  방지)
     if (spans.length === 0) {
       const noSubstitutionTemplate =
-        this.factory.createNoSubstitutionTemplateLiteral(head, head);
+        this.factory.createNoSubstitutionTemplateLiteral(formattedHead, formattedHead);
       return this.factory.createTaggedTemplateExpression(
         this.factory.createIdentifier("css"),
         undefined,
@@ -241,7 +246,7 @@ class TypescriptNodeKitManager {
       );
     }
 
-    const template = this.createTemplateLiteral(head, spans);
+    const template = this.createTemplateLiteral(formattedHead, spans);
     return this.createTaggedTemplate("css", template);
   }
 

@@ -120,9 +120,17 @@ export class FigmaCompiler {
     if (!rootDep) return false;
     
     // 해당 컴포넌트의 componentSetId와 비교
+    // 단일 COMPONENT인 경우 componentSetId가 없으므로 componentId 자체와 비교
     const rootDepComponentSetId = rootDep.info?.components?.[rootComponentId]?.componentSetId;
     
-    return depComponentSetId === rootDepComponentSetId;
+    // COMPONENT_SET에 속한 경우: componentSetId로 비교
+    if (rootDepComponentSetId) {
+      return depComponentSetId === rootDepComponentSetId;
+    }
+    
+    // 단일 COMPONENT인 경우: componentId 자체로 비교
+    // (getDependenciesGroupedByComponentSet에서 componentId가 fallback으로 사용됨)
+    return depComponentSetId === rootComponentId;
   }
 
   /**
