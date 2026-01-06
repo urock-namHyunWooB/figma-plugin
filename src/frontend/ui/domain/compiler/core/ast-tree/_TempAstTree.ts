@@ -14,6 +14,7 @@ import helper from "@compiler/manager/HelperManager";
 import { BinaryOperator } from "@compiler/types/customType";
 import { diff } from "deep-object-diff";
 import UpdateStyle from "@compiler/core/ast-tree/style/UpdateStyle";
+import { toCamelCase } from "@compiler/utils/normalizeString";
 
 type Variant = Record<string, string>;
 type Data = Record<string, Variant>;
@@ -724,9 +725,11 @@ class _TempAstTree {
     for (const boolPropName of booleanProps) {
       if (this._isVisibleOnlyWhenBooleanTrue(targetNode, boolPropName)) {
         // 불리언 조건으로 변환: props.boolPropName === 'True'
+        // prop 이름을 camelCase로 정규화 (예: "Left Icon" → "leftIcon")
+        const normalizedPropName = toCamelCase(boolPropName);
         return {
           type: "condition",
-          condition: helper.createBinaryCondition(boolPropName, "True"),
+          condition: helper.createBinaryCondition(normalizedPropName, "True"),
         };
       }
     }
@@ -770,6 +773,8 @@ class _TempAstTree {
 
     const conditions: ConditionNode[] = variantName.split(",").map((part) => {
       const [key, value] = part.split("=").map((s) => s.trim());
+      // prop 이름을 camelCase로 정규화 (예: "Size" → "size", "With label" → "withLabel")
+      const normalizedKey = toCamelCase(key);
 
       return {
         type: "BinaryExpression",
@@ -782,7 +787,7 @@ class _TempAstTree {
           },
           property: {
             type: "Identifier",
-            name: key,
+            name: normalizedKey,
           },
           computed: false,
           optional: false,
@@ -905,16 +910,18 @@ class _TempAstTree {
 
       // 이 prop의 다른 값들 (absent가 아닌 값들)
       const otherValues = def.variantOptions.filter((v) => v !== absentValue);
+      // prop 이름을 camelCase로 정규화 (예: "Left Icon" → "leftIcon")
+      const normalizedPropName = toCamelCase(propName);
 
       if (otherValues.length === 1) {
-        // 단일 값: props.LeftIcon === 'True'
+        // 단일 값: props.leftIcon === 'True'
         orConditions.push(
-          helper.createBinaryCondition(propName, otherValues[0])
+          helper.createBinaryCondition(normalizedPropName, otherValues[0])
         );
       } else if (otherValues.length > 1) {
         // 복수 값: 배열 기반 includes 조건 사용
         orConditions.push(
-          helper.createIncludesCondition(propName, otherValues)
+          helper.createIncludesCondition(normalizedPropName, otherValues)
         );
       }
     }
@@ -965,11 +972,13 @@ class _TempAstTree {
         presentValues.length > 0 &&
         presentValues.length < def.variantOptions.length
       ) {
+        // prop 이름을 camelCase로 정규화 (예: "Left Icon" → "leftIcon")
+        const normalizedPropName = toCamelCase(propName);
         if (presentValues.length === 1) {
-          return helper.createBinaryCondition(propName, presentValues[0]);
+          return helper.createBinaryCondition(normalizedPropName, presentValues[0]);
         } else {
           // 여러 값이면 배열 기반 includes 조건 사용
-          return helper.createIncludesCondition(propName, presentValues);
+          return helper.createIncludesCondition(normalizedPropName, presentValues);
         }
       }
     }
@@ -1042,14 +1051,17 @@ class _TempAstTree {
       // 모든 옵션에서 존재하면 이 속성으로는 조건 추론 불가
       if (presentOptions.size === allOptions.size) continue;
 
+      // prop 이름을 camelCase로 정규화 (예: "Left Icon" → "leftIcon")
+      const normalizedPropName = toCamelCase(propName);
+
       // 일부 옵션에서만 존재 → 조건 생성
       if (presentOptions.size === 1) {
         const value = [...presentOptions][0];
-        conditions.push(helper.createBinaryCondition(propName, value));
+        conditions.push(helper.createBinaryCondition(normalizedPropName, value));
       } else if (presentOptions.size > 1) {
         // 여러 값이면 배열 기반 includes 조건 사용
         conditions.push(
-          helper.createIncludesCondition(propName, [...presentOptions])
+          helper.createIncludesCondition(normalizedPropName, [...presentOptions])
         );
       }
     }

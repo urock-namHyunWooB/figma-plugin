@@ -2,6 +2,7 @@ import { FinalAstTree } from "@compiler";
 import ts from "typescript";
 import { ArraySlot } from "@compiler/core/ArraySlotDetector";
 import SvgToJsx from "./SvgToJsx";
+import { toCamelCase } from "@compiler/utils/normalizeString";
 
 class CreateJsxTree {
   private _jsxTree: ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression;
@@ -77,10 +78,10 @@ class CreateJsxTree {
         // props.characters가 있으면 prop 참조 (동적 텍스트)
         const rawPropName = (node.props as any).characters;
         // originalKey → propName 매핑 사용 (INSTANCE의 경우)
-        // 매핑이 없으면 기존 정규화 방식 사용 (COMPONENT_SET의 경우)
+        // 매핑이 없으면 toCamelCase로 정규화 (일관된 prop 이름 생성)
         const propName =
           this.originalKeyToPropName.get(rawPropName) ||
-          this._normalizeName(rawPropName);
+          toCamelCase(rawPropName);
         // props.text를 참조하는 JSX Expression 생성 (구조 분해된 변수 사용)
         const textExpression = this.factory.createJsxExpression(
           undefined,

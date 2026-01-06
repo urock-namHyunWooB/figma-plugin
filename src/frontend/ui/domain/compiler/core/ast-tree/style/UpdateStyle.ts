@@ -10,6 +10,7 @@ import { traverseBFS } from "@compiler/utils/traverse";
 import { diff } from "deep-object-diff";
 import { toStringName } from "@compiler/utils/stringUtils";
 import { removeCommonShallow } from "@compiler/utils/objectUtils";
+import { toCamelCase } from "@compiler/utils/normalizeString";
 
 // ============================================================
 // Type Definitions
@@ -167,13 +168,15 @@ class UpdateStyle {
     ) as Record<string, { css: CssStyle } & VariantProps>;
   }
 
-  /** "size=Large, state=Default" 형식의 문자열을 { size: "Large", state: "Default" } 객체로 파싱합니다. */
+  /** "Size=Large, State=Default" 형식의 문자열을 { size: "Large", state: "Default" } 객체로 파싱합니다. */
   private _parseVariantName(variantName: string): VariantProps {
     const keyValuePairs = variantName
       .split(",")
       .map((pair) => pair.trim())
       .map((pair) => pair.split("=").map((s) => s.trim()))
-      .filter(([key, value]) => key && value);
+      .filter(([key, value]) => key && value)
+      // prop 이름을 camelCase로 정규화 (RefineProps와 일치시킴)
+      .map(([key, value]) => [toCamelCase(key), value]);
 
     return Object.fromEntries(keyValuePairs);
   }
@@ -343,13 +346,15 @@ class UpdateStyle {
   /** "Size=Large" 형태의 variantName을 ConditionNode AST로 변환합니다. */
   private _parseVariantCondition(variantName: string): ConditionNode {
     const [key, value] = variantName.split("=").map((s) => s.trim());
+    // prop 이름을 camelCase로 정규화 (예: "Size" → "size", "With label" → "withLabel")
+    const normalizedKey = toCamelCase(key);
     return {
       type: "BinaryExpression",
       operator: "===" as BinaryOperator,
       left: {
         type: "MemberExpression",
         object: { type: "Identifier", name: "props" },
-        property: { type: "Identifier", name: key },
+        property: { type: "Identifier", name: normalizedKey },
         computed: false,
         optional: false,
       },

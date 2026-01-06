@@ -749,6 +749,11 @@ class _FinalAstTree {
       // 바인딩된 노드 처리
       const { node } = binding;
 
+      // 루트 노드는 슬롯이 될 수 없음 (JSX 트리 전체가 사라짐)
+      if (node.parent === null) {
+        continue;
+      }
+
       // visible condition 제거 (항상 보이도록)
       node.visible = { type: "static", value: true };
 

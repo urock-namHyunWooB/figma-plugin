@@ -1,46 +1,67 @@
-import React from "react";
-import { css } from "@emotion/react";
+import { IconGlyphEditSizeDefault } from "../IconGlyphEditSizeDefault/IconGlyphEditSizeDefault";
 
-export type Size = "default" | "large" | "small";
-export type Options = "2 options" | "3 options";
-export interface SelectbuttonsProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  size?: Size;
-  options?: Options;
+export interface IButtonProps {
+  size?: "small" | "default" | "large";
+  variant?: "default" | "primary" | "danger" | "secondary";
+  icon?: "true" | "false";
+  className?: string;
 }
 
-const SelectbuttonsCss = css`
-  display: flex;
-  width: 280px;
-  padding: 4px;
-  align-items: flex-start;
-  gap: 4px;
-  border-radius: 3px;
-  background: var(--Light-gray-2, #f2f2f2);
-`;
-const Option1SizeStyles = {
-  default: { height: "24px", padding: "4px 41px 4px 42px" },
-  large: { height: "28px", padding: "4px 37px 4px 38px" },
-  small: { height: "20px", padding: "2px 41px 2px 42px" },
-};
-const Option1Css = ($size: NonNullable<SelectbuttonsProps["size"]>) => css`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex: 1 0 0;
-  border-radius: 3px;
-  ${Option1SizeStyles[$size]}
-`;
+export const Button = ({
+  size = "default",
+  variant = "default",
+  icon = "false",
+  className,
+  ...props
+}: IButtonProps): JSX.Element => {
+  const variantsClassName =
+    "size-" + size + " variant-" + variant + " icon-" + icon;
 
-export default function Selectbuttons(props: SelectbuttonsProps) {
-  const { size = "default", options = "2 options", ...restProps } = props;
   return (
-    <button css={SelectbuttonsCss} {...restProps}>
-      <Option1 css={Option1Css(size)} />
-      {size === "default" && options === "2 options" && <Option2 />}
-      {size === "default" && options === "3 options" && <Option1 />}
-      {size === "default" && options === "3 options" && <Option2 />}
-      {size === "default" && options === "3 options" && <Option3 />}
-    </button>
+    <div
+      className={
+        "bg-light-gray-2 rounded-[3px] pt-[7px] pr-3 pb-[7px] pl-3 flex flex-row gap-2.5 items-center justify-start relative " +
+        className +
+        " " +
+        variantsClassName
+      }
+    >
+      {icon === "true" && (
+        <>
+          <IconGlyphEditSizeDefault
+            glyph="edit"
+            className="!shrink-0 !w-3.5 !h-3.5"
+          ></IconGlyphEditSizeDefault>
+        </>
+      )}
+      {variant === "secondary" && (
+        <>
+          <div
+            className="text-dark text-left font-['SfProText-Semibold',_sans-serif] text-[13px] leading-[18px] font-semibold relative flex items-center justify-start"
+            style={{
+              transformOrigin: "0 0",
+              transform: "rotate(0deg) scale(1, 1)",
+            }}
+          >
+            Secondary{" "}
+          </div>
+        </>
+      )}
+      {(variant === "default" ||
+        variant === "primary" ||
+        variant === "danger") && (
+        <>
+          <div
+            className="text-dark text-left font-['SfProText-Semibold',_sans-serif] text-[13px] leading-[18px] font-semibold relative flex items-center justify-start"
+            style={{
+              transformOrigin: "0 0",
+              transform: "rotate(0deg) scale(1, 1)",
+            }}
+          >
+            Default{" "}
+          </div>
+        </>
+      )}
+    </div>
   );
-}
+};

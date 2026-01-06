@@ -65,6 +65,13 @@ class Engine {
   public getFinalAstTree() {
     return this.CreateFinalAstTree.finalAstTree;
   }
+
+  /**
+   * TempAstTree 반환 (디버깅용)
+   */
+  public getTempAstTree() {
+    return this.CreateFinalAstTree.tempAstTree;
+  }
 }
 
 export default Engine;

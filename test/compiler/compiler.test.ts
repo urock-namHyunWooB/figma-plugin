@@ -299,7 +299,7 @@ describe("compiler 테스트", () => {
               const right = (cond as any).right;
               const isSizeMember =
                 left?.type === "MemberExpression" &&
-                left?.property?.name === "Size";
+                left?.property?.name === "size"; // camelCase로 정규화됨
               const isSmall =
                 right?.type === "Literal" && right?.value === "Small";
               return !!(isSizeMember && isSmall);
@@ -493,13 +493,19 @@ describe("compiler 테스트", () => {
           expect(typeof rootProps).toBe("object");
         });
 
-        test("componentPropertyDefinitions에 정의된 props가 루트에 있어야 한다", () => {
+        test("componentPropertyDefinitions에 정의된 props가 루트에 있어야 한다 (camelCase로 정규화됨)", () => {
           const definitions = specDataManager.getComponentPropertyDefinitions();
           const rootProps = createFinalAstTree.tempAstTree.props;
 
           if (definitions) {
             Object.keys(definitions).forEach((propName) => {
-              expect(rootProps).toHaveProperty(propName);
+              // prop 이름은 camelCase로 정규화됨 (예: "Size" → "size", "With label" → "withLabel")
+              const normalizedPropName =
+                propName.charAt(0).toLowerCase() +
+                propName
+                  .slice(1)
+                  .replace(/\s+(\w)/g, (_, c) => c.toUpperCase());
+              expect(rootProps).toHaveProperty(normalizedPropName);
             });
           }
         });

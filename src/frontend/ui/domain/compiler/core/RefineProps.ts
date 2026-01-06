@@ -37,7 +37,7 @@ class RefineProps {
 
     if (this.propsDef) {
       this.propsDef = this.addId(this.propsDef);
-      // this.propsDef = this.normalizePropsName(this.propsDef);
+      this.propsDef = this.normalizePropsName(this.propsDef);
       // this.propsDef = this.refineLikeComponent(this.propsDef);
       // this.propsDef = this.refineStateProp(this.propsDef);
     }
@@ -116,13 +116,24 @@ class RefineProps {
     return propsDef;
   }
 
-  private normalizePropsName(
-    componentPropertyDefinitions: ComponentPropertyDefinitions
-  ) {
+  /**
+   * prop 이름을 camelCase로 정규화
+   * 예: "With label" → "withLabel"
+   * 원본 키는 originalKey 필드에 저장 (TypeScript 타입 인덱싱용)
+   */
+  private normalizePropsName(propsDef: PropsDef) {
     const props = {} as PropsDef;
 
-    Object.entries(componentPropertyDefinitions).forEach(([key, value]) => {
-      props[toCamelCase(key)] = value;
+    Object.entries(propsDef).forEach(([key, value]) => {
+      const normalizedKey = toCamelCase(key);
+      // 빈 문자열이면 스킵 (특수문자만 있는 경우)
+      if (!normalizedKey) return;
+      
+      props[normalizedKey] = {
+        ...value,
+        // 이미 originalKey가 있으면 보존, 없으면 현재 key 사용
+        originalKey: value.originalKey || key,
+      };
     });
 
     return props;
