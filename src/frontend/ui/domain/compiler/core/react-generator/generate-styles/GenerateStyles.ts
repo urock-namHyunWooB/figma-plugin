@@ -13,6 +13,8 @@ class GenerateStyles {
   private usedNames: Map<string, number> = new Map();
   /** 루트 노드에 사용할 컴포넌트 이름 (외부에서 전달) */
   private componentName: string | undefined;
+  /** CSS 내용 중복 제거용 Map (정규화된 CSS 키 → 변수명) */
+  private cssContentMap: Map<string, string> = new Map();
 
   constructor(factory: NodeFactory, astTree: FinalAstTree) {
     this.factory = factory;
@@ -173,6 +175,7 @@ class GenerateStyles {
   /**
    * CSS 함수 생성
    * 예: const primaryButtonCss = ($size: Size) => css`...`
+   * 동일한 CSS 내용이 있으면 기존 변수명을 재사용하여 중복 제거
    */
   private _createCssFunction(node: FinalAstTree): ts.VariableStatement | null {
     const hasBaseStyle =
@@ -197,6 +200,9 @@ class GenerateStyles {
     // PascalCase로 변환하여 인터페이스 이름과 일치시킴 (btn → Btn → BtnProps)
     const propsInterfaceName = `${capitalize(normalizeName(rootComponentName))}Props`;
 
+    // 파라미터 시그니처 수집 (중복 체크 키에 사용)
+    const paramSignatures: string[] = [];
+
     for (const [propName] of grouped.entries()) {
       // NonNullable IndexedAccessType 사용: NonNullable<ComponentProps["propName"]>
       // optional prop에서 undefined를 제외하여 인덱싱 타입 에러 방지
@@ -213,42 +219,62 @@ class GenerateStyles {
         undefined // 기본값 없음
       );
       params.push(param);
+      paramSignatures.push(propName);
     }
 
-    // 2. CSS 템플릿 생성
-    const templateSpans: Array<{ expr: ts.Expression; tail: string }> = [];
+    // 2. CSS 템플릿 내용 생성 (중복 체크를 위해 먼저 계산)
     let cssHead = "";
 
     // Base 스타일
     if (hasBaseStyle) {
       cssHead = this._styleObjectToCssString(node.style.base || {});
-      // cssHead 끝에 개행 추가 (템플릿 보간 전에 빈 줄을 위해)
-      // 단, cssHead가 비어있지 않을 때만 추가
       if (cssHead && (hasDynamicStyle || hasPseudoStyle)) {
-        // cssHead가 이미 개행으로 끝나지 않으면 추가
         if (!cssHead.endsWith("\n")) {
           cssHead += "\n";
         }
       }
     }
 
-    // Dynamic 스타일 보간 추가
-    // 예: ${paddingBySize[$size]} 형태로 객체를 직접 보간
-    // Boolean prop은 삼항 연산자로 직접 스타일 객체를 보간
+    // Pseudo 스타일 (동적 스타일이 없을 때만 head에 포함)
+    let pseudoCss = "";
+    if (hasPseudoStyle) {
+      pseudoCss = this._pseudoStyleToCssString(node.style.pseudo || {});
+      if (!hasDynamicStyle) {
+        cssHead = cssHead ? cssHead + "\n" + pseudoCss : pseudoCss;
+      }
+    }
+
+    // 3. 중복 체크 키 생성 (파라미터 시그니처 + CSS 내용)
+    const cssContentKey = this._generateCssContentKey(
+      paramSignatures,
+      cssHead,
+      hasDynamicStyle ? grouped : null,
+      hasPseudoStyle && hasDynamicStyle ? pseudoCss : ""
+    );
+
+    // 4. 중복 체크: 동일한 CSS가 이미 있으면 기존 변수명 재사용
+    const existingVarName = this.cssContentMap.get(cssContentKey);
+    if (existingVarName) {
+      // AST에 기존 CSS 변수명 저장
+      if (node.generatedNames) {
+        node.generatedNames.cssVarName = existingVarName;
+      }
+      return null; // 새 변수 생성하지 않음
+    }
+
+    // 5. 새 CSS - Dynamic 스타일 보간 추가
+    const templateSpans: Array<{ expr: ts.Expression; tail: string }> = [];
+
     if (hasDynamicStyle) {
       for (const [propName, variants] of grouped.entries()) {
-        // Boolean prop인지 확인 (루트의 props에서 타입 체크)
         const propDef = this.astTree.props[propName];
         const isBooleanProp = propDef?.type === "BOOLEAN";
 
         let expr: ts.Expression;
 
         if (isBooleanProp) {
-          // Boolean prop: 삼항 연산자로 직접 스타일 객체 생성
-          // $customDisabled ? { background: "..." } : { background: "..." }
           const paramIdentifier = this.kit.createIdentifier(`$${propName}`);
 
-          // True/False 스타일 찾기
           const trueVariant = variants.find(
             (v: { value: string; style: Record<string, any> }) =>
               v.value === "True"
@@ -273,7 +299,6 @@ class GenerateStyles {
             falseStyle
           );
         } else {
-          // 일반 prop: Record 객체 인덱싱 (AST에 저장된 변수명 사용)
           const recordVarName =
             node.generatedNames?.recordVarNames[propName] ||
             `${propName}Styles`;
@@ -281,8 +306,6 @@ class GenerateStyles {
           expr = this.kit.createElementAccess(recordVarName, indexExpression);
         }
 
-        // 객체를 직접 보간 (emotion이 CSS로 변환)
-        // tail은 최소한 개행이라도 있어야 함 (빈 문자열이면 문제 발생)
         const tail = hasPseudoStyle ? "\n\n" : "\n";
         templateSpans.push({
           expr,
@@ -291,21 +314,13 @@ class GenerateStyles {
       }
     }
 
-    // Pseudo 스타일 추가
-    if (hasPseudoStyle) {
-      const pseudoCss = this._pseudoStyleToCssString(node.style.pseudo || {});
-      if (templateSpans.length > 0) {
-        // 마지막 span의 tail에 pseudo 스타일 추가
-        const lastSpan = templateSpans[templateSpans.length - 1];
-        lastSpan.tail = lastSpan.tail + pseudoCss;
-      } else {
-        // 보간이 없으면 head에 추가
-        cssHead = cssHead ? cssHead + "\n" + pseudoCss : pseudoCss;
-      }
+    // Pseudo 스타일 추가 (동적 스타일이 있을 때)
+    if (hasPseudoStyle && hasDynamicStyle && templateSpans.length > 0) {
+      const lastSpan = templateSpans[templateSpans.length - 1];
+      lastSpan.tail = lastSpan.tail + pseudoCss;
     }
 
-    // 3. CSS tagged template 생성
-    // cssHead가 비어있고 spans도 비어있으면 최소한의 공백이라도 넣어야 함
+    // 6. CSS tagged template 생성
     const finalHead = cssHead || " ";
 
     const taggedTemplate = this.kit.createCssTaggedTemplate(
@@ -313,14 +328,13 @@ class GenerateStyles {
       templateSpans
     );
 
-    // 4. 화살표 함수 생성
+    // 7. 화살표 함수 생성
     const arrowFunction =
       params.length > 0
         ? this.kit.createArrowFunction(params, taggedTemplate)
         : taggedTemplate;
 
-    // 5. const 변수 선언
-    // CSS 변수명 생성: btnCss (중복 시 btnCss_2)
+    // 8. const 변수 선언
     const nodeName = this._getNodeBaseName(node);
     const baseCssName = `${normalizeName(nodeName)}Css`;
     const cssVarName = this._generateUniqueVarName(baseCssName);
@@ -330,7 +344,66 @@ class GenerateStyles {
       node.generatedNames.cssVarName = cssVarName;
     }
 
+    // 중복 체크 맵에 저장
+    this.cssContentMap.set(cssContentKey, cssVarName);
+
     return this.kit.createConstVariable(cssVarName, arrowFunction);
+  }
+
+  /**
+   * CSS 중복 체크를 위한 정규화된 키 생성
+   * 파라미터 시그니처 + CSS 내용을 결합
+   */
+  private _generateCssContentKey(
+    paramSignatures: string[],
+    cssHead: string,
+    dynamicGroups: Map<
+      string,
+      Array<{ value: string; style: Record<string, any> }>
+    > | null,
+    pseudoCss: string
+  ): string {
+    const parts: string[] = [];
+
+    // 파라미터 시그니처
+    parts.push(`params:[${paramSignatures.sort().join(",")}]`);
+
+    // Base CSS (정규화: 공백 통일)
+    parts.push(`base:${this._normalizeCssForComparison(cssHead)}`);
+
+    // Dynamic 스타일 (Record 변수명이 아닌 실제 스타일 내용으로 비교)
+    if (dynamicGroups) {
+      const dynamicParts: string[] = [];
+      for (const [propName, variants] of dynamicGroups.entries()) {
+        const variantStrs = variants
+          .map((v) => `${v.value}:${JSON.stringify(v.style)}`)
+          .sort()
+          .join("|");
+        dynamicParts.push(`${propName}={${variantStrs}}`);
+      }
+      parts.push(`dynamic:[${dynamicParts.sort().join(",")}]`);
+    }
+
+    // Pseudo CSS
+    if (pseudoCss) {
+      parts.push(`pseudo:${this._normalizeCssForComparison(pseudoCss)}`);
+    }
+
+    return parts.join("||");
+  }
+
+  /**
+   * CSS 문자열 정규화 (비교용)
+   * 공백, 줄바꿈 등을 통일하여 동일한 스타일이 다르게 인식되는 것을 방지
+   */
+  private _normalizeCssForComparison(css: string): string {
+    return css
+      .replace(/\s+/g, " ") // 모든 공백을 단일 공백으로
+      .replace(/;\s*/g, ";") // 세미콜론 뒤 공백 제거
+      .replace(/:\s*/g, ":") // 콜론 뒤 공백 제거
+      .replace(/{\s*/g, "{") // 중괄호 뒤 공백 제거
+      .replace(/\s*}/g, "}") // 중괄호 앞 공백 제거
+      .trim();
   }
 
   /**

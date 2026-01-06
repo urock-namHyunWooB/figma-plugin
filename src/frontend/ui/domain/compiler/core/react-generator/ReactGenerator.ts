@@ -155,10 +155,12 @@ class ReactGenerator {
   private printSections(sections: CodeSection[]): string {
     const printedSections = sections
       .map((section) => {
-        const sourceFile = this.createSourceFileFromStatements(
-          section.statements
-        );
-        return this.printer.printFile(sourceFile);
+        // 각 statement를 개별로 출력하여 줄바꿈 추가
+        const printedStatements = section.statements.map((statement) => {
+          const sourceFile = this.createSourceFileFromStatements([statement]);
+          return this.printer.printFile(sourceFile).trim();
+        });
+        return printedStatements.join("\n\n");
       })
       .filter((section) => section.trim().length > 0);
 
