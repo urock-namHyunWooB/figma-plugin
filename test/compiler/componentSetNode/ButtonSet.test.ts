@@ -298,7 +298,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
     test("Text는 무조건 하나 있어야 한다.", async () => {
       const compiler = new FigmaCompiler(mockData);
       const code = await await compiler.getGeneratedCode("Button")!;
-      
+
       const Component = await renderReactComponent(code!);
 
       const parsed = parsePropsFromInterface(code!);
@@ -308,7 +308,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
       // 기존 AST 테스트에서도 TEXT 노드는 1개로 강제하고 있으니,
       // 실제 렌더 결과에서도 "텍스트로 보이는 노드"가 최소 1개는 있어야 한다.
-      const allText = (screen.queryAllByText(/.+/g) ?? []).filter(
+      const allText = (screen.queryAllByText(/.+/) ?? []).filter(
         (el) => el.textContent && el.textContent.trim().length > 0
       );
       expect(allText.length).toBeGreaterThanOrEqual(1);
@@ -368,7 +368,8 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
       // JSDOM에서 emotion/style sheet 기반 font-family를 안정적으로 computedStyle로 검증하기 어렵기 때문에,
       // 생성 코드에 font-family 선언이 포함되는지를 1차로 보장한다.
       // CSS-in-JS는 camelCase(fontFamily) 또는 kebab-case(font-family) 모두 사용 가능
-      expect(code).toMatch(/font-family\s*:|fontFamily\s*:/);
+      // 객체 내부의 "fontFamily": 형태도 포함
+      expect(code).toMatch(/font-family\s*:|"?fontFamily"?\s*:/);
     });
 
     test("아이콘 크기 적용이 실제 아이콘에 잘 먹어야 한다.", async () => {

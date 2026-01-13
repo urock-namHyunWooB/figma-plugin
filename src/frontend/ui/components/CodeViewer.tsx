@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { css } from "@emotion/react";
 import hljs from "highlight.js/lib/core";
 import typescript from "highlight.js/lib/languages/typescript";
@@ -109,13 +109,25 @@ const emptyStateStyle = css`
   font-size: 14px;
 `;
 
-export function CodeViewer({ code, title = "Generated Code" }: CodeViewerProps) {
-  const codeRef = useRef<HTMLElement>(null);
+export function CodeViewer({
+  code,
+  title = "Generated Code",
+}: CodeViewerProps) {
   const [copied, setCopied] = useState(false);
+  const [highlightedHtml, setHighlightedHtml] = useState<string>("");
 
+  // 코드가 변경될 때마다 하이라이팅된 HTML 생성
   useEffect(() => {
-    if (codeRef.current && code) {
-      hljs.highlightElement(codeRef.current);
+    if (code) {
+      try {
+        const result = hljs.highlight(code, { language: "typescript" });
+        setHighlightedHtml(result.value);
+      } catch {
+        // 하이라이팅 실패 시 원본 코드 사용
+        setHighlightedHtml(code);
+      }
+    } else {
+      setHighlightedHtml("");
     }
   }, [code]);
 
@@ -123,9 +135,33 @@ export function CodeViewer({ code, title = "Generated Code" }: CodeViewerProps) 
     if (!code) return;
 
     try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      // 1차 시도: Clipboard API (modern browsers)
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(code);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      }
+
+      // 2차 시도: execCommand fallback (iframe/plugin 환경)
+      const textArea = document.createElement("textarea");
+      textArea.value = code;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "-9999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      const successful = document.execCommand("copy");
+      document.body.removeChild(textArea);
+
+      if (successful) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        console.error("execCommand copy failed");
+      }
     } catch (err) {
       console.error("Failed to copy:", err);
     }
@@ -147,9 +183,10 @@ export function CodeViewer({ code, title = "Generated Code" }: CodeViewerProps) 
       {code ? (
         <div css={codeContainerStyle}>
           <pre>
-            <code ref={codeRef} className="language-typescript">
-              {code}
-            </code>
+            <code
+              className="language-typescript hljs"
+              dangerouslySetInnerHTML={{ __html: highlightedHtml }}
+            />
           </pre>
         </div>
       ) : (
@@ -162,4 +199,3 @@ export function CodeViewer({ code, title = "Generated Code" }: CodeViewerProps) 
 }
 
 export default CodeViewer;
-

@@ -1,8 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { MESSAGE_TYPES } from "../../backend/types/messages";
 import FigmaCompiler, { FigmaNodeData } from "./domain/compiler";
-
-import tadaButtonSample from "../../../test/fixtures/button/tadaButton.json";
 export default function useMessageHandler() {
   const [selectionNodeData, setSelectionNodeData] =
     useState<FigmaNodeData | null>(null);

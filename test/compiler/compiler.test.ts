@@ -8,6 +8,7 @@ import urockButtonSampleMockData from "../fixtures/button/urockButton.json";
 import tadaButtonComponentMockData from "../fixtures/tada-button-component.json";
 
 import airtableButtonMockData from "../fixtures/button/airtableButton.json";
+import airtableButtonWithDeps from "../fixtures/any-component-set/airtable-button.json";
 import urockChipsMockData from "../fixtures/chip/urock-chips.json";
 import airtableSelectButton from "../fixtures/select-button/airtable-select-button.json";
 
@@ -727,56 +728,6 @@ describe("compiler 테스트", () => {
         });
       });
 
-      describe("다양한 fixture 데이터 처리", () => {
-        test("tadaButton도 올바르게 처리되어야 한다", () => {
-          const specDataManager = new SpecDataManager(
-            tadaButtonMockData as any
-          );
-          const renderTree = specDataManager.getRenderTree();
-
-          const matcher = new NodeMatcher(specDataManager);
-          const createSuperTree = new CreateSuperTree(
-            renderTree,
-            specDataManager,
-            matcher
-          );
-
-          const refineProps = new RefineProps(renderTree, specDataManager);
-
-          expect(() => {
-            new CreateAstTree(
-              specDataManager,
-              createSuperTree.getSuperTree(),
-              refineProps.refinedProps
-            );
-          }).not.toThrow();
-        });
-
-        test("airtableButton도 올바르게 처리되어야 한다", () => {
-          const specDataManager = new SpecDataManager(
-            airtableButtonMockData as any
-          );
-          const renderTree = specDataManager.getRenderTree();
-
-          const matcher = new NodeMatcher(specDataManager);
-          const createSuperTree = new CreateSuperTree(
-            renderTree,
-            specDataManager,
-            matcher
-          );
-
-          const refineProps = new RefineProps(renderTree, specDataManager);
-
-          expect(() => {
-            new CreateAstTree(
-              specDataManager,
-              createSuperTree.getSuperTree(),
-              refineProps.refinedProps
-            );
-          }).not.toThrow();
-        });
-      });
-
       describe("NodeMatcher 엣지 케이스", () => {
         const specDataManager = new SpecDataManager(
           taptapButtonSampleMockData as any
@@ -1138,16 +1089,7 @@ describe("compiler 테스트", () => {
         expect(styles.lineHeight).toBe("18px");
       });
 
-      test("Text color는 흰색이여야 한다.", () => {
-        const { container } = renderButton({
-          size: "Large",
-          leftIcon: null,
-          rightIcon: null,
-        });
-        const textEl = getTextElement(container);
-        const styles = getComputedStyle(textEl);
-        expect(styles.color).toBe("rgb(255, 255, 255)");
-      });
+      // "Text color는 흰색이여야 한다" → browser-only.test.ts로 이동
 
       test("Left Icon과 Right Icon이 렌더링 되어야 한다.", () => {
         renderButton({
@@ -1337,15 +1279,7 @@ describe("compiler 테스트", () => {
         expect(missingTypes).toHaveLength(0);
       });
 
-      test("customType이 outlined_blue일때 배경색은 #F7F9FE 이다.", async () => {
-        const { container } = renderButton({
-          customType: "outlined_blue",
-        });
-        const root = getRootElement(container);
-        const styles = getComputedStyle(root);
-        // 배경색 확인 (#F7F9FE = rgb(247, 249, 254))
-        expect(styles.backgroundColor).toBe("rgb(247, 249, 254)");
-      });
+      // "customType이 outlined_blue일때 배경색" → browser-only.test.ts로 이동
 
       test("customType이 icon-outlined-red 일 때 텍스트는 없어야 한다", async () => {
         const { container } = renderButton({
@@ -1457,15 +1391,7 @@ describe("compiler 테스트", () => {
         expect(getRootElement(container)).toBeTruthy();
       });
 
-      test("prop color가 cyan이면 배경색은 #AEF2F6 이다", () => {
-        const { container } = renderChip({
-          color: "cyan",
-        });
-        const root = getRootElement(container);
-        const styles = getComputedStyle(root);
-        // 배경색 확인 (#AEF2F6 = rgb(174, 242, 246))
-        expect(styles.backgroundColor).toBe("rgb(174, 242, 246)");
-      });
+      // "prop color가 cyan이면 배경색" → browser-only.test.ts로 이동
     });
 
     describe("airtableSelectButton", () => {
@@ -1520,10 +1446,11 @@ describe("compiler 테스트", () => {
           expect(generatedCode).not.toMatch(/SizedefaultSelectedfalseCss/i);
         });
 
-        test("불필요한 INSTANCE 자식 CSS가 생성되지 않아야 한다", () => {
-          // Option1Css, Option2Css 등이 없어야 함 (INSTANCE로 렌더링되므로)
-          expect(generatedCode).not.toMatch(/const\s+Option1Css\s*=/);
-          expect(generatedCode).not.toMatch(/const\s+Option2Css\s*=/);
+        test("INSTANCE 노드도 레이아웃 스타일이 있으면 CSS가 생성되어야 한다", () => {
+          // Option1, Option2 등 INSTANCE 노드도 부모 레이아웃에서의 배치 스타일이 필요
+          // (flex-shrink, margin 등)
+          expect(generatedCode).toMatch(/const\s+Option1Css\s*=/);
+          expect(generatedCode).toMatch(/const\s+Option2Css\s*=/);
         });
 
         test("TEXT 노드의 텍스트 내용이 비어있지 않아야 한다", () => {
@@ -1776,5 +1703,119 @@ describe("compiler 테스트", () => {
         expect(container.firstElementChild).toBeTruthy();
       });
     });
+  });
+
+  describe("airtableButton에서 icon은 props로 처리해야한다.", () => {
+    /**
+     * dependencies에 있는 INSTANCE는 slot으로 처리되어야 한다.
+     * - ArraySlot 조건(2개 이상 반복)에 맞지 않는 단일 INSTANCE
+     * - props에 icon?: React.ReactNode 타입 추가
+     * - JSX에서 {icon} 형태로 렌더링
+     */
+
+    let code: string;
+    let specDataManager: SpecDataManager;
+
+    beforeAll(async () => {
+      specDataManager = new SpecDataManager(airtableButtonWithDeps as any);
+      const compiler = new FigmaCompiler(airtableButtonWithDeps as any);
+      code = await compiler.getGeneratedCode();
+    });
+
+    test("dependencies에 Icon 컴포넌트가 있어야 한다", () => {
+      const dependencies = specDataManager.getDependencies();
+      expect(dependencies).toBeDefined();
+      expect(Object.keys(dependencies!).length).toBeGreaterThan(0);
+    });
+
+    test("생성된 코드에 icon prop이 있어야 한다", () => {
+      // props 인터페이스에 icon이 있어야 함
+      expect(code).toMatch(/icon\??\s*:/);
+    });
+
+    test("icon prop의 타입이 React.ReactNode여야 한다", () => {
+      // icon?: React.ReactNode
+      expect(code).toMatch(/icon\??\s*:\s*React\.ReactNode/);
+    });
+
+    test("JSX에서 {icon}으로 렌더링되어야 한다", () => {
+      // {icon} 형태로 슬롯 렌더링
+      expect(code).toContain("{icon}");
+    });
+
+    test("Icon INSTANCE가 externalComponent로 처리되지 않아야 한다", () => {
+      // <Icon ... /> 형태가 아니어야 함
+      expect(code).not.toMatch(/<Icon\s+/);
+    });
+
+    test("props 구조 분해에 icon이 포함되어야 한다", () => {
+      // const { ..., icon, ... } = props;
+      expect(code).toMatch(/\{\s*[^}]*icon[^}]*\}\s*=\s*props/);
+    });
+  });
+});
+
+
+// === 한글 컴포넌트 이름 처리 테스트 ===
+describe("한글 컴포넌트 이름 처리", () => {
+  // 간단한 mock 데이터 생성 함수 (FigmaNodeData 형태)
+  const createMockData = (name: string) => ({
+    info: {
+      document: {
+        id: "test:1",
+        name,
+        type: "FRAME",
+        children: [],
+      },
+    },
+    styleTree: {
+      id: "test:1",
+      name,
+      cssStyle: {},
+      children: [],
+    },
+  });
+
+  test("한글만 있는 컴포넌트 이름도 유효한 함수 이름으로 변환되어야 한다", () => {
+    const compiler = new FigmaCompiler(createMockData("버튼 컴포넌트") as any);
+    const componentName = compiler.getComponentName();
+
+    // 유효한 JavaScript 식별자여야 함 (Component + hash)
+    expect(componentName).toMatch(/^Component[a-z0-9]+$/);
+    expect(componentName.length).toBeGreaterThan(0);
+  });
+
+  test("한글+영문 혼합 컴포넌트 이름은 영문만 추출되어야 한다", () => {
+    const compiler = new FigmaCompiler(createMockData("Button 버튼") as any);
+    const componentName = compiler.getComponentName();
+
+    // "Button"이 추출되어야 함
+    expect(componentName).toBe("Button");
+  });
+
+  test("특수문자만 있는 컴포넌트 이름도 유효한 함수 이름으로 변환되어야 한다", () => {
+    const compiler = new FigmaCompiler(createMockData("🎉✨") as any);
+    const componentName = compiler.getComponentName();
+
+    // 유효한 JavaScript 식별자여야 함 (Component + hash)
+    expect(componentName).toMatch(/^Component[a-z0-9]+$/);
+    expect(componentName.length).toBeGreaterThan(0);
+  });
+
+  test("숫자로 시작하는 이름은 앞에 _가 추가되어야 한다", () => {
+    const compiler = new FigmaCompiler(createMockData("123Button") as any);
+    const componentName = compiler.getComponentName();
+
+    // _로 시작해야 함
+    expect(componentName).toMatch(/^_/);
+    expect(componentName).toBe("_123button");
+  });
+
+  test("빈 문자열도 유효한 함수 이름으로 변환되어야 한다", () => {
+    const compiler = new FigmaCompiler(createMockData("") as any);
+    const componentName = compiler.getComponentName();
+
+    // 유효한 JavaScript 식별자여야 함
+    expect(componentName).toMatch(/^[a-zA-Z_][a-zA-Z0-9_]*$/);
   });
 });

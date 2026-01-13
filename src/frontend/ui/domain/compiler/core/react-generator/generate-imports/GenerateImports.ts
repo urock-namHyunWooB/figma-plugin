@@ -26,9 +26,7 @@ class GenerateImports {
     // React import: import React from "react";
     imports.push(this._createReactImport());
 
-    // emotion css import: import { css, cx } from "@emotion/css";
-    imports.push(this._createEmotionCssImport());
-
+    // 스타일 관련 import (emotion, tailwind 등)는 StyleStrategy에서 관리
     // 외부 컴포넌트는 같은 파일에 생성되므로 import 불필요
 
     return imports;

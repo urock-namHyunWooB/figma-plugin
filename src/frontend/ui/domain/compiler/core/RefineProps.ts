@@ -35,6 +35,13 @@ class RefineProps {
 
     this.propsDef = propsDef || {};
 
+    // componentPropertyReferences에서 참조하는 props 자동 추출
+    // (componentPropertyDefinitions가 없는 dependencies 컴포넌트 지원)
+    const referencedProps = this.extractPropsFromPropertyReferences(
+      specDataManager.getDocument()
+    );
+    this.propsDef = { ...this.propsDef, ...referencedProps };
+
     if (this.propsDef) {
       this.propsDef = this.addId(this.propsDef);
       this.propsDef = this.normalizePropsName(this.propsDef);
@@ -75,6 +82,60 @@ class RefineProps {
       };
     }
 
+    return propsDef;
+  }
+
+  /**
+   * document를 순회하여 componentPropertyReferences에서 props 추출
+   * componentPropertyDefinitions가 없는 COMPONENT (dependencies)에서 사용
+   *
+   * 예: TEXT 노드의 componentPropertyReferences.characters = "Text#1140:2"
+   * → text prop 생성
+   */
+  private extractPropsFromPropertyReferences(
+    document: any
+  ): PropsDef {
+    const propsDef: PropsDef = {};
+    const typeCounters: Record<string, number> = {};
+    const processedRefs = new Set<string>();
+
+    const traverse = (node: any) => {
+      if (!node) return;
+
+      const refs = node.componentPropertyReferences;
+      if (refs) {
+        // characters 참조 → TEXT prop
+        if (refs.characters && !processedRefs.has(refs.characters)) {
+          processedRefs.add(refs.characters);
+          const propName = this.generatePropName(refs.characters, "TEXT", typeCounters);
+          propsDef[propName] = {
+            type: "TEXT",
+            defaultValue: node.characters || node.name || "",
+            originalKey: refs.characters,
+          };
+        }
+
+        // visible 참조 → BOOLEAN prop
+        if (refs.visible && !processedRefs.has(refs.visible)) {
+          processedRefs.add(refs.visible);
+          const propName = this.generatePropName(refs.visible, "BOOLEAN", typeCounters);
+          propsDef[propName] = {
+            type: "BOOLEAN",
+            defaultValue: node.visible !== false,
+            originalKey: refs.visible,
+          };
+        }
+      }
+
+      // children 순회
+      if (node.children && Array.isArray(node.children)) {
+        for (const child of node.children) {
+          traverse(child);
+        }
+      }
+    };
+
+    traverse(document);
     return propsDef;
   }
 

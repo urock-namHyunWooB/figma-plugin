@@ -258,7 +258,12 @@ class UpdateSquashByIou {
     siblingGraph: SiblingGraph
   ): { isValid: boolean; violations: any[] } {
     const clonedTree = helper.deepCloneTree(superTree) as SuperTreeNode;
-    const clonedTarget = helper.findNodeById(clonedTree, targetNode.id)!;
+    const clonedTarget = helper.findNodeById(clonedTree, targetNode.id);
+
+    // clonedTarget이 null이면 유효하지 않은 것으로 처리
+    if (!clonedTarget) {
+      return { isValid: false, violations: [{ reason: "Target node not found in cloned tree" }] };
+    }
 
     clonedTarget.mergedNode = [
       ...targetNode.mergedNode,

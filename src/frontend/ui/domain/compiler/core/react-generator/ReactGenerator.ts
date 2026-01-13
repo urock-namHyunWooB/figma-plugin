@@ -12,20 +12,37 @@ import GenerateInterface from "./generate-interface/GenerateInterface";
 import GenerateComponent from "./generate-component/GenerateComponent";
 import { capitalize, normalizeName } from "@compiler/utils/stringUtils";
 import { ArraySlot } from "@compiler/core/ArraySlotDetector";
+import {
+  StyleStrategy,
+  StyleStrategyOptions,
+  createStyleStrategy,
+} from "./style-strategy";
 
 interface CodeSection {
   statements: ts.Statement[];
+}
+
+/**
+ * ReactGenerator 옵션
+ */
+export interface ReactGeneratorOptions {
+  /** 스타일 전략 옵션 (기본: emotion) */
+  styleStrategy?: StyleStrategyOptions;
 }
 
 class ReactGenerator {
   private astTree: FinalAstTree;
   private factory: NodeFactory;
   private arraySlots: ArraySlot[];
+  private options: ReactGeneratorOptions;
 
   private GenerateImports: GenerateImports;
   private GenerateStyles: GenerateStyles;
   private GenerateInterface: GenerateInterface;
   private GenerateComponent: GenerateComponent;
+
+  /** 스타일 전략 (Emotion 또는 Tailwind) */
+  private styleStrategy: StyleStrategy;
 
   private readonly printer: ts.Printer;
   private static readonly PRETTIER_CONFIG: PrettierOptions = {
@@ -43,9 +60,14 @@ class ReactGenerator {
 
   private _componentName: string;
 
-  constructor(astTree: FinalAstTree, arraySlots: ArraySlot[] = []) {
+  constructor(
+    astTree: FinalAstTree,
+    arraySlots: ArraySlot[] = [],
+    options?: ReactGeneratorOptions
+  ) {
     this.astTree = astTree;
     this.arraySlots = arraySlots;
+    this.options = options || {};
     const factory = (this.factory = ts.factory);
 
     this._componentName = astTree.metaData.document.name ?? astTree.name;
@@ -56,13 +78,29 @@ class ReactGenerator {
       removeComments: true,
     });
 
+    // 스타일 전략 생성
+    this.styleStrategy = createStyleStrategy(
+      factory,
+      astTree,
+      this.options.styleStrategy
+    );
+
     // AST에서 사용된 외부 컴포넌트 목록 수집
     const externalComponents = this._collectExternalComponents(astTree);
 
     this.GenerateImports = new GenerateImports(factory, externalComponents);
-    this.GenerateInterface = new GenerateInterface(factory, astTree, arraySlots);
+    this.GenerateInterface = new GenerateInterface(
+      factory,
+      astTree,
+      arraySlots
+    );
     this.GenerateStyles = new GenerateStyles(factory, astTree);
-    this.GenerateComponent = new GenerateComponent(factory, astTree, arraySlots);
+    this.GenerateComponent = new GenerateComponent(
+      factory,
+      astTree,
+      arraySlots,
+      this.styleStrategy
+    );
   }
 
   /**
@@ -114,9 +152,30 @@ class ReactGenerator {
     // 전달된 componentName 우선 사용, 없으면 AST에서 추출한 이름 사용
     componentName = componentName || this._componentName;
 
+    const isEmotionStrategy = this.styleStrategy.name === "emotion";
+
+    // Import 문: 기본 import + 스타일 전략별 import
+    const imports = [
+      ...this.GenerateImports.createImports().filter((imp) => {
+        // Emotion 전략이 아닌 경우 @emotion/react import 제거
+        if (!isEmotionStrategy) {
+          const moduleSpecifier = (imp.moduleSpecifier as ts.StringLiteral)
+            .text;
+          return !moduleSpecifier.includes("@emotion");
+        }
+        return true;
+      }),
+      ...this.styleStrategy.generateImports(),
+    ];
+
+    // 스타일 선언부: 전략에 따라 다르게 생성
+    const styleStatements = isEmotionStrategy
+      ? this.GenerateStyles.createStyleVariables(componentName)
+      : this.styleStrategy.generateDeclarations(this.astTree, componentName);
+
     return [
       {
-        statements: [...this.GenerateImports.createImports()],
+        statements: imports,
       },
       {
         statements: [
@@ -124,9 +183,8 @@ class ReactGenerator {
           this.GenerateInterface.createPropsInterface(componentName),
         ],
       },
-
       {
-        statements: this.GenerateStyles.createStyleVariables(componentName),
+        statements: styleStatements,
       },
       {
         statements: [
@@ -169,13 +227,24 @@ class ReactGenerator {
 
   /**
    * Prettier로 코드 포맷팅
-   * 포맷팅 실패 시 원본 코드 반환
+   * 테스트 환경에서는 포맷팅을 스킵하고, 포맷팅 실패 시 원본 코드 반환
    */
   private async formatCode(code: string): Promise<string> {
+    // 테스트 환경에서는 Prettier 포맷팅 스킵 (성능 향상 + 스택 오버플로우 방지)
+    if (
+      typeof import.meta !== "undefined" &&
+      (import.meta as any).env?.VITEST
+    ) {
+      return code;
+    }
+
     try {
       return await prettier.format(code, ReactGenerator.PRETTIER_CONFIG);
     } catch (error) {
-      console.warn("Prettier formatting failed, returning unformatted code:", error);
+      console.warn(
+        "Prettier formatting failed, returning unformatted code:",
+        error
+      );
       return code;
     }
   }

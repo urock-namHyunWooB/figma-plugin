@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { css } from "@emotion/react";
 import useMessageHandler from "./useMessageHandler";
 import FigmaCompiler, { PropDefinition } from "@compiler";
@@ -6,6 +6,59 @@ import { useComponentRenderer } from "./hooks/useComponentRenderer";
 import { PropController } from "./components/PropController";
 import { CodeViewer } from "./components/CodeViewer";
 import ErrorBoundary from "@frontend/ui/components/ErrorBoundary";
+
+/**
+ * SLOT props에 대한 목업 엘리먼트 생성
+ */
+function createSlotMockup(prop: PropDefinition): React.ReactNode {
+  const slotInfo = prop.slotInfo;
+
+  // dependency에 SVG가 있으면 SVG 렌더링
+  if (slotInfo?.mockupSvg) {
+    return React.createElement("div", {
+      key: `slot-mockup-${prop.name}`,
+      dangerouslySetInnerHTML: { __html: slotInfo.mockupSvg },
+      style: { display: "inline-flex" },
+    });
+  }
+
+  // SVG가 없으면 기본 placeholder
+  const componentName = slotInfo?.componentName || prop.name;
+  return React.createElement(
+    "div",
+    {
+      key: `slot-mockup-${prop.name}`,
+      style: {
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "8px 12px",
+        border: "2px dashed #0078d4",
+        borderRadius: "4px",
+        backgroundColor: "rgba(0, 120, 212, 0.1)",
+        color: "#0078d4",
+        fontSize: "12px",
+        fontWeight: 500,
+        minWidth: "60px",
+        minHeight: "24px",
+      },
+    },
+    `[${componentName}]`
+  );
+}
+
+// twind - Tailwind 런타임 처리
+import { defineConfig, install, observe } from "@twind/core";
+import presetTailwind from "@twind/preset-tailwind";
+import presetAutoprefix from "@twind/preset-autoprefix";
+
+const twindConfig = defineConfig({
+  presets: [presetAutoprefix(), presetTailwind()],
+  hash: false,
+  theme: { extend: {} },
+  rules: [],
+  ignorelist: [/^css-/, /^hljs/, /^language-/, /^class_$/, /^function_$/],
+});
 
 const appContainerStyle = css`
   display: flex;
@@ -17,30 +70,43 @@ const appContainerStyle = css`
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 `;
 
-const topSectionStyle = css`
+const previewSectionStyle = css`
   flex: 0 0 auto;
   padding: 16px;
+  padding-bottom: 8px;
   border-bottom: 1px solid #2d2d2d;
-  overflow: auto;
-  max-height: 60vh;
 `;
 
-const previewContainerStyle = css`
-  background: #1e1e1e;
-  border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 16px;
-  min-height: 100px;
+const scrollSectionStyle = css`
+  flex: 1;
+  overflow-y: auto;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
 `;
 
 const previewTitleStyle = css`
+  margin-bottom: 12px;
   font-size: 14px;
   font-weight: 600;
   color: #e0e0e0;
-  margin-bottom: 12px;
+`;
+
+const previewContainerStyle = css`
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  height: 200px;
+  overflow: hidden;
+  position: relative;
+`;
+
+const previewContentStyle = css`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center;
+  width: max-content;
+  height: max-content;
 `;
 
 const emptyPreviewStyle = css`
@@ -57,12 +123,60 @@ const errorStyle = css`
   margin-bottom: 16px;
 `;
 
-const bottomSectionStyle = css`
+const propsControlSectionStyle = css`
+  padding: 16px;
+  padding-top: 8px;
+`;
+
+const codeSectionStyle = css`
   flex: 1;
   padding: 16px;
-  overflow: hidden;
+  padding-top: 8px;
   display: flex;
   flex-direction: column;
+  min-height: 200px;
+`;
+
+const codeHeaderStyle = css`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+`;
+
+const codeTitleStyle = css`
+  font-size: 14px;
+  font-weight: 600;
+  color: #e0e0e0;
+`;
+
+const styleToggleStyle = css`
+  display: flex;
+  gap: 4px;
+  background: #2d2d2d;
+  border-radius: 6px;
+  padding: 2px;
+`;
+
+const styleButtonStyle = css`
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: transparent;
+  color: #808080;
+
+  &:hover {
+    color: #e0e0e0;
+  }
+`;
+
+const styleButtonActiveStyle = css`
+  background: #404040;
+  color: #e0e0e0;
 `;
 
 function App() {
@@ -73,6 +187,89 @@ function App() {
   const [propValues, setPropValues] = useState<Record<string, any>>({});
   const [componentName, setComponentName] = useState<string>("");
   const [errorBoundaryKey, setErrorBoundaryKey] = useState(0);
+  const [scale, setScale] = useState(1);
+  const [originalSize, setOriginalSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  const [styleStrategy, setStyleStrategy] = useState<"emotion" | "tailwind">(
+    "emotion"
+  );
+  const [slotMockupEnabled, setSlotMockupEnabled] = useState<
+    Record<string, boolean>
+  >({});
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const previewContentRef = useRef<HTMLDivElement>(null);
+  const twindInitializedRef = useRef(false);
+
+  // twind 초기화 (Tailwind 런타임 처리)
+  useEffect(() => {
+    if (twindInitializedRef.current) return;
+    twindInitializedRef.current = true;
+
+    const tw = install(twindConfig);
+    observe(tw, document.documentElement);
+  }, []);
+
+  // Figma 데이터에서 원본 크기 추출
+  useEffect(() => {
+    if (selectionNodeData?.info?.document?.absoluteBoundingBox) {
+      const bbox = selectionNodeData.info.document.absoluteBoundingBox;
+      setOriginalSize({ width: bbox.width, height: bbox.height });
+    } else {
+      setOriginalSize(null);
+    }
+  }, [selectionNodeData]);
+
+  // 컨테이너에 맞춰 자동 스케일 계산
+  const updateAutoScale = useCallback(() => {
+    const container = previewContainerRef.current;
+
+    if (!container) {
+      setScale(1);
+      return;
+    }
+
+    // 원본 크기가 있으면 그것을 사용, 없으면 DOM에서 측정
+    let contentWidth: number;
+    let contentHeight: number;
+
+    if (originalSize) {
+      contentWidth = originalSize.width;
+      contentHeight = originalSize.height;
+    } else {
+      const content = previewContentRef.current;
+      if (!content) {
+        setScale(1);
+        return;
+      }
+      content.style.transform = "translate(-50%, -50%) scale(1)";
+      void content.offsetHeight;
+      const renderedChild = content.firstElementChild as HTMLElement;
+      contentWidth = renderedChild?.offsetWidth || content.scrollWidth;
+      contentHeight = renderedChild?.offsetHeight || content.scrollHeight;
+    }
+
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+
+    // 패딩 여유
+    const padding = 32;
+    const availableWidth = containerWidth - padding;
+    const availableHeight = containerHeight - padding;
+
+    if (contentWidth === 0 || contentHeight === 0) {
+      setScale(1);
+      return;
+    }
+
+    // 컨테이너에 맞춰 스케일 계산 (최대 1)
+    const scaleX = availableWidth / contentWidth;
+    const scaleY = availableHeight / contentHeight;
+    const fitScale = Math.min(scaleX, scaleY, 1);
+
+    setScale(fitScale);
+  }, [originalSize]);
 
   // FigmaCompiler로 코드 생성
   useEffect(() => {
@@ -88,7 +285,9 @@ function App() {
     }
 
     try {
-      const figmaCompiler = new FigmaCompiler(selectionNodeData);
+      const figmaCompiler = new FigmaCompiler(selectionNodeData, {
+        styleStrategy: { type: styleStrategy },
+      });
       const name = figmaCompiler.getComponentName();
       setComponentName(name);
 
@@ -96,11 +295,20 @@ function App() {
       const props = figmaCompiler.getPropsDefinition();
       setPropDefinitions(props);
 
-      // Props 초기값 설정
+      // Props 초기값 설정 (SLOT에는 목업 주입)
       const initialValues: Record<string, any> = {};
+      const initialSlotEnabled: Record<string, boolean> = {};
       props.forEach((prop) => {
-        initialValues[prop.name] = prop.defaultValue;
+        if (prop.type === "SLOT") {
+          // mockupSvg가 있는 경우에만 기본 활성화 (placeholder 방지)
+          const hasMockup = !!prop.slotInfo?.mockupSvg;
+          initialSlotEnabled[prop.name] = hasMockup;
+          initialValues[prop.name] = hasMockup ? createSlotMockup(prop) : null;
+        } else {
+          initialValues[prop.name] = prop.defaultValue;
+        }
       });
+      setSlotMockupEnabled(initialSlotEnabled);
       setPropValues(initialValues);
 
       // 코드 생성
@@ -110,10 +318,21 @@ function App() {
     } catch (e) {
       console.error("FigmaCompiler error:", e);
     }
-  }, [selectionNodeData]);
+  }, [selectionNodeData, styleStrategy]);
 
   // 동적 컴포넌트 렌더러
   const { Component, error, isLoading } = useComponentRenderer(generatedCode);
+
+  // Component가 렌더링되거나 props가 변경되면 자동 스케일 업데이트
+  useEffect(() => {
+    if (Component && !isLoading && !error) {
+      // 렌더링 완료 후 스케일 계산 (약간의 딜레이)
+      const timer = setTimeout(() => {
+        updateAutoScale();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [Component, isLoading, error, propValues, updateAutoScale]);
 
   // Prop 변경 핸들러
   const handlePropChange = (name: string, value: any) => {
@@ -123,42 +342,102 @@ function App() {
     }));
   };
 
+  // SLOT 목업 토글 핸들러
+  const handleSlotMockupToggle = (name: string, enabled: boolean) => {
+    setSlotMockupEnabled((prev) => ({
+      ...prev,
+      [name]: enabled,
+    }));
+
+    // 해당 prop 값 업데이트
+    const propDef = propDefinitions.find((p) => p.name === name);
+    if (propDef) {
+      setPropValues((prev) => ({
+        ...prev,
+        [name]: enabled ? createSlotMockup(propDef) : null,
+      }));
+    }
+  };
+
   return (
     <div css={appContainerStyle}>
-      {/* 상단: Preview + Props Control */}
-      <div css={topSectionStyle}>
+      {/* 상단 고정: Preview */}
+      <div css={previewSectionStyle}>
         <div css={previewTitleStyle}>
           Preview {componentName && `- ${componentName}`}
         </div>
 
         <ErrorBoundary key={errorBoundaryKey}>
-          <div css={previewContainerStyle}>
-            {isLoading && <span css={emptyPreviewStyle}>Loading...</span>}
+          <div ref={previewContainerRef} css={previewContainerStyle}>
+            <div
+              ref={previewContentRef}
+              css={previewContentStyle}
+              style={{
+                transform: `translate(-50%, -50%) scale(${scale})`,
+                ...(originalSize && {
+                  width: `${originalSize.width}px`,
+                  height: `${originalSize.height}px`,
+                }),
+              }}
+            >
+              {isLoading && <span css={emptyPreviewStyle}>Loading...</span>}
 
-            {error && <div css={errorStyle}>Error: {error}</div>}
+              {error && <div css={errorStyle}>Error: {error}</div>}
 
-            {!isLoading && !error && Component && <Component {...propValues} />}
+              {!isLoading && !error && Component && (
+                <Component {...propValues} />
+              )}
 
-            {!isLoading && !error && !Component && (
-              <span css={emptyPreviewStyle}>
-                Select a component in Figma to preview
-              </span>
-            )}
+              {!isLoading && !error && !Component && (
+                <span css={emptyPreviewStyle}>
+                  Select a component in Figma to preview
+                </span>
+              )}
+            </div>
           </div>
         </ErrorBoundary>
-
-        {propDefinitions.length > 0 && (
-          <PropController
-            propDefinitions={propDefinitions}
-            propValues={propValues}
-            onPropChange={handlePropChange}
-          />
-        )}
       </div>
 
-      {/* 하단: Generated Code */}
-      <div css={bottomSectionStyle}>
-        <CodeViewer code={generatedCode} />
+      {/* 스크롤 영역: Props Control + Generated Code */}
+      <div css={scrollSectionStyle}>
+        {propDefinitions.length > 0 && (
+          <div css={propsControlSectionStyle}>
+            <PropController
+              slotMockupEnabled={slotMockupEnabled}
+              onSlotMockupToggle={handleSlotMockupToggle}
+              propDefinitions={propDefinitions}
+              propValues={propValues}
+              onPropChange={handlePropChange}
+            />
+          </div>
+        )}
+
+        <div css={codeSectionStyle}>
+          <div css={codeHeaderStyle}>
+            <span css={codeTitleStyle}>Generated Code</span>
+            <div css={styleToggleStyle}>
+              <button
+                css={[
+                  styleButtonStyle,
+                  styleStrategy === "emotion" && styleButtonActiveStyle,
+                ]}
+                onClick={() => setStyleStrategy("emotion")}
+              >
+                Emotion
+              </button>
+              <button
+                css={[
+                  styleButtonStyle,
+                  styleStrategy === "tailwind" && styleButtonActiveStyle,
+                ]}
+                onClick={() => setStyleStrategy("tailwind")}
+              >
+                Tailwind
+              </button>
+            </div>
+          </div>
+          <CodeViewer code={generatedCode} />
+        </div>
       </div>
     </div>
   );

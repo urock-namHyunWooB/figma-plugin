@@ -27,7 +27,8 @@ describe("CSS 최적화 - 중복 제거", () => {
       const uniqueFrameStyles = new Set<string>();
 
       // 각 FrameCss 변수의 내용을 추출하여 고유한 것만 카운트
-      const frameCssPattern = /const (Frame\d*Css)\s*=\s*css`([^`]+)`/g;
+      // css` 또는 css ` (공백 포함) 모두 매칭
+      const frameCssPattern = /const (Frame\d*Css)\s*=\s*css\s*`([^`]+)`/g;
       let match;
       while ((match = frameCssPattern.exec(generatedCode)) !== null) {
         const cssContent = match[2].replace(/\s+/g, " ").trim();
@@ -42,7 +43,8 @@ describe("CSS 최적화 - 중복 제거", () => {
 
     test("titleCss 변수들이 동일한 스타일이면 합쳐져야 한다", () => {
       // titleCss_2, titleCss_3, titleCss_4 등이 동일한 스타일이면 하나로 합쳐짐
-      const titleCssPattern = /const (titleCss(?:_\d+)?)\s*=\s*css`([^`]+)`/g;
+      // css` 또는 css ` (공백 포함) 모두 매칭
+      const titleCssPattern = /const (titleCss(?:_\d+)?)\s*=\s*css\s*`([^`]+)`/g;
       const titleStyles: Map<string, string[]> = new Map();
 
       let match;

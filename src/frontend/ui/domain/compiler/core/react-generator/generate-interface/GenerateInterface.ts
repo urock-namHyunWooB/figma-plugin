@@ -334,6 +334,21 @@ class GenerateInterface {
       members.push(propSig);
     }
 
+    // children prop 추가 (React 표준, 의존 컴포넌트가 SVG 등을 children으로 받을 수 있도록)
+    const childrenPropSig = this.factory.createPropertySignature(
+      undefined,
+      "children",
+      this.factory.createToken(ts.SyntaxKind.QuestionToken), // optional
+      this.factory.createTypeReferenceNode(
+        this.factory.createQualifiedName(
+          this.factory.createIdentifier("React"),
+          "ReactNode"
+        ),
+        undefined
+      )
+    );
+    members.push(childrenPropSig);
+
     return members;
   }
 

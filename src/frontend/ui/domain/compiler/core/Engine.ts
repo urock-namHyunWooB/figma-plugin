@@ -3,11 +3,22 @@ import NodeMatcher from "@compiler/core/NodeMatcher";
 import debug from "@compiler/manager/DebuggingManager";
 import RefineProps from "@compiler/core/RefineProps";
 import CreateAstTree from "@compiler/core/ast-tree/CreateAstTree";
-import ReactGenerator from "@compiler/core/react-generator/ReactGenerator";
+import ReactGenerator, {
+  ReactGeneratorOptions,
+} from "@compiler/core/react-generator/ReactGenerator";
 import CreateSuperTree from "./super-tree/CreateSuperTree";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import { toCamelCase } from "@compiler/utils/normalizeString";
 import ArraySlotDetector, { ArraySlot } from "@compiler/core/ArraySlotDetector";
+import type { StyleStrategyOptions } from "@compiler/core/react-generator/style-strategy";
+
+/**
+ * Engine 옵션
+ */
+export interface EngineOptions {
+  /** 스타일 전략 옵션 */
+  styleStrategy?: StyleStrategyOptions;
+}
 
 class Engine {
   private CreateSuperTree: CreateSuperTree;
@@ -15,7 +26,11 @@ class Engine {
   private reactGenerator: ReactGenerator;
   private arraySlots: ArraySlot[];
 
-  constructor(root: FigmaCompiler, renderTree: RenderTree) {
+  constructor(
+    root: FigmaCompiler,
+    renderTree: RenderTree,
+    options?: EngineOptions
+  ) {
     const node = root.SpecDataManager.getSpecById(renderTree.id);
     const specManager = root.SpecDataManager;
     const matcher = new NodeMatcher(specManager);
@@ -42,9 +57,15 @@ class Engine {
       refinedProps
     ));
 
+    // ReactGenerator 옵션 구성
+    const generatorOptions: ReactGeneratorOptions = {
+      styleStrategy: options?.styleStrategy,
+    };
+
     this.reactGenerator = new ReactGenerator(
       createFinalAstTree.finalAstTree,
-      this.arraySlots
+      this.arraySlots,
+      generatorOptions
     );
   }
 

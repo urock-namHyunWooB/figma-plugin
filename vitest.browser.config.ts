@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config";
 import path from "path";
+import { playwright } from "@vitest/browser-playwright";
 
 export default defineConfig({
   // 테스트 환경에서 Prettier 스킵을 위한 환경 변수
@@ -17,9 +18,8 @@ export default defineConfig({
     environment: "happy-dom",
     setupFiles: ["./test/setup.ts"],
     testTimeout: 30000,
-    include: ["test/**/*.test.ts", "test/**/*.test.tsx"],
-    // 브라우저 전용 테스트 제외 (npm run test:browser로 실행)
-    exclude: ["test/**/*.browser-only.test.ts", "test/**/browser-only.test.ts", "node_modules"],
+    // 브라우저 전용 테스트만 실행
+    include: ["test/**/*.browser-only.test.ts", "test/**/browser-only.test.ts"],
     // 병렬 실행
     fileParallelism: true,
     // test.concurrent의 동시 실행 수 제한
@@ -31,6 +31,32 @@ export default defineConfig({
         minThreads: 2,
         maxThreads: 4,
       },
+    },
+    // 브라우저 모드 (Playwright)
+    browser: {
+      enabled: true,
+      provider: playwright({
+        launch: {
+          args: [
+            "--disable-gpu",
+            "--no-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-extensions",
+            "--disable-background-networking",
+            "--disable-sync",
+            "--disable-translate",
+            "--metrics-recording-only",
+            "--no-first-run",
+          ],
+        },
+      }),
+      headless: true,
+      instances: [
+        {
+          browser: "chromium",
+          isolate: false,
+        },
+      ],
     },
     coverage: {
       provider: "v8",

@@ -1,4 +1,5 @@
 import { FigmaNodeData } from "@compiler/types/baseType";
+import { toCamelCase } from "@compiler/utils/normalizeString";
 
 /**
  * 배열 슬롯 아이템의 prop 정의
@@ -189,7 +190,7 @@ class ArraySlotDetector {
       // "-count" 같은 suffix 제거
       const baseName = cleaned.replace(/-count$/, "").trim();
       if (baseName) {
-        return this.toCamelCase(baseName);
+        return toCamelCase(baseName);
       }
     }
 
@@ -199,7 +200,7 @@ class ArraySlotDetector {
       // "Option 1" → "options", "Item" → "items"
       const baseName = firstName.replace(/\s*\d+$/, "").trim();
       if (baseName) {
-        return this.toCamelCase(baseName) + "s";
+        return toCamelCase(baseName) + "s";
       }
     }
 
@@ -222,7 +223,7 @@ class ArraySlotDetector {
         instance.componentProperties
       )) {
         const val = propValue as any;
-        const normalizedName = this.toCamelCase(propName);
+        const normalizedName = toCamelCase(propName);
 
         if (!propsMap.has(normalizedName)) {
           propsMap.set(normalizedName, {
@@ -314,7 +315,7 @@ class ArraySlotDetector {
           for (const [propName, propDef] of Object.entries(definitions)) {
             const def = propDef as any;
             props.push({
-              name: this.toCamelCase(propName),
+              name: toCamelCase(propName),
               type: def.type,
               values: def.variantOptions,
               defaultValue: def.defaultValue,
@@ -347,15 +348,6 @@ class ArraySlotDetector {
     return instances;
   }
 
-  /**
-   * 문자열을 camelCase로 변환
-   */
-  private toCamelCase(str: string): string {
-    return str
-      .toLowerCase()
-      .replace(/[-_\s]+(.)?/g, (_, char) => (char ? char.toUpperCase() : ""))
-      .replace(/^(.)/, (char) => char.toLowerCase());
-  }
 }
 
 export default ArraySlotDetector;

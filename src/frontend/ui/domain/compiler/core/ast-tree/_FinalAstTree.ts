@@ -191,30 +191,68 @@ class _FinalAstTree {
 
       if (node.parent === null) {
         node.semanticRole = isButtonComponent ? "button" : "root";
+        // 루트 노드에도 vectorSvg가 있을 수 있음 (의존 컴포넌트가 아이콘인 경우)
+        const vectorSvg = this.specDataManager.getVectorSvgByNodeId(node.id);
+        if (vectorSvg) {
+          node.metaData.vectorSvg = vectorSvg;
+        }
         return;
       }
 
       // Figma 타입별 semanticRole 매핑
       switch (node.type) {
-        case "TEXT":
+        case "TEXT": {
           node.semanticRole = "text";
           // TEXT 노드의 characters 저장 (고정 텍스트용)
           const textSpec = this.specDataManager.getSpecById(node.id);
           if (textSpec && "characters" in textSpec) {
             node.metaData.characters = (textSpec as any).characters;
+
+            // 부분 텍스트 스타일링 처리 (characterStyleOverrides)
+            const characters = (textSpec as any).characters as string;
+            const styleOverrides = (textSpec as any)
+              .characterStyleOverrides as number[] | undefined;
+            const styleTable = (textSpec as any).styleOverrideTable as
+              | Record<string, any>
+              | undefined;
+
+            if (
+              styleOverrides &&
+              styleOverrides.length > 0 &&
+              styleTable &&
+              Object.keys(styleTable).length > 0
+            ) {
+              // 스타일 오버라이드가 있으면 텍스트를 세그먼트로 분할
+              node.metaData.textSegments = this._parseTextSegments(
+                characters,
+                styleOverrides,
+                styleTable,
+                (textSpec as any).style, // 기본 스타일
+                (textSpec as any).fills // 기본 fills (색상)
+              );
+            }
           }
           break;
+        }
 
-        case "INSTANCE":
+        case "INSTANCE": {
           // INSTANCE는 보통 아이콘
           node.semanticRole = "icon";
+          // 아이콘 INSTANCE인 경우, 내부 Vector들의 SVG를 합성하여 metaData에 저장
+          const mergedSvg = this.specDataManager.mergeInstanceVectorSvgs(
+            node.id
+          );
+          if (mergedSvg) {
+            node.metaData.vectorSvg = mergedSvg;
+          }
           break;
+        }
 
         case "VECTOR":
         case "LINE":
         case "STAR":
         case "ELLIPSE":
-        case "POLYGON":
+        case "POLYGON": {
           node.semanticRole = "vector";
           // vectorSvg 데이터가 있으면 metaData에 저장
           const vectorSvg = this.specDataManager.getVectorSvgByNodeId(node.id);
@@ -222,6 +260,7 @@ class _FinalAstTree {
             node.metaData.vectorSvg = vectorSvg;
           }
           break;
+        }
 
         case "FRAME":
         case "GROUP":
@@ -1497,8 +1536,18 @@ class _FinalAstTree {
   }
 
   /**
-   * INSTANCE 노드를 외부 컴포넌트 참조로 변환
-   * dependencies가 있는 INSTANCE 노드는 externalComponent 필드가 설정되고 children이 비워짐
+   * INSTANCE 노드를 slot 또는 externalComponent로 변환
+   * 
+   * 루트 타입에 따른 처리:
+   * - COMPONENT_SET: 내부 INSTANCE는 slot으로 처리 (커스터마이징 가능)
+   * - INSTANCE/COMPONENT/FRAME: 내부 INSTANCE는 externalComponent로 처리 (인라인 렌더링)
+   * 
+   * ArraySlot 조건 (2개 이상 반복):
+   * - 같은 부모 아래에 2개 이상의 INSTANCE가 같은 컴포넌트를 참조
+   * → externalComponent로 처리 (배열 렌더링에서 사용)
+   * 
+   * isExposedInstance: true
+   * → 항상 slot으로 처리 (Figma에서 명시적으로 노출된 인스턴스)
    */
   private updateExternalComponents(astTree: FinalAstTree): FinalAstTree {
     const dependencies = this.specDataManager.getDependencies();
@@ -1507,6 +1556,10 @@ class _FinalAstTree {
     if (!dependencies || Object.keys(dependencies).length === 0) {
       return astTree;
     }
+
+    // 루트 타입 확인: COMPONENT_SET인 경우 내부 INSTANCE를 slot으로 처리
+    const rootSpec = this.specDataManager.getSpecById(astTree.id);
+    const isComponentSetRoot = rootSpec?.type === "COMPONENT_SET";
 
     // ComponentSet별 그룹핑 정보 가져오기
     const groupedDeps =
@@ -1519,12 +1572,20 @@ class _FinalAstTree {
     >();
 
     for (const [componentSetId, group] of Object.entries(groupedDeps)) {
-      const componentName = this._normalizeComponentName(group.componentSetName);
+      const componentName = this._normalizeComponentName(
+        group.componentSetName
+      );
       for (const variant of group.variants) {
         const componentId = variant.info.document.id;
         componentIdToInfo.set(componentId, { componentSetId, componentName });
       }
     }
+
+    // ArraySlot에 속하는 INSTANCE ID 집합 수집
+    const arraySlotInstanceIds = this._collectArraySlotInstanceIds(astTree, componentIdToInfo);
+
+    // 생성된 slot 이름 수집 (props에 추가하기 위함)
+    const collectedSlotNames = new Set<string>();
 
     // 트리 순회하며 INSTANCE 노드 처리
     const processNode = (node: FinalAstTree): void => {
@@ -1532,6 +1593,11 @@ class _FinalAstTree {
       if (node.parent === null) {
         node.children.forEach(processNode);
         return;
+      }
+
+      // 이미 slot으로 처리된 노드는 스킵 (_refineComponentLikeProp에서 처리됨)
+      if ((node as any).isSlot) {
+        return; // 자식 처리도 불필요 (children 이미 비워짐)
       }
 
       // INSTANCE 노드이고 componentId가 있는 경우
@@ -1542,6 +1608,29 @@ class _FinalAstTree {
         if (componentId && componentIdToInfo.has(componentId)) {
           const info = componentIdToInfo.get(componentId)!;
 
+          const isArraySlot = arraySlotInstanceIds.has(node.id);
+          
+          // slot으로 처리해야 하는 경우:
+          // COMPONENT_SET 루트이고 ArraySlot이 아닌 단일 INSTANCE (커스터마이징 가능)
+          // isExposedInstance: true인 경우는 externalComponent로 유지 (기존 동작)
+          const shouldBeSlot = isComponentSetRoot && !isArraySlot;
+          
+          if (shouldBeSlot) {
+            const slotName = toCamelCase(info.componentName);
+            
+            (node as any).isSlot = true;
+            (node as any).slotName = slotName;
+            collectedSlotNames.add(slotName);
+
+            // children 비우기 (slot으로 렌더링되므로)
+            node.children = [];
+
+            return; // 자식 처리 불필요
+          }
+
+          // externalComponent로 처리 (인라인 렌더링):
+          // 1. ArraySlot에 속하는 INSTANCE (2개 이상 반복)
+          // 2. INSTANCE/COMPONENT/FRAME 내부의 일반 INSTANCE - 기본 인스턴스 그대로 렌더링
           // componentProperties에서 props 추출
           const componentProperties = (spec as any)?.componentProperties || {};
           const props: Record<string, string> = {};
@@ -1549,12 +1638,8 @@ class _FinalAstTree {
           for (const [key, value] of Object.entries(componentProperties)) {
             const propValue = (value as any)?.value;
             if (propValue !== undefined) {
-              // prop 이름을 camelCase로 변환
               const propName = toCamelCase(key);
-              
-              // 빈 문자열이면 스킵 (안전장치: 특수문자만 있고 숫자도 없는 경우)
               if (!propName) continue;
-              
               props[propName] = propValue;
             }
           }
@@ -1580,19 +1665,268 @@ class _FinalAstTree {
 
     processNode(astTree);
 
+    // 수집된 slot 이름들을 루트 props에 추가
+    for (const slotName of collectedSlotNames) {
+      if (!astTree.props[slotName]) {
+        astTree.props[slotName] = {
+          type: "SLOT",
+          defaultValue: null,
+        };
+      }
+    }
+
     return astTree;
   }
 
   /**
+   * 트리 전체에서 같은 componentSetId를 참조하는 INSTANCE가 2개 이상인 경우 수집
+   * - 1개: slot으로 처리
+   * - 2개 이상: externalComponent로 처리 (ArraySlot)
+   */
+  private _collectArraySlotInstanceIds(
+    astTree: FinalAstTree,
+    componentIdToInfo: Map<string, { componentSetId: string; componentName: string }>
+  ): Set<string> {
+    const arraySlotInstanceIds = new Set<string>();
+    
+    // 1단계: 트리 전체에서 componentSetId별 INSTANCE 수집
+    const componentSetGroups = new Map<string, FinalAstTree[]>();
+    
+    const collectInstances = (node: FinalAstTree): void => {
+      if (node.type === "INSTANCE") {
+        const spec = this.specDataManager.getSpecById(node.id);
+        const componentId = (spec as any)?.componentId;
+        
+        if (componentId && componentIdToInfo.has(componentId)) {
+          const info = componentIdToInfo.get(componentId)!;
+          const key = info.componentSetId;
+          
+          if (!componentSetGroups.has(key)) {
+            componentSetGroups.set(key, []);
+          }
+          componentSetGroups.get(key)!.push(node);
+        }
+      }
+      
+      for (const child of node.children) {
+        collectInstances(child);
+      }
+    };
+    
+    collectInstances(astTree);
+    
+    // 2단계: 2개 이상인 그룹의 INSTANCE ID 수집
+    for (const [, instances] of componentSetGroups) {
+      if (instances.length >= 2) {
+        for (const instance of instances) {
+          arraySlotInstanceIds.add(instance.id);
+        }
+      }
+    }
+
+    return arraySlotInstanceIds;
+  }
+
+  /**
+   * 텍스트를 스타일별 세그먼트로 분할
+   * characterStyleOverrides와 styleOverrideTable을 기반으로 연속된 같은 스타일의 글자를 그룹화
+   */
+  private _parseTextSegments(
+    characters: string,
+    styleOverrides: number[],
+    styleTable: Record<string, any>,
+    baseStyle: any,
+    baseFills?: any[]
+  ): Array<{
+    text: string;
+    styleIndex: number;
+    style: Record<string, string> | null;
+  }> {
+    const segments: Array<{
+      text: string;
+      styleIndex: number;
+      style: Record<string, string> | null;
+    }> = [];
+
+    if (characters.length === 0) return segments;
+
+    // styleOverrides 배열이 characters보다 짧을 수 있음 (뒤쪽 글자는 기본 스타일)
+    let currentStyleIndex = styleOverrides[0] ?? 0;
+    let currentText = "";
+
+    for (let i = 0; i < characters.length; i++) {
+      const char = characters[i];
+      const styleIndex = styleOverrides[i] ?? 0;
+
+      if (styleIndex === currentStyleIndex) {
+        // 같은 스타일이면 텍스트 누적
+        currentText += char;
+      } else {
+        // 스타일이 바뀌면 현재 세그먼트 저장하고 새 세그먼트 시작
+        if (currentText) {
+          segments.push({
+            text: currentText,
+            styleIndex: currentStyleIndex,
+            style: this._extractOverrideStyle(
+              currentStyleIndex,
+              styleTable,
+              baseStyle,
+              baseFills
+            ),
+          });
+        }
+        currentStyleIndex = styleIndex;
+        currentText = char;
+      }
+    }
+
+    // 마지막 세그먼트 저장
+    if (currentText) {
+      segments.push({
+        text: currentText,
+        styleIndex: currentStyleIndex,
+        style: this._extractOverrideStyle(
+          currentStyleIndex,
+          styleTable,
+          baseStyle,
+          baseFills
+        ),
+      });
+    }
+
+    return segments;
+  }
+
+  /**
+   * styleOverrideTable에서 CSS 스타일 추출
+   * styleIndex가 0이면 기본 스타일 적용 (부모 CSS 상속 방지를 위해 명시적으로 설정)
+   */
+  private _extractOverrideStyle(
+    styleIndex: number,
+    styleTable: Record<string, any>,
+    baseStyle: any,
+    baseFills?: any[]
+  ): Record<string, string> | null {
+    const cssStyle: Record<string, string> = {};
+
+    // styleIndex가 0이면 기본 스타일 적용
+    // 부모 CSS에서 오버라이드 스타일이 적용될 수 있으므로 기본 스타일을 명시적으로 설정
+    if (styleIndex === 0) {
+      // 기본 fills에서 색상 추출
+      if (baseFills && baseFills.length > 0) {
+        const fill = baseFills[0];
+        if (fill.type === "SOLID" && fill.color) {
+          const { r, g, b, a } = fill.color;
+          const toHex = (v: number) =>
+            Math.round(v * 255)
+              .toString(16)
+              .padStart(2, "0");
+          if (a !== undefined && a < 1) {
+            cssStyle.color = `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${a})`;
+          } else {
+            cssStyle.color = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+          }
+        }
+      }
+      // 기본 fontWeight
+      if (baseStyle?.fontWeight) {
+        cssStyle.fontWeight = String(baseStyle.fontWeight);
+      }
+      return Object.keys(cssStyle).length > 0 ? cssStyle : null;
+    }
+
+    const override = styleTable[String(styleIndex)];
+    if (!override) return null;
+
+    // fills에서 색상 추출 (가장 중요한 오버라이드)
+    if (override.fills && override.fills.length > 0) {
+      const fill = override.fills[0];
+      if (fill.type === "SOLID" && fill.color) {
+        const { r, g, b, a } = fill.color;
+        const toHex = (v: number) =>
+          Math.round(v * 255)
+            .toString(16)
+            .padStart(2, "0");
+        if (a !== undefined && a < 1) {
+          cssStyle.color = `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${a})`;
+        } else {
+          cssStyle.color = `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        }
+      }
+    }
+
+    // fontWeight 오버라이드
+    if (override.fontWeight && override.fontWeight !== baseStyle?.fontWeight) {
+      cssStyle.fontWeight = String(override.fontWeight);
+    }
+
+    // fontSize 오버라이드
+    if (override.fontSize && override.fontSize !== baseStyle?.fontSize) {
+      cssStyle.fontSize = `${override.fontSize}px`;
+    }
+
+    // fontFamily 오버라이드
+    if (override.fontFamily && override.fontFamily !== baseStyle?.fontFamily) {
+      cssStyle.fontFamily = override.fontFamily;
+    }
+
+    // textDecoration 오버라이드 (underline 등)
+    if (override.textDecoration) {
+      cssStyle.textDecoration = override.textDecoration.toLowerCase();
+    }
+
+    // fontStyle 오버라이드 (italic 등)
+    if (
+      override.fontStyle &&
+      override.fontStyle.toLowerCase() === "italic"
+    ) {
+      cssStyle.fontStyle = "italic";
+    }
+
+    return Object.keys(cssStyle).length > 0 ? cssStyle : null;
+  }
+
+  /**
    * 컴포넌트 이름 정규화 (PascalCase, 특수문자 제거)
+   * 한글/비ASCII 문자가 포함된 경우 fallback 이름 생성
    */
   private _normalizeComponentName(name: string): string {
-    return name
-      .replace(/[^a-zA-Z0-9\s]/g, "") // 특수문자 제거
-      .split(/\s+/) // 공백으로 분리
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1)) // PascalCase
+    // 먼저 영문/숫자만 추출 시도
+    let normalized = name
+      .replace(/[^a-zA-Z0-9\s]/g, "") // 특수문자 및 한글 제거
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join("");
+
+    // 영문/숫자가 없으면 (한글만 있는 경우 등) fallback 이름 생성
+    if (!normalized || normalized.length === 0) {
+      // 원본 이름에서 고유한 해시 생성
+      const hash = this._simpleHash(name);
+      normalized = `Component${hash}`;
+    }
+
+    // 숫자로 시작하면 앞에 _ 추가
+    if (/^[0-9]/.test(normalized)) {
+      normalized = "_" + normalized;
+    }
+
+    return normalized;
+  }
+
+  /**
+   * 간단한 해시 함수 (이름에서 고유한 숫자 생성)
+   */
+  private _simpleHash(str: string): string {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // 32bit 정수로 변환
+    }
+    return Math.abs(hash).toString(36).substring(0, 6);
   }
 }
+
 
 export default _FinalAstTree;

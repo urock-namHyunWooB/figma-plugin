@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useReducer, useRef } from "react";
 
 import FigmaCompiler from "@frontend/ui/domain/compiler";
+import type { FigmaCompilerOptions } from "@compiler/FigmaCompiler";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
 import { toCamelCase } from "@compiler/utils/normalizeString";
 import type { FigmaNodeData } from "@compiler/types/baseType";
+
+export type StyleStrategyType = "emotion" | "tailwind";
+
+export interface CompilerDebugOptions {
+  styleStrategy?: StyleStrategyType;
+}
 
 type Status = "idle" | "compiling" | "ready" | "error";
 
@@ -87,13 +94,31 @@ function getDefaultPropsFromSpec(spec: FigmaNodeData): Record<string, any> {
   return props;
 }
 
-export function useCompilerDebug(spec: FigmaNodeData) {
+export function useCompilerDebug(
+  spec: FigmaNodeData | null,
+  options?: CompilerDebugOptions
+) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const compileIdRef = useRef(0);
 
-  const defaultProps = useMemo(() => getDefaultPropsFromSpec(spec), [spec]);
+  const defaultProps = useMemo(
+    () => (spec ? getDefaultPropsFromSpec(spec) : {}),
+    [spec]
+  );
+
+  // styleStrategy 옵션을 FigmaCompilerOptions로 변환
+  const compilerOptions: FigmaCompilerOptions | undefined = useMemo(() => {
+    if (!options?.styleStrategy || options.styleStrategy === "emotion") {
+      return undefined; // 기본값 (Emotion)
+    }
+    return {
+      styleStrategy: { type: options.styleStrategy },
+    };
+  }, [options?.styleStrategy]);
 
   useEffect(() => {
+    if (!spec) return;
+
     let isMounted = true;
     const compileId = ++compileIdRef.current;
 
@@ -102,7 +127,7 @@ export function useCompilerDebug(spec: FigmaNodeData) {
 
       const start = performance.now();
       try {
-        const compiler = new FigmaCompiler(spec);
+        const compiler = new FigmaCompiler(spec!, compilerOptions);
         const code = await compiler.getGeneratedCode();
         if (!code) throw new Error("코드 생성 실패");
 
@@ -138,7 +163,7 @@ export function useCompilerDebug(spec: FigmaNodeData) {
     return () => {
       isMounted = false;
     };
-  }, [spec]);
+  }, [spec, compilerOptions]);
 
   return {
     ...state,

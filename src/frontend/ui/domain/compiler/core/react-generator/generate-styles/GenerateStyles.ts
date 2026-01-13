@@ -74,10 +74,8 @@ class GenerateStyles {
         return;
       }
 
-      // externalComponent가 있는 노드는 CSS 생성 스킵 (외부 컴포넌트로 렌더링됨)
-      if (node.externalComponent) {
-        return;
-      }
+      // 외부 컴포넌트(INSTANCE)도 레이아웃 스타일이 필요할 수 있으므로 CSS 생성
+      // (부모 레이아웃에서의 배치: flex-shrink, margin 등)
 
       // 스타일이 없는 노드는 스킵
       const hasBaseStyle =

@@ -183,6 +183,80 @@ class SpecDataManager {
   }
 
   /**
+   * INSTANCE 노드 ID로 해당 INSTANCE 내부의 모든 Vector SVG를 반환
+   * I{instanceId};... 형태의 키를 가진 모든 SVG를 수집
+   */
+  public getVectorSvgsByInstanceId(
+    instanceId: string
+  ): { nodeId: string; svg: string; boundingBox?: any }[] {
+    const vectorSvgs = this.spec.vectorSvgs;
+    if (!vectorSvgs) return [];
+
+    const result: { nodeId: string; svg: string; boundingBox?: any }[] = [];
+    const prefix = `I${instanceId};`;
+
+    for (const [nodeId, svg] of Object.entries(vectorSvgs)) {
+      if (nodeId.startsWith(prefix)) {
+        // 해당 노드의 boundingBox 정보도 함께 가져옴
+        const nodeSpec = this.specHashMap[nodeId];
+        result.push({
+          nodeId,
+          svg,
+          boundingBox: nodeSpec?.absoluteBoundingBox,
+        });
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * INSTANCE 노드의 내부 Vector들을 하나의 SVG로 합성
+   */
+  public mergeInstanceVectorSvgs(instanceId: string): string | undefined {
+    const vectors = this.getVectorSvgsByInstanceId(instanceId);
+    if (vectors.length === 0) return undefined;
+
+    // INSTANCE 노드의 boundingBox 가져오기
+    const instanceSpec = this.specHashMap[instanceId];
+    const instanceBox = instanceSpec?.absoluteBoundingBox;
+    if (!instanceBox) return undefined;
+
+    const { width: instWidth, height: instHeight, x: instX, y: instY } = instanceBox;
+
+    // 각 SVG의 path 요소들을 추출하고 상대 위치로 변환
+    const pathElements: string[] = [];
+
+    for (const { svg, boundingBox } of vectors) {
+      if (!boundingBox) continue;
+
+      // SVG에서 path 요소 추출
+      const pathMatch = svg.match(/<path[^>]*\/>/g);
+      if (!pathMatch) continue;
+
+      // 상대 위치 계산
+      const relX = boundingBox.x - instX;
+      const relY = boundingBox.y - instY;
+
+      // path를 g 태그로 감싸서 위치 조정
+      for (const path of pathMatch) {
+        if (relX !== 0 || relY !== 0) {
+          pathElements.push(
+            `<g transform="translate(${relX}, ${relY})">${path}</g>`
+          );
+        } else {
+          pathElements.push(path);
+        }
+      }
+    }
+
+    if (pathElements.length === 0) return undefined;
+
+    // 합성된 SVG 생성
+    return `<svg width="${instWidth}" height="${instHeight}" viewBox="0 0 ${instWidth} ${instHeight}" fill="none" xmlns="http://www.w3.org/2000/svg">${pathElements.join("")}</svg>`;
+  }
+
+  /**
    * dependencies를 componentSetId 기준으로 그룹핑합니다.
    * 같은 ComponentSet의 variants는 하나의 React 컴포넌트로 컴파일됩니다.
    */
@@ -200,12 +274,12 @@ class SpecDataManager {
 
     for (const [componentId, data] of Object.entries(dependencies)) {
       // components 맵에서 componentSetId 찾기
-      const componentInfo = data.info.components?.[componentId];
+      const componentInfo = data.info.components?.[componentId] as any;
       const componentSetId = componentInfo?.componentSetId;
 
       if (componentSetId) {
         // componentSets 맵에서 이름 가져오기
-        const componentSetInfo = data.info.componentSets?.[componentSetId];
+        const componentSetInfo = data.info.componentSets?.[componentSetId] as any;
         const componentSetName = componentSetInfo?.name || "Unknown";
 
         if (!groups[componentSetId]) {

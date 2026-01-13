@@ -195,3 +195,4 @@ export interface ExternalComponentRef {
   componentName: string;
   /** INSTANCE에서 전달하는 props (예: { size: "default", selected: "false" }) */
   props: Record<string, string>;
+}

@@ -1,4 +1,4 @@
-import * as Babel from "@babel/standalone";
+import { transform as sucraseTransform } from "sucrase";
 import * as React from "react";
 
 // emotion을 동적으로 import (설치되지 않았을 수 있음)
@@ -152,24 +152,19 @@ export async function renderReactComponent(
     // 기타 export 문 제거 (남아있는 경우, 단 default function은 이미 처리했으므로 제외)
     cleanedCode = cleanedCode.replace(/export\s+(?!default\s+function)/g, "");
 
-    // 4. Babel로 JSX → JavaScript 변환
-    // emotion을 사용하려면 jsx runtime을 사용해야 하지만,
-    // @babel/standalone에서는 emotion/babel-plugin을 동적으로 로드할 수 없음
-    // 따라서 classic runtime을 사용하고, emotion의 jsx를 수동으로 적용
-    const transformed = Babel.transform(cleanedCode, {
-      presets: [
-        ["react", { runtime: "classic" }],
-        ["typescript", { isTSX: true, allExtensions: true }],
-      ],
-      filename: "component.tsx",
+    // 4. sucrase로 JSX/TSX → JavaScript 변환 (Babel 대비 99% 경량)
+    // classic runtime 사용, emotion의 jsx를 수동으로 적용
+    const transformed = sucraseTransform(cleanedCode, {
+      transforms: ["typescript", "jsx"],
+      jsxRuntime: "classic",
     }).code;
 
     if (!transformed) {
-      throw new Error("Babel transformation failed");
+      throw new Error("Sucrase transformation failed");
     }
 
     // 4-1. emotion이 있으면 React.createElement를 emotion의 jsx로 교체
-    // Babel이 JSX를 React.createElement로 변환하므로, 이를 emotion의 jsx로 교체
+    // sucrase가 JSX를 React.createElement로 변환하므로, 이를 emotion의 jsx로 교체
     let transformedWithEmotion = transformed;
     if (emotionModule && emotionJsx) {
       // React.createElement를 emotion의 jsx로 교체
@@ -187,6 +182,7 @@ export async function renderReactComponent(
     const prevCss = (window as any).css;
     const prevCx = (window as any).cx;
     const prevStyled = (window as any).styled;
+    const prevCn = (window as any).cn;
     const prevEmotionReact = (window as any).__EMOTION_REACT__;
 
     try {
@@ -201,6 +197,15 @@ export async function renderReactComponent(
       (window as any).useState = React.useState;
       (window as any).css = cssFunction;
       (window as any).cx = cxFunction;
+
+      // Tailwind용 cn 함수 (clsx와 유사한 기능)
+      const cnFunction = (...args: any[]): string => {
+        return args
+          .flat()
+          .filter((x) => typeof x === "string" && x.trim())
+          .join(" ");
+      };
+      (window as any).cn = cnFunction;
 
       // styled component 지원
       if (emotionStyled) {
@@ -254,12 +259,18 @@ export async function renderReactComponent(
       // 6. eval로 코드 실행 (window.React, window.css를 사용)
       // 전체 코드를 실행하고 컴포넌트 함수를 반환
       // 함수 선언은 hoisting되므로 실행 후 컴포넌트 이름으로 접근 가능
+      
+      // 생성된 코드에 인라인 cn 함수가 있는지 확인 (const cn = ... 또는 var cn = ...)
+      const transformedCode = transformedWithEmotion || transformed;
+      const hasInlineCn = transformedCode.includes("var cn") || transformedCode.includes("const cn");
+      
       const evalCode = `
         'use strict';
         var React = window.React;
         var useState = window.useState;
         var css = window.css;
         var cx = window.cx;
+        ${hasInlineCn ? "" : "var cn = window.cn;"}
         ${emotionStyled ? "var styled = window.styled;" : ""}
         ${emotionModule && emotionJsx ? "var jsx = window.jsx; var jsxs = window.jsxs;" : ""}
         
@@ -298,6 +309,11 @@ export async function renderReactComponent(
         (window as any).cx = prevCx;
       } else {
         delete (window as any).cx;
+      }
+      if (prevCn !== undefined) {
+        (window as any).cn = prevCn;
+      } else {
+        delete (window as any).cn;
       }
       if (prevStyled !== undefined) {
         (window as any).styled = prevStyled;
@@ -348,10 +364,10 @@ export function validateComponentCode(code: string): {
       };
     }
 
-    // Babel 변환 테스트
-    Babel.transform(code, {
-      presets: [["react", { runtime: "classic" }], "typescript"],
-      filename: "test.tsx",
+    // sucrase 변환 테스트
+    sucraseTransform(code, {
+      transforms: ["typescript", "jsx"],
+      jsxRuntime: "classic",
     });
 
     return { isValid: true };

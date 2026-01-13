@@ -6,6 +6,10 @@ interface PropControllerProps {
   propDefinitions: PropDefinition[];
   propValues: Record<string, any>;
   onPropChange: (name: string, value: any) => void;
+  /** SLOT 목업 활성화 상태 */
+  slotMockupEnabled?: Record<string, boolean>;
+  /** SLOT 목업 토글 핸들러 */
+  onSlotMockupToggle?: (name: string, enabled: boolean) => void;
 }
 
 const containerStyle = css`
@@ -86,21 +90,37 @@ const checkboxStyle = css`
   cursor: pointer;
 `;
 
-const slotPlaceholderStyle = css`
+const slotContainerStyle = css`
   flex: 1;
-  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const slotLabelStyle = css`
+  padding: 6px 10px;
   background: #2d2d2d;
-  border: 1px dashed #606060;
+  border: 1px dashed #0078d4;
   border-radius: 4px;
-  color: #808080;
+  color: #0078d4;
   font-size: 12px;
-  font-style: italic;
+  flex: 1;
+`;
+
+const slotToggleStyle = css`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #808080;
 `;
 
 export function PropController({
   propDefinitions,
   propValues,
   onPropChange,
+  slotMockupEnabled = {},
+  onSlotMockupToggle,
 }: PropControllerProps) {
   const renderControl = (prop: PropDefinition) => {
     const value = propValues[prop.name] ?? prop.defaultValue;
@@ -147,12 +167,26 @@ export function PropController({
           </div>
         );
 
-      case "SLOT":
+      case "SLOT": {
+        const isEnabled = slotMockupEnabled[prop.name] ?? true;
+        const componentName = prop.slotInfo?.componentName || prop.name;
         return (
-          <div css={slotPlaceholderStyle}>
-            ReactNode (slot)
+          <div css={slotContainerStyle}>
+            <div css={slotLabelStyle}>
+              {componentName}
+            </div>
+            <label css={slotToggleStyle}>
+              <input
+                type="checkbox"
+                checked={isEnabled}
+                onChange={(e) => onSlotMockupToggle?.(prop.name, e.target.checked)}
+                style={{ width: 14, height: 14, cursor: "pointer" }}
+              />
+              Mockup
+            </label>
           </div>
         );
+      }
 
       default:
         return (

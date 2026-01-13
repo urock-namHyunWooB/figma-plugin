@@ -1,0 +1,2981 @@
+{
+  "pluginData": [],
+  "info": {
+    "document": {
+      "id": "3797:2179",
+      "name": "Popup/Body",
+      "type": "INSTANCE",
+      "scrollBehavior": "SCROLLS",
+      "componentId": "3125:163424",
+      "componentProperties": {
+        "Property 1": {
+          "value": "Body",
+          "type": "VARIANT",
+          "boundVariables": {}
+        }
+      },
+      "overrides": [],
+      "children": [
+        {
+          "id": "I3797:2179;3269:203472",
+          "name": "Scroll",
+          "visible": false,
+          "type": "INSTANCE",
+          "scrollBehavior": "SCROLLS",
+          "componentId": "3269:203471",
+          "componentProperties": {
+            "Property 1": {
+              "value": "Default",
+              "type": "VARIANT",
+              "boundVariables": {}
+            }
+          },
+          "overrides": [],
+          "children": [
+            {
+              "id": "I3797:2179;3269:203472;3269:203046",
+              "name": "Scroll",
+              "type": "RECTANGLE",
+              "scrollBehavior": "SCROLLS",
+              "boundVariables": {
+                "fills": [
+                  {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:202:45385"
+                  }
+                ]
+              },
+              "blendMode": "PASS_THROUGH",
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0.8509804010391235,
+                    "g": 0.8666666746139526,
+                    "b": 0.8784313797950745,
+                    "a": 1
+                  },
+                  "boundVariables": {
+                    "color": {
+                      "type": "VARIABLE_ALIAS",
+                      "id": "VariableID:202:45385"
+                    }
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "styles": {
+                "fill": "910:154395"
+              },
+              "cornerRadius": 2,
+              "cornerSmoothing": 0,
+              "absoluteBoundingBox": {
+                "x": -1447,
+                "y": 481,
+                "width": 4,
+                "height": 40
+              },
+              "absoluteRenderBounds": null,
+              "constraints": {
+                "vertical": "SCALE",
+                "horizontal": "SCALE"
+              },
+              "effects": [],
+              "interactions": []
+            }
+          ],
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": false,
+          "background": [],
+          "fills": [],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "backgroundColor": {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          "absoluteBoundingBox": {
+            "x": -1447,
+            "y": 481,
+            "width": 4,
+            "height": 40
+          },
+          "absoluteRenderBounds": null,
+          "constraints": {
+            "vertical": "TOP",
+            "horizontal": "RIGHT"
+          },
+          "layoutAlign": "INHERIT",
+          "layoutGrow": 0,
+          "layoutPositioning": "ABSOLUTE",
+          "layoutSizingHorizontal": "FIXED",
+          "layoutSizingVertical": "FIXED",
+          "effects": [],
+          "interactions": []
+        },
+        {
+          "id": "I3797:2179;3125:163423",
+          "name": "Body Text",
+          "type": "TEXT",
+          "scrollBehavior": "SCROLLS",
+          "boundVariables": {
+            "fills": [
+              {
+                "type": "VARIABLE_ALIAS",
+                "id": "VariableID:80:2772"
+              }
+            ]
+          },
+          "blendMode": "PASS_THROUGH",
+          "fills": [
+            {
+              "blendMode": "NORMAL",
+              "type": "SOLID",
+              "color": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 1
+              },
+              "boundVariables": {
+                "color": {
+                  "type": "VARIABLE_ALIAS",
+                  "id": "VariableID:80:2772"
+                }
+              }
+            }
+          ],
+          "strokes": [],
+          "strokeWeight": 0,
+          "strokeAlign": "CENTER",
+          "styles": {
+            "fill": "910:154390",
+            "text": "997:108665"
+          },
+          "absoluteBoundingBox": {
+            "x": -1762,
+            "y": 481,
+            "width": 303,
+            "height": 40
+          },
+          "absoluteRenderBounds": {
+            "x": -1761.111328125,
+            "y": 485.63671875,
+            "width": 258.9453125,
+            "height": 33.302734375
+          },
+          "constraints": {
+            "vertical": "TOP",
+            "horizontal": "LEFT"
+          },
+          "layoutAlign": "INHERIT",
+          "layoutGrow": 0,
+          "layoutSizingHorizontal": "FIXED",
+          "layoutSizingVertical": "HUG",
+          "characters": "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
+          "characterStyleOverrides": [],
+          "styleOverrideTable": {},
+          "lineTypes": ["NONE"],
+          "lineIndentations": [0],
+          "style": {
+            "fontFamily": "Pretendard",
+            "fontPostScriptName": "Pretendard-Medium",
+            "fontStyle": "Medium",
+            "fontWeight": 500,
+            "textAutoResize": "HEIGHT",
+            "fontSize": 14,
+            "textAlignHorizontal": "LEFT",
+            "textAlignVertical": "TOP",
+            "letterSpacing": 0,
+            "lineHeightPx": 20,
+            "lineHeightPercent": 119.71007537841797,
+            "lineHeightPercentFontSize": 142.85714721679688,
+            "lineHeightUnit": "PIXELS"
+          },
+          "layoutVersion": 4,
+          "effects": [],
+          "interactions": []
+        },
+        {
+          "id": "I3797:2179;3240:196103",
+          "name": "Decorate/Gradient",
+          "visible": false,
+          "type": "INSTANCE",
+          "scrollBehavior": "SCROLLS",
+          "componentId": "3240:196076",
+          "componentProperties": {
+            "Direction": {
+              "value": "Bottom",
+              "type": "VARIANT",
+              "boundVariables": {}
+            }
+          },
+          "overrides": [],
+          "children": [
+            {
+              "id": "I3797:2179;3240:196103;3240:196077",
+              "name": "Gradient",
+              "type": "RECTANGLE",
+              "scrollBehavior": "SCROLLS",
+              "blendMode": "PASS_THROUGH",
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "GRADIENT_LINEAR",
+                  "gradientHandlePositions": [
+                    {
+                      "x": 0.5,
+                      "y": -3.0616171314629196e-17
+                    },
+                    {
+                      "x": 0.5,
+                      "y": 0.9999999999999999
+                    },
+                    {
+                      "x": 0,
+                      "y": 0
+                    }
+                  ],
+                  "gradientStops": [
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0
+                      },
+                      "position": 0
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.02082962915301323
+                      },
+                      "position": 0.04696296155452728
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.043970368802547455
+                      },
+                      "position": 0.08903703838586807
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.07039999961853027
+                      },
+                      "position": 0.12800000607967377
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.10109629482030869
+                      },
+                      "position": 0.16562962532043457
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.13703703880310059
+                      },
+                      "position": 0.20370370149612427
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.17919999361038208
+                      },
+                      "position": 0.24400000274181366
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.22856296598911285
+                      },
+                      "position": 0.28829628229141235
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.2861036956310272
+                      },
+                      "position": 0.3383703827857971
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.35280001163482666
+                      },
+                      "position": 0.3959999978542328
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.4296296238899231
+                      },
+                      "position": 0.46296295523643494
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.5175703763961792
+                      },
+                      "position": 0.5410370230674744
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.6176000237464905
+                      },
+                      "position": 0.6320000290870667
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.7306963205337524
+                      },
+                      "position": 0.7376296520233154
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.8578370213508606
+                      },
+                      "position": 0.8597037196159363
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      },
+                      "position": 1
+                    }
+                  ]
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "absoluteBoundingBox": {
+                "x": -1782,
+                "y": 481,
+                "width": 343,
+                "height": 40
+              },
+              "absoluteRenderBounds": null,
+              "constraints": {
+                "vertical": "SCALE",
+                "horizontal": "SCALE"
+              },
+              "effects": [],
+              "isMask": true,
+              "maskType": "ALPHA",
+              "interactions": []
+            },
+            {
+              "id": "I3797:2179;3240:196103;3240:196078",
+              "name": "Color",
+              "type": "RECTANGLE",
+              "scrollBehavior": "SCROLLS",
+              "boundVariables": {
+                "fills": [
+                  {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:202:45391"
+                  }
+                ]
+              },
+              "blendMode": "PASS_THROUGH",
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  },
+                  "boundVariables": {
+                    "color": {
+                      "type": "VARIABLE_ALIAS",
+                      "id": "VariableID:202:45391"
+                    }
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "styles": {
+                "fill": "911:154440"
+              },
+              "absoluteBoundingBox": {
+                "x": -1782,
+                "y": 481,
+                "width": 343,
+                "height": 40
+              },
+              "absoluteRenderBounds": null,
+              "constraints": {
+                "vertical": "SCALE",
+                "horizontal": "SCALE"
+              },
+              "effects": [],
+              "interactions": []
+            }
+          ],
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": false,
+          "background": [],
+          "fills": [],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "backgroundColor": {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          "absoluteBoundingBox": {
+            "x": -1782,
+            "y": 481,
+            "width": 343,
+            "height": 40
+          },
+          "absoluteRenderBounds": null,
+          "constraints": {
+            "vertical": "BOTTOM",
+            "horizontal": "CENTER"
+          },
+          "layoutAlign": "INHERIT",
+          "layoutGrow": 0,
+          "layoutPositioning": "ABSOLUTE",
+          "layoutSizingHorizontal": "FIXED",
+          "layoutSizingVertical": "FIXED",
+          "effects": [],
+          "interactions": []
+        },
+        {
+          "id": "I3797:2179;3269:211069",
+          "name": "Decorate/Gradient",
+          "visible": false,
+          "type": "INSTANCE",
+          "scrollBehavior": "SCROLLS",
+          "componentId": "3240:196070",
+          "componentProperties": {
+            "Direction": {
+              "value": "Top",
+              "type": "VARIANT",
+              "boundVariables": {}
+            }
+          },
+          "overrides": [],
+          "children": [
+            {
+              "id": "I3797:2179;3269:211069;3240:196071",
+              "name": "Gradient",
+              "type": "RECTANGLE",
+              "locked": true,
+              "scrollBehavior": "SCROLLS",
+              "blendMode": "PASS_THROUGH",
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "GRADIENT_LINEAR",
+                  "gradientHandlePositions": [
+                    {
+                      "x": 0.5,
+                      "y": -3.0616171314629196e-17
+                    },
+                    {
+                      "x": 0.5,
+                      "y": 0.9999999999999999
+                    },
+                    {
+                      "x": 0,
+                      "y": 0
+                    }
+                  ],
+                  "gradientStops": [
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      },
+                      "position": 0
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.9791703820228577
+                      },
+                      "position": 0.04696296155452728
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.9560296535491943
+                      },
+                      "position": 0.08903703838586807
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.9296000003814697
+                      },
+                      "position": 0.12800000607967377
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.8989037275314331
+                      },
+                      "position": 0.16562962532043457
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.8629629611968994
+                      },
+                      "position": 0.20370370149612427
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.8208000063896179
+                      },
+                      "position": 0.24400000274181366
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.7714370489120483
+                      },
+                      "position": 0.28829628229141235
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.7138962745666504
+                      },
+                      "position": 0.3383703827857971
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.6471999883651733
+                      },
+                      "position": 0.3959999978542328
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.5703703761100769
+                      },
+                      "position": 0.46296295523643494
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.4824296236038208
+                      },
+                      "position": 0.5410370230674744
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.3824000060558319
+                      },
+                      "position": 0.6320000290870667
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.26930370926856995
+                      },
+                      "position": 0.7376296520233154
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.1421629637479782
+                      },
+                      "position": 0.8597037196159363
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0
+                      },
+                      "position": 1
+                    }
+                  ]
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "absoluteBoundingBox": {
+                "x": -1782,
+                "y": 481,
+                "width": 343,
+                "height": 40
+              },
+              "absoluteRenderBounds": null,
+              "constraints": {
+                "vertical": "SCALE",
+                "horizontal": "SCALE"
+              },
+              "effects": [],
+              "isMask": true,
+              "maskType": "ALPHA",
+              "interactions": []
+            },
+            {
+              "id": "I3797:2179;3269:211069;3240:196072",
+              "name": "Color",
+              "type": "RECTANGLE",
+              "scrollBehavior": "SCROLLS",
+              "boundVariables": {
+                "fills": [
+                  {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:202:45391"
+                  }
+                ]
+              },
+              "blendMode": "PASS_THROUGH",
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  },
+                  "boundVariables": {
+                    "color": {
+                      "type": "VARIABLE_ALIAS",
+                      "id": "VariableID:202:45391"
+                    }
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "styles": {
+                "fill": "911:154440"
+              },
+              "absoluteBoundingBox": {
+                "x": -1782,
+                "y": 481,
+                "width": 343,
+                "height": 40
+              },
+              "absoluteRenderBounds": null,
+              "constraints": {
+                "vertical": "SCALE",
+                "horizontal": "SCALE"
+              },
+              "effects": [],
+              "interactions": []
+            }
+          ],
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": false,
+          "background": [],
+          "fills": [],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "backgroundColor": {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          "absoluteBoundingBox": {
+            "x": -1782,
+            "y": 481,
+            "width": 343,
+            "height": 40
+          },
+          "absoluteRenderBounds": null,
+          "constraints": {
+            "vertical": "TOP",
+            "horizontal": "CENTER"
+          },
+          "layoutAlign": "INHERIT",
+          "layoutGrow": 0,
+          "layoutPositioning": "ABSOLUTE",
+          "layoutSizingHorizontal": "FIXED",
+          "layoutSizingVertical": "FIXED",
+          "effects": [],
+          "interactions": []
+        }
+      ],
+      "blendMode": "PASS_THROUGH",
+      "clipsContent": true,
+      "background": [],
+      "fills": [],
+      "strokes": [],
+      "strokeWeight": 1,
+      "strokeAlign": "INSIDE",
+      "backgroundColor": {
+        "r": 0,
+        "g": 0,
+        "b": 0,
+        "a": 0
+      },
+      "layoutMode": "HORIZONTAL",
+      "primaryAxisSizingMode": "FIXED",
+      "paddingLeft": 20,
+      "paddingRight": 20,
+      "itemSpacing": 8,
+      "layoutWrap": "NO_WRAP",
+      "absoluteBoundingBox": {
+        "x": -1782,
+        "y": 481,
+        "width": 343,
+        "height": 40
+      },
+      "absoluteRenderBounds": {
+        "x": -1782,
+        "y": 481,
+        "width": 343,
+        "height": 40
+      },
+      "constraints": {
+        "vertical": "TOP",
+        "horizontal": "LEFT"
+      },
+      "layoutAlign": "STRETCH",
+      "layoutGrow": 0,
+      "layoutSizingHorizontal": "FILL",
+      "layoutSizingVertical": "HUG",
+      "effects": [],
+      "interactions": []
+    },
+    "components": {
+      "3125:163424": {
+        "key": "ce7d6b2c3473d776561bbf05e256e35d67595c3f",
+        "name": "Property 1=Body",
+        "description": "",
+        "remote": false,
+        "componentSetId": "6018:109204",
+        "documentationLinks": []
+      },
+      "3269:203471": {
+        "key": "83bd3a84f848fcbbd21ee45b76f9df6ea09d5042",
+        "name": "Property 1=Default",
+        "description": "",
+        "remote": false,
+        "componentSetId": "3661:82141",
+        "documentationLinks": []
+      },
+      "3240:196076": {
+        "key": "f76c21988d871dc2a1baeae5c8c128cf3b7b2dbd",
+        "name": "Direction=Bottom",
+        "description": "",
+        "remote": false,
+        "componentSetId": "3240:196069",
+        "documentationLinks": []
+      },
+      "3240:196070": {
+        "key": "564379e803b4d6769df3aa02a2fd5f5034a3ae8c",
+        "name": "Direction=Top",
+        "description": "",
+        "remote": false,
+        "componentSetId": "3240:196069",
+        "documentationLinks": []
+      }
+    },
+    "componentSets": {
+      "6018:109204": {
+        "key": "9ae55db20d342ea314c3d45a7570a3b64bc010bb",
+        "name": "Popup/Body",
+        "description": "",
+        "remote": false
+      },
+      "3661:82141": {
+        "key": "03b12777e2af731bcc6349b92281cb58fd1d67a1",
+        "name": "Scroll",
+        "description": "스크롤 정도를 나타낼 때 사용합니다.\n\n\n키워드: Scroll, 스크롤",
+        "remote": false
+      },
+      "3240:196069": {
+        "key": "15f986ad0561d82220ce819dcd14c5c772ac747c",
+        "name": "Decorate/Gradient",
+        "description": "아직 끝나지 않은 콘텐츠 상태를 매끄럽게 표현합니다.\n기본적으로 White&Black 을 사용하며 명도가 강하다고 판단될 경우 Opacity를 적용할 수 있습니다.\n\n\n키워드 : 그라데이션, 그라디언트, 사라지는, Gradient\n\n\n# 개발 코멘트\nmask-image 및 gradient-mask으로 구현합니다.\nGradient Ease: 0.25, 0.1, 0.25, 1",
+        "remote": false
+      }
+    },
+    "schemaVersion": 0,
+    "styles": {
+      "910:154395": {
+        "key": "2bc3896f7c979a97694470736506b651559c56bf",
+        "name": "Semantic/Label/Weakest",
+        "styleType": "FILL",
+        "remote": false,
+        "description": ""
+      },
+      "910:154390": {
+        "key": "e1e5ee0508caf0e355d22e582a40d415e20ff290",
+        "name": "Semantic/Label/Normal",
+        "styleType": "FILL",
+        "remote": false,
+        "description": ""
+      },
+      "997:108665": {
+        "key": "b9d7b3509f3172757989f98fae31e2269674011d",
+        "name": "Paragraph 3/Medium",
+        "styleType": "TEXT",
+        "remote": false,
+        "description": ""
+      },
+      "911:154440": {
+        "key": "7f26fa025f2957582edeaa90cc8c4d766a44b3a5",
+        "name": "Semantic/Background/Normal",
+        "styleType": "FILL",
+        "remote": false,
+        "description": ""
+      }
+    }
+  },
+  "styleTree": {
+    "id": "3797:2179",
+    "name": "Popup/Body",
+    "cssStyle": {
+      "display": "flex",
+      "padding": "0 20px",
+      "align-items": "flex-start",
+      "gap": "8px",
+      "align-self": "stretch"
+    },
+    "children": [
+      {
+        "id": "I3797:2179;3269:203472",
+        "name": "Scroll",
+        "cssStyle": {
+          "display": "flex",
+          "width": "4px",
+          "height": "40px",
+          "flex-direction": "column",
+          "justify-content": "center",
+          "align-items": "center",
+          "position": "absolute",
+          "right": "4px"
+        },
+        "children": [
+          {
+            "id": "I3797:2179;3269:203472;3269:203046",
+            "name": "Scroll",
+            "cssStyle": {
+              "width": "4px",
+              "height": "40px",
+              "flex-shrink": "0",
+              "border-radius": "2px",
+              "background": "var(--Label-Weakest, #D9DDE0)",
+              "position": "absolute",
+              "left": "0px",
+              "top": "0px"
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "I3797:2179;3125:163423",
+        "name": "Body Text",
+        "cssStyle": {
+          "width": "303px",
+          "color": "var(--Semantic-Label-Normal, var(--Label-Normal, #000))",
+          "font-family": "Pretendard",
+          "font-size": "14px",
+          "font-style": "normal",
+          "font-weight": "500",
+          "line-height": "20px /* 142.857% */"
+        },
+        "children": []
+      },
+      {
+        "id": "I3797:2179;3240:196103",
+        "name": "Decorate/Gradient",
+        "cssStyle": {
+          "width": "343px",
+          "height": "40px",
+          "position": "absolute"
+        },
+        "children": [
+          {
+            "id": "I3797:2179;3240:196103;3240:196077",
+            "name": "Gradient",
+            "cssStyle": {
+              "width": "343px",
+              "height": "40px",
+              "background": "linear-gradient(180deg, rgba(0, 0, 0, 0.00) 0%, rgba(0, 0, 0, 0.02) 4.7%, rgba(0, 0, 0, 0.04) 8.9%, rgba(0, 0, 0, 0.07) 12.8%, rgba(0, 0, 0, 0.10) 16.56%, rgba(0, 0, 0, 0.14) 20.37%, rgba(0, 0, 0, 0.18) 24.4%, rgba(0, 0, 0, 0.23) 28.83%, rgba(0, 0, 0, 0.29) 33.84%, rgba(0, 0, 0, 0.35) 39.6%, rgba(0, 0, 0, 0.43) 46.3%, rgba(0, 0, 0, 0.52) 54.1%, rgba(0, 0, 0, 0.62) 63.2%, rgba(0, 0, 0, 0.73) 73.76%, rgba(0, 0, 0, 0.86) 85.97%, #000 100%)",
+              "position": "absolute",
+              "left": "0px",
+              "top": "0px"
+            },
+            "children": []
+          },
+          {
+            "id": "I3797:2179;3240:196103;3240:196078",
+            "name": "Color",
+            "cssStyle": {
+              "width": "343px",
+              "height": "40px",
+              "background": "var(--Background-Normal, #FFF)",
+              "position": "absolute",
+              "left": "0px",
+              "top": "0px"
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "I3797:2179;3269:211069",
+        "name": "Decorate/Gradient",
+        "cssStyle": {
+          "width": "343px",
+          "height": "40px",
+          "position": "absolute"
+        },
+        "children": [
+          {
+            "id": "I3797:2179;3269:211069;3240:196071",
+            "name": "Gradient",
+            "cssStyle": {
+              "width": "343px",
+              "height": "40px",
+              "background": "linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.98) 4.7%, rgba(0, 0, 0, 0.96) 8.9%, rgba(0, 0, 0, 0.93) 12.8%, rgba(0, 0, 0, 0.90) 16.56%, rgba(0, 0, 0, 0.86) 20.37%, rgba(0, 0, 0, 0.82) 24.4%, rgba(0, 0, 0, 0.77) 28.83%, rgba(0, 0, 0, 0.71) 33.84%, rgba(0, 0, 0, 0.65) 39.6%, rgba(0, 0, 0, 0.57) 46.3%, rgba(0, 0, 0, 0.48) 54.1%, rgba(0, 0, 0, 0.38) 63.2%, rgba(0, 0, 0, 0.27) 73.76%, rgba(0, 0, 0, 0.14) 85.97%, rgba(0, 0, 0, 0.00) 100%)",
+              "position": "absolute",
+              "left": "0px",
+              "top": "0px"
+            },
+            "children": []
+          },
+          {
+            "id": "I3797:2179;3269:211069;3240:196072",
+            "name": "Color",
+            "cssStyle": {
+              "width": "343px",
+              "height": "40px",
+              "background": "var(--Background-Normal, #FFF)",
+              "position": "absolute",
+              "left": "0px",
+              "top": "0px"
+            },
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  "dependencies": {
+    "3125:163424": {
+      "pluginData": [],
+      "info": {
+        "document": {
+          "id": "3125:163424",
+          "name": "Property 1=Body",
+          "type": "COMPONENT",
+          "scrollBehavior": "SCROLLS",
+          "children": [
+            {
+              "id": "3269:203472",
+              "name": "Scroll",
+              "visible": false,
+              "type": "INSTANCE",
+              "scrollBehavior": "SCROLLS",
+              "componentId": "3269:203471",
+              "componentProperties": {
+                "Property 1": {
+                  "value": "Default",
+                  "type": "VARIANT",
+                  "boundVariables": {}
+                }
+              },
+              "overrides": [
+                {
+                  "id": "3269:203472",
+                  "overriddenFields": ["layoutPositioning"]
+                }
+              ],
+              "children": [
+                {
+                  "id": "I3269:203472;3269:203046",
+                  "name": "Scroll",
+                  "type": "RECTANGLE",
+                  "scrollBehavior": "SCROLLS",
+                  "boundVariables": {
+                    "fills": [
+                      {
+                        "type": "VARIABLE_ALIAS",
+                        "id": "VariableID:202:45385"
+                      }
+                    ]
+                  },
+                  "blendMode": "PASS_THROUGH",
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0.8509804010391235,
+                        "g": 0.8666666746139526,
+                        "b": 0.8784313797950745,
+                        "a": 1
+                      },
+                      "boundVariables": {
+                        "color": {
+                          "type": "VARIABLE_ALIAS",
+                          "id": "VariableID:202:45385"
+                        }
+                      }
+                    }
+                  ],
+                  "strokes": [],
+                  "strokeWeight": 1,
+                  "strokeAlign": "INSIDE",
+                  "styles": {
+                    "fill": "910:154395"
+                  },
+                  "cornerRadius": 2,
+                  "cornerSmoothing": 0,
+                  "absoluteBoundingBox": {
+                    "x": 2314,
+                    "y": 1493,
+                    "width": 4,
+                    "height": 40
+                  },
+                  "absoluteRenderBounds": null,
+                  "constraints": {
+                    "vertical": "SCALE",
+                    "horizontal": "SCALE"
+                  },
+                  "effects": [],
+                  "interactions": []
+                }
+              ],
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": false,
+              "background": [],
+              "fills": [],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "backgroundColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0
+              },
+              "absoluteBoundingBox": {
+                "x": 2314,
+                "y": 1493,
+                "width": 4,
+                "height": 40
+              },
+              "absoluteRenderBounds": null,
+              "constraints": {
+                "vertical": "TOP",
+                "horizontal": "RIGHT"
+              },
+              "layoutAlign": "INHERIT",
+              "layoutGrow": 0,
+              "layoutPositioning": "ABSOLUTE",
+              "layoutSizingHorizontal": "FIXED",
+              "layoutSizingVertical": "FIXED",
+              "effects": [],
+              "interactions": []
+            },
+            {
+              "id": "3125:163423",
+              "name": "Body Text",
+              "type": "TEXT",
+              "scrollBehavior": "SCROLLS",
+              "boundVariables": {
+                "fills": [
+                  {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:80:2772"
+                  }
+                ]
+              },
+              "blendMode": "PASS_THROUGH",
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 1
+                  },
+                  "boundVariables": {
+                    "color": {
+                      "type": "VARIABLE_ALIAS",
+                      "id": "VariableID:80:2772"
+                    }
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 0,
+              "strokeAlign": "CENTER",
+              "styles": {
+                "fill": "910:154390",
+                "text": "997:108665"
+              },
+              "absoluteBoundingBox": {
+                "x": 1999,
+                "y": 1493,
+                "width": 303,
+                "height": 40
+              },
+              "absoluteRenderBounds": {
+                "x": 1999.888671875,
+                "y": 1497.63671875,
+                "width": 258.9453125,
+                "height": 33.302734375
+              },
+              "constraints": {
+                "vertical": "TOP",
+                "horizontal": "LEFT"
+              },
+              "layoutAlign": "INHERIT",
+              "layoutGrow": 0,
+              "layoutSizingHorizontal": "FIXED",
+              "layoutSizingVertical": "HUG",
+              "characters": "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
+              "characterStyleOverrides": [],
+              "styleOverrideTable": {},
+              "lineTypes": ["NONE"],
+              "lineIndentations": [0],
+              "style": {
+                "fontFamily": "Pretendard",
+                "fontPostScriptName": "Pretendard-Medium",
+                "fontStyle": "Medium",
+                "fontWeight": 500,
+                "textAutoResize": "HEIGHT",
+                "fontSize": 14,
+                "textAlignHorizontal": "LEFT",
+                "textAlignVertical": "TOP",
+                "letterSpacing": 0,
+                "lineHeightPx": 20,
+                "lineHeightPercent": 119.71007537841797,
+                "lineHeightPercentFontSize": 142.85714721679688,
+                "lineHeightUnit": "PIXELS"
+              },
+              "layoutVersion": 4,
+              "effects": [],
+              "interactions": []
+            },
+            {
+              "id": "3240:196103",
+              "name": "Decorate/Gradient",
+              "visible": false,
+              "type": "INSTANCE",
+              "scrollBehavior": "SCROLLS",
+              "componentId": "3240:196076",
+              "componentProperties": {
+                "Direction": {
+                  "value": "Bottom",
+                  "type": "VARIANT",
+                  "boundVariables": {}
+                }
+              },
+              "overrides": [
+                {
+                  "id": "3240:196103",
+                  "overriddenFields": ["height", "layoutPositioning", "width"]
+                }
+              ],
+              "children": [
+                {
+                  "id": "I3240:196103;3240:196077",
+                  "name": "Gradient",
+                  "type": "RECTANGLE",
+                  "scrollBehavior": "SCROLLS",
+                  "blendMode": "PASS_THROUGH",
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "GRADIENT_LINEAR",
+                      "gradientHandlePositions": [
+                        {
+                          "x": 0.5,
+                          "y": -3.0616171314629196e-17
+                        },
+                        {
+                          "x": 0.5,
+                          "y": 0.9999999999999999
+                        },
+                        {
+                          "x": 0,
+                          "y": 0
+                        }
+                      ],
+                      "gradientStops": [
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0
+                          },
+                          "position": 0
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.02082962915301323
+                          },
+                          "position": 0.04696296155452728
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.043970368802547455
+                          },
+                          "position": 0.08903703838586807
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.07039999961853027
+                          },
+                          "position": 0.12800000607967377
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.10109629482030869
+                          },
+                          "position": 0.16562962532043457
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.13703703880310059
+                          },
+                          "position": 0.20370370149612427
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.17919999361038208
+                          },
+                          "position": 0.24400000274181366
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.22856296598911285
+                          },
+                          "position": 0.28829628229141235
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.2861036956310272
+                          },
+                          "position": 0.3383703827857971
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.35280001163482666
+                          },
+                          "position": 0.3959999978542328
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.4296296238899231
+                          },
+                          "position": 0.46296295523643494
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.5175703763961792
+                          },
+                          "position": 0.5410370230674744
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.6176000237464905
+                          },
+                          "position": 0.6320000290870667
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.7306963205337524
+                          },
+                          "position": 0.7376296520233154
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.8578370213508606
+                          },
+                          "position": 0.8597037196159363
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 1
+                          },
+                          "position": 1
+                        }
+                      ]
+                    }
+                  ],
+                  "strokes": [],
+                  "strokeWeight": 1,
+                  "strokeAlign": "INSIDE",
+                  "absoluteBoundingBox": {
+                    "x": 1979,
+                    "y": 1493,
+                    "width": 343,
+                    "height": 40
+                  },
+                  "absoluteRenderBounds": null,
+                  "constraints": {
+                    "vertical": "SCALE",
+                    "horizontal": "SCALE"
+                  },
+                  "effects": [],
+                  "isMask": true,
+                  "maskType": "ALPHA",
+                  "interactions": []
+                },
+                {
+                  "id": "I3240:196103;3240:196078",
+                  "name": "Color",
+                  "type": "RECTANGLE",
+                  "scrollBehavior": "SCROLLS",
+                  "boundVariables": {
+                    "fills": [
+                      {
+                        "type": "VARIABLE_ALIAS",
+                        "id": "VariableID:202:45391"
+                      }
+                    ]
+                  },
+                  "blendMode": "PASS_THROUGH",
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      },
+                      "boundVariables": {
+                        "color": {
+                          "type": "VARIABLE_ALIAS",
+                          "id": "VariableID:202:45391"
+                        }
+                      }
+                    }
+                  ],
+                  "strokes": [],
+                  "strokeWeight": 1,
+                  "strokeAlign": "INSIDE",
+                  "styles": {
+                    "fill": "911:154440"
+                  },
+                  "absoluteBoundingBox": {
+                    "x": 1979,
+                    "y": 1493,
+                    "width": 343,
+                    "height": 40
+                  },
+                  "absoluteRenderBounds": null,
+                  "constraints": {
+                    "vertical": "SCALE",
+                    "horizontal": "SCALE"
+                  },
+                  "effects": [],
+                  "interactions": []
+                }
+              ],
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": false,
+              "background": [],
+              "fills": [],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "backgroundColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0
+              },
+              "absoluteBoundingBox": {
+                "x": 1979,
+                "y": 1493,
+                "width": 343,
+                "height": 40
+              },
+              "absoluteRenderBounds": null,
+              "constraints": {
+                "vertical": "BOTTOM",
+                "horizontal": "CENTER"
+              },
+              "layoutAlign": "INHERIT",
+              "layoutGrow": 0,
+              "layoutPositioning": "ABSOLUTE",
+              "layoutSizingHorizontal": "FIXED",
+              "layoutSizingVertical": "FIXED",
+              "effects": [],
+              "interactions": []
+            },
+            {
+              "id": "3269:211069",
+              "name": "Decorate/Gradient",
+              "visible": false,
+              "type": "INSTANCE",
+              "scrollBehavior": "SCROLLS",
+              "componentId": "3240:196070",
+              "componentProperties": {
+                "Direction": {
+                  "value": "Top",
+                  "type": "VARIANT",
+                  "boundVariables": {}
+                }
+              },
+              "overrides": [
+                {
+                  "id": "3269:211069",
+                  "overriddenFields": ["height", "layoutPositioning", "width"]
+                }
+              ],
+              "children": [
+                {
+                  "id": "I3269:211069;3240:196071",
+                  "name": "Gradient",
+                  "type": "RECTANGLE",
+                  "locked": true,
+                  "scrollBehavior": "SCROLLS",
+                  "blendMode": "PASS_THROUGH",
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "GRADIENT_LINEAR",
+                      "gradientHandlePositions": [
+                        {
+                          "x": 0.5,
+                          "y": -3.0616171314629196e-17
+                        },
+                        {
+                          "x": 0.5,
+                          "y": 0.9999999999999999
+                        },
+                        {
+                          "x": 0,
+                          "y": 0
+                        }
+                      ],
+                      "gradientStops": [
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 1
+                          },
+                          "position": 0
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.9791703820228577
+                          },
+                          "position": 0.04696296155452728
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.9560296535491943
+                          },
+                          "position": 0.08903703838586807
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.9296000003814697
+                          },
+                          "position": 0.12800000607967377
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.8989037275314331
+                          },
+                          "position": 0.16562962532043457
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.8629629611968994
+                          },
+                          "position": 0.20370370149612427
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.8208000063896179
+                          },
+                          "position": 0.24400000274181366
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.7714370489120483
+                          },
+                          "position": 0.28829628229141235
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.7138962745666504
+                          },
+                          "position": 0.3383703827857971
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.6471999883651733
+                          },
+                          "position": 0.3959999978542328
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.5703703761100769
+                          },
+                          "position": 0.46296295523643494
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.4824296236038208
+                          },
+                          "position": 0.5410370230674744
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.3824000060558319
+                          },
+                          "position": 0.6320000290870667
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.26930370926856995
+                          },
+                          "position": 0.7376296520233154
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0.1421629637479782
+                          },
+                          "position": 0.8597037196159363
+                        },
+                        {
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 0
+                          },
+                          "position": 1
+                        }
+                      ]
+                    }
+                  ],
+                  "strokes": [],
+                  "strokeWeight": 1,
+                  "strokeAlign": "INSIDE",
+                  "absoluteBoundingBox": {
+                    "x": 1979,
+                    "y": 1493,
+                    "width": 343,
+                    "height": 40
+                  },
+                  "absoluteRenderBounds": null,
+                  "constraints": {
+                    "vertical": "SCALE",
+                    "horizontal": "SCALE"
+                  },
+                  "effects": [],
+                  "isMask": true,
+                  "maskType": "ALPHA",
+                  "interactions": []
+                },
+                {
+                  "id": "I3269:211069;3240:196072",
+                  "name": "Color",
+                  "type": "RECTANGLE",
+                  "scrollBehavior": "SCROLLS",
+                  "boundVariables": {
+                    "fills": [
+                      {
+                        "type": "VARIABLE_ALIAS",
+                        "id": "VariableID:202:45391"
+                      }
+                    ]
+                  },
+                  "blendMode": "PASS_THROUGH",
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      },
+                      "boundVariables": {
+                        "color": {
+                          "type": "VARIABLE_ALIAS",
+                          "id": "VariableID:202:45391"
+                        }
+                      }
+                    }
+                  ],
+                  "strokes": [],
+                  "strokeWeight": 1,
+                  "strokeAlign": "INSIDE",
+                  "styles": {
+                    "fill": "911:154440"
+                  },
+                  "absoluteBoundingBox": {
+                    "x": 1979,
+                    "y": 1493,
+                    "width": 343,
+                    "height": 40
+                  },
+                  "absoluteRenderBounds": null,
+                  "constraints": {
+                    "vertical": "SCALE",
+                    "horizontal": "SCALE"
+                  },
+                  "effects": [],
+                  "interactions": []
+                }
+              ],
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": false,
+              "background": [],
+              "fills": [],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "backgroundColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0
+              },
+              "absoluteBoundingBox": {
+                "x": 1979,
+                "y": 1493,
+                "width": 343,
+                "height": 40
+              },
+              "absoluteRenderBounds": null,
+              "constraints": {
+                "vertical": "TOP",
+                "horizontal": "CENTER"
+              },
+              "layoutAlign": "INHERIT",
+              "layoutGrow": 0,
+              "layoutPositioning": "ABSOLUTE",
+              "layoutSizingHorizontal": "FIXED",
+              "layoutSizingVertical": "FIXED",
+              "effects": [],
+              "interactions": []
+            }
+          ],
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": true,
+          "background": [],
+          "fills": [],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "backgroundColor": {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          "layoutMode": "HORIZONTAL",
+          "primaryAxisSizingMode": "FIXED",
+          "paddingLeft": 20,
+          "paddingRight": 20,
+          "itemSpacing": 8,
+          "layoutWrap": "NO_WRAP",
+          "absoluteBoundingBox": {
+            "x": 1979,
+            "y": 1493,
+            "width": 343,
+            "height": 40
+          },
+          "absoluteRenderBounds": {
+            "x": 1979,
+            "y": 1493,
+            "width": 343,
+            "height": 40
+          },
+          "constraints": {
+            "vertical": "TOP",
+            "horizontal": "LEFT"
+          },
+          "layoutSizingHorizontal": "FIXED",
+          "layoutSizingVertical": "HUG",
+          "effects": [],
+          "interactions": []
+        },
+        "components": {
+          "3125:163424": {
+            "key": "ce7d6b2c3473d776561bbf05e256e35d67595c3f",
+            "name": "Property 1=Body",
+            "description": "",
+            "remote": false,
+            "componentSetId": "6018:109204",
+            "documentationLinks": []
+          },
+          "3269:203471": {
+            "key": "83bd3a84f848fcbbd21ee45b76f9df6ea09d5042",
+            "name": "Property 1=Default",
+            "description": "",
+            "remote": false,
+            "componentSetId": "3661:82141",
+            "documentationLinks": []
+          },
+          "3240:196076": {
+            "key": "f76c21988d871dc2a1baeae5c8c128cf3b7b2dbd",
+            "name": "Direction=Bottom",
+            "description": "",
+            "remote": false,
+            "componentSetId": "3240:196069",
+            "documentationLinks": []
+          },
+          "3240:196070": {
+            "key": "564379e803b4d6769df3aa02a2fd5f5034a3ae8c",
+            "name": "Direction=Top",
+            "description": "",
+            "remote": false,
+            "componentSetId": "3240:196069",
+            "documentationLinks": []
+          }
+        },
+        "componentSets": {
+          "6018:109204": {
+            "key": "9ae55db20d342ea314c3d45a7570a3b64bc010bb",
+            "name": "Popup/Body",
+            "description": "",
+            "remote": false
+          },
+          "3661:82141": {
+            "key": "03b12777e2af731bcc6349b92281cb58fd1d67a1",
+            "name": "Scroll",
+            "description": "스크롤 정도를 나타낼 때 사용합니다.\n\n\n키워드: Scroll, 스크롤",
+            "remote": false
+          },
+          "3240:196069": {
+            "key": "15f986ad0561d82220ce819dcd14c5c772ac747c",
+            "name": "Decorate/Gradient",
+            "description": "아직 끝나지 않은 콘텐츠 상태를 매끄럽게 표현합니다.\n기본적으로 White&Black 을 사용하며 명도가 강하다고 판단될 경우 Opacity를 적용할 수 있습니다.\n\n\n키워드 : 그라데이션, 그라디언트, 사라지는, Gradient\n\n\n# 개발 코멘트\nmask-image 및 gradient-mask으로 구현합니다.\nGradient Ease: 0.25, 0.1, 0.25, 1",
+            "remote": false
+          }
+        },
+        "schemaVersion": 0,
+        "styles": {
+          "910:154395": {
+            "key": "2bc3896f7c979a97694470736506b651559c56bf",
+            "name": "Semantic/Label/Weakest",
+            "styleType": "FILL",
+            "remote": false,
+            "description": ""
+          },
+          "910:154390": {
+            "key": "e1e5ee0508caf0e355d22e582a40d415e20ff290",
+            "name": "Semantic/Label/Normal",
+            "styleType": "FILL",
+            "remote": false,
+            "description": ""
+          },
+          "997:108665": {
+            "key": "b9d7b3509f3172757989f98fae31e2269674011d",
+            "name": "Paragraph 3/Medium",
+            "styleType": "TEXT",
+            "remote": false,
+            "description": ""
+          },
+          "911:154440": {
+            "key": "7f26fa025f2957582edeaa90cc8c4d766a44b3a5",
+            "name": "Semantic/Background/Normal",
+            "styleType": "FILL",
+            "remote": false,
+            "description": ""
+          }
+        }
+      },
+      "styleTree": {
+        "id": "3125:163424",
+        "name": "Property 1=Body",
+        "cssStyle": {
+          "display": "flex",
+          "width": "343px",
+          "padding": "0 20px",
+          "align-items": "flex-start",
+          "gap": "8px"
+        },
+        "children": [
+          {
+            "id": "3269:203472",
+            "name": "Scroll",
+            "cssStyle": {
+              "display": "flex",
+              "width": "4px",
+              "height": "40px",
+              "flex-direction": "column",
+              "justify-content": "center",
+              "align-items": "center",
+              "position": "absolute",
+              "right": "4px"
+            },
+            "children": [
+              {
+                "id": "I3269:203472;3269:203046",
+                "name": "Scroll",
+                "cssStyle": {
+                  "width": "4px",
+                  "height": "40px",
+                  "flex-shrink": "0",
+                  "border-radius": "2px",
+                  "background": "var(--Label-Weakest, #D9DDE0)",
+                  "position": "absolute",
+                  "left": "0px",
+                  "top": "0px"
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "3125:163423",
+            "name": "Body Text",
+            "cssStyle": {
+              "width": "303px",
+              "flex-shrink": "0",
+              "color": "var(--Semantic-Label-Normal, var(--Label-Normal, #000))",
+              "font-family": "Pretendard",
+              "font-size": "14px",
+              "font-style": "normal",
+              "font-weight": "500",
+              "line-height": "20px /* 142.857% */"
+            },
+            "children": []
+          },
+          {
+            "id": "3240:196103",
+            "name": "Decorate/Gradient",
+            "cssStyle": {
+              "width": "343px",
+              "height": "40px",
+              "position": "absolute"
+            },
+            "children": [
+              {
+                "id": "I3240:196103;3240:196077",
+                "name": "Gradient",
+                "cssStyle": {
+                  "width": "343px",
+                  "height": "40px",
+                  "background": "linear-gradient(180deg, rgba(0, 0, 0, 0.00) 0%, rgba(0, 0, 0, 0.02) 4.7%, rgba(0, 0, 0, 0.04) 8.9%, rgba(0, 0, 0, 0.07) 12.8%, rgba(0, 0, 0, 0.10) 16.56%, rgba(0, 0, 0, 0.14) 20.37%, rgba(0, 0, 0, 0.18) 24.4%, rgba(0, 0, 0, 0.23) 28.83%, rgba(0, 0, 0, 0.29) 33.84%, rgba(0, 0, 0, 0.35) 39.6%, rgba(0, 0, 0, 0.43) 46.3%, rgba(0, 0, 0, 0.52) 54.1%, rgba(0, 0, 0, 0.62) 63.2%, rgba(0, 0, 0, 0.73) 73.76%, rgba(0, 0, 0, 0.86) 85.97%, #000 100%)",
+                  "position": "absolute",
+                  "left": "0px",
+                  "top": "0px"
+                },
+                "children": []
+              },
+              {
+                "id": "I3240:196103;3240:196078",
+                "name": "Color",
+                "cssStyle": {
+                  "width": "343px",
+                  "height": "40px",
+                  "background": "var(--Background-Normal, #FFF)",
+                  "position": "absolute",
+                  "left": "0px",
+                  "top": "0px"
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "3269:211069",
+            "name": "Decorate/Gradient",
+            "cssStyle": {
+              "width": "343px",
+              "height": "40px",
+              "position": "absolute"
+            },
+            "children": [
+              {
+                "id": "I3269:211069;3240:196071",
+                "name": "Gradient",
+                "cssStyle": {
+                  "width": "343px",
+                  "height": "40px",
+                  "background": "linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.98) 4.7%, rgba(0, 0, 0, 0.96) 8.9%, rgba(0, 0, 0, 0.93) 12.8%, rgba(0, 0, 0, 0.90) 16.56%, rgba(0, 0, 0, 0.86) 20.37%, rgba(0, 0, 0, 0.82) 24.4%, rgba(0, 0, 0, 0.77) 28.83%, rgba(0, 0, 0, 0.71) 33.84%, rgba(0, 0, 0, 0.65) 39.6%, rgba(0, 0, 0, 0.57) 46.3%, rgba(0, 0, 0, 0.48) 54.1%, rgba(0, 0, 0, 0.38) 63.2%, rgba(0, 0, 0, 0.27) 73.76%, rgba(0, 0, 0, 0.14) 85.97%, rgba(0, 0, 0, 0.00) 100%)",
+                  "position": "absolute",
+                  "left": "0px",
+                  "top": "0px"
+                },
+                "children": []
+              },
+              {
+                "id": "I3269:211069;3240:196072",
+                "name": "Color",
+                "cssStyle": {
+                  "width": "343px",
+                  "height": "40px",
+                  "background": "var(--Background-Normal, #FFF)",
+                  "position": "absolute",
+                  "left": "0px",
+                  "top": "0px"
+                },
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "3269:203471": {
+      "pluginData": [],
+      "info": {
+        "document": {
+          "id": "3269:203471",
+          "name": "Property 1=Default",
+          "type": "COMPONENT",
+          "scrollBehavior": "SCROLLS",
+          "children": [
+            {
+              "id": "3269:203046",
+              "name": "Scroll",
+              "type": "RECTANGLE",
+              "scrollBehavior": "SCROLLS",
+              "boundVariables": {
+                "fills": [
+                  {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:202:45385"
+                  }
+                ]
+              },
+              "blendMode": "PASS_THROUGH",
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 0.8509804010391235,
+                    "g": 0.8666666746139526,
+                    "b": 0.8784313797950745,
+                    "a": 1
+                  },
+                  "boundVariables": {
+                    "color": {
+                      "type": "VARIABLE_ALIAS",
+                      "id": "VariableID:202:45385"
+                    }
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "styles": {
+                "fill": "910:154395"
+              },
+              "cornerRadius": 2,
+              "cornerSmoothing": 0,
+              "absoluteBoundingBox": {
+                "x": 744,
+                "y": 342,
+                "width": 4,
+                "height": 40
+              },
+              "absoluteRenderBounds": {
+                "x": 744,
+                "y": 342,
+                "width": 4,
+                "height": 40
+              },
+              "constraints": {
+                "vertical": "SCALE",
+                "horizontal": "SCALE"
+              },
+              "effects": [],
+              "interactions": []
+            }
+          ],
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": false,
+          "background": [],
+          "fills": [],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "backgroundColor": {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          "absoluteBoundingBox": {
+            "x": 744,
+            "y": 342,
+            "width": 4,
+            "height": 40
+          },
+          "absoluteRenderBounds": {
+            "x": 744,
+            "y": 342,
+            "width": 4,
+            "height": 40
+          },
+          "constraints": {
+            "vertical": "TOP",
+            "horizontal": "LEFT"
+          },
+          "effects": [],
+          "interactions": []
+        },
+        "components": {
+          "3269:203471": {
+            "key": "83bd3a84f848fcbbd21ee45b76f9df6ea09d5042",
+            "name": "Property 1=Default",
+            "description": "",
+            "remote": false,
+            "componentSetId": "3661:82141",
+            "documentationLinks": []
+          }
+        },
+        "componentSets": {
+          "3661:82141": {
+            "key": "03b12777e2af731bcc6349b92281cb58fd1d67a1",
+            "name": "Scroll",
+            "description": "스크롤 정도를 나타낼 때 사용합니다.\n\n\n키워드: Scroll, 스크롤",
+            "remote": false
+          }
+        },
+        "schemaVersion": 0,
+        "styles": {
+          "910:154395": {
+            "key": "2bc3896f7c979a97694470736506b651559c56bf",
+            "name": "Semantic/Label/Weakest",
+            "styleType": "FILL",
+            "remote": false,
+            "description": ""
+          }
+        }
+      },
+      "styleTree": {
+        "id": "3269:203471",
+        "name": "Property 1=Default",
+        "cssStyle": {
+          "width": "4px",
+          "height": "40px",
+          "position": "relative"
+        },
+        "children": [
+          {
+            "id": "3269:203046",
+            "name": "Scroll",
+            "cssStyle": {
+              "width": "4px",
+              "height": "40px",
+              "border-radius": "2px",
+              "background": "var(--Label-Weakest, #D9DDE0)",
+              "position": "absolute",
+              "left": "0px",
+              "top": "0px"
+            },
+            "children": []
+          }
+        ]
+      }
+    },
+    "3240:196076": {
+      "pluginData": [],
+      "info": {
+        "document": {
+          "id": "3240:196076",
+          "name": "Direction=Bottom",
+          "type": "COMPONENT",
+          "scrollBehavior": "SCROLLS",
+          "children": [
+            {
+              "id": "3240:196077",
+              "name": "Gradient",
+              "type": "RECTANGLE",
+              "scrollBehavior": "SCROLLS",
+              "blendMode": "PASS_THROUGH",
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "GRADIENT_LINEAR",
+                  "gradientHandlePositions": [
+                    {
+                      "x": 0.5,
+                      "y": -3.0616171314629196e-17
+                    },
+                    {
+                      "x": 0.5,
+                      "y": 0.9999999999999999
+                    },
+                    {
+                      "x": 0,
+                      "y": 0
+                    }
+                  ],
+                  "gradientStops": [
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0
+                      },
+                      "position": 0
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.02082962915301323
+                      },
+                      "position": 0.04696296155452728
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.043970368802547455
+                      },
+                      "position": 0.08903703838586807
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.07039999961853027
+                      },
+                      "position": 0.12800000607967377
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.10109629482030869
+                      },
+                      "position": 0.16562962532043457
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.13703703880310059
+                      },
+                      "position": 0.20370370149612427
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.17919999361038208
+                      },
+                      "position": 0.24400000274181366
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.22856296598911285
+                      },
+                      "position": 0.28829628229141235
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.2861036956310272
+                      },
+                      "position": 0.3383703827857971
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.35280001163482666
+                      },
+                      "position": 0.3959999978542328
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.4296296238899231
+                      },
+                      "position": 0.46296295523643494
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.5175703763961792
+                      },
+                      "position": 0.5410370230674744
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.6176000237464905
+                      },
+                      "position": 0.6320000290870667
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.7306963205337524
+                      },
+                      "position": 0.7376296520233154
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.8578370213508606
+                      },
+                      "position": 0.8597037196159363
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      },
+                      "position": 1
+                    }
+                  ]
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "absoluteBoundingBox": {
+                "x": -20436,
+                "y": 650,
+                "width": 80,
+                "height": 80
+              },
+              "absoluteRenderBounds": null,
+              "constraints": {
+                "vertical": "SCALE",
+                "horizontal": "SCALE"
+              },
+              "effects": [],
+              "isMask": true,
+              "maskType": "ALPHA",
+              "interactions": []
+            },
+            {
+              "id": "3240:196078",
+              "name": "Color",
+              "type": "RECTANGLE",
+              "scrollBehavior": "SCROLLS",
+              "boundVariables": {
+                "fills": [
+                  {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:202:45391"
+                  }
+                ]
+              },
+              "blendMode": "PASS_THROUGH",
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  },
+                  "boundVariables": {
+                    "color": {
+                      "type": "VARIABLE_ALIAS",
+                      "id": "VariableID:202:45391"
+                    }
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "styles": {
+                "fill": "911:154440"
+              },
+              "absoluteBoundingBox": {
+                "x": -20436,
+                "y": 650,
+                "width": 80,
+                "height": 80
+              },
+              "absoluteRenderBounds": {
+                "x": -20436,
+                "y": 650,
+                "width": 80,
+                "height": 80
+              },
+              "constraints": {
+                "vertical": "SCALE",
+                "horizontal": "SCALE"
+              },
+              "effects": [],
+              "interactions": []
+            }
+          ],
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": false,
+          "background": [],
+          "fills": [],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "backgroundColor": {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          "absoluteBoundingBox": {
+            "x": -20436,
+            "y": 650,
+            "width": 80,
+            "height": 80
+          },
+          "absoluteRenderBounds": {
+            "x": -20436,
+            "y": 650,
+            "width": 80,
+            "height": 80
+          },
+          "constraints": {
+            "vertical": "TOP",
+            "horizontal": "LEFT"
+          },
+          "layoutAlign": "INHERIT",
+          "layoutGrow": 0,
+          "layoutSizingHorizontal": "FIXED",
+          "layoutSizingVertical": "FIXED",
+          "effects": [],
+          "interactions": []
+        },
+        "components": {
+          "3240:196076": {
+            "key": "f76c21988d871dc2a1baeae5c8c128cf3b7b2dbd",
+            "name": "Direction=Bottom",
+            "description": "",
+            "remote": false,
+            "componentSetId": "3240:196069",
+            "documentationLinks": []
+          }
+        },
+        "componentSets": {
+          "3240:196069": {
+            "key": "15f986ad0561d82220ce819dcd14c5c772ac747c",
+            "name": "Decorate/Gradient",
+            "description": "아직 끝나지 않은 콘텐츠 상태를 매끄럽게 표현합니다.\n기본적으로 White&Black 을 사용하며 명도가 강하다고 판단될 경우 Opacity를 적용할 수 있습니다.\n\n\n키워드 : 그라데이션, 그라디언트, 사라지는, Gradient\n\n\n# 개발 코멘트\nmask-image 및 gradient-mask으로 구현합니다.\nGradient Ease: 0.25, 0.1, 0.25, 1",
+            "remote": false
+          }
+        },
+        "schemaVersion": 0,
+        "styles": {
+          "911:154440": {
+            "key": "7f26fa025f2957582edeaa90cc8c4d766a44b3a5",
+            "name": "Semantic/Background/Normal",
+            "styleType": "FILL",
+            "remote": false,
+            "description": ""
+          }
+        }
+      },
+      "styleTree": {
+        "id": "3240:196076",
+        "name": "Direction=Bottom",
+        "cssStyle": {
+          "width": "80px",
+          "height": "80px",
+          "position": "relative"
+        },
+        "children": [
+          {
+            "id": "3240:196077",
+            "name": "Gradient",
+            "cssStyle": {
+              "width": "80px",
+              "height": "80px",
+              "background": "linear-gradient(180deg, rgba(0, 0, 0, 0.00) 0%, rgba(0, 0, 0, 0.02) 4.7%, rgba(0, 0, 0, 0.04) 8.9%, rgba(0, 0, 0, 0.07) 12.8%, rgba(0, 0, 0, 0.10) 16.56%, rgba(0, 0, 0, 0.14) 20.37%, rgba(0, 0, 0, 0.18) 24.4%, rgba(0, 0, 0, 0.23) 28.83%, rgba(0, 0, 0, 0.29) 33.84%, rgba(0, 0, 0, 0.35) 39.6%, rgba(0, 0, 0, 0.43) 46.3%, rgba(0, 0, 0, 0.52) 54.1%, rgba(0, 0, 0, 0.62) 63.2%, rgba(0, 0, 0, 0.73) 73.76%, rgba(0, 0, 0, 0.86) 85.97%, #000 100%)",
+              "position": "absolute",
+              "left": "0px",
+              "top": "0px"
+            },
+            "children": []
+          },
+          {
+            "id": "3240:196078",
+            "name": "Color",
+            "cssStyle": {
+              "width": "80px",
+              "height": "80px",
+              "background": "var(--Background-Normal, #FFF)",
+              "position": "absolute",
+              "left": "0px",
+              "top": "0px"
+            },
+            "children": []
+          }
+        ]
+      }
+    },
+    "3240:196070": {
+      "pluginData": [],
+      "info": {
+        "document": {
+          "id": "3240:196070",
+          "name": "Direction=Top",
+          "type": "COMPONENT",
+          "scrollBehavior": "SCROLLS",
+          "children": [
+            {
+              "id": "3240:196071",
+              "name": "Gradient",
+              "type": "RECTANGLE",
+              "locked": true,
+              "scrollBehavior": "SCROLLS",
+              "blendMode": "PASS_THROUGH",
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "GRADIENT_LINEAR",
+                  "gradientHandlePositions": [
+                    {
+                      "x": 0.5,
+                      "y": -3.0616171314629196e-17
+                    },
+                    {
+                      "x": 0.5,
+                      "y": 0.9999999999999999
+                    },
+                    {
+                      "x": 0,
+                      "y": 0
+                    }
+                  ],
+                  "gradientStops": [
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      },
+                      "position": 0
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.9791703820228577
+                      },
+                      "position": 0.04696296155452728
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.9560296535491943
+                      },
+                      "position": 0.08903703838586807
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.9296000003814697
+                      },
+                      "position": 0.12800000607967377
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.8989037275314331
+                      },
+                      "position": 0.16562962532043457
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.8629629611968994
+                      },
+                      "position": 0.20370370149612427
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.8208000063896179
+                      },
+                      "position": 0.24400000274181366
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.7714370489120483
+                      },
+                      "position": 0.28829628229141235
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.7138962745666504
+                      },
+                      "position": 0.3383703827857971
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.6471999883651733
+                      },
+                      "position": 0.3959999978542328
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.5703703761100769
+                      },
+                      "position": 0.46296295523643494
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.4824296236038208
+                      },
+                      "position": 0.5410370230674744
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.3824000060558319
+                      },
+                      "position": 0.6320000290870667
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.26930370926856995
+                      },
+                      "position": 0.7376296520233154
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0.1421629637479782
+                      },
+                      "position": 0.8597037196159363
+                    },
+                    {
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 0
+                      },
+                      "position": 1
+                    }
+                  ]
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "absoluteBoundingBox": {
+                "x": -20436,
+                "y": 458,
+                "width": 80,
+                "height": 80
+              },
+              "absoluteRenderBounds": null,
+              "constraints": {
+                "vertical": "SCALE",
+                "horizontal": "SCALE"
+              },
+              "effects": [],
+              "isMask": true,
+              "maskType": "ALPHA",
+              "interactions": []
+            },
+            {
+              "id": "3240:196072",
+              "name": "Color",
+              "type": "RECTANGLE",
+              "scrollBehavior": "SCROLLS",
+              "boundVariables": {
+                "fills": [
+                  {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:202:45391"
+                  }
+                ]
+              },
+              "blendMode": "PASS_THROUGH",
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  },
+                  "boundVariables": {
+                    "color": {
+                      "type": "VARIABLE_ALIAS",
+                      "id": "VariableID:202:45391"
+                    }
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "styles": {
+                "fill": "911:154440"
+              },
+              "absoluteBoundingBox": {
+                "x": -20436,
+                "y": 458,
+                "width": 80,
+                "height": 80
+              },
+              "absoluteRenderBounds": {
+                "x": -20436,
+                "y": 458,
+                "width": 80,
+                "height": 80
+              },
+              "constraints": {
+                "vertical": "SCALE",
+                "horizontal": "SCALE"
+              },
+              "effects": [],
+              "interactions": []
+            }
+          ],
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": false,
+          "background": [],
+          "fills": [],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "backgroundColor": {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          "absoluteBoundingBox": {
+            "x": -20436,
+            "y": 458,
+            "width": 80,
+            "height": 80
+          },
+          "absoluteRenderBounds": {
+            "x": -20436,
+            "y": 458,
+            "width": 80,
+            "height": 80
+          },
+          "constraints": {
+            "vertical": "TOP",
+            "horizontal": "LEFT"
+          },
+          "layoutAlign": "INHERIT",
+          "layoutGrow": 0,
+          "layoutSizingHorizontal": "FIXED",
+          "layoutSizingVertical": "FIXED",
+          "effects": [],
+          "interactions": []
+        },
+        "components": {
+          "3240:196070": {
+            "key": "564379e803b4d6769df3aa02a2fd5f5034a3ae8c",
+            "name": "Direction=Top",
+            "description": "",
+            "remote": false,
+            "componentSetId": "3240:196069",
+            "documentationLinks": []
+          }
+        },
+        "componentSets": {
+          "3240:196069": {
+            "key": "15f986ad0561d82220ce819dcd14c5c772ac747c",
+            "name": "Decorate/Gradient",
+            "description": "아직 끝나지 않은 콘텐츠 상태를 매끄럽게 표현합니다.\n기본적으로 White&Black 을 사용하며 명도가 강하다고 판단될 경우 Opacity를 적용할 수 있습니다.\n\n\n키워드 : 그라데이션, 그라디언트, 사라지는, Gradient\n\n\n# 개발 코멘트\nmask-image 및 gradient-mask으로 구현합니다.\nGradient Ease: 0.25, 0.1, 0.25, 1",
+            "remote": false
+          }
+        },
+        "schemaVersion": 0,
+        "styles": {
+          "911:154440": {
+            "key": "7f26fa025f2957582edeaa90cc8c4d766a44b3a5",
+            "name": "Semantic/Background/Normal",
+            "styleType": "FILL",
+            "remote": false,
+            "description": ""
+          }
+        }
+      },
+      "styleTree": {
+        "id": "3240:196070",
+        "name": "Direction=Top",
+        "cssStyle": {
+          "width": "80px",
+          "height": "80px"
+        },
+        "children": [
+          {
+            "id": "3240:196071",
+            "name": "Gradient",
+            "cssStyle": {
+              "width": "80px",
+              "height": "80px",
+              "background": "linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.98) 4.7%, rgba(0, 0, 0, 0.96) 8.9%, rgba(0, 0, 0, 0.93) 12.8%, rgba(0, 0, 0, 0.90) 16.56%, rgba(0, 0, 0, 0.86) 20.37%, rgba(0, 0, 0, 0.82) 24.4%, rgba(0, 0, 0, 0.77) 28.83%, rgba(0, 0, 0, 0.71) 33.84%, rgba(0, 0, 0, 0.65) 39.6%, rgba(0, 0, 0, 0.57) 46.3%, rgba(0, 0, 0, 0.48) 54.1%, rgba(0, 0, 0, 0.38) 63.2%, rgba(0, 0, 0, 0.27) 73.76%, rgba(0, 0, 0, 0.14) 85.97%, rgba(0, 0, 0, 0.00) 100%)"
+            },
+            "children": []
+          },
+          {
+            "id": "3240:196072",
+            "name": "Color",
+            "cssStyle": {
+              "width": "80px",
+              "height": "80px",
+              "background": "var(--Background-Normal, #FFF)"
+            },
+            "children": []
+          }
+        ]
+      }
+    }
+  }
+}

@@ -3,20 +3,24 @@ import CreateJsxTree from "@compiler/core/react-generator/generate-component/jsx
 import { FinalAstTree } from "@compiler";
 import CreateStyledComponent from "@compiler/core/react-generator/generate-component/styeld/CreateStyledComponent";
 import { ArraySlot } from "@compiler/core/ArraySlotDetector";
+import { StyleStrategy } from "@compiler/core/react-generator/style-strategy";
 
 class GenerateComponent {
   private factory: NodeFactory;
   private astTree: FinalAstTree;
   private arraySlots: ArraySlot[];
+  private styleStrategy?: StyleStrategy;
 
   constructor(
     factory: NodeFactory,
     astTree: FinalAstTree,
-    arraySlots: ArraySlot[] = []
+    arraySlots: ArraySlot[] = [],
+    styleStrategy?: StyleStrategy
   ) {
     this.factory = factory;
     this.astTree = astTree;
     this.arraySlots = arraySlots;
+    this.styleStrategy = styleStrategy;
   }
   /**
    * 컴포넌트 함수 생성
@@ -25,7 +29,11 @@ class GenerateComponent {
   public createComponentFunction(
     componentName: string
   ): ts.FunctionDeclaration {
-    const jsxTree = new CreateJsxTree(this.astTree, this.arraySlots).jsxTree;
+    const jsxTree = new CreateJsxTree(
+      this.astTree,
+      this.arraySlots,
+      this.styleStrategy
+    ).jsxTree;
 
     // JsxExpression을 return 문에서 사용할 수 있도록 변환
     let returnExpression: ts.Expression;
@@ -88,7 +96,9 @@ class GenerateComponent {
     const props = this.astTree.props || {};
 
     // 배열 슬롯 이름 수집 (중복 제거)
-    const arraySlotNames = new Set(this.arraySlots.map((slot) => slot.slotName));
+    const arraySlotNames = new Set(
+      this.arraySlots.map((slot) => slot.slotName)
+    );
 
     const bindingElements: ts.BindingElement[] = [];
     const propNames: string[] = [];
@@ -136,6 +146,15 @@ class GenerateComponent {
       );
       bindingElements.push(bindingElement);
     }
+
+    // children prop 추가 (의존 컴포넌트가 SVG 등을 children으로 받을 수 있도록)
+    const childrenBindingElement = this.factory.createBindingElement(
+      undefined,
+      undefined,
+      this.factory.createIdentifier("children"),
+      undefined
+    );
+    bindingElements.push(childrenBindingElement);
 
     // 나머지 props를 위한 rest element
     const restElement = this.factory.createBindingElement(

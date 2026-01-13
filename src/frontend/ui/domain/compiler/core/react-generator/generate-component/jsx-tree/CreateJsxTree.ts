@@ -3,12 +3,15 @@ import ts from "typescript";
 import { ArraySlot } from "@compiler/core/ArraySlotDetector";
 import SvgToJsx from "./SvgToJsx";
 import { toCamelCase } from "@compiler/utils/normalizeString";
+import { StyleStrategy } from "@compiler/core/react-generator/style-strategy";
+import { normalizeName } from "@compiler/utils/stringUtils";
 
 class CreateJsxTree {
   private _jsxTree: ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression;
 
   private astTree: FinalAstTree;
   private arraySlots: ArraySlot[];
+  private styleStrategy?: StyleStrategy;
 
   private factory = ts.factory;
   private styleVariables: Map<string, string> = new Map(); // node.id -> style variable name
@@ -20,13 +23,29 @@ class CreateJsxTree {
   // 배열 슬롯 부모 ID → ArraySlot 매핑
   private arraySlotByParentId: Map<string, ArraySlot> = new Map();
 
+  // 외부 컴포넌트 wrapper 스타일 (위치 스타일)
+  private wrapperStyles: Map<string, Record<string, string>> = new Map();
+
   public get jsxTree() {
     return this._jsxTree;
   }
 
-  constructor(astTree: FinalAstTree, arraySlots: ArraySlot[] = []) {
+  /**
+   * 외부 컴포넌트 wrapper 스타일 반환
+   * GenerateStyles에서 사용
+   */
+  public getWrapperStyles(): Map<string, Record<string, string>> {
+    return this.wrapperStyles;
+  }
+
+  constructor(
+    astTree: FinalAstTree,
+    arraySlots: ArraySlot[] = [],
+    styleStrategy?: StyleStrategy
+  ) {
     this.astTree = astTree;
     this.arraySlots = arraySlots;
+    this.styleStrategy = styleStrategy;
     this._buildArraySlotMapping();
     this._buildOriginalKeyMapping();
     this._jsxTree = this._createJsxTree(astTree);
@@ -57,6 +76,7 @@ class CreateJsxTree {
     node: FinalAstTree
   ): ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression {
     // 외부 컴포넌트 참조인 경우 (INSTANCE → 별도 컴포넌트로 렌더링)
+    // vectorSvg가 있으면 SVG를 children으로 전달
     if (node.externalComponent) {
       return this._createExternalComponentJsx(node);
     }
@@ -76,6 +96,7 @@ class CreateJsxTree {
     if (node.type === "TEXT") {
       if ((node.props as any)?.characters) {
         // props.characters가 있으면 prop 참조 (동적 텍스트)
+        // 동적 텍스트는 부분 스타일링 적용 불가 (전체 텍스트가 바뀌므로)
         const rawPropName = (node.props as any).characters;
         // originalKey → propName 매핑 사용 (INSTANCE의 경우)
         // 매핑이 없으면 toCamelCase로 정규화 (일관된 prop 이름 생성)
@@ -89,6 +110,12 @@ class CreateJsxTree {
         );
         // children 앞에 텍스트 추가
         children = [textExpression, ...children];
+      } else if (node.metaData.textSegments) {
+        // 부분 텍스트 스타일링이 있으면 여러 <span>으로 분할
+        const segmentElements = this._createTextSegments(
+          node.metaData.textSegments
+        );
+        children = [...segmentElements, ...children];
       } else if (node.metaData.characters) {
         // metaData.characters가 있으면 고정 텍스트 (단일 COMPONENT 등)
         const textLiteral = this.factory.createJsxText(
@@ -99,9 +126,25 @@ class CreateJsxTree {
       }
     }
 
-    // VECTOR 노드: vectorSvg가 있으면 dangerouslySetInnerHTML로 렌더링
-    if (node.semanticRole === "vector" && node.metaData.vectorSvg) {
-      return this._createVectorSvgElement(node, attributes);
+    // VECTOR, ICON 노드 또는 루트 노드가 vectorSvg를 가지면 SVG로 렌더링
+    // (의존 컴포넌트가 아이콘인 경우, 루트 노드에 vectorSvg가 주입됨)
+    if (node.metaData.vectorSvg) {
+      const isVectorOrIcon =
+        node.semanticRole === "vector" || node.semanticRole === "icon";
+      const isRootWithSvg = node.parent === null;
+
+      if (isVectorOrIcon || isRootWithSvg) {
+        return this._createVectorSvgElement(node, attributes);
+      }
+    }
+
+    // 루트 노드인 경우 {children}을 마지막에 추가 (의존 컴포넌트가 SVG 등을 받을 수 있도록)
+    if (node.parent === null) {
+      const childrenExpression = this.factory.createJsxExpression(
+        undefined,
+        this.factory.createIdentifier("children")
+      );
+      children = [...children, childrenExpression];
     }
 
     return this._createJsxElement(tagName, attributes, children);
@@ -110,10 +153,13 @@ class CreateJsxTree {
   /**
    * 외부 컴포넌트(INSTANCE)를 JSX로 변환
    * <SelectButton size={size} selected="false" />
+   * SVG는 의존 컴포넌트 자체에서 렌더링하므로 여기서는 참조만 함
+   *
+   * 위치 스타일(position, left, top 등)이 있으면 wrapper div로 감싸서 적용
    */
   private _createExternalComponentJsx(
     node: FinalAstTree
-  ): ts.JsxSelfClosingElement {
+  ): ts.JsxSelfClosingElement | ts.JsxElement {
     const extComp = node.externalComponent!;
 
     // 컴포넌트 이름 (PascalCase)
@@ -123,33 +169,134 @@ class CreateJsxTree {
     const attributes: ts.JsxAttributeLike[] = [];
 
     for (const [propName, propValue] of Object.entries(extComp.props)) {
-      // 부모 컴포넌트의 같은 이름 prop이 있으면 변수 참조, 없으면 문자열 리터럴
+      // 부모 컴포넌트의 같은 이름 prop이 있으면 변수 참조, 없으면 고정값
       const parentHasSameProp = propName in this.astTree.props;
 
-      let valueExpression: ts.Expression;
+      let jsxAttr: ts.JsxAttribute;
       if (parentHasSameProp) {
         // 부모 prop을 그대로 전달: size={size}
-        valueExpression = this.factory.createIdentifier(propName);
+        jsxAttr = this.factory.createJsxAttribute(
+          this.factory.createIdentifier(propName),
+          this.factory.createJsxExpression(
+            undefined,
+            this.factory.createIdentifier(propName)
+          )
+        );
       } else {
-        // 고정값으로 전달: selected="false"
-        valueExpression = this.factory.createStringLiteral(propValue);
+        // 고정값으로 전달: 타입에 따라 처리
+        // boolean: selected={false}, string: text="hello"
+        const valueType = typeof propValue;
+        if (valueType === "boolean") {
+          jsxAttr = this.factory.createJsxAttribute(
+            this.factory.createIdentifier(propName),
+            this.factory.createJsxExpression(
+              undefined,
+              propValue ? this.factory.createTrue() : this.factory.createFalse()
+            )
+          );
+        } else if (valueType === "number") {
+          jsxAttr = this.factory.createJsxAttribute(
+            this.factory.createIdentifier(propName),
+            this.factory.createJsxExpression(
+              undefined,
+              this.factory.createNumericLiteral(propValue as number)
+            )
+          );
+        } else {
+          // string 또는 기타: 문자열 리터럴
+          jsxAttr = this.factory.createJsxAttribute(
+            this.factory.createIdentifier(propName),
+            this.factory.createStringLiteral(String(propValue))
+          );
+        }
       }
-
-      const jsxAttr = this.factory.createJsxAttribute(
-        this.factory.createIdentifier(propName),
-        parentHasSameProp
-          ? this.factory.createJsxExpression(undefined, valueExpression)
-          : this.factory.createStringLiteral(propValue)
-      );
 
       attributes.push(jsxAttr);
     }
 
+    const jsxAttributes = this.factory.createJsxAttributes(attributes);
+
     // Self-closing element: <SelectButton ... />
-    return this.factory.createJsxSelfClosingElement(
+    const componentElement = this.factory.createJsxSelfClosingElement(
       tagIdentifier,
       undefined,
-      this.factory.createJsxAttributes(attributes)
+      jsxAttributes
+    );
+
+    // 위치 스타일(position, left, top 등)이 있으면 wrapper div로 감싸기
+    const layoutStyles = this._extractLayoutStyles(node.style?.base || {});
+    if (Object.keys(layoutStyles).length > 0) {
+      return this._wrapWithLayoutDiv(node, componentElement, layoutStyles);
+    }
+
+    return componentElement;
+  }
+
+  /**
+   * 레이아웃/위치 관련 스타일만 추출
+   */
+  private _extractLayoutStyles(
+    styles: Record<string, any>
+  ): Record<string, string> {
+    const layoutProps = [
+      "position",
+      "left",
+      "top",
+      "right",
+      "bottom",
+      "transform",
+      "zIndex",
+    ];
+    const result: Record<string, string> = {};
+    for (const prop of layoutProps) {
+      if (styles[prop] !== undefined) {
+        result[prop] = styles[prop];
+      }
+    }
+    return result;
+  }
+
+  /**
+   * 외부 컴포넌트를 wrapper div로 감싸서 위치 스타일 적용
+   * <div style={{ position: "absolute", left: "3px", top: "18px" }}><ChoiceToken /></div>
+   */
+  private _wrapWithLayoutDiv(
+    _node: FinalAstTree,
+    componentElement: ts.JsxSelfClosingElement,
+    layoutStyles: Record<string, string>
+  ): ts.JsxElement {
+    // style={{ ... }} 객체 생성
+    const styleProperties: ts.PropertyAssignment[] = [];
+    for (const [prop, value] of Object.entries(layoutStyles)) {
+      styleProperties.push(
+        this.factory.createPropertyAssignment(
+          this.factory.createIdentifier(prop),
+          this.factory.createStringLiteral(value)
+        )
+      );
+    }
+
+    const styleObject = this.factory.createObjectLiteralExpression(
+      styleProperties,
+      false
+    );
+
+    // style={...} 속성 생성
+    const styleAttr = this.factory.createJsxAttribute(
+      this.factory.createIdentifier("style"),
+      this.factory.createJsxExpression(undefined, styleObject)
+    );
+    const wrapperAttributes = this.factory.createJsxAttributes([styleAttr]);
+
+    // <div style={{...}}><ChoiceToken /></div>
+    return this.factory.createJsxElement(
+      this.factory.createJsxOpeningElement(
+        this.factory.createIdentifier("div"),
+        undefined,
+        wrapperAttributes
+      ),
+      [componentElement],
+      this.factory.createJsxClosingElement(this.factory.createIdentifier("div"))
     );
   }
 
@@ -179,7 +326,11 @@ class CreateJsxTree {
   private _createAttributes(node: FinalAstTree): ts.JsxAttributeLike[] {
     const attributes: ts.JsxAttributeLike[] = [];
 
-    const styleAttr = this._createStyleAttribute(node);
+    // 스타일 전략이 있으면 사용, 없으면 기본 Emotion 방식 사용
+    const styleAttr = this.styleStrategy
+      ? this.styleStrategy.createStyleAttribute(node)
+      : this._createStyleAttribute(node);
+
     if (styleAttr) {
       attributes.push(styleAttr);
     }
@@ -391,6 +542,67 @@ class CreateJsxTree {
   }
 
   /**
+   * 부분 텍스트 스타일링을 위한 세그먼트 JSX 생성
+   * 각 세그먼트를 <span>으로 감싸고 인라인 스타일 적용
+   */
+  private _createTextSegments(
+    segments: Array<{
+      text: string;
+      styleIndex: number;
+      style: Record<string, string> | null;
+    }>
+  ): ts.JsxChild[] {
+    const result: ts.JsxChild[] = [];
+
+    for (const segment of segments) {
+      if (segment.style && Object.keys(segment.style).length > 0) {
+        // 스타일이 있으면 <span style={{...}}>텍스트</span>
+        const styleProperties = Object.entries(segment.style).map(
+          ([key, value]) => {
+            // CSS 속성명을 camelCase로 변환 (font-weight → fontWeight)
+            const camelKey = key.replace(/-([a-z])/g, (_, c) =>
+              c.toUpperCase()
+            );
+            return this.factory.createPropertyAssignment(
+              this.factory.createIdentifier(camelKey),
+              this.factory.createStringLiteral(value)
+            );
+          }
+        );
+
+        const styleObject = this.factory.createObjectLiteralExpression(
+          styleProperties,
+          false
+        );
+
+        const styleAttr = this.factory.createJsxAttribute(
+          this.factory.createIdentifier("style"),
+          this.factory.createJsxExpression(undefined, styleObject)
+        );
+
+        const spanElement = this.factory.createJsxElement(
+          this.factory.createJsxOpeningElement(
+            this.factory.createIdentifier("span"),
+            undefined,
+            this.factory.createJsxAttributes([styleAttr])
+          ),
+          [this.factory.createJsxText(segment.text, false)],
+          this.factory.createJsxClosingElement(
+            this.factory.createIdentifier("span")
+          )
+        );
+
+        result.push(spanElement);
+      } else {
+        // 스타일이 없으면 텍스트만 추가
+        result.push(this.factory.createJsxText(segment.text, false));
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * VECTOR 노드를 JSX SVG Element로 렌더링
    * SVG 문자열을 파싱하여 React JSX로 변환
    */
@@ -540,16 +752,10 @@ class CreateJsxTree {
   }
 
   /**
-   * 노드 이름을 변수명으로 정규화 (첫 글자 소문자)
+   * 노드 이름을 변수명으로 정규화 - stringUtils의 normalizeName을 사용하여 GenerateStyles와 일관성 유지
    */
   private _normalizeName(name: string): string {
-    const normalized = name
-      .replace(/\s+/g, "")
-      .replace(/[^a-zA-Z0-9_$]/g, "")
-      .replace(/^[0-9]/, "_$&"); // 숫자로 시작하면 앞에 _ 추가
-
-    // 첫 글자 소문자 (camelCase)
-    return normalized.charAt(0).toLowerCase() + normalized.slice(1);
+    return normalizeName(name);
   }
 
   /**
