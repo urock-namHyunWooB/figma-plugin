@@ -11,7 +11,14 @@ const isDev =
 
 // 개발 모드에서만 TestComp 동적 로드 (프로덕션 빌드에서 제외)
 const TestComp = isDev
-  ? lazy(() => import("./debug/TestComp").then((m) => ({ default: m.TestComp })))
+  ? lazy(() =>
+      import("./debug/TestComp").then((m) => ({ default: m.TestComp }))
+    )
+  : () => null;
+
+// Examples 페이지 (개발 모드에서만)
+const ExamplesPage = isDev
+  ? lazy(() => import("./pages/ExamplesPage"))
   : () => null;
 
 const Router = isDev ? BrowserRouter : MemoryRouter;
@@ -28,6 +35,16 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             element={
               <Suspense fallback={<div>Loading...</div>}>
                 <TestComp />
+              </Suspense>
+            }
+          />
+        )}
+        {isDev && (
+          <Route
+            path="/example"
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <ExamplesPage />
               </Suspense>
             }
           />
