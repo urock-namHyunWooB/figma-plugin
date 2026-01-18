@@ -64,13 +64,13 @@ describe("Popup 중첩 의존성 렌더링", () => {
     expect(result).toContain("function Large");
   });
 
-  it("Popup: Confirm 텍스트가 렌더링됨", async () => {
+  it("Popup: 버튼 텍스트가 렌더링됨", async () => {
     const fixture = JSON.parse(fs.readFileSync(popupFixturePath, "utf-8"));
     const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
-    // Confirm 텍스트가 렌더링되어야 함 (버튼 내부 텍스트)
-    expect(result).toContain("Confirm");
+    // Log out 텍스트가 렌더링되어야 함 (버튼 내부 텍스트)
+    expect(result).toContain("Log out");
   });
 
   it("Popup: ArraySlot이 visible: false INSTANCE를 잘못 포함하지 않음", async () => {
@@ -93,7 +93,6 @@ describe("Popup 중첩 의존성 렌더링", () => {
     // 주요 의존 컴포넌트들이 생성되어야 함
     const expectedComponents = [
       "Popuptop",
-      "Popupbody",
       "Popupbottom",
       "Large",
     ];

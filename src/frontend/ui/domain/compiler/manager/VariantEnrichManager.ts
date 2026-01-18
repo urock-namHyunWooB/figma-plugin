@@ -53,22 +53,35 @@ class VariantEnrichManager {
   /**
    * dependency 컴포넌트의 루트를 유연하게 만들기 (width/height를 100%로 설정)
    * 사용하는 곳(INSTANCE)의 wrapper가 크기와 padding을 제공하고, 컴포넌트는 그 안을 채움
+   *
+   * 제거하는 스타일:
+   * - 크기: width, height → 100%로 대체
+   * - 패딩: padding (모든 방향)
+   * - 시각적 스타일: background, border-radius, border, opacity
+   *   (wrapper(INSTANCE)가 시각적 스타일을 담당하므로 dependency에서는 제거)
    */
   public makeRootFlexible(variant: FigmaNodeData): FigmaNodeData {
     if (!variant.styleTree?.cssStyle) {
       return variant;
     }
 
-    // 기존 width/height/padding 제거하고 100%로 대체
-    // wrapper에서 이미 padding을 적용하므로 dependency에서는 제거
+    // 크기/패딩/시각적 스타일 제거하고 100%로 대체
+    // wrapper에서 이미 이 스타일들을 적용하므로 dependency에서는 제거
     const {
+      // 크기 관련
       width: _width,
       height: _height,
+      // 패딩 관련
       padding: _padding,
       "padding-top": _paddingTop,
       "padding-right": _paddingRight,
       "padding-bottom": _paddingBottom,
       "padding-left": _paddingLeft,
+      // 시각적 스타일 (wrapper가 담당)
+      background: _background,
+      "border-radius": _borderRadius,
+      border: _border,
+      opacity: _opacity,
       ...restCssStyle
     } = variant.styleTree.cssStyle;
 

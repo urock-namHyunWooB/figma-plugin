@@ -1863,6 +1863,140 @@ case "BOOLEAN_OPERATION": {  // 추가
 
 ---
 
+### 15. Dependency 루트의 시각적 스타일이 Wrapper와 충돌
+
+#### 문제
+
+Popup 컴포넌트에서 Left Button(Neutral)과 Right Button(Primary)이 서로 다른 배경색을 가져야 하는데, 모두 같은 색(#595B5E)으로 렌더링됨.
+
+```
+Figma 원본:
+┌─────────────────────────────────────┐
+│  [Left Button]    [Right Button]   │
+│    (회색)            (파란색)        │
+│   #595B5E          #0050FF         │
+└─────────────────────────────────────┘
+
+잘못된 렌더링:
+┌─────────────────────────────────────┐
+│  [Left Button]    [Right Button]   │
+│    (회색)            (회색)          │
+│   #595B5E          #595B5E         │  ← 둘 다 같은 색!
+└─────────────────────────────────────┘
+```
+
+#### 원인
+
+1. **Figma API 동작**: INSTANCE 노드에 variant의 root fills를 복사
+   - Left Button INSTANCE → Neutral variant 배경색 (#595B5E)
+   - Right Button INSTANCE → Primary variant 배경색 (#0050FF)
+
+2. **스타일 중복**: wrapper(INSTANCE)와 dependency 모두 시각적 스타일을 가짐
+   - wrapper에는 올바른 variant별 배경색 존재
+   - dependency는 대표 variant(Neutral) 하나로만 컴파일됨
+   - dependency의 `width: 100%; height: 100%`가 wrapper를 완전히 덮음
+
+3. **결과**: dependency의 배경색이 wrapper의 배경색을 가림
+
+```typescript
+// wrapper CSS (올바른 색상)
+const RightButtonCss = css`
+  background: #0050FF;  // Primary 색상
+`;
+
+// dependency CSS (잘못된 색상 - 대표 variant만 사용)
+const LargeCss = css`
+  background: #595B5E;  // Neutral 색상 (모든 인스턴스에 적용)
+  width: 100%;
+  height: 100%;         // wrapper를 완전히 덮음
+`;
+```
+
+#### 해결
+
+**역할 분리 원칙**:
+- **wrapper (INSTANCE)**: 시각적 스타일 담당 (background, border-radius, border, opacity)
+- **dependency**: 레이아웃 스타일만 담당 (display, flex, gap, align-items 등)
+
+**`VariantEnrichManager.makeRootFlexible()` 확장**:
+
+```typescript
+public makeRootFlexible(variant: FigmaNodeData): FigmaNodeData {
+  const {
+    // 크기 관련 (기존)
+    width: _width,
+    height: _height,
+    // 패딩 관련 (기존)
+    padding: _padding,
+    "padding-top": _paddingTop,
+    "padding-right": _paddingRight,
+    "padding-bottom": _paddingBottom,
+    "padding-left": _paddingLeft,
+    // 시각적 스타일 (추가) - wrapper가 담당
+    background: _background,
+    "border-radius": _borderRadius,
+    border: _border,
+    opacity: _opacity,
+    ...restCssStyle
+  } = variant.styleTree.cssStyle;
+
+  return {
+    ...variant,
+    styleTree: {
+      ...variant.styleTree,
+      cssStyle: {
+        ...restCssStyle,
+        width: "100%",
+        height: "100%",
+      },
+    },
+  };
+}
+```
+
+#### 제거되는 시각적 스타일
+
+| 스타일 | 루트 사용 횟수 | 설명 |
+| ------ | ------------- | ---- |
+| `background` | 42 | 배경색 - wrapper가 variant별로 담당 |
+| `border-radius` | 44 | 모서리 둥글기 - wrapper가 담당 |
+| `border` | 6 | 테두리 - wrapper가 담당 |
+| `opacity` | 6 | 투명도 - wrapper가 담당 |
+
+#### 결과
+
+```css
+/* wrapper CSS - 시각적 스타일 포함 */
+const LeftButtonCss = css`
+  background: #595B5E;
+  border-radius: 8px;
+  /* + 레이아웃 스타일 */
+`;
+
+const RightButtonCss = css`
+  background: #0050FF;      /* 올바른 Primary 색상! */
+  border-radius: 8px;
+  /* + 레이아웃 스타일 */
+`;
+
+/* dependency CSS - 레이아웃만 */
+const LargeCss = css`
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  /* background, border-radius 제거됨 */
+`;
+```
+
+#### 테스트
+
+`test/compiler/popupVisualStyles.test.ts`
+
+---
+
 ## 테스트
 
 ### 테스트 구조
@@ -1885,7 +2019,7 @@ test/
 
 ### 테스트 현황
 
-- **테스트 케이스**: 500+ passed
+- **테스트 케이스**: 506 passed
 - **Fixture 수**: 35개
 - **스냅샷 테스트**: Visual Regression 포함
 
@@ -1895,6 +2029,7 @@ test/
 | ----------- | ---- |
 | `arraySlot.test.ts` | ArraySlot 감지, componentId 그룹핑, SuperTree 병합 ID 매칭 |
 | `popupNestedDependency.test.ts` | 중첩 dependency 컴포넌트 렌더링 |
+| `popupVisualStyles.test.ts` | dependency 시각적 스타일 제거 검증 |
 | `dependencyEmptyChildren.test.ts` | dependency children 비어있을 때 I... 노드 처리 |
 | `instanceOverrideProps.test.ts` | INSTANCE 오버라이드 props 전달 |
 | `layoutRegression.test.ts` | 레이아웃 회귀 테스트 |

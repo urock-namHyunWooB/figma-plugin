@@ -33,6 +33,14 @@ const getFailingFixtures = (): string[] => {
 describe("Layout Regression Tests", () => {
   const fixtures = getFailingFixtures();
 
+  // fixtures가 없으면 스킵 테스트
+  if (fixtures.length === 0) {
+    it("no failing fixtures to test (this is expected when all issues are resolved)", () => {
+      expect(fixtures).toHaveLength(0);
+    });
+    return;
+  }
+
   fixtures.forEach((fixture) => {
     describe(fixture, () => {
       let nodeData: FigmaNodeData;
