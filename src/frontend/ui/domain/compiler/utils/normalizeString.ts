@@ -1,3 +1,44 @@
+/**
+ * 컴포넌트 이름 정규화 (PascalCase, 특수문자 제거)
+ * 한글/비ASCII 문자가 포함된 경우 fallback 이름 생성
+ */
+export function normalizeComponentName(name: string): string {
+  // 먼저 영문/숫자만 추출 시도
+  let normalized = name
+    .replace(/[^a-zA-Z0-9\s]/g, "") // 특수문자 및 한글 제거
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join("");
+
+  // 영문/숫자가 없으면 (한글만 있는 경우 등) fallback 이름 생성
+  if (!normalized || normalized.length === 0) {
+    // 원본 이름에서 고유한 해시 생성
+    const hash = simpleHash(name);
+    normalized = `Component${hash}`;
+  }
+
+  // 숫자로 시작하면 앞에 _ 추가
+  if (/^[0-9]/.test(normalized)) {
+    normalized = "_" + normalized;
+  }
+
+  return normalized;
+}
+
+/**
+ * 간단한 해시 함수 (이름에서 고유한 숫자 생성)
+ */
+export function simpleHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // 32bit 정수로 변환
+  }
+  return Math.abs(hash).toString(36).substring(0, 6);
+}
+
 export function toCamelCase(key: string) {
   // 1) # 이후 제거 (예: "Label#89:6" → "Label")
   const hashIndex = key.indexOf("#");

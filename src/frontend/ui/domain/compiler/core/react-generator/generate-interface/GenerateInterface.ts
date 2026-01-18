@@ -349,6 +349,37 @@ class GenerateInterface {
     );
     members.push(childrenPropSig);
 
+    // overrideableProps 추가 (dependency 컴포넌트의 오버라이드 가능한 prop)
+    if (this.astTree.overrideableProps) {
+      for (const [propName, propInfo] of Object.entries(
+        this.astTree.overrideableProps
+      )) {
+        const typeName =
+          propInfo.type === "fills" ? "string" : "string | React.ReactNode";
+        const typeNode =
+          propInfo.type === "fills"
+            ? this.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword)
+            : this.factory.createUnionTypeNode([
+                this.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+                this.factory.createTypeReferenceNode(
+                  this.factory.createQualifiedName(
+                    this.factory.createIdentifier("React"),
+                    "ReactNode"
+                  ),
+                  undefined
+                ),
+              ]);
+
+        const overridePropSig = this.factory.createPropertySignature(
+          undefined,
+          propName,
+          this.factory.createToken(ts.SyntaxKind.QuestionToken), // optional
+          typeNode
+        );
+        members.push(overridePropSig);
+      }
+    }
+
     return members;
   }
 

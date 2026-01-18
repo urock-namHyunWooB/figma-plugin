@@ -6,12 +6,23 @@ import { toCamelCase } from "@compiler/utils/normalizeString";
 import { StyleStrategy } from "@compiler/core/react-generator/style-strategy";
 import { normalizeName } from "@compiler/utils/stringUtils";
 
+/**
+ * CreateJsxTree 옵션
+ */
+export interface CreateJsxTreeOptions {
+  /** 스타일 전략 */
+  styleStrategy?: StyleStrategy;
+  /** 디버그 모드: true이면 data-figma-id 속성 추가 */
+  debug?: boolean;
+}
+
 class CreateJsxTree {
   private _jsxTree: ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression;
 
   private astTree: FinalAstTree;
   private arraySlots: ArraySlot[];
   private styleStrategy?: StyleStrategy;
+  private debug: boolean;
 
   private factory = ts.factory;
   private styleVariables: Map<string, string> = new Map(); // node.id -> style variable name
@@ -41,11 +52,12 @@ class CreateJsxTree {
   constructor(
     astTree: FinalAstTree,
     arraySlots: ArraySlot[] = [],
-    styleStrategy?: StyleStrategy
+    options?: CreateJsxTreeOptions
   ) {
     this.astTree = astTree;
     this.arraySlots = arraySlots;
-    this.styleStrategy = styleStrategy;
+    this.styleStrategy = options?.styleStrategy;
+    this.debug = options?.debug ?? false;
     this._buildArraySlotMapping();
     this._buildOriginalKeyMapping();
     this._jsxTree = this._createJsxTree(astTree);
@@ -58,6 +70,43 @@ class CreateJsxTree {
     for (const slot of this.arraySlots) {
       this.arraySlotByParentId.set(slot.parentId, slot);
     }
+  }
+
+  /**
+   * 노드의 children에 매칭되는 ArraySlot 찾기
+   *
+   * 병합된 SuperTree에서는 parentId가 다를 수 있으므로:
+   * 1. 먼저 parentId로 직접 매칭 시도
+   * 2. 실패하면 children의 ID 또는 componentId로 매칭
+   */
+  private _findArraySlotForNode(node: FinalAstTree): ArraySlot | undefined {
+    // 1. parentId로 직접 매칭 (기존 로직)
+    const directMatch = this.arraySlotByParentId.get(node.id);
+    if (directMatch) {
+      return directMatch;
+    }
+
+    // 2. children의 ID로 매칭
+    for (const slot of this.arraySlots) {
+      const instanceIds = new Set(slot.instances.map((i) => i.id));
+
+      // 현재 노드의 children 중 ArraySlot instance가 있는지 확인
+      for (const child of node.children) {
+        if (instanceIds.has(child.id)) {
+          return slot;
+        }
+
+        // externalComponent의 componentId로도 확인
+        if (child.externalComponent) {
+          const extCompId = child.externalComponent.componentId;
+          if (slot.componentId && extCompId === slot.componentId) {
+            return slot;
+          }
+        }
+      }
+    }
+
+    return undefined;
   }
 
   /**
@@ -118,11 +167,29 @@ class CreateJsxTree {
         children = [...segmentElements, ...children];
       } else if (node.metaData.characters) {
         // metaData.characters가 있으면 고정 텍스트 (단일 COMPONENT 등)
-        const textLiteral = this.factory.createJsxText(
-          node.metaData.characters as string,
-          false
-        );
-        children = [textLiteral, ...children];
+        const textContent = node.metaData.characters as string;
+
+        // 오버라이드 prop이 있으면 {aaText ?? "100"} 형태로 생성
+        const textPropName = this._getTextOverridePropName(node);
+        if (textPropName) {
+          // textPropName ?? "defaultText" 형태
+          const textExpression = this.factory.createJsxExpression(
+            undefined,
+            this.factory.createBinaryExpression(
+              this.factory.createIdentifier(textPropName),
+              this.factory.createToken(ts.SyntaxKind.QuestionQuestionToken),
+              this.factory.createStringLiteral(textContent)
+            )
+          );
+          children = [textExpression, ...children];
+        } else if (textContent.includes("\n")) {
+          // 줄바꿈(\n)이 있으면 <br />로 분할
+          const textElements = this._createTextWithLineBreaks(textContent);
+          children = [...textElements, ...children];
+        } else {
+          const textLiteral = this.factory.createJsxText(textContent, false);
+          children = [textLiteral, ...children];
+        }
       }
     }
 
@@ -199,7 +266,7 @@ class CreateJsxTree {
             this.factory.createIdentifier(propName),
             this.factory.createJsxExpression(
               undefined,
-              this.factory.createNumericLiteral(propValue as number)
+              this.factory.createNumericLiteral(Number(propValue))
             )
           );
         } else {
@@ -214,6 +281,19 @@ class CreateJsxTree {
       attributes.push(jsxAttr);
     }
 
+    // overrideProps 전달 (INSTANCE children의 오버라이드된 fills, characters)
+    if (extComp.overrideProps) {
+      for (const [propName, propValue] of Object.entries(
+        extComp.overrideProps
+      )) {
+        const jsxAttr = this.factory.createJsxAttribute(
+          this.factory.createIdentifier(propName),
+          this.factory.createStringLiteral(String(propValue))
+        );
+        attributes.push(jsxAttr);
+      }
+    }
+
     const jsxAttributes = this.factory.createJsxAttributes(attributes);
 
     // Self-closing element: <SelectButton ... />
@@ -225,6 +305,18 @@ class CreateJsxTree {
 
     // 위치 스타일(position, left, top 등)이 있으면 wrapper div로 감싸기
     const layoutStyles = this._extractLayoutStyles(node.style?.base || {});
+
+    // absoluteBoundingBox에서 width/height 보충 (CSS에 없을 경우)
+    const boundingBox = node.metaData?.spec?.absoluteBoundingBox;
+    if (boundingBox) {
+      if (!layoutStyles["width"] && boundingBox.width) {
+        layoutStyles["width"] = `${boundingBox.width}px`;
+      }
+      if (!layoutStyles["height"] && boundingBox.height) {
+        layoutStyles["height"] = `${boundingBox.height}px`;
+      }
+    }
+
     if (Object.keys(layoutStyles).length > 0) {
       return this._wrapWithLayoutDiv(node, componentElement, layoutStyles);
     }
@@ -233,12 +325,14 @@ class CreateJsxTree {
   }
 
   /**
-   * 레이아웃/위치 관련 스타일만 추출
+   * 레이아웃/위치/크기 관련 스타일 추출
+   * 외부 컴포넌트의 wrapper에 적용할 스타일
    */
   private _extractLayoutStyles(
     styles: Record<string, any>
   ): Record<string, string> {
     const layoutProps = [
+      // Position
       "position",
       "left",
       "top",
@@ -246,6 +340,19 @@ class CreateJsxTree {
       "bottom",
       "transform",
       "zIndex",
+      // Size
+      "width",
+      "height",
+      "minWidth",
+      "maxWidth",
+      "minHeight",
+      "maxHeight",
+      // Flex (자식으로서의 flex 속성)
+      "flex",
+      "flexGrow",
+      "flexShrink",
+      "flexBasis",
+      "alignSelf",
     ];
     const result: Record<string, string> = {};
     for (const prop of layoutProps) {
@@ -258,35 +365,70 @@ class CreateJsxTree {
 
   /**
    * 외부 컴포넌트를 wrapper div로 감싸서 위치 스타일 적용
-   * <div style={{ position: "absolute", left: "3px", top: "18px" }}><ChoiceToken /></div>
+   * CSS 클래스가 있으면 사용, 없으면 인라인 스타일 fallback
+   * <div css={ColorguideCss}><ColorGuide /></div>
    */
   private _wrapWithLayoutDiv(
-    _node: FinalAstTree,
+    node: FinalAstTree,
     componentElement: ts.JsxSelfClosingElement,
     layoutStyles: Record<string, string>
   ): ts.JsxElement {
-    // style={{ ... }} 객체 생성
-    const styleProperties: ts.PropertyAssignment[] = [];
-    for (const [prop, value] of Object.entries(layoutStyles)) {
-      styleProperties.push(
-        this.factory.createPropertyAssignment(
-          this.factory.createIdentifier(prop),
-          this.factory.createStringLiteral(value)
+    const wrapperAttrs: ts.JsxAttributeLike[] = [];
+
+    // CSS 클래스가 있으면 css 속성 사용 (Emotion 전략)
+    const cssVarName = node.generatedNames?.cssVarName;
+    if (cssVarName) {
+      const cssAttr = this.factory.createJsxAttribute(
+        this.factory.createIdentifier("css"),
+        this.factory.createJsxExpression(
+          undefined,
+          this.factory.createIdentifier(cssVarName)
         )
       );
+      wrapperAttrs.push(cssAttr);
+    } else {
+      // Tailwind 전략이거나 CSS 클래스가 없는 경우:
+      // node.style.base 전체 스타일을 인라인으로 적용 (layoutStyles만이 아닌 전체)
+      const fullStyles = node.style?.base || {};
+      const styleProperties: ts.PropertyAssignment[] = [];
+
+      for (const [prop, value] of Object.entries(fullStyles)) {
+        // CSS 속성명을 camelCase로 변환 (flex-direction → flexDirection)
+        const camelProp = this._kebabToCamel(prop);
+        styleProperties.push(
+          this.factory.createPropertyAssignment(
+            this.factory.createIdentifier(camelProp),
+            this.factory.createStringLiteral(String(value))
+          )
+        );
+      }
+
+      // layoutStyles에서 fullStyles에 없는 것 추가 (width/height 등 boundingBox에서 온 것)
+      for (const [prop, value] of Object.entries(layoutStyles)) {
+        const camelProp = this._kebabToCamel(prop);
+        if (!(prop in fullStyles)) {
+          styleProperties.push(
+            this.factory.createPropertyAssignment(
+              this.factory.createIdentifier(camelProp),
+              this.factory.createStringLiteral(value)
+            )
+          );
+        }
+      }
+
+      const styleObject = this.factory.createObjectLiteralExpression(
+        styleProperties,
+        false
+      );
+
+      const styleAttr = this.factory.createJsxAttribute(
+        this.factory.createIdentifier("style"),
+        this.factory.createJsxExpression(undefined, styleObject)
+      );
+      wrapperAttrs.push(styleAttr);
     }
 
-    const styleObject = this.factory.createObjectLiteralExpression(
-      styleProperties,
-      false
-    );
-
-    // style={...} 속성 생성
-    const styleAttr = this.factory.createJsxAttribute(
-      this.factory.createIdentifier("style"),
-      this.factory.createJsxExpression(undefined, styleObject)
-    );
-    const wrapperAttributes = this.factory.createJsxAttributes([styleAttr]);
+    const wrapperAttributes = this.factory.createJsxAttributes(wrapperAttrs);
 
     // <div style={{...}}><ChoiceToken /></div>
     return this.factory.createJsxElement(
@@ -326,6 +468,15 @@ class CreateJsxTree {
   private _createAttributes(node: FinalAstTree): ts.JsxAttributeLike[] {
     const attributes: ts.JsxAttributeLike[] = [];
 
+    // debug 모드: data-figma-id 속성 추가
+    if (this.debug && node.id) {
+      const dataFigmaIdAttr = this.factory.createJsxAttribute(
+        this.factory.createIdentifier("data-figma-id"),
+        this.factory.createStringLiteral(node.id)
+      );
+      attributes.push(dataFigmaIdAttr);
+    }
+
     // 스타일 전략이 있으면 사용, 없으면 기본 Emotion 방식 사용
     const styleAttr = this.styleStrategy
       ? this.styleStrategy.createStyleAttribute(node)
@@ -333,6 +484,12 @@ class CreateJsxTree {
 
     if (styleAttr) {
       attributes.push(styleAttr);
+    }
+
+    // 오버라이드 prop이 있으면 style 속성 추가
+    const overrideStyleAttr = this._createOverrideStyleAttribute(node);
+    if (overrideStyleAttr) {
+      attributes.push(overrideStyleAttr);
     }
 
     // 루트 노드이고 네이티브 HTML 요소인 경우 {...restProps} 추가
@@ -344,6 +501,76 @@ class CreateJsxTree {
     }
 
     return attributes;
+  }
+
+  /**
+   * TEXT 노드에 대한 오버라이드 prop 이름 반환
+   * 예: "AA" 노드 → "aaText" prop
+   */
+  private _getTextOverridePropName(node: FinalAstTree): string | null {
+    if (!this.astTree.overrideableProps) {
+      return null;
+    }
+
+    const nodeName = toCamelCase(node.name);
+    if (!nodeName) {
+      return null;
+    }
+
+    const textPropName = `${nodeName}Text`;
+    if (this.astTree.overrideableProps[textPropName]) {
+      return textPropName;
+    }
+
+    return null;
+  }
+
+  /**
+   * 오버라이드 prop에 해당하는 노드에 CSS 변수 style 속성 생성
+   * 예: rectangle1Bg prop → style={{ '--rectangle1-bg': rectangle1Bg }}
+   */
+  private _createOverrideStyleAttribute(
+    node: FinalAstTree
+  ): ts.JsxAttribute | null {
+    if (!this.astTree.overrideableProps) {
+      return null;
+    }
+
+    const nodeName = toCamelCase(node.name);
+    if (!nodeName) {
+      return null;
+    }
+
+    // 해당 노드에 적용 가능한 오버라이드 prop 찾기
+    const styleProperties: ts.PropertyAssignment[] = [];
+
+    // fills 오버라이드 (background → CSS 변수)
+    const bgPropName = `${nodeName}Bg`;
+    if (this.astTree.overrideableProps[bgPropName]) {
+      // CSS 변수명: --rectangle1-bg (camelCase → kebab-case)
+      const cssVarName = `--${nodeName.replace(/([A-Z])/g, "-$1").toLowerCase()}-bg`;
+      styleProperties.push(
+        this.factory.createPropertyAssignment(
+          this.factory.createStringLiteral(cssVarName),
+          this.factory.createIdentifier(bgPropName)
+        )
+      );
+    }
+
+    if (styleProperties.length === 0) {
+      return null;
+    }
+
+    // style={{ '--rectangle1-bg': rectangle1Bg }} 형태로 생성
+    const styleObject = this.factory.createObjectLiteralExpression(
+      styleProperties,
+      false
+    );
+
+    return this.factory.createJsxAttribute(
+      this.factory.createIdentifier("style"),
+      this.factory.createJsxExpression(undefined, styleObject)
+    );
   }
 
   /**
@@ -362,16 +589,25 @@ class CreateJsxTree {
   private _createChildren(node: FinalAstTree): ts.JsxChild[] {
     const children: ts.JsxChild[] = [];
 
-    // 배열 슬롯인지 확인
-    const arraySlot = this.arraySlotByParentId.get(node.id);
-    if (arraySlot) {
-      // 배열 슬롯: .map() 형태로 렌더링
-      const mapExpression = this._createArraySlotMapExpression(node, arraySlot);
-      children.push(mapExpression);
-      return children;
-    }
+    // 배열 슬롯인지 확인 (children의 ID로 매칭)
+    // 주의: 병합된 SuperTree에서는 parentId가 다를 수 있으므로
+    // instance ID 또는 componentId로 매칭
+    const arraySlot = this._findArraySlotForNode(node);
+
+    // ArraySlot에 포함된 인스턴스 ID들 (있으면)
+    const arraySlotInstanceIds = new Set(
+      arraySlot?.instances.map((inst) => inst.id) ?? []
+    );
 
     for (const child of node.children) {
+      // ArraySlot에 포함된 인스턴스이거나, 자식/하위 노드에 ArraySlot 인스턴스가 있으면 건너뛰기
+      // (별도로 .map()으로 렌더링됨)
+      if (
+        this._containsArraySlotInstance(child, arraySlotInstanceIds, arraySlot)
+      ) {
+        continue;
+      }
+
       const childJsx = this._createJsxTree(child);
 
       if (child.visible.type === "condition") {
@@ -389,12 +625,61 @@ class CreateJsxTree {
       }
     }
 
+    // ArraySlot이 있으면 .map() 표현식 추가
+    if (arraySlot) {
+      const mapExpression = this._createArraySlotMapExpression(node, arraySlot);
+      children.push(mapExpression);
+    }
+
     return children;
+  }
+
+  /**
+   * 노드 또는 하위 노드에 ArraySlot 인스턴스가 포함되어 있는지 확인
+   *
+   * ArraySlot 인스턴스는 다음 조건 중 하나로 감지:
+   * 1. 노드 ID가 arraySlotInstanceIds에 포함됨
+   * 2. 노드가 externalComponent이고, componentId가 ArraySlot의 componentId/componentSetId와 일치
+   */
+  private _containsArraySlotInstance(
+    node: FinalAstTree,
+    arraySlotInstanceIds: Set<string>,
+    arraySlot?: ArraySlot
+  ): boolean {
+    // 현재 노드가 ArraySlot 인스턴스인지 확인 (ID 기반)
+    if (arraySlotInstanceIds.has(node.id)) {
+      return true;
+    }
+
+    // externalComponent인 경우, componentId/componentSetId 비교
+    if (node.externalComponent && arraySlot) {
+      const extComp = node.externalComponent;
+      if (
+        (arraySlot.componentSetId &&
+          extComp.componentSetId === arraySlot.componentSetId) ||
+        (arraySlot.componentId && extComp.componentId === arraySlot.componentId)
+      ) {
+        return true;
+      }
+    }
+
+    // 하위 노드 재귀 검사
+    for (const child of node.children) {
+      if (
+        this._containsArraySlotInstance(child, arraySlotInstanceIds, arraySlot)
+      ) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**
    * 배열 슬롯을 .map() 형태로 렌더링
    * {slotName.map((item, index) => <ComponentName key={index} {...item} />)}
+   * 또는 레이아웃 스타일이 있으면:
+   * {slotName.map((item, index) => <div key={index} style={{...}}><ComponentName {...item} /></div>)}
    */
   private _createArraySlotMapExpression(
     _node: FinalAstTree,
@@ -406,16 +691,18 @@ class CreateJsxTree {
     const firstInstance = slot.instances[0];
     const componentName = this._inferComponentNameFromSlot(slot);
 
-    // props 속성들 생성: size={item.size}, selected={item.selected}, ...
-    const attributes: ts.JsxAttributeLike[] = [];
-
-    // key={index} 추가
-    attributes.push(
-      factory.createJsxAttribute(
-        factory.createIdentifier("key"),
-        factory.createJsxExpression(undefined, factory.createIdentifier("index"))
-      )
+    // 첫 번째 인스턴스의 레이아웃 스타일 추출 (wrapper에 적용할 스타일)
+    const firstInstanceNode = this._findNodeById(
+      this.astTree,
+      firstInstance.id
     );
+    const layoutStyles = this._extractLayoutStyles(
+      firstInstanceNode?.style?.base || {}
+    );
+    const hasLayoutStyles = Object.keys(layoutStyles).length > 0;
+
+    // props 속성들 생성: size={item.size}, selected={item.selected}, ...
+    const componentAttributes: ts.JsxAttributeLike[] = [];
 
     // item의 각 prop을 JSX attribute로 변환
     for (const prop of slot.itemProps) {
@@ -423,7 +710,7 @@ class CreateJsxTree {
         factory.createIdentifier("item"),
         factory.createIdentifier(prop.name)
       );
-      attributes.push(
+      componentAttributes.push(
         factory.createJsxAttribute(
           factory.createIdentifier(prop.name),
           factory.createJsxExpression(undefined, propAccess)
@@ -431,14 +718,76 @@ class CreateJsxTree {
       );
     }
 
-    // <ComponentName key={index} size={item.size} ... />
-    const jsxElement = factory.createJsxSelfClosingElement(
+    // <ComponentName size={item.size} ... /> (key 없이)
+    const componentElement = factory.createJsxSelfClosingElement(
       factory.createIdentifier(componentName),
       undefined,
-      factory.createJsxAttributes(attributes)
+      factory.createJsxAttributes(componentAttributes)
     );
 
-    // (item, index) => <ComponentName ... />
+    // key={index} attribute
+    const keyAttr = factory.createJsxAttribute(
+      factory.createIdentifier("key"),
+      factory.createJsxExpression(undefined, factory.createIdentifier("index"))
+    );
+
+    // 최종 JSX 요소 결정
+    let finalJsxElement: ts.JsxSelfClosingElement | ts.JsxElement;
+
+    if (hasLayoutStyles) {
+      // wrapper div에 key와 style 적용
+      // <div key={index} data-figma-id="..." style={{height: "24px", flex: "1 0 0"}}><SelectButton ... /></div>
+      const styleProperties: ts.PropertyAssignment[] = [];
+      for (const [prop, value] of Object.entries(layoutStyles)) {
+        styleProperties.push(
+          factory.createPropertyAssignment(
+            factory.createIdentifier(prop),
+            factory.createStringLiteral(value)
+          )
+        );
+      }
+
+      const styleAttr = factory.createJsxAttribute(
+        factory.createIdentifier("style"),
+        factory.createJsxExpression(
+          undefined,
+          factory.createObjectLiteralExpression(styleProperties, false)
+        )
+      );
+
+      // wrapper div 속성 (key, style, 그리고 debug 모드면 data-figma-id)
+      const wrapperAttrs: ts.JsxAttributeLike[] = [keyAttr, styleAttr];
+
+      // debug 모드: wrapper에 data-figma-id 추가 (layout comparison용)
+      if (this.debug && firstInstanceNode) {
+        wrapperAttrs.push(
+          factory.createJsxAttribute(
+            factory.createIdentifier("data-figma-id"),
+            factory.createStringLiteral(firstInstanceNode.id)
+          )
+        );
+      }
+
+      finalJsxElement = factory.createJsxElement(
+        factory.createJsxOpeningElement(
+          factory.createIdentifier("div"),
+          undefined,
+          factory.createJsxAttributes(wrapperAttrs)
+        ),
+        [componentElement],
+        factory.createJsxClosingElement(factory.createIdentifier("div"))
+      );
+    } else {
+      // wrapper 없이 컴포넌트에 key 직접 적용
+      // <ComponentName key={index} size={item.size} ... />
+      finalJsxElement = factory.createJsxSelfClosingElement(
+        factory.createIdentifier(componentName),
+        undefined,
+        factory.createJsxAttributes([keyAttr, ...componentAttributes])
+      );
+    }
+
+    // (item, index) => <...>
     const arrowFunction = factory.createArrowFunction(
       undefined,
       undefined,
@@ -456,7 +805,7 @@ class CreateJsxTree {
       ],
       undefined,
       factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-      jsxElement
+      finalJsxElement
     );
 
     // slotName.map(...)
@@ -603,6 +952,34 @@ class CreateJsxTree {
   }
 
   /**
+   * 줄바꿈(\n)이 포함된 텍스트를 <br /> 태그와 함께 생성
+   * "첫 번째 줄\n두 번째 줄" → ["첫 번째 줄", <br />, "두 번째 줄"]
+   */
+  private _createTextWithLineBreaks(text: string): ts.JsxChild[] {
+    const lines = text.split("\n");
+    const result: ts.JsxChild[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      // 텍스트 추가
+      if (lines[i].length > 0) {
+        result.push(this.factory.createJsxText(lines[i], false));
+      }
+
+      // 마지막 줄이 아니면 <br /> 추가
+      if (i < lines.length - 1) {
+        const brElement = this.factory.createJsxSelfClosingElement(
+          this.factory.createIdentifier("br"),
+          undefined,
+          this.factory.createJsxAttributes([])
+        );
+        result.push(brElement);
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * VECTOR 노드를 JSX SVG Element로 렌더링
    * SVG 문자열을 파싱하여 React JSX로 변환
    */
@@ -671,7 +1048,8 @@ class CreateJsxTree {
       case "image":
         return "img";
       case "vector":
-        return "svg";
+        // vectorSvg가 있으면 svg, 없으면 div (배경색으로 표현)
+        return node.metaData?.vectorSvg ? "svg" : "div";
       case "icon":
         return "span";
       case "container":
@@ -756,6 +1134,14 @@ class CreateJsxTree {
    */
   private _normalizeName(name: string): string {
     return normalizeName(name);
+  }
+
+  /**
+   * kebab-case를 camelCase로 변환
+   * 예: flex-direction → flexDirection
+   */
+  private _kebabToCamel(str: string): string {
+    return str.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
   }
 
   /**

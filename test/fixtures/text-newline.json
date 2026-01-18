@@ -1,0 +1,69 @@
+{
+  "pluginData": [],
+  "info": {
+    "document": {
+      "id": "test:1",
+      "name": "TextWithNewline",
+      "type": "FRAME",
+      "children": [
+        {
+          "id": "test:2",
+          "name": "MultilineText",
+          "type": "TEXT",
+          "characters": "첫 번째 줄입니다.\n두 번째 줄입니다.\n세 번째 줄입니다.",
+          "fills": [
+            {
+              "type": "SOLID",
+              "color": { "r": 0, "g": 0, "b": 0, "a": 1 }
+            }
+          ],
+          "style": {
+            "fontFamily": "Inter",
+            "fontSize": 16,
+            "fontWeight": 400,
+            "lineHeightPx": 24
+          },
+          "absoluteBoundingBox": {
+            "x": 0,
+            "y": 0,
+            "width": 200,
+            "height": 72
+          }
+        }
+      ],
+      "absoluteBoundingBox": {
+        "x": 0,
+        "y": 0,
+        "width": 200,
+        "height": 72
+      }
+    },
+    "components": {},
+    "componentSets": {},
+    "schemaVersion": 0,
+    "styles": {}
+  },
+  "styleTree": {
+    "id": "test:1",
+    "name": "TextWithNewline",
+    "cssStyle": {
+      "display": "flex",
+      "width": "200px",
+      "height": "72px"
+    },
+    "children": [
+      {
+        "id": "test:2",
+        "name": "MultilineText",
+        "cssStyle": {
+          "color": "#000000",
+          "font-family": "Inter",
+          "font-size": "16px",
+          "font-weight": "400",
+          "line-height": "24px"
+        },
+        "children": []
+      }
+    ]
+  }
+}

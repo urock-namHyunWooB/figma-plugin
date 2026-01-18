@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { css } from "@emotion/react";
+import { useNavigate } from "react-router-dom";
 import useMessageHandler from "./useMessageHandler";
 import FigmaCompiler, { PropDefinition } from "@compiler";
 import { useComponentRenderer } from "./hooks/useComponentRenderer";
@@ -47,25 +48,14 @@ function createSlotMockup(prop: PropDefinition): React.ReactNode {
   );
 }
 
-// twind - Tailwind 런타임 처리
-import { defineConfig, install, observe } from "@twind/core";
-import presetTailwind from "@twind/preset-tailwind";
-import presetAutoprefix from "@twind/preset-autoprefix";
-
-const twindConfig = defineConfig({
-  presets: [presetAutoprefix(), presetTailwind()],
-  hash: false,
-  theme: { extend: {} },
-  rules: [],
-  ignorelist: [/^css-/, /^hljs/, /^language-/, /^class_$/, /^function_$/],
-});
+// twind는 main.tsx에서 전역 초기화됨
 
 const appContainerStyle = css`
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #121212;
-  color: #e0e0e0;
+  background: #ffffff;
+  color: #1a1a1a;
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 `;
@@ -74,7 +64,7 @@ const previewSectionStyle = css`
   flex: 0 0 auto;
   padding: 16px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #2d2d2d;
+  border-bottom: 1px solid #e5e7eb;
 `;
 
 const scrollSectionStyle = css`
@@ -88,7 +78,7 @@ const previewTitleStyle = css`
   margin-bottom: 12px;
   font-size: 14px;
   font-weight: 600;
-  color: #e0e0e0;
+  color: #1a1a1a;
 `;
 
 const previewContainerStyle = css`
@@ -110,15 +100,15 @@ const previewContentStyle = css`
 `;
 
 const emptyPreviewStyle = css`
-  color: #808080;
+  color: #6b7280;
   font-size: 14px;
 `;
 
 const errorStyle = css`
-  color: #f44336;
+  color: #dc2626;
   font-size: 13px;
   padding: 12px;
-  background: rgba(244, 67, 54, 0.1);
+  background: rgba(220, 38, 38, 0.1);
   border-radius: 4px;
   margin-bottom: 16px;
 `;
@@ -147,13 +137,13 @@ const codeHeaderStyle = css`
 const codeTitleStyle = css`
   font-size: 14px;
   font-weight: 600;
-  color: #e0e0e0;
+  color: #1a1a1a;
 `;
 
 const styleToggleStyle = css`
   display: flex;
   gap: 4px;
-  background: #2d2d2d;
+  background: #f3f4f6;
   border-radius: 6px;
   padding: 2px;
 `;
@@ -167,20 +157,44 @@ const styleButtonStyle = css`
   cursor: pointer;
   transition: all 0.15s ease;
   background: transparent;
-  color: #808080;
+  color: #6b7280;
 
   &:hover {
-    color: #e0e0e0;
+    color: #1a1a1a;
   }
 `;
 
 const styleButtonActiveStyle = css`
-  background: #404040;
-  color: #e0e0e0;
+  background: #00c2e0;
+  color: #ffffff;
+`;
+
+const saveButtonStyle = css`
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  background: #7dc728;
+  color: #ffffff;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #6bb020;
+  }
+
+  &:disabled {
+    background: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
 `;
 
 function App() {
-  const { selectionNodeData } = useMessageHandler();
+  const navigate = useNavigate();
+  const { selectionNodeData, scanState, startScan, resetScan } =
+    useMessageHandler();
 
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [propDefinitions, setPropDefinitions] = useState<PropDefinition[]>([]);
@@ -198,18 +212,10 @@ function App() {
   const [slotMockupEnabled, setSlotMockupEnabled] = useState<
     Record<string, boolean>
   >({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const previewContentRef = useRef<HTMLDivElement>(null);
-  const twindInitializedRef = useRef(false);
-
-  // twind 초기화 (Tailwind 런타임 처리)
-  useEffect(() => {
-    if (twindInitializedRef.current) return;
-    twindInitializedRef.current = true;
-
-    const tw = install(twindConfig);
-    observe(tw, document.documentElement);
-  }, []);
 
   // Figma 데이터에서 원본 크기 추출
   useEffect(() => {
@@ -359,12 +365,120 @@ function App() {
     }
   };
 
+  // 스캔 상태 텍스트
+  const getScanStatusText = () => {
+    if (scanState.isScanning) {
+      return `스캔 중... ${scanState.current}/${scanState.total}`;
+    }
+    if (scanState.total > 0) {
+      return `완료: ${scanState.succeeded}개 성공, ${scanState.failed}개 실패`;
+    }
+    return "";
+  };
+
+  // 로컬 failing 폴더에 저장 (dev 전용)
+  const saveToFailing = async () => {
+    if (!selectionNodeData || !componentName) {
+      setSaveStatus("No data to save");
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveStatus("Exporting image...");
+
+    try {
+      // 1. Figma에서 이미지 요청
+      const imageBase64 = await new Promise<string | null>((resolve) => {
+        const handler = (event: MessageEvent) => {
+          const msg = event.data.pluginMessage;
+          if (msg?.type === "selection-image-result") {
+            window.removeEventListener("message", handler);
+            resolve(msg.imageBase64);
+          }
+        };
+        window.addEventListener("message", handler);
+
+        // 3초 타임아웃
+        setTimeout(() => {
+          window.removeEventListener("message", handler);
+          resolve(null);
+        }, 3000);
+
+        // 이미지 요청 전송
+        parent.postMessage(
+          { pluginMessage: { type: "export-selection-image" } },
+          "*"
+        );
+      });
+
+      setSaveStatus("Saving...");
+
+      // 2. 파일명 안전하게 처리 (공백 → 언더스코어)
+      const safeName = componentName.replace(/\s+/g, "_");
+
+      // 3. 서버에 저장
+      const response = await fetch("http://localhost:5173/api/save-failing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: safeName,
+          nodeData: selectionNodeData,
+          imageBase64: imageBase64,
+        }),
+      });
+
+      if (response.ok) {
+        setSaveStatus(`✅ Saved: ${componentName}`);
+      } else {
+        const error = await response.text();
+        setSaveStatus(`❌ Error: ${error}`);
+      }
+    } catch (e) {
+      setSaveStatus(`❌ Failed: ${(e as Error).message}`);
+    } finally {
+      setIsSaving(false);
+      // 3초 후 상태 메시지 제거
+      setTimeout(() => setSaveStatus(null), 3000);
+    }
+  };
+
   return (
     <div css={appContainerStyle}>
       {/* 상단 고정: Preview */}
       <div css={previewSectionStyle}>
-        <div css={previewTitleStyle}>
-          Preview {componentName && `- ${componentName}`}
+        <div
+          css={previewTitleStyle}
+          style={{ display: "flex", alignItems: "center", gap: "12px" }}
+        >
+          <span>Preview {componentName && `- ${componentName}`}</span>
+
+          {/* Dev 전용: Save to Failing 버튼 */}
+          {selectionNodeData && (
+            <button
+              css={saveButtonStyle}
+              onClick={saveToFailing}
+              disabled={isSaving}
+            >
+              {isSaving ? "Saving..." : "💾 Save to Failing"}
+            </button>
+          )}
+
+          {saveStatus && (
+            <span
+              style={{
+                fontSize: "11px",
+                color: saveStatus.startsWith("✅") ? "#7dc728" : "#dc2626",
+              }}
+            >
+              {saveStatus}
+            </span>
+          )}
+
+          <span
+            style={{ marginLeft: "auto", fontSize: "11px", color: "#6b7280" }}
+          >
+            {getScanStatusText()}
+          </span>
         </div>
 
         <ErrorBoundary key={errorBoundaryKey}>

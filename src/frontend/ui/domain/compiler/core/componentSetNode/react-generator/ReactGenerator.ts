@@ -631,7 +631,9 @@ class ReactGenerator {
         const cssCall = this._createCssCall(variant.style);
 
         // 하이픈이나 특수문자가 포함된 경우 computed property 사용
-        const isValidIdentifier = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(variant.value);
+        const isValidIdentifier = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(
+          variant.value
+        );
         const propertyName = isValidIdentifier
           ? this.factory.createIdentifier(variant.value)
           : this.factory.createStringLiteral(variant.value);
@@ -988,10 +990,6 @@ class ReactGenerator {
       const dynamicStyles = node.style.dynamic || [];
 
       if (Object.keys(baseStyle).length > 0 || dynamicStyles.length > 0) {
-        console.log(`\n[노드: ${node.name}]`);
-        console.log(`Base style:`, baseStyle);
-        console.log(`Dynamic styles 개수:`, dynamicStyles.length);
-
         // 공통화 전
         const allDynamicKeys = new Set<string>();
         dynamicStyles.forEach((dynamic) => {

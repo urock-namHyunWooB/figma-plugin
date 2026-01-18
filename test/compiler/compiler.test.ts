@@ -18,7 +18,7 @@ import FigmaCompiler, {
   TempAstTree,
 } from "@compiler";
 import NodeMatcher from "@compiler/core/NodeMatcher";
-import RefineProps from "@compiler/core/RefineProps";
+import PropsExtractor from "@compiler/manager/PropsExtractor";
 import CreateAstTree from "@compiler/core/ast-tree/CreateAstTree";
 import CreateSuperTree from "@compiler/core/super-tree/CreateSuperTree";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
@@ -69,7 +69,7 @@ describe("compiler 테스트", () => {
           matcher
         );
 
-        const RefindProps = new RefineProps(renderTree, specDataManager);
+        const RefindProps = new PropsExtractor(specDataManager);
 
         const createFinalAstTree = new CreateAstTree(
           specDataManager,
@@ -121,7 +121,7 @@ describe("compiler 테스트", () => {
           matcher
         );
 
-        const RefindProps = new RefineProps(renderTree, specDataManager);
+        const RefindProps = new PropsExtractor(specDataManager);
 
         const createFinalAstTree = new CreateAstTree(
           specDataManager,
@@ -186,7 +186,7 @@ describe("compiler 테스트", () => {
           matcher
         );
 
-        const RefindProps = new RefineProps(renderTree, specDataManager);
+        const RefindProps = new PropsExtractor(specDataManager);
 
         const createFinalAstTree = new CreateAstTree(
           specDataManager,
@@ -245,7 +245,7 @@ describe("compiler 테스트", () => {
           matcher
         );
 
-        const refineProps = new RefineProps(renderTree, specDataManager);
+        const refineProps = new PropsExtractor(specDataManager);
 
         const createFinalAstTree = new CreateAstTree(
           specDataManager,
@@ -338,7 +338,7 @@ describe("compiler 테스트", () => {
           matcher
         );
 
-        const refineProps = new RefineProps(renderTree, specDataManager);
+        const refineProps = new PropsExtractor(specDataManager);
 
         const createFinalAstTree = new CreateAstTree(
           specDataManager,
@@ -378,7 +378,7 @@ describe("compiler 테스트", () => {
           matcher
         );
 
-        const refineProps = new RefineProps(renderTree, specDataManager);
+        const refineProps = new PropsExtractor(specDataManager);
 
         const createFinalAstTree = new CreateAstTree(
           specDataManager,
@@ -440,7 +440,7 @@ describe("compiler 테스트", () => {
           matcher
         );
 
-        const refineProps = new RefineProps(renderTree, specDataManager);
+        const refineProps = new PropsExtractor(specDataManager);
 
         const createFinalAstTree = new CreateAstTree(
           specDataManager,
@@ -480,7 +480,7 @@ describe("compiler 테스트", () => {
           matcher
         );
 
-        const refineProps = new RefineProps(renderTree, specDataManager);
+        const refineProps = new PropsExtractor(specDataManager);
 
         const createFinalAstTree = new CreateAstTree(
           specDataManager,
@@ -528,7 +528,7 @@ describe("compiler 테스트", () => {
             taptapButtonSampleMockData as any
           );
           const renderTree = specDataManager.getRenderTree();
-          const refineProps = new RefineProps(renderTree, specDataManager);
+          const refineProps = new PropsExtractor(specDataManager);
 
           const definitions = specDataManager.getComponentPropertyDefinitions();
           const refined = refineProps.refinedProps;
@@ -652,7 +652,7 @@ describe("compiler 테스트", () => {
           matcher
         );
 
-        const refineProps = new RefineProps(renderTree, specDataManager);
+        const refineProps = new PropsExtractor(specDataManager);
 
         const createFinalAstTree = new CreateAstTree(
           specDataManager,
@@ -695,7 +695,7 @@ describe("compiler 테스트", () => {
           matcher
         );
 
-        const refineProps = new RefineProps(renderTree, specDataManager);
+        const refineProps = new PropsExtractor(specDataManager);
 
         const createFinalAstTree = new CreateAstTree(
           specDataManager,
@@ -790,7 +790,7 @@ describe("compiler 테스트", () => {
         matcher
       );
 
-      const RefindProps = new RefineProps(renderTree, specDataManager);
+      const RefindProps = new PropsExtractor(specDataManager);
 
       const createFinalAstTree = new CreateAstTree(
         specDataManager,
@@ -889,7 +889,7 @@ describe("compiler 테스트", () => {
         matcher
       );
 
-      const RefindProps = new RefineProps(renderTree, specDataManager);
+      const RefindProps = new PropsExtractor(specDataManager);
 
       const createFinalAstTree = new CreateAstTree(
         specDataManager,
@@ -953,7 +953,7 @@ describe("compiler 테스트", () => {
         matcher
       );
 
-      const RefindProps = new RefineProps(renderTree, specDataManager);
+      const RefindProps = new PropsExtractor(specDataManager);
 
       const createFinalAstTree = new CreateAstTree(
         specDataManager,
@@ -1010,7 +1010,7 @@ describe("compiler 테스트", () => {
         matcher
       );
 
-      const RefindProps = new RefineProps(renderTree, specDataManager);
+      const RefindProps = new PropsExtractor(specDataManager);
 
       const createFinalAstTree = new CreateAstTree(
         specDataManager,

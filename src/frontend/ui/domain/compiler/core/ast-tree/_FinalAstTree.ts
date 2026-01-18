@@ -1,7 +1,7 @@
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import {
   FinalAstTree,
-  MergedNode,
+  NewMergedNode,
   StyleObject,
   TempAstTree,
   ConditionNode,
@@ -53,8 +53,246 @@ class _FinalAstTree {
     finalAstTree = this.updateMetaData(finalAstTree);
     finalAstTree = this.updateProps(finalAstTree);
     finalAstTree = this.updateExternalComponents(finalAstTree);
+    finalAstTree = this.updateSvgFillToColor(finalAstTree, tempAstTree);
+    finalAstTree = this.updateOverrideableProps(finalAstTree);
 
     this._finalAstTree = finalAstTree;
+  }
+
+  /**
+   * dependency 컴포넌트가 받을 수 있는 오버라이드 props 생성
+   * _overrideableProps가 있는 경우에만 (dependency 컴포넌트만)
+   * + 오버라이드 가능한 노드의 스타일을 CSS 변수로 변경
+   */
+  private updateOverrideableProps(astTree: FinalAstTree): FinalAstTree {
+    // _overrideableProps 정보가 있으면 사용 (dependency 컴포넌트)
+    const spec = this.specDataManager.getSpec() as any;
+    if (spec._overrideableProps) {
+      astTree.overrideableProps = spec._overrideableProps;
+
+      // 오버라이드 가능한 노드의 스타일을 CSS 변수로 변경
+      this._applyOverrideableCssVariables(astTree, spec._overrideableProps);
+    }
+
+    // 메인 컴포넌트는 overrideableProps를 생성하지 않음
+    // (오버라이드는 dependency 컴포넌트에서만 처리)
+    return astTree;
+  }
+
+  /**
+   * 오버라이드 가능한 노드의 스타일에 CSS 변수 적용
+   * 예: background: #D6D6D6 → background: var(--rectangle1-bg, #D6D6D6)
+   *
+   * 주의:
+   * - CSS 변수명은 nodeName을 kebab-case로 변환하여 생성
+   * - CreateJsxTree._createOverrideStyleAttribute와 동일한 방식 사용
+   * - 이미 CSS 변수가 적용된 경우 중복 적용 방지
+   */
+  private _applyOverrideableCssVariables(
+    node: FinalAstTree,
+    overrideableProps: Record<
+      string,
+      { nodeId: string; nodeName: string; type: string }
+    >
+  ): void {
+    // fills 오버라이드만 처리 (Bg로 끝나는 prop)
+    const bgProps = Object.entries(overrideableProps).filter(
+      ([propName, info]) => propName.endsWith("Bg") && info.type === "fills"
+    );
+
+    if (bgProps.length === 0) {
+      return;
+    }
+
+    // 모든 노드를 순회하며 매칭되는 노드에 CSS 변수 적용
+    this._traverseAndApplyCssVariables(node, bgProps);
+  }
+
+  /**
+   * 트리를 순회하며 오버라이드 가능한 노드에 CSS 변수 적용
+   */
+  private _traverseAndApplyCssVariables(
+    node: FinalAstTree,
+    bgProps: Array<[string, { nodeId: string; nodeName: string; type: string }]>
+  ): void {
+    const normalizedNodeName = this._toCamelCase(node.name);
+
+    // 현재 노드가 오버라이드 대상인지 확인
+    for (const [_propName, info] of bgProps) {
+      if (normalizedNodeName === info.nodeName) {
+        const background = node.style?.base?.background;
+
+        if (background) {
+          // CSS 변수명: CreateJsxTree와 동일한 방식 (nodeName → kebab-case)
+          const cssVarName = `--${normalizedNodeName.replace(/([A-Z])/g, "-$1").toLowerCase()}-bg`;
+
+          // 이미 해당 CSS 변수가 적용되었는지 확인 (중복 방지)
+          if (background.includes(cssVarName)) {
+            break;
+          }
+
+          // CSS 변수로 감싸기 (기존 값이 var(...)이어도 중첩 가능)
+          node.style.base!.background = `var(${cssVarName}, ${background})`;
+        }
+        break; // 하나의 노드는 하나의 prop에만 매칭
+      }
+    }
+
+    // 자식 노드 순회
+    if (node.children) {
+      for (const child of node.children) {
+        this._traverseAndApplyCssVariables(child, bgProps);
+      }
+    }
+  }
+
+  /**
+   * 문자열을 camelCase로 변환
+   * CreateJsxTree의 toCamelCase와 동일한 로직 사용
+   */
+  private _toCamelCase(str: string): string {
+    return str
+      .replace(/[^a-zA-Z0-9]/g, " ")
+      .split(" ")
+      .filter(Boolean)
+      .map((word, index) =>
+        index === 0
+          ? word.toLowerCase()
+          : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      )
+      .join("");
+  }
+
+  /**
+   * SVG fill 색상을 부모의 CSS color로 변환
+   * SVG에서 fill="currentColor"를 사용하므로, 부모에 color 속성이 필요
+   *
+   * 로직:
+   * 1. tempAstTree.mergedNode에서 각 variant의 자식 중 fill 스타일을 찾음
+   * 2. Default variant의 fill → base style의 color
+   * 3. Disabled variant의 fill → :disabled pseudo style의 color
+   */
+  private updateSvgFillToColor(
+    astTree: FinalAstTree,
+    tempAstTree: TempAstTree
+  ): FinalAstTree {
+    const mergedNode = tempAstTree.mergedNode;
+    if (!mergedNode || mergedNode.length === 0) {
+      return astTree;
+    }
+
+    // mergedNode의 variantName에서 State가 있는지 확인
+    // (Plus 같은 내부 컴포넌트는 State가 없으므로 부모의 color를 상속받음)
+    const hasStateInVariants = mergedNode.some((variant) => {
+      const variantName = variant.variantName || variant.name || "";
+      return /State=/i.test(variantName);
+    });
+    if (!hasStateInVariants) {
+      return astTree;
+    }
+
+    // 각 variant에서 fill 색상 추출
+    const fillByVariant = new Map<string, string>();
+
+    for (const variant of mergedNode) {
+      const variantName = variant.variantName || variant.name || "";
+      const fillColor = this._findFillColorInChildren(variant);
+      if (fillColor) {
+        fillByVariant.set(variantName, fillColor);
+      }
+    }
+
+    if (fillByVariant.size === 0) {
+      return astTree;
+    }
+
+    // State 값 추출 (예: "Size=Large, State=Disabled" → "Disabled")
+    const getStateFromVariantName = (name: string): string | null => {
+      const match = name.match(/State=(\w+)/i);
+      return match ? match[1] : null;
+    };
+
+    // Default variant의 fill → base color
+    let defaultColor: string | null = null;
+    let disabledColor: string | null = null;
+
+    for (const [variantName, fillColor] of fillByVariant.entries()) {
+      const state = getStateFromVariantName(variantName);
+      if (state === "Default" || state === null) {
+        if (!defaultColor) defaultColor = fillColor;
+      } else if (state === "Disabled") {
+        disabledColor = fillColor;
+      }
+    }
+
+    // 모든 fill이 같으면 base에만 적용
+    const uniqueColors = new Set(fillByVariant.values());
+    if (uniqueColors.size === 1) {
+      const color = uniqueColors.values().next().value;
+      astTree.style.base = { ...astTree.style.base, color };
+    } else {
+      // Default color → base
+      if (defaultColor) {
+        astTree.style.base = { ...astTree.style.base, color: defaultColor };
+      }
+
+      // Disabled color → :disabled pseudo
+      if (disabledColor && disabledColor !== defaultColor) {
+        if (!astTree.style.pseudo) {
+          astTree.style.pseudo = {};
+        }
+        astTree.style.pseudo[":disabled"] = {
+          ...astTree.style.pseudo[":disabled"],
+          color: disabledColor,
+        };
+      }
+    }
+
+    return astTree;
+  }
+
+  /**
+   * variant의 자식 노드들에서 fill 색상 찾기
+   */
+  private _findFillColorInChildren(variant: StyleTree): string | null {
+    const cssStyle = variant.cssStyle || {};
+
+    // 현재 노드에 fill이 있으면 반환
+    if (cssStyle.fill) {
+      return this._extractColorFromFill(cssStyle.fill);
+    }
+
+    // 자식 노드들에서 찾기
+    if (variant.children) {
+      for (const child of variant.children) {
+        const childFill = this._findFillColorInChildren(child);
+        if (childFill) return childFill;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * fill 값에서 색상 추출
+   * "var(--Neutral-600, #4B4B4B)" → "#4B4B4B"
+   * "#4B4B4B" → "#4B4B4B"
+   */
+  private _extractColorFromFill(fill: string): string | null {
+    if (!fill) return null;
+
+    // var(--name, #color) 형태에서 fallback 색상 추출
+    const varMatch = fill.match(/var\([^,]+,\s*([^)]+)\)/);
+    if (varMatch) {
+      return varMatch[1].trim();
+    }
+
+    // 직접 색상 값
+    if (fill.startsWith("#") || fill.startsWith("rgb")) {
+      return fill;
+    }
+
+    return null;
   }
 
   private createFinalAstTree(tempAstTree: TempAstTree): FinalAstTree {
@@ -99,6 +337,13 @@ class _FinalAstTree {
     // 루트가 INSTANCE인 경우, 자식 노드들을 삭제하지 않음
     const isRootInstance = astTree.type === "INSTANCE";
 
+    // dependency 컴파일 판단:
+    // 원래 children이 비어있었고, enrichVariantWithInstanceChildren로 채워진 경우
+    // 이 경우에만 I... 노드를 유지해야 함 (실제 콘텐츠이므로)
+    const specData = this.specDataManager.getSpec();
+    const enrichedFromEmptyChildren =
+      (specData as any)._enrichedFromEmptyChildren === true;
+
     // 1. 삭제할 노드 수집
     traverseBFS(astTree, (node, meta) => {
       const targetSpec = this.specDataManager.getSpecById(node.id);
@@ -106,10 +351,25 @@ class _FinalAstTree {
         nodesToRemove.push(node);
       }
 
-      // INSTANCE 내부 노드 정리: 루트가 INSTANCE가 아닐 때만 I로 시작하는 노드 삭제
+      // INSTANCE 내부 노드 정리:
+      // - 루트가 INSTANCE이면 I... 노드 유지
+      // - 원래 children이 비어있고 enrichment로 채워진 경우 I... 노드 유지
+      // - I... 노드가 INSTANCE이고 dependency에 있는 componentId를 참조하면 유지 (externalComponent로 변환됨)
+      // - I... 노드의 자손 중에 dependency 참조가 있으면 유지 (부모도 필요)
+      // - 그 외에는 I... 노드 삭제
       const isInstanceChild = node.id.startsWith("I");
-      if (isInstanceChild && !isRootInstance) {
-        nodesToRemove.push(node);
+      if (isInstanceChild && !isRootInstance && !enrichedFromEmptyChildren) {
+        const dependencies = this.specDataManager.getDependencies();
+
+        // 현재 노드 또는 자손 중에 dependency 참조가 있는지 확인
+        const hasDescendantWithDependency = this._hasDescendantWithDependency(
+          node,
+          dependencies
+        );
+
+        if (!hasDescendantWithDependency) {
+          nodesToRemove.push(node);
+        }
       }
 
       const spec = this.specDataManager.getSpecById(node.id);
@@ -128,6 +388,36 @@ class _FinalAstTree {
     });
 
     return astTree;
+  }
+
+  /**
+   * 노드 또는 자손 중에 dependency 참조가 있는지 확인
+   * INSTANCE 타입이고 componentId가 dependencies에 있으면 true
+   */
+  private _hasDescendantWithDependency(
+    node: FinalAstTree,
+    dependencies: Record<string, any> | undefined
+  ): boolean {
+    if (!dependencies) return false;
+
+    // 현재 노드 확인
+    const nodeSpec = this.specDataManager.getSpecById(node.id);
+    const isInstance = (nodeSpec as any)?.type === "INSTANCE";
+    const componentId = (nodeSpec as any)?.componentId;
+    if (isInstance && componentId && dependencies[componentId]) {
+      return true;
+    }
+
+    // 자손 확인
+    if (node.children) {
+      for (const child of node.children) {
+        if (this._hasDescendantWithDependency(child, dependencies)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -210,8 +500,9 @@ class _FinalAstTree {
 
             // 부분 텍스트 스타일링 처리 (characterStyleOverrides)
             const characters = (textSpec as any).characters as string;
-            const styleOverrides = (textSpec as any)
-              .characterStyleOverrides as number[] | undefined;
+            const styleOverrides = (textSpec as any).characterStyleOverrides as
+              | number[]
+              | undefined;
             const styleTable = (textSpec as any).styleOverrideTable as
               | Record<string, any>
               | undefined;
@@ -244,6 +535,11 @@ class _FinalAstTree {
           );
           if (mergedSvg) {
             node.metaData.vectorSvg = mergedSvg;
+          }
+          // INSTANCE의 spec(absoluteBoundingBox 포함) 저장 - wrapper 크기 설정용
+          const instanceSpec = this.specDataManager.getSpecById(node.id);
+          if (instanceSpec) {
+            node.metaData.spec = instanceSpec;
           }
           break;
         }
@@ -1537,15 +1833,15 @@ class _FinalAstTree {
 
   /**
    * INSTANCE 노드를 slot 또는 externalComponent로 변환
-   * 
+   *
    * 루트 타입에 따른 처리:
    * - COMPONENT_SET: 내부 INSTANCE는 slot으로 처리 (커스터마이징 가능)
    * - INSTANCE/COMPONENT/FRAME: 내부 INSTANCE는 externalComponent로 처리 (인라인 렌더링)
-   * 
+   *
    * ArraySlot 조건 (2개 이상 반복):
    * - 같은 부모 아래에 2개 이상의 INSTANCE가 같은 컴포넌트를 참조
    * → externalComponent로 처리 (배열 렌더링에서 사용)
-   * 
+   *
    * isExposedInstance: true
    * → 항상 slot으로 처리 (Figma에서 명시적으로 노출된 인스턴스)
    */
@@ -1582,7 +1878,10 @@ class _FinalAstTree {
     }
 
     // ArraySlot에 속하는 INSTANCE ID 집합 수집
-    const arraySlotInstanceIds = this._collectArraySlotInstanceIds(astTree, componentIdToInfo);
+    const arraySlotInstanceIds = this._collectArraySlotInstanceIds(
+      astTree,
+      componentIdToInfo
+    );
 
     // 생성된 slot 이름 수집 (props에 추가하기 위함)
     const collectedSlotNames = new Set<string>();
@@ -1609,15 +1908,15 @@ class _FinalAstTree {
           const info = componentIdToInfo.get(componentId)!;
 
           const isArraySlot = arraySlotInstanceIds.has(node.id);
-          
+
           // slot으로 처리해야 하는 경우:
           // COMPONENT_SET 루트이고 ArraySlot이 아닌 단일 INSTANCE (커스터마이징 가능)
           // isExposedInstance: true인 경우는 externalComponent로 유지 (기존 동작)
           const shouldBeSlot = isComponentSetRoot && !isArraySlot;
-          
+
           if (shouldBeSlot) {
             const slotName = toCamelCase(info.componentName);
-            
+
             (node as any).isSlot = true;
             (node as any).slotName = slotName;
             collectedSlotNames.add(slotName);
@@ -1644,12 +1943,24 @@ class _FinalAstTree {
             }
           }
 
+          // INSTANCE children의 오버라이드 추출
+          // dependency의 styleTree.children에서 원본 노드 정보 가져오기
+          const instanceChildren = (spec as any)?.children || [];
+          const variantData = dependencies[componentId];
+          const variantStyleChildren = variantData?.styleTree?.children || [];
+          const overrideProps = this._extractOverridePropsFromStyle(
+            instanceChildren,
+            variantStyleChildren
+          );
+
           // externalComponent 필드 설정
           node.externalComponent = {
             componentId,
             componentSetId: info.componentSetId,
             componentName: info.componentName,
             props,
+            overrideProps:
+              Object.keys(overrideProps).length > 0 ? overrideProps : undefined,
           };
 
           // children 비우기 (외부 컴포넌트로 렌더링되므로)
@@ -1685,36 +1996,39 @@ class _FinalAstTree {
    */
   private _collectArraySlotInstanceIds(
     astTree: FinalAstTree,
-    componentIdToInfo: Map<string, { componentSetId: string; componentName: string }>
+    componentIdToInfo: Map<
+      string,
+      { componentSetId: string; componentName: string }
+    >
   ): Set<string> {
     const arraySlotInstanceIds = new Set<string>();
-    
+
     // 1단계: 트리 전체에서 componentSetId별 INSTANCE 수집
     const componentSetGroups = new Map<string, FinalAstTree[]>();
-    
+
     const collectInstances = (node: FinalAstTree): void => {
       if (node.type === "INSTANCE") {
         const spec = this.specDataManager.getSpecById(node.id);
         const componentId = (spec as any)?.componentId;
-        
+
         if (componentId && componentIdToInfo.has(componentId)) {
           const info = componentIdToInfo.get(componentId)!;
           const key = info.componentSetId;
-          
+
           if (!componentSetGroups.has(key)) {
             componentSetGroups.set(key, []);
           }
           componentSetGroups.get(key)!.push(node);
         }
       }
-      
+
       for (const child of node.children) {
         collectInstances(child);
       }
     };
-    
+
     collectInstances(astTree);
-    
+
     // 2단계: 2개 이상인 그룹의 INSTANCE ID 수집
     for (const [, instances] of componentSetGroups) {
       if (instances.length >= 2) {
@@ -1876,14 +2190,183 @@ class _FinalAstTree {
     }
 
     // fontStyle 오버라이드 (italic 등)
-    if (
-      override.fontStyle &&
-      override.fontStyle.toLowerCase() === "italic"
-    ) {
+    if (override.fontStyle && override.fontStyle.toLowerCase() === "italic") {
       cssStyle.fontStyle = "italic";
     }
 
     return Object.keys(cssStyle).length > 0 ? cssStyle : null;
+  }
+
+  /**
+   * INSTANCE children에서 오버라이드된 속성(fills, characters)을 추출
+   * styleTree 기반 비교 (dependency의 info.document.children이 비어있을 수 있음)
+   * prop 형태로 반환: { rectangle1Bg: "#D6D6D6", aaText: "90" }
+   */
+  private _extractOverridePropsFromStyle(
+    instanceChildren: any[],
+    variantStyleChildren: any[]
+  ): Record<string, string> {
+    const overrideProps: Record<string, string> = {};
+
+    if (!instanceChildren || instanceChildren.length === 0) {
+      return overrideProps;
+    }
+
+    // variantStyleChildren을 이름으로 매핑 (ID가 아닌 이름으로 비교)
+    const variantStyleMap = new Map<string, any>();
+    const buildStyleMap = (children: any[]) => {
+      for (const child of children) {
+        // 이름을 정규화하여 키로 사용
+        const normalizedName = child.name?.toLowerCase().replace(/\s+/g, "");
+        if (normalizedName) {
+          variantStyleMap.set(normalizedName, child);
+        }
+        if (child.children) {
+          buildStyleMap(child.children);
+        }
+      }
+    };
+    buildStyleMap(variantStyleChildren);
+
+    // INSTANCE children 순회하며 오버라이드 추출
+    const extractFromChildren = (children: any[]) => {
+      for (const child of children) {
+        // 노드 이름으로 원본 스타일 찾기
+        const normalizedName = child.name?.toLowerCase().replace(/\s+/g, "");
+        const originalStyle = variantStyleMap.get(normalizedName);
+
+        // 노드 이름을 prop 이름으로 변환 (camelCase)
+        const baseName = toCamelCase(child.name || "");
+
+        if (baseName) {
+          // fills 오버라이드 (background color)
+          if (child.fills && child.fills.length > 0) {
+            const bgColor = this._extractColorFromFills(child.fills);
+            if (bgColor) {
+              // 원본 스타일의 background와 비교
+              const originalBg = originalStyle?.cssStyle?.background;
+              // 원본과 다르면 오버라이드로 추가
+              if (!originalBg || !originalBg.includes(bgColor)) {
+                overrideProps[`${baseName}Bg`] = bgColor;
+              }
+            }
+          }
+
+          // characters 오버라이드 (text)
+          if (child.characters !== undefined) {
+            overrideProps[`${baseName}Text`] = child.characters;
+          }
+        }
+
+        // 재귀적으로 children 처리
+        if (child.children) {
+          extractFromChildren(child.children);
+        }
+      }
+    };
+
+    extractFromChildren(instanceChildren);
+
+    return overrideProps;
+  }
+
+  /**
+   * INSTANCE children에서 오버라이드된 속성(fills, characters)을 추출
+   * prop 형태로 반환: { rectangle1Bg: "#D6D6D6", aaText: "90" }
+   */
+  private _extractOverrideProps(
+    instanceChildren: any[],
+    variantChildren: any[]
+  ): Record<string, string> {
+    const overrideProps: Record<string, string> = {};
+
+    if (!instanceChildren || instanceChildren.length === 0) {
+      return overrideProps;
+    }
+
+    // 원본 variant children을 ID로 매핑
+    const variantMap = new Map<string, any>();
+    const buildVariantMap = (children: any[]) => {
+      for (const child of children) {
+        variantMap.set(child.id, child);
+        if (child.children) {
+          buildVariantMap(child.children);
+        }
+      }
+    };
+    buildVariantMap(variantChildren);
+
+    // INSTANCE children 순회하며 오버라이드 추출
+    const extractFromChildren = (children: any[]) => {
+      for (const child of children) {
+        const originalId = this._getOriginalIdFromInstanceId(child.id);
+        const original = variantMap.get(originalId);
+
+        if (original) {
+          // 노드 이름을 prop 이름으로 변환 (camelCase)
+          const baseName = toCamelCase(original.name);
+
+          // fills 오버라이드 (background color)
+          if (
+            child.fills !== undefined &&
+            JSON.stringify(child.fills) !== JSON.stringify(original.fills)
+          ) {
+            const bgColor = this._extractColorFromFills(child.fills);
+            if (bgColor) {
+              overrideProps[`${baseName}Bg`] = bgColor;
+            }
+          }
+
+          // characters 오버라이드 (text)
+          if (
+            child.characters !== undefined &&
+            child.characters !== original.characters
+          ) {
+            overrideProps[`${baseName}Text`] = child.characters;
+          }
+        }
+
+        // 재귀적으로 children 처리
+        if (child.children) {
+          extractFromChildren(child.children);
+        }
+      }
+    };
+
+    extractFromChildren(instanceChildren);
+
+    return overrideProps;
+  }
+
+  /**
+   * INSTANCE child ID에서 원본 ID 추출
+   * 예: I704:56;704:29;692:1613 → 692:1613
+   */
+  private _getOriginalIdFromInstanceId(instanceId: string): string {
+    if (!instanceId.startsWith("I")) return instanceId;
+    const parts = instanceId.split(";");
+    return parts[parts.length - 1];
+  }
+
+  /**
+   * fills 배열에서 색상 추출 (hex 형식)
+   */
+  private _extractColorFromFills(fills: any[]): string | null {
+    if (!fills || fills.length === 0) return null;
+
+    const fill = fills[0];
+    if (fill.type !== "SOLID" || !fill.color) return null;
+
+    const { r, g, b, a } = fill.color;
+    const toHex = (v: number) =>
+      Math.round(v * 255)
+        .toString(16)
+        .padStart(2, "0");
+
+    if (a !== undefined && a < 1) {
+      return `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${a})`;
+    }
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
   }
 
   /**
@@ -1927,6 +2410,5 @@ class _FinalAstTree {
     return Math.abs(hash).toString(36).substring(0, 6);
   }
 }
-
 
 export default _FinalAstTree;

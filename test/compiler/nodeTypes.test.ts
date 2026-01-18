@@ -87,9 +87,10 @@ describe("노드 타입 지원 테스트", () => {
   });
 
   describe("VECTOR 노드", () => {
-    test("vectorSvgs가 없으면 빈 svg 태그로 렌더링된다", () => {
+    test("vectorSvgs가 없으면 div 태그로 렌더링된다 (배경색 적용)", () => {
       const code = cache["noVectorSvgs"].code;
-      expect(code).toContain("<svg");
+      // vectorSvg가 없으면 svg 대신 div로 렌더링 (fill → background 변환)
+      expect(code).toContain("<div");
     });
 
     test("vectorSvgs가 있으면 SVG가 JSX로 변환되어 렌더링된다", () => {

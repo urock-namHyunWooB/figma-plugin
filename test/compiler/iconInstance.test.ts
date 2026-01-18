@@ -4,7 +4,7 @@ import frame03MockData from "../fixtures/any/frame-03.json";
 
 import FigmaCompiler, { FinalAstTree } from "@compiler";
 import NodeMatcher from "@compiler/core/NodeMatcher";
-import RefineProps from "@compiler/core/RefineProps";
+import PropsExtractor from "@compiler/manager/PropsExtractor";
 import CreateAstTree from "@compiler/core/ast-tree/CreateAstTree";
 import CreateSuperTree from "@compiler/core/super-tree/CreateSuperTree";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
@@ -42,7 +42,7 @@ describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
         specDataManager,
         matcher
       );
-      const refineProps = new RefineProps(renderTree, specDataManager);
+      const refineProps = new PropsExtractor(specDataManager);
 
       const createAstTree = new CreateAstTree(
         specDataManager,

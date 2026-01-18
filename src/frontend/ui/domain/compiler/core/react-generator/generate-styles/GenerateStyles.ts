@@ -495,14 +495,41 @@ class GenerateStyles {
 
   /**
    * Pseudo 스타일을 CSS 문자열로 변환
+   *
+   * - :hover, :active는 :not(:disabled)로 감싸서 disabled 상태에서 적용되지 않도록 함
+   * - 순서 중요: hover → focus → active → disabled (클릭 시 active가 hover를 덮어씀)
    */
   private _pseudoStyleToCssString(
     pseudo: Record<string, Record<string, any>>
   ): string {
-    return Object.entries(pseudo)
+    // :disabled가 있는지 확인
+    const hasDisabled = ":disabled" in pseudo;
+
+    // CSS 우선순위에 맞게 정렬 (LVHFA: Link, Visited, Hover, Focus, Active)
+    const pseudoOrder = [":hover", ":focus", ":active", ":disabled"];
+    const sortedEntries = Object.entries(pseudo).sort(([a], [b]) => {
+      const indexA = pseudoOrder.indexOf(a);
+      const indexB = pseudoOrder.indexOf(b);
+      // 목록에 없으면 맨 앞으로
+      if (indexA === -1) return -1;
+      if (indexB === -1) return 1;
+      return indexA - indexB;
+    });
+
+    return sortedEntries
       .map(([pseudoClass, styles]) => {
         const cssContent = this._styleObjectToCssString(styles);
-        return `\n  ${pseudoClass} {\n${cssContent}\n  }`;
+
+        // :hover, :active는 disabled 상태에서 적용되면 안됨
+        let finalPseudoClass = pseudoClass;
+        if (
+          hasDisabled &&
+          (pseudoClass === ":hover" || pseudoClass === ":active")
+        ) {
+          finalPseudoClass = `&:not(:disabled)${pseudoClass}`;
+        }
+
+        return `\n  ${finalPseudoClass} {\n${cssContent}\n  }`;
       })
       .join("");
   }

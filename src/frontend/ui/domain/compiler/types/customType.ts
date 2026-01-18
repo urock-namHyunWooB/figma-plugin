@@ -113,7 +113,7 @@ export interface TempAstTree extends SuperTreeNode {
   parent: TempAstTree | null;
   visible: VisibleValue | null;
   style: StyleObject;
-  mergedNode: MergedNode[];
+  mergedNode: NewMergedNode[];
   children: TempAstTree[];
 
   /**
@@ -180,6 +180,15 @@ export interface FinalAstTree {
    * 이 필드가 있으면 children은 무시되고 외부 컴포넌트로 렌더링됨
    */
   externalComponent?: ExternalComponentRef;
+
+  /**
+   * dependency 컴포넌트가 받을 수 있는 오버라이드 props
+   * { propName: { nodeName, type } } 형태
+   */
+  overrideableProps?: Record<
+    string,
+    { nodeId: string; nodeName: string; type: string }
+  >;
 }
 
 /**
@@ -195,4 +204,6 @@ export interface ExternalComponentRef {
   componentName: string;
   /** INSTANCE에서 전달하는 props (예: { size: "default", selected: "false" }) */
   props: Record<string, string>;
+  /** INSTANCE children의 오버라이드된 속성 (fills → Bg, characters → Text) */
+  overrideProps?: Record<string, string>;
 }

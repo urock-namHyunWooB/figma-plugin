@@ -55,10 +55,20 @@ class ArraySlotDetector {
 
   /**
    * 배열 슬롯을 감지하여 반환
+   *
+   * COMPONENT_SET 또는 COMPONENT 루트에서만 ArraySlot 감지
+   * FRAME 등 일반 노드에서는 정적으로 렌더링
    */
   public detect(): ArraySlot[] {
-    const slots: ArraySlot[] = [];
     const document = this.data.info.document;
+
+    // COMPONENT_SET 또는 COMPONENT가 아니면 ArraySlot 감지하지 않음
+    // (FRAME 등은 정적으로 렌더링)
+    if (document.type !== "COMPONENT_SET" && document.type !== "COMPONENT") {
+      return [];
+    }
+
+    const slots: ArraySlot[] = [];
 
     // 모든 노드를 순회하면서 배열 슬롯 감지
     this.traverseAndDetect(document, slots);
@@ -92,9 +102,9 @@ class ArraySlotDetector {
   private detectArraySlotInChildren(parentNode: any): ArraySlot | null {
     const children = parentNode.children || [];
 
-    // INSTANCE 타입인 children만 필터링
+    // INSTANCE 타입이면서 visible: false가 아닌 children만 필터링
     const instances = children.filter(
-      (child: any) => child.type === "INSTANCE"
+      (child: any) => child.type === "INSTANCE" && child.visible !== false
     );
 
     if (instances.length < 2) {
@@ -120,11 +130,12 @@ class ArraySlotDetector {
       }
 
       // 배열 슬롯으로 감지
-      // key 형식: "componentSetId:1268:564" 또는 "componentId:247:56500"
-      const colonIndex = key.indexOf(":");
-      const type = key.substring(0, colonIndex);
-      const id = key.substring(colonIndex + 1);
-      const isComponentSet = type === "componentSetId";
+      // key 형식: "componentId:247:56500"
+      const componentId = key.replace("componentId:", "");
+
+      // componentSetId 조회 (있으면 사용)
+      const component = this.components[componentId];
+      const componentSetId = component?.componentSetId;
 
       // 슬롯 이름 추론
       const slotName = this.inferSlotName(validInstances, parentNode.name);
@@ -136,8 +147,8 @@ class ArraySlotDetector {
         parentId: parentNode.id,
         parentName: parentNode.name,
         slotName,
-        componentSetId: isComponentSet ? id : undefined,
-        componentId: !isComponentSet ? id : undefined,
+        componentSetId: componentSetId,
+        componentId: componentId,
         instances: validInstances.map((instance: any) => ({
           id: instance.id,
           name: instance.name,
@@ -152,21 +163,17 @@ class ArraySlotDetector {
   }
 
   /**
-   * INSTANCE들을 componentSetId 또는 componentId로 그룹핑
+   * INSTANCE들을 componentId로 그룹핑
+   *
+   * 동일한 componentId = 정확히 같은 컴포넌트 variant의 복제본
+   * 이 방식이 가장 정확하고 신뢰할 수 있는 ArraySlot 감지 방법
    */
-  private groupInstancesByComponent(
-    instances: any[]
-  ): Record<string, any[]> {
+  private groupInstancesByComponent(instances: any[]): Record<string, any[]> {
     const groups: Record<string, any[]> = {};
 
     for (const instance of instances) {
       const componentId = instance.componentId;
-      const component = this.components[componentId];
-
-      // componentSetId가 있으면 우선 사용, 없으면 componentId 사용
-      const key = component?.componentSetId
-        ? `componentSetId:${component.componentSetId}`
-        : `componentId:${componentId}`;
+      const key = `componentId:${componentId}`;
 
       if (!groups[key]) {
         groups[key] = [];
@@ -347,8 +354,6 @@ class ArraySlotDetector {
 
     return instances;
   }
-
 }
 
 export default ArraySlotDetector;
-

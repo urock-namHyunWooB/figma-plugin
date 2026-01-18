@@ -5,22 +5,34 @@ import CreateStyledComponent from "@compiler/core/react-generator/generate-compo
 import { ArraySlot } from "@compiler/core/ArraySlotDetector";
 import { StyleStrategy } from "@compiler/core/react-generator/style-strategy";
 
+/**
+ * GenerateComponent 옵션
+ */
+export interface GenerateComponentOptions {
+  /** 스타일 전략 */
+  styleStrategy?: StyleStrategy;
+  /** 디버그 모드: true이면 data-figma-id 속성 추가 */
+  debug?: boolean;
+}
+
 class GenerateComponent {
   private factory: NodeFactory;
   private astTree: FinalAstTree;
   private arraySlots: ArraySlot[];
   private styleStrategy?: StyleStrategy;
+  private debug: boolean;
 
   constructor(
     factory: NodeFactory,
     astTree: FinalAstTree,
     arraySlots: ArraySlot[] = [],
-    styleStrategy?: StyleStrategy
+    options?: GenerateComponentOptions
   ) {
     this.factory = factory;
     this.astTree = astTree;
     this.arraySlots = arraySlots;
-    this.styleStrategy = styleStrategy;
+    this.styleStrategy = options?.styleStrategy;
+    this.debug = options?.debug ?? false;
   }
   /**
    * 컴포넌트 함수 생성
@@ -29,11 +41,10 @@ class GenerateComponent {
   public createComponentFunction(
     componentName: string
   ): ts.FunctionDeclaration {
-    const jsxTree = new CreateJsxTree(
-      this.astTree,
-      this.arraySlots,
-      this.styleStrategy
-    ).jsxTree;
+    const jsxTree = new CreateJsxTree(this.astTree, this.arraySlots, {
+      styleStrategy: this.styleStrategy,
+      debug: this.debug,
+    }).jsxTree;
 
     // JsxExpression을 return 문에서 사용할 수 있도록 변환
     let returnExpression: ts.Expression;
@@ -50,8 +61,16 @@ class GenerateComponent {
       returnExpression = jsxTree;
     }
 
-    // Props 구조 분해 생성
-    const destructuringStatement = this._createPropsDestructuring();
+    // Props 구조 분해 및 배열 슬롯 안전화 문장 생성
+    const { destructuring, arraySlotSafeStatements } =
+      this._createPropsDestructuringWithArraySafety();
+
+    // 함수 본문 구성
+    const bodyStatements: ts.Statement[] = [
+      destructuring,
+      ...arraySlotSafeStatements,
+      this.factory.createReturnStatement(returnExpression),
+    ];
 
     return this.factory.createFunctionDeclaration(
       [
@@ -75,24 +94,21 @@ class GenerateComponent {
         ),
       ],
       undefined,
-      this.factory.createBlock(
-        [
-          // const { size = "Large", ...restProps } = props;
-          destructuringStatement,
-          // return <JSX>;
-          this.factory.createReturnStatement(returnExpression),
-        ],
-        true
-      )
+      this.factory.createBlock(bodyStatements, true)
     );
   }
 
   /**
-   * Props 구조 분해 선언 생성
-   * const { size = "Large", leftIcon, rightIcon, text, ...restProps } = props;
-   * props가 비어있어도 restProps는 항상 생성
+   * Props 구조 분해 선언 생성 (배열 슬롯 안전화 포함)
+   *
+   * 배열 슬롯의 경우, 부모에서 문자열 등 비-배열 값이 전달될 수 있으므로:
+   * 1. 구조 분해: const { options: _rawOptions, ... } = props;
+   * 2. 안전화: const options = Array.isArray(_rawOptions) ? _rawOptions : [];
    */
-  private _createPropsDestructuring(): ts.VariableStatement {
+  private _createPropsDestructuringWithArraySafety(): {
+    destructuring: ts.VariableStatement;
+    arraySlotSafeStatements: ts.VariableStatement[];
+  } {
     const props = this.astTree.props || {};
 
     // 배열 슬롯 이름 수집 (중복 제거)
@@ -101,7 +117,7 @@ class GenerateComponent {
     );
 
     const bindingElements: ts.BindingElement[] = [];
-    const propNames: string[] = [];
+    const arraySlotSafeStatements: ts.VariableStatement[] = [];
 
     for (const [propName, propDef] of Object.entries(props)) {
       const prop = propDef as any;
@@ -110,8 +126,6 @@ class GenerateComponent {
       if (arraySlotNames.has(propName.toLowerCase())) {
         continue;
       }
-
-      propNames.push(propName);
 
       // 기본값이 있는 경우
       if (prop.defaultValue !== undefined) {
@@ -135,16 +149,64 @@ class GenerateComponent {
       }
     }
 
-    // 배열 슬롯 props 추가 (기본값: 빈 배열)
+    // 배열 슬롯 props: 임시 변수로 추출 후 안전화
     for (const slotName of arraySlotNames) {
-      propNames.push(slotName);
+      const rawVarName = `_raw${slotName.charAt(0).toUpperCase()}${slotName.slice(1)}`;
+
+      // 구조 분해: slotName: _rawSlotName
       const bindingElement = this.factory.createBindingElement(
         undefined,
-        undefined,
-        this.factory.createIdentifier(slotName),
-        this.factory.createArrayLiteralExpression([]) // 기본값: []
+        this.factory.createIdentifier(slotName), // propertyName
+        this.factory.createIdentifier(rawVarName), // name (임시 변수)
+        undefined
       );
       bindingElements.push(bindingElement);
+
+      // 안전화 문장: const slotName = Array.isArray(_rawSlotName) ? _rawSlotName : [];
+      const safeStatement = this.factory.createVariableStatement(
+        undefined,
+        this.factory.createVariableDeclarationList(
+          [
+            this.factory.createVariableDeclaration(
+              this.factory.createIdentifier(slotName),
+              undefined,
+              undefined,
+              this.factory.createConditionalExpression(
+                // Array.isArray(_rawSlotName)
+                this.factory.createCallExpression(
+                  this.factory.createPropertyAccessExpression(
+                    this.factory.createIdentifier("Array"),
+                    this.factory.createIdentifier("isArray")
+                  ),
+                  undefined,
+                  [this.factory.createIdentifier(rawVarName)]
+                ),
+                this.factory.createToken(ts.SyntaxKind.QuestionToken),
+                // ? _rawSlotName
+                this.factory.createIdentifier(rawVarName),
+                this.factory.createToken(ts.SyntaxKind.ColonToken),
+                // : []
+                this.factory.createArrayLiteralExpression([])
+              )
+            ),
+          ],
+          ts.NodeFlags.Const
+        )
+      );
+      arraySlotSafeStatements.push(safeStatement);
+    }
+
+    // overrideableProps 추가 (dependency 컴포넌트의 오버라이드 가능한 prop)
+    if (this.astTree.overrideableProps) {
+      for (const [propName] of Object.entries(this.astTree.overrideableProps)) {
+        const bindingElement = this.factory.createBindingElement(
+          undefined,
+          undefined,
+          this.factory.createIdentifier(propName),
+          undefined
+        );
+        bindingElements.push(bindingElement);
+      }
     }
 
     // children prop 추가 (의존 컴포넌트가 SVG 등을 children으로 받을 수 있도록)
@@ -170,7 +232,7 @@ class GenerateComponent {
       this.factory.createObjectBindingPattern(bindingElements);
 
     // const { ... } = props;
-    return this.factory.createVariableStatement(
+    const destructuring = this.factory.createVariableStatement(
       undefined,
       this.factory.createVariableDeclarationList(
         [
@@ -184,6 +246,8 @@ class GenerateComponent {
         ts.NodeFlags.Const
       )
     );
+
+    return { destructuring, arraySlotSafeStatements };
   }
 
   /**

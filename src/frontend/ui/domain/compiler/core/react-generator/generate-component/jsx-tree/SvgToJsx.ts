@@ -273,7 +273,9 @@ class SvgToJsx {
         this.factory.createJsxAttributes(attributes)
       ),
       children as ts.JsxChild[],
-      this.factory.createJsxClosingElement(this.factory.createIdentifier(tagName))
+      this.factory.createJsxClosingElement(
+        this.factory.createIdentifier(tagName)
+      )
     );
   }
 
@@ -292,10 +294,20 @@ class SvgToJsx {
       // 제거 대상 속성 스킵
       if (jsxAttrName === "__REMOVE__") continue;
 
+      // fill 속성이 색상 값이면 currentColor로 변경
+      // (State에 따라 CSS color로 제어 가능하도록)
+      let finalValue = attrValue;
+      if (attrName === "fill" && this._isColorValue(attrValue)) {
+        finalValue = "currentColor";
+      }
+
       // 값이 순수 숫자인 경우에만 JSX Expression으로 (공백 포함 시 문자열 유지)
-      const numValue = parseFloat(attrValue);
-      const isNumeric = !isNaN(numValue) && isFinite(numValue) && 
-        !/[a-zA-Z%]/.test(attrValue) && !/\s/.test(attrValue);
+      const numValue = parseFloat(finalValue);
+      const isNumeric =
+        !isNaN(numValue) &&
+        isFinite(numValue) &&
+        !/[a-zA-Z%]/.test(finalValue) &&
+        !/\s/.test(finalValue);
 
       let jsxAttrValue: ts.JsxAttributeValue;
       if (isNumeric) {
@@ -304,7 +316,7 @@ class SvgToJsx {
           this.factory.createNumericLiteral(numValue)
         );
       } else {
-        jsxAttrValue = this.factory.createStringLiteral(attrValue);
+        jsxAttrValue = this.factory.createStringLiteral(finalValue);
       }
 
       jsxAttrs.push(
@@ -316,6 +328,21 @@ class SvgToJsx {
     }
 
     return jsxAttrs;
+  }
+
+  /**
+   * 값이 색상 값인지 확인
+   * #RRGGBB, #RGB, rgb(), rgba() 등
+   */
+  private _isColorValue(value: string): boolean {
+    if (!value) return false;
+    // #으로 시작하는 hex 색상
+    if (/^#[0-9A-Fa-f]{3,8}$/.test(value)) return true;
+    // rgb, rgba, hsl, hsla 함수
+    if (/^(rgb|rgba|hsl|hsla)\(/.test(value)) return true;
+    // none은 색상 아님
+    if (value === "none") return false;
+    return false;
   }
 
   /**
@@ -351,4 +378,3 @@ interface ParsedElement {
 }
 
 export default SvgToJsx;
-

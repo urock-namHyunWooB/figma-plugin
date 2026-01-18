@@ -299,6 +299,164 @@ describe("Tailwind 런타임 실행 검증 테스트", () => {
   });
 });
 
+describe("TailwindStrategy CSS-to-Tailwind 변환 테스트", () => {
+  describe("정확한 값 매핑", () => {
+    test.concurrent.each(sampleFixtures)(
+      "$name에서 display: flex가 'flex' 클래스로 변환되어야 한다",
+      async ({ name, data }) => {
+        const cached = await getCachedCompile(name, data);
+        const code = cached.tailwind;
+
+        if (!code) return;
+
+        // flex 레이아웃을 가진 컴포넌트는 'flex' 클래스가 있어야 함
+        if (code.includes("display") || code.includes("flex-direction")) {
+          expect(code).toMatch(/\bflex\b/);
+        }
+      }
+    );
+
+    test.concurrent.each(sampleFixtures)(
+      "$name에서 position 값이 Tailwind 클래스로 변환되어야 한다",
+      async ({ name, data }) => {
+        const cached = await getCachedCompile(name, data);
+        const code = cached.tailwind;
+
+        if (!code) return;
+
+        // 잘못된 패턴: position-[absolute] (arbitrary value 사용)
+        // 올바른 패턴: absolute, relative, fixed 등
+        expect(code).not.toMatch(/position-\[/);
+      }
+    );
+
+    test.concurrent.each(sampleFixtures)(
+      "$name에서 justify-content가 justify- 클래스로 변환되어야 한다",
+      async ({ name, data }) => {
+        const cached = await getCachedCompile(name, data);
+        const code = cached.tailwind;
+
+        if (!code) return;
+
+        // 잘못된 패턴: [justify-content:center]
+        // 올바른 패턴: justify-center, justify-start 등
+        expect(code).not.toMatch(/\[justify-content:/);
+      }
+    );
+  });
+
+  describe("Arbitrary value 변환", () => {
+    test.concurrent.each(sampleFixtures)(
+      "$name에서 픽셀 값이 arbitrary value로 변환되어야 한다",
+      async ({ name, data }) => {
+        const cached = await getCachedCompile(name, data);
+        const code = cached.tailwind;
+
+        if (!code) return;
+
+        // 픽셀 값은 w-[123px], h-[456px] 형태로 변환되어야 함
+        // 잘못된 패턴: width-[123px] (prefix 오류)
+        expect(code).not.toMatch(/\bwidth-\[/);
+        expect(code).not.toMatch(/\bheight-\[/);
+
+        // w-[...px], h-[...px] 형태 확인
+        if (code.includes("px]")) {
+          expect(code).toMatch(/[wh]-\[\d+(\.\d+)?px\]/);
+        }
+      }
+    );
+
+    test.concurrent.each(sampleFixtures)(
+      "$name에서 100% 값이 w-full/h-full로 변환되어야 한다",
+      async ({ name, data }) => {
+        const cached = await getCachedCompile(name, data);
+        const code = cached.tailwind;
+
+        if (!code) return;
+
+        // 잘못된 패턴: w-[100%], h-[100%]
+        expect(code).not.toMatch(/w-\[100%\]/);
+        expect(code).not.toMatch(/h-\[100%\]/);
+      }
+    );
+  });
+
+  describe("rgba/hsla 색상 처리", () => {
+    test.concurrent.each(sampleFixtures)(
+      "$name에서 rgba 값이 잘리지 않아야 한다",
+      async ({ name, data }) => {
+        const cached = await getCachedCompile(name, data);
+        const code = cached.tailwind;
+
+        if (!code) return;
+
+        // 잘못된 패턴: bg-[rgba(0] (잘린 rgba)
+        expect(code).not.toMatch(/bg-\[rgba\(\d+\]/);
+
+        // rgba가 있다면 완전한 형태여야 함: bg-[rgba(0,_0,_0,_0.38)]
+        const rgbaMatches = code.match(/bg-\[rgba\([^\]]+\]/g);
+        if (rgbaMatches) {
+          for (const match of rgbaMatches) {
+            // 4개의 값이 있어야 함 (r, g, b, a)
+            const commaCount = (match.match(/,/g) || []).length;
+            expect(commaCount).toBe(3);
+          }
+        }
+      }
+    );
+
+    test.concurrent.each(sampleFixtures)(
+      "$name에서 CSS 변수가 arbitrary property로 변환되어야 한다",
+      async ({ name, data }) => {
+        const cached = await getCachedCompile(name, data);
+        const code = cached.tailwind;
+
+        if (!code) return;
+
+        // CSS 변수가 있는 경우 [background-color:var(...)] 형태로 변환되어야 함
+        if (code.includes("var(--")) {
+          // background-color의 var()는 arbitrary property로 처리
+          expect(code).toMatch(/\[(background-color|color|fill):/);
+        }
+      }
+    );
+  });
+
+  describe("특수 속성 처리", () => {
+    test.concurrent.each(sampleFixtures)(
+      "$name에서 border-radius가 rounded- 클래스로 변환되어야 한다",
+      async ({ name, data }) => {
+        const cached = await getCachedCompile(name, data);
+        const code = cached.tailwind;
+
+        if (!code) return;
+
+        // border-radius는 rounded-[...] 형태로 변환되어야 함
+        if (code.includes("radius") || code.includes("rounded")) {
+          expect(code).toMatch(/rounded-/);
+          expect(code).not.toMatch(/\[border-radius:/);
+        }
+      }
+    );
+
+    test.concurrent.each(sampleFixtures)(
+      "$name에서 gap이 gap- 클래스로 변환되어야 한다",
+      async ({ name, data }) => {
+        const cached = await getCachedCompile(name, data);
+        const code = cached.tailwind;
+
+        if (!code) return;
+
+        // gap은 gap-[...] 형태로 변환되어야 함
+        if (code.includes("gap")) {
+          expect(code).toMatch(/gap-/);
+          expect(code).not.toMatch(/\[gap:/);
+        }
+      }
+    );
+  });
+});
+
 describe("Tailwind 코드 품질 검증 테스트", () => {
   // NOTE: "중복 변수 선언 검증"은 "런타임 실행 검증"에서 이미 커버되므로 제거됨
   // (중복 변수가 있으면 eval에서 실패함)

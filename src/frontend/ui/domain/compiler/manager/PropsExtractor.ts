@@ -1,23 +1,27 @@
-import { RenderTree } from "@compiler";
-import SpecDataManager from "@compiler/manager/SpecDataManager";
-
+import SpecDataManager from "./SpecDataManager";
 import { toCamelCase } from "@compiler/utils/normalizeString";
 
 export type PropsDef = Record<string, any>;
 
-class RefineProps {
+/**
+ * Figma 원본 데이터에서 Props 정의를 추출하는 클래스
+ *
+ * - componentPropertyDefinitions (COMPONENT_SET)
+ * - componentProperties (INSTANCE/COMPONENT)
+ * - componentPropertyReferences (dependencies)
+ *
+ * 에서 props를 추출하고 정규화합니다.
+ */
+class PropsExtractor {
   private specDataManager: SpecDataManager;
-  private renderTree: RenderTree;
-
   private propsDef: PropsDef = {};
 
   public get refinedProps() {
     return this.propsDef;
   }
 
-  constructor(renderTree: RenderTree, specDataManager: SpecDataManager) {
+  constructor(specDataManager: SpecDataManager) {
     this.specDataManager = specDataManager;
-    this.renderTree = renderTree;
 
     // COMPONENT_SET: componentPropertyDefinitions 사용
     // INSTANCE/COMPONENT: componentProperties 사용 (형식 변환 필요)
@@ -27,9 +31,8 @@ class RefineProps {
       // INSTANCE의 componentProperties를 propsDef 형식으로 변환
       const componentProperties = specDataManager.getComponentProperties();
       if (componentProperties) {
-        propsDef = this.convertComponentPropertiesToDefinitions(
-          componentProperties
-        );
+        propsDef =
+          this.convertComponentPropertiesToDefinitions(componentProperties);
       }
     }
 
@@ -43,10 +46,7 @@ class RefineProps {
     this.propsDef = { ...this.propsDef, ...referencedProps };
 
     if (this.propsDef) {
-      this.propsDef = this.addId(this.propsDef);
       this.propsDef = this.normalizePropsName(this.propsDef);
-      // this.propsDef = this.refineLikeComponent(this.propsDef);
-      // this.propsDef = this.refineStateProp(this.propsDef);
     }
   }
 
@@ -92,9 +92,7 @@ class RefineProps {
    * 예: TEXT 노드의 componentPropertyReferences.characters = "Text#1140:2"
    * → text prop 생성
    */
-  private extractPropsFromPropertyReferences(
-    document: any
-  ): PropsDef {
+  private extractPropsFromPropertyReferences(document: any): PropsDef {
     const propsDef: PropsDef = {};
     const typeCounters: Record<string, number> = {};
     const processedRefs = new Set<string>();
@@ -107,7 +105,11 @@ class RefineProps {
         // characters 참조 → TEXT prop
         if (refs.characters && !processedRefs.has(refs.characters)) {
           processedRefs.add(refs.characters);
-          const propName = this.generatePropName(refs.characters, "TEXT", typeCounters);
+          const propName = this.generatePropName(
+            refs.characters,
+            "TEXT",
+            typeCounters
+          );
           propsDef[propName] = {
             type: "TEXT",
             defaultValue: node.characters || node.name || "",
@@ -118,7 +120,11 @@ class RefineProps {
         // visible 참조 → BOOLEAN prop
         if (refs.visible && !processedRefs.has(refs.visible)) {
           processedRefs.add(refs.visible);
-          const propName = this.generatePropName(refs.visible, "BOOLEAN", typeCounters);
+          const propName = this.generatePropName(
+            refs.visible,
+            "BOOLEAN",
+            typeCounters
+          );
           propsDef[propName] = {
             type: "BOOLEAN",
             defaultValue: node.visible !== false,
@@ -164,20 +170,6 @@ class RefineProps {
   }
 
   /**
-   * prop 이름에서 특수문자 제거 (Number#796:3 → Number7963)
-   * @deprecated generatePropName 사용 권장
-   */
-  private normalizePropertyName(name: string): string {
-    return name.replace(/[^a-zA-Z0-9]/g, "");
-  }
-
-  private addId(propsDef: PropsDef) {
-    const props = {} as PropsDef;
-
-    return propsDef;
-  }
-
-  /**
    * prop 이름을 camelCase로 정규화
    * 예: "With label" → "withLabel"
    * 원본 키는 originalKey 필드에 저장 (TypeScript 타입 인덱싱용)
@@ -189,7 +181,7 @@ class RefineProps {
       const normalizedKey = toCamelCase(key);
       // 빈 문자열이면 스킵 (특수문자만 있는 경우)
       if (!normalizedKey) return;
-      
+
       props[normalizedKey] = {
         ...value,
         // 이미 originalKey가 있으면 보존, 없으면 현재 key 사용
@@ -199,40 +191,6 @@ class RefineProps {
 
     return props;
   }
-
-  private refineLikeComponent(propsDef: PropsDef) {
-    Object.entries(propsDef).forEach(([key, value]) => {
-      if (
-        ((value.type === "VARIANT" &&
-          value.variantOptions?.[0].toLowerCase() === "false") ||
-          value.variantOptions?.[0].toLowerCase() === "true") &&
-        (value.variantOptions?.[1].toLowerCase() === "false" ||
-          value.variantOptions?.[1].toLowerCase() === "true")
-      ) {
-        value.type = "Component";
-        delete value.defaultValue;
-        delete value.variantOptions;
-      }
-    });
-
-    return propsDef;
-  }
-
-  private refineStateProp(propsDef: PropsDef) {
-    Object.entries(propsDef).forEach(([key, value]) => {
-      if (
-        key.toLowerCase().includes("state") &&
-        value.type === "VARIANT" &&
-        (value.variantOptions.includes("Hover") ||
-          value.variantOptions.includes("hover") ||
-          value.variantOptions.includes("HOVER"))
-      ) {
-        delete propsDef[key];
-      }
-    });
-
-    return propsDef;
-  }
 }
 
-export default RefineProps;
+export default PropsExtractor;

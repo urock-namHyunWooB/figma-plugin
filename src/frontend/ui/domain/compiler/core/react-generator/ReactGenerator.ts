@@ -28,6 +28,8 @@ interface CodeSection {
 export interface ReactGeneratorOptions {
   /** 스타일 전략 옵션 (기본: emotion) */
   styleStrategy?: StyleStrategyOptions;
+  /** 디버그 모드: true이면 data-figma-id 속성 추가 */
+  debug?: boolean;
 }
 
 class ReactGenerator {
@@ -99,8 +101,24 @@ class ReactGenerator {
       factory,
       astTree,
       arraySlots,
-      this.styleStrategy
+      {
+        styleStrategy: this.styleStrategy,
+        debug: this.options.debug,
+      }
     );
+  }
+
+  /**
+   * 최종 코드 문자열 생성
+   */
+  public async generateComponentCode(componentName: string): Promise<string> {
+    const sections = this.createCodeSections(componentName);
+
+    const unformattedCode = this.printSections(sections);
+
+    const rtnVal = await this.formatCode(unformattedCode);
+
+    return rtnVal;
   }
 
   /**
@@ -130,19 +148,6 @@ class ReactGenerator {
         componentName,
       })
     );
-  }
-
-  /**
-   * 최종 코드 문자열 생성
-   */
-  public async generateComponentCode(componentName: string): Promise<string> {
-    const sections = this.createCodeSections(componentName);
-
-    const unformattedCode = this.printSections(sections);
-
-    const rtnVal = await this.formatCode(unformattedCode);
-
-    return rtnVal;
   }
 
   /**

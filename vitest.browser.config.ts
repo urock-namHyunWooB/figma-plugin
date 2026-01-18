@@ -18,6 +18,11 @@ export default defineConfig({
     environment: "happy-dom",
     setupFiles: ["./test/setup.ts"],
     testTimeout: 30000,
+    silent: true, // 모든 console 출력 비활성화
+    onConsoleLog(log, type) {
+      // 모든 console 로그 차단
+      return false;
+    },
     // 브라우저 전용 테스트만 실행
     include: ["test/**/*.browser-only.test.ts", "test/**/browser-only.test.ts"],
     // 병렬 실행

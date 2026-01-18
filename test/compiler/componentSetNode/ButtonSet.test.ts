@@ -4,7 +4,7 @@ import * as React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import NodeMatcher from "@compiler/core/NodeMatcher";
-import RefineProps from "@compiler/core/RefineProps";
+import PropsExtractor from "@compiler/manager/PropsExtractor";
 import CreateAstTree from "@compiler/core/ast-tree/CreateAstTree";
 import CreateSuperTree from "@compiler/core/super-tree/CreateSuperTree";
 import { FinalAstTree, SuperTreeNode } from "@compiler";
@@ -150,7 +150,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
     specDataManager,
     matcher
   );
-  const refineProps = new RefineProps(renderTree, specDataManager);
+  const refineProps = new PropsExtractor(specDataManager);
 
   const createFinalAstTree = new CreateAstTree(
     specDataManager,

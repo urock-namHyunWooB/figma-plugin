@@ -17,9 +17,18 @@ export default defineConfig({
     environment: "happy-dom",
     setupFiles: ["./test/setup.ts"],
     testTimeout: 30000,
+    silent: true, // 모든 console 출력 비활성화
+    onConsoleLog(log, type) {
+      // 모든 console 로그 차단
+      return false;
+    },
     include: ["test/**/*.test.ts", "test/**/*.test.tsx"],
     // 브라우저 전용 테스트 제외 (npm run test:browser로 실행)
-    exclude: ["test/**/*.browser-only.test.ts", "test/**/browser-only.test.ts", "node_modules"],
+    exclude: [
+      "test/**/*.browser-only.test.ts",
+      "test/**/browser-only.test.ts",
+      "node_modules",
+    ],
     // 병렬 실행
     fileParallelism: true,
     // test.concurrent의 동시 실행 수 제한

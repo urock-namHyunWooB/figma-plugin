@@ -4,7 +4,7 @@ import { toCamelCase } from "@compiler/utils/normalizeString";
 import { getNodesAtDepth, traverseBFS } from "@compiler/utils/traverse";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import CreateSuperTree from "./super-tree/CreateSuperTree";
-import RefineProps from "@compiler/core/componentSetNode/RefineProps";
+import PropsExtractor from "@compiler/manager/PropsExtractor";
 import CreateAstTree from "./ast-tree/CreateAstTree";
 import debug from "@compiler/manager/DebuggingManager";
 import ReactGenerator from "@compiler/core/componentSetNode/react-generator/ReactGenerator";
@@ -15,7 +15,7 @@ class ComponentSetCompiler {
   private propsDef: PropsDef;
 
   private CreateSuperTree: CreateSuperTree;
-  private RefindProps: RefineProps;
+  private propsExtractor: PropsExtractor;
   private CreateFinalAstTree: CreateAstTree;
   private reactGenerator: ReactGenerator;
 
@@ -31,11 +31,8 @@ class ComponentSetCompiler {
     );
 
     this.propsDef = this.extractPropsDef(renderTree, specDataManager, matcher);
-    const RefindProps = (this.RefindProps = new RefineProps(
-      renderTree,
-      specDataManager
-    ));
-    const refinedProps = RefindProps.refinedProps;
+    this.propsExtractor = new PropsExtractor(specDataManager);
+    const refinedProps = this.propsExtractor.refinedProps;
 
     const superNodeTree = this.CreateSuperTree.getSuperTree();
 

@@ -1,14 +1,11 @@
 import FigmaCompiler, { RenderTree } from "@compiler";
 import NodeMatcher from "@compiler/core/NodeMatcher";
-import debug from "@compiler/manager/DebuggingManager";
-import RefineProps from "@compiler/core/RefineProps";
 import CreateAstTree from "@compiler/core/ast-tree/CreateAstTree";
 import ReactGenerator, {
   ReactGeneratorOptions,
 } from "@compiler/core/react-generator/ReactGenerator";
 import CreateSuperTree from "./super-tree/CreateSuperTree";
-import SpecDataManager from "@compiler/manager/SpecDataManager";
-import { toCamelCase } from "@compiler/utils/normalizeString";
+
 import ArraySlotDetector, { ArraySlot } from "@compiler/core/ArraySlotDetector";
 import type { StyleStrategyOptions } from "@compiler/core/react-generator/style-strategy";
 
@@ -18,6 +15,8 @@ import type { StyleStrategyOptions } from "@compiler/core/react-generator/style-
 export interface EngineOptions {
   /** 스타일 전략 옵션 */
   styleStrategy?: StyleStrategyOptions;
+  /** 디버그 모드: true이면 data-figma-id 속성 추가 */
+  debug?: boolean;
 }
 
 class Engine {
@@ -31,15 +30,13 @@ class Engine {
     renderTree: RenderTree,
     options?: EngineOptions
   ) {
-    const node = root.SpecDataManager.getSpecById(renderTree.id);
     const specManager = root.SpecDataManager;
     const matcher = new NodeMatcher(specManager);
 
     // 배열 슬롯 감지
-    const arraySlotDetector = new ArraySlotDetector(
+    this.arraySlots = new ArraySlotDetector(
       root.SpecDataManager.getSpec()
-    );
-    this.arraySlots = arraySlotDetector.detect();
+    ).detect();
 
     this.CreateSuperTree = new CreateSuperTree(
       renderTree,
@@ -47,7 +44,7 @@ class Engine {
       matcher
     );
 
-    const refinedProps = new RefineProps(renderTree, specManager).refinedProps;
+    const refinedProps = root.propsManager.extractedProps;
 
     const superNodeTree = this.CreateSuperTree.getSuperTree();
 
@@ -60,6 +57,7 @@ class Engine {
     // ReactGenerator 옵션 구성
     const generatorOptions: ReactGeneratorOptions = {
       styleStrategy: options?.styleStrategy,
+      debug: options?.debug,
     };
 
     this.reactGenerator = new ReactGenerator(

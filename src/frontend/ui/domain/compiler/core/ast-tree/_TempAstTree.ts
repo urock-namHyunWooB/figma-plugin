@@ -6,7 +6,7 @@ import {
   TempAstTree,
   VisibleValue,
 } from "@compiler";
-import { PropsDef } from "@compiler/core/RefineProps";
+import { PropsDef } from "@compiler/manager/PropsExtractor";
 
 import SpecDataManager from "../../manager/SpecDataManager";
 import { traverseBFS } from "@compiler/utils/traverse";
@@ -60,6 +60,9 @@ class _TempAstTree {
     tempAstTree = new UpdateStyle(specDataManager).updateStyle(tempAstTree);
     // tempAstTree = this.updateStyle2(tempAstTree);
     tempAstTree = this.updateNormalizeStyle(tempAstTree);
+    tempAstTree = this.updateRotatedElements(tempAstTree);
+    tempAstTree = this.updateVectorStyles(tempAstTree);
+    tempAstTree = this.updateFlexWithPadding(tempAstTree);
     tempAstTree = this.updatePositionStyles(tempAstTree);
     tempAstTree = this.updateVisible(tempAstTree);
     tempAstTree = this.updateConditionalWrapper(tempAstTree);
@@ -561,26 +564,220 @@ class _TempAstTree {
   }
 
   /**
+   * 회전된 요소의 레이아웃 처리
+   *
+   * 문제: CSS transform: rotate()는 시각적 변환만 수행하고 레이아웃에는 영향 없음
+   * Figma의 absoluteRenderBounds는 회전 후 실제 렌더링 크기를 제공
+   *
+   * 해결: ±90도 회전된 요소의 경우
+   * 1. transform: rotate() 제거
+   * 2. absoluteRenderBounds 기반으로 실제 크기 설정
+   * 3. width/height swap으로 회전 효과 시뮬레이션
+   */
+  private updateRotatedElements(tempAstTree: TempAstTree): TempAstTree {
+    traverseBFS(tempAstTree, (node) => {
+      const nodeSpec = this._specDataManager.getSpecById(node.id);
+      if (!nodeSpec) return;
+
+      const rotation = nodeSpec.rotation;
+      if (rotation === undefined || rotation === 0) return;
+
+      // ±90도 또는 ±270도 회전 감지
+      const absRotation = Math.abs(rotation);
+      const isRotated90 =
+        Math.abs(absRotation - Math.PI / 2) < 0.01 ||
+        Math.abs(absRotation - (3 * Math.PI) / 2) < 0.01;
+
+      if (!isRotated90) return;
+
+      const base = node.style.base;
+      const renderBounds = nodeSpec.absoluteRenderBounds;
+
+      if (!renderBounds || renderBounds.width <= 0 || renderBounds.height <= 0)
+        return;
+
+      // transform: rotate() 제거 - 크기로 대체
+      delete base["transform"];
+
+      // absoluteRenderBounds 기준 실제 크기 설정
+      const renderWidth = Math.round(renderBounds.width);
+      const renderHeight = Math.round(renderBounds.height);
+
+      base["width"] = `${renderWidth}px`;
+      base["height"] = `${renderHeight}px`;
+
+      // flex: X 0 0을 flex: X 0 auto로 변경 (명시적 크기 유지)
+      if (base["flex"]) {
+        const flexMatch = base["flex"].match(/^(\d+)\s+(\d+)\s+/);
+        if (flexMatch) {
+          base["flex"] = `${flexMatch[1]} ${flexMatch[2]} auto`;
+        }
+      }
+
+      // 회전된 요소의 자식들도 overflow: visible 필요
+      base["overflow"] = "visible";
+    });
+
+    return tempAstTree;
+  }
+
+  /**
+   * VECTOR/LINE 등 SVG 노드 스타일 처리
+   *
+   * 1. SVG 전용 속성 제거 (stroke-width, stroke 등은 SVG 내부에서 처리)
+   * 2. absoluteRenderBounds 기반으로 실제 렌더링 크기 설정
+   * 3. overflow: visible로 stroke가 잘리지 않도록 처리
+   *
+   * VECTOR 노드는 부모가 회전된 경우에도 absoluteRenderBounds가
+   * 실제 화면에 렌더링되는 크기를 제공하므로 이를 사용
+   */
+  private updateVectorStyles(tempAstTree: TempAstTree): TempAstTree {
+    const vectorTypes = ["VECTOR", "LINE", "STAR", "ELLIPSE", "POLYGON"];
+    const svgOnlyProps = [
+      "stroke-width",
+      "stroke",
+      "stroke-linecap",
+      "stroke-linejoin",
+      "stroke-miterlimit",
+      "stroke-dasharray",
+      "stroke-dashoffset",
+    ];
+
+    traverseBFS(tempAstTree, (node) => {
+      const nodeSpec = this._specDataManager.getSpecById(node.id);
+      // styleTree의 노드는 type이 없을 수 있으므로 nodeSpec에서도 확인
+      const nodeType = node.type || nodeSpec?.type;
+      if (!vectorTypes.includes(nodeType)) return;
+
+      const base = node.style.base;
+
+      // vectorSvg가 있는지 확인
+      const hasVectorSvg = this._specDataManager.getVectorSvgByNodeId(node.id);
+
+      // fill 처리
+      if ("fill" in base) {
+        if (hasVectorSvg) {
+          // vectorSvg가 있는 경우: fill을 color로 변환
+          // SVG 내부의 path가 fill="currentColor"를 사용하므로 color CSS가 적용됨
+          base["color"] = base["fill"];
+        } else {
+          // vectorSvg가 없는 경우: fill을 background로 변환
+          base["background"] = base["fill"];
+        }
+        // fill은 항상 제거
+        delete base["fill"];
+      }
+
+      // background 처리: vectorSvg가 있으면 color로 변환
+      // (ELLIPSE 등 일부 노드는 fill 대신 background로 스타일이 제공됨)
+      if (hasVectorSvg && "background" in base && !("color" in base)) {
+        base["color"] = base["background"];
+        delete base["background"];
+      }
+
+      // 나머지 SVG 전용 속성 제거
+      for (const prop of svgOnlyProps) {
+        if (prop in base) {
+          delete base[prop];
+        }
+      }
+
+      // SVG stroke가 잘리지 않도록 overflow: visible 추가
+      base["overflow"] = "visible";
+
+      // absoluteRenderBounds 기반으로 실제 크기 설정
+      // 부모가 회전된 경우에도 renderBounds가 정확한 화면 크기를 제공
+      if (nodeSpec?.absoluteRenderBounds) {
+        const { width, height } = nodeSpec.absoluteRenderBounds;
+        if (width > 0) {
+          base["width"] = `${Math.round(width)}px`;
+        }
+        if (height > 0) {
+          base["height"] = `${Math.round(height)}px`;
+        }
+      }
+    });
+
+    return tempAstTree;
+  }
+
+  /**
+   * flex-basis: 0을 실제 크기로 수정
+   *
+   * 문제: Figma getCSSAsync()가 `flex: 1 0 0` (flex-basis: 0)을 반환하지만,
+   * padding이 있으면 형제 요소들의 크기가 불균등해짐
+   *
+   * 근본 원인: flex-basis가 0이면 padding 차이가 최종 크기에 영향
+   *
+   * 해결: flex-basis를 실제 Figma 크기로 설정
+   * `flex: 1 0 0` → `flex: 1 0 480px`
+   */
+  private updateFlexWithPadding(tempAstTree: TempAstTree): TempAstTree {
+    traverseBFS(tempAstTree, (node) => {
+      const base = node.style.base;
+
+      // flex가 있는지 확인
+      const flexValue = base["flex"];
+      if (!flexValue || typeof flexValue !== "string") return;
+
+      // flex: X 0 0 패턴 매칭 (flex-basis가 0인 경우)
+      const match = flexValue.match(/^(\d+)\s+(\d+)\s+0$/);
+      if (!match) return;
+
+      const [, flexGrow, flexShrink] = match;
+
+      // Figma의 실제 width 가져오기
+      const nodeSpec = this._specDataManager.getSpecById(node.id);
+      const width = nodeSpec?.absoluteBoundingBox?.width;
+
+      if (!width) return;
+
+      // flex-basis를 실제 크기로 수정
+      // flex: 1 0 0 → flex: 1 0 480px
+      base["flex"] = `${flexGrow} ${flexShrink} ${width}px`;
+    });
+
+    return tempAstTree;
+  }
+
+  /**
+   * px 값을 파싱하여 숫자로 변환
+   */
+  private _parsePxValue(value: string | undefined): number {
+    if (!value) return 0;
+    const match = value.match(/^(\d+(?:\.\d+)?)px$/);
+    return match ? parseFloat(match[1]) : 0;
+  }
+
+  /**
    * 오토레이아웃이 아닌 컨테이너의 자식들에게 position 스타일을 추가합니다.
-   * 
+   *
    * - GROUP 노드는 항상 absolute positioning
    * - FRAME 노드는 layoutMode가 없거나 "NONE"이면 absolute positioning
    * - COMPONENT_SET은 제외 (여러 variant의 위치를 병합하면 안됨)
    */
   private updatePositionStyles(tempAstTree: TempAstTree): TempAstTree {
     // 재귀적으로 처리 (부모 → 자식 순서)
-    const processNode = (node: TempAstTree, parentSpec: any | null) => {
+    const processNode = (
+      node: TempAstTree,
+      parentNode: TempAstTree | null,
+      parentSpec: any | null
+    ) => {
       const nodeSpec = this._specDataManager.getSpecById(node.id);
-      
+
       // 부모가 오토레이아웃이 아닌 경우 position 스타일 추가
-      if (parentSpec && this._shouldApplyAbsolutePosition(parentSpec, nodeSpec)) {
+      if (
+        parentSpec &&
+        parentNode &&
+        this._shouldApplyAbsolutePosition(parentSpec, nodeSpec, parentNode)
+      ) {
         const parentBox = parentSpec.absoluteBoundingBox;
         const nodeBox = nodeSpec?.absoluteBoundingBox;
-        
+
         if (parentBox && nodeBox) {
           const left = nodeBox.x - parentBox.x;
           const top = nodeBox.y - parentBox.y;
-          
+
           // 기존 스타일에 position 추가 (이미 있으면 덮어쓰지 않음)
           if (!node.style.base["position"]) {
             node.style.base["position"] = "absolute";
@@ -593,60 +790,85 @@ class _TempAstTree {
           }
         }
       }
-      
-      // 현재 노드가 absolute positioning 컨테이너인 경우 relative 추가
-      if (this._isAbsolutePositioningContainer(nodeSpec) && node.children.length > 0) {
+
+      // 현재 노드가 absolute positioning 컨테이너인 경우 relative + height 추가
+      if (
+        this._isAbsolutePositioningContainer(nodeSpec, node) &&
+        node.children.length > 0
+      ) {
         if (!node.style.base["position"]) {
           node.style.base["position"] = "relative";
         }
+
+        // 자식이 모두 absolute라서 부모 높이가 0이 되는 문제 해결
+        // Figma의 absoluteBoundingBox.height를 명시적으로 설정
+        const nodeBox = nodeSpec?.absoluteBoundingBox;
+        if (nodeBox?.height && !node.style.base["height"]) {
+          node.style.base["height"] = `${nodeBox.height}px`;
+        }
       }
-      
+
       // 자식들 처리
       for (const child of node.children) {
-        processNode(child, nodeSpec);
+        processNode(child, node, nodeSpec);
       }
     };
-    
+
     // 루트부터 시작 (루트의 부모는 null)
-    processNode(tempAstTree, null);
-    
+    processNode(tempAstTree, null, null);
+
     return tempAstTree;
   }
-  
+
   /**
    * 부모가 absolute positioning을 사용하는 컨테이너인지 확인
+   * @param spec info.document 노드
+   * @param node TempAstTree 노드 (cssStyle 확인용)
    */
-  private _isAbsolutePositioningContainer(spec: any): boolean {
+  private _isAbsolutePositioningContainer(
+    spec: any,
+    node?: TempAstTree
+  ): boolean {
     if (!spec) return false;
-    
+
+    // cssStyle에 display: flex가 있으면 flexbox 레이아웃 사용
+    // (layoutMode가 없어도 Figma가 CSS에 flex를 출력한 경우)
+    if (node?.style?.base?.["display"] === "flex") {
+      return false;
+    }
+
     const type = spec.type;
-    
+
     // COMPONENT_SET은 제외
     if (type === "COMPONENT_SET") return false;
-    
+
     // GROUP은 항상 absolute positioning
     if (type === "GROUP") return true;
-    
+
     // FRAME, COMPONENT, INSTANCE는 layoutMode가 없거나 NONE이면 absolute
     if (type === "FRAME" || type === "COMPONENT" || type === "INSTANCE") {
       const layoutMode = spec.layoutMode;
       return !layoutMode || layoutMode === "NONE";
     }
-    
+
     return false;
   }
-  
+
   /**
    * 자식 노드에 absolute position을 적용해야 하는지 확인
    */
-  private _shouldApplyAbsolutePosition(parentSpec: any, childSpec: any): boolean {
+  private _shouldApplyAbsolutePosition(
+    parentSpec: any,
+    childSpec: any,
+    parentNode?: TempAstTree
+  ): boolean {
     if (!parentSpec || !childSpec) return false;
-    
+
     // visible이 false인 노드는 제외
     if (childSpec.visible === false) return false;
-    
+
     // 부모가 absolute positioning 컨테이너인지 확인
-    return this._isAbsolutePositioningContainer(parentSpec);
+    return this._isAbsolutePositioningContainer(parentSpec, parentNode);
   }
 
   private updateVisible(pivotNode: TempAstTree) {
@@ -975,10 +1197,16 @@ class _TempAstTree {
         // prop 이름을 camelCase로 정규화 (예: "Left Icon" → "leftIcon")
         const normalizedPropName = toCamelCase(propName);
         if (presentValues.length === 1) {
-          return helper.createBinaryCondition(normalizedPropName, presentValues[0]);
+          return helper.createBinaryCondition(
+            normalizedPropName,
+            presentValues[0]
+          );
         } else {
           // 여러 값이면 배열 기반 includes 조건 사용
-          return helper.createIncludesCondition(normalizedPropName, presentValues);
+          return helper.createIncludesCondition(
+            normalizedPropName,
+            presentValues
+          );
         }
       }
     }
@@ -1057,11 +1285,15 @@ class _TempAstTree {
       // 일부 옵션에서만 존재 → 조건 생성
       if (presentOptions.size === 1) {
         const value = [...presentOptions][0];
-        conditions.push(helper.createBinaryCondition(normalizedPropName, value));
+        conditions.push(
+          helper.createBinaryCondition(normalizedPropName, value)
+        );
       } else if (presentOptions.size > 1) {
         // 여러 값이면 배열 기반 includes 조건 사용
         conditions.push(
-          helper.createIncludesCondition(normalizedPropName, [...presentOptions])
+          helper.createIncludesCondition(normalizedPropName, [
+            ...presentOptions,
+          ])
         );
       }
     }

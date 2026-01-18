@@ -10,12 +10,13 @@ class SpecDataManager {
   private document: SceneNode;
 
   constructor(spec: FigmaNodeData) {
-    this.spec = spec;
+    // 원본 변질 방지를 위해 깊은 복사
+    this.spec = JSON.parse(JSON.stringify(spec));
 
-    this.document = spec.info.document;
+    this.document = this.spec.info.document;
 
-    this.recursiveAddSpec(spec.info.document);
-    this.recursiveAddRenderTree(spec.styleTree);
+    this.recursiveAddSpec(this.spec.info.document);
+    this.recursiveAddRenderTree(this.spec.styleTree);
   }
 
   public getDocument() {

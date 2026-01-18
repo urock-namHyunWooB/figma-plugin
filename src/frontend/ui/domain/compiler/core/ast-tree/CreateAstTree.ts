@@ -1,6 +1,6 @@
 import SpecDataManager from "@compiler/manager/SpecDataManager";
 import { SuperTreeNode } from "@compiler";
-import { PropsDef } from "@compiler/core/RefineProps";
+import { PropsDef } from "@compiler/manager/PropsExtractor";
 import _TempAstTree from "@compiler/core/ast-tree/_TempAstTree";
 import _FinalAstTree from "./_FinalAstTree";
 import HelperManager from "@compiler/manager/HelperManager";

@@ -1,0 +1,2457 @@
+{
+  "pluginData": [],
+  "info": {
+    "document": {
+      "id": "18:473",
+      "name": "Bars/Status Bar/iPhone/Black",
+      "type": "INSTANCE",
+      "scrollBehavior": "SCROLLS",
+      "boundVariables": {
+        "fills": [
+          {
+            "type": "VARIABLE_ALIAS",
+            "id": "VariableID:51:3240"
+          }
+        ]
+      },
+      "componentId": "14:315",
+      "overrides": [
+        {
+          "id": "18:473",
+          "overriddenFields": [
+            "fills",
+            "height",
+            "inheritFillStyleId",
+            "width"
+          ]
+        },
+        {
+          "id": "I18:473;6316:31513",
+          "overriddenFields": [
+            "inheritFillStyleId"
+          ]
+        },
+        {
+          "id": "I18:473;6316:31521",
+          "overriddenFields": [
+            "inheritFillStyleId"
+          ]
+        },
+        {
+          "id": "I18:473;6316:31525",
+          "overriddenFields": [
+            "inheritFillStyleId"
+          ]
+        },
+        {
+          "id": "I18:473;6316:31530",
+          "overriddenFields": [
+            "inheritFillStyleId"
+          ]
+        },
+        {
+          "id": "I18:473;6316:31538",
+          "overriddenFields": [
+            "inheritFillStyleId",
+            "strokes"
+          ]
+        },
+        {
+          "id": "I18:473;6316:31539",
+          "overriddenFields": [
+            "inheritFillStyleId"
+          ]
+        }
+      ],
+      "children": [
+        {
+          "id": "I18:473;6316:31512",
+          "name": "Status Bar – Light",
+          "type": "GROUP",
+          "scrollBehavior": "SCROLLS",
+          "children": [
+            {
+              "id": "I18:473;6316:31513",
+              "name": "Container",
+              "type": "VECTOR",
+              "scrollBehavior": "SCROLLS",
+              "boundVariables": {
+                "fills": [
+                  {
+                    "type": "VARIABLE_ALIAS",
+                    "id": "VariableID:51:3240"
+                  }
+                ]
+              },
+              "blendMode": "NORMAL",
+              "opacity": 0.00009999999747378752,
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  },
+                  "boundVariables": {
+                    "color": {
+                      "type": "VARIABLE_ALIAS",
+                      "id": "VariableID:51:3240"
+                    }
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 0,
+              "strokeAlign": "CENTER",
+              "styles": {
+                "fill": "74:1789"
+              },
+              "absoluteBoundingBox": {
+                "x": -1930,
+                "y": -1216,
+                "width": 375,
+                "height": 44
+              },
+              "absoluteRenderBounds": {
+                "x": -1930,
+                "y": -1216,
+                "width": 375,
+                "height": 44
+              },
+              "constraints": {
+                "vertical": "SCALE",
+                "horizontal": "SCALE"
+              },
+              "effects": [],
+              "interactions": []
+            },
+            {
+              "id": "I18:473;6316:31514",
+              "name": "Status Bar – Battery",
+              "type": "GROUP",
+              "scrollBehavior": "SCROLLS",
+              "children": [
+                {
+                  "id": "I18:473;6316:31515",
+                  "name": "Bounds",
+                  "type": "RECTANGLE",
+                  "scrollBehavior": "SCROLLS",
+                  "blendMode": "NORMAL",
+                  "opacity": 0.00009999999747378752,
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0.9803921580314636,
+                        "g": 0.24313725531101227,
+                        "b": 0.24313725531101227,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokes": [
+                    {
+                      "blendMode": "NORMAL",
+                      "visible": false,
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0.5920000076293945,
+                        "g": 0.5920000076293945,
+                        "b": 0.5920000076293945,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokeWeight": 0,
+                  "strokeAlign": "CENTER",
+                  "absoluteBoundingBox": {
+                    "x": -1596.8883056640625,
+                    "y": -1203,
+                    "width": 26.928192138671875,
+                    "height": 20
+                  },
+                  "absoluteRenderBounds": {
+                    "x": -1596.8883056640625,
+                    "y": -1203,
+                    "width": 26.92822265625,
+                    "height": 20
+                  },
+                  "constraints": {
+                    "vertical": "SCALE",
+                    "horizontal": "SCALE"
+                  },
+                  "effects": [],
+                  "interactions": []
+                },
+                {
+                  "id": "I18:473;6316:31516",
+                  "name": "Body",
+                  "type": "BOOLEAN_OPERATION",
+                  "scrollBehavior": "SCROLLS",
+                  "children": [
+                    {
+                      "id": "I18:473;6316:31517",
+                      "name": "Exclude",
+                      "type": "BOOLEAN_OPERATION",
+                      "scrollBehavior": "SCROLLS",
+                      "children": [
+                        {
+                          "id": "I18:473;6316:31518",
+                          "name": "Outer",
+                          "type": "VECTOR",
+                          "scrollBehavior": "SCROLLS",
+                          "blendMode": "PASS_THROUGH",
+                          "fills": [
+                            {
+                              "opacity": 0.3799999952316284,
+                              "blendMode": "NORMAL",
+                              "type": "SOLID",
+                              "color": {
+                                "r": 0,
+                                "g": 0,
+                                "b": 0,
+                                "a": 1
+                              }
+                            }
+                          ],
+                          "strokes": [
+                            {
+                              "blendMode": "NORMAL",
+                              "visible": false,
+                              "type": "SOLID",
+                              "color": {
+                                "r": 0.5920000076293945,
+                                "g": 0.5920000076293945,
+                                "b": 0.5920000076293945,
+                                "a": 1
+                              }
+                            }
+                          ],
+                          "strokeWeight": 0,
+                          "strokeAlign": "CENTER",
+                          "absoluteBoundingBox": {
+                            "x": -1594.8936767578125,
+                            "y": -1198.5,
+                            "width": 21.941490173339844,
+                            "height": 11.5
+                          },
+                          "absoluteRenderBounds": null,
+                          "constraints": {
+                            "vertical": "SCALE",
+                            "horizontal": "SCALE"
+                          },
+                          "effects": [],
+                          "interactions": []
+                        },
+                        {
+                          "id": "I18:473;6316:31519",
+                          "name": "Inner",
+                          "type": "VECTOR",
+                          "scrollBehavior": "SCROLLS",
+                          "blendMode": "PASS_THROUGH",
+                          "fills": [
+                            {
+                              "opacity": 0.3799999952316284,
+                              "blendMode": "NORMAL",
+                              "type": "SOLID",
+                              "color": {
+                                "r": 0,
+                                "g": 0,
+                                "b": 0,
+                                "a": 1
+                              }
+                            }
+                          ],
+                          "strokes": [
+                            {
+                              "blendMode": "NORMAL",
+                              "visible": false,
+                              "type": "SOLID",
+                              "color": {
+                                "r": 0.5920000076293945,
+                                "g": 0.5920000076293945,
+                                "b": 0.5920000076293945,
+                                "a": 1
+                              }
+                            }
+                          ],
+                          "strokeWeight": 0,
+                          "strokeAlign": "CENTER",
+                          "absoluteBoundingBox": {
+                            "x": -1593.8963623046875,
+                            "y": -1197.5,
+                            "width": 19.946807861328125,
+                            "height": 9.5
+                          },
+                          "absoluteRenderBounds": null,
+                          "constraints": {
+                            "vertical": "SCALE",
+                            "horizontal": "SCALE"
+                          },
+                          "effects": [],
+                          "interactions": []
+                        }
+                      ],
+                      "blendMode": "PASS_THROUGH",
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0.8549019694328308,
+                            "g": 0.8549019694328308,
+                            "b": 0.8549019694328308,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0,
+                      "strokeAlign": "CENTER",
+                      "booleanOperation": "EXCLUDE",
+                      "absoluteBoundingBox": {
+                        "x": -1594.8936767578125,
+                        "y": -1198.5,
+                        "width": 21.941490173339844,
+                        "height": 11.5
+                      },
+                      "absoluteRenderBounds": null,
+                      "constraints": {
+                        "vertical": "SCALE",
+                        "horizontal": "SCALE"
+                      },
+                      "effects": [],
+                      "interactions": []
+                    },
+                    {
+                      "id": "I18:473;6316:31520",
+                      "name": "Path",
+                      "type": "VECTOR",
+                      "scrollBehavior": "SCROLLS",
+                      "blendMode": "PASS_THROUGH",
+                      "fills": [
+                        {
+                          "opacity": 0.3799999952316284,
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [
+                        {
+                          "blendMode": "NORMAL",
+                          "visible": false,
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0.5920000076293945,
+                            "g": 0.5920000076293945,
+                            "b": 0.5920000076293945,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokeWeight": 0,
+                      "strokeAlign": "CENTER",
+                      "absoluteBoundingBox": {
+                        "x": -1571.954833984375,
+                        "y": -1195.16552734375,
+                        "width": 1.2466754913330078,
+                        "height": 4.331089019775391
+                      },
+                      "absoluteRenderBounds": null,
+                      "constraints": {
+                        "vertical": "SCALE",
+                        "horizontal": "SCALE"
+                      },
+                      "effects": [],
+                      "interactions": []
+                    }
+                  ],
+                  "blendMode": "PASS_THROUGH",
+                  "fills": [
+                    {
+                      "opacity": 0.3799999952316284,
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokes": [
+                    {
+                      "blendMode": "NORMAL",
+                      "visible": false,
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0.5920000076293945,
+                        "g": 0.5920000076293945,
+                        "b": 0.5920000076293945,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokeWeight": 0,
+                  "strokeAlign": "CENTER",
+                  "booleanOperation": "UNION",
+                  "absoluteBoundingBox": {
+                    "x": -1594.8936767578125,
+                    "y": -1198.5,
+                    "width": 24.185504913330078,
+                    "height": 11.5
+                  },
+                  "absoluteRenderBounds": {
+                    "x": -1594.8936767578125,
+                    "y": -1198.5,
+                    "width": 24.185546875,
+                    "height": 11.5
+                  },
+                  "constraints": {
+                    "vertical": "SCALE",
+                    "horizontal": "SCALE"
+                  },
+                  "effects": [],
+                  "interactions": []
+                },
+                {
+                  "id": "I18:473;6316:31521",
+                  "name": "Reserve",
+                  "type": "VECTOR",
+                  "scrollBehavior": "SCROLLS",
+                  "boundVariables": {
+                    "fills": [
+                      {
+                        "type": "VARIABLE_ALIAS",
+                        "id": "VariableID:51:3235"
+                      }
+                    ]
+                  },
+                  "blendMode": "PASS_THROUGH",
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      },
+                      "boundVariables": {
+                        "color": {
+                          "type": "VARIABLE_ALIAS",
+                          "id": "VariableID:51:3235"
+                        }
+                      }
+                    }
+                  ],
+                  "strokes": [
+                    {
+                      "blendMode": "NORMAL",
+                      "visible": false,
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0.5920000076293945,
+                        "g": 0.5920000076293945,
+                        "b": 0.5920000076293945,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokeWeight": 0,
+                  "strokeAlign": "CENTER",
+                  "styles": {
+                    "fill": "74:1790"
+                  },
+                  "absoluteBoundingBox": {
+                    "x": -1592.89892578125,
+                    "y": -1196.5,
+                    "width": 17.95212745666504,
+                    "height": 7.5
+                  },
+                  "absoluteRenderBounds": {
+                    "x": -1592.89892578125,
+                    "y": -1196.5,
+                    "width": 17.9521484375,
+                    "height": 7.5
+                  },
+                  "constraints": {
+                    "vertical": "SCALE",
+                    "horizontal": "SCALE"
+                  },
+                  "effects": [],
+                  "interactions": []
+                }
+              ],
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": false,
+              "background": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "backgroundColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0
+              },
+              "absoluteBoundingBox": {
+                "x": -1596.8883056640625,
+                "y": -1203,
+                "width": 26.928192138671875,
+                "height": 20
+              },
+              "absoluteRenderBounds": {
+                "x": -1596.8883056640625,
+                "y": -1203,
+                "width": 26.92822265625,
+                "height": 20
+              },
+              "constraints": {
+                "vertical": "SCALE",
+                "horizontal": "SCALE"
+              },
+              "effects": [],
+              "interactions": []
+            },
+            {
+              "id": "I18:473;6316:31522",
+              "name": "Status Bar – Wi–Fi",
+              "type": "GROUP",
+              "scrollBehavior": "SCROLLS",
+              "children": [
+                {
+                  "id": "I18:473;6316:31523",
+                  "name": "Bounds",
+                  "type": "RECTANGLE",
+                  "scrollBehavior": "SCROLLS",
+                  "blendMode": "NORMAL",
+                  "opacity": 0.00009999999747378752,
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0.9803921580314636,
+                        "g": 0.24313725531101227,
+                        "b": 0.24313725531101227,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokes": [
+                    {
+                      "blendMode": "NORMAL",
+                      "visible": false,
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0.5920000076293945,
+                        "g": 0.5920000076293945,
+                        "b": 0.5920000076293945,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokeWeight": 0,
+                  "strokeAlign": "CENTER",
+                  "absoluteBoundingBox": {
+                    "x": -1638.776611328125,
+                    "y": -1203,
+                    "width": 19.946807861328125,
+                    "height": 20
+                  },
+                  "absoluteRenderBounds": {
+                    "x": -1638.776611328125,
+                    "y": -1203,
+                    "width": 19.94677734375,
+                    "height": 20
+                  },
+                  "constraints": {
+                    "vertical": "SCALE",
+                    "horizontal": "SCALE"
+                  },
+                  "effects": [],
+                  "interactions": []
+                },
+                {
+                  "id": "I18:473;6316:31524",
+                  "name": "Bounds",
+                  "type": "RECTANGLE",
+                  "scrollBehavior": "SCROLLS",
+                  "blendMode": "NORMAL",
+                  "opacity": 0.00009999999747378752,
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0.9803921580314636,
+                        "g": 0.24313725531101227,
+                        "b": 0.24313725531101227,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokes": [
+                    {
+                      "blendMode": "NORMAL",
+                      "visible": false,
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0.5920000076293945,
+                        "g": 0.5920000076293945,
+                        "b": 0.5920000076293945,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokeWeight": 0,
+                  "strokeAlign": "CENTER",
+                  "absoluteBoundingBox": {
+                    "x": -1617.83251953125,
+                    "y": -1203,
+                    "width": 19.946807861328125,
+                    "height": 20
+                  },
+                  "absoluteRenderBounds": {
+                    "x": -1617.83251953125,
+                    "y": -1203,
+                    "width": 19.94677734375,
+                    "height": 20
+                  },
+                  "constraints": {
+                    "vertical": "SCALE",
+                    "horizontal": "SCALE"
+                  },
+                  "effects": [],
+                  "interactions": []
+                },
+                {
+                  "id": "I18:473;6316:31525",
+                  "name": "Wi–Fi",
+                  "type": "BOOLEAN_OPERATION",
+                  "scrollBehavior": "SCROLLS",
+                  "boundVariables": {
+                    "fills": [
+                      {
+                        "type": "VARIABLE_ALIAS",
+                        "id": "VariableID:51:3235"
+                      }
+                    ]
+                  },
+                  "children": [
+                    {
+                      "id": "I18:473;6316:31526",
+                      "name": "Wave",
+                      "type": "VECTOR",
+                      "scrollBehavior": "SCROLLS",
+                      "blendMode": "PASS_THROUGH",
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0,
+                      "strokeAlign": "CENTER",
+                      "absoluteBoundingBox": {
+                        "x": -1609.6793212890625,
+                        "y": -1190.851806640625,
+                        "width": 4.381521224975586,
+                        "height": 2.956730842590332
+                      },
+                      "absoluteRenderBounds": null,
+                      "constraints": {
+                        "vertical": "SCALE",
+                        "horizontal": "SCALE"
+                      },
+                      "effects": [],
+                      "interactions": []
+                    },
+                    {
+                      "id": "I18:473;6316:31527",
+                      "name": "Wave",
+                      "type": "VECTOR",
+                      "scrollBehavior": "SCROLLS",
+                      "blendMode": "PASS_THROUGH",
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0,
+                      "strokeAlign": "CENTER",
+                      "absoluteBoundingBox": {
+                        "x": -1612.306396484375,
+                        "y": -1194.6234130859375,
+                        "width": 9.637097358703613,
+                        "height": 3.24650502204895
+                      },
+                      "absoluteRenderBounds": null,
+                      "constraints": {
+                        "vertical": "SCALE",
+                        "horizontal": "SCALE"
+                      },
+                      "effects": [],
+                      "interactions": []
+                    },
+                    {
+                      "id": "I18:473;6316:31528",
+                      "name": "Wave",
+                      "type": "VECTOR",
+                      "scrollBehavior": "SCROLLS",
+                      "blendMode": "PASS_THROUGH",
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [],
+                      "strokeWeight": 0,
+                      "strokeAlign": "CENTER",
+                      "absoluteBoundingBox": {
+                        "x": -1614.9676513671875,
+                        "y": -1198.39501953125,
+                        "width": 14.96010684967041,
+                        "height": 4.337285995483398
+                      },
+                      "absoluteRenderBounds": null,
+                      "constraints": {
+                        "vertical": "SCALE",
+                        "horizontal": "SCALE"
+                      },
+                      "effects": [],
+                      "interactions": []
+                    }
+                  ],
+                  "blendMode": "PASS_THROUGH",
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      },
+                      "boundVariables": {
+                        "color": {
+                          "type": "VARIABLE_ALIAS",
+                          "id": "VariableID:51:3235"
+                        }
+                      }
+                    }
+                  ],
+                  "strokes": [],
+                  "strokeWeight": 0,
+                  "strokeAlign": "CENTER",
+                  "styles": {
+                    "fill": "74:1790"
+                  },
+                  "booleanOperation": "UNION",
+                  "absoluteBoundingBox": {
+                    "x": -1614.9676513671875,
+                    "y": -1198.39501953125,
+                    "width": 14.96010684967041,
+                    "height": 10.5
+                  },
+                  "absoluteRenderBounds": {
+                    "x": -1614.9676513671875,
+                    "y": -1198.39501953125,
+                    "width": 14.9600830078125,
+                    "height": 10.5
+                  },
+                  "constraints": {
+                    "vertical": "SCALE",
+                    "horizontal": "SCALE"
+                  },
+                  "effects": [],
+                  "interactions": []
+                }
+              ],
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": false,
+              "background": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "backgroundColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0
+              },
+              "absoluteBoundingBox": {
+                "x": -1638.776611328125,
+                "y": -1203,
+                "width": 40.89095687866211,
+                "height": 20
+              },
+              "absoluteRenderBounds": {
+                "x": -1638.776611328125,
+                "y": -1203,
+                "width": 40.89095687866211,
+                "height": 20
+              },
+              "constraints": {
+                "vertical": "SCALE",
+                "horizontal": "SCALE"
+              },
+              "effects": [],
+              "interactions": []
+            },
+            {
+              "id": "I18:473;6316:31529",
+              "name": "Status Bar – Service",
+              "type": "GROUP",
+              "scrollBehavior": "SCROLLS",
+              "children": [
+                {
+                  "id": "I18:473;6316:31530",
+                  "name": "Signal",
+                  "type": "BOOLEAN_OPERATION",
+                  "scrollBehavior": "SCROLLS",
+                  "boundVariables": {
+                    "fills": [
+                      {
+                        "type": "VARIABLE_ALIAS",
+                        "id": "VariableID:51:3235"
+                      }
+                    ]
+                  },
+                  "children": [
+                    {
+                      "id": "I18:473;6316:31531",
+                      "name": "Bar",
+                      "type": "RECTANGLE",
+                      "scrollBehavior": "SCROLLS",
+                      "blendMode": "PASS_THROUGH",
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [
+                        {
+                          "blendMode": "NORMAL",
+                          "visible": false,
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0.5920000076293945,
+                            "g": 0.5920000076293945,
+                            "b": 0.5920000076293945,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokeWeight": 0,
+                      "strokeAlign": "CENTER",
+                      "cornerRadius": 1,
+                      "cornerSmoothing": 0,
+                      "absoluteBoundingBox": {
+                        "x": -1637.2806396484375,
+                        "y": -1191.5,
+                        "width": 2.992021322250366,
+                        "height": 3.75
+                      },
+                      "absoluteRenderBounds": null,
+                      "constraints": {
+                        "vertical": "SCALE",
+                        "horizontal": "SCALE"
+                      },
+                      "effects": [],
+                      "interactions": []
+                    },
+                    {
+                      "id": "I18:473;6316:31532",
+                      "name": "Bar",
+                      "type": "RECTANGLE",
+                      "scrollBehavior": "SCROLLS",
+                      "blendMode": "PASS_THROUGH",
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [
+                        {
+                          "blendMode": "NORMAL",
+                          "visible": false,
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0.5920000076293945,
+                            "g": 0.5920000076293945,
+                            "b": 0.5920000076293945,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokeWeight": 0,
+                      "strokeAlign": "CENTER",
+                      "cornerRadius": 1,
+                      "cornerSmoothing": 0,
+                      "absoluteBoundingBox": {
+                        "x": -1632.543212890625,
+                        "y": -1193.5,
+                        "width": 2.992021322250366,
+                        "height": 5.75
+                      },
+                      "absoluteRenderBounds": null,
+                      "constraints": {
+                        "vertical": "SCALE",
+                        "horizontal": "SCALE"
+                      },
+                      "effects": [],
+                      "interactions": []
+                    },
+                    {
+                      "id": "I18:473;6316:31533",
+                      "name": "Bar",
+                      "type": "RECTANGLE",
+                      "scrollBehavior": "SCROLLS",
+                      "blendMode": "PASS_THROUGH",
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [
+                        {
+                          "blendMode": "NORMAL",
+                          "visible": false,
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0.5920000076293945,
+                            "g": 0.5920000076293945,
+                            "b": 0.5920000076293945,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokeWeight": 0,
+                      "strokeAlign": "CENTER",
+                      "cornerRadius": 1,
+                      "cornerSmoothing": 0,
+                      "absoluteBoundingBox": {
+                        "x": -1627.805908203125,
+                        "y": -1196,
+                        "width": 2.992021322250366,
+                        "height": 8.25
+                      },
+                      "absoluteRenderBounds": null,
+                      "constraints": {
+                        "vertical": "SCALE",
+                        "horizontal": "SCALE"
+                      },
+                      "effects": [],
+                      "interactions": []
+                    },
+                    {
+                      "id": "I18:473;6316:31534",
+                      "name": "Bar",
+                      "type": "RECTANGLE",
+                      "scrollBehavior": "SCROLLS",
+                      "blendMode": "PASS_THROUGH",
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokes": [
+                        {
+                          "blendMode": "NORMAL",
+                          "visible": false,
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0.5920000076293945,
+                            "g": 0.5920000076293945,
+                            "b": 0.5920000076293945,
+                            "a": 1
+                          }
+                        }
+                      ],
+                      "strokeWeight": 0,
+                      "strokeAlign": "CENTER",
+                      "cornerRadius": 1,
+                      "cornerSmoothing": 0,
+                      "absoluteBoundingBox": {
+                        "x": -1623.0684814453125,
+                        "y": -1198.25,
+                        "width": 2.992021322250366,
+                        "height": 10.5
+                      },
+                      "absoluteRenderBounds": null,
+                      "constraints": {
+                        "vertical": "SCALE",
+                        "horizontal": "SCALE"
+                      },
+                      "effects": [],
+                      "interactions": []
+                    }
+                  ],
+                  "blendMode": "PASS_THROUGH",
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      },
+                      "boundVariables": {
+                        "color": {
+                          "type": "VARIABLE_ALIAS",
+                          "id": "VariableID:51:3235"
+                        }
+                      }
+                    }
+                  ],
+                  "strokes": [
+                    {
+                      "blendMode": "NORMAL",
+                      "visible": false,
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0.5920000076293945,
+                        "g": 0.5920000076293945,
+                        "b": 0.5920000076293945,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokeWeight": 0,
+                  "strokeAlign": "CENTER",
+                  "styles": {
+                    "fill": "74:1790"
+                  },
+                  "booleanOperation": "UNION",
+                  "absoluteBoundingBox": {
+                    "x": -1637.2806396484375,
+                    "y": -1198.25,
+                    "width": 17.20412254333496,
+                    "height": 10.5
+                  },
+                  "absoluteRenderBounds": {
+                    "x": -1637.2806396484375,
+                    "y": -1198.25,
+                    "width": 17.2041015625,
+                    "height": 10.5
+                  },
+                  "constraints": {
+                    "vertical": "SCALE",
+                    "horizontal": "SCALE"
+                  },
+                  "effects": [],
+                  "interactions": []
+                }
+              ],
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": false,
+              "background": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "backgroundColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0
+              },
+              "absoluteBoundingBox": {
+                "x": -1637.2806396484375,
+                "y": -1198.25,
+                "width": 17.20412254333496,
+                "height": 10.5
+              },
+              "absoluteRenderBounds": {
+                "x": -1637.2806396484375,
+                "y": -1198.25,
+                "width": 17.20412254333496,
+                "height": 10.5
+              },
+              "constraints": {
+                "vertical": "SCALE",
+                "horizontal": "SCALE"
+              },
+              "effects": [],
+              "interactions": []
+            },
+            {
+              "id": "I18:473;6316:31535",
+              "name": "Time",
+              "type": "FRAME",
+              "scrollBehavior": "SCROLLS",
+              "children": [
+                {
+                  "id": "I18:473;6316:31536",
+                  "name": "Status Bar – Location",
+                  "type": "GROUP",
+                  "scrollBehavior": "SCROLLS",
+                  "children": [
+                    {
+                      "id": "I18:473;6316:31537",
+                      "name": "Bounds",
+                      "type": "RECTANGLE",
+                      "scrollBehavior": "SCROLLS",
+                      "blendMode": "PASS_THROUGH",
+                      "fills": [],
+                      "strokes": [],
+                      "strokeWeight": 0,
+                      "strokeAlign": "CENTER",
+                      "absoluteBoundingBox": {
+                        "x": -1869.660888671875,
+                        "y": -1202,
+                        "width": 15.957447052001953,
+                        "height": 16
+                      },
+                      "absoluteRenderBounds": null,
+                      "constraints": {
+                        "vertical": "SCALE",
+                        "horizontal": "SCALE"
+                      },
+                      "effects": [],
+                      "interactions": []
+                    },
+                    {
+                      "id": "I18:473;6316:31538",
+                      "name": "Location",
+                      "type": "VECTOR",
+                      "scrollBehavior": "SCROLLS",
+                      "boundVariables": {
+                        "fills": [
+                          {
+                            "type": "VARIABLE_ALIAS",
+                            "id": "VariableID:51:3235"
+                          }
+                        ],
+                        "strokes": [
+                          {
+                            "type": "VARIABLE_ALIAS",
+                            "id": "VariableID:51:3235"
+                          }
+                        ]
+                      },
+                      "blendMode": "PASS_THROUGH",
+                      "fills": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 1
+                          },
+                          "boundVariables": {
+                            "color": {
+                              "type": "VARIABLE_ALIAS",
+                              "id": "VariableID:51:3235"
+                            }
+                          }
+                        }
+                      ],
+                      "strokes": [
+                        {
+                          "blendMode": "NORMAL",
+                          "type": "SOLID",
+                          "color": {
+                            "r": 0,
+                            "g": 0,
+                            "b": 0,
+                            "a": 1
+                          },
+                          "boundVariables": {
+                            "color": {
+                              "type": "VARIABLE_ALIAS",
+                              "id": "VariableID:51:3235"
+                            }
+                          }
+                        }
+                      ],
+                      "strokeWeight": 1,
+                      "strokeAlign": "INSIDE",
+                      "styles": {
+                        "fill": "74:1790",
+                        "stroke": "74:1790"
+                      },
+                      "absoluteBoundingBox": {
+                        "x": -1866.170166015625,
+                        "y": -1198,
+                        "width": 10.472074508666992,
+                        "height": 10.5
+                      },
+                      "absoluteRenderBounds": {
+                        "x": -1866.170166015625,
+                        "y": -1198,
+                        "width": 10.4720458984375,
+                        "height": 10.5
+                      },
+                      "constraints": {
+                        "vertical": "SCALE",
+                        "horizontal": "SCALE"
+                      },
+                      "effects": [],
+                      "interactions": []
+                    }
+                  ],
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": false,
+                  "background": [
+                    {
+                      "blendMode": "NORMAL",
+                      "visible": false,
+                      "type": "SOLID",
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "visible": false,
+                      "type": "SOLID",
+                      "color": {
+                        "r": 1,
+                        "g": 1,
+                        "b": 1,
+                        "a": 1
+                      }
+                    }
+                  ],
+                  "strokes": [],
+                  "strokeWeight": 1,
+                  "strokeAlign": "INSIDE",
+                  "backgroundColor": {
+                    "r": 0,
+                    "g": 0,
+                    "b": 0,
+                    "a": 0
+                  },
+                  "absoluteBoundingBox": {
+                    "x": -1869.660888671875,
+                    "y": -1202,
+                    "width": 15.957447052001953,
+                    "height": 16
+                  },
+                  "absoluteRenderBounds": {
+                    "x": -1869.660888671875,
+                    "y": -1202,
+                    "width": 15.957447052001953,
+                    "height": 16
+                  },
+                  "constraints": {
+                    "vertical": "TOP",
+                    "horizontal": "LEFT"
+                  },
+                  "effects": [],
+                  "interactions": []
+                },
+                {
+                  "id": "I18:473;6316:31539",
+                  "name": "12:22",
+                  "type": "TEXT",
+                  "scrollBehavior": "SCROLLS",
+                  "boundVariables": {
+                    "fills": [
+                      {
+                        "type": "VARIABLE_ALIAS",
+                        "id": "VariableID:51:3235"
+                      }
+                    ]
+                  },
+                  "blendMode": "PASS_THROUGH",
+                  "fills": [
+                    {
+                      "blendMode": "NORMAL",
+                      "type": "SOLID",
+                      "color": {
+                        "r": 0,
+                        "g": 0,
+                        "b": 0,
+                        "a": 1
+                      },
+                      "boundVariables": {
+                        "color": {
+                          "type": "VARIABLE_ALIAS",
+                          "id": "VariableID:51:3235"
+                        }
+                      }
+                    }
+                  ],
+                  "strokes": [],
+                  "strokeWeight": 0,
+                  "strokeAlign": "CENTER",
+                  "styles": {
+                    "fill": "74:1790"
+                  },
+                  "absoluteBoundingBox": {
+                    "x": -1905.1103515625,
+                    "y": -1203,
+                    "width": 33,
+                    "height": 20
+                  },
+                  "absoluteRenderBounds": {
+                    "x": -1904.471923828125,
+                    "y": -1199.010009765625,
+                    "width": 31.5858154296875,
+                    "height": 10.4549560546875
+                  },
+                  "constraints": {
+                    "vertical": "CENTER",
+                    "horizontal": "SCALE"
+                  },
+                  "characters": "12:22",
+                  "characterStyleOverrides": [],
+                  "styleOverrideTable": {},
+                  "lineTypes": [
+                    "NONE"
+                  ],
+                  "lineIndentations": [
+                    0
+                  ],
+                  "style": {
+                    "fontFamily": "Apple SD Gothic Neo",
+                    "fontPostScriptName": "AppleSDGothicNeo-Bold",
+                    "fontStyle": "Bold",
+                    "fontWeight": 700,
+                    "textAutoResize": "WIDTH_AND_HEIGHT",
+                    "fontSize": 15,
+                    "textAlignHorizontal": "CENTER",
+                    "textAlignVertical": "TOP",
+                    "letterSpacing": -0.23999999463558197,
+                    "lineHeightPx": 20,
+                    "lineHeightPercent": 111.11111450195312,
+                    "lineHeightPercentFontSize": 133.3333282470703,
+                    "lineHeightUnit": "PIXELS"
+                  },
+                  "effects": [],
+                  "interactions": []
+                }
+              ],
+              "blendMode": "PASS_THROUGH",
+              "clipsContent": true,
+              "background": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "fills": [
+                {
+                  "blendMode": "NORMAL",
+                  "visible": false,
+                  "type": "SOLID",
+                  "color": {
+                    "r": 1,
+                    "g": 1,
+                    "b": 1,
+                    "a": 1
+                  }
+                }
+              ],
+              "strokes": [],
+              "strokeWeight": 1,
+              "strokeAlign": "INSIDE",
+              "backgroundColor": {
+                "r": 0,
+                "g": 0,
+                "b": 0,
+                "a": 0
+              },
+              "absoluteBoundingBox": {
+                "x": -1906.0665283203125,
+                "y": -1203,
+                "width": 53,
+                "height": 20
+              },
+              "absoluteRenderBounds": {
+                "x": -1906.0665283203125,
+                "y": -1203,
+                "width": 53,
+                "height": 20
+              },
+              "constraints": {
+                "vertical": "SCALE",
+                "horizontal": "SCALE"
+              },
+              "effects": [],
+              "interactions": []
+            }
+          ],
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": false,
+          "background": [
+            {
+              "blendMode": "NORMAL",
+              "visible": false,
+              "type": "SOLID",
+              "color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              }
+            }
+          ],
+          "fills": [
+            {
+              "blendMode": "NORMAL",
+              "visible": false,
+              "type": "SOLID",
+              "color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              }
+            }
+          ],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "backgroundColor": {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          "absoluteBoundingBox": {
+            "x": -1930,
+            "y": -1216,
+            "width": 375,
+            "height": 44
+          },
+          "absoluteRenderBounds": {
+            "x": -1930,
+            "y": -1216,
+            "width": 375,
+            "height": 44
+          },
+          "constraints": {
+            "vertical": "SCALE",
+            "horizontal": "SCALE"
+          },
+          "effects": [],
+          "interactions": []
+        }
+      ],
+      "blendMode": "PASS_THROUGH",
+      "clipsContent": false,
+      "background": [
+        {
+          "blendMode": "NORMAL",
+          "type": "SOLID",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          },
+          "boundVariables": {
+            "color": {
+              "type": "VARIABLE_ALIAS",
+              "id": "VariableID:51:3240"
+            }
+          }
+        }
+      ],
+      "fills": [
+        {
+          "blendMode": "NORMAL",
+          "type": "SOLID",
+          "color": {
+            "r": 1,
+            "g": 1,
+            "b": 1,
+            "a": 1
+          },
+          "boundVariables": {
+            "color": {
+              "type": "VARIABLE_ALIAS",
+              "id": "VariableID:51:3240"
+            }
+          }
+        }
+      ],
+      "strokes": [],
+      "strokeWeight": 1,
+      "strokeAlign": "INSIDE",
+      "backgroundColor": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": 1
+      },
+      "styles": {
+        "fills": "74:1789",
+        "fill": "74:1789"
+      },
+      "absoluteBoundingBox": {
+        "x": -1930,
+        "y": -1216,
+        "width": 375,
+        "height": 44
+      },
+      "absoluteRenderBounds": {
+        "x": -1930,
+        "y": -1216,
+        "width": 375,
+        "height": 44
+      },
+      "constraints": {
+        "vertical": "TOP",
+        "horizontal": "LEFT"
+      },
+      "effects": [],
+      "interactions": []
+    },
+    "components": {
+      "14:315": {
+        "key": "b0d4c4b5fec70a638611e0319bb66f72edede0cd",
+        "name": "Bars/Status Bar/iPhone/Black",
+        "description": "",
+        "remote": true,
+        "documentationLinks": []
+      }
+    },
+    "componentSets": {},
+    "schemaVersion": 0,
+    "styles": {
+      "74:1789": {
+        "key": "9a3333128c101a9042e72fb6701f9298875e03b9",
+        "name": "Semantic/Static/White",
+        "styleType": "FILL",
+        "remote": false,
+        "description": ""
+      },
+      "74:1790": {
+        "key": "e67329626f43d4d5851a4dcef3e0778f369bb2a5",
+        "name": "Semantic/Static/Black",
+        "styleType": "FILL",
+        "remote": false,
+        "description": ""
+      }
+    }
+  },
+  "styleTree": {
+    "id": "18:473",
+    "name": "Bars/Status Bar/iPhone/Black",
+    "cssStyle": {
+      "display": "flex",
+      "width": "375px",
+      "height": "44px",
+      "justify-content": "center",
+      "align-items": "center",
+      "background": "var(--Static-White, #FFF)",
+      "position": "relative"
+    },
+    "children": [
+      {
+        "id": "I18:473;6316:31512",
+        "name": "Status Bar – Light",
+        "cssStyle": {
+          "width": "375px",
+          "height": "44px",
+          "flex-shrink": "0",
+          "position": "absolute",
+          "left": "0px",
+          "top": "0px"
+        },
+        "children": [
+          {
+            "id": "I18:473;6316:31513",
+            "name": "Container",
+            "cssStyle": {
+              "width": "375px",
+              "height": "44px",
+              "fill": "var(--Static-White, #FFF)",
+              "opacity": "0.0001",
+              "position": "absolute",
+              "left": "0px",
+              "top": "0px"
+            },
+            "children": []
+          },
+          {
+            "id": "I18:473;6316:31514",
+            "name": "Status Bar – Battery",
+            "cssStyle": {
+              "width": "26.928px",
+              "height": "20px",
+              "position": "absolute",
+              "left": "333.1116943359375px",
+              "top": "13px"
+            },
+            "children": [
+              {
+                "id": "I18:473;6316:31515",
+                "name": "Bounds",
+                "cssStyle": {
+                  "width": "26.928px",
+                  "height": "20px",
+                  "opacity": "0.0001",
+                  "background": "#FA3E3E",
+                  "position": "absolute",
+                  "left": "0px",
+                  "top": "0px"
+                },
+                "children": []
+              },
+              {
+                "id": "I18:473;6316:31516",
+                "name": "Body",
+                "cssStyle": {
+                  "width": "24.186px",
+                  "height": "11.5px",
+                  "fill": "rgba(0, 0, 0, 0.38)",
+                  "position": "absolute",
+                  "left": "1.99462890625px",
+                  "top": "4.5px"
+                },
+                "children": [
+                  {
+                    "id": "I18:473;6316:31517",
+                    "name": "Exclude",
+                    "cssStyle": {
+                      "width": "21.941px",
+                      "height": "11.5px",
+                      "fill": "#DADADA"
+                    },
+                    "children": [
+                      {
+                        "id": "I18:473;6316:31518",
+                        "name": "Outer",
+                        "cssStyle": {
+                          "width": "21.941px",
+                          "height": "11.5px",
+                          "fill": "rgba(0, 0, 0, 0.38)"
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "I18:473;6316:31519",
+                        "name": "Inner",
+                        "cssStyle": {
+                          "width": "19.947px",
+                          "height": "9.5px",
+                          "fill": "rgba(0, 0, 0, 0.38)"
+                        },
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "I18:473;6316:31520",
+                    "name": "Path",
+                    "cssStyle": {
+                      "width": "1.247px",
+                      "height": "4.331px",
+                      "fill": "rgba(0, 0, 0, 0.38)"
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "I18:473;6316:31521",
+                "name": "Reserve",
+                "cssStyle": {
+                  "width": "17.952px",
+                  "height": "7.5px",
+                  "fill": "var(--Static-Black, #000)",
+                  "position": "absolute",
+                  "left": "3.9893798828125px",
+                  "top": "6.5px"
+                },
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "I18:473;6316:31522",
+            "name": "Status Bar – Wi–Fi",
+            "cssStyle": {
+              "width": "40.891px",
+              "height": "20px",
+              "position": "absolute",
+              "left": "291.223388671875px",
+              "top": "13px"
+            },
+            "children": [
+              {
+                "id": "I18:473;6316:31523",
+                "name": "Bounds",
+                "cssStyle": {
+                  "width": "19.947px",
+                  "height": "20px",
+                  "opacity": "0.0001",
+                  "background": "#FA3E3E",
+                  "position": "absolute",
+                  "left": "0px",
+                  "top": "0px"
+                },
+                "children": []
+              },
+              {
+                "id": "I18:473;6316:31524",
+                "name": "Bounds",
+                "cssStyle": {
+                  "width": "19.947px",
+                  "height": "20px",
+                  "opacity": "0.0001",
+                  "background": "#FA3E3E",
+                  "position": "absolute",
+                  "left": "20.944091796875px",
+                  "top": "0px"
+                },
+                "children": []
+              },
+              {
+                "id": "I18:473;6316:31525",
+                "name": "Wi–Fi",
+                "cssStyle": {
+                  "width": "14.96px",
+                  "height": "10.5px",
+                  "fill": "var(--Static-Black, #000)",
+                  "position": "absolute",
+                  "left": "23.8089599609375px",
+                  "top": "4.60498046875px"
+                },
+                "children": [
+                  {
+                    "id": "I18:473;6316:31526",
+                    "name": "Wave",
+                    "cssStyle": {
+                      "width": "4.382px",
+                      "height": "2.957px",
+                      "fill": "#000"
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "I18:473;6316:31527",
+                    "name": "Wave",
+                    "cssStyle": {
+                      "width": "9.637px",
+                      "height": "3.247px",
+                      "fill": "#000"
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "I18:473;6316:31528",
+                    "name": "Wave",
+                    "cssStyle": {
+                      "width": "14.96px",
+                      "height": "4.337px",
+                      "fill": "#000"
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "I18:473;6316:31529",
+            "name": "Status Bar – Service",
+            "cssStyle": {
+              "width": "17.204px",
+              "height": "10.5px",
+              "position": "absolute",
+              "left": "292.7193603515625px",
+              "top": "17.75px"
+            },
+            "children": [
+              {
+                "id": "I18:473;6316:31530",
+                "name": "Signal",
+                "cssStyle": {
+                  "width": "17.204px",
+                  "height": "10.5px",
+                  "fill": "var(--Static-Black, #000)",
+                  "position": "absolute",
+                  "left": "0px",
+                  "top": "0px"
+                },
+                "children": [
+                  {
+                    "id": "I18:473;6316:31531",
+                    "name": "Bar",
+                    "cssStyle": {
+                      "width": "2.992px",
+                      "height": "3.75px",
+                      "border-radius": "1px",
+                      "background": "#000"
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "I18:473;6316:31532",
+                    "name": "Bar",
+                    "cssStyle": {
+                      "width": "2.992px",
+                      "height": "5.75px",
+                      "border-radius": "1px",
+                      "background": "#000"
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "I18:473;6316:31533",
+                    "name": "Bar",
+                    "cssStyle": {
+                      "width": "2.992px",
+                      "height": "8.25px",
+                      "border-radius": "1px",
+                      "background": "#000"
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "I18:473;6316:31534",
+                    "name": "Bar",
+                    "cssStyle": {
+                      "width": "2.992px",
+                      "height": "10.5px",
+                      "border-radius": "1px",
+                      "background": "#000"
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "I18:473;6316:31535",
+            "name": "Time",
+            "cssStyle": {
+              "display": "inline-flex",
+              "padding": "0 0.637px 0 0.956px",
+              "justify-content": "center",
+              "align-items": "flex-start",
+              "gap": "2.449px",
+              "position": "absolute",
+              "left": "23.9334716796875px",
+              "top": "13px",
+              "height": "20px"
+            },
+            "children": [
+              {
+                "id": "I18:473;6316:31536",
+                "name": "Status Bar – Location",
+                "cssStyle": {
+                  "width": "15.957px",
+                  "height": "16px",
+                  "position": "absolute",
+                  "left": "36.4056396484375px",
+                  "top": "1px"
+                },
+                "children": [
+                  {
+                    "id": "I18:473;6316:31537",
+                    "name": "Bounds",
+                    "cssStyle": {
+                      "width": "15.957px",
+                      "height": "16px",
+                      "position": "absolute",
+                      "left": "0px",
+                      "top": "0px"
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "I18:473;6316:31538",
+                    "name": "Location",
+                    "cssStyle": {
+                      "width": "10.472px",
+                      "height": "10.5px",
+                      "fill": "var(--Static-Black, #000)",
+                      "stroke-width": "1px",
+                      "stroke": "var(--Static-Black, #000)",
+                      "position": "absolute",
+                      "left": "3.49072265625px",
+                      "top": "4px"
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "I18:473;6316:31539",
+                "name": "12:22",
+                "cssStyle": {
+                  "color": "var(--Semantic-Static-Black, var(--Static-Black, #000))",
+                  "text-align": "center",
+                  "font-family": "\"Apple SD Gothic Neo\"",
+                  "font-size": "15px",
+                  "font-style": "normal",
+                  "font-weight": "700",
+                  "line-height": "20px /* 133.333% */",
+                  "letter-spacing": "-0.24px",
+                  "position": "absolute",
+                  "left": "0.9561767578125px",
+                  "top": "0px"
+                },
+                "children": []
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "dependencies": {
+    "14:315": {
+      "pluginData": [],
+      "info": {
+        "document": {
+          "id": "14:315",
+          "name": "Bars/Status Bar/iPhone/Black",
+          "type": "COMPONENT",
+          "scrollBehavior": "SCROLLS",
+          "children": [],
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": false,
+          "background": [
+            {
+              "blendMode": "NORMAL",
+              "visible": false,
+              "type": "SOLID",
+              "color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              }
+            }
+          ],
+          "fills": [
+            {
+              "blendMode": "NORMAL",
+              "visible": false,
+              "type": "SOLID",
+              "color": {
+                "r": 1,
+                "g": 1,
+                "b": 1,
+                "a": 1
+              }
+            }
+          ],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "backgroundColor": {
+            "r": 0,
+            "g": 0,
+            "b": 0,
+            "a": 0
+          },
+          "absoluteBoundingBox": {
+            "x": 0,
+            "y": 0,
+            "width": 375,
+            "height": 44
+          },
+          "absoluteRenderBounds": {
+            "x": 0,
+            "y": 0,
+            "width": 375,
+            "height": 44
+          },
+          "constraints": {
+            "vertical": "TOP",
+            "horizontal": "LEFT"
+          },
+          "effects": [],
+          "interactions": []
+        },
+        "components": {
+          "14:315": {
+            "key": "b0d4c4b5fec70a638611e0319bb66f72edede0cd",
+            "name": "Bars/Status Bar/iPhone/Black",
+            "description": "",
+            "remote": true,
+            "documentationLinks": []
+          }
+        },
+        "componentSets": {},
+        "schemaVersion": 0,
+        "styles": {}
+      },
+      "styleTree": {
+        "id": "14:315",
+        "name": "Bars/Status Bar/iPhone/Black",
+        "cssStyle": {
+          "display": "flex",
+          "width": "375px",
+          "height": "44px",
+          "justify-content": "center",
+          "align-items": "center"
+        },
+        "children": [
+          {
+            "id": "14:316",
+            "name": "Status Bar – Light",
+            "cssStyle": {
+              "width": "375px",
+              "height": "44px",
+              "flex-shrink": "0"
+            },
+            "children": [
+              {
+                "id": "14:317",
+                "name": "Container",
+                "cssStyle": {
+                  "width": "375px",
+                  "height": "44px",
+                  "fill": "var(--Static-White, #FFF)",
+                  "opacity": "0.0001"
+                },
+                "children": []
+              },
+              {
+                "id": "14:318",
+                "name": "Status Bar – Battery",
+                "cssStyle": {
+                  "width": "26.928px",
+                  "height": "20px"
+                },
+                "children": [
+                  {
+                    "id": "14:319",
+                    "name": "Bounds",
+                    "cssStyle": {
+                      "width": "26.928px",
+                      "height": "20px",
+                      "opacity": "0.0001",
+                      "background": "#FA3E3E"
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "14:320",
+                    "name": "Body",
+                    "cssStyle": {
+                      "width": "24.186px",
+                      "height": "11.5px",
+                      "fill": "rgba(0, 0, 0, 0.38)"
+                    },
+                    "children": [
+                      {
+                        "id": "14:321",
+                        "name": "Exclude",
+                        "cssStyle": {
+                          "width": "21.941px",
+                          "height": "11.5px",
+                          "fill": "#DADADA"
+                        },
+                        "children": [
+                          {
+                            "id": "14:322",
+                            "name": "Outer",
+                            "cssStyle": {
+                              "width": "21.941px",
+                              "height": "11.5px",
+                              "fill": "rgba(0, 0, 0, 0.38)"
+                            },
+                            "children": []
+                          },
+                          {
+                            "id": "14:323",
+                            "name": "Inner",
+                            "cssStyle": {
+                              "width": "19.947px",
+                              "height": "9.5px",
+                              "fill": "rgba(0, 0, 0, 0.38)"
+                            },
+                            "children": []
+                          }
+                        ]
+                      },
+                      {
+                        "id": "14:324",
+                        "name": "Path",
+                        "cssStyle": {
+                          "width": "1.247px",
+                          "height": "4.331px",
+                          "fill": "rgba(0, 0, 0, 0.38)"
+                        },
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "14:325",
+                    "name": "Reserve",
+                    "cssStyle": {
+                      "width": "17.952px",
+                      "height": "7.5px",
+                      "fill": "var(--Static-Black, #000)"
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "id": "14:326",
+                "name": "Status Bar – Wi–Fi",
+                "cssStyle": {
+                  "width": "40.891px",
+                  "height": "20px"
+                },
+                "children": [
+                  {
+                    "id": "14:327",
+                    "name": "Bounds",
+                    "cssStyle": {
+                      "width": "19.947px",
+                      "height": "20px",
+                      "opacity": "0.0001",
+                      "background": "#FA3E3E"
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "14:328",
+                    "name": "Bounds",
+                    "cssStyle": {
+                      "width": "19.947px",
+                      "height": "20px",
+                      "opacity": "0.0001",
+                      "background": "#FA3E3E"
+                    },
+                    "children": []
+                  },
+                  {
+                    "id": "14:329",
+                    "name": "Wi–Fi",
+                    "cssStyle": {
+                      "width": "14.96px",
+                      "height": "10.5px",
+                      "fill": "var(--Static-Black, #000)"
+                    },
+                    "children": [
+                      {
+                        "id": "14:330",
+                        "name": "Wave",
+                        "cssStyle": {
+                          "width": "4.382px",
+                          "height": "2.957px",
+                          "fill": "#000"
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "14:331",
+                        "name": "Wave",
+                        "cssStyle": {
+                          "width": "9.637px",
+                          "height": "3.247px",
+                          "fill": "#000"
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "14:332",
+                        "name": "Wave",
+                        "cssStyle": {
+                          "width": "14.96px",
+                          "height": "4.337px",
+                          "fill": "#000"
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "14:333",
+                "name": "Status Bar – Service",
+                "cssStyle": {
+                  "width": "17.204px",
+                  "height": "10.5px"
+                },
+                "children": [
+                  {
+                    "id": "14:334",
+                    "name": "Signal",
+                    "cssStyle": {
+                      "width": "17.204px",
+                      "height": "10.5px",
+                      "fill": "var(--Static-Black, #000)"
+                    },
+                    "children": [
+                      {
+                        "id": "14:335",
+                        "name": "Bar",
+                        "cssStyle": {
+                          "width": "2.992px",
+                          "height": "3.75px",
+                          "border-radius": "1px",
+                          "background": "#000"
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "14:336",
+                        "name": "Bar",
+                        "cssStyle": {
+                          "width": "2.992px",
+                          "height": "5.75px",
+                          "border-radius": "1px",
+                          "background": "#000"
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "14:337",
+                        "name": "Bar",
+                        "cssStyle": {
+                          "width": "2.992px",
+                          "height": "8.25px",
+                          "border-radius": "1px",
+                          "background": "#000"
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "14:338",
+                        "name": "Bar",
+                        "cssStyle": {
+                          "width": "2.992px",
+                          "height": "10.5px",
+                          "border-radius": "1px",
+                          "background": "#000"
+                        },
+                        "children": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "14:339",
+                "name": "Time",
+                "cssStyle": {
+                  "display": "inline-flex",
+                  "padding": "0 0.637px 0 0.956px",
+                  "justify-content": "center",
+                  "align-items": "flex-start",
+                  "gap": "2.449px"
+                },
+                "children": [
+                  {
+                    "id": "14:340",
+                    "name": "Status Bar – Location",
+                    "cssStyle": {
+                      "width": "15.957px",
+                      "height": "16px"
+                    },
+                    "children": [
+                      {
+                        "id": "14:341",
+                        "name": "Bounds",
+                        "cssStyle": {
+                          "width": "15.957px",
+                          "height": "16px"
+                        },
+                        "children": []
+                      },
+                      {
+                        "id": "14:342",
+                        "name": "Location",
+                        "cssStyle": {
+                          "width": "10.472px",
+                          "height": "10.5px",
+                          "fill": "var(--Static-Black, #000)",
+                          "stroke-width": "1px",
+                          "stroke": "var(--Static-Black, #000)"
+                        },
+                        "children": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "14:343",
+                    "name": "12:22",
+                    "cssStyle": {
+                      "color": "var(--Static-Black, #000)",
+                      "text-align": "center",
+                      "font-family": "\"Apple SD Gothic Neo\"",
+                      "font-size": "15px",
+                      "font-style": "normal",
+                      "font-weight": "700",
+                      "line-height": "20px /* 133.333% */",
+                      "letter-spacing": "-0.24px"
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "vectorSvgs": {
+    "I18:473;6316:31513": "<svg width=\"375\" height=\"44\" viewBox=\"0 0 375 44\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path opacity=\"0.01\" fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M0 0H375V44H0V0Z\" fill=\"white\"/>\n</svg>\n",
+    "I18:473;6316:31521": "<svg width=\"18\" height=\"8\" viewBox=\"0 0 18 8\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M0.99734 0H16.9548C17.5056 0 17.9521 0.447715 17.9521 1V6.5C17.9521 7.05228 17.5056 7.5 16.9548 7.5H0.99734C0.446525 7.5 0 7.05228 0 6.5V1C0 0.447715 0.446525 0 0.99734 0Z\" fill=\"black\"/>\n</svg>\n",
+    "I18:473;6316:31538": "<svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M6.43945 8.0791V4.04492H2.40918L9.51172 0.961914L6.43945 8.0791Z\" fill=\"black\" stroke=\"black\"/>\n</svg>\n"
+  }
+}

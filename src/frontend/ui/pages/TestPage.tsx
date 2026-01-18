@@ -1,0 +1,812 @@
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import { createRoot } from "react-dom/client";
+import { css } from "@emotion/react";
+import { useNavigate } from "react-router-dom";
+import FigmaCompiler from "@compiler";
+import { FigmaNodeData } from "../domain/compiler";
+import { renderReactComponent } from "../domain/renderer/component-render";
+import { loadFontsFromNodeData } from "../domain/compiler/utils/fontLoader";
+import {
+  compareNodeStyles,
+  StyleDiff,
+} from "../domain/compiler/utils/styleComparison";
+// twind - main.tsx에서 export한 전역 인스턴스 사용
+import { twindTw } from "../main";
+
+// fixtures/failing 폴더의 JSON 파일들
+const failingFixtures = import.meta.glob(
+  "../../../../test/fixtures/failing/*.json",
+  { eager: true, import: "default" }
+) as Record<string, FigmaNodeData>;
+
+// fixtures/failing 폴더의 PNG 파일들
+const failingImages = import.meta.glob(
+  "../../../../test/fixtures/failing/*.png",
+  { eager: true, as: "url" }
+) as Record<string, string>;
+
+const fixtureList = Object.entries(failingFixtures).map(([path, data]) => {
+  const fileName = path.split("/").pop()?.replace(".json", "") || "";
+  const imagePath = path.replace(".json", ".png");
+  const imageUrl = failingImages[imagePath];
+  return { name: fileName, data, imageUrl };
+});
+
+interface VariantResult {
+  variantName: string;
+  status: "success" | "warning" | "error";
+  totalNodes: number;
+  foundInDom: number;
+  matchedNodes: number;
+  styleDiffs: StyleDiff[];
+}
+
+interface TestResult {
+  name: string;
+  status: "success" | "warning" | "error";
+  totalNodes: number;
+  foundInDom: number;
+  matchedNodes: number;
+  styleDiffs: StyleDiff[];
+  errorMessage?: string;
+  isComponentSet?: boolean;
+  variants?: VariantResult[];
+}
+
+/** variant 이름에서 props 파싱
+ * 예: "Size=default, Variant=primary, Icon=true"
+ * → { size: "default", variant: "primary", icon: true }
+ *
+ * - key를 camelCase로 변환
+ * - "true"/"false" 값은 boolean으로 변환
+ * - State=Disabled → disabled={true} 변환 (컴파일러에서 state prop 삭제됨)
+ */
+function parseVariantProps(variantName: string): Record<string, any> {
+  const props: Record<string, any> = {};
+  const pairs = variantName.split(",").map((s) => s.trim());
+  for (const pair of pairs) {
+    const [key, value] = pair.split("=").map((s) => s.trim());
+    if (key && value) {
+      // key를 camelCase로 변환 (첫 글자 소문자)
+      const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+
+      // "true"/"false"는 boolean으로 변환
+      if (value === "true") {
+        props[camelKey] = true;
+      } else if (value === "false") {
+        props[camelKey] = false;
+      } else {
+        props[camelKey] = value;
+      }
+
+      // State=Disabled → disabled 속성 추가
+      // (컴파일러에서 :disabled pseudo-class로 변환하므로 button에 disabled 필요)
+      if (camelKey === "state" && value === "Disabled") {
+        props["disabled"] = true;
+      }
+    }
+  }
+
+  // state prop 제거 (컴파일러에서 삭제했으므로 컴포넌트에서 사용 안함)
+  delete props["state"];
+
+  return props;
+}
+
+/** 특정 variant의 nodeData 생성 (해당 variant만 포함) */
+function _createVariantNodeData(
+  originalNodeData: FigmaNodeData,
+  variantNode: any
+): FigmaNodeData {
+  return {
+    ...originalNodeData,
+    info: {
+      ...originalNodeData.info,
+      document: variantNode,
+    },
+  };
+}
+
+/** 비교 결과로 상태 판정 */
+function _determineStatus(
+  totalNodes: number,
+  foundInDom: number,
+  matchedNodes: number,
+  diffsCount: number
+): "success" | "warning" | "error" {
+  const foundRate = totalNodes > 0 ? foundInDom / totalNodes : 0;
+  const matchRate = foundInDom > 0 ? matchedNodes / foundInDom : 0;
+
+  if (foundInDom === 0 && totalNodes > 0) return "error";
+  if (foundRate < 0.3) return "error";
+  if (foundRate < 0.5 || matchRate < 0.5) return "warning";
+  if (diffsCount > 3) return "warning";
+  return "success";
+}
+
+type StyleStrategy = "emotion" | "tailwind";
+
+export default function TestPage() {
+  const navigate = useNavigate();
+  const renderRef = useRef<HTMLDivElement>(null);
+  const [results, setResults] = useState<TestResult[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0 });
+  const [strategy, setStrategy] = useState<StyleStrategy>("emotion");
+
+  // 선택된 fixture 렌더링 (Component Set이면 모든 variant 렌더링)
+  const renderComponent = useCallback(
+    async (fixture: { name: string; data: FigmaNodeData }) => {
+      if (!renderRef.current) return;
+
+      const container = renderRef.current;
+      try {
+        await loadFontsFromNodeData(fixture.data);
+        const compiler = new FigmaCompiler(fixture.data, {
+          debug: true,
+          styleStrategy: { type: strategy },
+        });
+        const code = await compiler.compile();
+
+        if (!code) {
+          container.innerHTML = `<div style="color: red;">컴파일 실패</div>`;
+          return;
+        }
+
+        // 생성된 코드 출력
+        console.log(`📝 Generated Code for ${fixture.name} [${strategy}]:\n`, code);
+
+        const Component = await renderReactComponent(code);
+        const doc = fixture.data.info.document as any;
+        const isComponentSet = doc.type === "COMPONENT_SET";
+
+        if (isComponentSet) {
+          // Component Set: 모든 variant 렌더링
+          const variants = doc.children || [];
+          container.innerHTML = "";
+          const root = createRoot(container);
+
+          root.render(
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+            >
+              {variants.map((variant: any, idx: number) => {
+                const props = parseVariantProps(variant.name || "");
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        color: "#666",
+                        minWidth: "200px",
+                        fontFamily: "monospace",
+                      }}
+                    >
+                      {variant.name}
+                    </div>
+                    <Component {...props} />
+                  </div>
+                );
+              })}
+            </div>
+          );
+        } else {
+          // 일반 컴포넌트: 기본 렌더링
+          container.innerHTML = "";
+          const root = createRoot(container);
+          root.render(<Component />);
+        }
+
+        // Tailwind 전략일 때 twind로 클래스 처리
+        if (strategy === "tailwind") {
+          requestAnimationFrame(() => {
+            const elements = container.querySelectorAll("[class]");
+            elements.forEach((el) => {
+              const className = el.getAttribute("class");
+              if (className && !className.startsWith("css-")) {
+                const classes = className.split(/\s+/).filter(c => c && !c.startsWith("css-"));
+                classes.forEach(cls => twindTw(cls));
+              }
+            });
+          });
+        }
+      } catch (e) {
+        container.innerHTML = `<div style="color: red;">렌더링 실패: ${(e as Error).message}</div>`;
+      }
+    },
+    [strategy]
+  );
+
+  // 전체 테스트
+  const testAll = useCallback(async () => {
+    if (!renderRef.current) return;
+
+    const container = renderRef.current;
+    setIsTesting(true);
+    setResults([]);
+    setProgress({ current: 0, total: fixtureList.length });
+
+    const newResults: TestResult[] = [];
+
+    for (let i = 0; i < fixtureList.length; i++) {
+      const fixture = fixtureList[i];
+      setProgress({ current: i + 1, total: fixtureList.length });
+
+      try {
+        await loadFontsFromNodeData(fixture.data);
+        const compiler = new FigmaCompiler(fixture.data, {
+          debug: true,
+          styleStrategy: { type: strategy },
+        });
+        const code = await compiler.compile();
+
+        if (!code) {
+          newResults.push({
+            name: fixture.name,
+            status: "error",
+            totalNodes: 0,
+            foundInDom: 0,
+            matchedNodes: 0,
+            styleDiffs: [],
+            errorMessage: "컴파일 실패",
+          });
+          continue;
+        }
+
+        const Component = await renderReactComponent(code);
+        container.innerHTML = "";
+        const root = createRoot(container);
+        root.render(<Component />);
+
+        await new Promise((r) =>
+          requestAnimationFrame(() => setTimeout(r, 150))
+        );
+
+        const comparison = compareNodeStyles(fixture.data, container);
+
+        // 신뢰도 기반 상태 판정
+        const foundRate =
+          comparison.totalNodes > 0
+            ? comparison.foundInDom / comparison.totalNodes
+            : 0;
+        const matchRate =
+          comparison.foundInDom > 0
+            ? comparison.matchedNodes / comparison.foundInDom
+            : 0;
+
+        let status: "success" | "warning" | "error" = "success";
+
+        if (comparison.foundInDom === 0 && comparison.totalNodes > 0) {
+          // DOM에서 아무것도 못 찾음 - 구조적 문제
+          status = "error";
+        } else if (foundRate < 0.1) {
+          // 10% 미만만 DOM에서 찾음 - 심각한 불일치
+          status = "error";
+        } else if (foundRate < 0.5 || matchRate < 0.5) {
+          // 50% 미만 발견 또는 50% 미만 매칭
+          status = "warning";
+        } else if (comparison.diffs.length > 3) {
+          // 스타일 차이 3개 초과
+          status = "warning";
+        }
+
+        newResults.push({
+          name: fixture.name,
+          status,
+          totalNodes: comparison.totalNodes,
+          foundInDom: comparison.foundInDom,
+          matchedNodes: comparison.matchedNodes,
+          styleDiffs: comparison.diffs,
+        });
+
+        root.unmount();
+      } catch (e) {
+        newResults.push({
+          name: fixture.name,
+          status: "error",
+          totalNodes: 0,
+          foundInDom: 0,
+          matchedNodes: 0,
+          styleDiffs: [],
+          errorMessage: (e as Error).message,
+        });
+      }
+    }
+
+    setResults(newResults);
+    setIsTesting(false);
+
+    // 첫 번째 선택
+    if (newResults.length > 0 && fixtureList.length > 0) {
+      setSelected(fixtureList[0].name);
+      renderComponent(fixtureList[0]);
+    }
+  }, [renderComponent, strategy]);
+
+  // strategy 변경 시 선택된 컴포넌트 다시 렌더링
+  useEffect(() => {
+    if (selected) {
+      const fixture = fixtureList.find((f) => f.name === selected);
+      if (fixture) {
+        renderComponent(fixture);
+      }
+    }
+  }, [strategy, selected, renderComponent]);
+
+  // 결과 요약
+  const summary = {
+    success: results.filter((r) => r.status === "success").length,
+    warning: results.filter((r) => r.status === "warning").length,
+    error: results.filter((r) => r.status === "error").length,
+  };
+
+  const selectedResult = results.find((r) => r.name === selected);
+  const selectedFixture = fixtureList.find((f) => f.name === selected);
+
+  return (
+    <div css={containerStyle}>
+      {/* 헤더 */}
+      <header css={headerStyle}>
+        <button onClick={() => navigate("/")} css={backBtn}>
+          ← Back
+        </button>
+        <h1 css={titleStyle}>🧪 Component Test</h1>
+
+        {/* Strategy 전환 버튼 */}
+        <div css={strategyToggle}>
+          <button
+            onClick={() => setStrategy("emotion")}
+            css={[strategyBtn, strategy === "emotion" && strategyBtnActive]}
+          >
+            Emotion
+          </button>
+          <button
+            onClick={() => setStrategy("tailwind")}
+            css={[strategyBtn, strategy === "tailwind" && strategyBtnActive]}
+          >
+            Tailwind
+          </button>
+        </div>
+
+        <button
+          onClick={testAll}
+          disabled={isTesting || fixtureList.length === 0}
+          css={testAllBtn}
+        >
+          {isTesting
+            ? `⏳ ${progress.current}/${progress.total}`
+            : `🚀 Test All (${fixtureList.length})`}
+        </button>
+      </header>
+
+      {/* 결과 요약 */}
+      {results.length > 0 && (
+        <div css={summaryStyle}>
+          <span css={successText}>✅ {summary.success}</span>
+          <span css={warningText}>⚠️ {summary.warning}</span>
+          <span css={errorText}>❌ {summary.error}</span>
+          <span css={totalText}>/ {results.length} 컴포넌트</span>
+        </div>
+      )}
+
+      {/* 메인 */}
+      <div css={mainStyle}>
+        {/* 왼쪽: 목록 */}
+        <div css={listPanel}>
+          {results.length === 0
+            ? // 테스트 전: fixture 목록만
+              fixtureList.map((f) => (
+                <div
+                  key={f.name}
+                  css={[listItem, selected === f.name && listItemActive]}
+                  onClick={() => {
+                    setSelected(f.name);
+                    renderComponent(f);
+                  }}
+                >
+                  <span css={statusIcon}>⏳</span>
+                  <span css={itemName}>{f.name}</span>
+                </div>
+              ))
+            : // 테스트 후: 결과 목록
+              results.map((r) => (
+                <div
+                  key={r.name}
+                  css={[
+                    listItem,
+                    selected === r.name && listItemActive,
+                    getStatusBorder(r.status),
+                  ]}
+                  onClick={() => {
+                    setSelected(r.name);
+                    const fixture = fixtureList.find((f) => f.name === r.name);
+                    if (fixture) renderComponent(fixture);
+                  }}
+                >
+                  <span css={statusIcon}>
+                    {r.status === "success" && "✅"}
+                    {r.status === "warning" && "⚠️"}
+                    {r.status === "error" && "❌"}
+                  </span>
+                  <span css={itemName}>{r.name}</span>
+                  <span
+                    css={itemStats}
+                    title={`Found: ${r.foundInDom}/${r.totalNodes}, Match: ${r.matchedNodes}`}
+                  >
+                    {r.foundInDom}/{r.totalNodes}
+                  </span>
+                </div>
+              ))}
+        </div>
+
+        {/* 오른쪽: 원본 vs 렌더링 */}
+        <div css={detailPanel}>
+          {/* 비교 영역 */}
+          <div css={compareArea}>
+            {/* 원본 이미지 */}
+            <div css={compareBox}>
+              <div css={compareLabel}>📐 Figma 원본</div>
+              <div css={imageContainer}>
+                {selectedFixture?.imageUrl ? (
+                  <img
+                    src={selectedFixture.imageUrl}
+                    alt="Figma original"
+                    css={originalImage}
+                  />
+                ) : (
+                  <div css={noImage}>이미지 없음</div>
+                )}
+              </div>
+            </div>
+
+            {/* 렌더링 결과 */}
+            <div css={compareBox}>
+              <div css={compareLabel}>
+                🖥️ 렌더링 결과 ({strategy === "emotion" ? "Emotion" : "Tailwind"})
+              </div>
+              <div ref={renderRef} css={renderBox} />
+            </div>
+          </div>
+
+          {/* 스타일 차이 */}
+          {selectedResult && selectedResult.styleDiffs.length > 0 && (
+            <div css={diffSection}>
+              <h3 css={diffTitle}>
+                🎨 스타일 차이 ({selectedResult.styleDiffs.length})
+              </h3>
+              <div css={diffList}>
+                {selectedResult.styleDiffs.slice(0, 20).map((diff, i) => (
+                  <div key={i} css={diffItem}>
+                    <span css={diffNode}>{diff.nodeName}</span>
+                    <span css={diffProp}>{diff.property}</span>
+                    <span css={diffExpected}>{diff.expected}</span>
+                    <span css={diffArrow}>→</span>
+                    <span css={diffActual}>{diff.actual}</span>
+                  </div>
+                ))}
+                {selectedResult.styleDiffs.length > 20 && (
+                  <div css={moreText}>
+                    ... 외 {selectedResult.styleDiffs.length - 20}개
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {selectedResult?.errorMessage && (
+            <div css={errorBox}>{selectedResult.errorMessage}</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 스타일
+const containerStyle = css`
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #0d1117;
+  color: #e6edf3;
+`;
+
+const headerStyle = css`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+`;
+
+const backBtn = css`
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #8b949e;
+  cursor: pointer;
+  &:hover {
+    background: #21262d;
+  }
+`;
+
+const titleStyle = css`
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  flex: 1;
+`;
+
+const testAllBtn = css`
+  padding: 8px 16px;
+  background: #238636;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  &:hover:not(:disabled) {
+    background: #2ea043;
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const summaryStyle = css`
+  display: flex;
+  gap: 20px;
+  padding: 10px 20px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  font-size: 14px;
+`;
+
+const successText = css`
+  color: #3fb950;
+`;
+const warningText = css`
+  color: #d29922;
+`;
+const errorText = css`
+  color: #f85149;
+`;
+const totalText = css`
+  color: #8b949e;
+`;
+
+const mainStyle = css`
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+`;
+
+const listPanel = css`
+  width: 280px;
+  background: #161b22;
+  border-right: 1px solid #30363d;
+  overflow-y: auto;
+  padding: 8px;
+`;
+
+const listItem = css`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  &:hover {
+    background: #21262d;
+  }
+`;
+
+const listItemActive = css`
+  background: #21262d;
+`;
+
+const getStatusBorder = (status: string) => {
+  switch (status) {
+    case "success":
+      return css`
+        border-left-color: #3fb950;
+      `;
+    case "warning":
+      return css`
+        border-left-color: #d29922;
+      `;
+    case "error":
+      return css`
+        border-left-color: #f85149;
+      `;
+    default:
+      return css``;
+  }
+};
+
+const statusIcon = css`
+  font-size: 14px;
+`;
+const itemName = css`
+  flex: 1;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+const itemStats = css`
+  font-size: 11px;
+  color: #8b949e;
+`;
+
+const detailPanel = css`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+`;
+
+const compareArea = css`
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  overflow: auto;
+  background: #0d1117;
+`;
+
+const compareBox = css`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+`;
+
+const compareLabel = css`
+  padding: 8px 12px;
+  background: #21262d;
+  border-radius: 6px 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8b949e;
+`;
+
+const imageContainer = css`
+  flex: 1;
+  background: white;
+  border-radius: 0 0 6px 6px;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  overflow: auto;
+`;
+
+const originalImage = css`
+  max-width: 100%;
+  height: auto;
+`;
+
+const noImage = css`
+  color: #8b949e;
+  font-size: 13px;
+`;
+
+const renderBox = css`
+  flex: 1;
+  background: white;
+  border-radius: 0 0 6px 6px;
+  padding: 16px;
+  overflow: auto;
+`;
+
+const diffSection = css`
+  max-height: 200px;
+  overflow-y: auto;
+  background: #161b22;
+  border-top: 1px solid #30363d;
+  padding: 12px 16px;
+`;
+
+const diffTitle = css`
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #8b949e;
+`;
+
+const diffList = css`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const diffItem = css`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  padding: 4px 8px;
+  background: #21262d;
+  border-radius: 4px;
+`;
+
+const diffNode = css`
+  color: #79c0ff;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
+const diffProp = css`
+  color: #d2a8ff;
+  min-width: 60px;
+`;
+
+const diffExpected = css`
+  color: #f85149;
+  min-width: 80px;
+`;
+
+const diffArrow = css`
+  color: #8b949e;
+`;
+
+const diffActual = css`
+  color: #3fb950;
+`;
+
+const moreText = css`
+  font-size: 11px;
+  color: #8b949e;
+  padding: 4px 8px;
+`;
+
+const errorBox = css`
+  padding: 12px 16px;
+  background: rgba(248, 81, 73, 0.1);
+  border-top: 1px solid #f85149;
+  color: #f85149;
+  font-size: 13px;
+`;
+
+const strategyToggle = css`
+  display: flex;
+  background: #21262d;
+  border-radius: 6px;
+  padding: 2px;
+  gap: 2px;
+`;
+
+const strategyBtn = css`
+  padding: 6px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #8b949e;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  &:hover {
+    color: #e6edf3;
+  }
+`;
+
+const strategyBtnActive = css`
+  background: #30363d;
+  color: #e6edf3;
+`;

@@ -1,0 +1,1124 @@
+{
+  "pluginData": [],
+  "info": {
+      "document": {
+          "id": "15:129",
+          "name": "Yellow",
+          "type": "FRAME",
+          "scrollBehavior": "SCROLLS",
+          "children": [
+              {
+                  "id": "15:131",
+                  "name": "Yellow bright",
+                  "type": "FRAME",
+                  "scrollBehavior": "SCROLLS",
+                  "children": [
+                      {
+                          "id": "15:132",
+                          "name": "Swatch",
+                          "type": "RECTANGLE",
+                          "scrollBehavior": "SCROLLS",
+                          "blendMode": "PASS_THROUGH",
+                          "fills": [
+                              {
+                                  "blendMode": "NORMAL",
+                                  "type": "SOLID",
+                                  "color": {
+                                      "r": 0.9882352948188782,
+                                      "g": 0.7058823704719543,
+                                      "b": 0,
+                                      "a": 1
+                                  }
+                              }
+                          ],
+                          "strokes": [],
+                          "strokeWeight": 1,
+                          "strokeAlign": "INSIDE",
+                          "styles": {
+                              "fill": "705:4755"
+                          },
+                          "cornerRadius": 3,
+                          "cornerSmoothing": 0,
+                          "absoluteBoundingBox": {
+                              "x": 2912,
+                              "y": 500,
+                              "width": 40,
+                              "height": 40
+                          },
+                          "absoluteRenderBounds": {
+                              "x": 2912,
+                              "y": 500,
+                              "width": 40,
+                              "height": 40
+                          },
+                          "constraints": {
+                              "vertical": "CENTER",
+                              "horizontal": "LEFT"
+                          },
+                          "effects": [],
+                          "interactions": []
+                      },
+                      {
+                          "id": "15:133",
+                          "name": "Yellow bright",
+                          "type": "TEXT",
+                          "scrollBehavior": "SCROLLS",
+                          "blendMode": "PASS_THROUGH",
+                          "fills": [
+                              {
+                                  "blendMode": "NORMAL",
+                                  "type": "SOLID",
+                                  "color": {
+                                      "r": 0.20000000298023224,
+                                      "g": 0.20000000298023224,
+                                      "b": 0.20000000298023224,
+                                      "a": 1
+                                  }
+                              }
+                          ],
+                          "strokes": [],
+                          "strokeWeight": 1,
+                          "strokeAlign": "OUTSIDE",
+                          "styles": {
+                              "fill": "240:457",
+                              "text": "15:49"
+                          },
+                          "absoluteBoundingBox": {
+                              "x": 2968,
+                              "y": 510,
+                              "width": 92,
+                              "height": 20
+                          },
+                          "absoluteRenderBounds": {
+                              "x": 2968.5126953125,
+                              "y": 513.74267578125,
+                              "width": 90.029296875,
+                              "height": 14.28955078125
+                          },
+                          "constraints": {
+                              "vertical": "CENTER",
+                              "horizontal": "LEFT"
+                          },
+                          "characters": "Yellow bright",
+                          "characterStyleOverrides": [],
+                          "styleOverrideTable": {},
+                          "lineTypes": [
+                              "NONE"
+                          ],
+                          "lineIndentations": [
+                              0
+                          ],
+                          "style": {
+                              "fontFamily": "SF Pro Text",
+                              "fontPostScriptName": "SFProText-Regular",
+                              "fontStyle": "Regular",
+                              "fontWeight": 400,
+                              "textAutoResize": "WIDTH_AND_HEIGHT",
+                              "fontSize": 15,
+                              "textAlignHorizontal": "LEFT",
+                              "textAlignVertical": "CENTER",
+                              "letterSpacing": 0,
+                              "lineHeightPx": 20,
+                              "lineHeightPercent": 111.72940826416016,
+                              "lineHeightPercentFontSize": 133.3333282470703,
+                              "lineHeightUnit": "PIXELS"
+                          },
+                          "layoutVersion": 1,
+                          "effects": [],
+                          "interactions": []
+                      }
+                  ],
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "background": [],
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 1,
+                  "strokeAlign": "INSIDE",
+                  "backgroundColor": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0,
+                      "a": 0
+                  },
+                  "absoluteBoundingBox": {
+                      "x": 2912,
+                      "y": 500,
+                      "width": 264,
+                      "height": 40
+                  },
+                  "absoluteRenderBounds": {
+                      "x": 2912,
+                      "y": 500,
+                      "width": 264,
+                      "height": 40
+                  },
+                  "constraints": {
+                      "vertical": "TOP",
+                      "horizontal": "LEFT"
+                  },
+                  "layoutAlign": "STRETCH",
+                  "layoutGrow": 0,
+                  "layoutSizingHorizontal": "FILL",
+                  "layoutSizingVertical": "FIXED",
+                  "effects": [],
+                  "interactions": []
+              },
+              {
+                  "id": "15:135",
+                  "name": "Yellow ",
+                  "type": "FRAME",
+                  "scrollBehavior": "SCROLLS",
+                  "children": [
+                      {
+                          "id": "15:136",
+                          "name": "Swatch",
+                          "type": "RECTANGLE",
+                          "scrollBehavior": "SCROLLS",
+                          "blendMode": "PASS_THROUGH",
+                          "fills": [
+                              {
+                                  "blendMode": "NORMAL",
+                                  "type": "SOLID",
+                                  "color": {
+                                      "r": 0.8784313797950745,
+                                      "g": 0.5529412031173706,
+                                      "b": 0,
+                                      "a": 1
+                                  }
+                              }
+                          ],
+                          "strokes": [],
+                          "strokeWeight": 1,
+                          "strokeAlign": "INSIDE",
+                          "styles": {
+                              "fill": "705:4756"
+                          },
+                          "cornerRadius": 3,
+                          "cornerSmoothing": 0,
+                          "absoluteBoundingBox": {
+                              "x": 2912,
+                              "y": 556,
+                              "width": 40,
+                              "height": 40
+                          },
+                          "absoluteRenderBounds": {
+                              "x": 2912,
+                              "y": 556,
+                              "width": 40,
+                              "height": 40
+                          },
+                          "constraints": {
+                              "vertical": "CENTER",
+                              "horizontal": "LEFT"
+                          },
+                          "effects": [],
+                          "interactions": []
+                      },
+                      {
+                          "id": "15:137",
+                          "name": "Yellow",
+                          "type": "TEXT",
+                          "scrollBehavior": "SCROLLS",
+                          "blendMode": "PASS_THROUGH",
+                          "fills": [
+                              {
+                                  "blendMode": "NORMAL",
+                                  "type": "SOLID",
+                                  "color": {
+                                      "r": 0.20000000298023224,
+                                      "g": 0.20000000298023224,
+                                      "b": 0.20000000298023224,
+                                      "a": 1
+                                  }
+                              }
+                          ],
+                          "strokes": [],
+                          "strokeWeight": 1,
+                          "strokeAlign": "OUTSIDE",
+                          "styles": {
+                              "fill": "240:457",
+                              "text": "15:49"
+                          },
+                          "absoluteBoundingBox": {
+                              "x": 2968,
+                              "y": 566,
+                              "width": 45,
+                              "height": 20
+                          },
+                          "absoluteRenderBounds": {
+                              "x": 2968.5126953125,
+                              "y": 569.9697265625,
+                              "width": 43.9013671875,
+                              "height": 11.16943359375
+                          },
+                          "constraints": {
+                              "vertical": "CENTER",
+                              "horizontal": "LEFT"
+                          },
+                          "characters": "Yellow",
+                          "characterStyleOverrides": [],
+                          "styleOverrideTable": {},
+                          "lineTypes": [
+                              "NONE"
+                          ],
+                          "lineIndentations": [
+                              0
+                          ],
+                          "style": {
+                              "fontFamily": "SF Pro Text",
+                              "fontPostScriptName": "SFProText-Regular",
+                              "fontStyle": "Regular",
+                              "fontWeight": 400,
+                              "textAutoResize": "WIDTH_AND_HEIGHT",
+                              "fontSize": 15,
+                              "textAlignHorizontal": "LEFT",
+                              "textAlignVertical": "CENTER",
+                              "letterSpacing": 0,
+                              "lineHeightPx": 20,
+                              "lineHeightPercent": 111.72940826416016,
+                              "lineHeightPercentFontSize": 133.3333282470703,
+                              "lineHeightUnit": "PIXELS"
+                          },
+                          "layoutVersion": 1,
+                          "effects": [],
+                          "interactions": []
+                      }
+                  ],
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "background": [],
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 1,
+                  "strokeAlign": "INSIDE",
+                  "backgroundColor": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0,
+                      "a": 0
+                  },
+                  "absoluteBoundingBox": {
+                      "x": 2912,
+                      "y": 556,
+                      "width": 264,
+                      "height": 40
+                  },
+                  "absoluteRenderBounds": {
+                      "x": 2912,
+                      "y": 556,
+                      "width": 264,
+                      "height": 40
+                  },
+                  "constraints": {
+                      "vertical": "TOP",
+                      "horizontal": "LEFT"
+                  },
+                  "layoutAlign": "STRETCH",
+                  "layoutGrow": 0,
+                  "layoutSizingHorizontal": "FILL",
+                  "layoutSizingVertical": "FIXED",
+                  "effects": [],
+                  "interactions": []
+              },
+              {
+                  "id": "15:139",
+                  "name": "Yellow dark 1",
+                  "type": "FRAME",
+                  "scrollBehavior": "SCROLLS",
+                  "children": [
+                      {
+                          "id": "15:140",
+                          "name": "Swatch",
+                          "type": "RECTANGLE",
+                          "scrollBehavior": "SCROLLS",
+                          "blendMode": "PASS_THROUGH",
+                          "fills": [
+                              {
+                                  "blendMode": "NORMAL",
+                                  "type": "SOLID",
+                                  "color": {
+                                      "r": 0.7215686440467834,
+                                      "g": 0.4588235318660736,
+                                      "b": 0.0117647061124444,
+                                      "a": 1
+                                  }
+                              }
+                          ],
+                          "strokes": [],
+                          "strokeWeight": 1,
+                          "strokeAlign": "INSIDE",
+                          "styles": {
+                              "fill": "705:4757"
+                          },
+                          "cornerRadius": 3,
+                          "cornerSmoothing": 0,
+                          "absoluteBoundingBox": {
+                              "x": 2912,
+                              "y": 612,
+                              "width": 40,
+                              "height": 40
+                          },
+                          "absoluteRenderBounds": {
+                              "x": 2912,
+                              "y": 612,
+                              "width": 40,
+                              "height": 40
+                          },
+                          "constraints": {
+                              "vertical": "CENTER",
+                              "horizontal": "LEFT"
+                          },
+                          "effects": [],
+                          "interactions": []
+                      },
+                      {
+                          "id": "15:141",
+                          "name": "Yellow dark 1",
+                          "type": "TEXT",
+                          "scrollBehavior": "SCROLLS",
+                          "blendMode": "PASS_THROUGH",
+                          "fills": [
+                              {
+                                  "blendMode": "NORMAL",
+                                  "type": "SOLID",
+                                  "color": {
+                                      "r": 0.20000000298023224,
+                                      "g": 0.20000000298023224,
+                                      "b": 0.20000000298023224,
+                                      "a": 1
+                                  }
+                              }
+                          ],
+                          "strokes": [],
+                          "strokeWeight": 1,
+                          "strokeAlign": "OUTSIDE",
+                          "styles": {
+                              "fill": "240:457",
+                              "text": "15:49"
+                          },
+                          "absoluteBoundingBox": {
+                              "x": 2968,
+                              "y": 622,
+                              "width": 92,
+                              "height": 20
+                          },
+                          "absoluteRenderBounds": {
+                              "x": 2968.5126953125,
+                              "y": 625.9697265625,
+                              "width": 89.23828125,
+                              "height": 11.16943359375
+                          },
+                          "constraints": {
+                              "vertical": "CENTER",
+                              "horizontal": "LEFT"
+                          },
+                          "characters": "Yellow dark 1",
+                          "characterStyleOverrides": [],
+                          "styleOverrideTable": {},
+                          "lineTypes": [
+                              "NONE"
+                          ],
+                          "lineIndentations": [
+                              0
+                          ],
+                          "style": {
+                              "fontFamily": "SF Pro Text",
+                              "fontPostScriptName": "SFProText-Regular",
+                              "fontStyle": "Regular",
+                              "fontWeight": 400,
+                              "textAutoResize": "WIDTH_AND_HEIGHT",
+                              "fontSize": 15,
+                              "textAlignHorizontal": "LEFT",
+                              "textAlignVertical": "CENTER",
+                              "letterSpacing": 0,
+                              "lineHeightPx": 20,
+                              "lineHeightPercent": 111.72940826416016,
+                              "lineHeightPercentFontSize": 133.3333282470703,
+                              "lineHeightUnit": "PIXELS"
+                          },
+                          "layoutVersion": 1,
+                          "effects": [],
+                          "interactions": []
+                      }
+                  ],
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "background": [],
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 1,
+                  "strokeAlign": "INSIDE",
+                  "backgroundColor": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0,
+                      "a": 0
+                  },
+                  "absoluteBoundingBox": {
+                      "x": 2912,
+                      "y": 612,
+                      "width": 264,
+                      "height": 40
+                  },
+                  "absoluteRenderBounds": {
+                      "x": 2912,
+                      "y": 612,
+                      "width": 264,
+                      "height": 40
+                  },
+                  "constraints": {
+                      "vertical": "TOP",
+                      "horizontal": "LEFT"
+                  },
+                  "layoutAlign": "STRETCH",
+                  "layoutGrow": 0,
+                  "layoutSizingHorizontal": "FILL",
+                  "layoutSizingVertical": "FIXED",
+                  "effects": [],
+                  "interactions": []
+              },
+              {
+                  "id": "15:143",
+                  "name": "Yellow light 1",
+                  "type": "FRAME",
+                  "scrollBehavior": "SCROLLS",
+                  "children": [
+                      {
+                          "id": "15:144",
+                          "name": "Swatch",
+                          "type": "RECTANGLE",
+                          "scrollBehavior": "SCROLLS",
+                          "blendMode": "PASS_THROUGH",
+                          "fills": [
+                              {
+                                  "blendMode": "NORMAL",
+                                  "type": "SOLID",
+                                  "color": {
+                                      "r": 1,
+                                      "g": 0.8392156958580017,
+                                      "b": 0.4313725531101227,
+                                      "a": 1
+                                  }
+                              }
+                          ],
+                          "strokes": [],
+                          "strokeWeight": 1,
+                          "strokeAlign": "INSIDE",
+                          "styles": {
+                              "fill": "705:4758"
+                          },
+                          "cornerRadius": 3,
+                          "cornerSmoothing": 0,
+                          "absoluteBoundingBox": {
+                              "x": 2912,
+                              "y": 668,
+                              "width": 40,
+                              "height": 40
+                          },
+                          "absoluteRenderBounds": {
+                              "x": 2912,
+                              "y": 668,
+                              "width": 40,
+                              "height": 40
+                          },
+                          "constraints": {
+                              "vertical": "CENTER",
+                              "horizontal": "LEFT"
+                          },
+                          "effects": [],
+                          "interactions": []
+                      },
+                      {
+                          "id": "15:145",
+                          "name": "Yellow light 1",
+                          "type": "TEXT",
+                          "scrollBehavior": "SCROLLS",
+                          "blendMode": "PASS_THROUGH",
+                          "fills": [
+                              {
+                                  "blendMode": "NORMAL",
+                                  "type": "SOLID",
+                                  "color": {
+                                      "r": 0.20000000298023224,
+                                      "g": 0.20000000298023224,
+                                      "b": 0.20000000298023224,
+                                      "a": 1
+                                  }
+                              }
+                          ],
+                          "strokes": [],
+                          "strokeWeight": 1,
+                          "strokeAlign": "OUTSIDE",
+                          "styles": {
+                              "fill": "240:457",
+                              "text": "15:49"
+                          },
+                          "absoluteBoundingBox": {
+                              "x": 2968,
+                              "y": 678,
+                              "width": 92,
+                              "height": 20
+                          },
+                          "absoluteRenderBounds": {
+                              "x": 2968.5126953125,
+                              "y": 681.74267578125,
+                              "width": 88.857421875,
+                              "height": 14.28955078125
+                          },
+                          "constraints": {
+                              "vertical": "CENTER",
+                              "horizontal": "LEFT"
+                          },
+                          "characters": "Yellow light 1",
+                          "characterStyleOverrides": [],
+                          "styleOverrideTable": {},
+                          "lineTypes": [
+                              "NONE"
+                          ],
+                          "lineIndentations": [
+                              0
+                          ],
+                          "style": {
+                              "fontFamily": "SF Pro Text",
+                              "fontPostScriptName": "SFProText-Regular",
+                              "fontStyle": "Regular",
+                              "fontWeight": 400,
+                              "textAutoResize": "WIDTH_AND_HEIGHT",
+                              "fontSize": 15,
+                              "textAlignHorizontal": "LEFT",
+                              "textAlignVertical": "CENTER",
+                              "letterSpacing": 0,
+                              "lineHeightPx": 20,
+                              "lineHeightPercent": 111.72940826416016,
+                              "lineHeightPercentFontSize": 133.3333282470703,
+                              "lineHeightUnit": "PIXELS"
+                          },
+                          "layoutVersion": 1,
+                          "effects": [],
+                          "interactions": []
+                      }
+                  ],
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "background": [],
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 1,
+                  "strokeAlign": "INSIDE",
+                  "backgroundColor": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0,
+                      "a": 0
+                  },
+                  "absoluteBoundingBox": {
+                      "x": 2912,
+                      "y": 668,
+                      "width": 264,
+                      "height": 40
+                  },
+                  "absoluteRenderBounds": {
+                      "x": 2912,
+                      "y": 668,
+                      "width": 264,
+                      "height": 40
+                  },
+                  "constraints": {
+                      "vertical": "TOP",
+                      "horizontal": "LEFT"
+                  },
+                  "layoutAlign": "STRETCH",
+                  "layoutGrow": 0,
+                  "layoutSizingHorizontal": "FILL",
+                  "layoutSizingVertical": "FIXED",
+                  "effects": [],
+                  "interactions": []
+              },
+              {
+                  "id": "15:147",
+                  "name": "Yellow light 2",
+                  "type": "FRAME",
+                  "scrollBehavior": "SCROLLS",
+                  "children": [
+                      {
+                          "id": "15:148",
+                          "name": "Swatch",
+                          "type": "RECTANGLE",
+                          "scrollBehavior": "SCROLLS",
+                          "blendMode": "PASS_THROUGH",
+                          "fills": [
+                              {
+                                  "blendMode": "NORMAL",
+                                  "type": "SOLID",
+                                  "color": {
+                                      "r": 1,
+                                      "g": 0.9176470637321472,
+                                      "b": 0.7137255072593689,
+                                      "a": 1
+                                  }
+                              }
+                          ],
+                          "strokes": [],
+                          "strokeWeight": 1,
+                          "strokeAlign": "INSIDE",
+                          "styles": {
+                              "fill": "705:4759"
+                          },
+                          "cornerRadius": 3,
+                          "cornerSmoothing": 0,
+                          "absoluteBoundingBox": {
+                              "x": 2912,
+                              "y": 724,
+                              "width": 40,
+                              "height": 40
+                          },
+                          "absoluteRenderBounds": {
+                              "x": 2912,
+                              "y": 724,
+                              "width": 40,
+                              "height": 40
+                          },
+                          "constraints": {
+                              "vertical": "CENTER",
+                              "horizontal": "LEFT"
+                          },
+                          "effects": [],
+                          "interactions": []
+                      },
+                      {
+                          "id": "15:149",
+                          "name": "Yellow light 2",
+                          "type": "TEXT",
+                          "scrollBehavior": "SCROLLS",
+                          "blendMode": "PASS_THROUGH",
+                          "fills": [
+                              {
+                                  "blendMode": "NORMAL",
+                                  "type": "SOLID",
+                                  "color": {
+                                      "r": 0.20000000298023224,
+                                      "g": 0.20000000298023224,
+                                      "b": 0.20000000298023224,
+                                      "a": 1
+                                  }
+                              }
+                          ],
+                          "strokes": [],
+                          "strokeWeight": 1,
+                          "strokeAlign": "OUTSIDE",
+                          "styles": {
+                              "fill": "240:457",
+                              "text": "15:49"
+                          },
+                          "absoluteBoundingBox": {
+                              "x": 2968,
+                              "y": 734,
+                              "width": 94,
+                              "height": 20
+                          },
+                          "absoluteRenderBounds": {
+                              "x": 2968.5126953125,
+                              "y": 737.74267578125,
+                              "width": 91.85302734375,
+                              "height": 14.28955078125
+                          },
+                          "constraints": {
+                              "vertical": "CENTER",
+                              "horizontal": "LEFT"
+                          },
+                          "characters": "Yellow light 2",
+                          "characterStyleOverrides": [],
+                          "styleOverrideTable": {},
+                          "lineTypes": [
+                              "NONE"
+                          ],
+                          "lineIndentations": [
+                              0
+                          ],
+                          "style": {
+                              "fontFamily": "SF Pro Text",
+                              "fontPostScriptName": "SFProText-Regular",
+                              "fontStyle": "Regular",
+                              "fontWeight": 400,
+                              "textAutoResize": "WIDTH_AND_HEIGHT",
+                              "fontSize": 15,
+                              "textAlignHorizontal": "LEFT",
+                              "textAlignVertical": "CENTER",
+                              "letterSpacing": 0,
+                              "lineHeightPx": 20,
+                              "lineHeightPercent": 111.72940826416016,
+                              "lineHeightPercentFontSize": 133.3333282470703,
+                              "lineHeightUnit": "PIXELS"
+                          },
+                          "layoutVersion": 1,
+                          "effects": [],
+                          "interactions": []
+                      }
+                  ],
+                  "blendMode": "PASS_THROUGH",
+                  "clipsContent": true,
+                  "background": [],
+                  "fills": [],
+                  "strokes": [],
+                  "strokeWeight": 1,
+                  "strokeAlign": "INSIDE",
+                  "backgroundColor": {
+                      "r": 0,
+                      "g": 0,
+                      "b": 0,
+                      "a": 0
+                  },
+                  "absoluteBoundingBox": {
+                      "x": 2912,
+                      "y": 724,
+                      "width": 264,
+                      "height": 40
+                  },
+                  "absoluteRenderBounds": {
+                      "x": 2912,
+                      "y": 724,
+                      "width": 264,
+                      "height": 40
+                  },
+                  "constraints": {
+                      "vertical": "TOP",
+                      "horizontal": "LEFT"
+                  },
+                  "layoutAlign": "STRETCH",
+                  "layoutGrow": 0,
+                  "layoutSizingHorizontal": "FILL",
+                  "layoutSizingVertical": "FIXED",
+                  "effects": [],
+                  "interactions": []
+              }
+          ],
+          "blendMode": "PASS_THROUGH",
+          "clipsContent": true,
+          "background": [],
+          "fills": [],
+          "strokes": [],
+          "strokeWeight": 1,
+          "strokeAlign": "INSIDE",
+          "backgroundColor": {
+              "r": 0,
+              "g": 0,
+              "b": 0,
+              "a": 0
+          },
+          "layoutMode": "VERTICAL",
+          "counterAxisSizingMode": "FIXED",
+          "itemSpacing": 16,
+          "layoutWrap": "NO_WRAP",
+          "absoluteBoundingBox": {
+              "x": 2912,
+              "y": 500,
+              "width": 264,
+              "height": 264
+          },
+          "absoluteRenderBounds": {
+              "x": 2912,
+              "y": 500,
+              "width": 264,
+              "height": 264
+          },
+          "constraints": {
+              "vertical": "TOP",
+              "horizontal": "LEFT"
+          },
+          "layoutAlign": "INHERIT",
+          "layoutGrow": 0,
+          "layoutSizingHorizontal": "FIXED",
+          "layoutSizingVertical": "HUG",
+          "effects": [],
+          "interactions": []
+      },
+      "components": {},
+      "componentSets": {},
+      "schemaVersion": 0,
+      "styles": {
+          "705:4755": {
+              "key": "4a67c0a59238de31e0692505c698da914248192b",
+              "name": "yellowBright",
+              "styleType": "FILL",
+              "remote": false,
+              "description": ""
+          },
+          "240:457": {
+              "key": "7c090d2289bd6a952a90b5c55fc9e0d8d0227474",
+              "name": "Dark",
+              "styleType": "FILL",
+              "remote": false,
+              "description": ""
+          },
+          "15:49": {
+              "key": "09e4275c9b73e8ef914c3925d818a1d128d325ad",
+              "name": "Text / large",
+              "styleType": "TEXT",
+              "remote": false,
+              "description": ""
+          },
+          "705:4756": {
+              "key": "062ef2f7aa2f1361a3da88b0589e0b9984103a66",
+              "name": "yellow",
+              "styleType": "FILL",
+              "remote": false,
+              "description": ""
+          },
+          "705:4757": {
+              "key": "32f091ce3b1c1360c2840b37811596e96969f95d",
+              "name": "yellowDark1",
+              "styleType": "FILL",
+              "remote": false,
+              "description": ""
+          },
+          "705:4758": {
+              "key": "c50c36b2250179f2809023ed040e20c268e7d52f",
+              "name": "yellowLight1",
+              "styleType": "FILL",
+              "remote": false,
+              "description": ""
+          },
+          "705:4759": {
+              "key": "1d656fcd14e4ab638df21f033e44c6ee07eef879",
+              "name": "yellowLight2",
+              "styleType": "FILL",
+              "remote": false,
+              "description": ""
+          }
+      }
+  },
+  "styleTree": {
+      "id": "15:129",
+      "name": "Yellow",
+      "cssStyle": {
+          "display": "flex",
+          "width": "264px",
+          "flex-direction": "column",
+          "align-items": "flex-start",
+          "gap": "16px"
+      },
+      "children": [
+          {
+              "id": "15:131",
+              "name": "Yellow bright",
+              "cssStyle": {
+                  "display": "flex",
+                  "padding-right": "116px",
+                  "align-items": "center",
+                  "gap": "16px",
+                  "align-self": "stretch",
+                  "position": "relative"
+              },
+              "children": [
+                  {
+                      "id": "15:132",
+                      "name": "Swatch",
+                      "cssStyle": {
+                          "width": "40px",
+                          "height": "40px",
+                          "border-radius": "3px",
+                          "background": "var(--yellowBright, #FCB400)",
+                          "position": "absolute",
+                          "left": "0px",
+                          "top": "0px"
+                      },
+                      "children": []
+                  },
+                  {
+                      "id": "15:133",
+                      "name": "Yellow bright",
+                      "cssStyle": {
+                          "color": "var(--Dark, #333)",
+                          "font-family": "\"SF Pro Text\"",
+                          "font-size": "15px",
+                          "font-style": "normal",
+                          "font-weight": "400",
+                          "line-height": "20px /* 133.333% */",
+                          "position": "absolute",
+                          "left": "56px",
+                          "top": "10px"
+                      },
+                      "children": []
+                  }
+              ]
+          },
+          {
+              "id": "15:135",
+              "name": "Yellow ",
+              "cssStyle": {
+                  "display": "flex",
+                  "padding-right": "163px",
+                  "align-items": "center",
+                  "gap": "16px",
+                  "align-self": "stretch",
+                  "position": "relative"
+              },
+              "children": [
+                  {
+                      "id": "15:136",
+                      "name": "Swatch",
+                      "cssStyle": {
+                          "width": "40px",
+                          "height": "40px",
+                          "border-radius": "3px",
+                          "background": "var(--yellow, #E08D00)",
+                          "position": "absolute",
+                          "left": "0px",
+                          "top": "0px"
+                      },
+                      "children": []
+                  },
+                  {
+                      "id": "15:137",
+                      "name": "Yellow",
+                      "cssStyle": {
+                          "color": "var(--Dark, #333)",
+                          "font-family": "\"SF Pro Text\"",
+                          "font-size": "15px",
+                          "font-style": "normal",
+                          "font-weight": "400",
+                          "line-height": "20px /* 133.333% */",
+                          "position": "absolute",
+                          "left": "56px",
+                          "top": "10px"
+                      },
+                      "children": []
+                  }
+              ]
+          },
+          {
+              "id": "15:139",
+              "name": "Yellow dark 1",
+              "cssStyle": {
+                  "display": "flex",
+                  "padding-right": "116px",
+                  "align-items": "center",
+                  "gap": "16px",
+                  "align-self": "stretch",
+                  "position": "relative"
+              },
+              "children": [
+                  {
+                      "id": "15:140",
+                      "name": "Swatch",
+                      "cssStyle": {
+                          "width": "40px",
+                          "height": "40px",
+                          "border-radius": "3px",
+                          "background": "var(--yellowDark1, #B87503)",
+                          "position": "absolute",
+                          "left": "0px",
+                          "top": "0px"
+                      },
+                      "children": []
+                  },
+                  {
+                      "id": "15:141",
+                      "name": "Yellow dark 1",
+                      "cssStyle": {
+                          "color": "var(--Dark, #333)",
+                          "font-family": "\"SF Pro Text\"",
+                          "font-size": "15px",
+                          "font-style": "normal",
+                          "font-weight": "400",
+                          "line-height": "20px /* 133.333% */",
+                          "position": "absolute",
+                          "left": "56px",
+                          "top": "10px"
+                      },
+                      "children": []
+                  }
+              ]
+          },
+          {
+              "id": "15:143",
+              "name": "Yellow light 1",
+              "cssStyle": {
+                  "display": "flex",
+                  "padding-right": "116px",
+                  "align-items": "center",
+                  "gap": "16px",
+                  "align-self": "stretch",
+                  "position": "relative"
+              },
+              "children": [
+                  {
+                      "id": "15:144",
+                      "name": "Swatch",
+                      "cssStyle": {
+                          "width": "40px",
+                          "height": "40px",
+                          "border-radius": "3px",
+                          "background": "var(--yellowLight1, #FFD66E)",
+                          "position": "absolute",
+                          "left": "0px",
+                          "top": "0px"
+                      },
+                      "children": []
+                  },
+                  {
+                      "id": "15:145",
+                      "name": "Yellow light 1",
+                      "cssStyle": {
+                          "color": "var(--Dark, #333)",
+                          "font-family": "\"SF Pro Text\"",
+                          "font-size": "15px",
+                          "font-style": "normal",
+                          "font-weight": "400",
+                          "line-height": "20px /* 133.333% */",
+                          "position": "absolute",
+                          "left": "56px",
+                          "top": "10px"
+                      },
+                      "children": []
+                  }
+              ]
+          },
+          {
+              "id": "15:147",
+              "name": "Yellow light 2",
+              "cssStyle": {
+                  "display": "flex",
+                  "padding-right": "114px",
+                  "align-items": "center",
+                  "gap": "16px",
+                  "align-self": "stretch",
+                  "position": "relative"
+              },
+              "children": [
+                  {
+                      "id": "15:148",
+                      "name": "Swatch",
+                      "cssStyle": {
+                          "width": "40px",
+                          "height": "40px",
+                          "border-radius": "3px",
+                          "background": "var(--yellowLight2, #FFEAB6)",
+                          "position": "absolute",
+                          "left": "0px",
+                          "top": "0px"
+                      },
+                      "children": []
+                  },
+                  {
+                      "id": "15:149",
+                      "name": "Yellow light 2",
+                      "cssStyle": {
+                          "color": "var(--Dark, #333)",
+                          "font-family": "\"SF Pro Text\"",
+                          "font-size": "15px",
+                          "font-style": "normal",
+                          "font-weight": "400",
+                          "line-height": "20px /* 133.333% */",
+                          "position": "absolute",
+                          "left": "56px",
+                          "top": "10px"
+                      },
+                      "children": []
+                  }
+              ]
+          }
+      ]
+  }
+}

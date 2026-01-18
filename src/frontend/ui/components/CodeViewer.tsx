@@ -38,7 +38,7 @@ const titleStyle = css`
 
 const copyButtonStyle = css`
   padding: 6px 12px;
-  background: #0078d4;
+  background: #00c2e0;
   color: white;
   border: none;
   border-radius: 4px;
@@ -47,20 +47,20 @@ const copyButtonStyle = css`
   transition: background 0.2s;
 
   &:hover {
-    background: #106ebe;
+    background: #00a8c5;
   }
 
   &:active {
-    background: #005a9e;
+    background: #008fb0;
   }
 `;
 
 const copiedButtonStyle = css`
   ${copyButtonStyle}
-  background: #28a745;
+  background: #7dc728;
 
   &:hover {
-    background: #28a745;
+    background: #7dc728;
   }
 `;
 
@@ -109,10 +109,7 @@ const emptyStateStyle = css`
   font-size: 14px;
 `;
 
-export function CodeViewer({
-  code,
-  title = "Generated Code",
-}: CodeViewerProps) {
+export function CodeViewer({ code, title = "" }: CodeViewerProps) {
   const [copied, setCopied] = useState(false);
   const [highlightedHtml, setHighlightedHtml] = useState<string>("");
 
