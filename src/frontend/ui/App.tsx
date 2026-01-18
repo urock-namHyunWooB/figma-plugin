@@ -453,7 +453,7 @@ function App() {
           <span>Preview {componentName && `- ${componentName}`}</span>
 
           {/* Dev 전용: Save to Failing 버튼 */}
-          {selectionNodeData && (
+          {import.meta.env.DEV && selectionNodeData && (
             <button
               css={saveButtonStyle}
               onClick={saveToFailing}
@@ -463,7 +463,7 @@ function App() {
             </button>
           )}
 
-          {saveStatus && (
+          {import.meta.env.DEV && saveStatus && (
             <span
               style={{
                 fontSize: "11px",

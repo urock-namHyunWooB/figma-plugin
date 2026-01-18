@@ -1,5 +1,5 @@
 {
-  "name": "플러그인_테스트",
+  "name": "CodeMate",
   "id": "1564500782401608215",
   "api": "1.0.0",
   "main": "dist/code.js",
