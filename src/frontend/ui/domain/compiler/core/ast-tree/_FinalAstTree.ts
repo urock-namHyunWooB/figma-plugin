@@ -548,7 +548,8 @@ class _FinalAstTree {
         case "LINE":
         case "STAR":
         case "ELLIPSE":
-        case "POLYGON": {
+        case "POLYGON":
+        case "BOOLEAN_OPERATION": {
           node.semanticRole = "vector";
           // vectorSvg 데이터가 있으면 metaData에 저장
           const vectorSvg = this.specDataManager.getVectorSvgByNodeId(node.id);

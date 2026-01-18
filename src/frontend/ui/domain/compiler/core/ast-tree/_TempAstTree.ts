@@ -632,7 +632,7 @@ class _TempAstTree {
    * 실제 화면에 렌더링되는 크기를 제공하므로 이를 사용
    */
   private updateVectorStyles(tempAstTree: TempAstTree): TempAstTree {
-    const vectorTypes = ["VECTOR", "LINE", "STAR", "ELLIPSE", "POLYGON"];
+    const vectorTypes = ["VECTOR", "LINE", "STAR", "ELLIPSE", "POLYGON", "BOOLEAN_OPERATION"];
     const svgOnlyProps = [
       "stroke-width",
       "stroke",

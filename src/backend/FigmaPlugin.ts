@@ -409,13 +409,15 @@ export class FigmaPlugin {
     node: SceneNode,
     vectorSvgs: Record<string, string>
   ): Promise<void> {
-    // VECTOR 노드인 경우 SVG로 export
+    // VECTOR 또는 BOOLEAN_OPERATION 노드인 경우 SVG로 export
+    // BOOLEAN_OPERATION은 여러 VECTOR를 조합한 복합 도형 (예: 배터리 아이콘)
     if (
       node.type === "VECTOR" ||
       node.type === "LINE" ||
       node.type === "STAR" ||
       node.type === "ELLIPSE" ||
-      node.type === "POLYGON"
+      node.type === "POLYGON" ||
+      node.type === "BOOLEAN_OPERATION"
     ) {
       try {
         const svgBytes = await node.exportAsync({ format: "SVG" });

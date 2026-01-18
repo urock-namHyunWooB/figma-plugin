@@ -2,7 +2,7 @@
   "pluginData": [],
   "info": {
     "document": {
-      "id": "18:473",
+      "id": "18:458",
       "name": "Bars/Status Bar/iPhone/Black",
       "type": "INSTANCE",
       "scrollBehavior": "SCROLLS",
@@ -17,7 +17,7 @@
       "componentId": "14:315",
       "overrides": [
         {
-          "id": "18:473",
+          "id": "18:458",
           "overriddenFields": [
             "fills",
             "height",
@@ -26,38 +26,38 @@
           ]
         },
         {
-          "id": "I18:473;6316:31513",
+          "id": "I18:458;6316:31513",
           "overriddenFields": [
             "inheritFillStyleId"
           ]
         },
         {
-          "id": "I18:473;6316:31521",
+          "id": "I18:458;6316:31521",
           "overriddenFields": [
             "inheritFillStyleId"
           ]
         },
         {
-          "id": "I18:473;6316:31525",
+          "id": "I18:458;6316:31525",
           "overriddenFields": [
             "inheritFillStyleId"
           ]
         },
         {
-          "id": "I18:473;6316:31530",
+          "id": "I18:458;6316:31530",
           "overriddenFields": [
             "inheritFillStyleId"
           ]
         },
         {
-          "id": "I18:473;6316:31538",
+          "id": "I18:458;6316:31538",
           "overriddenFields": [
             "inheritFillStyleId",
             "strokes"
           ]
         },
         {
-          "id": "I18:473;6316:31539",
+          "id": "I18:458;6316:31539",
           "overriddenFields": [
             "inheritFillStyleId"
           ]
@@ -65,13 +65,13 @@
       ],
       "children": [
         {
-          "id": "I18:473;6316:31512",
+          "id": "I18:458;6316:31512",
           "name": "Status Bar – Light",
           "type": "GROUP",
           "scrollBehavior": "SCROLLS",
           "children": [
             {
-              "id": "I18:473;6316:31513",
+              "id": "I18:458;6316:31513",
               "name": "Container",
               "type": "VECTOR",
               "scrollBehavior": "SCROLLS",
@@ -110,14 +110,14 @@
                 "fill": "74:1789"
               },
               "absoluteBoundingBox": {
-                "x": -1930,
-                "y": -1216,
+                "x": -958,
+                "y": 470,
                 "width": 375,
                 "height": 44
               },
               "absoluteRenderBounds": {
-                "x": -1930,
-                "y": -1216,
+                "x": -958,
+                "y": 470,
                 "width": 375,
                 "height": 44
               },
@@ -129,13 +129,13 @@
               "interactions": []
             },
             {
-              "id": "I18:473;6316:31514",
+              "id": "I18:458;6316:31514",
               "name": "Status Bar – Battery",
               "type": "GROUP",
               "scrollBehavior": "SCROLLS",
               "children": [
                 {
-                  "id": "I18:473;6316:31515",
+                  "id": "I18:458;6316:31515",
                   "name": "Bounds",
                   "type": "RECTANGLE",
                   "scrollBehavior": "SCROLLS",
@@ -169,14 +169,14 @@
                   "strokeWeight": 0,
                   "strokeAlign": "CENTER",
                   "absoluteBoundingBox": {
-                    "x": -1596.8883056640625,
-                    "y": -1203,
+                    "x": -624.8883056640625,
+                    "y": 483,
                     "width": 26.928192138671875,
                     "height": 20
                   },
                   "absoluteRenderBounds": {
-                    "x": -1596.8883056640625,
-                    "y": -1203,
+                    "x": -624.8883056640625,
+                    "y": 483,
                     "width": 26.92822265625,
                     "height": 20
                   },
@@ -188,19 +188,19 @@
                   "interactions": []
                 },
                 {
-                  "id": "I18:473;6316:31516",
+                  "id": "I18:458;6316:31516",
                   "name": "Body",
                   "type": "BOOLEAN_OPERATION",
                   "scrollBehavior": "SCROLLS",
                   "children": [
                     {
-                      "id": "I18:473;6316:31517",
+                      "id": "I18:458;6316:31517",
                       "name": "Exclude",
                       "type": "BOOLEAN_OPERATION",
                       "scrollBehavior": "SCROLLS",
                       "children": [
                         {
-                          "id": "I18:473;6316:31518",
+                          "id": "I18:458;6316:31518",
                           "name": "Outer",
                           "type": "VECTOR",
                           "scrollBehavior": "SCROLLS",
@@ -234,8 +234,8 @@
                           "strokeWeight": 0,
                           "strokeAlign": "CENTER",
                           "absoluteBoundingBox": {
-                            "x": -1594.8936767578125,
-                            "y": -1198.5,
+                            "x": -622.8936157226562,
+                            "y": 487.5,
                             "width": 21.941490173339844,
                             "height": 11.5
                           },
@@ -248,7 +248,7 @@
                           "interactions": []
                         },
                         {
-                          "id": "I18:473;6316:31519",
+                          "id": "I18:458;6316:31519",
                           "name": "Inner",
                           "type": "VECTOR",
                           "scrollBehavior": "SCROLLS",
@@ -282,8 +282,8 @@
                           "strokeWeight": 0,
                           "strokeAlign": "CENTER",
                           "absoluteBoundingBox": {
-                            "x": -1593.8963623046875,
-                            "y": -1197.5,
+                            "x": -621.8963012695312,
+                            "y": 488.5,
                             "width": 19.946807861328125,
                             "height": 9.5
                           },
@@ -314,8 +314,8 @@
                       "strokeAlign": "CENTER",
                       "booleanOperation": "EXCLUDE",
                       "absoluteBoundingBox": {
-                        "x": -1594.8936767578125,
-                        "y": -1198.5,
+                        "x": -622.8936157226562,
+                        "y": 487.5,
                         "width": 21.941490173339844,
                         "height": 11.5
                       },
@@ -328,7 +328,7 @@
                       "interactions": []
                     },
                     {
-                      "id": "I18:473;6316:31520",
+                      "id": "I18:458;6316:31520",
                       "name": "Path",
                       "type": "VECTOR",
                       "scrollBehavior": "SCROLLS",
@@ -362,8 +362,8 @@
                       "strokeWeight": 0,
                       "strokeAlign": "CENTER",
                       "absoluteBoundingBox": {
-                        "x": -1571.954833984375,
-                        "y": -1195.16552734375,
+                        "x": -599.9547729492188,
+                        "y": 490.8344421386719,
                         "width": 1.2466754913330078,
                         "height": 4.331089019775391
                       },
@@ -407,15 +407,15 @@
                   "strokeAlign": "CENTER",
                   "booleanOperation": "UNION",
                   "absoluteBoundingBox": {
-                    "x": -1594.8936767578125,
-                    "y": -1198.5,
+                    "x": -622.8936157226562,
+                    "y": 487.5,
                     "width": 24.185504913330078,
                     "height": 11.5
                   },
                   "absoluteRenderBounds": {
-                    "x": -1594.8936767578125,
-                    "y": -1198.5,
-                    "width": 24.185546875,
+                    "x": -622.8936157226562,
+                    "y": 487.5,
+                    "width": 24.18548583984375,
                     "height": 11.5
                   },
                   "constraints": {
@@ -426,7 +426,7 @@
                   "interactions": []
                 },
                 {
-                  "id": "I18:473;6316:31521",
+                  "id": "I18:458;6316:31521",
                   "name": "Reserve",
                   "type": "VECTOR",
                   "scrollBehavior": "SCROLLS",
@@ -476,14 +476,14 @@
                     "fill": "74:1790"
                   },
                   "absoluteBoundingBox": {
-                    "x": -1592.89892578125,
-                    "y": -1196.5,
+                    "x": -620.89892578125,
+                    "y": 489.5,
                     "width": 17.95212745666504,
                     "height": 7.5
                   },
                   "absoluteRenderBounds": {
-                    "x": -1592.89892578125,
-                    "y": -1196.5,
+                    "x": -620.89892578125,
+                    "y": 489.5,
                     "width": 17.9521484375,
                     "height": 7.5
                   },
@@ -533,14 +533,14 @@
                 "a": 0
               },
               "absoluteBoundingBox": {
-                "x": -1596.8883056640625,
-                "y": -1203,
+                "x": -624.8883056640625,
+                "y": 483,
                 "width": 26.928192138671875,
                 "height": 20
               },
               "absoluteRenderBounds": {
-                "x": -1596.8883056640625,
-                "y": -1203,
+                "x": -624.8883056640625,
+                "y": 483,
                 "width": 26.92822265625,
                 "height": 20
               },
@@ -552,13 +552,13 @@
               "interactions": []
             },
             {
-              "id": "I18:473;6316:31522",
+              "id": "I18:458;6316:31522",
               "name": "Status Bar – Wi–Fi",
               "type": "GROUP",
               "scrollBehavior": "SCROLLS",
               "children": [
                 {
-                  "id": "I18:473;6316:31523",
+                  "id": "I18:458;6316:31523",
                   "name": "Bounds",
                   "type": "RECTANGLE",
                   "scrollBehavior": "SCROLLS",
@@ -592,14 +592,14 @@
                   "strokeWeight": 0,
                   "strokeAlign": "CENTER",
                   "absoluteBoundingBox": {
-                    "x": -1638.776611328125,
-                    "y": -1203,
+                    "x": -666.776611328125,
+                    "y": 483,
                     "width": 19.946807861328125,
                     "height": 20
                   },
                   "absoluteRenderBounds": {
-                    "x": -1638.776611328125,
-                    "y": -1203,
+                    "x": -666.776611328125,
+                    "y": 483,
                     "width": 19.94677734375,
                     "height": 20
                   },
@@ -611,7 +611,7 @@
                   "interactions": []
                 },
                 {
-                  "id": "I18:473;6316:31524",
+                  "id": "I18:458;6316:31524",
                   "name": "Bounds",
                   "type": "RECTANGLE",
                   "scrollBehavior": "SCROLLS",
@@ -645,15 +645,15 @@
                   "strokeWeight": 0,
                   "strokeAlign": "CENTER",
                   "absoluteBoundingBox": {
-                    "x": -1617.83251953125,
-                    "y": -1203,
+                    "x": -645.8324584960938,
+                    "y": 483,
                     "width": 19.946807861328125,
                     "height": 20
                   },
                   "absoluteRenderBounds": {
-                    "x": -1617.83251953125,
-                    "y": -1203,
-                    "width": 19.94677734375,
+                    "x": -645.8324584960938,
+                    "y": 483,
+                    "width": 19.94683837890625,
                     "height": 20
                   },
                   "constraints": {
@@ -664,7 +664,7 @@
                   "interactions": []
                 },
                 {
-                  "id": "I18:473;6316:31525",
+                  "id": "I18:458;6316:31525",
                   "name": "Wi–Fi",
                   "type": "BOOLEAN_OPERATION",
                   "scrollBehavior": "SCROLLS",
@@ -678,7 +678,7 @@
                   },
                   "children": [
                     {
-                      "id": "I18:473;6316:31526",
+                      "id": "I18:458;6316:31526",
                       "name": "Wave",
                       "type": "VECTOR",
                       "scrollBehavior": "SCROLLS",
@@ -699,8 +699,8 @@
                       "strokeWeight": 0,
                       "strokeAlign": "CENTER",
                       "absoluteBoundingBox": {
-                        "x": -1609.6793212890625,
-                        "y": -1190.851806640625,
+                        "x": -637.6793823242188,
+                        "y": 495.1482849121094,
                         "width": 4.381521224975586,
                         "height": 2.956730842590332
                       },
@@ -713,7 +713,7 @@
                       "interactions": []
                     },
                     {
-                      "id": "I18:473;6316:31527",
+                      "id": "I18:458;6316:31527",
                       "name": "Wave",
                       "type": "VECTOR",
                       "scrollBehavior": "SCROLLS",
@@ -734,8 +734,8 @@
                       "strokeWeight": 0,
                       "strokeAlign": "CENTER",
                       "absoluteBoundingBox": {
-                        "x": -1612.306396484375,
-                        "y": -1194.6234130859375,
+                        "x": -640.3064575195312,
+                        "y": 491.37664794921875,
                         "width": 9.637097358703613,
                         "height": 3.24650502204895
                       },
@@ -748,7 +748,7 @@
                       "interactions": []
                     },
                     {
-                      "id": "I18:473;6316:31528",
+                      "id": "I18:458;6316:31528",
                       "name": "Wave",
                       "type": "VECTOR",
                       "scrollBehavior": "SCROLLS",
@@ -769,8 +769,8 @@
                       "strokeWeight": 0,
                       "strokeAlign": "CENTER",
                       "absoluteBoundingBox": {
-                        "x": -1614.9676513671875,
-                        "y": -1198.39501953125,
+                        "x": -642.9677124023438,
+                        "y": 487.6050109863281,
                         "width": 14.96010684967041,
                         "height": 4.337285995483398
                       },
@@ -810,14 +810,14 @@
                   },
                   "booleanOperation": "UNION",
                   "absoluteBoundingBox": {
-                    "x": -1614.9676513671875,
-                    "y": -1198.39501953125,
+                    "x": -642.9677124023438,
+                    "y": 487.6050109863281,
                     "width": 14.96010684967041,
                     "height": 10.5
                   },
                   "absoluteRenderBounds": {
-                    "x": -1614.9676513671875,
-                    "y": -1198.39501953125,
+                    "x": -642.9677124023438,
+                    "y": 487.6050109863281,
                     "width": 14.9600830078125,
                     "height": 10.5
                   },
@@ -867,15 +867,15 @@
                 "a": 0
               },
               "absoluteBoundingBox": {
-                "x": -1638.776611328125,
-                "y": -1203,
+                "x": -666.776611328125,
+                "y": 483,
                 "width": 40.89095687866211,
                 "height": 20
               },
               "absoluteRenderBounds": {
-                "x": -1638.776611328125,
-                "y": -1203,
-                "width": 40.89095687866211,
+                "x": -666.776611328125,
+                "y": 483,
+                "width": 40.8909912109375,
                 "height": 20
               },
               "constraints": {
@@ -886,13 +886,13 @@
               "interactions": []
             },
             {
-              "id": "I18:473;6316:31529",
+              "id": "I18:458;6316:31529",
               "name": "Status Bar – Service",
               "type": "GROUP",
               "scrollBehavior": "SCROLLS",
               "children": [
                 {
-                  "id": "I18:473;6316:31530",
+                  "id": "I18:458;6316:31530",
                   "name": "Signal",
                   "type": "BOOLEAN_OPERATION",
                   "scrollBehavior": "SCROLLS",
@@ -906,7 +906,7 @@
                   },
                   "children": [
                     {
-                      "id": "I18:473;6316:31531",
+                      "id": "I18:458;6316:31531",
                       "name": "Bar",
                       "type": "RECTANGLE",
                       "scrollBehavior": "SCROLLS",
@@ -941,8 +941,8 @@
                       "cornerRadius": 1,
                       "cornerSmoothing": 0,
                       "absoluteBoundingBox": {
-                        "x": -1637.2806396484375,
-                        "y": -1191.5,
+                        "x": -665.2806396484375,
+                        "y": 494.5,
                         "width": 2.992021322250366,
                         "height": 3.75
                       },
@@ -955,7 +955,7 @@
                       "interactions": []
                     },
                     {
-                      "id": "I18:473;6316:31532",
+                      "id": "I18:458;6316:31532",
                       "name": "Bar",
                       "type": "RECTANGLE",
                       "scrollBehavior": "SCROLLS",
@@ -990,8 +990,8 @@
                       "cornerRadius": 1,
                       "cornerSmoothing": 0,
                       "absoluteBoundingBox": {
-                        "x": -1632.543212890625,
-                        "y": -1193.5,
+                        "x": -660.5432739257812,
+                        "y": 492.5,
                         "width": 2.992021322250366,
                         "height": 5.75
                       },
@@ -1004,7 +1004,7 @@
                       "interactions": []
                     },
                     {
-                      "id": "I18:473;6316:31533",
+                      "id": "I18:458;6316:31533",
                       "name": "Bar",
                       "type": "RECTANGLE",
                       "scrollBehavior": "SCROLLS",
@@ -1039,8 +1039,8 @@
                       "cornerRadius": 1,
                       "cornerSmoothing": 0,
                       "absoluteBoundingBox": {
-                        "x": -1627.805908203125,
-                        "y": -1196,
+                        "x": -655.805908203125,
+                        "y": 490,
                         "width": 2.992021322250366,
                         "height": 8.25
                       },
@@ -1053,7 +1053,7 @@
                       "interactions": []
                     },
                     {
-                      "id": "I18:473;6316:31534",
+                      "id": "I18:458;6316:31534",
                       "name": "Bar",
                       "type": "RECTANGLE",
                       "scrollBehavior": "SCROLLS",
@@ -1088,8 +1088,8 @@
                       "cornerRadius": 1,
                       "cornerSmoothing": 0,
                       "absoluteBoundingBox": {
-                        "x": -1623.0684814453125,
-                        "y": -1198.25,
+                        "x": -651.0685424804688,
+                        "y": 487.75,
                         "width": 2.992021322250366,
                         "height": 10.5
                       },
@@ -1141,14 +1141,14 @@
                   },
                   "booleanOperation": "UNION",
                   "absoluteBoundingBox": {
-                    "x": -1637.2806396484375,
-                    "y": -1198.25,
+                    "x": -665.2806396484375,
+                    "y": 487.75,
                     "width": 17.20412254333496,
                     "height": 10.5
                   },
                   "absoluteRenderBounds": {
-                    "x": -1637.2806396484375,
-                    "y": -1198.25,
+                    "x": -665.2806396484375,
+                    "y": 487.75,
                     "width": 17.2041015625,
                     "height": 10.5
                   },
@@ -1198,14 +1198,14 @@
                 "a": 0
               },
               "absoluteBoundingBox": {
-                "x": -1637.2806396484375,
-                "y": -1198.25,
+                "x": -665.2806396484375,
+                "y": 487.75,
                 "width": 17.20412254333496,
                 "height": 10.5
               },
               "absoluteRenderBounds": {
-                "x": -1637.2806396484375,
-                "y": -1198.25,
+                "x": -665.2806396484375,
+                "y": 487.75,
                 "width": 17.20412254333496,
                 "height": 10.5
               },
@@ -1217,19 +1217,19 @@
               "interactions": []
             },
             {
-              "id": "I18:473;6316:31535",
+              "id": "I18:458;6316:31535",
               "name": "Time",
               "type": "FRAME",
               "scrollBehavior": "SCROLLS",
               "children": [
                 {
-                  "id": "I18:473;6316:31536",
+                  "id": "I18:458;6316:31536",
                   "name": "Status Bar – Location",
                   "type": "GROUP",
                   "scrollBehavior": "SCROLLS",
                   "children": [
                     {
-                      "id": "I18:473;6316:31537",
+                      "id": "I18:458;6316:31537",
                       "name": "Bounds",
                       "type": "RECTANGLE",
                       "scrollBehavior": "SCROLLS",
@@ -1239,8 +1239,8 @@
                       "strokeWeight": 0,
                       "strokeAlign": "CENTER",
                       "absoluteBoundingBox": {
-                        "x": -1869.660888671875,
-                        "y": -1202,
+                        "x": -897.660888671875,
+                        "y": 484,
                         "width": 15.957447052001953,
                         "height": 16
                       },
@@ -1253,7 +1253,7 @@
                       "interactions": []
                     },
                     {
-                      "id": "I18:473;6316:31538",
+                      "id": "I18:458;6316:31538",
                       "name": "Location",
                       "type": "VECTOR",
                       "scrollBehavior": "SCROLLS",
@@ -1315,14 +1315,14 @@
                         "stroke": "74:1790"
                       },
                       "absoluteBoundingBox": {
-                        "x": -1866.170166015625,
-                        "y": -1198,
+                        "x": -894.1702270507812,
+                        "y": 488,
                         "width": 10.472074508666992,
                         "height": 10.5
                       },
                       "absoluteRenderBounds": {
-                        "x": -1866.170166015625,
-                        "y": -1198,
+                        "x": -894.1702270507812,
+                        "y": 488,
                         "width": 10.4720458984375,
                         "height": 10.5
                       },
@@ -1372,14 +1372,14 @@
                     "a": 0
                   },
                   "absoluteBoundingBox": {
-                    "x": -1869.660888671875,
-                    "y": -1202,
+                    "x": -897.660888671875,
+                    "y": 484,
                     "width": 15.957447052001953,
                     "height": 16
                   },
                   "absoluteRenderBounds": {
-                    "x": -1869.660888671875,
-                    "y": -1202,
+                    "x": -897.660888671875,
+                    "y": 484,
                     "width": 15.957447052001953,
                     "height": 16
                   },
@@ -1391,7 +1391,7 @@
                   "interactions": []
                 },
                 {
-                  "id": "I18:473;6316:31539",
+                  "id": "I18:458;6316:31539",
                   "name": "12:22",
                   "type": "TEXT",
                   "scrollBehavior": "SCROLLS",
@@ -1429,16 +1429,16 @@
                     "fill": "74:1790"
                   },
                   "absoluteBoundingBox": {
-                    "x": -1905.1103515625,
-                    "y": -1203,
+                    "x": -933.1103515625,
+                    "y": 483,
                     "width": 33,
                     "height": 20
                   },
                   "absoluteRenderBounds": {
-                    "x": -1904.471923828125,
-                    "y": -1199.010009765625,
-                    "width": 31.5858154296875,
-                    "height": 10.4549560546875
+                    "x": -932.4719848632812,
+                    "y": 486.989990234375,
+                    "width": 31.5859375,
+                    "height": 10.45501708984375
                   },
                   "constraints": {
                     "vertical": "CENTER",
@@ -1510,14 +1510,14 @@
                 "a": 0
               },
               "absoluteBoundingBox": {
-                "x": -1906.0665283203125,
-                "y": -1203,
+                "x": -934.0664672851562,
+                "y": 483,
                 "width": 53,
                 "height": 20
               },
               "absoluteRenderBounds": {
-                "x": -1906.0665283203125,
-                "y": -1203,
+                "x": -934.0664672851562,
+                "y": 483,
                 "width": 53,
                 "height": 20
               },
@@ -1567,14 +1567,14 @@
             "a": 0
           },
           "absoluteBoundingBox": {
-            "x": -1930,
-            "y": -1216,
+            "x": -958,
+            "y": 470,
             "width": 375,
             "height": 44
           },
           "absoluteRenderBounds": {
-            "x": -1930,
-            "y": -1216,
+            "x": -958,
+            "y": 470,
             "width": 375,
             "height": 44
           },
@@ -1638,14 +1638,14 @@
         "fill": "74:1789"
       },
       "absoluteBoundingBox": {
-        "x": -1930,
-        "y": -1216,
+        "x": -958,
+        "y": 470,
         "width": 375,
         "height": 44
       },
       "absoluteRenderBounds": {
-        "x": -1930,
-        "y": -1216,
+        "x": -958,
+        "y": 470,
         "width": 375,
         "height": 44
       },
@@ -1685,7 +1685,7 @@
     }
   },
   "styleTree": {
-    "id": "18:473",
+    "id": "18:458",
     "name": "Bars/Status Bar/iPhone/Black",
     "cssStyle": {
       "display": "flex",
@@ -1693,75 +1693,59 @@
       "height": "44px",
       "justify-content": "center",
       "align-items": "center",
-      "background": "var(--Static-White, #FFF)",
-      "position": "relative"
+      "background": "var(--Static-White, #FFF)"
     },
     "children": [
       {
-        "id": "I18:473;6316:31512",
+        "id": "I18:458;6316:31512",
         "name": "Status Bar – Light",
         "cssStyle": {
           "width": "375px",
           "height": "44px",
-          "flex-shrink": "0",
-          "position": "absolute",
-          "left": "0px",
-          "top": "0px"
+          "flex-shrink": "0"
         },
         "children": [
           {
-            "id": "I18:473;6316:31513",
+            "id": "I18:458;6316:31513",
             "name": "Container",
             "cssStyle": {
               "width": "375px",
               "height": "44px",
               "fill": "var(--Static-White, #FFF)",
-              "opacity": "0.0001",
-              "position": "absolute",
-              "left": "0px",
-              "top": "0px"
+              "opacity": "0.0001"
             },
             "children": []
           },
           {
-            "id": "I18:473;6316:31514",
+            "id": "I18:458;6316:31514",
             "name": "Status Bar – Battery",
             "cssStyle": {
               "width": "26.928px",
-              "height": "20px",
-              "position": "absolute",
-              "left": "333.1116943359375px",
-              "top": "13px"
+              "height": "20px"
             },
             "children": [
               {
-                "id": "I18:473;6316:31515",
+                "id": "I18:458;6316:31515",
                 "name": "Bounds",
                 "cssStyle": {
                   "width": "26.928px",
                   "height": "20px",
                   "opacity": "0.0001",
-                  "background": "#FA3E3E",
-                  "position": "absolute",
-                  "left": "0px",
-                  "top": "0px"
+                  "background": "#FA3E3E"
                 },
                 "children": []
               },
               {
-                "id": "I18:473;6316:31516",
+                "id": "I18:458;6316:31516",
                 "name": "Body",
                 "cssStyle": {
                   "width": "24.186px",
                   "height": "11.5px",
-                  "fill": "rgba(0, 0, 0, 0.38)",
-                  "position": "absolute",
-                  "left": "1.99462890625px",
-                  "top": "4.5px"
+                  "fill": "rgba(0, 0, 0, 0.38)"
                 },
                 "children": [
                   {
-                    "id": "I18:473;6316:31517",
+                    "id": "I18:458;6316:31517",
                     "name": "Exclude",
                     "cssStyle": {
                       "width": "21.941px",
@@ -1770,7 +1754,7 @@
                     },
                     "children": [
                       {
-                        "id": "I18:473;6316:31518",
+                        "id": "I18:458;6316:31518",
                         "name": "Outer",
                         "cssStyle": {
                           "width": "21.941px",
@@ -1780,7 +1764,7 @@
                         "children": []
                       },
                       {
-                        "id": "I18:473;6316:31519",
+                        "id": "I18:458;6316:31519",
                         "name": "Inner",
                         "cssStyle": {
                           "width": "19.947px",
@@ -1792,7 +1776,7 @@
                     ]
                   },
                   {
-                    "id": "I18:473;6316:31520",
+                    "id": "I18:458;6316:31520",
                     "name": "Path",
                     "cssStyle": {
                       "width": "1.247px",
@@ -1804,73 +1788,58 @@
                 ]
               },
               {
-                "id": "I18:473;6316:31521",
+                "id": "I18:458;6316:31521",
                 "name": "Reserve",
                 "cssStyle": {
                   "width": "17.952px",
                   "height": "7.5px",
-                  "fill": "var(--Static-Black, #000)",
-                  "position": "absolute",
-                  "left": "3.9893798828125px",
-                  "top": "6.5px"
+                  "fill": "var(--Static-Black, #000)"
                 },
                 "children": []
               }
             ]
           },
           {
-            "id": "I18:473;6316:31522",
+            "id": "I18:458;6316:31522",
             "name": "Status Bar – Wi–Fi",
             "cssStyle": {
               "width": "40.891px",
-              "height": "20px",
-              "position": "absolute",
-              "left": "291.223388671875px",
-              "top": "13px"
+              "height": "20px"
             },
             "children": [
               {
-                "id": "I18:473;6316:31523",
+                "id": "I18:458;6316:31523",
                 "name": "Bounds",
                 "cssStyle": {
                   "width": "19.947px",
                   "height": "20px",
                   "opacity": "0.0001",
-                  "background": "#FA3E3E",
-                  "position": "absolute",
-                  "left": "0px",
-                  "top": "0px"
+                  "background": "#FA3E3E"
                 },
                 "children": []
               },
               {
-                "id": "I18:473;6316:31524",
+                "id": "I18:458;6316:31524",
                 "name": "Bounds",
                 "cssStyle": {
                   "width": "19.947px",
                   "height": "20px",
                   "opacity": "0.0001",
-                  "background": "#FA3E3E",
-                  "position": "absolute",
-                  "left": "20.944091796875px",
-                  "top": "0px"
+                  "background": "#FA3E3E"
                 },
                 "children": []
               },
               {
-                "id": "I18:473;6316:31525",
+                "id": "I18:458;6316:31525",
                 "name": "Wi–Fi",
                 "cssStyle": {
                   "width": "14.96px",
                   "height": "10.5px",
-                  "fill": "var(--Static-Black, #000)",
-                  "position": "absolute",
-                  "left": "23.8089599609375px",
-                  "top": "4.60498046875px"
+                  "fill": "var(--Static-Black, #000)"
                 },
                 "children": [
                   {
-                    "id": "I18:473;6316:31526",
+                    "id": "I18:458;6316:31526",
                     "name": "Wave",
                     "cssStyle": {
                       "width": "4.382px",
@@ -1880,7 +1849,7 @@
                     "children": []
                   },
                   {
-                    "id": "I18:473;6316:31527",
+                    "id": "I18:458;6316:31527",
                     "name": "Wave",
                     "cssStyle": {
                       "width": "9.637px",
@@ -1890,7 +1859,7 @@
                     "children": []
                   },
                   {
-                    "id": "I18:473;6316:31528",
+                    "id": "I18:458;6316:31528",
                     "name": "Wave",
                     "cssStyle": {
                       "width": "14.96px",
@@ -1904,30 +1873,24 @@
             ]
           },
           {
-            "id": "I18:473;6316:31529",
+            "id": "I18:458;6316:31529",
             "name": "Status Bar – Service",
             "cssStyle": {
               "width": "17.204px",
-              "height": "10.5px",
-              "position": "absolute",
-              "left": "292.7193603515625px",
-              "top": "17.75px"
+              "height": "10.5px"
             },
             "children": [
               {
-                "id": "I18:473;6316:31530",
+                "id": "I18:458;6316:31530",
                 "name": "Signal",
                 "cssStyle": {
                   "width": "17.204px",
                   "height": "10.5px",
-                  "fill": "var(--Static-Black, #000)",
-                  "position": "absolute",
-                  "left": "0px",
-                  "top": "0px"
+                  "fill": "var(--Static-Black, #000)"
                 },
                 "children": [
                   {
-                    "id": "I18:473;6316:31531",
+                    "id": "I18:458;6316:31531",
                     "name": "Bar",
                     "cssStyle": {
                       "width": "2.992px",
@@ -1938,7 +1901,7 @@
                     "children": []
                   },
                   {
-                    "id": "I18:473;6316:31532",
+                    "id": "I18:458;6316:31532",
                     "name": "Bar",
                     "cssStyle": {
                       "width": "2.992px",
@@ -1949,7 +1912,7 @@
                     "children": []
                   },
                   {
-                    "id": "I18:473;6316:31533",
+                    "id": "I18:458;6316:31533",
                     "name": "Bar",
                     "cssStyle": {
                       "width": "2.992px",
@@ -1960,7 +1923,7 @@
                     "children": []
                   },
                   {
-                    "id": "I18:473;6316:31534",
+                    "id": "I18:458;6316:31534",
                     "name": "Bar",
                     "cssStyle": {
                       "width": "2.992px",
@@ -1975,62 +1938,49 @@
             ]
           },
           {
-            "id": "I18:473;6316:31535",
+            "id": "I18:458;6316:31535",
             "name": "Time",
             "cssStyle": {
               "display": "inline-flex",
               "padding": "0 0.637px 0 0.956px",
               "justify-content": "center",
               "align-items": "flex-start",
-              "gap": "2.449px",
-              "position": "absolute",
-              "left": "23.9334716796875px",
-              "top": "13px",
-              "height": "20px"
+              "gap": "2.449px"
             },
             "children": [
               {
-                "id": "I18:473;6316:31536",
+                "id": "I18:458;6316:31536",
                 "name": "Status Bar – Location",
                 "cssStyle": {
                   "width": "15.957px",
-                  "height": "16px",
-                  "position": "absolute",
-                  "left": "36.4056396484375px",
-                  "top": "1px"
+                  "height": "16px"
                 },
                 "children": [
                   {
-                    "id": "I18:473;6316:31537",
+                    "id": "I18:458;6316:31537",
                     "name": "Bounds",
                     "cssStyle": {
                       "width": "15.957px",
-                      "height": "16px",
-                      "position": "absolute",
-                      "left": "0px",
-                      "top": "0px"
+                      "height": "16px"
                     },
                     "children": []
                   },
                   {
-                    "id": "I18:473;6316:31538",
+                    "id": "I18:458;6316:31538",
                     "name": "Location",
                     "cssStyle": {
                       "width": "10.472px",
                       "height": "10.5px",
                       "fill": "var(--Static-Black, #000)",
                       "stroke-width": "1px",
-                      "stroke": "var(--Static-Black, #000)",
-                      "position": "absolute",
-                      "left": "3.49072265625px",
-                      "top": "4px"
+                      "stroke": "var(--Static-Black, #000)"
                     },
                     "children": []
                   }
                 ]
               },
               {
-                "id": "I18:473;6316:31539",
+                "id": "I18:458;6316:31539",
                 "name": "12:22",
                 "cssStyle": {
                   "color": "var(--Semantic-Static-Black, var(--Static-Black, #000))",
@@ -2040,10 +1990,7 @@
                   "font-style": "normal",
                   "font-weight": "700",
                   "line-height": "20px /* 133.333% */",
-                  "letter-spacing": "-0.24px",
-                  "position": "absolute",
-                  "left": "0.9561767578125px",
-                  "top": "0px"
+                  "letter-spacing": "-0.24px"
                 },
                 "children": []
               }
@@ -2450,8 +2397,11 @@
     }
   },
   "vectorSvgs": {
-    "I18:473;6316:31513": "<svg width=\"375\" height=\"44\" viewBox=\"0 0 375 44\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path opacity=\"0.01\" fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M0 0H375V44H0V0Z\" fill=\"white\"/>\n</svg>\n",
-    "I18:473;6316:31521": "<svg width=\"18\" height=\"8\" viewBox=\"0 0 18 8\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M0.99734 0H16.9548C17.5056 0 17.9521 0.447715 17.9521 1V6.5C17.9521 7.05228 17.5056 7.5 16.9548 7.5H0.99734C0.446525 7.5 0 7.05228 0 6.5V1C0 0.447715 0.446525 0 0.99734 0Z\" fill=\"black\"/>\n</svg>\n",
-    "I18:473;6316:31538": "<svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M6.43945 8.0791V4.04492H2.40918L9.51172 0.961914L6.43945 8.0791Z\" fill=\"black\" stroke=\"black\"/>\n</svg>\n"
+    "I18:458;6316:31513": "<svg width=\"375\" height=\"44\" viewBox=\"0 0 375 44\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path opacity=\"0.01\" fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M0 0H375V44H0V0Z\" fill=\"white\"/>\n</svg>\n",
+    "I18:458;6316:31516": "<svg width=\"25\" height=\"12\" viewBox=\"0 0 25 12\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M19.4481 0H2.49335C1.11631 0 0 1.11929 0 2.5V9C0 10.3807 1.11631 11.5 2.49335 11.5H19.4481C20.8252 11.5 21.9415 10.3807 21.9415 9V2.5C21.9415 1.11929 20.8252 0 19.4481 0ZM0.99734 2.5C0.99734 1.67157 1.66713 1 2.49335 1H19.4481C20.2744 1 20.9441 1.67157 20.9441 2.5V9C20.9441 9.82843 20.2744 10.5 19.4481 10.5H2.49335C1.66713 10.5 0.99734 9.82843 0.99734 9V2.5ZM24.1855 5.5C24.1855 4.57465 23.6841 3.76672 22.9388 3.33446V7.66554C23.6841 7.23328 24.1855 6.42535 24.1855 5.5Z\" fill=\"black\" fill-opacity=\"0.38\"/>\n</svg>\n",
+    "I18:458;6316:31521": "<svg width=\"18\" height=\"8\" viewBox=\"0 0 18 8\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M0.99734 0H16.9548C17.5056 0 17.9521 0.447715 17.9521 1V6.5C17.9521 7.05228 17.5056 7.5 16.9548 7.5H0.99734C0.446525 7.5 0 7.05228 0 6.5V1C0 0.447715 0.446525 0 0.99734 0Z\" fill=\"black\"/>\n</svg>\n",
+    "I18:458;6316:31525": "<svg width=\"15\" height=\"11\" viewBox=\"0 0 15 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M14.9601 3.09385L14.9535 2.859C12.8995 1.01621 10.2611 0 7.48839 0C4.7079 0 2.06256 1.02199 0.00634767 2.8742L0 3.10883L1.21599 4.33017L1.43603 4.33729C3.10923 2.86027 5.24541 2.04746 7.48839 2.04746C9.72378 2.04746 11.8532 2.85475 13.5242 4.32272L13.744 4.31535L14.9601 3.09385ZM12.2882 5.52936L12.2984 5.76729L11.0786 6.99238L10.8645 7.00444C9.90629 6.23653 8.7241 5.81909 7.48839 5.81909C6.24517 5.81909 5.05624 6.24164 4.09527 7.01814L3.88059 7.00649L2.66128 5.78182L2.67103 5.5442C4.01654 4.39891 5.71158 3.77163 7.48839 3.77163C9.25732 3.77163 10.9453 4.39332 12.2882 5.52936ZM7.58639 10.5H7.3588L5.33548 8.46779C5.26491 8.3969 5.27493 8.27926 5.35646 8.22144C5.97896 7.77999 6.71892 7.54327 7.48839 7.54327C8.24973 7.54327 8.98228 7.77499 9.60091 8.20778C9.68314 8.26531 9.69359 8.38354 9.62272 8.45471L7.58639 10.5Z\" fill=\"black\"/>\n</svg>\n",
+    "I18:458;6316:31530": "<svg width=\"18\" height=\"11\" viewBox=\"0 0 18 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M15.2121 0C14.6598 0 14.2121 0.447715 14.2121 1V9.5C14.2121 10.0523 14.6598 10.5 15.2121 10.5H16.2041C16.7564 10.5 17.2041 10.0523 17.2041 9.5V1C17.2041 0.447715 16.7564 0 16.2041 0H15.2121ZM9.47473 3.25C9.47473 2.69772 9.92245 2.25 10.4747 2.25H11.4668C12.019 2.25 12.4668 2.69772 12.4668 3.25V9.5C12.4668 10.0523 12.019 10.5 11.4668 10.5H10.4747C9.92245 10.5 9.47473 10.0523 9.47473 9.5V3.25ZM5.73737 4.75C5.18508 4.75 4.73737 5.19772 4.73737 5.75V9.5C4.73737 10.0523 5.18508 10.5 5.73737 10.5H6.72939C7.28167 10.5 7.72939 10.0523 7.72939 9.5V5.75C7.72939 5.19772 7.28167 4.75 6.72939 4.75H5.73737ZM1 6.75C0.447715 6.75 0 7.19772 0 7.75V9.5C0 10.0523 0.447716 10.5 1 10.5H1.99202C2.54431 10.5 2.99202 10.0523 2.99202 9.5V7.75C2.99202 7.19772 2.54431 6.75 1.99202 6.75H1Z\" fill=\"black\"/>\n</svg>\n",
+    "I18:458;6316:31538": "<svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M6.43945 8.0791V4.04492H2.40918L9.51172 0.961914L6.43945 8.0791Z\" fill=\"black\" stroke=\"black\"/>\n</svg>\n"
   }
 }
