@@ -5,8 +5,9 @@
   "description": "Your Figma Plugin",
   "main": "code.js",
   "scripts": {
-    "build": "npm run build:plugin -- --mode development && npm run build:ui -- --mode development",
-    "build:prod": "npm run build:plugin && npm run build:ui",
+    "build": "npm run build:plugin && npm run build:ui",
+    "build:dev": "npm run build:plugin -- --mode development && npm run build:ui -- --mode development",
+    "build:prod": "npm run build:plugin -- --mode production && npm run build:ui -- --mode production",
     "build:plugin": "vite build --config vite.plugin.config.ts",
     "build:ui": "vite build --config vite.ui.config.ts",
     "build:wasm": "cd src/wasm-engine && chmod +x build.sh && ./build.sh",

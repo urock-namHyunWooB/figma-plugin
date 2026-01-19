@@ -81,11 +81,15 @@ export default defineConfig(({ mode }) => ({
   plugins: [viteSingleFile(), tsconfigPaths(), saveFailingFixturePlugin()],
   root: path.resolve(__dirname, "src/frontend/ui"),
 
-  // 프로덕션 빌드에서만 isDev를 false로 강제 (debug 코드 트리쉐이킹)
-  define:
-    mode === "production"
+  // mode에 따라 DEV_BUILD 플래그 설정
+  // - development: DEV 기능 활성화 (Save to Failing 버튼 등)
+  // - production: DEV 기능 비활성화
+  define: {
+    __DEV_BUILD__: JSON.stringify(mode === "development"),
+    ...(mode === "production"
       ? { "window.location.hostname": JSON.stringify("figma.com") }
-      : {},
+      : {}),
+  },
 
   resolve: {
     alias: {
