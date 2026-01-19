@@ -651,27 +651,40 @@ class _TempAstTree {
 
       const base = node.style.base;
 
-      // vectorSvg가 있는지 확인
+      // vectorSvg가 있는지 확인 (자기 자신 또는 부모가 SVG로 렌더링되는지)
       const hasVectorSvg = this._specDataManager.getVectorSvgByNodeId(node.id);
 
-      // fill 처리
+      // SVG로 렌더링될 노드인지 확인:
+      // 1. 자체적으로 vectorSvg가 있거나
+      // 2. VECTOR/BOOLEAN_OPERATION 타입이면 부모의 SVG에 포함될 수 있음
+      const isSvgRendered = hasVectorSvg ||
+        ["VECTOR", "BOOLEAN_OPERATION"].includes(nodeType);
+
+      // fill 처리 (base 스타일)
       if ("fill" in base) {
-        if (hasVectorSvg) {
-          // vectorSvg가 있는 경우: fill을 color로 변환
-          // SVG 내부의 path가 fill="currentColor"를 사용하므로 color CSS가 적용됨
-          base["color"] = base["fill"];
+        if (isSvgRendered) {
+          // SVG로 렌더링되는 경우: fill 제거 (SVG path에 직접 색상이 있음)
+          delete base["fill"];
         } else {
-          // vectorSvg가 없는 경우: fill을 background로 변환
+          // SVG가 아닌 경우: fill을 background로 변환
           base["background"] = base["fill"];
+          delete base["fill"];
         }
-        // fill은 항상 제거
-        delete base["fill"];
       }
 
-      // background 처리: vectorSvg가 있으면 color로 변환
+      // fill 처리 (dynamic 스타일) - variant별 다른 색상이 있을 때
+      if (isSvgRendered && node.style.dynamic) {
+        for (const dynamicStyle of node.style.dynamic) {
+          if ("fill" in dynamicStyle.style) {
+            // SVG path에 직접 색상이 있으므로 fill 스타일 제거
+            delete dynamicStyle.style["fill"];
+          }
+        }
+      }
+
+      // background 처리: SVG로 렌더링되면 background 제거
       // (ELLIPSE 등 일부 노드는 fill 대신 background로 스타일이 제공됨)
-      if (hasVectorSvg && "background" in base && !("color" in base)) {
-        base["color"] = base["background"];
+      if (isSvgRendered && "background" in base) {
         delete base["background"];
       }
 
@@ -775,8 +788,30 @@ class _TempAstTree {
         const nodeBox = nodeSpec?.absoluteBoundingBox;
 
         if (parentBox && nodeBox) {
-          const left = nodeBox.x - parentBox.x;
-          const top = nodeBox.y - parentBox.y;
+          let left = nodeBox.x - parentBox.x;
+          let top = nodeBox.y - parentBox.y;
+
+          // COMPONENT_SET의 variant 전용 노드 처리:
+          // 일부 variant에서만 존재하는 루트의 직접 자식은 해당 variant 기준으로 위치해야 함
+          // 부모(merged root)의 bounding box가 첫 번째 variant 기준이라 위치가 틀어지는 문제 해결
+          if (parentNode === tempAstTree) {
+            // 루트의 직접 자식인 경우
+            // SuperTree의 root ID가 첫 번째 variant ID를 사용하므로,
+            // 실제 document의 root 타입을 확인해야 함
+            const actualRootType = this._specDataManager.getRootNodeType();
+            if (actualRootType === "COMPONENT_SET") {
+              // variant 전용 노드인지 확인 (모든 variant에 존재하지 않는 노드)
+              const allVariants = this._specDataManager.getRenderTree().children;
+              const totalVariantCount = allVariants?.length || 0;
+
+              if (node.mergedNode && node.mergedNode.length < totalVariantCount) {
+                // variant 전용 노드는 해당 variant의 origin(0,0)에 배치
+                // (각 variant는 자신만의 좌표 시스템을 가짐)
+                left = 0;
+                top = 0;
+              }
+            }
+          }
 
           // 기존 스타일에 position 추가 (이미 있으면 덮어쓰지 않음)
           if (!node.style.base["position"]) {
@@ -927,15 +962,53 @@ class _TempAstTree {
       return null;
     }
 
-    // 2. 모든 variant에서 존재하면 항상 보임
+    // 2. 노드가 존재하는 모든 variant에서 visible 상태 확인
     const totalVariantCount =
       this._specDataManager.getRenderTree().children.length;
 
-    if (targetNode.mergedNode.length === totalVariantCount) {
+    // 일부 variant에서 visible: false인지 확인
+    const hiddenVariantNames: string[] = [];
+    const visibleVariantNames: string[] = [];
+
+    for (const merged of targetNode.mergedNode) {
+      const spec = this._specDataManager.getSpecById(merged.id);
+      if (spec?.visible === false) {
+        hiddenVariantNames.push(merged.variantName || "");
+      } else {
+        visibleVariantNames.push(merged.variantName || "");
+      }
+    }
+
+    // 노드가 존재하는 모든 variant에서 visible: false이면 static false
+    // (일부 variant에만 존재해도 그 모든 variant에서 hidden이면 제거)
+    if (
+      targetNode.mergedNode.length > 0 &&
+      visibleVariantNames.length === 0
+    ) {
       return {
         type: "static",
-        value: true,
+        value: false,
       };
+    }
+
+    if (targetNode.mergedNode.length === totalVariantCount) {
+      // 모든 variant에서 visible이면 static true
+      if (hiddenVariantNames.length === 0) {
+        return {
+          type: "static",
+          value: true,
+        };
+      }
+
+      // 일부만 visible인 경우 → 조건 추론
+      const condition = this._inferConditionFromVisibleVariants(
+        visibleVariantNames,
+        hiddenVariantNames,
+        componentPropertyDefinitions
+      );
+      if (condition) {
+        return { type: "condition", condition };
+      }
     }
 
     if (!componentPropertyDefinitions) return null;
@@ -963,6 +1036,89 @@ class _TempAstTree {
     }
 
     return null;
+  }
+
+  /**
+   * visible/hidden variant를 분석하여 visibility 조건 추론
+   * 예: visible=["Double Button=True"], hidden=["Double Button=False"]
+   *     → 조건: doubleButton === true (또는 doubleButton)
+   */
+  private _inferConditionFromVisibleVariants(
+    visibleVariantNames: string[],
+    hiddenVariantNames: string[],
+    definitions: Record<string, any>
+  ): ConditionNode | null {
+    if (visibleVariantNames.length === 0) return null;
+
+    // variant name을 파싱
+    const visibleParsed = visibleVariantNames.map((name) =>
+      helper.parseVariantName(name)
+    );
+    const hiddenParsed = hiddenVariantNames.map((name) =>
+      helper.parseVariantName(name)
+    );
+
+    // visible variant들의 공통 prop 값 찾기
+    if (visibleParsed.length === 0) return null;
+
+    const firstVisible = visibleParsed[0];
+    const conditions: ConditionNode[] = [];
+
+    for (const [propName, propValue] of Object.entries(firstVisible)) {
+      // 모든 visible variant에서 같은 값인지 확인
+      const allVisibleSame = visibleParsed.every(
+        (v) => v[propName] === propValue
+      );
+      if (!allVisibleSame) continue;
+
+      // 모든 hidden variant에서 다른 값인지 확인
+      const allHiddenDifferent = hiddenParsed.every(
+        (v) => v[propName] !== propValue
+      );
+      if (!allHiddenDifferent) continue;
+
+      // 이 prop이 visible/hidden을 구분하는 조건
+      const normalizedPropName = toCamelCase(propName);
+      const def = definitions[propName];
+
+      // True/False boolean인 경우 간단한 조건 생성
+      if (
+        def?.variantOptions?.length === 2 &&
+        def.variantOptions
+          .map((o: string) => o.toLowerCase())
+          .sort()
+          .join(",") === "false,true"
+      ) {
+        // propValue가 "True"면 doubleButton, "False"면 !doubleButton
+        if (propValue.toLowerCase() === "true") {
+          conditions.push({
+            type: "Identifier",
+            name: normalizedPropName,
+          } as ConditionNode);
+        } else {
+          conditions.push({
+            type: "UnaryExpression",
+            operator: "!",
+            prefix: true,
+            argument: {
+              type: "Identifier",
+              name: normalizedPropName,
+            },
+          } as ConditionNode);
+        }
+      } else {
+        // 일반 VARIANT인 경우 === 비교
+        conditions.push(
+          helper.createBinaryCondition(normalizedPropName, propValue)
+        );
+      }
+    }
+
+    if (conditions.length === 0) return null;
+    if (conditions.length === 1) return conditions[0];
+
+    // 여러 조건이면 AND로 결합
+    return helper.combineWithAnd(conditions);
   }
 
   // Helper: 해당 불리언 속성이 True일 때만 노드가 존재하는지 확인

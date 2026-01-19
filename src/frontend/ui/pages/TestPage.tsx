@@ -53,11 +53,41 @@ interface TestResult {
   variants?: VariantResult[];
 }
 
+// HTML 네이티브 속성과 충돌하는 prop 이름들 (컴파일러와 동일)
+const CONFLICTING_HTML_ATTRS = [
+  "disabled",
+  "type",
+  "value",
+  "name",
+  "id",
+  "hidden",
+  "checked",
+  "selected",
+  "required",
+  "readOnly",
+  "placeholder",
+  "autoFocus",
+  "autoComplete",
+];
+
+/**
+ * 컴파일러와 동일한 renaming 로직
+ * name → customName, disabled → customDisabled 등
+ */
+function renameConflictingPropName(propName: string): string {
+  const lowerPropName = propName.toLowerCase();
+  if (CONFLICTING_HTML_ATTRS.some((attr) => attr.toLowerCase() === lowerPropName)) {
+    return `custom${propName.charAt(0).toUpperCase() + propName.slice(1)}`;
+  }
+  return propName;
+}
+
 /** variant 이름에서 props 파싱
  * 예: "Size=default, Variant=primary, Icon=true"
  * → { size: "default", variant: "primary", icon: true }
  *
  * - key를 camelCase로 변환
+ * - HTML 충돌 속성은 custom prefix 추가 (name → customName)
  * - "true"/"false" 값은 boolean으로 변환
  * - State=Disabled → disabled={true} 변환 (컴파일러에서 state prop 삭제됨)
  */
@@ -68,7 +98,10 @@ function parseVariantProps(variantName: string): Record<string, any> {
     const [key, value] = pair.split("=").map((s) => s.trim());
     if (key && value) {
       // key를 camelCase로 변환 (첫 글자 소문자)
-      const camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+      let camelKey = key.charAt(0).toLowerCase() + key.slice(1);
+
+      // HTML 충돌 속성 rename (컴파일러와 동일한 로직)
+      camelKey = renameConflictingPropName(camelKey);
 
       // "true"/"false"는 boolean으로 변환
       if (value === "true") {

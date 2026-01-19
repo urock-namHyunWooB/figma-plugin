@@ -1997,6 +1997,192 @@ const LargeCss = css`
 
 ---
 
+### 16. COMPONENT_SET variant별 노드 위치 오프셋 문제
+
+#### 문제
+
+COMPONENT_SET에서 일부 variant에만 존재하는 노드가 잘못된 `top` 값을 가짐. 예를 들어 X3 variant의 `Group21233`이 `top: 144px`로 렌더링됨 (올바른 값은 `top: 0px`).
+
+```
+Figma 캔버스:
+┌─────────────────────────────────────────┐
+│ [X1 variant] (y: 0)                     │
+│ [X2 variant] (y: 72)                    │
+│ [X3 variant] (y: 144)  ← Group21233 포함 │
+└─────────────────────────────────────────┘
+
+잘못된 렌더링:
+Group21233 { top: 144px }  ← 캔버스 절대 좌표 사용
+
+올바른 렌더링:
+Group21233 { top: 0px }    ← variant 내 상대 좌표
+```
+
+#### 원인
+
+- `updatePositionStyles()`에서 부모의 `absoluteBoundingBox`를 기준으로 자식 위치 계산
+- COMPONENT_SET의 경우, 각 variant가 캔버스에서 다른 y 좌표에 배치됨
+- variant-specific 노드(모든 variant에 존재하지 않는 노드)는 해당 variant의 오프셋이 반영되어 잘못된 위치 계산
+
+#### 해결
+
+`_TempAstTree.updatePositionStyles()`에서 COMPONENT_SET 루트 처리:
+
+```typescript
+// COMPONENT_SET의 루트 자식 노드는 variant별로 다른 위치에 있으므로
+// variant-specific 노드(모든 variant에 존재하지 않는 노드)는 0,0 기준
+if (parentNode === tempAstTree) {
+  const actualRootType = this._specDataManager.getRootNodeType();
+  if (actualRootType === "COMPONENT_SET") {
+    const allVariants = this._specDataManager.getRenderTree().children;
+    const totalVariantCount = allVariants?.length || 0;
+
+    // mergedNode 길이가 전체 variant 수보다 작으면 variant-specific 노드
+    if (node.mergedNode && node.mergedNode.length < totalVariantCount) {
+      left = 0;
+      top = 0;
+    }
+  }
+}
+```
+
+#### 테스트
+
+`test/compiler/componentSetVariantPosition.test.ts`
+
+---
+
+### 17. SVG fill 색상이 currentColor로 변환되어 다중 색상 손실
+
+#### 문제
+
+Figma에서 여러 색상을 가진 SVG (예: 파란 배경 + 흰색 텍스트)가 모두 같은 색으로 렌더링됨. 특히 배지 색상이 연하게 보이는 문제.
+
+```
+Figma 원본:
+┌──────────────┐
+│ 🔵 #0050FF   │  ← 파란 배경
+│   ⬜ white   │  ← 흰색 텍스트/아이콘
+│   ⬛ black   │  ← 검정 텍스트
+└──────────────┘
+
+잘못된 렌더링:
+모든 path의 fill이 "currentColor"로 변환되어
+CSS color 속성 하나로 모든 색상이 제어됨
+```
+
+#### 원인
+
+`SvgToJsx._createJsxAttributes()`에서 모든 색상 fill 값을 `currentColor`로 변환:
+
+```typescript
+// 문제 코드
+if (attrName === "fill" && this._isColorValue(attrValue)) {
+  finalValue = "currentColor";  // #0050FF, white, black 모두 currentColor로
+}
+```
+
+이 로직은 단일 색상 아이콘에서 CSS로 색상을 제어하기 위한 것이었으나, 다중 색상 SVG에서는 모든 색상 정보를 잃게 됨.
+
+#### 해결
+
+`SvgToJsx._createJsxAttributes()`에서 원본 fill 색상 유지:
+
+```typescript
+// 수정: fill 색상을 그대로 유지 (다중 색상 SVG 지원)
+const finalValue = attrValue;
+// currentColor 변환 로직 제거
+```
+
+`_TempAstTree.updateVectorStyles()`에서 SVG 노드의 불필요한 CSS fill/color 제거:
+
+```typescript
+if (isSvgRendered) {
+  // SVG path에 직접 색상이 있으므로 CSS fill/background 제거
+  delete base["fill"];
+  delete base["background"];
+}
+```
+
+#### 결과
+
+```jsx
+// SVG path들이 원본 색상 유지
+<svg viewBox="0 0 94 56" fill="none">
+  <path d="M80.25..." fill="#0050FF" />  {/* 파란 배경 */}
+  <path d="M232..." fill="white" />      {/* 흰색 텍스트 */}
+  <path d="M119..." fill="black" />      {/* 검정 텍스트 */}
+</svg>
+```
+
+#### 테스트
+
+`test/compiler/svgToJsx.test.ts` - "fill 색상 보존" 섹션
+`test/compiler/componentSetVariantPosition.test.ts`
+
+---
+
+### 18. TestPage에서 HTML 속성과 충돌하는 Prop 이름 처리
+
+#### 문제
+
+Figma variant prop 이름이 HTML 속성과 충돌하여 컴포넌트가 올바르게 렌더링되지 않음. 예: `name` prop이 HTML `name` 속성으로 인식됨.
+
+```
+Figma Variant:
+- name: "ONiON X1" | "ONiON X2" | "ONiON X3"
+
+컴파일된 Props:
+{ customName: "ONiON X1" }  ← 컴파일러가 name을 customName으로 변환
+
+TestPage에서 전달:
+{ name: "ONiON X1" }        ← 변환 안 됨 → props 불일치
+```
+
+#### 원인
+
+- 컴파일러(`PropsManager`)는 HTML 속성과 충돌하는 prop 이름을 `customXxx` 형태로 변환
+- TestPage의 `parseVariantProps()`는 이 변환을 수행하지 않음
+- 결과적으로 컴포넌트에 전달되는 props와 기대하는 props가 불일치
+
+#### 해결
+
+`TestPage.tsx`에 동일한 prop 이름 변환 로직 추가:
+
+```typescript
+const CONFLICTING_HTML_ATTRS = [
+  "disabled", "type", "value", "name", "id", "hidden",
+  "checked", "selected", "required", "readOnly",
+  "placeholder", "autoFocus", "autoComplete",
+];
+
+function renameConflictingPropName(propName: string): string {
+  const lowerPropName = propName.toLowerCase();
+  if (CONFLICTING_HTML_ATTRS.some((attr) => attr.toLowerCase() === lowerPropName)) {
+    return `custom${propName.charAt(0).toUpperCase() + propName.slice(1)}`;
+  }
+  return propName;
+}
+
+// parseVariantProps에서 사용
+camelKey = renameConflictingPropName(camelKey);
+```
+
+#### 결과
+
+```typescript
+// TestPage에서 올바른 props 전달
+parseVariantProps("name=ONiON X1")
+// → { customName: "ONiON X1" }  ← 컴파일러와 일치
+
+// 컴포넌트 정상 렌더링
+<ColorbrandLogo customName="ONiON X1" />
+<ColorbrandLogo customName="ONiON X2" />
+<ColorbrandLogo customName="ONiON X3" />
+```
+
+---
+
 ## 테스트
 
 ### 테스트 구조
@@ -2033,7 +2219,8 @@ test/
 | `dependencyEmptyChildren.test.ts` | dependency children 비어있을 때 I... 노드 처리 |
 | `instanceOverrideProps.test.ts` | INSTANCE 오버라이드 props 전달 |
 | `layoutRegression.test.ts` | 레이아웃 회귀 테스트 |
+| `componentSetVariantPosition.test.ts` | COMPONENT_SET variant 위치 및 SVG 색상 테스트 |
 
 ---
 
-_Last Updated: 2026-01-18_
+_Last Updated: 2026-01-19_

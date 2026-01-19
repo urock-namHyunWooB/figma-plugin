@@ -224,6 +224,37 @@ class CreateJsxTree {
    *
    * 위치 스타일(position, left, top 등)이 있으면 wrapper div로 감싸서 적용
    */
+  /**
+   * 네이티브 HTML 속성과 충돌하는 prop 이름 rename
+   * dependency 컴포넌트가 버튼 등으로 렌더링될 때 충돌 방지
+   */
+  private _renameConflictingPropName(propName: string): string {
+    // 흔히 충돌하는 네이티브 속성 목록
+    const conflictingAttrs = [
+      "disabled",
+      "type",
+      "value",
+      "name",
+      "id",
+      "hidden",
+      "checked",
+      "selected",
+      "required",
+      "readOnly",
+      "placeholder",
+      "autoFocus",
+      "autoComplete",
+    ];
+
+    const lowerPropName = propName.toLowerCase();
+    if (conflictingAttrs.some((attr) => attr.toLowerCase() === lowerPropName)) {
+      // custom prefix 추가: disabled -> customDisabled
+      return `custom${propName.charAt(0).toUpperCase() + propName.slice(1)}`;
+    }
+
+    return propName;
+  }
+
   private _createExternalComponentJsx(
     node: FinalAstTree
   ): ts.JsxSelfClosingElement | ts.JsxElement {
@@ -236,17 +267,20 @@ class CreateJsxTree {
     const attributes: ts.JsxAttributeLike[] = [];
 
     for (const [propName, propValue] of Object.entries(extComp.props)) {
+      // 네이티브 HTML 속성과 충돌하는 prop 이름 rename
+      const resolvedPropName = this._renameConflictingPropName(propName);
+
       // 부모 컴포넌트의 같은 이름 prop이 있으면 변수 참조, 없으면 고정값
-      const parentHasSameProp = propName in this.astTree.props;
+      const parentHasSameProp = resolvedPropName in this.astTree.props;
 
       let jsxAttr: ts.JsxAttribute;
       if (parentHasSameProp) {
         // 부모 prop을 그대로 전달: size={size}
         jsxAttr = this.factory.createJsxAttribute(
-          this.factory.createIdentifier(propName),
+          this.factory.createIdentifier(resolvedPropName),
           this.factory.createJsxExpression(
             undefined,
-            this.factory.createIdentifier(propName)
+            this.factory.createIdentifier(resolvedPropName)
           )
         );
       } else {
@@ -255,7 +289,7 @@ class CreateJsxTree {
         const valueType = typeof propValue;
         if (valueType === "boolean") {
           jsxAttr = this.factory.createJsxAttribute(
-            this.factory.createIdentifier(propName),
+            this.factory.createIdentifier(resolvedPropName),
             this.factory.createJsxExpression(
               undefined,
               propValue ? this.factory.createTrue() : this.factory.createFalse()
@@ -263,7 +297,7 @@ class CreateJsxTree {
           );
         } else if (valueType === "number") {
           jsxAttr = this.factory.createJsxAttribute(
-            this.factory.createIdentifier(propName),
+            this.factory.createIdentifier(resolvedPropName),
             this.factory.createJsxExpression(
               undefined,
               this.factory.createNumericLiteral(Number(propValue))
@@ -272,7 +306,7 @@ class CreateJsxTree {
         } else {
           // string 또는 기타: 문자열 리터럴
           jsxAttr = this.factory.createJsxAttribute(
-            this.factory.createIdentifier(propName),
+            this.factory.createIdentifier(resolvedPropName),
             this.factory.createStringLiteral(String(propValue))
           );
         }
@@ -614,11 +648,25 @@ class CreateJsxTree {
         const condition = this._convertEstreeToTsExpression(
           child.visible.condition
         );
-        const conditionalJsx = this._wrapWithConditionalRendering(
-          condition,
-          childJsx as ts.JsxElement | ts.JsxSelfClosingElement
-        );
-        children.push(conditionalJsx);
+
+        // childJsx가 JsxExpression인 경우 (variant SVG 등) 내부 expression 추출
+        if (ts.isJsxExpression(childJsx)) {
+          const innerExpr = childJsx.expression || this.factory.createNull();
+          const conditionalExpr = this.factory.createBinaryExpression(
+            condition,
+            this.factory.createToken(ts.SyntaxKind.AmpersandAmpersandToken),
+            innerExpr
+          );
+          children.push(
+            this.factory.createJsxExpression(undefined, conditionalExpr)
+          );
+        } else {
+          const conditionalJsx = this._wrapWithConditionalRendering(
+            condition,
+            childJsx as ts.JsxElement | ts.JsxSelfClosingElement
+          );
+          children.push(conditionalJsx);
+        }
       } else {
         // static인 경우 그대로 추가
         children.push(childJsx as ts.JsxChild);
@@ -986,7 +1034,12 @@ class CreateJsxTree {
   private _createVectorSvgElement(
     node: FinalAstTree,
     attributes: ts.JsxAttributeLike[]
-  ): ts.JsxElement | ts.JsxSelfClosingElement {
+  ): ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression {
+    // variant별로 다른 SVG가 있는 경우 조건부 렌더링
+    if (node.metaData.vectorSvgs) {
+      return this._createVariantSvgElement(node, attributes);
+    }
+
     const svgString = node.metaData.vectorSvg as string;
 
     // SVG 문자열을 JSX AST로 변환
@@ -1026,6 +1079,135 @@ class CreateJsxTree {
       undefined,
       this.factory.createJsxAttributes(attributes)
     );
+  }
+
+  /**
+   * variant별로 다른 SVG를 조건부로 렌더링
+   * {customName === "ONiON X1" ? <svg>...</svg> : customName === "ONiON X2" ? <svg>...</svg> : <svg>...</svg>}
+   */
+  private _createVariantSvgElement(
+    node: FinalAstTree,
+    attributes: ts.JsxAttributeLike[]
+  ): ts.JsxExpression {
+    const vectorSvgs = node.metaData.vectorSvgs as Record<string, string>;
+
+    // variant prop 이름 찾기 (type이 "VARIANT"인 prop)
+    // originalKey도 함께 저장 (rename된 경우 매칭에 사용)
+    let variantPropName: string | null = null;
+    let variantOriginalKey: string | null = null;
+    for (const [propName, propDef] of Object.entries(this.astTree.props)) {
+      if ((propDef as any)?.type === "VARIANT") {
+        variantPropName = propName;
+        variantOriginalKey = (propDef as any)?.originalKey || null;
+        break;
+      }
+    }
+
+    if (!variantPropName) {
+      // variant prop을 찾지 못하면 첫 번째 SVG로 fallback
+      const firstSvg = Object.values(vectorSvgs)[0];
+      const svgToJsx = new SvgToJsx();
+      const svgJsx = svgToJsx.convert(firstSvg);
+      if (svgJsx) {
+        return this.factory.createJsxExpression(undefined, svgJsx as any);
+      }
+      return this.factory.createJsxExpression(
+        undefined,
+        this.factory.createNull()
+      );
+    }
+
+    // variant name에서 prop value 추출 (예: "Name=ONiON X1" → "ONiON X1")
+    const entries = Object.entries(vectorSvgs);
+    const svgToJsx = new SvgToJsx();
+
+    // 각 variant에 대한 SVG JSX 생성
+    const variantSvgs: Array<{ value: string; jsx: ts.JsxChild }> = [];
+    for (const [variantName, svgString] of entries) {
+      // variantName 파싱 (예: "Name=ONiON X1, Size=Large" → { Name: "ONiON X1", Size: "Large" })
+      const parsed: Record<string, string> = {};
+      for (const part of variantName.split(",")) {
+        const [key, val] = part.split("=").map((s) => s.trim());
+        if (key && val) {
+          parsed[key] = val;
+        }
+      }
+
+      // variantPropName에 해당하는 값 추출
+      // originalKey가 있으면 그것도 매칭에 사용 (rename된 경우: Name → customName)
+      let propValue: string | null = null;
+      for (const [key, val] of Object.entries(parsed)) {
+        // originalKey와 직접 비교하거나 camelCase 변환 후 propName과 비교
+        if (
+          key === variantOriginalKey ||
+          toCamelCase(key) === variantPropName
+        ) {
+          propValue = val;
+          break;
+        }
+      }
+
+      if (!propValue) continue;
+
+      const svgJsx = svgToJsx.convert(svgString);
+      if (svgJsx) {
+        // css 속성 병합
+        let mergedSvg: ts.JsxChild;
+        if (ts.isJsxSelfClosingElement(svgJsx)) {
+          const existingAttrs = svgJsx.attributes.properties;
+          const mergedAttrs = [...attributes, ...Array.from(existingAttrs)];
+          mergedSvg = this.factory.createJsxSelfClosingElement(
+            svgJsx.tagName,
+            undefined,
+            this.factory.createJsxAttributes(mergedAttrs)
+          );
+        } else if (ts.isJsxElement(svgJsx)) {
+          const existingAttrs = svgJsx.openingElement.attributes.properties;
+          const mergedAttrs = [...attributes, ...Array.from(existingAttrs)];
+          mergedSvg = this.factory.createJsxElement(
+            this.factory.createJsxOpeningElement(
+              svgJsx.openingElement.tagName,
+              undefined,
+              this.factory.createJsxAttributes(mergedAttrs)
+            ),
+            svgJsx.children,
+            svgJsx.closingElement
+          );
+        } else {
+          continue;
+        }
+        variantSvgs.push({ value: propValue, jsx: mergedSvg });
+      }
+    }
+
+    if (variantSvgs.length === 0) {
+      return this.factory.createJsxExpression(
+        undefined,
+        this.factory.createNull()
+      );
+    }
+
+    // 중첩 삼항 연산자 생성: propName === "val1" ? svg1 : propName === "val2" ? svg2 : svg3
+    // 역순으로 구성 (마지막 값이 else절이 됨)
+    // JSX 요소는 ParenthesizedExpression으로 감싸지 않고 직접 사용
+    let conditionalExpr: ts.Expression = variantSvgs[variantSvgs.length - 1].jsx as unknown as ts.Expression;
+
+    for (let i = variantSvgs.length - 2; i >= 0; i--) {
+      const { value, jsx } = variantSvgs[i];
+      conditionalExpr = this.factory.createConditionalExpression(
+        this.factory.createBinaryExpression(
+          this.factory.createIdentifier(variantPropName),
+          this.factory.createToken(ts.SyntaxKind.EqualsEqualsEqualsToken),
+          this.factory.createStringLiteral(value)
+        ),
+        this.factory.createToken(ts.SyntaxKind.QuestionToken),
+        jsx as unknown as ts.Expression,
+        this.factory.createToken(ts.SyntaxKind.ColonToken),
+        conditionalExpr
+      );
+    }
+
+    return this.factory.createJsxExpression(undefined, conditionalExpr);
   }
 
   private _getTagName(node: FinalAstTree): string {
@@ -1462,8 +1644,47 @@ class CreateJsxTree {
 
   /**
    * BinaryExpression 변환 (예: props.size === 'L')
+   * Boolean/Slot prop의 경우 === "True" → propName, === "False" → !propName 으로 변환
    */
-  private _convertBinaryExpression(node: any): ts.BinaryExpression {
+  private _convertBinaryExpression(node: any): ts.Expression {
+    // Boolean/Slot prop 문자열 비교를 실제 boolean 비교로 변환
+    // props.serviceCenter === "True" → serviceCenter
+    // props.serviceCenter === "False" → !serviceCenter
+    // props.doubleButton === "True" → doubleButton (slot truthy check)
+    // props.doubleButton === "False" → !doubleButton (slot falsy check)
+    if (
+      (node.operator === "===" || node.operator === "!==") &&
+      node.left?.type === "MemberExpression" &&
+      node.left?.object?.name === "props" &&
+      node.right?.type === "Literal" &&
+      (node.right?.value === "True" || node.right?.value === "False")
+    ) {
+      const propName = node.left.property?.name;
+      if (propName) {
+        // astTree.props에서 해당 prop이 BOOLEAN 또는 SLOT 타입인지 확인
+        const propDef = this.astTree.props[propName];
+        if (propDef?.type === "BOOLEAN" || propDef?.type === "SLOT") {
+          const propIdentifier = this.factory.createIdentifier(propName);
+          const isTrue = node.right.value === "True";
+          const isEquality = node.operator === "===";
+
+          // === "True" → propName (truthy check)
+          // === "False" → !propName (falsy check)
+          // !== "True" → !propName
+          // !== "False" → propName
+          const shouldNegate = isEquality ? !isTrue : isTrue;
+
+          if (shouldNegate) {
+            return this.factory.createPrefixUnaryExpression(
+              ts.SyntaxKind.ExclamationToken,
+              propIdentifier
+            );
+          }
+          return propIdentifier;
+        }
+      }
+    }
+
     const left = this._convertEstreeToTsExpression(node.left);
     const right = this._convertEstreeToTsExpression(node.right);
 

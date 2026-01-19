@@ -294,12 +294,8 @@ class SvgToJsx {
       // 제거 대상 속성 스킵
       if (jsxAttrName === "__REMOVE__") continue;
 
-      // fill 속성이 색상 값이면 currentColor로 변경
-      // (State에 따라 CSS color로 제어 가능하도록)
-      let finalValue = attrValue;
-      if (attrName === "fill" && this._isColorValue(attrValue)) {
-        finalValue = "currentColor";
-      }
+      // fill 속성의 색상 값을 그대로 유지 (multi-color SVG 지원)
+      const finalValue = attrValue;
 
       // 값이 순수 숫자인 경우에만 JSX Expression으로 (공백 포함 시 문자열 유지)
       const numValue = parseFloat(finalValue);

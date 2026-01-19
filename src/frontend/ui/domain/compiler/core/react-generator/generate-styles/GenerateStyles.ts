@@ -193,10 +193,16 @@ class GenerateStyles {
       : new Map();
 
     // 루트 컴포넌트의 Props 인터페이스 이름 사용 (모든 노드에서 동일)
+    // 외부에서 전달받은 componentName 사용 (FigmaCompiler에서 normalizeComponentName으로 정규화됨)
+    // componentName이 없으면 fallback으로 원본 이름 사용
     const rootComponentName =
-      this.astTree.metaData.document?.name || this.astTree.name;
-    // PascalCase로 변환하여 인터페이스 이름과 일치시킴 (btn → Btn → BtnProps)
-    const propsInterfaceName = `${capitalize(normalizeName(rootComponentName))}Props`;
+      this.componentName ||
+      this.astTree.metaData.document?.name ||
+      this.astTree.name;
+    // componentName이 이미 정규화되어 있으면 그대로 사용, 아니면 정규화
+    const propsInterfaceName = this.componentName
+      ? `${capitalize(this.componentName)}Props`
+      : `${capitalize(normalizeName(rootComponentName))}Props`;
 
     // 파라미터 시그니처 수집 (중복 체크 키에 사용)
     const paramSignatures: string[] = [];

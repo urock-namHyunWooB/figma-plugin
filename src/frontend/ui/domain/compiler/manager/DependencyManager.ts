@@ -205,6 +205,21 @@ class DependencyManager {
         (enrichedVariant as any)._overrideableProps = overrideableProps;
       }
 
+      // dependency가 COMPONENT_SET의 variant인 경우, componentPropertyDefinitions 추론
+      // (dependency에는 COMPONENT_SET 정보가 없으므로 variant 이름에서 추출)
+      if (
+        group.variants.length >= 1 &&
+        !enrichedVariant.info.document.componentPropertyDefinitions
+      ) {
+        const inferredProps = this._inferComponentPropertyDefinitions(
+          group.variants
+        );
+        if (Object.keys(inferredProps).length > 0) {
+          (enrichedVariant.info.document as any).componentPropertyDefinitions =
+            inferredProps;
+        }
+      }
+
       try {
         const depCompiler = compilerFactory(enrichedVariant);
         const depComponentName = normalizeComponentName(group.componentSetName);
@@ -307,13 +322,21 @@ class DependencyManager {
         dep.componentName
       );
 
-      codeParts.push(`// === ${dep.componentName} ===`);
+      // 이미 주석이 있으면 추가하지 않음 (nested dependency에서 이미 추가된 경우)
+      const commentLine = `// === ${dep.componentName} ===`;
+      if (!depCodeWithoutImports.trim().startsWith("// ===")) {
+        codeParts.push(commentLine);
+      }
       codeParts.push(depCodeWithoutImports);
       codeParts.push(""); // 빈 줄
     }
 
     // 3. 메인 컴포넌트
-    codeParts.push(`// === ${result.mainComponent.componentName} ===`);
+    // 이미 주석이 있으면 추가하지 않음
+    const mainCommentLine = `// === ${result.mainComponent.componentName} ===`;
+    if (!mainCodeWithoutImports.trim().startsWith("// ===")) {
+      codeParts.push(mainCommentLine);
+    }
     codeParts.push(mainCodeWithoutImports);
 
     return codeParts.join("\n");
@@ -495,6 +518,49 @@ class DependencyManager {
       return `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${a})`;
     }
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+  }
+
+  /**
+   * variant 이름에서 componentPropertyDefinitions 추론
+   * 예: "Size=Large, Color=Primary, Disabled=False" → { Size: {...}, Color: {...}, Disabled: {...} }
+   */
+  private _inferComponentPropertyDefinitions(
+    variants: FigmaNodeData[]
+  ): Record<string, any> {
+    // 각 prop별로 모든 옵션 수집
+    const propOptionsMap: Record<string, Set<string>> = {};
+
+    for (const variant of variants) {
+      const variantName = variant.info.document.name;
+      // "Size=Large, Color=Primary, Disabled=False" 형식 파싱
+      const propPairs = variantName.split(",").map((s) => s.trim());
+
+      for (const pair of propPairs) {
+        const [propName, propValue] = pair.split("=").map((s) => s.trim());
+        if (propName && propValue) {
+          if (!propOptionsMap[propName]) {
+            propOptionsMap[propName] = new Set();
+          }
+          propOptionsMap[propName].add(propValue);
+        }
+      }
+    }
+
+    // componentPropertyDefinitions 구성
+    const definitions: Record<string, any> = {};
+    for (const [propName, options] of Object.entries(propOptionsMap)) {
+      const variantOptions = Array.from(options);
+      // 첫 번째 variant의 값을 defaultValue로 사용
+      const defaultValue = variantOptions[0];
+
+      definitions[propName] = {
+        type: "VARIANT",
+        defaultValue,
+        variantOptions,
+      };
+    }
+
+    return definitions;
   }
 
   /**

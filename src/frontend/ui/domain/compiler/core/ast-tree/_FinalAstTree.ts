@@ -55,6 +55,7 @@ class _FinalAstTree {
     finalAstTree = this.updateExternalComponents(finalAstTree);
     finalAstTree = this.updateSvgFillToColor(finalAstTree, tempAstTree);
     finalAstTree = this.updateOverrideableProps(finalAstTree);
+    finalAstTree = this.removeRedundantVisibleConditions(finalAstTree);
 
     this._finalAstTree = finalAstTree;
   }
@@ -310,7 +311,10 @@ class _FinalAstTree {
         style: node.style,
         children: [],
         semanticRole: "container", // 기본값, updateMetaData에서 정확한 값 할당
-        metaData: {},
+        metaData: {
+          // mergedNode 정보 복사 (variant별 SVG 처리에 필요)
+          mergedNode: node.mergedNode,
+        },
       };
 
       finalNode.children = node.children.map((child) =>
@@ -354,11 +358,17 @@ class _FinalAstTree {
       // INSTANCE 내부 노드 정리:
       // - 루트가 INSTANCE이면 I... 노드 유지
       // - 원래 children이 비어있고 enrichment로 채워진 경우 I... 노드 유지
+      // - TEXT 노드는 항상 유지 (사용자에게 보이는 콘텐츠)
       // - I... 노드가 INSTANCE이고 dependency에 있는 componentId를 참조하면 유지 (externalComponent로 변환됨)
       // - I... 노드의 자손 중에 dependency 참조가 있으면 유지 (부모도 필요)
       // - 그 외에는 I... 노드 삭제
       const isInstanceChild = node.id.startsWith("I");
       if (isInstanceChild && !isRootInstance && !enrichedFromEmptyChildren) {
+        // TEXT 노드는 삭제하지 않음 (사용자에게 보이는 콘텐츠이므로)
+        if (node.type === "TEXT") {
+          return;
+        }
+
         const dependencies = this.specDataManager.getDependencies();
 
         // 현재 노드 또는 자손 중에 dependency 참조가 있는지 확인
@@ -372,8 +382,20 @@ class _FinalAstTree {
         }
       }
 
+      // visible이 static false인 노드 제거
+      if (node.visible.type === "static" && node.visible.value === false) {
+        nodesToRemove.push(node);
+        return;
+      }
+
+      // Figma spec에서 visible: false이고 prop binding이 없는 노드 제거
+      // 단, AST에서 condition이 설정된 경우는 유지 (다른 variant에서 visible일 수 있음)
       const spec = this.specDataManager.getSpecById(node.id);
-      if (spec.visible === false && !spec.componentPropertyReferences) {
+      if (
+        spec.visible === false &&
+        !spec.componentPropertyReferences &&
+        node.visible.type !== "condition"
+      ) {
         nodesToRemove.push(node);
       }
     });
@@ -552,9 +574,47 @@ class _FinalAstTree {
         case "BOOLEAN_OPERATION": {
           node.semanticRole = "vector";
           // vectorSvg 데이터가 있으면 metaData에 저장
-          const vectorSvg = this.specDataManager.getVectorSvgByNodeId(node.id);
-          if (vectorSvg) {
-            node.metaData.vectorSvg = vectorSvg;
+          // 병합된 노드의 경우 각 variant별 SVG를 수집하여 다르면 vectorSvgs로 저장
+          const mergedNodes = node.metaData.mergedNode as Array<{
+            id: string;
+            variantName?: string | null;
+          }> | undefined;
+
+          if (mergedNodes && mergedNodes.length > 1) {
+            // 병합된 노드: 각 variant의 SVG 수집
+            const svgByVariant: Record<string, string> = {};
+            let firstSvg: string | undefined;
+            let allSame = true;
+
+            for (const merged of mergedNodes) {
+              const svg = this.specDataManager.getVectorSvgByNodeId(merged.id);
+              if (svg && merged.variantName) {
+                svgByVariant[merged.variantName] = svg;
+                if (firstSvg === undefined) {
+                  firstSvg = svg;
+                } else if (svg !== firstSvg) {
+                  allSame = false;
+                }
+              }
+            }
+
+            if (Object.keys(svgByVariant).length > 0) {
+              if (allSame && firstSvg) {
+                // 모든 variant의 SVG가 동일하면 단일 값 저장
+                node.metaData.vectorSvg = firstSvg;
+              } else {
+                // variant별로 다른 SVG가 있으면 map으로 저장
+                node.metaData.vectorSvgs = svgByVariant;
+                // 기본값으로 첫 번째 SVG도 저장 (fallback용)
+                node.metaData.vectorSvg = firstSvg;
+              }
+            }
+          } else {
+            // 단일 노드: 기존 로직
+            const vectorSvg = this.specDataManager.getVectorSvgByNodeId(node.id);
+            if (vectorSvg) {
+              node.metaData.vectorSvg = vectorSvg;
+            }
           }
           break;
         }
@@ -845,21 +905,27 @@ class _FinalAstTree {
     const props = astTree.props;
     return Object.entries(props)
       .filter(([key, value]: [string, any]) => {
-        // BOOLEAN 타입
+        // BOOLEAN 타입 처리
         if (value.type === "BOOLEAN") {
+          // VARIANT에서 변환된 BOOLEAN (True/False VARIANT)은 slot으로 변환하지 않음
+          // 단, icon이 포함된 prop 이름은 slot 후보로 유지 (아이콘은 교체 패턴이 일반적)
+          if (value.variantOptions) {
+            // icon 관련 prop은 slot 후보로 유지
+            const lowerKey = key.toLowerCase();
+            if (lowerKey.includes("icon")) {
+              return !this._isOnlyStyleChangeByBoolean(astTree, key);
+            }
+            // 그 외 True/False VARIANT는 visibility toggle이므로 slot이 아님
+            return false;
+          }
+          // 원본 BOOLEAN은 스타일만 변경하는 경우가 아니면 slot 후보
           return !this._isOnlyStyleChangeByBoolean(astTree, key);
         }
 
-        // True/False VARIANT 타입 (대소문자 모두 처리)
+        // VARIANT 타입 - slot 후보로 변환하지 않음
+        // VARIANT는 스타일 변경 용도(Size, Color 등)로 사용되므로 slot으로 변환하면 안됨
         if (value.type === "VARIANT") {
-          const options = (value.variantOptions || []).map((o: string) =>
-            o.toLowerCase()
-          );
-          return (
-            options.length === 2 &&
-            options.includes("true") &&
-            options.includes("false")
-          );
+          return false;
         }
         return false;
       })
@@ -1098,6 +1164,7 @@ class _FinalAstTree {
       (node as any).isSlot = true;
 
       // 부모 노드의 visible condition에서 slot prop 관련 조건 제거
+      // (slot 노드 자체의 조건만 제거, 다른 노드는 boolean 비교로 변환됨)
       if (node.parent && node.parent.visible.type === "condition") {
         node.parent.visible = this._removeSlotPropsFromCondition(
           node.parent.visible.condition,
@@ -2040,6 +2107,41 @@ class _FinalAstTree {
     }
 
     return arraySlotInstanceIds;
+  }
+
+  /**
+   * 부모-자식 간 중복 visible 조건 제거
+   * 부모가 이미 같은 조건을 가지고 있으면 자식의 조건을 static: true로 변경
+   */
+  private removeRedundantVisibleConditions(astTree: FinalAstTree): FinalAstTree {
+    const processNode = (
+      node: FinalAstTree,
+      ancestorConditions: string[]
+    ): void => {
+      // 현재 노드의 조건을 문자열로 변환
+      let currentConditionStr: string | null = null;
+      if (node.visible.type === "condition") {
+        currentConditionStr = generate(node.visible.condition);
+
+        // 조상 노드 중 같은 조건이 있으면 중복 → static: true로 변경
+        if (ancestorConditions.includes(currentConditionStr)) {
+          node.visible = { type: "static", value: true };
+          currentConditionStr = null; // 조건이 제거되었으므로 자식에게 전달하지 않음
+        }
+      }
+
+      // 자식 노드 처리
+      const newAncestorConditions = currentConditionStr
+        ? [...ancestorConditions, currentConditionStr]
+        : ancestorConditions;
+
+      for (const child of node.children) {
+        processNode(child, newAncestorConditions);
+      }
+    };
+
+    processNode(astTree, []);
+    return astTree;
   }
 
   /**

@@ -186,5 +186,48 @@ describe("SvgToJsx", () => {
       expect(result).toBeNull();
     });
   });
+
+  describe("fill 색상 보존", () => {
+    test("hex 색상 fill을 그대로 유지한다", () => {
+      const svg = '<svg><path d="M0 0" fill="#0050FF"/></svg>';
+      const result = svgToJsx.convert(svg);
+      const code = printJsx(result);
+
+      // fill 색상이 currentColor로 변환되지 않고 원래 값 유지
+      expect(code).toContain('fill="#0050FF"');
+      expect(code).not.toContain("currentColor");
+    });
+
+    test("다중 색상 SVG에서 각 path의 fill 색상을 유지한다", () => {
+      const svg = `<svg viewBox="0 0 100 100">
+        <path d="M0 0" fill="#0050FF"/>
+        <path d="M10 10" fill="white"/>
+        <path d="M20 20" fill="black"/>
+      </svg>`;
+      const result = svgToJsx.convert(svg);
+      const code = printJsx(result);
+
+      // 각 path의 고유 색상이 유지되어야 함
+      expect(code).toContain('fill="#0050FF"');
+      expect(code).toContain('fill="white"');
+      expect(code).toContain('fill="black"');
+    });
+
+    test("rgb/rgba fill 색상을 그대로 유지한다", () => {
+      const svg = '<svg><rect fill="rgb(0, 80, 255)"/></svg>';
+      const result = svgToJsx.convert(svg);
+      const code = printJsx(result);
+
+      expect(code).toContain('fill="rgb(0, 80, 255)"');
+    });
+
+    test("fill=none은 그대로 유지한다", () => {
+      const svg = '<svg fill="none"><path d="M0 0"/></svg>';
+      const result = svgToJsx.convert(svg);
+      const code = printJsx(result);
+
+      expect(code).toContain('fill="none"');
+    });
+  });
 });
 
