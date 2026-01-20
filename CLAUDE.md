@@ -123,3 +123,43 @@ INSTANCE children have compound IDs like `I704:56;704:29;692:1613`. The last seg
 Detailed technical docs in `docs/`:
 - `COMPILER_ENGINE.md` - Architecture and algorithms
 - `COMPILE_PIPELINE.md` - Phase-by-phase pipeline walkthrough
+
+
+
+다음 워크플로우를 따를 것:
+
+### 1. 문제 정의 (코드 수정 금지)
+- 문제 현상을 명확하게 정리
+- 재현 조건 파악
+- 예상 원인 분석
+- **이 단계에서는 절대 코드를 수정하지 않음**
+
+### 2. 해결 방안 논의
+- 가능한 해결 방법들을 제시
+- 각 방법의 장단점 설명
+- 사용자와 함께 최적의 방안 결정
+
+### 3. 코드 수정 전 검토
+- 수정할 코드와 변경 내용을 사용자에게 미리 보여줌
+- 사용자 승인 후에만 코드 수정 진행
+
+### 4. 이슈 문서화
+- 해결된 이슈를 markdown 파일에 기록
+- 기록 내용: 문제 설명, 원인, 해결 방법, 관련 파일
+
+### 5. 테스트 코드 추가
+- 해당 이슈에 대한 회귀 테스트 작성
+- 테스트 실행하여 통과 확인
+
+## 서브에이전트 활용 지침
+
+설정된 서브에이전트는 해당 작업이 필요할 때 **자동으로 사용**할 것. 사용자가 요청하기 전에 proactively 활용.
+
+### 필수 서브에이전트
+- **browser-validator**: 컴파일된 React 컴포넌트의 브라우저 렌더링 검증 시 사용
+  - Figma 원본과 렌더링 결과 비교
+  - 스타일 값 확인, 시각적 비교
+  - `/test` 라우터에서 테스트 실행
+- **compiler-debugger**: 컴파일러 오류 분석 및 디버깅
+  - 컴파일 실패, AST 트리 문제, 6단계 파이프라인 추적
+- **issue-closer**: 해결된 컴파일러 이슈 문서화 및 회귀 테스트 추가

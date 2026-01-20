@@ -36,9 +36,10 @@ describe("CSS 최적화 - 중복 제거", () => {
       }
 
       // 동일한 스타일이 있다면 변수 수가 고유 스타일 수와 같거나 적어야 함
+      // +2 여유분: dependency 루트의 background: transparent로 인한 추가 변형 허용
       expect(frameCssMatches.length).toBeLessThanOrEqual(
-        uniqueFrameStyles.size + 1
-      ); // +1은 여유분
+        uniqueFrameStyles.size + 2
+      );
     });
 
     test("titleCss 변수들이 동일한 스타일이면 합쳐져야 한다", () => {

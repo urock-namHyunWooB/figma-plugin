@@ -201,6 +201,13 @@ export interface FinalAstTree {
     string,
     { nodeId: string; nodeName: string; type: string }
   >;
+
+  /**
+   * visible: false인 노드가 조건부 렌더링으로 변환될 때
+   * 해당 노드를 제어하는 props 이름 (예: "showInteraction")
+   * INSTANCE에서 visible override 시 이 prop에 true 전달
+   */
+  hiddenNodeProp?: string;
 }
 
 /**
@@ -218,4 +225,6 @@ export interface ExternalComponentRef {
   props: Record<string, string>;
   /** INSTANCE children의 오버라이드된 속성 (fills → Bg, characters → Text) */
   overrideProps?: Record<string, string>;
+  /** INSTANCE에서 visible override된 노드의 props (예: { showInteraction: true }) */
+  visibleOverrideProps?: Record<string, boolean>;
 }

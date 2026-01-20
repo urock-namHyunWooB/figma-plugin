@@ -841,6 +841,11 @@ class _TempAstTree {
         if (nodeBox?.height && !node.style.base["height"]) {
           node.style.base["height"] = `${nodeBox.height}px`;
         }
+
+        // SECTION root의 경우 width도 설정 (cssStyle이 비어있을 수 있음)
+        if (nodeSpec?.type === "SECTION" && nodeBox?.width && !node.style.base["width"]) {
+          node.style.base["width"] = `${nodeBox.width}px`;
+        }
       }
 
       // 자식들 처리
@@ -879,6 +884,9 @@ class _TempAstTree {
 
     // GROUP은 항상 absolute positioning
     if (type === "GROUP") return true;
+
+    // SECTION은 항상 absolute positioning (Auto Layout 미지원)
+    if (type === "SECTION") return true;
 
     // FRAME, COMPONENT, INSTANCE는 layoutMode가 없거나 NONE이면 absolute
     if (type === "FRAME" || type === "COMPONENT" || type === "INSTANCE") {

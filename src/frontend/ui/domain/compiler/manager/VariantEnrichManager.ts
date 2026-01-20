@@ -85,6 +85,14 @@ class VariantEnrichManager {
       ...restCssStyle
     } = variant.styleTree.cssStyle;
 
+    // 자식 중 position: absolute가 있는지 확인
+    // 있으면 부모에 position: relative를 추가해야 함
+    const hasAbsoluteChild = this._hasAbsolutePositionedChild(
+      variant.styleTree.children || []
+    );
+
+    // 브라우저 기본 배경색(button 등)을 무력화하기 위해 항상 background: transparent 추가
+    // wrapper가 시각적 스타일(background, opacity 등)을 담당하므로, 내부 요소는 투명해야 함
     return {
       ...variant,
       styleTree: {
@@ -93,6 +101,9 @@ class VariantEnrichManager {
           ...restCssStyle,
           width: "100%",
           height: "100%",
+          background: "transparent",
+          // 자식 중 absolute positioned가 있으면 position: relative 추가
+          ...(hasAbsoluteChild && { position: "relative" }),
         },
       },
     };
@@ -143,6 +154,21 @@ class VariantEnrichManager {
         components: mergedComponents,
       },
     };
+  }
+
+  /**
+   * 자식 styleTree 중 position: absolute가 있는지 재귀적으로 확인
+   * 있으면 부모에 position: relative가 필요함
+   */
+  private _hasAbsolutePositionedChild(children: any[]): boolean {
+    for (const child of children) {
+      if (child.cssStyle?.position === "absolute") {
+        return true;
+      }
+      // 자식의 자식은 확인하지 않음 - 직접 자식만 확인
+      // (재귀적으로 확인하면 손자 absolute도 잡히는데, 그건 자식이 처리해야 함)
+    }
+    return false;
   }
 }
 

@@ -97,24 +97,56 @@ class DependencyManager {
       let representativeVariant = group.variants[0];
       let instanceNode: any = null;
 
-      // 1차: visible: true인 INSTANCE 찾기
-      for (const variant of group.variants) {
-        const variantId = variant.info.document.id;
-        const found =
-          this.instanceOverrideManager.findInstanceNodeForComponentId(
-            variantId
-          );
+      // 원본 children에서 숨겨진 노드 ID 수집
+      const hiddenNodeIds = this._getHiddenNodeIds(
+        group.variants[0]?.info?.document?.children || []
+      );
 
-        // visible이 명시적으로 false가 아닌 경우만 선택
-        if (found && found.visible !== false) {
-          representativeVariant = variant;
-          instanceNode = found;
+      // 1차: 숨겨진 자식이 visible인 INSTANCE 우선 선택 (Pressed 상태 등)
+      // 이 INSTANCE의 오버라이드(opacity 등)가 visible 상태에서 사용됨
+      if (hiddenNodeIds.length > 0) {
+        for (const variant of group.variants) {
+          const variantId = variant.info.document.id;
+          const allInstances =
+            this.instanceOverrideManager.findAllInstanceNodesForComponentId(
+              variantId
+            );
 
-          break;
+          for (const found of allInstances) {
+            if (
+              found &&
+              found.visible !== false &&
+              this._hasVisibleOverrideForHiddenNodes(found, hiddenNodeIds)
+            ) {
+              representativeVariant = variant;
+              instanceNode = found;
+              break;
+            }
+          }
+          if (instanceNode) break;
         }
       }
 
-      // 2차: visible: true인 것이 없으면 아무 INSTANCE나 선택 (기존 동작)
+      // 2차: visible: true인 INSTANCE 찾기
+      if (!instanceNode) {
+        for (const variant of group.variants) {
+          const variantId = variant.info.document.id;
+          const found =
+            this.instanceOverrideManager.findInstanceNodeForComponentId(
+              variantId
+            );
+
+          // visible이 명시적으로 false가 아닌 경우만 선택
+          if (found && found.visible !== false) {
+            representativeVariant = variant;
+            instanceNode = found;
+
+            break;
+          }
+        }
+      }
+
+      // 3차: visible: true인 것이 없으면 아무 INSTANCE나 선택 (기존 동작)
       if (!instanceNode) {
         for (const variant of group.variants) {
           const variantId = variant.info.document.id;
@@ -143,12 +175,19 @@ class DependencyManager {
       );
 
       // INSTANCE 컨텍스트 병합: INSTANCE의 오버라이드를 원본 variant에 적용
+      // 주의: visible: false 노드도 유지해야 함 (INSTANCE에서 visible override 가능)
+      // _processHiddenNodes에서 show{NodeName} props로 조건부 렌더링 처리
       if (instanceNode) {
+        const originalChildren =
+          representativeVariant.info.document.children || [];
         const hasActualOverride =
           this.instanceOverrideManager.hasActualOverride(
-            representativeVariant.info.document.children || [],
+            originalChildren,
             instanceNode.children || []
           );
+
+        // 원본 children에 visible: false인 노드가 있는지 확인
+        const hasHiddenChildren = this._hasHiddenChildren(originalChildren);
 
         if (hasActualOverride) {
           // 오버라이드가 있으면 원본 ID로 매핑 (characters 등 적용)
@@ -157,23 +196,31 @@ class DependencyManager {
               enrichedVariant,
               instanceNode
             );
-        } else {
-          // 오버라이드가 없으면 INSTANCE children을 그대로 사용
-          const originalChildren =
-            representativeVariant.info.document.children || [];
-
+        } else if (originalChildren.length === 0) {
+          // 원본 children이 비어있으면 INSTANCE children 사용
+          // (Gnb 같은 케이스: 원본 COMPONENT에 children이 없고 INSTANCE에서 콘텐츠 제공)
           enrichedVariant =
             this.instanceOverrideManager.enrichVariantWithInstanceChildren(
               enrichedVariant,
               instanceNode
             );
-
-          // 원본 children이 비어있었을 때만 플래그 설정
-          // 플래그가 true면 I... 노드가 유지됨 (실제 콘텐츠)
-          // 플래그가 false면 I... 노드가 삭제됨 (INSTANCE 컨텍스트의 중복 노드)
-          if (originalChildren.length === 0) {
-            (enrichedVariant as any)._enrichedFromEmptyChildren = true;
-          }
+          (enrichedVariant as any)._enrichedFromEmptyChildren = true;
+        } else if (hasHiddenChildren) {
+          // 원본 children에 visible: false 노드가 있으면 원본 children 유지
+          // 단, styleTree는 병합하여 크기 override 적용 (INSTANCE에서 크기가 다를 수 있음)
+          // visible: false 노드는 _processHiddenNodes에서 show{NodeName} props로 노출됨
+          enrichedVariant =
+            this.instanceOverrideManager.enrichVariantWithStyleTreeOnly(
+              enrichedVariant,
+              instanceNode
+            );
+        } else {
+          // 그 외의 경우: INSTANCE children 사용 (기존 동작)
+          enrichedVariant =
+            this.instanceOverrideManager.enrichVariantWithInstanceChildren(
+              enrichedVariant,
+              instanceNode
+            );
         }
       }
 
@@ -489,6 +536,21 @@ class DependencyManager {
     return overrideProps;
   }
 
+  /**
+   * children 중에 visible: false인 노드가 있는지 재귀적으로 확인
+   */
+  private _hasHiddenChildren(children: any[]): boolean {
+    for (const child of children) {
+      if (child.visible === false) {
+        return true;
+      }
+      if (child.children && this._hasHiddenChildren(child.children)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private _toCamelCase(str: string): string {
     return str
       .replace(/[^a-zA-Z0-9]+/g, " ")
@@ -612,6 +674,69 @@ class DependencyManager {
     }
 
     return overrideableProps;
+  }
+
+  /**
+   * children에서 visible: false인 노드의 ID 목록 반환
+   */
+  private _getHiddenNodeIds(children: any[]): string[] {
+    const hiddenIds: string[] = [];
+
+    const traverse = (nodes: any[]) => {
+      for (const node of nodes) {
+        if (node.visible === false) {
+          hiddenIds.push(node.id);
+        }
+        if (node.children) {
+          traverse(node.children);
+        }
+      }
+    };
+
+    traverse(children);
+    return hiddenIds;
+  }
+
+  /**
+   * INSTANCE의 children 중에서 hiddenNodeIds에 해당하는 노드가
+   * visible override (visible이 false가 아닌 값)를 가지고 있는지 확인
+   */
+  private _hasVisibleOverrideForHiddenNodes(
+    instanceNode: any,
+    hiddenNodeIds: string[]
+  ): boolean {
+    if (!instanceNode?.children) return false;
+
+    const checkChildren = (children: any[]): boolean => {
+      for (const child of children) {
+        // INSTANCE child ID에서 원본 ID 추출 (예: I14:1633;14:1647 → 14:1647)
+        const originalId = this._getOriginalIdFromInstanceId(child.id);
+
+        if (hiddenNodeIds.includes(originalId)) {
+          // visible이 undefined이거나 true면 visible override가 있는 것
+          if (child.visible !== false) {
+            return true;
+          }
+        }
+
+        if (child.children && checkChildren(child.children)) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    return checkChildren(instanceNode.children);
+  }
+
+  /**
+   * INSTANCE child ID에서 원본 ID 추출
+   * 예: I14:1633;14:1647 → 14:1647
+   */
+  private _getOriginalIdFromInstanceId(instanceId: string): string {
+    if (!instanceId?.startsWith("I")) return instanceId;
+    const parts = instanceId.split(";");
+    return parts[parts.length - 1];
   }
 }
 

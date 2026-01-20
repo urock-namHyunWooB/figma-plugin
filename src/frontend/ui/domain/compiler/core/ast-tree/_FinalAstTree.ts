@@ -50,6 +50,7 @@ class _FinalAstTree {
 
     let finalAstTree = this.createFinalAstTree(tempAstTree);
     finalAstTree = this.updateCleanupNodes(finalAstTree);
+    finalAstTree = this._processHiddenNodes(finalAstTree);
     finalAstTree = this.updateMetaData(finalAstTree);
     finalAstTree = this.updateProps(finalAstTree);
     finalAstTree = this.updateExternalComponents(finalAstTree);
@@ -382,22 +383,11 @@ class _FinalAstTree {
         }
       }
 
-      // visible이 static false인 노드 제거
-      if (node.visible.type === "static" && node.visible.value === false) {
-        nodesToRemove.push(node);
-        return;
-      }
-
-      // Figma spec에서 visible: false이고 prop binding이 없는 노드 제거
-      // 단, AST에서 condition이 설정된 경우는 유지 (다른 variant에서 visible일 수 있음)
-      const spec = this.specDataManager.getSpecById(node.id);
-      if (
-        spec.visible === false &&
-        !spec.componentPropertyReferences &&
-        node.visible.type !== "condition"
-      ) {
-        nodesToRemove.push(node);
-      }
+      // visible: false 노드 처리:
+      // - 기존: 제거
+      // - 변경: 제거하지 않고 show{NodeName} props로 조건부 렌더링
+      // - 이유: INSTANCE에서 visible override 가능하므로 노드를 유지해야 함
+      // → _processHiddenNodes 메서드에서 별도 처리
     });
 
     // 2. 수집된 노드들을 트리에서 제거
@@ -410,6 +400,79 @@ class _FinalAstTree {
     });
 
     return astTree;
+  }
+
+  /**
+   * visible: false인 노드를 조건부 렌더링으로 변환
+   * - visible: false 노드를 제거하지 않고 유지
+   * - show{NodeName} props 생성 (기본값 false)
+   * - visible을 조건부로 변경 (showXxx === true일 때 렌더링)
+   *
+   * 이유: INSTANCE에서 visible을 override할 수 있으므로 노드를 유지해야 함
+   */
+  private _processHiddenNodes(astTree: FinalAstTree): FinalAstTree {
+    const hiddenNodes: FinalAstTree[] = [];
+
+    // 1. visible: false인 노드 수집
+    traverseBFS(astTree, (node) => {
+      // static false인 노드
+      if (node.visible?.type === "static" && node.visible.value === false) {
+        hiddenNodes.push(node);
+        return;
+      }
+
+      // spec에서 visible: false이고 prop binding이 없는 노드
+      const spec = this.specDataManager.getSpecById(node.id);
+      if (
+        spec?.visible === false &&
+        !spec.componentPropertyReferences?.visible &&
+        node.visible?.type !== "condition"
+      ) {
+        hiddenNodes.push(node);
+      }
+    });
+
+    // 2. 각 hidden 노드에 대해 show{NodeName} props 생성 및 visible 조건 설정
+    const usedPropNames = new Set<string>();
+
+    for (const node of hiddenNodes) {
+      // prop 이름 생성: show{NodeName}
+      const basePropName = `show${this._capitalizeFirstLetter(toCamelCase(node.name) || "Hidden")}`;
+      let propName = basePropName;
+
+      // 중복 이름 처리
+      let counter = 2;
+      while (usedPropNames.has(propName)) {
+        propName = `${basePropName}${counter}`;
+        counter++;
+      }
+      usedPropNames.add(propName);
+
+      // props에 추가 (기본값 false)
+      astTree.props[propName] = {
+        type: "BOOLEAN",
+        defaultValue: false,
+      };
+
+      // visible을 조건부로 변경
+      node.visible = {
+        type: "condition",
+        condition: helper.createBinaryCondition(propName, true),
+      };
+
+      // hiddenNodeProp 정보 저장 (INSTANCE에서 override 시 사용)
+      node.hiddenNodeProp = propName;
+    }
+
+    return astTree;
+  }
+
+  /**
+   * 첫 글자를 대문자로 변환
+   */
+  private _capitalizeFirstLetter(str: string): string {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
   /**
@@ -2521,9 +2584,17 @@ class _FinalAstTree {
           const instanceChildren = (spec as any)?.children || [];
           const variantData = dependencies[componentId];
           const variantStyleChildren = variantData?.styleTree?.children || [];
+          const variantInfoChildren = variantData?.info?.document?.children || [];
           const overrideProps = this._extractOverridePropsFromStyle(
             instanceChildren,
             variantStyleChildren
+          );
+
+          // visible override된 props 추출 (원본에서 visible=false, INSTANCE에서 visible=true)
+          // → dependency의 show{NodeName} props에 true 전달
+          const visibleOverrideProps = this._extractVisibleOverrideProps(
+            spec,
+            variantInfoChildren
           );
 
           // externalComponent 필드 설정
@@ -2534,6 +2605,10 @@ class _FinalAstTree {
             props,
             overrideProps:
               Object.keys(overrideProps).length > 0 ? overrideProps : undefined,
+            visibleOverrideProps:
+              Object.keys(visibleOverrideProps).length > 0
+                ? visibleOverrideProps
+                : undefined,
           };
 
           // children 비우기 (외부 컴포넌트로 렌더링되므로)
@@ -2975,6 +3050,78 @@ class _FinalAstTree {
       return `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${a})`;
     }
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+  }
+
+  /**
+   * INSTANCE spec에서 visible override된 props 추출
+   * 원본에서 visible: false인 노드가 INSTANCE에서 visible: true로 override된 경우
+   * dependency의 show{NodeName} props에 true 전달
+   *
+   * @param instanceSpec INSTANCE의 Figma spec (overrides 포함)
+   * @param variantInfoChildren dependency의 info.document.children
+   * @returns { showInteraction: true } 형태의 객체
+   */
+  private _extractVisibleOverrideProps(
+    instanceSpec: any,
+    variantInfoChildren: any[]
+  ): Record<string, boolean> {
+    const visibleOverrideProps: Record<string, boolean> = {};
+
+    // overrides 배열에서 visible override 찾기
+    const overrides = instanceSpec?.overrides || [];
+
+    for (const override of overrides) {
+      // overriddenFields에 'visible'이 있는지 확인
+      if (!override.overriddenFields?.includes("visible")) {
+        continue;
+      }
+
+      // override된 nodeId에서 원본 nodeId 추출
+      const overrideNodeId = override.id;
+      const originalNodeId = this._getOriginalIdFromInstanceId(overrideNodeId);
+
+      // variantInfoChildren에서 해당 노드 찾기
+      const originalNode = this._findNodeById(
+        variantInfoChildren,
+        originalNodeId
+      );
+
+      // 원본 노드가 visible: false인지 확인
+      if (originalNode && originalNode.visible === false) {
+        // INSTANCE children에서 해당 노드가 visible: true인지 확인
+        const instanceChildren = instanceSpec?.children || [];
+        const instanceNode = this._findNodeById(instanceChildren, overrideNodeId);
+
+        // INSTANCE에서 visible이 명시적으로 false가 아니면 true로 간주
+        // (Figma에서 visible override는 기본적으로 보이게 하는 것)
+        if (!instanceNode || instanceNode.visible !== false) {
+          // prop 이름 생성: show{NodeName}
+          const propName = `show${this._capitalizeFirstLetter(toCamelCase(originalNode.name) || "Hidden")}`;
+          visibleOverrideProps[propName] = true;
+        }
+      }
+    }
+
+    return visibleOverrideProps;
+  }
+
+  /**
+   * children 배열에서 특정 ID의 노드를 재귀적으로 찾기
+   */
+  private _findNodeById(children: any[], nodeId: string): any | null {
+    if (!children || children.length === 0) return null;
+
+    for (const child of children) {
+      if (child.id === nodeId) {
+        return child;
+      }
+      if (child.children) {
+        const found = this._findNodeById(child.children, nodeId);
+        if (found) return found;
+      }
+    }
+
+    return null;
   }
 
   /**

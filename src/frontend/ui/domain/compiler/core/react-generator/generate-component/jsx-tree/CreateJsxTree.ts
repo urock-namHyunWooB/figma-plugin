@@ -328,6 +328,23 @@ class CreateJsxTree {
       }
     }
 
+    // visibleOverrideProps 전달 (INSTANCE에서 visible override된 노드의 show props)
+    if (extComp.visibleOverrideProps) {
+      for (const [propName, propValue] of Object.entries(
+        extComp.visibleOverrideProps
+      )) {
+        // boolean 값으로 전달: showInteraction={true}
+        const jsxAttr = this.factory.createJsxAttribute(
+          this.factory.createIdentifier(propName),
+          this.factory.createJsxExpression(
+            undefined,
+            propValue ? this.factory.createTrue() : this.factory.createFalse()
+          )
+        );
+        attributes.push(jsxAttr);
+      }
+    }
+
     const jsxAttributes = this.factory.createJsxAttributes(attributes);
 
     // Self-closing element: <SelectButton ... />
@@ -622,17 +639,27 @@ class CreateJsxTree {
     // 해당 노드에 적용 가능한 오버라이드 prop 찾기
     const styleProperties: ts.PropertyAssignment[] = [];
 
-    // fills 오버라이드 (background → CSS 변수)
+    // fills 오버라이드
     const bgPropName = `${nodeName}Bg`;
     if (this.astTree.overrideableProps[bgPropName]) {
-      // CSS 변수명: --rectangle1-bg (camelCase → kebab-case)
-      const cssVarName = `--${nodeName.replace(/([A-Z])/g, "-$1").toLowerCase()}-bg`;
-      styleProperties.push(
-        this.factory.createPropertyAssignment(
-          this.factory.createStringLiteral(cssVarName),
-          this.factory.createIdentifier(bgPropName)
-        )
-      );
+      // TEXT 노드는 fills가 텍스트 색상이므로 color로 직접 적용
+      if (node.type === "TEXT") {
+        styleProperties.push(
+          this.factory.createPropertyAssignment(
+            this.factory.createIdentifier("color"),
+            this.factory.createIdentifier(bgPropName)
+          )
+        );
+      } else {
+        // 그 외 노드는 CSS 변수로 적용 (background)
+        const cssVarName = `--${nodeName.replace(/([A-Z])/g, "-$1").toLowerCase()}-bg`;
+        styleProperties.push(
+          this.factory.createPropertyAssignment(
+            this.factory.createStringLiteral(cssVarName),
+            this.factory.createIdentifier(bgPropName)
+          )
+        );
+      }
     }
 
     if (styleProperties.length === 0) {

@@ -17,8 +17,11 @@ describe("Popup 시각적 스타일 제거 검증", () => {
 
     const largeCss = largeCssMatch![1];
 
-    // background가 제거되었는지 확인
-    expect(largeCss).not.toContain("background");
+    // 원래 background 색상이 제거되었는지 확인 (transparent는 허용)
+    // wrapper가 시각적 스타일을 담당하므로, dependency에서는 원래 background가 제거됨
+    // 단, 브라우저 기본 배경을 무력화하기 위해 background: transparent는 추가될 수 있음
+    expect(largeCss).not.toMatch(/background:\s*#[0-9A-Fa-f]+/);
+    expect(largeCss).not.toMatch(/background:\s*var\(/);
 
     // border-radius가 제거되었는지 확인
     expect(largeCss).not.toContain("border-radius");

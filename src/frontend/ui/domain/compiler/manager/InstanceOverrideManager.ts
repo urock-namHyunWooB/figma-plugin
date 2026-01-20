@@ -129,6 +129,40 @@ class InstanceOverrideManager {
   }
 
   /**
+   * INSTANCE의 styleTree만 병합 (children은 원본 유지)
+   * visible: false 노드가 있을 때 사용 - 크기 override는 적용하되 visible 상태는 원본 유지
+   */
+  public enrichVariantWithStyleTreeOnly(
+    variant: FigmaNodeData,
+    instanceNode: any
+  ): FigmaNodeData {
+    if (!instanceNode) {
+      return variant;
+    }
+
+    // styleTree에서 INSTANCE의 children 부분 찾기
+    const instanceStyleTree = this.findStyleTreeForInstance(instanceNode.id);
+
+    // styleTree만 병합 (children은 원본 유지)
+    let newStyleTree = variant.styleTree;
+    if (instanceStyleTree?.children) {
+      const mergedStyleChildren = this.mergeStyleTreeChildren(
+        variant.styleTree?.children || [],
+        instanceStyleTree.children || []
+      );
+      newStyleTree = {
+        ...variant.styleTree,
+        children: mergedStyleChildren,
+      };
+    }
+
+    return {
+      ...variant,
+      styleTree: newStyleTree,
+    };
+  }
+
+  /**
    * INSTANCE children을 그대로 사용 (오버라이드가 없는 경우)
    * I...로 시작하는 노드 ID가 유지되어 updateCleanupNodes에서 삭제됨
    */
@@ -288,8 +322,8 @@ class InstanceOverrideManager {
 
             return mergedChild;
           })
-          // visible: false인 노드 제외 (INSTANCE 컨텍스트에서 숨겨진 노드)
-          .filter((child) => child.visible !== false)
+          // visible: false 노드도 유지 (INSTANCE에서 override 가능)
+          // FinalAstTree._processHiddenNodes에서 조건부 렌더링으로 처리
       );
     };
 
