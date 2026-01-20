@@ -2,7 +2,7 @@
 name: compiler-debugger
 description: 컴파일러 오류를 분석하고 디버깅합니다. 컴파일 실패, AST 트리 문제, 6단계 파이프라인 추적, 코드 생성 오류를 해결할 때 사용합니다.
 tools: Read, Bash, Glob, Grep, Edit
-model: sonnet
+model: opus
 ---
 
 # Compiler Debugger Agent
@@ -62,25 +62,71 @@ src/frontend/ui/domain/compiler/
 └── FigmaCompiler.ts                 # 진입점
 ```
 
-## 디버깅 프로세스
+## 디버깅 프로세스 (2단계)
 
-### 1. 에러 메시지 분석
+> **중요**: 대부분의 이슈는 어느 단계 문제인지 명확하지 않음. 반드시 **Step 1 진단**을 먼저 수행할 것.
+
+### Step 1: 진단 (어느 단계 문제인지 파악)
+
+**1-1. 증상 수집**
 ```bash
-# 테스트 실행으로 에러 확인
-npm run test -- --reporter=verbose [테스트파일]
+# 컴파일 실행하여 결과 확인
+npm run test -- compileLarge --reporter=verbose
 ```
 
-### 2. 파이프라인 단계 식별
+**1-2. 진단 체크리스트** (순서대로 확인)
 
-| 에러 패턴 | 의심 단계 | 확인 파일 |
-|----------|----------|----------|
-| `Cannot read property of undefined` (node 관련) | SuperTree | CreateSuperTree.ts |
+```
+□ 컴파일 자체가 실패하는가? (에러 발생)
+  → 에러 메시지로 단계 추정 (아래 표 참고)
+
+□ 컴파일은 되지만 결과가 이상한가?
+  → 아래 증상별 진단 수행
+```
+
+**1-3. 증상별 진단표**
+
+| 증상 | 의심 단계 | 확인 방법 |
+|-----|----------|----------|
+| 특정 variant에서만 스타일 다름 | Phase 2: SuperTree | IoU 값 확인, 노드 매칭 여부 |
+| prop이 컴포넌트에 전달 안됨 | Phase 3-4: AstTree | componentPropertyReferences 확인 |
+| 조건부 스타일(hover/disabled) 미적용 | Phase 4: FinalAstTree | conditionalStyles 객체 확인 |
+| SVG 색상/모양 이상 | Phase 5: CodeGen | SvgToJsx 변환 결과 확인 |
+| 중첩 컴포넌트 렌더링 안됨 | Phase 6: Dependency | dependency 체인 확인 |
+| 위치/크기가 잘못됨 | Phase 3: TempAstTree | absoluteBoundingBox vs 스타일 비교 |
+
+**1-4. 에러 메시지 → 단계 매핑**
+
+| 에러 패턴 | 단계 | 파일 |
+|----------|------|------|
+| `Cannot read property of undefined` (node) | SuperTree | CreateSuperTree.ts |
 | `props not found`, `binding error` | TempAstTree | _TempAstTree.ts |
 | `indexedConditional`, `slot` 관련 | FinalAstTree | _FinalAstTree.ts |
-| `ts.factory` 에러, 문법 오류 | ReactGenerator | GenerateStyles.ts, CreateJsxTree.ts |
+| `ts.factory` 에러, 문법 오류 | CodeGen | GenerateStyles.ts, CreateJsxTree.ts |
 | `circular dependency`, `missing component` | Dependency | DependencyManager.ts |
 
-### 3. IoU 매칭 문제 디버깅
+**1-5. 진단 결과 출력**
+```
+## 진단 결과
+- 증상: [증상 설명]
+- 의심 단계: Phase [N] - [단계명]
+- 확인할 파일: [파일 목록]
+- 근거: [왜 이 단계로 판단했는지]
+```
+
+---
+
+### Step 2: 해결 (해당 단계 집중 디버깅)
+
+진단된 단계에 따라 아래 섹션 참고하여 디버깅 수행.
+
+---
+
+## 단계별 디버깅 가이드
+
+### Phase 2: SuperTree - IoU 매칭 문제
+
+**확인 파일**: `CreateSuperTree.ts`, `NodeMatcher.ts`
 
 노드 매칭 실패 시 (같은 노드가 다르게 인식됨):
 ```typescript
@@ -95,11 +141,51 @@ console.log({
 });
 ```
 
-### 4. INSTANCE Override ID 분석
+**체크포인트**:
+- [ ] 두 variant의 노드 위치가 비슷한가? (IoU ≥ 0.8)
+- [ ] squash 로직에서 제외되는 조건이 있는가?
+- [ ] COMPONENT_SET 내 variant 오프셋이 고려되었는가?
 
+---
+
+### Phase 3-4: AstTree - Props 바인딩 문제
+
+**확인 파일**: `_TempAstTree.ts`, `_FinalAstTree.ts`
+
+**체크포인트**:
+- [ ] `componentPropertyReferences`에 prop이 있는가?
+- [ ] `_TempAstTree` → `_FinalAstTree` 전달 과정 확인
+- [ ] `conditionalStyles` 객체가 올바르게 생성되는가?
+- [ ] `indexedConditional` 패턴이 필요한 경우인가? (Boolean + Index prop 조합)
+
+---
+
+### Phase 5: CodeGen - 코드 생성 문제
+
+**확인 파일**: `GenerateStyles.ts`, `CreateJsxTree.ts`, `SvgToJsx.ts`
+
+**체크포인트**:
+- [ ] `ts.factory` 호출이 올바른가?
+- [ ] 스타일 레코드가 올바르게 생성되는가?
+- [ ] JSX 속성이 올바르게 전달되는가?
+- [ ] SVG fill/stroke 변환이 올바른가?
+
+---
+
+### Phase 6: Dependency - 중첩 컴포넌트 문제
+
+**확인 파일**: `DependencyManager.ts`, `InstanceOverrideManager.ts`
+
+**INSTANCE Override ID 분석**:
 복합 ID 형식: `I704:56;704:29;692:1613`
 - 마지막 세그먼트 `692:1613` = 원본 컴포넌트 노드 ID
-- `InstanceOverrideManager.ts`에서 처리
+
+**체크포인트**:
+- [ ] dependency 체인이 올바르게 탐색되는가?
+- [ ] vectorSvgs가 dependency에 전달되는가?
+- [ ] 중첩 INSTANCE의 override가 병합되는가?
+
+---
 
 ## 자주 발생하는 문제 패턴
 
