@@ -20,7 +20,7 @@ model: sonnet
 ```
 이슈 해결 완료
   ↓
-1. fixture 파일 이동 (failing/ → any/)
+1. fixture .json 파일 이동 (failing/ → any/), .png 삭제
   ↓
 2. COMPILER_ENGINE.md에 이슈 문서화
   ↓
@@ -48,15 +48,18 @@ test/fixtures/
 
 ### 이슈 해결 후 파일 이동
 ```bash
-# failing/ → any/로 이동
+# .json 파일만 failing/ → any/로 이동
 mv test/fixtures/failing/[파일명].json test/fixtures/any/
-mv test/fixtures/failing/[파일명].png test/fixtures/any/  # 이미지가 있는 경우
+
+# .png 등 이미지 파일은 이동하지 않고 삭제
+rm test/fixtures/failing/[파일명].png
 ```
 
 ### 중요
+- **`.json` 파일만 `any/`로 이동** (테스트에 필요한 데이터)
+- `.png` 등 이미지 파일은 디버깅용이므로 삭제
 - **테스트 코드는 항상 `any/` 경로 기반으로 작성**
 - failing/에 있는 파일은 아직 이슈가 해결되지 않은 것
-- 이슈 해결 후 반드시 any/로 이동
 
 ## 1. 이슈 문서화
 
@@ -222,7 +225,7 @@ npm run test
 
 ### 체크리스트
 
-- [ ] fixture 파일 이동 (`failing/` → `any/`)
+- [ ] fixture `.json` 파일 이동 (`failing/` → `any/`), `.png` 삭제
 - [ ] `COMPILER_ENGINE.md`에 이슈 문서화 완료
 - [ ] 테스트 파일 생성 (`test/compiler/[이슈명].test.ts`)
 - [ ] 테스트 경로가 `any/` 기반인지 확인
