@@ -12,6 +12,7 @@ export default defineConfig({
   // 빌드 최적화
   esbuild: {
     target: "esnext",
+    jsxImportSource: "@emotion/react",
   },
   test: {
     globals: true,
