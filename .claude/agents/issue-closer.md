@@ -20,14 +20,43 @@ model: sonnet
 ```
 이슈 해결 완료
   ↓
-1. COMPILER_ENGINE.md에 이슈 문서화
+1. fixture 파일 이동 (failing/ → any/)
   ↓
-2. 회귀 테스트 코드 작성
+2. COMPILER_ENGINE.md에 이슈 문서화
   ↓
-3. npm run test 실행하여 검증
+3. 회귀 테스트 코드 작성 (any/ 경로 기반)
+  ↓
+4. npm run test 실행하여 검증
   ↓
 완료
 ```
+
+## 0. Fixture 파일 관리
+
+### 디렉토리 구조
+```
+test/fixtures/
+├── failing/     # 아직 해결되지 않은 이슈의 fixture
+│   ├── Large.json
+│   └── Large.png
+│
+└── any/         # 해결된 이슈의 fixture (테스트에 사용)
+    ├── Popup.json
+    ├── Gnb.json
+    └── ...
+```
+
+### 이슈 해결 후 파일 이동
+```bash
+# failing/ → any/로 이동
+mv test/fixtures/failing/[파일명].json test/fixtures/any/
+mv test/fixtures/failing/[파일명].png test/fixtures/any/  # 이미지가 있는 경우
+```
+
+### 중요
+- **테스트 코드는 항상 `any/` 경로 기반으로 작성**
+- failing/에 있는 파일은 아직 이슈가 해결되지 않은 것
+- 이슈 해결 후 반드시 any/로 이동
 
 ## 1. 이슈 문서화
 
@@ -193,8 +222,10 @@ npm run test
 
 ### 체크리스트
 
+- [ ] fixture 파일 이동 (`failing/` → `any/`)
 - [ ] `COMPILER_ENGINE.md`에 이슈 문서화 완료
 - [ ] 테스트 파일 생성 (`test/compiler/[이슈명].test.ts`)
+- [ ] 테스트 경로가 `any/` 기반인지 확인
 - [ ] 테스트 케이스 작성 (최소 2-3개)
 - [ ] `npm run test` 통과
 - [ ] 기존 테스트 깨지지 않음
