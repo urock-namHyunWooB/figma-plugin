@@ -103,6 +103,18 @@ export type StyleObject = {
     condition: ConditionNode;
     style: Record<string, any>;
   }>;
+
+  /**
+   * Boolean prop + Index prop 조합 조건부 스타일
+   * 예: customDisabled && color 조합으로 배경색 결정
+   * 생성 코드: ${$customDisabled ? DisabledColorStyles[$color] : {}}
+   */
+  indexedConditional?: {
+    booleanProp: string; // "customDisabled"
+    indexProp: string; // "color"
+    styles: Record<string, Record<string, any>>; // { Primary: { background: "#CCE2FF" }, ... }
+    recordName?: string; // 생성될 레코드 변수명
+  };
 };
 
 export interface TempAstTree extends SuperTreeNode {

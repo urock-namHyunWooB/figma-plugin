@@ -103,10 +103,11 @@ function parseVariantProps(variantName: string): Record<string, any> {
       // HTML 충돌 속성 rename (컴파일러와 동일한 로직)
       camelKey = renameConflictingPropName(camelKey);
 
-      // "true"/"false"는 boolean으로 변환
-      if (value === "true") {
+      // "true"/"false"는 boolean으로 변환 (대소문자 무시)
+      const lowerValue = value.toLowerCase();
+      if (lowerValue === "true") {
         props[camelKey] = true;
-      } else if (value === "false") {
+      } else if (lowerValue === "false") {
         props[camelKey] = false;
       } else {
         props[camelKey] = value;

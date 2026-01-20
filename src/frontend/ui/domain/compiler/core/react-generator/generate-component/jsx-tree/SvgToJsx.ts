@@ -10,6 +10,8 @@ import ts from "typescript";
  */
 class SvgToJsx {
   private factory = ts.factory;
+  // SVG가 다중 색상인지 여부 (convert 호출 시 설정됨)
+  private _isMultiColorSvg = false;
 
   /**
    * SVG 속성 이름을 JSX camelCase로 변환하는 매핑
@@ -63,6 +65,9 @@ class SvgToJsx {
     svgString: string
   ): ts.JsxElement | ts.JsxSelfClosingElement | null {
     try {
+      // 다중 색상 여부 판단
+      this._isMultiColorSvg = this._detectMultiColorSvg(svgString);
+
       // 간단한 정규식 기반 파싱 (복잡한 SVG는 DOMParser 필요)
       const parsed = this._parseSvgString(svgString);
       if (!parsed) return null;
@@ -72,6 +77,28 @@ class SvgToJsx {
       console.error("SVG to JSX conversion failed:", error);
       return null;
     }
+  }
+
+  /**
+   * SVG가 다중 색상인지 감지
+   * fill 속성에서 유니크한 색상이 2개 이상이면 다중 색상
+   */
+  private _detectMultiColorSvg(svgString: string): boolean {
+    // fill="xxx" 패턴에서 색상 추출
+    const fillMatches = svgString.match(/fill="([^"]+)"/g);
+    if (!fillMatches) return false;
+
+    const uniqueColors = new Set<string>();
+    for (const match of fillMatches) {
+      const color = match.match(/fill="([^"]+)"/)?.[1];
+      if (color && this._isColorValue(color)) {
+        // 색상값 정규화 (소문자)
+        uniqueColors.add(color.toLowerCase());
+      }
+    }
+
+    // 유니크한 색상이 2개 이상이면 다중 색상
+    return uniqueColors.size >= 2;
   }
 
   /**
@@ -294,8 +321,16 @@ class SvgToJsx {
       // 제거 대상 속성 스킵
       if (jsxAttrName === "__REMOVE__") continue;
 
-      // fill 속성의 색상 값을 그대로 유지 (multi-color SVG 지원)
-      const finalValue = attrValue;
+      // fill 속성 처리:
+      // - 다중 색상 SVG: 원래 색상 유지 (각 path별 고유 색상)
+      // - 단일 색상 SVG: currentColor로 변환 (CSS로 색상 제어 가능)
+      let finalValue = attrValue;
+      if (attrName === "fill" && this._isColorValue(attrValue)) {
+        if (!this._isMultiColorSvg) {
+          finalValue = "currentColor";
+        }
+        // 다중 색상이면 원래 값 유지
+      }
 
       // 값이 순수 숫자인 경우에만 JSX Expression으로 (공백 포함 시 문자열 유지)
       const numValue = parseFloat(finalValue);
@@ -327,8 +362,30 @@ class SvgToJsx {
   }
 
   /**
+   * CSS 명명된 색상 목록 (일부)
+   */
+  private readonly NAMED_COLORS = new Set([
+    "white",
+    "black",
+    "red",
+    "green",
+    "blue",
+    "yellow",
+    "cyan",
+    "magenta",
+    "gray",
+    "grey",
+    "orange",
+    "pink",
+    "purple",
+    "brown",
+    "transparent",
+    "currentcolor",
+  ]);
+
+  /**
    * 값이 색상 값인지 확인
-   * #RRGGBB, #RGB, rgb(), rgba() 등
+   * #RRGGBB, #RGB, rgb(), rgba(), 명명된 색상 등
    */
   private _isColorValue(value: string): boolean {
     if (!value) return false;
@@ -336,6 +393,8 @@ class SvgToJsx {
     if (/^#[0-9A-Fa-f]{3,8}$/.test(value)) return true;
     // rgb, rgba, hsl, hsla 함수
     if (/^(rgb|rgba|hsl|hsla)\(/.test(value)) return true;
+    // 명명된 색상 (CSS color names)
+    if (this.NAMED_COLORS.has(value.toLowerCase())) return true;
     // none은 색상 아님
     if (value === "none") return false;
     return false;

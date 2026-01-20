@@ -187,15 +187,14 @@ describe("SvgToJsx", () => {
     });
   });
 
-  describe("fill 색상 보존", () => {
-    test("hex 색상 fill을 그대로 유지한다", () => {
+  describe("fill 색상 처리", () => {
+    test("단일 색상 SVG는 currentColor로 변환한다", () => {
       const svg = '<svg><path d="M0 0" fill="#0050FF"/></svg>';
       const result = svgToJsx.convert(svg);
       const code = printJsx(result);
 
-      // fill 색상이 currentColor로 변환되지 않고 원래 값 유지
-      expect(code).toContain('fill="#0050FF"');
-      expect(code).not.toContain("currentColor");
+      // 단일 색상 SVG는 currentColor로 변환 (CSS로 색상 제어 가능)
+      expect(code).toContain('fill="currentColor"');
     });
 
     test("다중 색상 SVG에서 각 path의 fill 색상을 유지한다", () => {
@@ -207,18 +206,19 @@ describe("SvgToJsx", () => {
       const result = svgToJsx.convert(svg);
       const code = printJsx(result);
 
-      // 각 path의 고유 색상이 유지되어야 함
+      // 다중 색상 SVG는 원래 색상 유지 (각 path별 고유 색상)
       expect(code).toContain('fill="#0050FF"');
       expect(code).toContain('fill="white"');
       expect(code).toContain('fill="black"');
     });
 
-    test("rgb/rgba fill 색상을 그대로 유지한다", () => {
+    test("단일 rgb 색상 SVG는 currentColor로 변환한다", () => {
       const svg = '<svg><rect fill="rgb(0, 80, 255)"/></svg>';
       const result = svgToJsx.convert(svg);
       const code = printJsx(result);
 
-      expect(code).toContain('fill="rgb(0, 80, 255)"');
+      // 단일 색상이므로 currentColor로 변환
+      expect(code).toContain('fill="currentColor"');
     });
 
     test("fill=none은 그대로 유지한다", () => {

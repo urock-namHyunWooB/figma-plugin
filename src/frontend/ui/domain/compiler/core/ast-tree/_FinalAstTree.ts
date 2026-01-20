@@ -656,6 +656,7 @@ class _FinalAstTree {
     astTree = this._normalizePropsType(astTree);
     astTree = this._refinePropsForNativeAttr(astTree);
     astTree = this._refineStateProp(astTree);
+    astTree = this._refineDisabledProp(astTree);
     astTree = this._refineComponentLikeProp(astTree);
     astTree = this._refinePropsForButton(astTree);
 
@@ -1494,6 +1495,510 @@ class _FinalAstTree {
     });
 
     return astTree;
+  }
+
+  /**
+   * Disabled prop을 :disabled pseudo-class로 변환
+   *
+   * Disabled/disabled prop이 VARIANT 타입으로 True/False 값을 가질 때:
+   * - props.Disabled === "True" 조건의 스타일 → :disabled pseudo-class
+   * - props.Disabled === "False" 조건의 스타일 → base style
+   * - Disabled prop 자체는 boolean으로 변환되어 customDisabled?: boolean
+   *
+   * @param astTree
+   * @private
+   */
+  private _refineDisabledProp(astTree: FinalAstTree) {
+    // Disabled prop 이름 후보들 (camelCase 변환 후의 이름 포함)
+    const DISABLED_PROP_NAMES = [
+      "disabled",
+      "Disabled",
+      "customDisabled",
+      "isDisabled",
+    ];
+
+    // 1. 루트 props에서 Disabled prop 찾기
+    let disabledPropName: string | null = null;
+    for (const name of DISABLED_PROP_NAMES) {
+      if (name in astTree.props) {
+        disabledPropName = name;
+        break;
+      }
+    }
+
+    // Disabled prop이 없으면 리턴
+    if (!disabledPropName) {
+      return astTree;
+    }
+
+    // Disabled prop 값이 Boolean 타입인지 확인
+    // _normalizePropsType 이후에는 type이 "BOOLEAN"으로 변환됨
+    const disabledProp = astTree.props[disabledPropName] as any;
+    const isBooleanType =
+      typeof disabledProp === "object" && disabledProp?.type === "BOOLEAN";
+    const isVariantType =
+      typeof disabledProp === "object" &&
+      disabledProp?.variantOptions &&
+      (disabledProp.variantOptions.includes("True") ||
+        disabledProp.variantOptions.includes("False"));
+
+    // Boolean 또는 Variant 타입이 아니면 리턴
+    if (!isBooleanType && !isVariantType) {
+      return astTree;
+    }
+
+    // Disabled 조건 패턴 (props.disabled === "True" 또는 props.customDisabled === "True")
+    const disabledConditionPattern = new RegExp(
+      `props\\.(?:${DISABLED_PROP_NAMES.join("|")})\\s*===\\s*['"]True['"]`
+    );
+    const disabledFalseConditionPattern = new RegExp(
+      `props\\.(?:${DISABLED_PROP_NAMES.join("|")})\\s*===\\s*['"]False['"]`
+    );
+
+    // 2. 모든 노드 순회하며 dynamic style 처리
+    traverseBFS(astTree, (node) => {
+      if (!node.style.dynamic || node.style.dynamic.length === 0) return;
+
+      const newDynamic: typeof node.style.dynamic = [];
+      const disabledStyles: Record<string, any> = {};
+
+      for (const dynamicStyle of node.style.dynamic) {
+        const conditionCode = generate(dynamicStyle.condition);
+
+        // Disabled === "True" 조건인지 확인
+        const isDisabledTrue = disabledConditionPattern.test(conditionCode);
+        const isDisabledFalse = disabledFalseConditionPattern.test(conditionCode);
+
+        // Disabled === "True" 단독 조건
+        if (isDisabledTrue && !conditionCode.includes("&&")) {
+          // :disabled pseudo-class로 이동
+          Object.assign(disabledStyles, dynamicStyle.style);
+          continue;
+        }
+
+        // Disabled === "False" 단독 조건
+        if (isDisabledFalse && !conditionCode.includes("&&")) {
+          // base로 이동 (default 상태)
+          node.style.base = { ...node.style.base, ...dynamicStyle.style };
+          continue;
+        }
+
+        // 복합 조건에서 Disabled 포함
+        if (isDisabledTrue || isDisabledFalse) {
+          // Disabled 조건 제거한 새 조건 생성
+          const newCondition = this._removeDisabledFromCondition(
+            dynamicStyle.condition,
+            DISABLED_PROP_NAMES
+          );
+
+          if (isDisabledTrue) {
+            // Disabled=True면 해당 스타일을 :disabled pseudo로 이동
+            Object.assign(disabledStyles, dynamicStyle.style);
+          } else if (newCondition) {
+            // Disabled=False면 조건만 제거하고 dynamic 유지
+            newDynamic.push({
+              condition: newCondition,
+              style: dynamicStyle.style,
+            });
+          } else {
+            // 조건이 모두 제거되면 base로 이동
+            node.style.base = { ...node.style.base, ...dynamicStyle.style };
+          }
+          continue;
+        }
+
+        // Disabled 조건이 아닌 경우 그대로 유지
+        newDynamic.push(dynamicStyle);
+      }
+
+      // 결과 적용
+      node.style.dynamic = newDynamic;
+      if (Object.keys(disabledStyles).length > 0) {
+        node.style.pseudo = {
+          ...node.style.pseudo,
+          ":disabled": {
+            ...(node.style.pseudo?.[":disabled"] || {}),
+            ...disabledStyles,
+          },
+        } as any;
+      }
+    });
+
+    // 3. dynamic style에서 Disabled 스타일을 찾지 못한 경우,
+    //    variant 데이터에서 직접 추출하여 TEXT 노드에 :disabled 스타일 적용
+    this._applyDisabledStylesFromVariants(astTree, disabledPropName);
+
+    // 4. Color prop이 있으면 버튼의 :disabled { color }를 제거 (텍스트 색상은 indexedConditional로 처리)
+    const hasColorProp = Object.keys(astTree.props).some(
+      (k) => k.toLowerCase() === "color"
+    );
+    if (hasColorProp && astTree.style.pseudo?.[":disabled"]?.color) {
+      delete astTree.style.pseudo[":disabled"].color;
+      if (Object.keys(astTree.style.pseudo[":disabled"]).length === 0) {
+        delete astTree.style.pseudo[":disabled"];
+      }
+    }
+
+    return astTree;
+  }
+
+  /**
+   * variant 데이터에서 Disabled=True 스타일을 추출하여 적용
+   * - 텍스트 색상: TEXT 노드에 동적 스타일로 적용
+   * - 배경색: Color prop별로 다르므로 동적 스타일로 적용
+   */
+  private _applyDisabledStylesFromVariants(
+    astTree: FinalAstTree,
+    disabledPropName: string
+  ) {
+    const document = this.specDataManager.getDocument();
+    if (!document?.children) return;
+
+    // variant를 파싱하여 Color별로 그룹화
+    // { Color값: { disabledTrue: variant, disabledFalse: variant } }
+    const variantsByColor = new Map<
+      string,
+      { disabledTrue?: any; disabledFalse?: any }
+    >();
+
+    for (const child of document.children) {
+      const variantName = child.name || "";
+
+      // Color 값 추출
+      const colorMatch = variantName.match(/Color\s*=\s*(\w+)/i);
+      const disabledMatch = variantName.match(/Disabled\s*=\s*(\w+)/i);
+
+      if (colorMatch && disabledMatch) {
+        const colorValue = colorMatch[1];
+        const disabledValue = disabledMatch[1].toLowerCase();
+
+        if (!variantsByColor.has(colorValue)) {
+          variantsByColor.set(colorValue, {});
+        }
+
+        const colorGroup = variantsByColor.get(colorValue)!;
+        if (disabledValue === "true") {
+          colorGroup.disabledTrue = child;
+        } else if (disabledValue === "false") {
+          colorGroup.disabledFalse = child;
+        }
+      }
+    }
+
+    // Color prop이 없는 경우 (단순 Disabled만 있는 경우)
+    if (variantsByColor.size === 0) {
+      // 기존 로직 사용
+      this._applySimpleDisabledStyles(astTree, disabledPropName);
+      return;
+    }
+
+    // 헬퍼 함수: RGB를 hex로 변환
+    const toHex = (v: number) =>
+      Math.round(v * 255)
+        .toString(16)
+        .padStart(2, "0");
+
+    const rgbToHex = (color: { r: number; g: number; b: number }) =>
+      `#${toHex(color.r)}${toHex(color.g)}${toHex(color.b)}`.toUpperCase();
+
+    // 헬퍼 함수: 노드에서 배경색 추출
+    const extractBackground = (node: any): string | null => {
+      if (node.fills && node.fills.length > 0) {
+        const fill = node.fills[0];
+        if (fill.type === "SOLID" && fill.color) {
+          return rgbToHex(fill.color);
+        }
+      }
+      return null;
+    };
+
+    // 헬퍼 함수: TEXT 노드에서 색상 추출
+    const extractTextColor = (node: any): string | null => {
+      if (node.type === "TEXT" && node.fills && node.fills.length > 0) {
+        const fill = node.fills[0];
+        if (fill.type === "SOLID" && fill.color) {
+          return rgbToHex(fill.color);
+        }
+      }
+      return null;
+    };
+
+    // Color별로 disabled 배경색 및 텍스트 색상 비교
+    const disabledBackgrounds: Record<string, string> = {};
+    const disabledTextColors: Record<string, string> = {};
+
+    const traverseForText = (node: any): string | null => {
+      const color = extractTextColor(node);
+      if (color) return color;
+      if (node.children) {
+        for (const child of node.children) {
+          const found = traverseForText(child);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    for (const [colorValue, variants] of variantsByColor) {
+      if (!variants.disabledTrue || !variants.disabledFalse) continue;
+
+      // 배경색 비교
+      const normalBg = extractBackground(variants.disabledFalse);
+      const disabledBg = extractBackground(variants.disabledTrue);
+
+      if (normalBg && disabledBg && normalBg !== disabledBg) {
+        disabledBackgrounds[colorValue] = disabledBg;
+      }
+
+      // 텍스트 색상 비교 (Color별로)
+      const normalTextColor = traverseForText(variants.disabledFalse);
+      const disabledText = traverseForText(variants.disabledTrue);
+
+      if (
+        normalTextColor &&
+        disabledText &&
+        normalTextColor !== disabledText
+      ) {
+        disabledTextColors[colorValue] = disabledText;
+      }
+    }
+
+    // Color prop 이름 찾기 (props에서)
+    let colorPropName: string | null = null;
+    for (const propName of Object.keys(astTree.props)) {
+      if (propName.toLowerCase() === "color") {
+        colorPropName = propName;
+        break;
+      }
+    }
+
+    // 1. 루트 노드(button)에 disabled 배경색 - indexedConditional 사용
+    if (
+      Object.keys(disabledBackgrounds).length > 0 &&
+      colorPropName &&
+      astTree.semanticRole === "button"
+    ) {
+      // Color별 disabled 배경색을 indexedConditional로 추가
+      // 생성 코드: ${$customDisabled ? DisabledColorStyles[$color] : {}}
+      const indexedStyles: Record<string, Record<string, any>> = {};
+      for (const [colorValue, bgColor] of Object.entries(disabledBackgrounds)) {
+        indexedStyles[colorValue] = { background: bgColor };
+      }
+
+      astTree.style.indexedConditional = {
+        booleanProp: disabledPropName,
+        indexProp: colorPropName,
+        styles: indexedStyles,
+      };
+    }
+
+    // 2. 루트 노드의 :disabled pseudo-class에서 color 제거 (텍스트 색상은 indexedConditional로 처리)
+    if (colorPropName && astTree.style.pseudo?.[":disabled"]?.color) {
+      delete astTree.style.pseudo[":disabled"].color;
+      // :disabled가 비어있으면 삭제
+      if (Object.keys(astTree.style.pseudo[":disabled"]).length === 0) {
+        delete astTree.style.pseudo[":disabled"];
+      }
+    }
+
+    // 3. TEXT 노드에 indexedConditional 적용 (Color별 disabled 텍스트 색상)
+    // Color prop이 있으면 기존 boolean dynamic style을 제거하고 indexedConditional로 대체
+    if (colorPropName) {
+      // Color prop의 모든 옵션 가져오기
+      const colorPropDef = astTree.props[colorPropName];
+      const allColorOptions: string[] =
+        (colorPropDef as any)?.variantOptions || [];
+
+      traverseBFS(astTree, (node) => {
+        if (node.type === "TEXT" && node.semanticRole === "text") {
+          // 기존 customDisabled boolean dynamic style 제거
+          if (node.style.dynamic) {
+            node.style.dynamic = node.style.dynamic.filter((ds) => {
+              const condStr = JSON.stringify(ds.condition);
+              return !condStr.includes(disabledPropName);
+            });
+          }
+
+          // 기존 :disabled pseudo-class 제거
+          if (node.style.pseudo?.[":disabled"]) {
+            delete node.style.pseudo[":disabled"];
+          }
+
+          // 모든 Color 옵션에 대해 스타일 설정 (변화 없으면 빈 객체)
+          const indexedStyles: Record<string, Record<string, any>> = {};
+          for (const colorValue of allColorOptions) {
+            if (disabledTextColors[colorValue]) {
+              indexedStyles[colorValue] = { color: disabledTextColors[colorValue] };
+            } else {
+              indexedStyles[colorValue] = {}; // 변화 없음 (예: Primary는 흰색 유지)
+            }
+          }
+
+          // indexedConditional 설정
+          if (Object.keys(indexedStyles).length > 0) {
+            node.style.indexedConditional = {
+              booleanProp: disabledPropName,
+              indexProp: colorPropName,
+              styles: indexedStyles,
+            };
+          }
+        }
+      });
+    }
+  }
+
+  /**
+   * Color prop이 없는 단순한 Disabled 처리
+   */
+  private _applySimpleDisabledStyles(
+    astTree: FinalAstTree,
+    disabledPropName: string
+  ) {
+    const document = this.specDataManager.getDocument();
+    if (!document?.children) return;
+
+    const disabledTrueVariants: any[] = [];
+    const disabledFalseVariants: any[] = [];
+
+    for (const child of document.children) {
+      const variantName = child.name || "";
+      const disabledMatch = variantName.match(/Disabled\s*=\s*(\w+)/i);
+      if (disabledMatch) {
+        const disabledValue = disabledMatch[1].toLowerCase();
+        if (disabledValue === "true") {
+          disabledTrueVariants.push(child);
+        } else if (disabledValue === "false") {
+          disabledFalseVariants.push(child);
+        }
+      }
+    }
+
+    if (disabledTrueVariants.length === 0 || disabledFalseVariants.length === 0)
+      return;
+
+    const toHex = (v: number) =>
+      Math.round(v * 255)
+        .toString(16)
+        .padStart(2, "0");
+
+    const extractTextColor = (node: any): string | null => {
+      if (node.type === "TEXT" && node.fills && node.fills.length > 0) {
+        const fill = node.fills[0];
+        if (fill.type === "SOLID" && fill.color) {
+          const { r, g, b } = fill.color;
+          return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+        }
+      }
+      return null;
+    };
+
+    const disabledTextColors = new Set<string>();
+    const normalTextColors = new Set<string>();
+
+    const traverse = (node: any, colorSet: Set<string>) => {
+      const color = extractTextColor(node);
+      if (color) colorSet.add(color);
+      if (node.children) {
+        for (const child of node.children) {
+          traverse(child, colorSet);
+        }
+      }
+    };
+
+    traverse(disabledTrueVariants[0], disabledTextColors);
+    traverse(disabledFalseVariants[0], normalTextColors);
+
+    const disabledOnlyColors = [...disabledTextColors].filter(
+      (c) => !normalTextColors.has(c)
+    );
+
+    if (disabledOnlyColors.length > 0) {
+      const disabledColor = disabledOnlyColors[0];
+
+      if (astTree.semanticRole === "button") {
+        astTree.style.pseudo = {
+          ...astTree.style.pseudo,
+          ":disabled": {
+            ...(astTree.style.pseudo?.[":disabled"] || {}),
+            color: disabledColor,
+          },
+        } as any;
+      }
+
+      traverseBFS(astTree, (node) => {
+        if (node.type === "TEXT" && node.semanticRole === "text") {
+          if (node.style.pseudo?.[":disabled"]?.color) return;
+
+          const disabledCondition = {
+            type: "BinaryExpression",
+            operator: "===",
+            left: {
+              type: "MemberExpression",
+              object: { type: "Identifier", name: "props" },
+              property: { type: "Identifier", name: disabledPropName },
+            },
+            right: { type: "Literal", value: "True" },
+          };
+
+          node.style.dynamic = node.style.dynamic || [];
+          node.style.dynamic.push({
+            condition: disabledCondition as any,
+            style: { color: disabledColor },
+          });
+        }
+      });
+    }
+  }
+
+  /**
+   * condition에서 Disabled prop 참조를 제거
+   */
+  private _removeDisabledFromCondition(
+    condition: any,
+    disabledPropNames: string[]
+  ): any | null {
+    if (!condition || !condition.type) return null;
+
+    if (condition.type === "BinaryExpression") {
+      const operator = condition.operator;
+
+      // props.disabled === "value" 형태인 경우
+      if (operator === "===") {
+        const left = condition.left;
+        if (
+          left?.type === "MemberExpression" &&
+          left.object?.name === "props" &&
+          left.property?.name
+        ) {
+          const propName = left.property.name;
+          if (disabledPropNames.includes(propName)) {
+            return null; // 제거
+          }
+        }
+      }
+
+      // && 또는 || 연산자의 경우 좌우 재귀 처리
+      if (operator === "&&" || operator === "||") {
+        const left = this._removeDisabledFromCondition(
+          condition.left,
+          disabledPropNames
+        );
+        const right = this._removeDisabledFromCondition(
+          condition.right,
+          disabledPropNames
+        );
+
+        if (!left && !right) return null;
+        if (!left) return right;
+        if (!right) return left;
+
+        return { ...condition, left, right };
+      }
+
+      return condition;
+    }
+
+    return condition;
   }
 
   /**

@@ -98,12 +98,23 @@ describe("Layout Regression Tests", () => {
       // wrapper div 검증
       it("should have wrapper divs for external components", () => {
         // INSTANCE 타입 노드 중 외부 컴포넌트(이름에 "/" 포함)가 있는지 확인
-        const findExternalInstances = (node: any): boolean => {
+        // 단, Decorate/Interactive 같은 데코레이터는 렌더링되지 않으므로 제외
+        const findExternalInstances = (node: any, parent?: any): boolean => {
           if (node.type === "INSTANCE" && node.name?.includes("/")) {
+            // Decorate 또는 Interaction 관련 인스턴스는 제외
+            // (동작만 제공하고 렌더링되지 않음)
+            if (
+              node.name.startsWith("Decorate/") ||
+              parent?.name === "Interaction"
+            ) {
+              return false;
+            }
             return true;
           }
           if (node.children) {
-            return node.children.some((c: any) => findExternalInstances(c));
+            return node.children.some((c: any) =>
+              findExternalInstances(c, node)
+            );
           }
           return false;
         };

@@ -526,8 +526,16 @@ class CreateJsxTree {
       attributes.push(overrideStyleAttr);
     }
 
-    // 루트 노드이고 네이티브 HTML 요소인 경우 {...restProps} 추가
+    // 루트 노드이고 네이티브 HTML 요소인 경우
     if (node.parent === null && this._isNativeHtmlElement(node)) {
+      // customDisabled prop이 있으면 disabled 속성에 바인딩
+      // (disabled prop이 customDisabled로 rename되었을 때 처리)
+      const disabledAttr = this._createDisabledAttribute(node);
+      if (disabledAttr) {
+        attributes.push(disabledAttr);
+      }
+
+      // {...restProps} 추가
       const restPropsSpread = this.factory.createJsxSpreadAttribute(
         this.factory.createIdentifier("restProps")
       );
@@ -535,6 +543,42 @@ class CreateJsxTree {
     }
 
     return attributes;
+  }
+
+  /**
+   * customDisabled prop을 disabled 속성에 바인딩하는 속성 생성
+   * button, input, select 등 form 요소에서만 적용
+   */
+  private _createDisabledAttribute(node: FinalAstTree): ts.JsxAttribute | null {
+    // form 요소(disabled 속성을 지원하는 요소)만 처리
+    const formElements = ["button", "input", "select", "textarea", "fieldset"];
+    if (!formElements.includes(node.semanticRole)) {
+      return null;
+    }
+
+    // customDisabled 또는 isDisabled prop 찾기
+    const disabledPropNames = ["customDisabled", "isDisabled"];
+    let foundPropName: string | null = null;
+
+    for (const propName of disabledPropNames) {
+      if (propName in this.astTree.props) {
+        foundPropName = propName;
+        break;
+      }
+    }
+
+    if (!foundPropName) {
+      return null;
+    }
+
+    // disabled={customDisabled} 속성 생성
+    return this.factory.createJsxAttribute(
+      this.factory.createIdentifier("disabled"),
+      this.factory.createJsxExpression(
+        undefined,
+        this.factory.createIdentifier(foundPropName)
+      )
+    );
   }
 
   /**

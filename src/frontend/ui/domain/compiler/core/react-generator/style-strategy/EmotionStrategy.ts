@@ -69,8 +69,9 @@ class EmotionStrategy implements StyleStrategy {
     const hasDynamicStyle = node.style.dynamic && node.style.dynamic.length > 0;
     const hasPseudoStyle =
       node.style.pseudo && Object.keys(node.style.pseudo).length > 0;
+    const hasIndexedConditional = !!node.style.indexedConditional;
 
-    if (!hasBaseStyle && !hasDynamicStyle && !hasPseudoStyle) {
+    if (!hasBaseStyle && !hasDynamicStyle && !hasPseudoStyle && !hasIndexedConditional) {
       return null;
     }
 
@@ -79,12 +80,23 @@ class EmotionStrategy implements StyleStrategy {
 
     let cssExpression: ts.Expression;
 
-    if (grouped.size > 0) {
+    if (grouped.size > 0 || hasIndexedConditional) {
       // 동적 스타일이 있으면 함수 호출
       const args: ts.Expression[] = [];
       for (const [propName] of grouped.entries()) {
         const propIdentifier = this.factory.createIdentifier(propName);
         args.push(propIdentifier);
+      }
+
+      // indexedConditional의 booleanProp 파라미터 추가
+      if (hasIndexedConditional) {
+        const { booleanProp } = node.style.indexedConditional!;
+        // 이미 동적 스타일에서 추가되지 않은 경우에만 추가
+        const existingPropNames = [...grouped.keys()];
+        if (!existingPropNames.includes(booleanProp)) {
+          const propIdentifier = this.factory.createIdentifier(booleanProp);
+          args.push(propIdentifier);
+        }
       }
 
       cssExpression = this.factory.createCallExpression(

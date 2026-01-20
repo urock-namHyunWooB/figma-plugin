@@ -167,6 +167,45 @@ class GenerateStyles {
       statements.push(recordVar);
     }
 
+    // indexedConditional 레코드 생성 (예: DisabledColorStyles)
+    if (node.style.indexedConditional) {
+      const { indexProp, styles } = node.style.indexedConditional;
+      const indexPropDef = this.astTree.props[indexProp];
+      const allOptions = (indexPropDef as any)?.variantOptions || [];
+
+      const nodeName = this._getNodeBaseName(node);
+      const baseName = `${normalizeName(nodeName)}Disabled${capitalize(indexProp)}Styles`;
+      const varName = this._generateUniqueVarName(baseName);
+
+      // AST에 저장 (나중에 CSS 함수에서 참조)
+      node.style.indexedConditional.recordName = varName;
+
+      // 모든 옵션에 대해 스타일 또는 빈 객체 할당
+      const recordEntries = allOptions.map((option: string) => {
+        const existingStyle = styles[option];
+        return {
+          key: option,
+          value: existingStyle
+            ? this._styleObjectToExpression(existingStyle)
+            : this._styleObjectToExpression({}),
+        };
+      });
+
+      // options가 없는 경우 fallback
+      if (recordEntries.length === 0) {
+        for (const [key, style] of Object.entries(styles)) {
+          recordEntries.push({
+            key,
+            value: this._styleObjectToExpression(style),
+          });
+        }
+      }
+
+      const recordObject = this.kit.createRecordObject(recordEntries);
+      const recordVar = this.kit.createConstVariable(varName, recordObject);
+      statements.push(recordVar);
+    }
+
     return statements;
   }
 
@@ -181,8 +220,9 @@ class GenerateStyles {
     const hasDynamicStyle = node.style.dynamic && node.style.dynamic.length > 0;
     const hasPseudoStyle =
       node.style.pseudo && Object.keys(node.style.pseudo).length > 0;
+    const hasIndexedConditional = !!node.style.indexedConditional;
 
-    if (!hasBaseStyle && !hasDynamicStyle && !hasPseudoStyle) {
+    if (!hasBaseStyle && !hasDynamicStyle && !hasPseudoStyle && !hasIndexedConditional) {
       return null;
     }
 
@@ -224,6 +264,26 @@ class GenerateStyles {
       );
       params.push(param);
       paramSignatures.push(propName);
+    }
+
+    // indexedConditional의 booleanProp 파라미터 추가
+    if (node.style.indexedConditional) {
+      const { booleanProp } = node.style.indexedConditional;
+      // 이미 동적 스타일에서 추가되지 않은 경우에만 추가
+      if (!paramSignatures.includes(booleanProp)) {
+        const indexedType = this.kit.createNonNullableIndexedAccessType(
+          propsInterfaceName,
+          booleanProp
+        );
+        const param = this.kit.createParameter(
+          `$${booleanProp}`,
+          indexedType,
+          false,
+          undefined
+        );
+        params.push(param);
+        paramSignatures.push(booleanProp);
+      }
     }
 
     // 2. CSS 템플릿 내용 생성 (중복 체크를 위해 먼저 계산)
@@ -316,6 +376,37 @@ class GenerateStyles {
           tail,
         });
       }
+    }
+
+    // indexedConditional 보간 추가
+    // 생성: ${$customDisabled ? DisabledColorStyles[$color] : {}}
+    if (node.style.indexedConditional) {
+      const { booleanProp, indexProp, recordName } = node.style.indexedConditional;
+      const recordVarName = recordName || `Disabled${capitalize(indexProp)}Styles`;
+
+      // $customDisabled
+      const conditionIdentifier = this.kit.createIdentifier(`$${booleanProp}`);
+      // DisabledColorStyles[$color]
+      const recordAccess = this.kit.createElementAccess(
+        recordVarName,
+        this.kit.createIdentifier(`$${indexProp}`)
+      );
+      // {}
+      const emptyObject = this.factory.createObjectLiteralExpression([]);
+      // $customDisabled ? DisabledColorStyles[$color] : {}
+      const conditionalExpr = this.factory.createConditionalExpression(
+        conditionIdentifier,
+        undefined,
+        recordAccess,
+        undefined,
+        emptyObject
+      );
+
+      const tail = hasPseudoStyle ? "\n\n" : "\n";
+      templateSpans.push({
+        expr: conditionalExpr,
+        tail,
+      });
     }
 
     // Pseudo 스타일 추가 (동적 스타일이 있을 때)
