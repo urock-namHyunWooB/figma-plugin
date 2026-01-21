@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { createRoot } from "react-dom/client";
+import { createRoot, Root } from "react-dom/client";
 import { css } from "@emotion/react";
 import { useNavigate } from "react-router-dom";
 import FigmaCompiler, { PropDefinition } from "@compiler";
@@ -10,6 +10,7 @@ import {
   compareNodeStyles,
   StyleDiff,
 } from "../domain/compiler/utils/styleComparison";
+import { PropController } from "../components/PropController";
 // twind - main.tsx에서 export한 전역 인스턴스 사용
 import { twindTw } from "../main";
 
@@ -129,11 +130,12 @@ function parseVariantProps(variantName: string): Record<string, any> {
 
 /**
  * SLOT props에 대한 목업 엘리먼트 생성
+ * App.tsx와 동일한 로직 - mockupSvg가 있으면 SVG 렌더링, 없으면 점선 박스
  */
 function createSlotMockup(prop: PropDefinition): React.ReactNode {
   const slotInfo = prop.slotInfo;
 
-  // SVG mockup이 있으면 사용
+  // mockupSvg가 있으면 SVG 렌더링 (App.tsx와 동일)
   if (slotInfo?.mockupSvg) {
     return React.createElement("div", {
       key: `slot-mockup-${prop.name}`,
@@ -169,7 +171,7 @@ function createSlotMockup(prop: PropDefinition): React.ReactNode {
         boxSizing: "border-box" as const,
       },
     },
-    `Slot: ${componentName}`
+    componentName
   );
 }
 
@@ -224,11 +226,18 @@ type StyleStrategy = "emotion" | "tailwind";
 export default function TestPage() {
   const navigate = useNavigate();
   const renderRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<Root | null>(null);
   const [results, setResults] = useState<TestResult[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [isTesting, setIsTesting] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [strategy, setStrategy] = useState<StyleStrategy>("emotion");
+
+  // Props Control 관련 상태 (플러그인 App.tsx와 동일)
+  const [propDefinitions, setPropDefinitions] = useState<PropDefinition[]>([]);
+  const [propValues, setPropValues] = useState<Record<string, any>>({});
+  const [slotMockupEnabled, setSlotMockupEnabled] = useState<Record<string, boolean>>({});
+  const [currentComponent, setCurrentComponent] = useState<React.ComponentType<any> | null>(null);
 
   // 선택된 fixture 렌더링 (Component Set이면 모든 variant 렌더링)
   const renderComponent = useCallback(
@@ -246,6 +255,10 @@ export default function TestPage() {
 
         if (!code) {
           container.innerHTML = `<div style="color: red;">컴파일 실패</div>`;
+          setPropDefinitions([]);
+          setPropValues({});
+          setSlotMockupEnabled({});
+          setCurrentComponent(null);
           return;
         }
 
@@ -253,56 +266,57 @@ export default function TestPage() {
         console.log(`📝 Generated Code for ${fixture.name} [${strategy}]:\n`, code);
 
         const Component = await renderReactComponent(code);
-        const doc = fixture.data.info.document as any;
-        const isComponentSet = doc.type === "COMPONENT_SET";
 
-        // SLOT props에 대한 mockup 생성
-        const propDefinitions = compiler.getPropsDefinition();
-        const slotMockups = createSlotMockups(propDefinitions);
+        // Props 정의 가져오기 (플러그인과 동일)
+        const props = compiler.getPropsDefinition();
+        setPropDefinitions(props);
+        console.log("📦 All Props:", props.map((p: any) => `${p.name} (${p.type})`));
+        console.log("📦 SLOT props with slotInfo:", props.filter((p: any) => p.type === "SLOT").map((p: any) => ({
+          name: p.name,
+          slotInfo: p.slotInfo
+        })));
 
-        if (isComponentSet) {
-          // Component Set: 모든 variant 렌더링
-          const variants = doc.children || [];
-          container.innerHTML = "";
-          const root = createRoot(container);
+        // Props 초기값 설정 (SLOT에는 목업 주입) - 플러그인 App.tsx와 동일한 로직
+        const initialValues: Record<string, any> = {};
+        const initialSlotEnabled: Record<string, boolean> = {};
+        props.forEach((prop) => {
+          if (prop.type === "SLOT") {
+            // 모든 SLOT에 대해 mockup 기본 활성화 (점선 박스 placeholder 표시)
+            initialSlotEnabled[prop.name] = true;
+            initialValues[prop.name] = createSlotMockup(prop);
+          } else {
+            initialValues[prop.name] = prop.defaultValue;
+          }
+        });
+        setSlotMockupEnabled(initialSlotEnabled);
+        setPropValues(initialValues);
+        setCurrentComponent(() => Component);
 
-          root.render(
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "16px" }}
-            >
-              {variants.map((variant: any, idx: number) => {
-                const props = parseVariantProps(variant.name || "");
-                return (
-                  <div
-                    key={idx}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "11px",
-                        color: "#666",
-                        minWidth: "200px",
-                        fontFamily: "monospace",
-                      }}
-                    >
-                      {variant.name}
-                    </div>
-                    <Component {...props} {...slotMockups} />
-                  </div>
-                );
-              })}
-            </div>
-          );
-        } else {
-          // 일반 컴포넌트: 기본 렌더링
-          container.innerHTML = "";
-          const root = createRoot(container);
-          root.render(<Component {...slotMockups} />);
+        // 초기 렌더링 - 기존 root 정리 후 새로 생성
+        if (rootRef.current) {
+          try {
+            rootRef.current.unmount();
+          } catch (e) {
+            // unmount 에러 무시
+          }
+          rootRef.current = null;
         }
+        container.innerHTML = ""; // DOM 완전 정리
+        rootRef.current = createRoot(container);
+
+        // 플러그인과 동일하게 단일 컴포넌트만 렌더링 (Props Control 값 사용)
+        rootRef.current.render(<Component {...initialValues} />);
+
+        // 테스트 페이지용: 큰 gap 값을 가진 요소의 gap을 조정하여 모든 slot이 보이게 함
+        setTimeout(() => {
+          container.querySelectorAll('*').forEach((el) => {
+            const style = getComputedStyle(el);
+            const gapValue = parseInt(style.gap, 10);
+            if (gapValue > 100) {
+              (el as HTMLElement).style.gap = '16px';
+            }
+          });
+        }, 100);
 
         // Tailwind 전략일 때 twind로 클래스 처리
         if (strategy === "tailwind") {
@@ -323,6 +337,49 @@ export default function TestPage() {
     },
     [strategy]
   );
+
+  // Prop 변경 핸들러 (플러그인 App.tsx와 동일)
+  const handlePropChange = useCallback((name: string, value: any) => {
+    setPropValues((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }, []);
+
+  // SLOT 목업 토글 핸들러 (플러그인 App.tsx와 동일)
+  const handleSlotMockupToggle = useCallback((name: string, enabled: boolean) => {
+    setSlotMockupEnabled((prev) => ({
+      ...prev,
+      [name]: enabled,
+    }));
+
+    // 해당 prop 값 업데이트
+    const propDef = propDefinitions.find((p) => p.name === name);
+    if (propDef) {
+      setPropValues((prev) => ({
+        ...prev,
+        [name]: enabled ? createSlotMockup(propDef) : null,
+      }));
+    }
+  }, [propDefinitions]);
+
+  // propValues 변경 시 컴포넌트 다시 렌더링 (플러그인과 동일하게 단일 컴포넌트)
+  useEffect(() => {
+    if (!currentComponent || !rootRef.current || !renderRef.current) return;
+
+    const timeoutId = setTimeout(() => {
+      if (!rootRef.current) return;
+
+      const Component = currentComponent;
+      try {
+        rootRef.current.render(<Component {...propValues} />);
+      } catch (e) {
+        console.error("Render error:", e);
+      }
+    }, 50);
+
+    return () => clearTimeout(timeoutId);
+  }, [propValues, currentComponent]);
 
   // 전체 테스트
   const testAll = useCallback(async () => {
@@ -575,6 +632,19 @@ export default function TestPage() {
             </div>
           </div>
 
+          {/* Props Control - 플러그인 App.tsx와 동일한 환경 테스트 */}
+          {propDefinitions.length > 0 && (
+            <div css={propsControlSection}>
+              <PropController
+                slotMockupEnabled={slotMockupEnabled}
+                onSlotMockupToggle={handleSlotMockupToggle}
+                propDefinitions={propDefinitions}
+                propValues={propValues}
+                onPropChange={handlePropChange}
+              />
+            </div>
+          )}
+
           {/* 스타일 차이 */}
           {selectedResult && selectedResult.styleDiffs.length > 0 && (
             <div css={diffSection}>
@@ -808,7 +878,16 @@ const renderBox = css`
   background: white;
   border-radius: 0 0 6px 6px;
   padding: 16px;
-  overflow: auto;
+  overflow: visible;
+
+  /* 컴파일된 컴포넌트가 잘리지 않도록 overflow: visible 설정 */
+  /* 큰 gap으로 인해 요소가 밀려나도 보이게 함 */
+`;
+
+const propsControlSection = css`
+  padding: 12px 16px;
+  background: #161b22;
+  border-top: 1px solid #30363d;
 `;
 
 const diffSection = css`
