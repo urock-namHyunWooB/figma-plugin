@@ -242,14 +242,11 @@ function App() {
       return;
     }
 
-    // 원본 크기가 있으면 그것을 사용, 없으면 DOM에서 측정
+    // 항상 DOM에서 실제 렌더링된 크기를 계산 (gap으로 인한 overflow 포함)
     let contentWidth: number;
     let contentHeight: number;
 
-    if (originalSize) {
-      contentWidth = originalSize.width;
-      contentHeight = originalSize.height;
-    } else {
+    {
       const content = previewContentRef.current;
       if (!content) {
         setScale(1);
@@ -258,8 +255,49 @@ function App() {
       content.style.transform = "translate(-50%, -50%) scale(1)";
       void content.offsetHeight;
       const renderedChild = content.firstElementChild as HTMLElement;
-      contentWidth = renderedChild?.offsetWidth || content.scrollWidth;
-      contentHeight = renderedChild?.offsetHeight || content.scrollHeight;
+
+      // 실제 컨텐츠 크기 계산: flexbox의 자식들 + gap 값 포함
+      const calculateActualWidth = (el: HTMLElement): number => {
+        const style = getComputedStyle(el);
+        const display = style.display;
+
+        // flex container인 경우 자식들의 실제 크기 + gap 계산
+        if (display === 'flex' || display === 'inline-flex') {
+          const gap = parseInt(style.gap, 10) || 0;
+          const flexDirection = style.flexDirection;
+          const children = Array.from(el.children) as HTMLElement[];
+
+          if (flexDirection === 'row' || flexDirection === 'row-reverse') {
+            // 가로 방향: 자식 너비 합 + gap
+            let totalWidth = 0;
+            children.forEach((child, i) => {
+              totalWidth += child.offsetWidth;
+              if (i < children.length - 1) totalWidth += gap;
+            });
+            // padding 추가
+            totalWidth += parseInt(style.paddingLeft, 10) || 0;
+            totalWidth += parseInt(style.paddingRight, 10) || 0;
+            return Math.max(totalWidth, el.offsetWidth);
+          }
+        }
+
+        // 재귀적으로 자식 탐색
+        let maxChildWidth = el.offsetWidth;
+        Array.from(el.children).forEach((child) => {
+          const childWidth = calculateActualWidth(child as HTMLElement);
+          maxChildWidth = Math.max(maxChildWidth, childWidth);
+        });
+
+        return maxChildWidth;
+      };
+
+      if (renderedChild) {
+        contentWidth = calculateActualWidth(renderedChild);
+        contentHeight = renderedChild.offsetHeight;
+      } else {
+        contentWidth = content.scrollWidth;
+        contentHeight = content.scrollHeight;
+      }
     }
 
     const containerWidth = container.clientWidth;
@@ -279,6 +317,16 @@ function App() {
     const scaleX = availableWidth / contentWidth;
     const scaleY = availableHeight / contentHeight;
     const fitScale = Math.min(scaleX, scaleY, 1);
+
+    // 컴포넌트에 직접 transform 적용 (overflow: hidden 문제 해결)
+    const content = previewContentRef.current;
+    if (content) {
+      const renderedChild = content.firstElementChild as HTMLElement;
+      if (renderedChild && fitScale < 1) {
+        renderedChild.style.transform = `scale(${fitScale})`;
+        renderedChild.style.transformOrigin = 'top left';
+      }
+    }
 
     setScale(fitScale);
   }, [originalSize]);
@@ -334,24 +382,12 @@ function App() {
   // 동적 컴포넌트 렌더러
   const { Component, error, isLoading } = useComponentRenderer(generatedCode);
 
-  // Component가 렌더링되거나 props가 변경되면 자동 스케일 업데이트 + gap 조정
+  // Component가 렌더링되거나 props가 변경되면 자동 스케일 업데이트
   useEffect(() => {
     if (Component && !isLoading && !error) {
-      // 렌더링 완료 후 스케일 계산 및 gap 조정 (약간의 딜레이)
+      // 렌더링 완료 후 스케일 계산 (약간의 딜레이)
       const timer = setTimeout(() => {
         updateAutoScale();
-
-        // 큰 gap 값을 가진 요소의 gap을 조정하여 모든 slot이 보이게 함
-        const container = previewContentRef.current;
-        if (container) {
-          container.querySelectorAll('*').forEach((el) => {
-            const style = getComputedStyle(el);
-            const gapValue = parseInt(style.gap, 10);
-            if (gapValue > 100) {
-              (el as HTMLElement).style.gap = '16px';
-            }
-          });
-        }
       }, 50);
       return () => clearTimeout(timer);
     }
@@ -504,11 +540,8 @@ function App() {
               ref={previewContentRef}
               css={previewContentStyle}
               style={{
-                transform: `translate(-50%, -50%) scale(${scale})`,
-                ...(originalSize && {
-                  width: `${originalSize.width}px`,
-                  height: `${originalSize.height}px`,
-                }),
+                // transform은 자식 컴포넌트에 직접 적용됨 (updateAutoScale에서)
+                transform: 'translate(-50%, -50%)',
               }}
             >
               {isLoading && <span css={emptyPreviewStyle}>Loading...</span>}

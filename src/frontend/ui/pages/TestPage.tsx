@@ -307,15 +307,62 @@ export default function TestPage() {
         // 플러그인과 동일하게 단일 컴포넌트만 렌더링 (Props Control 값 사용)
         rootRef.current.render(<Component {...initialValues} />);
 
-        // 테스트 페이지용: 큰 gap 값을 가진 요소의 gap을 조정하여 모든 slot이 보이게 함
+        // auto scale: 컴포넌트가 renderBox에 맞게 축소되도록 스케일 조정
         setTimeout(() => {
-          container.querySelectorAll('*').forEach((el) => {
+          const renderedChild = container.firstElementChild as HTMLElement;
+          if (!renderedChild) return;
+
+          // 실제 컨텐츠 크기 계산: flexbox의 자식들 + gap 값 포함
+          const calculateActualWidth = (el: HTMLElement): number => {
             const style = getComputedStyle(el);
-            const gapValue = parseInt(style.gap, 10);
-            if (gapValue > 100) {
-              (el as HTMLElement).style.gap = '16px';
+            const display = style.display;
+
+            // flex container인 경우 자식들의 실제 크기 + gap 계산
+            if (display === 'flex' || display === 'inline-flex') {
+              const gap = parseInt(style.gap, 10) || 0;
+              const flexDirection = style.flexDirection;
+              const children = Array.from(el.children) as HTMLElement[];
+
+              if (flexDirection === 'row' || flexDirection === 'row-reverse') {
+                // 가로 방향: 자식 너비 합 + gap
+                let totalWidth = 0;
+                children.forEach((child, i) => {
+                  totalWidth += child.offsetWidth;
+                  if (i < children.length - 1) totalWidth += gap;
+                });
+                // padding 추가
+                totalWidth += parseInt(style.paddingLeft, 10) || 0;
+                totalWidth += parseInt(style.paddingRight, 10) || 0;
+                return Math.max(totalWidth, el.offsetWidth);
+              }
             }
-          });
+
+            // 재귀적으로 자식 탐색
+            let maxChildWidth = el.offsetWidth;
+            Array.from(el.children).forEach((child) => {
+              const childWidth = calculateActualWidth(child as HTMLElement);
+              maxChildWidth = Math.max(maxChildWidth, childWidth);
+            });
+
+            return maxChildWidth;
+          };
+
+          const contentWidth = calculateActualWidth(renderedChild);
+          const contentHeight = renderedChild.offsetHeight;
+
+          const containerWidth = container.clientWidth;
+          const containerHeight = container.clientHeight;
+
+          if (contentWidth > 0 && contentHeight > 0) {
+            const scaleX = containerWidth / contentWidth;
+            const scaleY = containerHeight / contentHeight;
+            const scale = Math.min(scaleX, scaleY, 1); // 최대 1 (확대하지 않음)
+
+            if (scale < 1) {
+              renderedChild.style.transform = `scale(${scale})`;
+              renderedChild.style.transformOrigin = 'top left';
+            }
+          }
         }, 100);
 
         // Tailwind 전략일 때 twind로 클래스 처리
@@ -878,10 +925,9 @@ const renderBox = css`
   background: white;
   border-radius: 0 0 6px 6px;
   padding: 16px;
-  overflow: visible;
+  overflow: hidden;
 
-  /* 컴파일된 컴포넌트가 잘리지 않도록 overflow: visible 설정 */
-  /* 큰 gap으로 인해 요소가 밀려나도 보이게 함 */
+  /* auto scale로 컴포넌트가 축소되어 전체가 보이게 함 */
 `;
 
 const propsControlSection = css`
