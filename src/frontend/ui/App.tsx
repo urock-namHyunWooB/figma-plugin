@@ -334,12 +334,24 @@ function App() {
   // 동적 컴포넌트 렌더러
   const { Component, error, isLoading } = useComponentRenderer(generatedCode);
 
-  // Component가 렌더링되거나 props가 변경되면 자동 스케일 업데이트
+  // Component가 렌더링되거나 props가 변경되면 자동 스케일 업데이트 + gap 조정
   useEffect(() => {
     if (Component && !isLoading && !error) {
-      // 렌더링 완료 후 스케일 계산 (약간의 딜레이)
+      // 렌더링 완료 후 스케일 계산 및 gap 조정 (약간의 딜레이)
       const timer = setTimeout(() => {
         updateAutoScale();
+
+        // 큰 gap 값을 가진 요소의 gap을 조정하여 모든 slot이 보이게 함
+        const container = previewContentRef.current;
+        if (container) {
+          container.querySelectorAll('*').forEach((el) => {
+            const style = getComputedStyle(el);
+            const gapValue = parseInt(style.gap, 10);
+            if (gapValue > 100) {
+              (el as HTMLElement).style.gap = '16px';
+            }
+          });
+        }
       }, 50);
       return () => clearTimeout(timer);
     }
