@@ -2664,4 +2664,230 @@ function Label(props) {
 
 ---
 
+### 22. COMPONENT_SET 내부 TEXT 노드가 slot으로 변환되지 않음
+
+#### 문제
+
+COMPONENT_SET 컴포넌트의 TEXT 노드가 slot으로 변환되지 않아, 텍스트가 하드코딩되어 렌더링됨.
+
+```
+Figma 구조:
+- Headersub (COMPONENT_SET)
+  ├── Variant 1
+  │   ├── INSTANCE (아이콘)
+  │   ├── TEXT "검색"
+  │   └── INSTANCE (아이콘)
+  └── Variant 2
+      ├── INSTANCE (아이콘)
+      ├── TEXT "장바구니"
+      └── INSTANCE (아이콘)
+
+기대: INSTANCE들과 TEXT가 모두 slot으로 변환
+실제: INSTANCE는 slot이지만, TEXT는 하드코딩됨
+```
+
+#### 원인
+
+1. **isComponentSetRoot 조건 불완전**: `_FinalAstTree.ts`의 `isComponentSetRoot` 변수가 astTree의 첫 번째 variant만 확인
+   ```typescript
+   // 기존 코드 (line 2491)
+   const isComponentSetRoot = rootSpec?.type === "COMPONENT_SET";
+   // ❌ rootSpec이 variant를 가리키면 false
+   ```
+
+2. **TEXT slot 변환 로직 누락**: INSTANCE는 `isExposedInstance` 체크로 slot 변환이 되지만, TEXT 노드는 별도 처리 없음
+
+3. **originalDocument 미활용**: `specDataManager.getDocument()`로 원본 COMPONENT_SET을 가져올 수 있지만 사용하지 않음
+
+#### 해결
+
+**수정 파일**: `_FinalAstTree.ts`
+
+**1. isComponentSetRoot 조건 개선 (line 2491-2493)**
+
+originalDocument까지 확인하여 COMPONENT_SET 여부를 정확히 판별:
+
+```typescript
+const rootSpec = this.specDataManager.getSpecById(astTree.id);
+const originalDocument = this.specDataManager.getDocument();
+const isComponentSetRoot =
+  rootSpec?.type === "COMPONENT_SET" ||
+  originalDocument?.type === "COMPONENT_SET";  // 추가
+```
+
+**2. TEXT 노드 slot 변환 로직 추가 (line 2634-2650)**
+
+COMPONENT_SET 내부의 모든 TEXT 노드를 slot으로 변환:
+
+```typescript
+// TEXT 노드를 slot으로 변환 (COMPONENT_SET 내부의 TEXT 노드)
+// - isExposedInstance 체크 없이 COMPONENT_SET 내부의 TEXT 노드는 모두 slot으로 처리
+if (isComponentSetRoot && node.type === "TEXT") {
+  // slot 이름 생성: TEXT 노드의 name을 camelCase로 변환
+  let baseSlotName = toCamelCase(node.name) || "text";
+  let slotName = baseSlotName;
+  let counter = 2;
+  while (collectedSlotNames.has(slotName)) {
+    slotName = `${baseSlotName}${counter}`;
+    counter++;
+  }
+
+  (node as any).isSlot = true;
+  (node as any).slotName = slotName;
+  (node as any).isTextSlot = true; // TEXT slot임을 표시
+  collectedSlotNames.add(slotName);
+
+  node.children = [];
+  return;
+}
+```
+
+**핵심 변경사항**:
+1. `originalDocument?.type === "COMPONENT_SET"` 조건 추가로 정확한 root 타입 판별
+2. TEXT 노드 slot 변환 로직 추가 (camelCase 이름 변환, 중복 방지)
+3. `isTextSlot: true` 플래그로 TEXT slot임을 명시적으로 표시
+
+#### 결과
+
+```tsx
+// Headersub 컴포넌트
+interface HeadersubProps {
+  normalResponsive?: React.ReactNode;  // 왼쪽 아이콘 slot
+  text?: React.ReactNode;              // 텍스트 slot
+  normalResponsive2?: React.ReactNode; // 오른쪽 아이콘 slot
+}
+
+function Headersub({ normalResponsive, text, normalResponsive2 }: HeadersubProps) {
+  return (
+    <div css={HeadersubCss}>
+      {normalResponsive || <div css={SlotPlaceholderCss}>normalResponsive</div>}
+      {text || <div css={SlotPlaceholderCss}>text</div>}
+      {normalResponsive2 || <div css={SlotPlaceholderCss}>normalResponsive2</div>}
+    </div>
+  );
+}
+```
+
+브라우저 렌더링 (TestPage):
+- 세 개의 slot이 모두 점선 박스로 표시됨 ✓
+- `{normalResponsive}` - 왼쪽 아이콘 slot
+- `{text}` - 텍스트 slot
+- `{normalResponsive2}` - 오른쪽 아이콘 slot
+
+#### 테스트
+
+`test/compiler/componentSetTextSlot.test.ts`
+
+---
+
+### 23. NodeMatcher child pattern 비교 시 prefix 매칭 미지원
+
+#### 문제
+
+Variant 간 자식 노드 개수가 다른 경우, 같은 노드임에도 불구하고 서로 다른 노드로 판단되어 불필요한 slot이 생성됨.
+
+```
+Figma 구조:
+- Headersub (COMPONENT_SET)
+  ├── Default variant
+  │   ├── INSTANCE (왼쪽 아이콘)
+  │   ├── TEXT "검색"
+  │   └── INSTANCE (오른쪽 아이콘)  ← 3개 자식
+  └── Basic variant
+      ├── INSTANCE (왼쪽 아이콘)
+      └── TEXT "검색"                ← 2개 자식
+
+기대: 3개의 slot 생성 (왼쪽 아이콘, 텍스트, 오른쪽 아이콘)
+실제: 4개의 slot 생성 (Basic의 노드들이 별도 slot으로 인식됨)
+```
+
+**Child pattern 비교**:
+- Default variant: `"INSTANCE-TEXT-INSTANCE"` (자식 3개)
+- Basic variant: `"INSTANCE-TEXT"` (자식 2개)
+- 패턴이 다르므로 같은 구조로 인식되지 않음 → 매칭 실패
+
+#### 원인
+
+`NodeMatcher._compareByStructure()` 메서드에서 child pattern 비교가 너무 엄격함:
+
+```typescript
+// 기존 코드 (NodeMatcher.ts line 93-109)
+private _compareByStructure(nodeA: FrameNode, nodeB: FrameNode): boolean {
+  const patternA = this._getChildPattern(nodeA);
+  const patternB = this._getChildPattern(nodeB);
+
+  // 패턴이 완전히 동일한 경우만 true
+  if (patternA === patternB) return true;
+
+  // ❌ prefix 관계는 고려하지 않음
+  return false;
+}
+```
+
+**문제 시나리오**:
+1. Default variant의 FRAME: `"INSTANCE-TEXT-INSTANCE"` (3개)
+2. Basic variant의 FRAME: `"INSTANCE-TEXT"` (2개)
+3. `"INSTANCE-TEXT"`가 `"INSTANCE-TEXT-INSTANCE"`의 prefix임에도 불구하고 false 반환
+4. 두 FRAME이 다른 노드로 판단됨
+5. 각각의 자식들이 별도의 slot으로 생성됨 (4개)
+
+#### 해결
+
+**수정 파일**: `NodeMatcher.ts`
+
+**prefix 매칭 허용 (line 102-106)**:
+
+한 패턴이 다른 패턴의 prefix인 경우 같은 구조로 판단:
+
+```typescript
+private _compareByStructure(nodeA: FrameNode, nodeB: FrameNode): boolean {
+  const patternA = this._getChildPattern(nodeA);
+  const patternB = this._getChildPattern(nodeB);
+
+  // 패턴이 완전히 동일하면 true
+  if (patternA === patternB) return true;
+
+  // 한 패턴이 다른 패턴의 prefix인 경우 true (variant간 자식 수가 다른 경우 허용)
+  // 예: "INSTANCE-TEXT-INSTANCE" vs "INSTANCE-TEXT" → "INSTANCE-TEXT"가 prefix이므로 true
+  if (patternA.startsWith(patternB) || patternB.startsWith(patternA)) {
+    return true;
+  }
+
+  return false;
+}
+```
+
+**핵심 변경사항**:
+1. `startsWith()` 메서드로 prefix 관계 확인
+2. 한쪽 패턴이 다른 쪽의 부분집합이면 같은 구조로 판단
+3. Variant간 선택적 자식 노드(optional children)를 올바르게 처리
+
+#### 결과
+
+```tsx
+// Headersub 컴포넌트
+interface HeadersubProps {
+  normalResponsive?: React.ReactNode;  // 왼쪽 아이콘 slot
+  text?: React.ReactNode;              // 텍스트 slot
+  normalResponsive2?: React.ReactNode; // 오른쪽 아이콘 slot (optional)
+}
+
+// 3개의 slot만 생성됨 ✓
+function Headersub({ normalResponsive, text, normalResponsive2 }: HeadersubProps) {
+  return (
+    <div css={HeadersubCss}>
+      {normalResponsive}
+      {text}
+      {normalResponsive2}  {/* Basic variant에서는 없음 */}
+    </div>
+  );
+}
+```
+
+#### 테스트
+
+`test/compiler/nodeMatherChildPattern.test.ts`
+
+---
+
 _Last Updated: 2026-01-21_

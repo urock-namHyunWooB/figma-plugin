@@ -312,10 +312,9 @@ function App() {
       const initialSlotEnabled: Record<string, boolean> = {};
       props.forEach((prop) => {
         if (prop.type === "SLOT") {
-          // mockupSvg가 있는 경우에만 기본 활성화 (placeholder 방지)
-          const hasMockup = !!prop.slotInfo?.mockupSvg;
-          initialSlotEnabled[prop.name] = hasMockup;
-          initialValues[prop.name] = hasMockup ? createSlotMockup(prop) : null;
+          // 모든 SLOT에 대해 mockup 기본 활성화 (점선 박스 placeholder 표시)
+          initialSlotEnabled[prop.name] = true;
+          initialValues[prop.name] = createSlotMockup(prop);
         } else {
           initialValues[prop.name] = prop.defaultValue;
         }

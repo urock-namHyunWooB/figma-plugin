@@ -96,7 +96,16 @@ class NodeMatcher {
     const patternA = this._getChildPattern(nodeA);
     const patternB = this._getChildPattern(nodeB);
 
-    return patternA === patternB || patternA.length === patternB.length;
+    // 패턴이 완전히 동일하면 true
+    if (patternA === patternB) return true;
+
+    // 한 패턴이 다른 패턴의 prefix인 경우 true (variant간 자식 수가 다른 경우 허용)
+    // 예: "INSTANCE-TEXT-INSTANCE" vs "INSTANCE-TEXT" → "INSTANCE-TEXT"가 prefix이므로 true
+    if (patternA.startsWith(patternB) || patternB.startsWith(patternA)) {
+      return true;
+    }
+
+    return false;
   }
 
   private _getChildPattern(node: FrameNode): string {

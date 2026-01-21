@@ -972,14 +972,8 @@ class _FinalAstTree {
         // BOOLEAN 타입 처리
         if (value.type === "BOOLEAN") {
           // VARIANT에서 변환된 BOOLEAN (True/False VARIANT)은 slot으로 변환하지 않음
-          // 단, icon이 포함된 prop 이름은 slot 후보로 유지 (아이콘은 교체 패턴이 일반적)
+          // isExposedInstance 기반 slot 처리가 있으므로 VARIANT boolean은 제외
           if (value.variantOptions) {
-            // icon 관련 prop은 slot 후보로 유지
-            const lowerKey = key.toLowerCase();
-            if (lowerKey.includes("icon")) {
-              return !this._isOnlyStyleChangeByBoolean(astTree, key);
-            }
-            // 그 외 True/False VARIANT는 visibility toggle이므로 slot이 아님
             return false;
           }
           // 원본 BOOLEAN은 스타일만 변경하는 경우가 아니면 slot 후보
@@ -2490,8 +2484,13 @@ class _FinalAstTree {
     }
 
     // 루트 타입 확인: COMPONENT_SET인 경우 내부 INSTANCE를 slot으로 처리
+    // astTree.id가 COMPONENT_SET의 첫 번째 variant ID일 수 있으므로
+    // 원본 document의 타입도 확인
     const rootSpec = this.specDataManager.getSpecById(astTree.id);
-    const isComponentSetRoot = rootSpec?.type === "COMPONENT_SET";
+    const originalDocument = this.specDataManager.getDocument();
+    const isComponentSetRoot =
+      rootSpec?.type === "COMPONENT_SET" ||
+      originalDocument?.type === "COMPONENT_SET";
 
     // ComponentSet별 그룹핑 정보 가져오기
     const groupedDeps =
@@ -2544,14 +2543,28 @@ class _FinalAstTree {
           const info = componentIdToInfo.get(componentId)!;
 
           const isArraySlot = arraySlotInstanceIds.has(node.id);
+          // isExposedInstance: true 또는 exposedInstances 배열이 있는 경우
+          const isExposedInstance =
+            (spec as any)?.isExposedInstance === true ||
+            ((spec as any)?.exposedInstances?.length > 0);
 
           // slot으로 처리해야 하는 경우:
-          // COMPONENT_SET 루트이고 ArraySlot이 아닌 단일 INSTANCE (커스터마이징 가능)
-          // isExposedInstance: true인 경우는 externalComponent로 유지 (기존 동작)
-          const shouldBeSlot = isComponentSetRoot && !isArraySlot;
+          // 1. COMPONENT_SET 루트이고 ArraySlot이 아닌 단일 INSTANCE (커스터마이징 가능)
+          // 2. isExposedInstance: true 또는 exposedInstances가 있는 INSTANCE
+          //    (Figma에서 명시적으로 노출된 인스턴스)
+          //    - isExposedInstance는 ArraySlot 검사를 무시하고 항상 slot으로 처리
+          const shouldBeSlot =
+            (isComponentSetRoot && !isArraySlot) || isExposedInstance;
 
           if (shouldBeSlot) {
-            const slotName = toCamelCase(info.componentName);
+            // slot 이름 생성 (중복 시 번호 추가)
+            let baseSlotName = toCamelCase(info.componentName);
+            let slotName = baseSlotName;
+            let counter = 2;
+            while (collectedSlotNames.has(slotName)) {
+              slotName = `${baseSlotName}${counter}`;
+              counter++;
+            }
 
             (node as any).isSlot = true;
             (node as any).slotName = slotName;
@@ -2616,6 +2629,26 @@ class _FinalAstTree {
 
           return; // 자식 처리 불필요
         }
+      }
+
+      // TEXT 노드를 slot으로 변환 (COMPONENT_SET 내부의 TEXT 노드)
+      // - isExposedInstance 체크 없이 COMPONENT_SET 내부의 TEXT 노드는 모두 slot으로 처리
+      if (isComponentSetRoot && node.type === "TEXT") {
+        // slot 이름 생성: TEXT 노드의 name을 camelCase로 변환
+        let baseSlotName = toCamelCase(node.name) || "text";
+        let slotName = baseSlotName;
+        let counter = 2;
+        while (collectedSlotNames.has(slotName)) {
+          slotName = `${baseSlotName}${counter}`;
+          counter++;
+        }
+
+        (node as any).isSlot = true;
+        (node as any).slotName = slotName;
+        (node as any).isTextSlot = true; // TEXT slot임을 표시
+        collectedSlotNames.add(slotName);
+
+        return; // 자식 처리 불필요
       }
 
       // 자식 노드 처리
