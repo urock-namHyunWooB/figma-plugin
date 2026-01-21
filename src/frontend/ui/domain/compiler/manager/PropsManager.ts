@@ -13,6 +13,10 @@ export interface SlotInfo {
   hasDependency: boolean;
   /** dependency 컴포넌트의 SVG 마크업 (목업용) */
   mockupSvg?: string;
+  /** slot 영역의 너비 (px) */
+  width?: number;
+  /** slot 영역의 높이 (px) */
+  height?: number;
 }
 
 /**
@@ -106,6 +110,23 @@ class PropsManager {
         // 1. metaData.vectorSvg에서 SVG 추출 (가장 우선)
         let mockupSvg: string | undefined = node.metaData?.vectorSvg;
 
+        // slot 노드의 크기 추출
+        // 1. style.base에서 시도
+        const widthStr = node.style?.base?.width;
+        const heightStr = node.style?.base?.height;
+        let width = widthStr ? parseFloat(widthStr) : undefined;
+        let height = heightStr ? parseFloat(heightStr) : undefined;
+
+        // 2. style.base에 없으면 원본 스펙의 absoluteBoundingBox에서 가져오기
+        if (width === undefined || height === undefined) {
+          const spec = this.specDataManager.specHashMap[node.id];
+          const bbox = spec?.absoluteBoundingBox;
+          if (bbox) {
+            if (width === undefined) width = bbox.width;
+            if (height === undefined) height = bbox.height;
+          }
+        }
+
         // externalComponent 정보가 있으면 dependency 컴포넌트 정보 추출
         if (node.externalComponent) {
           const componentSetId = node.externalComponent.componentSetId;
@@ -130,6 +151,8 @@ class PropsManager {
               : node.externalComponent.componentName,
             hasDependency: !!depInfo,
             mockupSvg,
+            width,
+            height,
           });
         } else {
           // externalComponent가 없어도 metaData에서 SVG 추출 가능
@@ -137,6 +160,8 @@ class PropsManager {
             componentName: node.name,
             hasDependency: false,
             mockupSvg,
+            width,
+            height,
           });
         }
       }

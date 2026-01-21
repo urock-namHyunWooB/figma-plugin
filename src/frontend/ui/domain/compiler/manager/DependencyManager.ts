@@ -9,6 +9,7 @@ import type { FigmaNodeData } from "@compiler/types/baseType";
  */
 export interface CompiledDependency {
   componentName: string;
+  originalName?: string; // 충돌로 이름이 변경된 경우 원래 이름
   code: string;
   componentSetId: string;
 }
@@ -269,11 +270,20 @@ class DependencyManager {
 
       try {
         const depCompiler = compilerFactory(enrichedVariant);
-        const depComponentName = normalizeComponentName(group.componentSetName);
+        const originalDepName = normalizeComponentName(group.componentSetName);
+        let depComponentName = originalDepName;
+
+        // 메인 컴포넌트와 이름 충돌 방지
+        if (depComponentName === componentName) {
+          depComponentName = `_${depComponentName}`;
+        }
+
         const depCode = await depCompiler.getGeneratedCode(depComponentName);
 
         compiledDeps[componentSetId] = {
           componentName: depComponentName,
+          originalName:
+            originalDepName !== depComponentName ? originalDepName : undefined,
           code: depCode || "",
           componentSetId,
         };
@@ -379,12 +389,27 @@ class DependencyManager {
     }
 
     // 3. 메인 컴포넌트
+    // 이름이 변경된 의존성의 JSX 참조 치환
+    let finalMainCode = mainCodeWithoutImports;
+    for (const dep of Object.values(result.dependencies)) {
+      if (dep.originalName) {
+        const jsxOpenRegex = new RegExp(
+          `<${dep.originalName}(\\s|>|/)`,
+          "g"
+        );
+        const jsxCloseRegex = new RegExp(`</${dep.originalName}>`, "g");
+        finalMainCode = finalMainCode
+          .replace(jsxOpenRegex, `<${dep.componentName}$1`)
+          .replace(jsxCloseRegex, `</${dep.componentName}>`);
+      }
+    }
+
     // 이미 주석이 있으면 추가하지 않음
     const mainCommentLine = `// === ${result.mainComponent.componentName} ===`;
-    if (!mainCodeWithoutImports.trim().startsWith("// ===")) {
+    if (!finalMainCode.trim().startsWith("// ===")) {
       codeParts.push(mainCommentLine);
     }
-    codeParts.push(mainCodeWithoutImports);
+    codeParts.push(finalMainCode);
 
     return codeParts.join("\n");
   }

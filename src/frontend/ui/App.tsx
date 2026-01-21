@@ -23,8 +23,11 @@ function createSlotMockup(prop: PropDefinition): React.ReactNode {
     });
   }
 
-  // SVG가 없으면 기본 placeholder
+  // 실제 크기로 반투명 + 점선 placeholder
   const componentName = slotInfo?.componentName || prop.name;
+  const width = slotInfo?.width;
+  const height = slotInfo?.height;
+
   return React.createElement(
     "div",
     {
@@ -33,18 +36,21 @@ function createSlotMockup(prop: PropDefinition): React.ReactNode {
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "8px 12px",
-        border: "2px dashed #0078d4",
+        width: width ? `${width}px` : "auto",
+        height: height ? `${height}px` : "auto",
+        minWidth: width ? undefined : "60px",
+        minHeight: height ? undefined : "24px",
+        padding: width && height ? undefined : "8px 12px",
+        border: "1px dashed rgba(0, 120, 212, 0.5)",
         borderRadius: "4px",
-        backgroundColor: "rgba(0, 120, 212, 0.1)",
-        color: "#0078d4",
-        fontSize: "12px",
+        backgroundColor: "rgba(0, 120, 212, 0.08)",
+        color: "rgba(0, 120, 212, 0.6)",
+        fontSize: "11px",
         fontWeight: 500,
-        minWidth: "60px",
-        minHeight: "24px",
+        boxSizing: "border-box",
       },
     },
-    `[${componentName}]`
+    `Slot: ${componentName}`
   );
 }
 

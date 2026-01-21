@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { css } from "@emotion/react";
 import { useNavigate } from "react-router-dom";
-import FigmaCompiler from "@compiler";
+import FigmaCompiler, { PropDefinition } from "@compiler";
 import { FigmaNodeData } from "../domain/compiler";
 import { renderReactComponent } from "../domain/renderer/component-render";
 import { loadFontsFromNodeData } from "../domain/compiler/utils/fontLoader";
@@ -127,6 +127,67 @@ function parseVariantProps(variantName: string): Record<string, any> {
   return props;
 }
 
+/**
+ * SLOT props에 대한 목업 엘리먼트 생성
+ */
+function createSlotMockup(prop: PropDefinition): React.ReactNode {
+  const slotInfo = prop.slotInfo;
+
+  // SVG mockup이 있으면 사용
+  if (slotInfo?.mockupSvg) {
+    return React.createElement("div", {
+      key: `slot-mockup-${prop.name}`,
+      dangerouslySetInnerHTML: { __html: slotInfo.mockupSvg },
+      style: { display: "inline-flex" },
+    });
+  }
+
+  // 실제 크기로 반투명 + 점선 placeholder
+  const componentName = slotInfo?.componentName || prop.name;
+  const width = slotInfo?.width;
+  const height = slotInfo?.height;
+
+  return React.createElement(
+    "div",
+    {
+      key: `slot-mockup-${prop.name}`,
+      style: {
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: width ? `${width}px` : "auto",
+        height: height ? `${height}px` : "auto",
+        minWidth: width ? undefined : "60px",
+        minHeight: height ? undefined : "24px",
+        padding: width && height ? undefined : "8px 12px",
+        border: "1px dashed rgba(0, 120, 212, 0.5)",
+        borderRadius: "4px",
+        backgroundColor: "rgba(0, 120, 212, 0.08)",
+        color: "rgba(0, 120, 212, 0.6)",
+        fontSize: "11px",
+        fontWeight: 500,
+        boxSizing: "border-box" as const,
+      },
+    },
+    `Slot: ${componentName}`
+  );
+}
+
+/**
+ * Props 정의에서 SLOT 타입의 mockup props 생성
+ */
+function createSlotMockups(
+  propDefinitions: PropDefinition[]
+): Record<string, React.ReactNode> {
+  const mockups: Record<string, React.ReactNode> = {};
+  for (const prop of propDefinitions) {
+    if (prop.type === "SLOT") {
+      mockups[prop.name] = createSlotMockup(prop);
+    }
+  }
+  return mockups;
+}
+
 /** 특정 variant의 nodeData 생성 (해당 variant만 포함) */
 function _createVariantNodeData(
   originalNodeData: FigmaNodeData,
@@ -195,6 +256,10 @@ export default function TestPage() {
         const doc = fixture.data.info.document as any;
         const isComponentSet = doc.type === "COMPONENT_SET";
 
+        // SLOT props에 대한 mockup 생성
+        const propDefinitions = compiler.getPropsDefinition();
+        const slotMockups = createSlotMockups(propDefinitions);
+
         if (isComponentSet) {
           // Component Set: 모든 variant 렌더링
           const variants = doc.children || [];
@@ -226,7 +291,7 @@ export default function TestPage() {
                     >
                       {variant.name}
                     </div>
-                    <Component {...props} />
+                    <Component {...props} {...slotMockups} />
                   </div>
                 );
               })}
@@ -236,7 +301,7 @@ export default function TestPage() {
           // 일반 컴포넌트: 기본 렌더링
           container.innerHTML = "";
           const root = createRoot(container);
-          root.render(<Component />);
+          root.render(<Component {...slotMockups} />);
         }
 
         // Tailwind 전략일 때 twind로 클래스 처리
