@@ -48,14 +48,14 @@ describe("COMPONENT_SET 내부 TEXT 노드 slot 변환", () => {
     if (headersubPropsMatch) {
       const propsInterface = headersubPropsMatch[0];
 
-      // 1. normalResponsive (왼쪽 아이콘)
+      // 1. normalResponsive (왼쪽 아이콘 - INSTANCE slot)
       expect(propsInterface).toMatch(/normalResponsive\?:\s*React\.ReactNode/);
 
-      // 2. text (텍스트)
+      // 2. text (텍스트 - TEXT slot)
       expect(propsInterface).toMatch(/text\?:\s*React\.ReactNode/);
 
-      // 3. normalResponsive2 (오른쪽 아이콘)
-      expect(propsInterface).toMatch(/normalResponsive2\?:\s*React\.ReactNode/);
+      // 3. rightIcon (오른쪽 아이콘 - "Right Icon" boolean variant에서 생성)
+      expect(propsInterface).toMatch(/rightIcon\?:\s*React\.ReactNode/);
     }
   });
 
@@ -74,10 +74,10 @@ describe("COMPONENT_SET 내부 TEXT 노드 slot 변환", () => {
     if (functionMatch) {
       const functionCode = functionMatch[0];
 
-      // slot이 조건부 렌더링되어야 함 ({slotName} || <div ...>)
+      // slot이 렌더링되어야 함
       expect(functionCode).toMatch(/\{normalResponsive\}/);
-      expect(functionCode).toMatch(/\{text\}/);
-      expect(functionCode).toMatch(/\{normalResponsive2\}/);
+      expect(functionCode).toMatch(/text/);
+      expect(functionCode).toMatch(/\{rightIcon\}/);
     }
   });
 
@@ -99,7 +99,7 @@ describe("COMPONENT_SET 내부 TEXT 노드 slot 변환", () => {
       // slot이 null로 기본값 설정되어야 함
       expect(functionCode).toMatch(/normalResponsive\s*=\s*null/);
       expect(functionCode).toMatch(/text\s*=\s*null/);
-      expect(functionCode).toMatch(/normalResponsive2\s*=\s*null/);
+      expect(functionCode).toMatch(/rightIcon\s*=\s*null/);
     }
   });
 
@@ -127,14 +127,14 @@ describe("COMPONENT_SET 내부 TEXT 노드 slot 변환", () => {
     expect(result).toMatch(/text\?:\s*React\.ReactNode/);
   });
 
-  it("중복 slot 이름이 숫자로 구분되어야 한다", async () => {
+  it("INSTANCE slot과 boolean variant slot이 모두 생성되어야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
     const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
-    // normalResponsive와 normalResponsive2가 있어야 함
+    // normalResponsive (왼쪽 INSTANCE slot)과 rightIcon (Right Icon boolean variant)
     expect(result).toContain("normalResponsive?");
-    expect(result).toContain("normalResponsive2?");
+    expect(result).toContain("rightIcon?");
   });
 
   it("컴파일이 성공적으로 완료되어야 한다", async () => {

@@ -130,24 +130,15 @@ function parseVariantProps(variantName: string): Record<string, any> {
 
 /**
  * SLOT props에 대한 목업 엘리먼트 생성
- * App.tsx와 동일한 로직 - mockupSvg가 있으면 SVG 렌더링, 없으면 점선 박스
+ * 테스트 페이지에서는 모든 slot을 점선 플레이스홀더로 표시 (명확한 slot 식별을 위해)
  */
 function createSlotMockup(prop: PropDefinition): React.ReactNode {
   const slotInfo = prop.slotInfo;
 
-  // mockupSvg가 있으면 SVG 렌더링 (App.tsx와 동일)
-  if (slotInfo?.mockupSvg) {
-    return React.createElement("div", {
-      key: `slot-mockup-${prop.name}`,
-      dangerouslySetInnerHTML: { __html: slotInfo.mockupSvg },
-      style: { display: "inline-flex" },
-    });
-  }
-
-  // 실제 크기로 반투명 + 점선 placeholder
+  // 테스트 페이지에서는 모든 slot을 동일한 점선 플레이스홀더로 표시
+  // (mockupSvg 무시 - 명확한 slot 식별을 위해)
+  // 텍스트가 잘 보이도록 auto 크기 사용
   const componentName = slotInfo?.componentName || prop.name;
-  const width = slotInfo?.width;
-  const height = slotInfo?.height;
 
   return React.createElement(
     "div",
@@ -157,17 +148,14 @@ function createSlotMockup(prop: PropDefinition): React.ReactNode {
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        width: width ? `${width}px` : "auto",
-        height: height ? `${height}px` : "auto",
-        minWidth: width ? undefined : "60px",
-        minHeight: height ? undefined : "24px",
-        padding: width && height ? undefined : "8px 12px",
+        padding: "4px 8px",
         border: "1px dashed rgba(0, 120, 212, 0.5)",
         borderRadius: "4px",
         backgroundColor: "rgba(0, 120, 212, 0.08)",
         color: "rgba(0, 120, 212, 0.6)",
         fontSize: "11px",
         fontWeight: 500,
+        whiteSpace: "nowrap" as const,
         boxSizing: "border-box" as const,
       },
     },
@@ -307,62 +295,15 @@ export default function TestPage() {
         // 플러그인과 동일하게 단일 컴포넌트만 렌더링 (Props Control 값 사용)
         rootRef.current.render(<Component {...initialValues} />);
 
-        // auto scale: 컴포넌트가 renderBox에 맞게 축소되도록 스케일 조정
+        // 테스트 페이지용: 큰 gap 값을 가진 요소의 gap을 조정하여 모든 slot이 보이게 함
         setTimeout(() => {
-          const renderedChild = container.firstElementChild as HTMLElement;
-          if (!renderedChild) return;
-
-          // 실제 컨텐츠 크기 계산: flexbox의 자식들 + gap 값 포함
-          const calculateActualWidth = (el: HTMLElement): number => {
+          container.querySelectorAll('*').forEach((el) => {
             const style = getComputedStyle(el);
-            const display = style.display;
-
-            // flex container인 경우 자식들의 실제 크기 + gap 계산
-            if (display === 'flex' || display === 'inline-flex') {
-              const gap = parseInt(style.gap, 10) || 0;
-              const flexDirection = style.flexDirection;
-              const children = Array.from(el.children) as HTMLElement[];
-
-              if (flexDirection === 'row' || flexDirection === 'row-reverse') {
-                // 가로 방향: 자식 너비 합 + gap
-                let totalWidth = 0;
-                children.forEach((child, i) => {
-                  totalWidth += child.offsetWidth;
-                  if (i < children.length - 1) totalWidth += gap;
-                });
-                // padding 추가
-                totalWidth += parseInt(style.paddingLeft, 10) || 0;
-                totalWidth += parseInt(style.paddingRight, 10) || 0;
-                return Math.max(totalWidth, el.offsetWidth);
-              }
+            const gapValue = parseInt(style.gap, 10);
+            if (gapValue > 100) {
+              (el as HTMLElement).style.gap = '16px';
             }
-
-            // 재귀적으로 자식 탐색
-            let maxChildWidth = el.offsetWidth;
-            Array.from(el.children).forEach((child) => {
-              const childWidth = calculateActualWidth(child as HTMLElement);
-              maxChildWidth = Math.max(maxChildWidth, childWidth);
-            });
-
-            return maxChildWidth;
-          };
-
-          const contentWidth = calculateActualWidth(renderedChild);
-          const contentHeight = renderedChild.offsetHeight;
-
-          const containerWidth = container.clientWidth;
-          const containerHeight = container.clientHeight;
-
-          if (contentWidth > 0 && contentHeight > 0) {
-            const scaleX = containerWidth / contentWidth;
-            const scaleY = containerHeight / contentHeight;
-            const scale = Math.min(scaleX, scaleY, 1); // 최대 1 (확대하지 않음)
-
-            if (scale < 1) {
-              renderedChild.style.transform = `scale(${scale})`;
-              renderedChild.style.transformOrigin = 'top left';
-            }
-          }
+          });
         }, 100);
 
         // Tailwind 전략일 때 twind로 클래스 처리
@@ -925,9 +866,10 @@ const renderBox = css`
   background: white;
   border-radius: 0 0 6px 6px;
   padding: 16px;
-  overflow: hidden;
+  overflow: visible;
 
-  /* auto scale로 컴포넌트가 축소되어 전체가 보이게 함 */
+  /* 컴파일된 컴포넌트가 잘리지 않도록 overflow: visible 설정 */
+  /* 큰 gap으로 인해 요소가 밀려나도 보이게 함 */
 `;
 
 const propsControlSection = css`

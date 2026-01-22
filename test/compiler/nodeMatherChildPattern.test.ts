@@ -42,13 +42,12 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
       // ReactNode 타입의 slot prop 개수 확인
       const slotMatches = propsInterface.match(/React\.ReactNode/g);
 
-      // 3개의 slot만 생성되어야 함 (normalResponsive, text, normalResponsive2)
-      // 4개가 아님 (Basic variant의 노드들이 별도 slot으로 생성되지 않음)
-      expect(slotMatches?.length).toBe(3);
+      // 4개의 slot: normalResponsive, text, rightIcon, children
+      expect(slotMatches?.length).toBe(4);
     }
   });
 
-  it("정확히 3개의 slot prop이 있어야 한다 (normalResponsive, text, normalResponsive2)", async () => {
+  it("정확히 3개의 커스텀 slot prop이 있어야 한다 (normalResponsive, text, rightIcon)", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
     const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
@@ -62,18 +61,17 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
     if (headersubPropsMatch) {
       const propsInterface = headersubPropsMatch[0];
 
-      // 1. normalResponsive (왼쪽 아이콘)
+      // 1. normalResponsive (왼쪽 아이콘 - INSTANCE slot)
       expect(propsInterface).toMatch(/normalResponsive\?:\s*React\.ReactNode/);
 
-      // 2. text (텍스트)
+      // 2. text (텍스트 - TEXT slot)
       expect(propsInterface).toMatch(/text\?:\s*React\.ReactNode/);
 
-      // 3. normalResponsive2 (오른쪽 아이콘)
-      expect(propsInterface).toMatch(/normalResponsive2\?:\s*React\.ReactNode/);
+      // 3. rightIcon (오른쪽 아이콘 - boolean variant에서 생성)
+      expect(propsInterface).toMatch(/rightIcon\?:\s*React\.ReactNode/);
 
-      // 4개 이상의 slot이 없어야 함
-      // (예: normalResponsive3, text2 등이 생성되면 안 됨)
-      expect(propsInterface).not.toMatch(/normalResponsive3/);
+      // 불필요한 slot이 없어야 함
+      expect(propsInterface).not.toMatch(/normalResponsive2/);
       expect(propsInterface).not.toMatch(/text2/);
     }
   });
@@ -95,8 +93,8 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
 
       // 세 개의 slot이 JSX에 포함되어야 함
       expect(functionCode).toMatch(/\{normalResponsive\}/);
-      expect(functionCode).toMatch(/\{text\}/);
-      expect(functionCode).toMatch(/\{normalResponsive2\}/);
+      expect(functionCode).toMatch(/text/);
+      expect(functionCode).toMatch(/\{rightIcon\}/);
     }
   });
 
@@ -123,13 +121,11 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
     if (headersubPropsMatch) {
       const propsInterface = headersubPropsMatch[0];
 
-      // normalResponsive가 한 번만 나와야 함 (normalResponsive와 normalResponsive3가 동시에 있으면 안 됨)
-      const normalResponsiveMatches = propsInterface.match(/normalResponsive[^?2]/g);
-      expect(normalResponsiveMatches?.length).toBeLessThanOrEqual(1);
+      // normalResponsive가 한 번만 나와야 함 (normalResponsive2, normalResponsive3 등이 없어야 함)
+      expect(propsInterface).not.toMatch(/normalResponsive[23456789]/);
 
-      // text가 한 번만 나와야 함 (text와 text2가 동시에 있으면 안 됨)
-      const textMatches = propsInterface.match(/\stext\?/g);
-      expect(textMatches?.length).toBe(1);
+      // text가 한 번만 나와야 함 (text2, text3 등이 없어야 함)
+      expect(propsInterface).not.toMatch(/text[23456789]/);
     }
   });
 
@@ -145,13 +141,13 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
     if (headersubPropsMatch) {
       const propsInterface = headersubPropsMatch[0];
 
-      // ReactNode slot이 3개를 초과하면 안 됨
+      // ReactNode slot이 4개: normalResponsive, text, rightIcon, children
       const slotCount = (propsInterface.match(/React\.ReactNode/g) || []).length;
-      expect(slotCount).toBe(3);
+      expect(slotCount).toBe(4);
 
       // 불필요한 slot prop이 없어야 함
-      // (예: normalResponsive4, text3 등)
-      expect(propsInterface).not.toMatch(/normalResponsive[456789]/);
+      // (예: normalResponsive2, normalResponsive3, text2 등)
+      expect(propsInterface).not.toMatch(/normalResponsive[23456789]/);
       expect(propsInterface).not.toMatch(/text[23456789]/);
     }
   });

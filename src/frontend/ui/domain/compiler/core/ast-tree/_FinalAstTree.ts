@@ -578,6 +578,55 @@ class _FinalAstTree {
       switch (node.type) {
         case "TEXT": {
           node.semanticRole = "text";
+
+          // variant 간 TEXT characters 비교 (slot 여부 결정)
+          const mergedNodes = node.metaData.mergedNode as Array<{
+            id: string;
+            variantName?: string | null;
+          }> | undefined;
+
+          // COMPONENT_SET의 전체 variant 개수 확인
+          const originalDocument = this.specDataManager.getDocument();
+          const totalVariantCount = originalDocument?.type === "COMPONENT_SET"
+            ? originalDocument.children?.length ?? 0
+            : 0;
+
+          if (mergedNodes && mergedNodes.length >= 1) {
+            // TEXT가 일부 variant에만 존재하는 경우 (예: 3개 variant 중 2개만 TEXT 있음)
+            if (totalVariantCount > 0 && mergedNodes.length < totalVariantCount) {
+              node.metaData.shouldBeTextSlot = true;
+            }
+
+            // 병합된 노드가 2개 이상인 경우: 각 variant의 characters 비교
+            if (mergedNodes.length > 1 && !node.metaData.shouldBeTextSlot) {
+              let firstCharacters: string | undefined | null = undefined;
+              let allSame = true;
+              let hasMissing = false;
+
+              for (const merged of mergedNodes) {
+                const textSpec = this.specDataManager.getSpecById(merged.id);
+                const characters = textSpec && "characters" in textSpec
+                  ? (textSpec as any).characters
+                  : null;
+
+                if (characters === null || characters === undefined) {
+                  hasMissing = true;
+                }
+
+                if (firstCharacters === undefined) {
+                  firstCharacters = characters;
+                } else if (characters !== firstCharacters) {
+                  allSame = false;
+                }
+              }
+
+              // variant 간 TEXT가 다르거나 일부에 없으면 slot으로 표시
+              if (!allSame || hasMissing) {
+                node.metaData.shouldBeTextSlot = true;
+              }
+            }
+          }
+
           // TEXT 노드의 characters 저장 (고정 텍스트용)
           const textSpec = this.specDataManager.getSpecById(node.id);
           if (textSpec && "characters" in textSpec) {
@@ -972,8 +1021,14 @@ class _FinalAstTree {
         // BOOLEAN 타입 처리
         if (value.type === "BOOLEAN") {
           // VARIANT에서 변환된 BOOLEAN (True/False VARIANT)은 slot으로 변환하지 않음
-          // isExposedInstance 기반 slot 처리가 있으므로 VARIANT boolean은 제외
+          // 단, icon이 포함된 prop 이름은 slot 후보로 유지 (아이콘은 교체 패턴이 일반적)
           if (value.variantOptions) {
+            // icon 관련 prop은 slot 후보로 유지
+            const lowerKey = key.toLowerCase();
+            if (lowerKey.includes("icon")) {
+              return !this._isOnlyStyleChangeByBoolean(astTree, key);
+            }
+            // 그 외 True/False VARIANT는 visibility toggle이므로 slot이 아님
             return false;
           }
           // 원본 BOOLEAN은 스타일만 변경하는 경우가 아니면 slot 후보
@@ -2543,18 +2598,10 @@ class _FinalAstTree {
           const info = componentIdToInfo.get(componentId)!;
 
           const isArraySlot = arraySlotInstanceIds.has(node.id);
-          // isExposedInstance: true 또는 exposedInstances 배열이 있는 경우
-          const isExposedInstance =
-            (spec as any)?.isExposedInstance === true ||
-            ((spec as any)?.exposedInstances?.length > 0);
 
           // slot으로 처리해야 하는 경우:
-          // 1. COMPONENT_SET 루트이고 ArraySlot이 아닌 단일 INSTANCE (커스터마이징 가능)
-          // 2. isExposedInstance: true 또는 exposedInstances가 있는 INSTANCE
-          //    (Figma에서 명시적으로 노출된 인스턴스)
-          //    - isExposedInstance는 ArraySlot 검사를 무시하고 항상 slot으로 처리
-          const shouldBeSlot =
-            (isComponentSetRoot && !isArraySlot) || isExposedInstance;
+          // COMPONENT_SET 루트이고 ArraySlot이 아닌 INSTANCE (커스터마이징 가능)
+          const shouldBeSlot = isComponentSetRoot && !isArraySlot;
 
           if (shouldBeSlot) {
             // slot 이름 생성 (중복 시 번호 추가)
@@ -2631,9 +2678,10 @@ class _FinalAstTree {
         }
       }
 
-      // TEXT 노드를 slot으로 변환 (COMPONENT_SET 내부의 TEXT 노드)
-      // - isExposedInstance 체크 없이 COMPONENT_SET 내부의 TEXT 노드는 모두 slot으로 처리
-      if (isComponentSetRoot && node.type === "TEXT") {
+      // TEXT 노드를 slot으로 변환 (variant 간 TEXT가 다르거나 일부에 없는 경우)
+      // - shouldBeTextSlot 플래그가 있는 TEXT만 slot으로 변환
+      // - 모든 variant에서 동일한 TEXT는 하드코딩 유지
+      if (isComponentSetRoot && node.type === "TEXT" && node.metaData?.shouldBeTextSlot) {
         // slot 이름 생성: TEXT 노드의 name을 camelCase로 변환
         let baseSlotName = toCamelCase(node.name) || "text";
         let slotName = baseSlotName;
@@ -2689,6 +2737,12 @@ class _FinalAstTree {
 
     const collectInstances = (node: FinalAstTree): void => {
       if (node.type === "INSTANCE") {
+        // 이미 slot으로 처리된 INSTANCE는 ArraySlot 카운트에서 제외
+        // (boolean variant에 의해 제어되는 INSTANCE 등)
+        if ((node as any).isSlot) {
+          return;
+        }
+
         const spec = this.specDataManager.getSpecById(node.id);
         const componentId = (spec as any)?.componentId;
 

@@ -99,10 +99,18 @@ class NodeMatcher {
     // 패턴이 완전히 동일하면 true
     if (patternA === patternB) return true;
 
-    // 한 패턴이 다른 패턴의 prefix인 경우 true (variant간 자식 수가 다른 경우 허용)
-    // 예: "INSTANCE-TEXT-INSTANCE" vs "INSTANCE-TEXT" → "INSTANCE-TEXT"가 prefix이므로 true
-    if (patternA.startsWith(patternB) || patternB.startsWith(patternA)) {
-      return true;
+    // 길이가 같으면 true (원본 로직)
+    if (patternA.length === patternB.length) return true;
+
+    // prefix 매칭: 첫 번째 요소가 같고, 한쪽이 다른 쪽의 prefix일 때만
+    // 예: "INSTANCE-TEXT" vs "INSTANCE-TEXT-INSTANCE" → 매칭
+    // 예: "TEXT" vs "INSTANCE-TEXT" → 첫 번째 요소 다름 → 매칭 안함
+    const firstA = patternA.split("-")[0];
+    const firstB = patternB.split("-")[0];
+    if (firstA && firstB && firstA === firstB) {
+      if (patternA.startsWith(patternB) || patternB.startsWith(patternA)) {
+        return true;
+      }
     }
 
     return false;
