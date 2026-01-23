@@ -258,6 +258,23 @@ class SpecDataManager {
   }
 
   /**
+   * INSTANCE ID로 첫 번째 매칭되는 Vector SVG를 반환
+   * mergeInstanceVectorSvgs의 fallback으로 사용 (absoluteBoundingBox가 없는 경우)
+   */
+  public getFirstVectorSvgByInstanceId(instanceId: string): string | undefined {
+    const vectorSvgs = this.spec.vectorSvgs;
+    if (!vectorSvgs) return undefined;
+
+    const prefix = `I${instanceId};`;
+    for (const [nodeId, svg] of Object.entries(vectorSvgs)) {
+      if (nodeId.startsWith(prefix)) {
+        return svg;
+      }
+    }
+    return undefined;
+  }
+
+  /**
    * dependencies를 componentSetId 기준으로 그룹핑합니다.
    * 같은 ComponentSet의 variants는 하나의 React 컴포넌트로 컴파일됩니다.
    */

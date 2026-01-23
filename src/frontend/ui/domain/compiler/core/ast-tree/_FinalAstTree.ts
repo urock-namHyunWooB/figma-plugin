@@ -566,10 +566,27 @@ class _FinalAstTree {
 
       if (node.parent === null) {
         node.semanticRole = isButtonComponent ? "button" : "root";
-        // 루트 노드에도 vectorSvg가 있을 수 있음 (의존 컴포넌트가 아이콘인 경우)
-        const vectorSvg = this.specDataManager.getVectorSvgByNodeId(node.id);
-        if (vectorSvg) {
-          node.metaData.vectorSvg = vectorSvg;
+
+        // 루트 노드(dependency 컴포넌트)에 _variantSvgs가 있으면 vectorSvgs 설정
+        // COMPONENT_SET의 variant들이 서로 다른 아이콘(INSTANCE_SWAP)을 가질 때 사용
+        const variantSvgs = (this.specDataManager.getSpec() as any)
+          ._variantSvgs;
+        if (variantSvgs && Object.keys(variantSvgs).length > 1) {
+          const uniqueSvgs = new Set(Object.values(variantSvgs));
+          if (uniqueSvgs.size > 1) {
+            // variant별로 다른 SVG가 있으면 vectorSvgs로 저장
+            node.metaData.vectorSvgs = variantSvgs;
+            // 기본값으로 첫 번째 SVG도 저장 (fallback용)
+            node.metaData.vectorSvg = Object.values(variantSvgs)[0] as string;
+          }
+        }
+
+        // _variantSvgs가 없으면 기존 로직: 루트 노드에도 vectorSvg가 있을 수 있음
+        if (!node.metaData.vectorSvg) {
+          const vectorSvg = this.specDataManager.getVectorSvgByNodeId(node.id);
+          if (vectorSvg) {
+            node.metaData.vectorSvg = vectorSvg;
+          }
         }
         return;
       }
@@ -723,9 +740,18 @@ class _FinalAstTree {
             }
           } else {
             // 단일 노드: 기존 로직
-            const vectorSvg = this.specDataManager.getVectorSvgByNodeId(node.id);
-            if (vectorSvg) {
-              node.metaData.vectorSvg = vectorSvg;
+            // dependency 컴파일 시 _variantSvgs가 있으면 variant별 SVG 사용
+            const variantSvgs = (this.specDataManager.getSpec() as any)._variantSvgs;
+            if (variantSvgs && Object.keys(variantSvgs).length > 1) {
+              // variant별로 다른 SVG가 있으면 map으로 저장
+              node.metaData.vectorSvgs = variantSvgs;
+              // 기본값으로 첫 번째 SVG도 저장 (fallback용)
+              node.metaData.vectorSvg = Object.values(variantSvgs)[0] as string;
+            } else {
+              const vectorSvg = this.specDataManager.getVectorSvgByNodeId(node.id);
+              if (vectorSvg) {
+                node.metaData.vectorSvg = vectorSvg;
+              }
             }
           }
           break;
@@ -2819,6 +2845,10 @@ class _FinalAstTree {
           const props: Record<string, string> = {};
 
           for (const [key, value] of Object.entries(componentProperties)) {
+            const propType = (value as any)?.type;
+            // INSTANCE_SWAP props는 컴포넌트 참조 ID이므로 JSX props에서 제외
+            if (propType === "INSTANCE_SWAP") continue;
+
             const propValue = (value as any)?.value;
             if (propValue !== undefined) {
               const propName = toCamelCase(key);

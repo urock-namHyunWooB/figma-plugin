@@ -169,6 +169,24 @@ class DependencyManager {
         instancesByComponentId
       );
 
+      // 같은 COMPONENT_SET의 모든 variant에서 SVG 수집 (variant별 다른 SVG 지원)
+      // INSTANCE_SWAP으로 인해 각 variant가 서로 다른 아이콘을 가질 수 있음
+      if (group.variants.length > 1) {
+        const allVariantSvgs = this.variantEnrichManager.collectAllVariantSvgs(
+          group.variants,
+          instancesByComponentId
+        );
+
+        // 서로 다른 SVG가 있으면 _variantSvgs에 저장 (variant name을 키로)
+        // FinalAstTree에서 이를 사용하여 조건부 렌더링
+        if (Object.keys(allVariantSvgs).length > 1) {
+          const uniqueSvgs = new Set(Object.values(allVariantSvgs));
+          if (uniqueSvgs.size > 1) {
+            (enrichedVariant as any)._variantSvgs = allVariantSvgs;
+          }
+        }
+      }
+
       // 모든 INSTANCE에서 오버라이드 가능한 prop 수집
       const overrideableProps = this._collectAllOverrideableProps(
         group.variants,
@@ -339,10 +357,14 @@ class DependencyManager {
     // 이미 사용된 모든 변수명 추적 (메인 + 의존 컴포넌트)
     const usedVariableNames = new Set(mainVariableNames);
 
+    // 메인 컴포넌트의 타입명 수집 (중복 방지용)
+    const mainTypeNames = this._extractTypeNames(mainCodeWithoutImports);
+    const usedTypeNames = new Set(mainTypeNames);
+
     // 이미 추가된 컴포넌트 이름 추적 (중복 방지)
     const addedComponentNames = new Set<string>();
 
-    // 2. 의존 컴포넌트들 (import 제거, export 제거, 변수명 충돌 해결)
+    // 2. 의존 컴포넌트들 (import 제거, export 제거, 변수명/타입 충돌 해결)
     for (const dep of Object.values(result.dependencies)) {
       // INSTANCE 루트인 경우, 루트가 참조하는 componentId의 의존성은 스킵
       if (
@@ -377,6 +399,12 @@ class DependencyManager {
         depCodeWithoutImports,
         usedVariableNames,
         dep.componentName
+      );
+
+      // 타입 중복 해결 (이미 선언된 타입은 제거)
+      depCodeWithoutImports = this._resolveTypeConflicts(
+        depCodeWithoutImports,
+        usedTypeNames
       );
 
       // 이미 주석이 있으면 추가하지 않음 (nested dependency에서 이미 추가된 경우)
@@ -449,6 +477,50 @@ class DependencyManager {
     }
 
     return variables;
+  }
+
+  /**
+   * 코드에서 export type 선언 추출
+   * 예: export type Size = "Large" | "Small";
+   */
+  private _extractTypeNames(code: string): string[] {
+    const typeRegex = /export\s+type\s+(\w+)\s*=/g;
+    const types: string[] = [];
+
+    let match;
+    while ((match = typeRegex.exec(code)) !== null) {
+      types.push(match[1]);
+    }
+
+    return types;
+  }
+
+  /**
+   * 의존 컴포넌트의 타입 중복 해결
+   * 동일한 타입이 이미 선언되었으면 해당 export type 라인 제거
+   */
+  private _resolveTypeConflicts(
+    code: string,
+    usedTypeNames: Set<string>
+  ): string {
+    const depTypes = this._extractTypeNames(code);
+    let resolvedCode = code;
+
+    for (const typeName of depTypes) {
+      if (usedTypeNames.has(typeName)) {
+        // 이미 선언된 타입: export type 라인 제거
+        // 예: export type CustomName = "Blank"; 전체 라인 제거
+        const typeLineRegex = new RegExp(
+          `^export\\s+type\\s+${typeName}\\s*=\\s*[^;]+;\\s*$`,
+          "gm"
+        );
+        resolvedCode = resolvedCode.replace(typeLineRegex, "");
+      } else {
+        usedTypeNames.add(typeName);
+      }
+    }
+
+    return resolvedCode;
   }
 
   /**

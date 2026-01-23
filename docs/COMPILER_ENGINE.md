@@ -3114,4 +3114,299 @@ function Headerroot({ leftIcon, text, rightIcon }: HeaderrootProps) {
 
 ---
 
-_Last Updated: 2026-01-23_
+### 25. SVG 아이콘 색상이 거의 흰색으로 렌더링되는 문제
+
+#### 문제
+
+SVG 아이콘이 검은색 대신 거의 흰색(`rgb(230, 237, 243)`)으로 렌더링됨.
+
+```
+Figma 원본: 검은색 SVG 아이콘 (#000000)
+잘못된 렌더링: 거의 흰색 (rgb(230, 237, 243))
+```
+
+브라우저 DevTools 확인 결과:
+```html
+<svg fill="currentColor" ...>
+  <path fill="currentColor"/>
+</svg>
+```
+
+**문제 원인**: `fill="currentColor"`는 부모 요소의 `color` CSS 속성 값을 사용하는데, 부모에 `color`가 없으면 브라우저 기본값(User Agent Stylesheet)을 사용함.
+
+#### 원인
+
+**`SvgToJsx.ts`에서 모든 fill 속성을 `currentColor`로 변환**:
+
+```typescript
+// SvgToJsx.ts (기존 코드)
+if (attrName === "fill" && this._isColorValue(attrValue)) {
+  finalValue = "currentColor";  // 모든 색상을 currentColor로 변환
+}
+```
+
+**렌더링 문제**:
+1. SVG의 `fill="currentColor"` 설정됨
+2. 부모 컴포넌트에 `color` CSS 속성 없음
+3. 브라우저가 기본 색상 적용 → `rgb(230, 237, 243)` (거의 흰색)
+
+이 로직은 **이슈 #4 (State별 SVG 아이콘 색상 다름)**를 해결하기 위해 추가된 것이었지만:
+- State별로 다른 아이콘 색상이 필요한 경우: 부모에 `color` CSS 추가 (이슈 #4의 해결책)
+- State별로 같은 아이콘 색상인 경우: 부모에 `color` CSS 없음 → 렌더링 문제 발생
+
+#### 해결
+
+**원본 fill 색상을 유지하도록 수정**:
+
+`currentColor` 변환을 제거하고 Figma 원본의 fill 색상을 그대로 사용.
+
+**수정 파일**: `src/frontend/ui/domain/compiler/core/react-generator/generate-component/jsx-tree/SvgToJsx.ts`
+
+```typescript
+// line 324-327
+if (attrName === "fill" && attrValue === "currentColor") {
+  finalValue = "currentColor";
+} else if (attrName === "fill" && this._isColorValue(attrValue)) {
+  finalValue = attrValue;  // 원본 색상 유지
+}
+```
+
+**핵심 변경사항**:
+1. `fill="currentColor"`인 경우만 그대로 유지
+2. 다른 색상 값(`#000000`, `rgb(0,0,0)` 등)은 원본 그대로 유지
+3. 부모에 `color` CSS가 없어도 올바르게 렌더링됨
+
+#### 결과
+
+```tsx
+// 생성된 코드
+<svg viewBox="0 0 24 24" fill="none">
+  <path d="M..." fill="#000000"/>  {/* 원본 색상 유지 */}
+</svg>
+```
+
+브라우저 렌더링:
+| 항목 | 기존 | 수정 후 | 상태 |
+|------|------|---------|------|
+| SVG fill | `currentColor` → `rgb(230, 237, 243)` | `#000000` | ✓ |
+| 부모 color CSS | 필요 (없으면 렌더링 문제) | 불필요 | ✓ |
+| 아이콘 색상 | 거의 흰색 | 검은색 | ✓ |
+
+#### 테스트
+
+`test/compiler/svgToJsx.test.ts`
+
+```typescript
+test("단일 색상 SVG는 원래 색상을 유지한다", () => {
+  const svg = '<svg><path d="M0 0" fill="#0050FF"/></svg>';
+  const result = svgToJsx.convert(svg);
+  const code = printJsx(result);
+
+  // 원래 색상 유지 (currentColor는 부모에 color CSS가 없으면 렌더링 문제 발생)
+  expect(code).toContain('fill="#0050FF"');
+});
+```
+
+---
+
+### 26. COMPONENT_SET variant별 SVG 매핑 문제
+
+#### 문제
+
+동일 COMPONENT_SET의 variant들이 `INSTANCE_SWAP`으로 다른 SVG 아이콘을 사용하는 경우, 모든 variant가 첫 번째 variant의 SVG만 사용함.
+
+```
+Figma 구조:
+- NormalResponsive (COMPONENT_SET)
+  ├── Size=Normal variant
+  │   └── INSTANCE_SWAP → Arrow Icon (viewBox="0 0 20 16")
+  └── Size=Large variant
+      └── INSTANCE_SWAP → Dotted Square Icon (viewBox="0 0 32 32")
+
+기대: size === "Normal" ? <ArrowSvg/> : <DottedSquareSvg/>
+실제: 모든 variant에서 <ArrowSvg/> 렌더링 (첫 번째 variant만)
+```
+
+#### 원인
+
+**`_FinalAstTree.ts`에서 루트 노드 처리 시 `_variantSvgs` 체크가 실행되지 않음**:
+
+```typescript
+// _FinalAstTree.ts (기존 코드 line 567-588)
+if (isRootDocument) {
+  // 루트 노드 처리
+  // ...
+  return;  // ❌ 여기서 조기 종료 → _variantSvgs 로직에 도달하지 않음
+}
+
+// _variantSvgs 체크 (line 590-612)
+// ❌ 루트 노드는 위에서 return되어 이 로직에 도달하지 않음
+const variantSvgs = this._variantSvgs[node.id];
+if (variantSvgs) {
+  // variant별 SVG 매핑 로직
+}
+```
+
+**`_variantSvgs` 구조**:
+```typescript
+_variantSvgs = {
+  "INSTANCE_ID": {
+    "Size=Normal": "SVG_ID_1",    // Arrow Icon
+    "Size=Large": "SVG_ID_2",     // Dotted Square Icon
+  }
+}
+```
+
+**문제 시나리오**:
+1. `_variantSvgs`에 variant별 SVG 매핑이 올바르게 수집됨
+2. 루트 노드 처리 블록에서 `return`문으로 조기 종료
+3. `_variantSvgs` 체크 로직에 도달하지 않음
+4. `node.metaData.vectorSvgs` 설정되지 않음
+5. 모든 variant가 첫 번째 SVG만 사용
+
+#### 해결
+
+**루트 노드 처리 블록 내에서 `_variantSvgs` 체크 추가**:
+
+**수정 파일**: `src/frontend/ui/domain/compiler/core/ast-tree/_FinalAstTree.ts`
+
+```typescript
+// line 567-588 (루트 노드 처리 블록)
+if (isRootDocument) {
+  // 기존 루트 노드 처리 로직
+  // ...
+
+  // ✅ _variantSvgs 체크 추가
+  const variantSvgs = this._variantSvgs[node.id];
+  if (variantSvgs && Object.keys(variantSvgs).length > 0) {
+    const firstVariantName = Object.keys(variantSvgs)[0];
+    const firstSvgId = variantSvgs[firstVariantName];
+
+    // variant별로 다른 SVG가 있는지 확인
+    const hasDifferentSvgs = Object.values(variantSvgs).some(
+      (svgId) => svgId !== firstSvgId
+    );
+
+    if (hasDifferentSvgs) {
+      // variant별 SVG 매핑 설정
+      node.metaData.vectorSvgs = variantSvgs;
+    } else {
+      // 모든 variant가 같은 SVG 사용 → 단일 SVG
+      node.metaData.vectorSvg = this.specDataManager.getVectorSvg(firstSvgId);
+    }
+  }
+
+  return;
+}
+```
+
+**핵심 변경사항**:
+1. 루트 노드 처리 블록 내에 `_variantSvgs` 체크 로직 추가
+2. variant별로 다른 SVG가 있으면 `node.metaData.vectorSvgs` 설정
+3. 모든 variant가 같은 SVG면 `node.metaData.vectorSvg` 설정 (단일 SVG)
+
+**fallback 로직 추가**:
+
+**수정 파일**: `src/frontend/ui/domain/compiler/manager/VariantEnrichManager.ts`
+
+```typescript
+// variant별 SVG 가져오기 (fallback 지원)
+const svgId = variantSvgs[variantName];
+const svg = this.specDataManager.getVectorSvg(svgId);
+
+if (!svg) {
+  // fallback: 첫 번째 variant의 SVG 사용
+  const firstVariantName = Object.keys(variantSvgs)[0];
+  const firstSvgId = variantSvgs[firstVariantName];
+  svg = this.specDataManager.getVectorSvg(firstSvgId);
+}
+```
+
+**수정 파일**: `src/frontend/ui/domain/compiler/manager/SpecDataManager.ts`
+
+```typescript
+// getFirstVectorSvgByInstanceId 메서드 추가
+public getFirstVectorSvgByInstanceId(instanceId: string): string | undefined {
+  const spec = this.getSpecById(instanceId);
+  if (!spec) return undefined;
+
+  const mainComponentId = spec.mainComponent?.id;
+  if (!mainComponentId) return undefined;
+
+  const mainComponent = this.getSpecById(mainComponentId);
+  if (!mainComponent) return undefined;
+
+  // mainComponent의 첫 번째 VECTOR 자식 찾기
+  const firstVectorId = Object.keys(mainComponent.children || {}).find((childId) => {
+    const child = this.getSpecById(childId);
+    return child?.type === "VECTOR";
+  });
+
+  if (!firstVectorId) return undefined;
+  return this.getVectorSvg(firstVectorId);
+}
+```
+
+#### 결과
+
+```typescript
+// 생성된 코드
+const NormalResponsiveSvgs: Record<
+  NonNullable<NormalResponsiveProps["size"]>,
+  React.ReactNode
+> = {
+  Normal: (
+    <svg viewBox="0 0 20 16" fill="none">
+      <path d="M..." fill="black"/>  {/* Arrow Icon */}
+    </svg>
+  ),
+  Large: (
+    <svg viewBox="0 0 32 32" fill="none">
+      <rect d="M..." fill="black"/>  {/* Dotted Square Icon */}
+    </svg>
+  ),
+};
+
+function NormalResponsive({ size }: NormalResponsiveProps) {
+  return (
+    <div css={NormalResponsiveCss}>
+      {NormalResponsiveSvgs[size]}  {/* size에 따라 다른 SVG 렌더링 */}
+    </div>
+  );
+}
+```
+
+브라우저 렌더링:
+| size | SVG | 상태 |
+|------|-----|------|
+| Normal | Arrow Icon (viewBox="0 0 20 16") | ✓ |
+| Large | Dotted Square Icon (viewBox="0 0 32 32") | ✓ |
+
+#### 테스트
+
+`test/compiler/variantSvg.test.ts`
+
+```typescript
+test("COMPONENT_SET의 다른 variant들이 서로 다른 SVG를 사용해야 한다", async () => {
+  const compiler = new FigmaCompiler(typedefaultRightIcontrueFixture);
+  const code = await compiler.compile();
+
+  expect(code).toContain("NormalResponsive");
+  expect(code).toContain("size");
+
+  // SVG가 있어야 함 (fill="black"으로 원본 색상 유지)
+  expect(code).toContain("<svg");
+  expect(code).toContain('fill="black"');
+
+  // 조건부 SVG 렌더링: size prop에 따라 다른 SVG가 렌더링되어야 함
+  expect(code).toContain('size === "Normal"');
+
+  // 두 개의 서로 다른 SVG가 있어야 함
+  const svgMatches = code.match(/<svg[^>]*viewBox="[^"]+"/g) || [];
+  expect(svgMatches.length).toBeGreaterThanOrEqual(2);
+});
+```
+
+---
+
+_Last Updated: 2026-01-24_

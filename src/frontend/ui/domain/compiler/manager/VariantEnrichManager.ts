@@ -31,9 +31,11 @@ class VariantEnrichManager {
     }
 
     // 첫 번째 인스턴스의 merged SVG 추출
+    // mergeInstanceVectorSvgs가 실패하면 (absoluteBoundingBox 없음) fallback 사용
     const firstInstanceId = instanceIds[0];
     const mergedSvg =
-      this.specDataManager.mergeInstanceVectorSvgs(firstInstanceId);
+      this.specDataManager.mergeInstanceVectorSvgs(firstInstanceId) ||
+      this.specDataManager.getFirstVectorSvgByInstanceId(firstInstanceId);
 
     if (!mergedSvg) {
       return variant;
@@ -48,6 +50,40 @@ class VariantEnrichManager {
         [rootNodeId]: mergedSvg,
       },
     };
+  }
+
+  /**
+   * 모든 variant의 SVG를 수집하여 variant name을 키로 하는 map 생성
+   * COMPONENT_SET의 variant들이 서로 다른 SVG(INSTANCE_SWAP 등)를 가질 때 사용
+   * @returns variant name (예: "Size=Normal")을 키로 하는 SVG map
+   */
+  public collectAllVariantSvgs(
+    variants: FigmaNodeData[],
+    instancesByComponentId: Map<string, string[]>
+  ): Record<string, string> {
+    const svgByVariantName: Record<string, string> = {};
+
+    for (const variant of variants) {
+      const variantName = variant.info.document.name;
+      const componentId = variant.info.document.id;
+
+      // 해당 variant를 참조하는 인스턴스 찾기
+      const instanceIds = instancesByComponentId.get(componentId);
+      if (!instanceIds || instanceIds.length === 0) continue;
+
+      // 첫 번째 인스턴스의 SVG 추출
+      // mergeInstanceVectorSvgs가 실패하면 (absoluteBoundingBox 없음) fallback 사용
+      const firstInstanceId = instanceIds[0];
+      const mergedSvg =
+        this.specDataManager.mergeInstanceVectorSvgs(firstInstanceId) ||
+        this.specDataManager.getFirstVectorSvgByInstanceId(firstInstanceId);
+
+      if (mergedSvg) {
+        svgByVariantName[variantName] = mergedSvg;
+      }
+    }
+
+    return svgByVariantName;
   }
 
   /**

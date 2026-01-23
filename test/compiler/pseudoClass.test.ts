@@ -52,7 +52,7 @@ describe("Pseudo-class 처리", () => {
     }
   });
 
-  test("SVG fill이 currentColor로 변환되어야 한다", async () => {
+  test("SVG fill 색상이 원본 그대로 유지되어야 한다", async () => {
     const compiler = new FigmaCompiler(
       airtableButton as unknown as FigmaNodeData
     );
@@ -60,9 +60,10 @@ describe("Pseudo-class 처리", () => {
 
     expect(code).toBeDefined();
 
-    // SVG path가 있으면 fill="currentColor"가 있어야 함
+    // SVG path가 있으면 원래 fill 색상이 유지되어야 함 (currentColor는 부모 color 의존)
     if (code.includes("<path") && code.includes('fill="')) {
-      expect(code).toMatch(/fill="currentColor"/);
+      // fill="none"이 아닌 색상값이 있어야 함
+      expect(code).toMatch(/fill="(?!none)[^"]+"/);
     }
   });
 });
