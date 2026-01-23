@@ -1511,6 +1511,8 @@ class CreateJsxTree {
   /**
    * ESTree 조건에서 prop 이름과 값 추출
    * props.Size === "Large" → { prop: "size", value: "Large" }
+   * props.rightIcon != null → { prop: "rightIcon", value: "notNull" }
+   * props.rightIcon == null → { prop: "rightIcon", value: "null" }
    */
   private _extractPropAndValue(condition: any): {
     prop: string;
@@ -1520,7 +1522,7 @@ class CreateJsxTree {
       return null;
     }
 
-    // props.X === "value" 형태만 처리
+    // props.X === "value" 형태 처리
     if (
       condition.operator === "===" &&
       condition.left?.type === "MemberExpression" &&
@@ -1537,6 +1539,28 @@ class CreateJsxTree {
         return {
           prop: camelPropName,
           value: String(propValue),
+        };
+      }
+    }
+
+    // props.X != null 또는 props.X == null 형태 처리 (SLOT 조건)
+    if (
+      (condition.operator === "!=" || condition.operator === "==") &&
+      condition.left?.type === "MemberExpression" &&
+      condition.left.object?.name === "props" &&
+      condition.right?.type === "NullLiteral"
+    ) {
+      const propName = condition.left.property?.name;
+
+      if (propName) {
+        // prop 이름을 camelCase로 변환
+        const camelPropName =
+          propName.charAt(0).toLowerCase() + propName.slice(1);
+        // != null → "notNull", == null → "null"
+        const value = condition.operator === "!=" ? "notNull" : "null";
+        return {
+          prop: camelPropName,
+          value: value,
         };
       }
     }

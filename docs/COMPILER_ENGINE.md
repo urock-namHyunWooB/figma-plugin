@@ -2890,4 +2890,228 @@ function Headersub({ normalResponsive, text, normalResponsive2 }: HeadersubProps
 
 ---
 
-_Last Updated: 2026-01-21_
+### 24. SLOT prop 조건부 스타일 누락 문제
+
+#### 문제
+
+SLOT prop의 존재 여부에 따른 조건부 스타일이 렌더링되지 않음. Headerroot 컴포넌트에서 `rightIcon` slot의 유무에 따라 다른 padding, gap, justify-content, align-items가 적용되어야 하는데 모두 무시됨.
+
+```typescript
+// 기대: rightIcon이 있을 때와 없을 때 다른 레이아웃
+interface HeaderrootProps {
+  leftIcon?: React.ReactNode;
+  text?: React.ReactNode;
+  rightIcon?: React.ReactNode;  // optional slot
+}
+
+// 문제: rightIcon 유무와 관계없이 동일한 스타일 적용
+<div css={HeaderrootCss}>  {/* padding, gap 등이 누락됨 */}
+  {leftIcon}
+  {text}
+  {rightIcon}
+</div>
+```
+
+#### 원인
+
+1. **`_FinalAstTree.ts`의 `_removeSlotPropsDynamicStyles` 함수**
+   - SLOT 변환 시 해당 prop과 연관된 모든 dynamic styles를 완전히 삭제
+   - Boolean prop에서 SLOT으로 변환될 때 조건부 스타일이 제거됨
+
+2. **Emotion CSS 템플릿 리터럴의 객체 보간 문제**
+   - JavaScript 객체를 CSS 템플릿 리터럴에 직접 보간하면 `[object Object]`로 변환됨
+   - `css\`${dynamicStyles}\`` 방식으로는 조건부 스타일을 적용할 수 없음
+
+```typescript
+// 문제가 되는 코드
+const HeaderrootCss = css`
+  ${dynamicStyles}  // { padding: "16px 24px" } → "[object Object]"
+`;
+```
+
+#### 해결
+
+**SLOT prop에 대한 별도 CSS 변수 생성 패턴**:
+
+1. `_FinalAstTree.ts`: `_removeSlotPropsDynamicStyles` → `_convertSlotPropsDynamicStyles`로 변경
+   - 조건을 삭제하지 않고 변환: `props.X === "True"` → `props.X != null`
+   - SLOT prop의 유무를 검사하는 조건으로 변경
+
+2. `GenerateStyles.ts`: SLOT prop용 별도 CSS 변수 생성
+   - `_filterSlotDynamicStyles` 메서드 추가
+   - 각 SLOT prop에 대해 `${ComponentName}With${PropName}Css`, `${ComponentName}Without${PropName}Css` 생성
+
+3. `EmotionStrategy.ts`: CSS 배열로 조건부 스타일 조합
+   - base CSS + SLOT prop별 조건부 CSS를 배열로 결합
+   - `css={[baseCss, prop != null ? withPropCss : withoutPropCss]}`
+
+**수정 파일**: `_FinalAstTree.ts`
+
+```typescript
+private _convertSlotPropsDynamicStyles(node: TempAstTreeNode): void {
+  const slotProps = this._getSlotPropsFromNode(node);
+  if (!slotProps.length) return;
+
+  const slotPropNames = new Set(slotProps.map((p) => p.propName));
+
+  // dynamicStyles에서 slot prop 관련 조건 변환
+  node.dynamicStyles = node.dynamicStyles.map((ds) => {
+    const transformedConditions = ds.conditions.map((cond) => {
+      if (slotPropNames.has(cond.propName) && cond.comparison === "===") {
+        // "True"/"False" 비교를 null 체크로 변환
+        return this._convertSlotCondition(cond);
+      }
+      return cond;
+    });
+
+    return { ...ds, conditions: transformedConditions };
+  });
+}
+
+private _convertSlotCondition(cond: DynamicStyleCondition): DynamicStyleCondition {
+  if (cond.value === "True") {
+    return { ...cond, comparison: "!=", value: "null" };
+  } else if (cond.value === "False") {
+    return { ...cond, comparison: "==", value: "null" };
+  }
+  return cond;
+}
+```
+
+**수정 파일**: `GenerateStyles.ts`
+
+```typescript
+private _createRecordObjects(rootNode: FinalAstTreeNode): ts.VariableStatement[] {
+  const statements: ts.VariableStatement[] = [];
+
+  // SLOT prop dynamic styles 필터링
+  const slotPropDynamicStyles = this._filterSlotDynamicStyles(rootNode);
+
+  // 각 SLOT prop에 대해 별도 CSS 변수 생성
+  for (const [propName, { withStyles, withoutStyles }] of Object.entries(slotPropDynamicStyles)) {
+    const withVarName = `${rootNode.name}With${this._capitalize(propName)}Css`;
+    const withoutVarName = `${rootNode.name}Without${this._capitalize(propName)}Css`;
+
+    statements.push(this._createCssVariable(withVarName, withStyles));
+    statements.push(this._createCssVariable(withoutVarName, withoutStyles));
+  }
+
+  return statements;
+}
+
+private _filterSlotDynamicStyles(node: FinalAstTreeNode) {
+  const result: Record<string, { withStyles: CssStyle; withoutStyles: CssStyle }> = {};
+
+  for (const ds of node.dynamicStyles) {
+    const slotCondition = ds.conditions.find(
+      (c) => c.comparison === "!=" && c.value === "null"
+    );
+
+    if (slotCondition) {
+      if (!result[slotCondition.propName]) {
+        result[slotCondition.propName] = { withStyles: {}, withoutStyles: {} };
+      }
+
+      const isWithCondition = slotCondition.comparison === "!=";
+      const target = isWithCondition
+        ? result[slotCondition.propName].withStyles
+        : result[slotCondition.propName].withoutStyles;
+
+      Object.assign(target, ds.styles);
+    }
+  }
+
+  return result;
+}
+```
+
+**수정 파일**: `EmotionStrategy.ts`
+
+```typescript
+public createStyleAttribute(node: FinalAstTreeNode): ts.JsxAttribute {
+  const baseVarName = `${node.name}Css`;
+
+  // SLOT prop dynamic styles가 있는지 확인
+  const slotPropDynamicStyles = this._getSlotPropDynamicStyles(node);
+
+  if (slotPropDynamicStyles.length === 0) {
+    // 단일 CSS 변수
+    return ts.factory.createJsxAttribute(
+      ts.factory.createIdentifier("css"),
+      ts.factory.createJsxExpression(
+        undefined,
+        ts.factory.createIdentifier(baseVarName)
+      )
+    );
+  }
+
+  // CSS 배열 생성
+  const cssArray = ts.factory.createArrayLiteralExpression([
+    ts.factory.createIdentifier(baseVarName),
+    ...slotPropDynamicStyles.map((propName) =>
+      ts.factory.createConditionalExpression(
+        ts.factory.createBinaryExpression(
+          ts.factory.createIdentifier(propName),
+          ts.SyntaxKind.ExclamationEqualsToken,
+          ts.factory.createNull()
+        ),
+        ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+        ts.factory.createIdentifier(`${node.name}With${this._capitalize(propName)}Css`),
+        ts.factory.createToken(ts.SyntaxKind.ColonToken),
+        ts.factory.createIdentifier(`${node.name}Without${this._capitalize(propName)}Css`)
+      )
+    )
+  ]);
+
+  return ts.factory.createJsxAttribute(
+    ts.factory.createIdentifier("css"),
+    ts.factory.createJsxExpression(undefined, cssArray)
+  );
+}
+```
+
+#### 결과
+
+```typescript
+// 생성된 코드
+const HeaderrootCss = css`
+  display: flex;
+  flex-direction: row;
+`;
+
+const HeaderrootWithRightIconCss = css`
+  padding: 16px 24px;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 245px;
+`;
+
+const HeaderrootWithoutRightIconCss = css`
+  padding: 16px 301px 16px 24px;
+  align-items: center;
+`;
+
+// JSX에서 CSS 배열로 조건부 스타일 적용
+function Headerroot({ leftIcon, text, rightIcon }: HeaderrootProps) {
+  return (
+    <div css={[
+      HeaderrootCss,
+      rightIcon != null
+        ? HeaderrootWithRightIconCss
+        : HeaderrootWithoutRightIconCss,
+    ]}>
+      {leftIcon}
+      {text}
+      {rightIcon}
+    </div>
+  );
+}
+```
+
+#### 테스트
+
+`test/compiler/slotDynamicStyles.test.ts`
+
+---
+
+_Last Updated: 2026-01-23_

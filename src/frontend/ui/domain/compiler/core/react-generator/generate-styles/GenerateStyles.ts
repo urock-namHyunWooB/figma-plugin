@@ -122,8 +122,50 @@ class GenerateStyles {
     const grouped = this._groupDynamicStylesByProp(node.style.dynamic || []);
 
     for (const [propName, variants] of grouped.entries()) {
-      // Boolean prop은 Record 객체를 생성하지 않음 (삼항 연산자로 직접 처리)
       const propDef = this.astTree.props[propName];
+
+      // SLOT prop: 별도의 CSS 변수 두 개 생성 (notNull/null 각각)
+      if (propDef?.type === "SLOT") {
+        const nodeName = this._getNodeBaseName(node);
+        const normalizedNodeName = normalizeName(nodeName);
+        const capitalizedPropName = capitalize(propName);
+
+        // notNull 케이스 CSS
+        const notNullVariant = variants.find(v => v.value === "notNull");
+        if (notNullVariant && Object.keys(notNullVariant.style).length > 0) {
+          const notNullVarName = this._generateUniqueVarName(
+            `${normalizedNodeName}With${capitalizedPropName}Css`
+          );
+          const notNullCss = this._styleObjectToCssString(notNullVariant.style);
+          const notNullTagged = this.kit.createCssTaggedTemplate(notNullCss, []);
+          statements.push(this.kit.createConstVariable(notNullVarName, notNullTagged));
+
+          // AST에 저장
+          if (node.generatedNames) {
+            node.generatedNames.recordVarNames[`${propName}_notNull`] = notNullVarName;
+          }
+        }
+
+        // null 케이스 CSS
+        const nullVariant = variants.find(v => v.value === "null");
+        if (nullVariant && Object.keys(nullVariant.style).length > 0) {
+          const nullVarName = this._generateUniqueVarName(
+            `${normalizedNodeName}Without${capitalizedPropName}Css`
+          );
+          const nullCss = this._styleObjectToCssString(nullVariant.style);
+          const nullTagged = this.kit.createCssTaggedTemplate(nullCss, []);
+          statements.push(this.kit.createConstVariable(nullVarName, nullTagged));
+
+          // AST에 저장
+          if (node.generatedNames) {
+            node.generatedNames.recordVarNames[`${propName}_null`] = nullVarName;
+          }
+        }
+
+        continue;
+      }
+
+      // Boolean prop은 Record 객체를 생성하지 않음 (삼항 연산자로 직접 처리)
       if (propDef?.type === "BOOLEAN") {
         continue;
       }
@@ -228,9 +270,17 @@ class GenerateStyles {
 
     // 1. 파라미터 생성 (dynamic이 있으면 prop 파라미터 추가)
     const params: ts.ParameterDeclaration[] = [];
-    const grouped = hasDynamicStyle
+    let grouped = hasDynamicStyle
       ? this._groupDynamicStylesByProp(node.style.dynamic || [])
       : new Map();
+
+    // BOOLEAN prop 중 모든 variant가 빈 스타일인 경우 제외
+    // (SLOT으로 변환된 prop의 잔여 dynamic style 정리)
+    grouped = this._filterEmptyBooleanDynamicStyles(grouped);
+
+    // SLOT prop은 별도의 CSS 변수로 처리하므로 grouped에서 제외
+    // (CSS 배열 방식으로 JSX에서 조합)
+    grouped = this._filterSlotDynamicStyles(grouped);
 
     // 루트 컴포넌트의 Props 인터페이스 이름 사용 (모든 노드에서 동일)
     // 외부에서 전달받은 componentName 사용 (FigmaCompiler에서 normalizeComponentName으로 정규화됨)
@@ -333,6 +383,7 @@ class GenerateStyles {
       for (const [propName, variants] of grouped.entries()) {
         const propDef = this.astTree.props[propName];
         const isBooleanProp = propDef?.type === "BOOLEAN";
+        // SLOT prop은 이미 _filterSlotDynamicStyles에서 필터링됨
 
         let expr: ts.Expression;
 
@@ -363,6 +414,7 @@ class GenerateStyles {
             falseStyle
           );
         } else {
+          // VARIANT prop: Record 객체에서 인덱싱
           const recordVarName =
             node.generatedNames?.recordVarNames[propName] ||
             `${propName}Styles`;
@@ -543,8 +595,68 @@ class GenerateStyles {
   }
 
   /**
+   * BOOLEAN prop 중 모든 variant가 빈 스타일인 경우 제외
+   * SLOT으로 변환된 prop의 잔여 dynamic style 정리
+   */
+  private _filterEmptyBooleanDynamicStyles(
+    grouped: Map<string, Array<{ value: string; style: Record<string, any> }>>
+  ): Map<string, Array<{ value: string; style: Record<string, any> }>> {
+    const filtered = new Map<
+      string,
+      Array<{ value: string; style: Record<string, any> }>
+    >();
+
+    for (const [propName, variants] of grouped.entries()) {
+      const propDef = this.astTree.props[propName];
+
+      // BOOLEAN prop인 경우, 모든 variant의 스타일이 빈 객체인지 확인
+      if (propDef?.type === "BOOLEAN") {
+        const hasNonEmptyStyle = variants.some(
+          (v) => v.style && Object.keys(v.style).length > 0
+        );
+        // 모든 스타일이 빈 객체면 이 prop은 제외
+        if (!hasNonEmptyStyle) {
+          continue;
+        }
+      }
+
+      filtered.set(propName, variants);
+    }
+
+    return filtered;
+  }
+
+  /**
+   * SLOT prop을 dynamic styles에서 제외
+   * SLOT prop은 별도의 CSS 변수로 생성되어 CSS 배열로 JSX에서 조합됨
+   */
+  private _filterSlotDynamicStyles(
+    grouped: Map<string, Array<{ value: string; style: Record<string, any> }>>
+  ): Map<string, Array<{ value: string; style: Record<string, any> }>> {
+    const filtered = new Map<
+      string,
+      Array<{ value: string; style: Record<string, any> }>
+    >();
+
+    for (const [propName, variants] of grouped.entries()) {
+      const propDef = this.astTree.props[propName];
+
+      // SLOT prop은 제외 (별도 CSS 변수로 처리)
+      if (propDef?.type === "SLOT") {
+        continue;
+      }
+
+      filtered.set(propName, variants);
+    }
+
+    return filtered;
+  }
+
+  /**
    * ESTree 조건에서 prop 이름과 값 추출
    * props.Size === "Large" → { prop: "size", value: "Large" }
+   * props.rightIcon != null → { prop: "rightIcon", value: "notNull" }
+   * props.rightIcon == null → { prop: "rightIcon", value: "null" }
    */
   private _extractPropAndValue(condition: any): {
     prop: string;
@@ -554,7 +666,7 @@ class GenerateStyles {
       return null;
     }
 
-    // props.X === "value" 형태만 처리
+    // props.X === "value" 형태 처리
     if (
       condition.operator === "===" &&
       condition.left?.type === "MemberExpression" &&
@@ -571,6 +683,28 @@ class GenerateStyles {
         return {
           prop: camelPropName,
           value: String(propValue),
+        };
+      }
+    }
+
+    // props.X != null 또는 props.X == null 형태 처리 (SLOT 조건)
+    if (
+      (condition.operator === "!=" || condition.operator === "==") &&
+      condition.left?.type === "MemberExpression" &&
+      condition.left.object?.name === "props" &&
+      condition.right?.type === "NullLiteral"
+    ) {
+      const propName = condition.left.property?.name;
+
+      if (propName) {
+        // prop 이름을 camelCase로 변환
+        const camelPropName =
+          propName.charAt(0).toLowerCase() + propName.slice(1);
+        // != null → "notNull", == null → "null"
+        const value = condition.operator === "!=" ? "notNull" : "null";
+        return {
+          prop: camelPropName,
+          value: value,
         };
       }
     }

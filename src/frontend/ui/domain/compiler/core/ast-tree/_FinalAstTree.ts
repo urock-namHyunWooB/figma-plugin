@@ -1113,14 +1113,21 @@ class _FinalAstTree {
 
         for (const { key: propName } of slotCandidateProps) {
           const patterns = [
+            // 패턴 1: props.propName === true/True
             new RegExp(
               `props\\.${propName}\\s*(===|==)\\s*(true|'True'|"True")`,
               "i"
             ),
+            // 패턴 2: props['propName'] === true/True
             new RegExp(
               `props\\['${propName}'\\]\\s*(===|==)\\s*(true|'True'|"True")`,
               "i"
             ),
+            // 패턴 3: 단순 Identifier (True/False VARIANT가 BOOLEAN으로 변환된 경우)
+            // condition이 단순히 "propName"인 경우 (예: "icon", "leftIcon")
+            new RegExp(`^${propName}$`, "i"),
+            // 패턴 4: props.propName (단순 MemberExpression)
+            new RegExp(`^props\\.${propName}$`, "i"),
           ];
 
           if (patterns.some((p) => p.test(conditionCode))) {
@@ -1285,6 +1292,106 @@ class _FinalAstTree {
         );
       }
     }
+
+    // slot으로 변환된 prop 관련 dynamic style 조건 변환 (모든 노드에서)
+    // props.X === 'True' → props.X != null (slot이 존재하는지 여부)
+    this._convertSlotPropsDynamicStyles(astTree, slotPropNames);
+  }
+
+  /**
+   * slot으로 변환된 prop 관련 dynamic style 조건을 변환
+   * props.X === 'True'/'true' → props.X != null (slot이 존재하면)
+   * props.X === 'False'/'false' → props.X == null (slot이 없으면)
+   */
+  private _convertSlotPropsDynamicStyles(
+    node: FinalAstTree,
+    slotPropNames: Set<string>
+  ) {
+    if (node.style.dynamic && node.style.dynamic.length > 0) {
+      node.style.dynamic = node.style.dynamic
+        .map((dynamicStyle) => {
+          const conditionCode = generate(dynamicStyle.condition);
+          // slot prop을 참조하는 dynamic style은 조건 변환
+          for (const propName of slotPropNames) {
+            if (this._conditionReferencesProp(conditionCode, propName)) {
+              const newCondition = this._convertSlotCondition(
+                dynamicStyle.condition,
+                propName
+              );
+              if (newCondition) {
+                return { ...dynamicStyle, condition: newCondition };
+              }
+              // 변환 실패 시 제거
+              return null;
+            }
+          }
+          return dynamicStyle;
+        })
+        .filter((ds): ds is NonNullable<typeof ds> => ds !== null);
+    }
+
+    // children 순회
+    if (node.children) {
+      for (const child of node.children) {
+        this._convertSlotPropsDynamicStyles(child, slotPropNames);
+      }
+    }
+  }
+
+  /**
+   * slot prop 조건을 null 체크로 변환
+   * props.X === 'True' → props.X != null
+   * props.X === 'False' → props.X == null
+   */
+  private _convertSlotCondition(
+    condition: ConditionNode,
+    propName: string
+  ): ConditionNode | null {
+    if (!condition || condition.type !== "BinaryExpression") {
+      return null;
+    }
+
+    const { left, right, operator } = condition as any;
+
+    // props.X === 'True'/'true' 또는 props.X === 'False'/'false' 패턴 확인
+    if (
+      operator === "===" &&
+      left?.type === "MemberExpression" &&
+      left.object?.name === "props" &&
+      left.property?.name
+    ) {
+      const leftPropName = left.property.name;
+
+      // propName 매칭 확인 (대소문자 무시)
+      if (leftPropName.toLowerCase() !== propName.toLowerCase()) {
+        return null;
+      }
+
+      // right 값 확인 (Literal 또는 StringLiteral 타입 모두 지원)
+      const rightValue =
+        right?.type === "StringLiteral" || right?.type === "Literal"
+          ? right.value
+          : right?.type === "BooleanLiteral"
+            ? String(right.value)
+            : null;
+
+      if (!rightValue) return null;
+
+      const isTrue = rightValue.toLowerCase() === "true";
+      const isFalse = rightValue.toLowerCase() === "false";
+
+      if (!isTrue && !isFalse) return null;
+
+      // 새 조건 생성: props.X != null (True) 또는 props.X == null (False)
+      return {
+        type: "BinaryExpression",
+        operator: isTrue ? "!=" : "==",
+        left: left,
+        right: { type: "NullLiteral" },
+      } as ConditionNode;
+    }
+
+    return null;
   }
 
   /**
@@ -2402,53 +2509,122 @@ class _FinalAstTree {
   /**
    * Boolean prop의 True/False 차이가 style만 바꾸는지 확인
    * @returns true면 style만 변경 (slot candidate 아님), false면 tree 구조 변경
+   *
+   * 판단 로직:
+   * 1. INSTANCE 노드에 visible binding이 있으면 → slot 후보 (return false)
+   * 2. 다른 노드에 visible binding이 있으면 → 일반 boolean (return true)
+   * 3. visible binding 없고 dynamic style이 있으면 → slot 아님 (return true)
+   * 4. 아무것도 없으면 → slot 후보 (return false)
    */
   private _isOnlyStyleChangeByBoolean(
     astTree: FinalAstTree,
     boolPropKey: string
   ): boolean {
-    // 모든 노드를 순회하면서 해당 Boolean prop이 visible에 바인딩된 노드가 있는지 확인
-    const hasVisibleBinding = this._hasVisibleBindingToBoolean(
+    // 1. INSTANCE 노드에 visible binding이 있는지 확인
+    // INSTANCE에 visible binding이 있으면 slot으로 변환해야 함 (아이콘 교체 패턴)
+    const hasInstanceVisibleBinding = this._hasVisibleBindingToBoolean(
+      astTree,
+      boolPropKey,
+      true // INSTANCE만 확인
+    );
+
+    if (hasInstanceVisibleBinding) {
+      // INSTANCE에 visible binding이 있으면 slot 후보로 유지
+      // (dynamic style이 있더라도 slot 변환 필요)
+      return false;
+    }
+
+    // 2. 다른 노드(FRAME 등)에 visible binding이 있는지 확인
+    const hasAnyVisibleBinding = this._hasVisibleBindingToBoolean(
+      astTree,
+      boolPropKey,
+      false // 모든 노드 타입 확인
+    );
+
+    if (hasAnyVisibleBinding) {
+      // INSTANCE가 아닌 노드에 visible binding이 있으면 일반 boolean으로 유지
+      // (showInteraction 같은 FRAME visible toggle)
+      return true;
+    }
+
+    // 3. visible binding이 없는 경우에만 dynamic style 체크
+    const hasRealDynamicStyle = this._hasRealDynamicStyleByBoolean(
       astTree,
       boolPropKey
     );
 
-    // visible 바인딩이 있으면 tree 변화 → false, 없으면 style만 변화 → true
-    return !hasVisibleBinding;
+    // dynamic style이 있으면 style만 변경하는 것으로 처리 → slot 변환 안함
+    return hasRealDynamicStyle;
   }
 
   /**
-   * 특정 Boolean prop이 어떤 노드의 visible에 바인딩되어 있는지 확인
+   * 특정 Boolean prop이 루트 노드의 dynamic style에서 실제 스타일 변경을 하는지 확인
+   * 빈 객체 {}만 있는 경우는 false 반환 (slot 변환 허용)
+   *
+   * 중요: 루트 노드의 dynamic style만 확인합니다.
+   * 이유: CSS 함수의 파라미터로 사용되는 것은 루트 노드의 dynamic style이기 때문입니다.
+   * children 노드의 dynamic style은 해당 노드의 CSS에서 별도로 처리됩니다.
    */
-  private _hasVisibleBindingToBoolean(
-    node: FinalAstTree,
+  private _hasRealDynamicStyleByBoolean(
+    astTree: FinalAstTree,
     boolPropKey: string
   ): boolean {
-    if (node.visible.type === "condition") {
-      // 케이스 1: visible.type === "condition"인 경우
-      // condition AST에서 해당 prop을 참조하는지 확인
-      const code = generate(node.visible.condition);
-      // "props.LeftIcon" 또는 "props['Left Icon']" 패턴 확인
-      if (
-        node.type === "INSTANCE" &&
-        this._conditionReferencesProp(code, boolPropKey)
-      ) {
-        return true;
+    // 루트 노드의 dynamic style만 확인
+    if (astTree.style.dynamic && astTree.style.dynamic.length > 0) {
+      for (const dynamicStyle of astTree.style.dynamic) {
+        const conditionCode = generate(dynamicStyle.condition);
+        if (this._conditionReferencesProp(conditionCode, boolPropKey)) {
+          // 실제 스타일 속성이 있는 경우에만 true 반환
+          if (
+            dynamicStyle.style &&
+            Object.keys(dynamicStyle.style).length > 0
+          ) {
+            return true;
+          }
+        }
       }
     }
 
-    // 케이스 2: props.visible (직접 바인딩 - 문자열 참조)
-    const propsVisible = node.props?.visible;
-    if (typeof propsVisible === "string") {
-      if (this._matchesBoolProp(propsVisible, boolPropKey)) {
-        return true;
+    return false;
+  }
+
+  /**
+   * 특정 Boolean prop이 노드의 visible에 바인딩되어 있는지 확인
+   * @param node - 확인할 노드
+   * @param boolPropKey - Boolean prop 이름
+   * @param instanceOnly - true면 INSTANCE 노드만 확인, false면 모든 노드 확인
+   */
+  private _hasVisibleBindingToBoolean(
+    node: FinalAstTree,
+    boolPropKey: string,
+    instanceOnly: boolean
+  ): boolean {
+    // instanceOnly가 true면 INSTANCE 노드만 확인
+    const shouldCheck = instanceOnly ? node.type === "INSTANCE" : true;
+
+    if (shouldCheck) {
+      if (node.visible.type === "condition") {
+        // 케이스 1: visible.type === "condition"인 경우
+        // condition AST에서 해당 prop을 참조하는지 확인
+        const code = generate(node.visible.condition);
+        if (this._conditionReferencesProp(code, boolPropKey)) {
+          return true;
+        }
+      }
+
+      // 케이스 2: props.visible (직접 바인딩 - 문자열 참조)
+      const propsVisible = node.props?.visible;
+      if (typeof propsVisible === "string") {
+        if (this._matchesBoolProp(propsVisible, boolPropKey)) {
+          return true;
+        }
       }
     }
 
     // children 순회
     if (node.children) {
       for (const child of node.children) {
-        if (this._hasVisibleBindingToBoolean(child, boolPropKey)) {
+        if (this._hasVisibleBindingToBoolean(child, boolPropKey, instanceOnly)) {
           return true;
         }
       }
@@ -2459,11 +2635,16 @@ class _FinalAstTree {
 
   /**
    * condition 코드가 특정 prop을 참조하는지 확인
+   *
+   * 지원 패턴:
+   * 1. props.propName (MemberExpression)
+   * 2. props['propName'] (computed MemberExpression)
+   * 3. propName (단순 Identifier - True/False VARIANT가 BOOLEAN으로 변환된 경우)
    */
   private _conditionReferencesProp(code: string, propKey: string): boolean {
     const normalizedPropKey = this._normalizeForComparison(propKey);
 
-    // "props.XXX" 패턴에서 prop 이름 추출
+    // 패턴 1, 2: "props.XXX" 패턴에서 prop 이름 추출
     const propMatches = [
       ...code.matchAll(/props\.([^=!<>\s\]]+(?:\s+[^=!<>\s\]]+)*)/g),
       ...code.matchAll(/props\['([^']+)'\]/g),
@@ -2475,6 +2656,13 @@ class _FinalAstTree {
       if (this._normalizeForComparison(extractedProp) === normalizedPropKey) {
         return true;
       }
+    }
+
+    // 패턴 3: 단순 Identifier (code 전체가 prop 이름인 경우)
+    // True/False VARIANT가 BOOLEAN으로 변환되면 visible condition이 단순 Identifier가 됨
+    // 예: icon (props.icon === true 대신)
+    if (this._normalizeForComparison(code.trim()) === normalizedPropKey) {
+      return true;
     }
 
     return false;

@@ -78,12 +78,46 @@ class EmotionStrategy implements StyleStrategy {
     const cssVarName = this._getCssVariableName(node);
     const grouped = this._groupDynamicStylesByProp(node.style.dynamic || []);
 
+    // SLOT prop 분리 (CSS 배열 방식으로 처리)
+    const slotProps: Array<{
+      propName: string;
+      notNullVarName: string | undefined;
+      nullVarName: string | undefined;
+    }> = [];
+    const nonSlotGrouped = new Map<
+      string,
+      Array<{ value: string; style: Record<string, any> }>
+    >();
+
+    for (const [propName, variants] of grouped.entries()) {
+      // SLOT prop 여부 확인 (notNull/null 값으로 판별)
+      const isSlotProp = variants.some(
+        (v) => v.value === "notNull" || v.value === "null"
+      );
+
+      if (isSlotProp) {
+        // generatedNames에서 SLOT CSS 변수명 가져오기
+        const notNullVarName =
+          node.generatedNames?.recordVarNames[`${propName}_notNull`];
+        const nullVarName =
+          node.generatedNames?.recordVarNames[`${propName}_null`];
+
+        if (notNullVarName || nullVarName) {
+          slotProps.push({ propName, notNullVarName, nullVarName });
+        }
+      } else {
+        nonSlotGrouped.set(propName, variants);
+      }
+    }
+
     let cssExpression: ts.Expression;
 
-    if (grouped.size > 0 || hasIndexedConditional) {
-      // 동적 스타일이 있으면 함수 호출
+    // 1. base CSS 표현식 생성
+    let baseCssExpr: ts.Expression;
+    if (nonSlotGrouped.size > 0 || hasIndexedConditional) {
+      // 동적 스타일(non-SLOT)이 있으면 함수 호출
       const args: ts.Expression[] = [];
-      for (const [propName] of grouped.entries()) {
+      for (const [propName] of nonSlotGrouped.entries()) {
         const propIdentifier = this.factory.createIdentifier(propName);
         args.push(propIdentifier);
       }
@@ -91,22 +125,61 @@ class EmotionStrategy implements StyleStrategy {
       // indexedConditional의 booleanProp 파라미터 추가
       if (hasIndexedConditional) {
         const { booleanProp } = node.style.indexedConditional!;
-        // 이미 동적 스타일에서 추가되지 않은 경우에만 추가
-        const existingPropNames = [...grouped.keys()];
+        const existingPropNames = [...nonSlotGrouped.keys()];
         if (!existingPropNames.includes(booleanProp)) {
           const propIdentifier = this.factory.createIdentifier(booleanProp);
           args.push(propIdentifier);
         }
       }
 
-      cssExpression = this.factory.createCallExpression(
+      baseCssExpr = this.factory.createCallExpression(
         this.factory.createIdentifier(cssVarName),
         undefined,
         args
       );
     } else {
       // 정적 스타일만 있으면 변수 참조
-      cssExpression = this.factory.createIdentifier(cssVarName);
+      baseCssExpr = this.factory.createIdentifier(cssVarName);
+    }
+
+    // 2. SLOT prop이 있으면 CSS 배열로 조합
+    if (slotProps.length > 0) {
+      // css={[baseCss, propName != null ? withPropCss : withoutPropCss]}
+      const arrayElements: ts.Expression[] = [baseCssExpr];
+
+      for (const { propName, notNullVarName, nullVarName } of slotProps) {
+        // propName != null 조건
+        const condition = this.factory.createBinaryExpression(
+          this.factory.createIdentifier(propName),
+          this.factory.createToken(ts.SyntaxKind.ExclamationEqualsToken),
+          this.factory.createNull()
+        );
+
+        // 삼항 연산자: propName != null ? withPropCss : withoutPropCss
+        const trueExpr = notNullVarName
+          ? this.factory.createIdentifier(notNullVarName)
+          : this.factory.createNull();
+        const falseExpr = nullVarName
+          ? this.factory.createIdentifier(nullVarName)
+          : this.factory.createNull();
+
+        const conditionalExpr = this.factory.createConditionalExpression(
+          condition,
+          undefined,
+          trueExpr,
+          undefined,
+          falseExpr
+        );
+
+        arrayElements.push(conditionalExpr);
+      }
+
+      cssExpression = this.factory.createArrayLiteralExpression(
+        arrayElements,
+        false
+      );
+    } else {
+      cssExpression = baseCssExpr;
     }
 
     return this.factory.createJsxAttribute(
@@ -195,6 +268,9 @@ class EmotionStrategy implements StyleStrategy {
 
   /**
    * 조건에서 prop과 값 추출
+   * props.X === "value" → { prop: "x", value: "value" }
+   * props.rightIcon != null → { prop: "rightIcon", value: "notNull" }
+   * props.rightIcon == null → { prop: "rightIcon", value: "null" }
    */
   private _extractPropAndValue(condition: any): {
     prop: string;
@@ -204,6 +280,7 @@ class EmotionStrategy implements StyleStrategy {
       return null;
     }
 
+    // props.X === "value" 형태 처리
     if (
       condition.operator === "===" &&
       condition.left?.type === "MemberExpression" &&
@@ -219,6 +296,26 @@ class EmotionStrategy implements StyleStrategy {
         return {
           prop: camelPropName,
           value: String(propValue),
+        };
+      }
+    }
+
+    // props.X != null 또는 props.X == null 형태 처리 (SLOT 조건)
+    if (
+      (condition.operator === "!=" || condition.operator === "==") &&
+      condition.left?.type === "MemberExpression" &&
+      condition.left.object?.name === "props" &&
+      condition.right?.type === "NullLiteral"
+    ) {
+      const propName = condition.left.property?.name;
+
+      if (propName) {
+        const camelPropName =
+          propName.charAt(0).toLowerCase() + propName.slice(1);
+        const value = condition.operator === "!=" ? "notNull" : "null";
+        return {
+          prop: camelPropName,
+          value: value,
         };
       }
     }
