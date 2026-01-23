@@ -67,7 +67,14 @@ export function toCamelCase(key: string) {
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     .join("");
 
-  return first + rest;
+  const result = first + rest;
+
+  // 숫자로 시작하면 앞에 _ 추가 (JavaScript 식별자는 숫자로 시작할 수 없음)
+  if (/^[0-9]/.test(result)) {
+    return "_" + result;
+  }
+
+  return result;
 }
 
 /**

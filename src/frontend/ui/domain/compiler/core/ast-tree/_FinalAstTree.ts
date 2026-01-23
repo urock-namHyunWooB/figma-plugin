@@ -1571,21 +1571,9 @@ class _FinalAstTree {
       }
     }
 
-    // State prop이 있으면 제거 (단, keep 값만 있으면 유지)
-    if (statePropName) {
-      const stateProp = astTree.props[statePropName] as any;
-      const stateOptions =
-        typeof stateProp === "object" && stateProp?.variantOptions
-          ? stateProp.variantOptions
-          : [];
-      const hasKeepOnly =
-        stateOptions.length > 0 &&
-        stateOptions.every((v: string) => STATE_TO_PSEUDO[v] === "keep");
-
-      if (!hasKeepOnly) {
-        delete astTree.props[statePropName];
-      }
-    }
+    // State prop 삭제 여부는 순회 후 결정 (visible condition에 unresolvable state가 남아 있는지 확인 필요)
+    // 일단 플래그만 설정
+    let hasUnresolvableStateCondition = false;
 
     // State 조건 패턴 (props.state, props.State, props.states 등)
     const stateConditionPattern =
@@ -1607,8 +1595,9 @@ class _FinalAstTree {
           const pseudoClass = STATE_TO_PSEUDO[stateValue];
 
           if (pseudoClass === undefined) {
-            // loading 등 CSS 변환 불가 → condition 유지 (런타임 처리 필요)
-            // (이미 condition이므로 아무것도 하지 않음)
+            // loading, Error 등 CSS 변환 불가 → condition 유지 (런타임 처리 필요)
+            // state prop이 필요함을 표시
+            hasUnresolvableStateCondition = true;
           } else {
             // Default, Hover, Pressed 등 → visible: true (항상 보임)
             // CSS나 pseudo-class로 처리할 수 없으므로 항상 보이게 변경
@@ -1738,6 +1727,12 @@ class _FinalAstTree {
         node.style.unresolved = unresolved;
       }
     });
+
+    // 3. State prop 삭제 여부 결정
+    // visible condition에 CSS 변환 불가능한 state 조건이 남아 있으면 state prop 유지
+    if (statePropName && !hasUnresolvableStateCondition) {
+      delete astTree.props[statePropName];
+    }
 
     return astTree;
   }
