@@ -41,9 +41,6 @@ const TestComp = isDev
     )
   : () => null;
 
-// Scan Dashboard 페이지
-const ScanDashboardPage = lazy(() => import("./pages/ScanDashboardPage"));
-
 // Test 페이지 (로컬 JSON 테스트용)
 const TestPage = lazy(() => import("./pages/TestPage"));
 
@@ -66,14 +63,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           />
         )}
 
-        <Route
-          path="/scan"
-          element={
-            <Suspense fallback={<div>Loading...</div>}>
-              <ScanDashboardPage />
-            </Suspense>
-          }
-        />
         <Route
           path="/test"
           element={
