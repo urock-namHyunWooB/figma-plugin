@@ -2,6 +2,43 @@
 
 > 인터페이스/구조체/구현체 분리 관점에서의 코드베이스 분석
 
+---
+
+## ✅ 완료된 정리 작업 (2025-01-24)
+
+### 백엔드 미사용 코드 삭제 (~2,400줄)
+
+| 삭제된 파일 | 줄 수 | 사유 |
+|-------------|-------|------|
+| `managers/SelectionManager.ts` | 12 | 미사용 |
+| `managers/SpecManager.ts` | 407 | 미사용 |
+| `managers/ComponentStructureManager.ts` | 483 | SpecManager에서만 사용 |
+| `managers/MetadataManager.ts` | 429 | 프론트엔드에서 미사용 |
+| `extractors/StyleExtractor.ts` | 436 | ComponentStructureManager에서만 사용 |
+| `types/spec.ts` | 29 | SpecManager에서만 사용 |
+| `utils.ts` | 230 | SpecManager에서만 사용 |
+
+### 프론트엔드 미사용 코드 삭제 (~2,100줄)
+
+| 삭제된 파일 | 줄 수 | 사유 |
+|-------------|-------|------|
+| `pages/ScanDashboardPage.tsx` | 1,609 | /scan 라우트 미사용 |
+| `examples/` 폴더 (5개 파일) | ~500 | import 없음 |
+| `index.ts` | 0 | 빈 파일 |
+
+### 삭제된 메시지 타입
+
+- `SCAN_PAGE`, `SCAN_STARTED`, `SCAN_ITEM`, `SCAN_ITEM_ERROR`, `SCAN_COMPLETE`
+- `SET_METADATA`, `SAVE_PROPS_DEFINITION`, `SAVE_INTERNAL_STATE_DEFINITION`, `SAVE_ELEMENT_BINDINGS`
+- `RESIZE_UI`, `ON_RUN`
+
+### 결과
+
+- **총 4,630줄 삭제**
+- **Plugin 번들:** 9.61 kB → 3.85 kB (60% 감소)
+
+---
+
 ## 목차
 
 1. [개요](#1-개요)
@@ -21,12 +58,15 @@
 
 ```
 src/
-├── backend/                    # Figma 플러그인 백엔드
-│   ├── extractors/
-│   ├── managers/
+├── backend/                    # Figma 플러그인 백엔드 (정리 완료)
+│   ├── FigmaPlugin.ts          # 340줄 - 플러그인 메인 클래스
+│   ├── code.ts                 # 7줄 - 진입점
+│   ├── index.ts                # 2줄 - exports
 │   └── types/
+│       ├── messages.ts         # 44줄 - 메시지 타입
+│       └── styles.ts           # 171줄 - 스타일 타입 (프론트엔드에서 사용)
 │
-└── frontend/ui/domain/compiler/  # 컴파일러 엔진 (핵심)
+└── frontend/ui/domain/compiler/  # 컴파일러 엔진 (핵심, 리팩토링 대상)
     ├── core/
     │   ├── Engine.ts
     │   ├── NodeMatcher.ts
