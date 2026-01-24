@@ -1579,6 +1579,10 @@ class _FinalAstTree {
     const stateConditionPattern =
       /props\.(?:state|State|states|States)\s*===\s*['"](\w+)['"]/;
 
+    // Array.includes 패턴 (예: ["Insert", "Error"].includes(props.state))
+    const stateIncludesPattern =
+      /\[([^\]]+)\]\.includes\(props\.(?:state|State|states|States)\)/;
+
     // 2. 모든 노드 순회하며 dynamic style과 visible condition 처리
     traverseBFS(astTree, (node) => {
       // 2-1. visible condition 처리
@@ -1589,6 +1593,9 @@ class _FinalAstTree {
         const stateOnlyMatch = conditionCode.match(
           /^props\.(?:state|State|states|States)\s*===\s*['"](\w+)['"]$/
         );
+
+        // Array.includes 패턴 확인 (예: ["Insert", "Error"].includes(props.state))
+        const includesMatch = conditionCode.match(stateIncludesPattern);
 
         if (stateOnlyMatch) {
           const stateValue = stateOnlyMatch[1];
@@ -1601,6 +1608,27 @@ class _FinalAstTree {
           } else {
             // Default, Hover, Pressed 등 → visible: true (항상 보임)
             // CSS나 pseudo-class로 처리할 수 없으므로 항상 보이게 변경
+            node.visible = { type: "static", value: true };
+          }
+        } else if (includesMatch) {
+          // Array.includes 패턴 발견
+          // 배열 내 state 값들을 추출하여 CSS 변환 가능 여부 확인
+          const arrayContent = includesMatch[1];
+          const stateValues = arrayContent.match(/["'](\w+)["']/g) || [];
+          const extractedValues = stateValues.map((v) =>
+            v.replace(/["']/g, "")
+          );
+
+          // 모든 state 값이 CSS 변환 가능한지 확인
+          const hasUnresolvable = extractedValues.some(
+            (val) => STATE_TO_PSEUDO[val] === undefined
+          );
+
+          if (hasUnresolvable) {
+            // CSS 변환 불가능한 state가 포함됨 → condition 유지
+            hasUnresolvableStateCondition = true;
+          } else {
+            // 모두 CSS 변환 가능 → visible: true
             node.visible = { type: "static", value: true };
           }
         } else if (conditionCode.match(stateConditionPattern)) {
