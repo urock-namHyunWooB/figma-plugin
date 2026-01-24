@@ -3606,6 +3606,142 @@ function InputBoxotp({ state }: InputBoxotpProps) {
 }
 ```
 
+### 29. Array.includes 패턴에서 state prop 누락
+
+#### 문제
+
+`visible` 조건에서 `["Insert", "Error"].includes(props.state)` 패턴을 사용할 때, `state` prop이 삭제되어 런타임 에러 발생:
+
+```typescript
+// 생성된 코드
+function InputBoxstandard({ /* state prop 없음 */ }: Props) {
+  return (
+    <div>
+      {["Insert", "Error"].includes(state) && <div>...</div>}
+      {/* ❌ ReferenceError: state is not defined */}
+    </div>
+  );
+}
+```
+
+**문제 상황**:
+- `props.state === "Insert"` 패턴: state prop이 올바르게 보존됨 ✓
+- `["Insert", "Error"].includes(props.state)` 패턴: state prop이 삭제됨 ✗
+
+#### 원인
+
+`_refineStateProp` 함수에서 `props.state === "..."` 패턴만 감지하고, `["..."].includes(props.state)` 패턴은 감지하지 못함:
+
+```typescript
+// 기존 코드
+private _refineStateProp(astTree: FinalAstTree) {
+  // State 단독 조건 패턴만 확인
+  const stateOnlyMatch = conditionCode.match(
+    /^props\.(?:state|State|states|States)\s*===\s*['"](\w+)['"]$/
+  );
+
+  if (stateOnlyMatch) {
+    const stateValue = stateOnlyMatch[1];
+    const pseudoClass = STATE_TO_PSEUDO[stateValue];  // "Insert" → undefined
+
+    if (pseudoClass === undefined) {
+      hasUnresolvableStateCondition = true;  // ✓ state prop 보존
+    }
+  }
+  // ❌ Array.includes 패턴은 처리하지 않음
+}
+```
+
+**문제점**:
+1. `Array.includes` 패턴을 감지하지 못함
+2. 배열 내 state 값들이 CSS 변환 불가능해도 감지 안됨
+3. state prop이 삭제되어 `["Insert", "Error"].includes(state)` 코드가 에러 발생
+
+#### 해결
+
+**Array.includes 패턴 감지 로직 추가**
+
+**수정 파일**: `src/frontend/ui/domain/compiler/core/ast-tree/_FinalAstTree.ts`
+
+```typescript
+private _refineStateProp(astTree: FinalAstTree) {
+  const STATE_TO_PSEUDO: Record<string, string | null> = {
+    Default: null,
+    Hover: ":hover",
+    Pressed: ":active",
+    // "Insert", "Error" 등은 undefined (CSS 변환 불가)
+  };
+
+  let hasUnresolvableStateCondition = false;
+
+  // Array.includes 패턴 추가
+  const stateIncludesPattern =
+    /\[([^\]]+)\]\.includes\(props\.(?:state|State|states|States)\)/;
+
+  traverseBFS(astTree, (node) => {
+    if (node.visible.type === "condition") {
+      const conditionCode = generate(node.visible.condition);
+
+      // 1. 기존 패턴: props.state === "..."
+      const stateOnlyMatch = conditionCode.match(/^props\.state === ['"](\w+)['"]$/);
+
+      // 2. 새 패턴: ["Insert", "Error"].includes(props.state)
+      const includesMatch = conditionCode.match(stateIncludesPattern);
+
+      if (stateOnlyMatch) {
+        // ... 기존 로직
+      } else if (includesMatch) {
+        // Array.includes 패턴 처리
+        const arrayContent = includesMatch[1];
+        const stateValues = arrayContent.match(/["'](\w+)["']/g) || [];
+        const extractedValues = stateValues.map((v) => v.replace(/["']/g, ""));
+
+        // 배열 내 state 값 중 CSS 변환 불가능한 것이 있는지 확인
+        const hasUnresolvable = extractedValues.some(
+          (val) => STATE_TO_PSEUDO[val] === undefined
+        );
+
+        if (hasUnresolvable) {
+          // "Insert", "Error" 등 포함 → state prop 유지
+          hasUnresolvableStateCondition = true;
+        } else {
+          // 모두 CSS 변환 가능 → visible: true
+          node.visible = { type: "static", value: true };
+        }
+      }
+    }
+  });
+
+  // state prop 삭제 여부 결정
+  if (statePropName && !hasUnresolvableStateCondition) {
+    delete astTree.props[statePropName];
+  }
+}
+```
+
+**핵심 변경사항**:
+1. `stateIncludesPattern` 정규식으로 `["..."].includes(props.state)` 패턴 감지
+2. 배열 내 state 값들을 추출하여 CSS 변환 가능 여부 확인
+3. 변환 불가능한 값이 하나라도 있으면 `hasUnresolvableStateCondition = true` 설정
+4. state prop 보존하여 런타임 조건 처리 가능
+
+**결과**:
+
+```typescript
+// state prop 유지됨
+type InputBoxstandardProps = {
+  state: "Normal" | "Insert" | "Error";
+};
+
+function InputBoxstandard({ state }: InputBoxstandardProps) {
+  return (
+    <div>
+      {["Insert", "Error"].includes(state) && <div>...</div>}  {/* ✓ 정상 동작 */}
+    </div>
+  );
+}
+```
+
 ---
 
 _Last Updated: 2026-01-24_
