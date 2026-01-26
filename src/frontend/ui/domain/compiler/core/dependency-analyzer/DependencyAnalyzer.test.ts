@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import DependencyAnalyzer from "@compiler/core/DependencyAnalyzer";
+import DependencyAnalyzer from "./DependencyAnalyzer";
 import { CircularDependencyError } from "@compiler/types/architecture";
 import type { FigmaNodeData } from "@compiler/types/baseType";
 

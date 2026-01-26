@@ -22,7 +22,12 @@ export default defineConfig({
       // 모든 console 로그 차단
       return false;
     },
-    include: ["test/**/*.test.ts", "test/**/*.test.tsx"],
+    include: [
+      "test/**/*.test.ts",
+      "test/**/*.test.tsx",
+      "src/**/*.test.ts",
+      "src/**/*.test.tsx",
+    ],
     // 브라우저 전용 테스트 제외 (npm run test:browser로 실행)
     exclude: [
       "test/**/*.browser-only.test.ts",
