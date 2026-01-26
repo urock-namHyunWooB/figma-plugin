@@ -685,10 +685,27 @@ const code = await generator.generate();
 > 구현: `src/frontend/ui/domain/compiler/core/DependencyAnalyzer.ts`
 > 테스트: `test/compiler/dependencyAnalyzer.test.ts`
 
-### Phase 3: DataPreparer 통합
-- [ ] SpecDataManager, OverrideManager, VariantEnrichManager, PropsExtractor 통합
-- [ ] DataPreparer 인터페이스 구현
-- [ ] PreparedDesignData 출력 구조 정의
+### Phase 3: DataPreparer 통합 ✅
+- [x] SpecDataManager + PropsExtractor 통합
+- [x] DataPreparer 인터페이스 구현
+- [x] PreparedDesignData 출력 구조 정의
+- [ ] ~~InstanceOverrideManager, VariantEnrichManager 통합~~ → 분리 유지 결정 (DependencyManager 전용)
+
+> 구현:
+> - `src/frontend/ui/domain/compiler/core/data-preparer/DataPreparer.ts`
+> - `src/frontend/ui/domain/compiler/core/data-preparer/PreparedDesignData.ts`
+
+#### ⚠️ TODO: PreparedNode 정규화 (Phase 4에서 검토)
+
+현재 구현은 `SceneNode`를 그대로 사용합니다. `PreparedNode`로의 정규화는 다음 이유로 보류:
+
+1. **기존 코드 의존성**: Engine, CreateSuperTree, CreateAstTree 등이 SceneNode의 세부 속성(`type`, `fills`, `componentPropertyReferences` 등)에 직접 접근
+2. **TreeBuilder에서 변환이 더 적합**: Phase 4에서 `DesignNode`로 변환할 때 정규화하는 것이 자연스러움
+3. **중복 변환 방지**: PreparedNode → DesignNode 이중 변환 불필요
+
+**나중에 검토할 사항:**
+- `architecture.ts`의 `PreparedDesignData` 인터페이스에서 `PreparedNode` → `SceneNode`로 수정 필요
+- 또는 Phase 4에서 TreeBuilder 구현 시 PreparedNode 정규화 포함
 
 ### Phase 4: TreeBuilder 분리
 - [ ] CreateSuperTree, CreateAstTree 통합

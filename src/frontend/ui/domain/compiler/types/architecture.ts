@@ -170,10 +170,17 @@ export interface BundlingOptions {
 /**
  * DataPreparer의 출력
  * 정규화되고 enriched된 디자인 데이터
+ *
+ * NOTE: 현재 구현은 SceneNode를 그대로 사용합니다.
+ * PreparedNode로의 정규화는 TreeBuilder(Phase 4)에서 DesignNode로 변환할 때 수행합니다.
+ * @see docs/ARCHITECTURE.md "Phase 3: DataPreparer 통합" 섹션의 TODO 참조
  */
 export interface PreparedDesignData {
-  /** 루트 문서 노드 */
-  document: PreparedNode;
+  /** 원본 FigmaNodeData (깊은 복사본) */
+  readonly spec: FigmaNodeData;
+
+  /** 루트 문서 노드 (현재: SceneNode, 향후: PreparedNode로 정규화 검토) */
+  document: SceneNode;
 
   /** 스타일 트리 */
   styleTree: StyleTree;
@@ -184,20 +191,24 @@ export interface PreparedDesignData {
   /** 추출된 Props 정의 */
   props: ExtractedProps;
 
-  /** 노드 ID → PreparedNode 빠른 조회 */
-  nodeMap: Map<string, PreparedNode>;
+  /** 노드 ID → SceneNode 빠른 조회 (O(1)) */
+  nodeMap: Map<string, SceneNode>;
 
-  /** 스타일 ID → StyleTree 빠른 조회 */
+  /** 스타일 ID → StyleTree 빠른 조회 (O(1)) */
   styleMap: Map<string, StyleTree>;
 
   // 조회 메서드
-  getNodeById(id: string): PreparedNode | undefined;
+  getNodeById(id: string): SceneNode | undefined;
   getStyleById(id: string): StyleTree | undefined;
 }
 
 /**
  * 준비된 노드 데이터
  * FigmaNodeData를 정규화하고 enriched한 형태
+ *
+ * @deprecated 현재 미사용. SceneNode를 그대로 사용 중.
+ * Phase 4 (TreeBuilder) 구현 시 DesignNode로 직접 변환하거나,
+ * 필요시 이 인터페이스를 활성화하여 중간 정규화 단계로 사용.
  */
 export interface PreparedNode {
   id: string;
