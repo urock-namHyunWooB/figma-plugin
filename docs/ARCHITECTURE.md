@@ -668,11 +668,13 @@ const code = await generator.generate();
 
 ## Migration Plan
 
-### Phase 1: 인터페이스 정의
-- [ ] 각 컴포넌트 인터페이스 TypeScript 정의
-- [ ] Policy 타입 정의
-- [ ] 중간 데이터 구조 (PreparedDesignData, DesignTree) 정의
-- [ ] DependencyGraph 타입 정의
+### Phase 1: 인터페이스 정의 ✅
+- [x] 각 컴포넌트 인터페이스 TypeScript 정의
+- [x] Policy 타입 정의
+- [x] 중간 데이터 구조 (PreparedDesignData, DesignTree) 정의
+- [x] DependencyGraph 타입 정의
+
+> 구현: `src/frontend/ui/domain/compiler/types/architecture.ts`
 
 ### Phase 2: DependencyAnalyzer 구현
 - [ ] 의존성 그래프 구축 로직 (analyze → buildGraph)
