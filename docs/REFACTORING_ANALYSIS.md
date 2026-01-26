@@ -141,7 +141,7 @@ React Component Code (출력)
 ### 2.2 의존성 그래프
 
 ```
-FigmaCompiler (진입점)
+FigmaCodeGenerator (진입점)
 ├── SpecDataManager ─────────────────────┐
 │   └── (모든 Manager가 의존)            │
 ├── PropsManager                         │
@@ -178,7 +178,7 @@ FigmaCompiler (진입점)
 
 ```typescript
 class Engine {
-  constructor(root: FigmaCompiler, renderTree: RenderTree, options?: EngineOptions) {
+  constructor(root: FigmaCodeGenerator, renderTree: RenderTree, options?: EngineOptions) {
     const specManager = root.SpecDataManager;
     const matcher = new NodeMatcher(specManager);
 
@@ -1024,7 +1024,7 @@ class ReactGeneratorStage implements PipelineStage<FinalAstTree, string> { ... }
 | 파일 | 이유 |
 |------|------|
 | `_TempAstTree.ts` | `_FinalAstTree`가 의존 |
-| `DependencyManager.ts` | `FigmaCompiler`가 의존 |
+| `DependencyManager.ts` | `FigmaCodeGenerator`가 의존 |
 | `CreateJsxTree.ts` | `GenerateComponent`가 의존 |
 
 ### 낮은 영향도 (비교적 안전)

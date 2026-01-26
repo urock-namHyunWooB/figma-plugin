@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { css } from "@emotion/react";
 import { useNavigate } from "react-router-dom";
 import useMessageHandler from "./useMessageHandler";
-import FigmaCompiler, { PropDefinition } from "@compiler";
+import FigmaCodeGenerator, { PropDefinition } from "@compiler";
 import { useComponentRenderer } from "./hooks/useComponentRenderer";
 import { PropController } from "./components/PropController";
 import { CodeViewer } from "./components/CodeViewer";
@@ -331,7 +331,7 @@ function App() {
     setScale(fitScale);
   }, [originalSize]);
 
-  // FigmaCompiler로 코드 생성
+  // FigmaCodeGenerator로 코드 생성
   useEffect(() => {
     // selectionNodeData가 변경될 때마다 상태 리셋
     setErrorBoundaryKey((prev) => prev + 1);
@@ -345,14 +345,14 @@ function App() {
     }
 
     try {
-      const figmaCompiler = new FigmaCompiler(selectionNodeData, {
+      const codeGenerator = new FigmaCodeGenerator(selectionNodeData, {
         styleStrategy: { type: styleStrategy },
       });
-      const name = figmaCompiler.getComponentName();
+      const name = codeGenerator.getComponentName();
       setComponentName(name);
 
       // Props 정의 가져오기
-      const props = figmaCompiler.getPropsDefinition();
+      const props = codeGenerator.getPropsDefinition();
       setPropDefinitions(props);
 
       // Props 초기값 설정 (SLOT에는 목업 주입)
@@ -371,11 +371,11 @@ function App() {
       setPropValues(initialValues);
 
       // 코드 생성
-      figmaCompiler.getGeneratedCode(name).then((code) => {
+      codeGenerator.getGeneratedCode(name).then((code) => {
         setGeneratedCode(code);
       });
     } catch (e) {
-      console.error("FigmaCompiler error:", e);
+      console.error("FigmaCodeGenerator error:", e);
     }
   }, [selectionNodeData, styleStrategy]);
 

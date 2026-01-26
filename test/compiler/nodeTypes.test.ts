@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from "vitest";
-import FigmaCompiler from "@compiler";
+import FigmaCodeGenerator from "@compiler";
 import groupNode01 from "../fixtures/any/group-node-01.json";
 import type { FigmaNodeData } from "@compiler/types/index";
 
@@ -15,7 +15,7 @@ const cache: Record<string, CachedResult> = {};
 beforeAll(async () => {
   // 기본 데이터 컴파일
   const baseData = groupNode01 as unknown as FigmaNodeData;
-  const baseCompiler = new FigmaCompiler(baseData);
+  const baseCompiler = new FigmaCodeGenerator(baseData);
   cache["base"] = {
     code: await baseCompiler.getGeneratedCode("TestComponent"),
     data: baseData,
@@ -24,7 +24,7 @@ beforeAll(async () => {
   // imageUrls 없는 데이터
   const noImageUrls = JSON.parse(JSON.stringify(groupNode01)) as FigmaNodeData;
   delete noImageUrls.imageUrls;
-  const noImageUrlsCompiler = new FigmaCompiler(noImageUrls);
+  const noImageUrlsCompiler = new FigmaCodeGenerator(noImageUrls);
   cache["noImageUrls"] = {
     code: await noImageUrlsCompiler.getGeneratedCode("TestComponent"),
     data: noImageUrls,
@@ -36,7 +36,7 @@ beforeAll(async () => {
     "48dc7678f6ad4a7fd7b1dcb194118c5a0f6a2b1e": "https://example.com/image1.png",
     "4201c9377fef273eb9b49ee63d8c826211da1a6b": "https://example.com/image2.png",
   };
-  const withImageUrlsCompiler = new FigmaCompiler(withImageUrls);
+  const withImageUrlsCompiler = new FigmaCodeGenerator(withImageUrls);
   cache["withImageUrls"] = {
     code: await withImageUrlsCompiler.getGeneratedCode("TestComponent"),
     data: withImageUrls,
@@ -45,7 +45,7 @@ beforeAll(async () => {
   // vectorSvgs 없는 데이터
   const noVectorSvgs = JSON.parse(JSON.stringify(groupNode01)) as FigmaNodeData;
   delete noVectorSvgs.vectorSvgs;
-  const noVectorSvgsCompiler = new FigmaCompiler(noVectorSvgs);
+  const noVectorSvgsCompiler = new FigmaCodeGenerator(noVectorSvgs);
   cache["noVectorSvgs"] = {
     code: await noVectorSvgsCompiler.getGeneratedCode("TestComponent"),
     data: noVectorSvgs,
@@ -57,7 +57,7 @@ beforeAll(async () => {
     "1313:58606":
       '<svg width="1800" height="1"><line x1="0" y1="0" x2="1800" y2="0" stroke="black"/></svg>',
   };
-  const withVectorSvgsCompiler = new FigmaCompiler(withVectorSvgs);
+  const withVectorSvgsCompiler = new FigmaCodeGenerator(withVectorSvgs);
   cache["withVectorSvgs"] = {
     code: await withVectorSvgsCompiler.getGeneratedCode("TestComponent"),
     data: withVectorSvgs,

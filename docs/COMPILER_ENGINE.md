@@ -35,7 +35,7 @@ Figma Plugin API를 통해 추출한 디자인 데이터(`FigmaNodeData`)를 입
 ### 클래스 구조
 
 ```
-FigmaCompiler (Facade)
+FigmaCodeGenerator (Facade)
 ├── SpecDataManager          # 데이터 접근/조회
 ├── PropsManager             # Props 추출/포맷팅
 │   └── PropsExtractor       # 원본 데이터에서 Props 추출
@@ -59,7 +59,7 @@ FigmaCompiler (Facade)
 
 ```
 src/frontend/ui/domain/compiler/
-├── FigmaCompiler.ts           # 진입점 (Facade)
+├── FigmaCodeGenerator.ts           # 진입점 (Facade)
 ├── index.ts                   # 타입 export
 ├── core/
 │   ├── Engine.ts              # 파이프라인 조율
@@ -3388,7 +3388,7 @@ function NormalResponsive({ size }: NormalResponsiveProps) {
 
 ```typescript
 test("COMPONENT_SET의 다른 variant들이 서로 다른 SVG를 사용해야 한다", async () => {
-  const compiler = new FigmaCompiler(typedefaultRightIcontrueFixture);
+  const compiler = new FigmaCodeGenerator(typedefaultRightIcontrueFixture);
   const code = await compiler.compile();
 
   expect(code).toContain("NormalResponsive");

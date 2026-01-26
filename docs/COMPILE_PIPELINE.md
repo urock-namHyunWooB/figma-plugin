@@ -482,8 +482,8 @@ export default Button;
 
 ```typescript
 for (const [componentSetId, group] of Object.entries(groupedDeps)) {
-  const depCompiler = new FigmaCompiler(depSpec, options);
-  const depCode = await depCompiler.compile(componentName);
+  const depCodeGenerator = new FigmaCodeGenerator(depSpec, options);
+  const depCode = await depCodeGenerator.compile(componentName);
   compiledDependencies.push({ name, code: depCode });
 }
 ```

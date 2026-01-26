@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import FigmaCompiler from "@compiler/FigmaCompiler";
+import FigmaCodeGenerator from "@compiler/FigmaCodeGenerator";
 import type { FigmaNodeData } from "@compiler/types/baseType";
 import * as fs from "fs";
 
@@ -8,7 +8,7 @@ import typedefaultRightIcontrueFixture from "../fixtures/any/TypedefaultRightIco
 
 describe("Variant SVG Mapping", () => {
   test("COMPONENT_SET의 다른 variant들이 서로 다른 SVG를 사용해야 한다", async () => {
-    const compiler = new FigmaCompiler(
+    const compiler = new FigmaCodeGenerator(
       typedefaultRightIcontrueFixture as unknown as FigmaNodeData
     );
     const code = await compiler.compile();

@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import FigmaCompiler from "@compiler/FigmaCompiler";
+import FigmaCodeGenerator from "@compiler/FigmaCodeGenerator";
 import type { FigmaNodeData } from "@compiler/types/baseType";
 
 // InputBoxstandard fixture
@@ -7,7 +7,7 @@ import inputBoxStandardFixture from "../fixtures/any/InputBoxstandard.json";
 
 describe("InputBoxstandard Array.includes 패턴 테스트", () => {
   test("Array.includes 패턴에서 state prop이 보존되어야 한다", async () => {
-    const compiler = new FigmaCompiler(
+    const compiler = new FigmaCodeGenerator(
       inputBoxStandardFixture as unknown as FigmaNodeData
     );
     const code = await compiler.compile();
@@ -24,7 +24,7 @@ describe("InputBoxstandard Array.includes 패턴 테스트", () => {
   });
 
   test("Array.includes 패턴이 올바르게 생성되어야 한다", async () => {
-    const compiler = new FigmaCompiler(
+    const compiler = new FigmaCodeGenerator(
       inputBoxStandardFixture as unknown as FigmaNodeData
     );
     const code = await compiler.compile();
@@ -44,7 +44,7 @@ describe("InputBoxstandard Array.includes 패턴 테스트", () => {
   });
 
   test("CSS 변환 불가능한 state 값이 조건부 렌더링에 사용되어야 한다", async () => {
-    const compiler = new FigmaCompiler(
+    const compiler = new FigmaCodeGenerator(
       inputBoxStandardFixture as unknown as FigmaNodeData
     );
     const code = await compiler.compile();
@@ -62,7 +62,7 @@ describe("InputBoxstandard Array.includes 패턴 테스트", () => {
   });
 
   test("컴파일된 코드가 유효한 TypeScript여야 한다", async () => {
-    const compiler = new FigmaCompiler(
+    const compiler = new FigmaCodeGenerator(
       inputBoxStandardFixture as unknown as FigmaNodeData
     );
     const code = await compiler.compile();

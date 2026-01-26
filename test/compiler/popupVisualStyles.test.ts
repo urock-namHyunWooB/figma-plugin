@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
 import fs from "fs";
 import path from "path";
-import FigmaCompiler from "../../src/frontend/ui/domain/compiler/index";
+import FigmaCodeGenerator from "../../src/frontend/ui/domain/compiler/index";
 
 describe("Popup 시각적 스타일 제거 검증", () => {
   const popupFixturePath = path.join(__dirname, "../fixtures/any/Popup.json");
 
   it("Large dependency에서 background/border-radius가 제거되어야 한다", async () => {
     const popup = JSON.parse(fs.readFileSync(popupFixturePath, "utf8"));
-    const compiler = new FigmaCompiler(popup, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(popup, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // Large 컴포넌트 CSS 추출
@@ -29,7 +29,7 @@ describe("Popup 시각적 스타일 제거 검증", () => {
 
   it("wrapper(LeftButtonCss, RightButtonCss)에는 background가 있어야 한다", async () => {
     const popup = JSON.parse(fs.readFileSync(popupFixturePath, "utf8"));
-    const compiler = new FigmaCompiler(popup, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(popup, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // Wrapper CSS 확인

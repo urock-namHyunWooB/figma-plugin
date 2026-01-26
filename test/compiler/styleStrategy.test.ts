@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll } from "vitest";
-import FigmaCompiler from "@compiler";
-import type { FigmaCompilerOptions } from "@compiler/FigmaCompiler";
+import FigmaCodeGenerator from "@compiler";
+import type { FigmaCodeGeneratorOptions } from "@compiler/FigmaCodeGenerator";
 import { getCachedCompile, warmupCache } from "../utils/shared-compile-cache";
 
 // Fixtures - 샘플 테스트용 fixtures
@@ -11,7 +11,7 @@ import airtableSelectButton from "../fixtures/item-slot-likes/airtable-select-bu
 // 스타일 전략 정의
 const strategies: Array<{
   name: string;
-  options: FigmaCompilerOptions;
+  options: FigmaCodeGeneratorOptions;
   expectedStyleAttr: string;
   unexpectedImport: string;
 }> = [
@@ -132,7 +132,7 @@ describe("Tailwind 전용 테스트", () => {
 
   test("inlineCn: false일 때 커스텀 cn import 경로를 사용할 수 있어야 한다", async () => {
     // 이 테스트는 다른 옵션을 사용하므로 직접 컴파일
-    const compiler = new FigmaCompiler(airtableSelectButton as any, {
+    const compiler = new FigmaCodeGenerator(airtableSelectButton as any, {
       styleStrategy: {
         type: "tailwind",
         tailwind: {
@@ -506,7 +506,7 @@ describe("Tailwind 코드 품질 검증 테스트", () => {
 
     test("inlineCn: false일 때 cn import를 사용해야 한다", async () => {
       // 이 테스트는 다른 옵션을 사용하므로 직접 컴파일
-      const compiler = new FigmaCompiler(sampleFixtures[0].data as any, {
+      const compiler = new FigmaCodeGenerator(sampleFixtures[0].data as any, {
         styleStrategy: {
           type: "tailwind",
           tailwind: {

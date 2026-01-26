@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
 import fs from "fs";
 import path from "path";
-import FigmaCompiler from "../../src/frontend/ui/domain/compiler/index";
+import FigmaCodeGenerator from "../../src/frontend/ui/domain/compiler/index";
 
 describe("SLOT prop 조건부 스타일 처리", () => {
   const headerrootFixturePath = path.join(__dirname, "../fixtures/any/Headerroot.json");
 
   it("SLOT prop별 조건부 CSS 변수가 생성되어야 한다", async () => {
     const headerroot = JSON.parse(fs.readFileSync(headerrootFixturePath, "utf8"));
-    const compiler = new FigmaCompiler(headerroot, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(headerroot, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // rightIcon slot에 대한 With/Without CSS 변수가 생성되어야 함
@@ -31,7 +31,7 @@ describe("SLOT prop 조건부 스타일 처리", () => {
 
   it("rightIcon이 있을 때 적절한 레이아웃 스타일이 적용되어야 한다", async () => {
     const headerroot = JSON.parse(fs.readFileSync(headerrootFixturePath, "utf8"));
-    const compiler = new FigmaCompiler(headerroot, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(headerroot, { strategy: "emotion" });
     const result = await compiler.compile();
 
     const withCssMatch = result.match(/const HeaderrootWithRightIconCss = css`([^`]+)`/);
@@ -46,7 +46,7 @@ describe("SLOT prop 조건부 스타일 처리", () => {
 
   it("rightIcon이 없을 때 적절한 레이아웃 스타일이 적용되어야 한다", async () => {
     const headerroot = JSON.parse(fs.readFileSync(headerrootFixturePath, "utf8"));
-    const compiler = new FigmaCompiler(headerroot, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(headerroot, { strategy: "emotion" });
     const result = await compiler.compile();
 
     const withoutCssMatch = result.match(/const HeaderrootWithoutRightIconCss = css`([^`]+)`/);
@@ -60,7 +60,7 @@ describe("SLOT prop 조건부 스타일 처리", () => {
 
   it("JSX에서 CSS 배열로 조건부 스타일을 적용해야 한다", async () => {
     const headerroot = JSON.parse(fs.readFileSync(headerrootFixturePath, "utf8"));
-    const compiler = new FigmaCompiler(headerroot, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(headerroot, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // css={[HeaderrootCss, rightIcon != null ? ... : ...]} 패턴 확인
@@ -73,7 +73,7 @@ describe("SLOT prop 조건부 스타일 처리", () => {
 
   it("SLOT prop이 React.ReactNode 타입이어야 한다", async () => {
     const headerroot = JSON.parse(fs.readFileSync(headerrootFixturePath, "utf8"));
-    const compiler = new FigmaCompiler(headerroot, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(headerroot, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // Props interface에서 rightIcon이 React.ReactNode 타입인지 확인
@@ -87,7 +87,7 @@ describe("SLOT prop 조건부 스타일 처리", () => {
 
   it("Base CSS에는 조건부 스타일이 포함되지 않아야 한다", async () => {
     const headerroot = JSON.parse(fs.readFileSync(headerrootFixturePath, "utf8"));
-    const compiler = new FigmaCompiler(headerroot, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(headerroot, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // Base CSS (HeaderrootCss)는 공통 스타일만 포함

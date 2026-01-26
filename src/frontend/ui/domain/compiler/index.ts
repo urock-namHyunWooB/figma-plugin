@@ -1,7 +1,7 @@
 export type * from "./types/baseType";
 export type * from "./types/customType";
-export type { PropDefinition } from "./FigmaCompiler";
+export type { PropDefinition } from "./FigmaCodeGenerator";
 
-import FigmaCompiler from "./FigmaCompiler";
+import FigmaCodeGenerator from "./FigmaCodeGenerator";
 
-export default FigmaCompiler;
+export default FigmaCodeGenerator;

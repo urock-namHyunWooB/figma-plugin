@@ -1,4 +1,4 @@
-import FigmaCompiler, { RenderTree } from "@compiler";
+import FigmaCodeGenerator, { RenderTree } from "@compiler";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import CreateAstTree from "@compiler/core/ast-tree/CreateAstTree";
 import ReactGenerator, {
@@ -26,7 +26,7 @@ class Engine {
   private arraySlots: ArraySlot[];
 
   constructor(
-    root: FigmaCompiler,
+    root: FigmaCodeGenerator,
     renderTree: RenderTree,
     options?: EngineOptions
   ) {

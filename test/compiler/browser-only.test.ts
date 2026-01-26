@@ -8,7 +8,7 @@ import { describe, test, expect, beforeAll } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { render } from "@testing-library/react";
 import * as React from "react";
-import FigmaCompiler from "@compiler";
+import FigmaCodeGenerator from "@compiler";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
 
 import taptapButtonMockData from "../fixtures/button/taptapButton.json";
@@ -20,7 +20,7 @@ describe("브라우저 전용 스타일 테스트", () => {
     let Component: React.ComponentType<any>;
 
     beforeAll(async () => {
-      const compiler = new FigmaCompiler(taptapButtonMockData as any);
+      const compiler = new FigmaCodeGenerator(taptapButtonMockData as any);
       const code = await compiler.getGeneratedCode();
       Component = await renderReactComponent(code!);
     });
@@ -51,7 +51,7 @@ describe("브라우저 전용 스타일 테스트", () => {
     let Component: React.ComponentType<any>;
 
     beforeAll(async () => {
-      const compiler = new FigmaCompiler(urockButtonSampleMockData as any);
+      const compiler = new FigmaCodeGenerator(urockButtonSampleMockData as any);
       const code = await compiler.getGeneratedCode();
       Component = await renderReactComponent(code!);
     });
@@ -80,7 +80,7 @@ describe("브라우저 전용 스타일 테스트", () => {
     let Component: React.ComponentType<any>;
 
     beforeAll(async () => {
-      const compiler = new FigmaCompiler(urockChipsMockData as any);
+      const compiler = new FigmaCodeGenerator(urockChipsMockData as any);
       const code = await compiler.getGeneratedCode();
       Component = await renderReactComponent(code!);
     });

@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { createRoot, Root } from "react-dom/client";
 import { css } from "@emotion/react";
 import { useNavigate } from "react-router-dom";
-import FigmaCompiler, { PropDefinition } from "@compiler";
+import FigmaCodeGenerator, { PropDefinition } from "@compiler";
 import { FigmaNodeData } from "../domain/compiler";
 import { renderReactComponent } from "../domain/renderer/component-render";
 import { loadFontsFromNodeData } from "../domain/compiler/utils/fontLoader";
@@ -235,7 +235,7 @@ export default function TestPage() {
       const container = renderRef.current;
       try {
         await loadFontsFromNodeData(fixture.data);
-        const compiler = new FigmaCompiler(fixture.data, {
+        const compiler = new FigmaCodeGenerator(fixture.data, {
           debug: true,
           styleStrategy: { type: strategy },
         });
@@ -386,7 +386,7 @@ export default function TestPage() {
 
       try {
         await loadFontsFromNodeData(fixture.data);
-        const compiler = new FigmaCompiler(fixture.data, {
+        const compiler = new FigmaCodeGenerator(fixture.data, {
           debug: true,
           styleStrategy: { type: strategy },
         });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import FigmaCompiler from "../../src/frontend/ui/domain/compiler/index";
+import FigmaCodeGenerator from "../../src/frontend/ui/domain/compiler/index";
 import fs from "fs";
 import path from "path";
 
@@ -17,7 +17,7 @@ describe("인스턴스 오버라이드 Props", () => {
 
   it("fills 오버라이드가 CSS 변수로 변환됨", async () => {
     const fixture = JSON.parse(fs.readFileSync(tokensFixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = (await compiler.compile()) as unknown as string;
 
     // ColorGuide CSS에서 CSS 변수 사용 확인
@@ -31,7 +31,7 @@ describe("인스턴스 오버라이드 Props", () => {
 
   it("characters 오버라이드가 Props로 전달됨", async () => {
     const fixture = JSON.parse(fs.readFileSync(tokensFixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = (await compiler.compile()) as unknown as string;
 
     // ColorGuide 인터페이스에 aaText prop 확인
@@ -45,7 +45,7 @@ describe("인스턴스 오버라이드 Props", () => {
 
   it("외부 컴포넌트 wrapper에 CSS 클래스 적용", async () => {
     const fixture = JSON.parse(fs.readFileSync(tokensFixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = (await compiler.compile()) as unknown as string;
 
     // wrapper div에 css prop 사용 확인 (인라인 스타일 아님)
@@ -58,7 +58,7 @@ describe("인스턴스 오버라이드 Props", () => {
 
   it("ColorGuide Props 인터페이스 생성", async () => {
     const fixture = JSON.parse(fs.readFileSync(tokensFixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = (await compiler.compile()) as unknown as string;
 
     // ColorGuideProps 인터페이스 확인
@@ -72,7 +72,7 @@ describe("인스턴스 오버라이드 Props", () => {
 
   it("ColorGuide 컴포넌트에서 Props destructuring", async () => {
     const fixture = JSON.parse(fs.readFileSync(tokensFixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = (await compiler.compile()) as unknown as string;
 
     // Props destructuring 확인

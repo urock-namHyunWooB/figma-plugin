@@ -283,7 +283,7 @@ class GenerateStyles {
     grouped = this._filterSlotDynamicStyles(grouped);
 
     // 루트 컴포넌트의 Props 인터페이스 이름 사용 (모든 노드에서 동일)
-    // 외부에서 전달받은 componentName 사용 (FigmaCompiler에서 normalizeComponentName으로 정규화됨)
+    // 외부에서 전달받은 componentName 사용 (FigmaCodeGenerator에서 normalizeComponentName으로 정규화됨)
     // componentName이 없으면 fallback으로 원본 이름 사용
     const rootComponentName =
       this.componentName ||

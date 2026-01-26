@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useReducer, useRef } from "react";
 
-import FigmaCompiler from "@frontend/ui/domain/compiler";
-import type { FigmaCompilerOptions } from "@compiler/FigmaCompiler";
+import FigmaCodeGenerator from "@frontend/ui/domain/compiler";
+import type { FigmaCodeGeneratorOptions } from "@compiler/FigmaCodeGenerator";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
 import { toCamelCase } from "@compiler/utils/normalizeString";
 import type { FigmaNodeData } from "@compiler/types/baseType";
@@ -106,8 +106,8 @@ export function useCompilerDebug(
     [spec]
   );
 
-  // styleStrategy 옵션을 FigmaCompilerOptions로 변환
-  const compilerOptions: FigmaCompilerOptions | undefined = useMemo(() => {
+  // styleStrategy 옵션을 FigmaCodeGeneratorOptions로 변환
+  const compilerOptions: FigmaCodeGeneratorOptions | undefined = useMemo(() => {
     if (!options?.styleStrategy || options.styleStrategy === "emotion") {
       return undefined; // 기본값 (Emotion)
     }
@@ -127,7 +127,7 @@ export function useCompilerDebug(
 
       const start = performance.now();
       try {
-        const compiler = new FigmaCompiler(spec!, compilerOptions);
+        const compiler = new FigmaCodeGenerator(spec!, compilerOptions);
         const code = await compiler.getGeneratedCode();
         if (!code) throw new Error("코드 생성 실패");
 

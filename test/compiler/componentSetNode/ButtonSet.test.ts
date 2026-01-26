@@ -9,7 +9,7 @@ import CreateAstTree from "@compiler/core/ast-tree/CreateAstTree";
 import CreateSuperTree from "@compiler/core/super-tree/CreateSuperTree";
 import { FinalAstTree, SuperTreeNode } from "@compiler";
 import { traverseBFS } from "@compiler/utils/traverse";
-import { FigmaCompiler } from "@compiler/FigmaCompiler";
+import { FigmaCodeGenerator } from "@compiler/FigmaCodeGenerator";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
 
 // Vite의 import.meta.glob으로 모든 JSON 파일 동적 로드
@@ -220,8 +220,8 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
 
   describe("렌더링 테스트", () => {
     test("생성된 코드가 실제로 렌더링되어야 한다", async () => {
-      // 1. FigmaCompiler로 컴파일러 생성
-      const compiler = new FigmaCompiler(mockData);
+      // 1. FigmaCodeGenerator로 컴파일러 생성
+      const compiler = new FigmaCodeGenerator(mockData);
 
       // 2. 코드 생성
       const code = await await compiler.getGeneratedCode("Button")!;
@@ -240,7 +240,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
     });
 
     test("props를 전달하여 렌더링할 수 있어야 한다", async () => {
-      const compiler = new FigmaCompiler(mockData);
+      const compiler = new FigmaCodeGenerator(mockData);
       const code = await compiler.getGeneratedCode()!;
       const Component = await renderReactComponent(code!);
 
@@ -252,7 +252,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
     });
 
     test("props로 text를 넘기면 text가 렌더링 되어야 한다.", async () => {
-      const compiler = new FigmaCompiler(mockData);
+      const compiler = new FigmaCodeGenerator(mockData);
       const code = await compiler.getGeneratedCode()!;
       const Component = await renderReactComponent(code!);
 
@@ -296,7 +296,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
     });
 
     test("Text는 무조건 하나 있어야 한다.", async () => {
-      const compiler = new FigmaCompiler(mockData);
+      const compiler = new FigmaCodeGenerator(mockData);
       const code = await await compiler.getGeneratedCode("Button")!;
 
       const Component = await renderReactComponent(code!);
@@ -315,7 +315,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
     });
 
     test("Props에 Icon을 넣을 수 있으면 Icon 넣고 렌더링이 되어야 한다.", async () => {
-      const compiler = new FigmaCompiler(mockData);
+      const compiler = new FigmaCodeGenerator(mockData);
       const code = await compiler.getGeneratedCode("Button")!;
       const Component = await renderReactComponent(code!);
 
@@ -338,7 +338,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
     });
 
     test("버튼으로서 기본 기능을 할 수 있어야 한다.", async () => {
-      const compiler = new FigmaCompiler(mockData);
+      const compiler = new FigmaCodeGenerator(mockData);
       const code = await compiler.getGeneratedCode("Button")!;
       const Component = await renderReactComponent(code!);
 
@@ -362,7 +362,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
     });
 
     test("폰트 패밀리가 잘 지정 되어야 한다.", async () => {
-      const compiler = new FigmaCompiler(mockData);
+      const compiler = new FigmaCodeGenerator(mockData);
       const code = await compiler.getGeneratedCode("Button");
 
       // JSDOM에서 emotion/style sheet 기반 font-family를 안정적으로 computedStyle로 검증하기 어렵기 때문에,
@@ -373,7 +373,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
     });
 
     test("아이콘 크기 적용이 실제 아이콘에 잘 먹어야 한다.", async () => {
-      const compiler = new FigmaCompiler(mockData);
+      const compiler = new FigmaCodeGenerator(mockData);
       const code = await compiler.getGeneratedCode("Button")!;
 
       const parsed = parsePropsFromInterface(code!);
@@ -389,7 +389,7 @@ describe.each(fixtureEntries)("Button: %s", (fileName, mockData) => {
     });
 
     test("disabled 관련 속성이 있다면 해당 기능이 잘 적용 되어야 한다.", async () => {
-      const compiler = new FigmaCompiler(mockData);
+      const compiler = new FigmaCodeGenerator(mockData);
       const code = await compiler.getGeneratedCode("Button")!;
       const Component = await renderReactComponent(code!);
 

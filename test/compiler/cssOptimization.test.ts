@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from "vitest";
-import FigmaCompiler from "@compiler";
+import FigmaCodeGenerator from "@compiler";
 import taptapAnchorData from "../fixtures/any/taptap-anchor.json";
 import type { FigmaNodeData } from "@compiler/types/index";
 
@@ -8,7 +8,7 @@ describe("CSS 최적화 - 중복 제거", () => {
 
   beforeAll(async () => {
     const data = taptapAnchorData as unknown as FigmaNodeData;
-    const compiler = new FigmaCompiler(data);
+    const compiler = new FigmaCodeGenerator(data);
     generatedCode = (await compiler.getGeneratedCode("Anchor")) ?? "";
   });
 

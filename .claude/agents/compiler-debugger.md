@@ -59,7 +59,7 @@ src/frontend/ui/domain/compiler/
 │   ├── InstanceOverrideManager.ts   # INSTANCE override 병합
 │   └── DependencyManager.ts         # Phase 6: 의존성 관리
 │
-└── FigmaCompiler.ts                 # 진입점
+└── FigmaCodeGenerator.ts            # 진입점
 ```
 
 ## 디버깅 프로세스 (2단계)

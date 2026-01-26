@@ -18,23 +18,23 @@ import type { StyleStrategyOptions } from "./core/react-generator/style-strategy
 export type { SlotInfo, PropDefinition };
 
 /**
- * FigmaCompiler 옵션
+ * FigmaCodeGenerator 옵션
  */
-export interface FigmaCompilerOptions {
+export interface FigmaCodeGeneratorOptions {
   /** 스타일 전략 옵션 */
   styleStrategy?: StyleStrategyOptions;
   /** 디버그 모드: true이면 data-figma-id 속성 추가 */
   debug?: boolean;
 }
 
-export class FigmaCompiler {
+export class FigmaCodeGenerator {
   public readonly SpecDataManager: SpecDataManager;
   public readonly Engine: Engine;
-  private readonly options: FigmaCompilerOptions;
+  private readonly options: FigmaCodeGeneratorOptions;
   private readonly dependencyManager: DependencyManager;
   public readonly propsManager: PropsManager;
 
-  constructor(spec: FigmaNodeData, options?: FigmaCompilerOptions) {
+  constructor(spec: FigmaNodeData, options?: FigmaCodeGeneratorOptions) {
     this.options = options || {};
     const specDataManager = (this.SpecDataManager = new SpecDataManager(spec));
     const instanceOverrideManager = new InstanceOverrideManager(
@@ -131,7 +131,7 @@ export class FigmaCompiler {
       mainCode,
       name,
       // 컴파일러 팩토리: 재귀 컴파일용
-      (spec) => new FigmaCompiler(spec, this.options),
+      (spec) => new FigmaCodeGenerator(spec, this.options),
       // 이름 정규화 함수
       (n) => normalizeComponentName(n)
     );
@@ -141,4 +141,4 @@ export class FigmaCompiler {
 // DependencyManager에서 타입 re-export
 export type { MultiComponentResult, CompiledDependency };
 
-export default FigmaCompiler;
+export default FigmaCodeGenerator;

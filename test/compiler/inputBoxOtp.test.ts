@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import FigmaCompiler from "@compiler/FigmaCompiler";
+import FigmaCodeGenerator from "@compiler/FigmaCodeGenerator";
 import type { FigmaNodeData } from "@compiler/types/baseType";
 
 // InputBoxotp fixture
@@ -7,7 +7,7 @@ import inputBoxotpFixture from "../fixtures/any/InputBoxotp.json";
 
 describe("InputBoxotp 컴파일 테스트", () => {
   test("숫자로 시작하는 노드 이름이 올바른 식별자로 변환되어야 한다", async () => {
-    const compiler = new FigmaCompiler(
+    const compiler = new FigmaCodeGenerator(
       inputBoxotpFixture as unknown as FigmaNodeData
     );
     const code = await compiler.compile();
@@ -28,7 +28,7 @@ describe("InputBoxotp 컴파일 테스트", () => {
   });
 
   test("CSS 변환 불가능한 State prop이 보존되어야 한다", async () => {
-    const compiler = new FigmaCompiler(
+    const compiler = new FigmaCodeGenerator(
       inputBoxotpFixture as unknown as FigmaNodeData
     );
     const code = await compiler.compile();
@@ -48,7 +48,7 @@ describe("InputBoxotp 컴파일 테스트", () => {
   });
 
   test("State 조건부 visible이 올바르게 처리되어야 한다", async () => {
-    const compiler = new FigmaCompiler(
+    const compiler = new FigmaCodeGenerator(
       inputBoxotpFixture as unknown as FigmaNodeData
     );
     const code = await compiler.compile();

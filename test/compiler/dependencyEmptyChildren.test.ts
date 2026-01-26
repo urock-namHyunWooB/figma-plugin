@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import FigmaCompiler from "../../src/frontend/ui/domain/compiler/index";
+import FigmaCodeGenerator from "../../src/frontend/ui/domain/compiler/index";
 import fs from "fs";
 import path from "path";
 
@@ -25,7 +25,7 @@ describe("의존 컴포넌트 children 처리", () => {
 
   it("Gnb: 원래 children이 비어있으면 I... 노드 유지", async () => {
     const fixture = JSON.parse(fs.readFileSync(gnbFixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // Colorgnbhomen 컴포넌트에 실제 children이 렌더링되어야 함
@@ -46,7 +46,7 @@ describe("의존 컴포넌트 children 처리", () => {
 
   it("error-02: 원래 children이 있으면 I... 노드 삭제", async () => {
     const fixture = JSON.parse(fs.readFileSync(error02FixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // MonoResponsive 컴포넌트에서 ColorCss가 생성되면 안됨
@@ -56,7 +56,7 @@ describe("의존 컴포넌트 children 처리", () => {
 
   it("Gnb: 아이콘 요소가 SVG로 렌더링됨", async () => {
     const fixture = JSON.parse(fs.readFileSync(gnbFixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // Rectangle CSS가 생성되어야 함 (아이콘 요소)
@@ -68,7 +68,7 @@ describe("의존 컴포넌트 children 처리", () => {
 
   it("Gnb: 의존 컴포넌트들이 정상 생성됨", async () => {
     const fixture = JSON.parse(fs.readFileSync(gnbFixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // 주요 의존 컴포넌트들이 생성되어야 함

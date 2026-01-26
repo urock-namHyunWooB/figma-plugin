@@ -1,12 +1,12 @@
 import { describe, test, expect, beforeAll } from "vitest";
-import { FigmaCompiler } from "@compiler/FigmaCompiler";
+import { FigmaCodeGenerator } from "@compiler/FigmaCodeGenerator";
 import urockList from "../fixtures/any-component-set/urock-list.json";
 
 describe("부분 텍스트 스타일링 (characterStyleOverrides)", () => {
   let generatedCode: string;
 
   beforeAll(async () => {
-    const compiler = new FigmaCompiler(urockList as any);
+    const compiler = new FigmaCodeGenerator(urockList as any);
     generatedCode = (await compiler.getGeneratedCode()) || "";
   });
 

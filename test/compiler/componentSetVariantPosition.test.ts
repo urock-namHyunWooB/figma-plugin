@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import { FigmaCompiler } from "@compiler/FigmaCompiler";
+import { FigmaCodeGenerator } from "@compiler/FigmaCodeGenerator";
 
 /**
  * COMPONENT_SET 내 variant별 노드 위치 처리 테스트
@@ -26,7 +26,7 @@ describe("COMPONENT_SET variant position", () => {
     }
 
     const nodeData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-    const compiler = new FigmaCompiler(nodeData);
+    const compiler = new FigmaCodeGenerator(nodeData);
     const code = await compiler.compile();
 
     expect(code).not.toBeNull();
@@ -55,7 +55,7 @@ describe("COMPONENT_SET variant position", () => {
     }
 
     const nodeData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-    const compiler = new FigmaCompiler(nodeData);
+    const compiler = new FigmaCodeGenerator(nodeData);
     const code = await compiler.compile();
 
     expect(code).not.toBeNull();
@@ -74,7 +74,7 @@ describe("COMPONENT_SET variant position", () => {
     }
 
     const nodeData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-    const compiler = new FigmaCompiler(nodeData);
+    const compiler = new FigmaCodeGenerator(nodeData);
     const code = await compiler.compile();
 
     expect(code).not.toBeNull();

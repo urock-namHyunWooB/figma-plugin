@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import FigmaCompiler from "@compiler";
+import FigmaCodeGenerator from "@compiler";
 import error02Fixture from "../fixtures/any/error-02.json";
 
 describe("INSTANCE 컨텍스트 병합 - visible 처리", () => {
@@ -14,7 +14,7 @@ describe("INSTANCE 컨텍스트 병합 - visible 처리", () => {
    */
   
   test("dependencies 컴파일 시 INSTANCE 내부 노드(I...)가 삭제되어야 함", async () => {
-    const compiler = new FigmaCompiler(error02Fixture as any);
+    const compiler = new FigmaCodeGenerator(error02Fixture as any);
     const code = await compiler.compile();
     
     // ColorCss가 생성되면 안됨 (I로 시작하는 노드가 삭제되어야 함)
@@ -22,7 +22,7 @@ describe("INSTANCE 컨텍스트 병합 - visible 처리", () => {
   });
 
   test("MonoResponsive 컴포넌트 내부에 ColorCss가 없어야 함", async () => {
-    const compiler = new FigmaCompiler(error02Fixture as any);
+    const compiler = new FigmaCodeGenerator(error02Fixture as any);
     const code = await compiler.compile();
     
     // MonoResponsive 컴포넌트 내부만 확인

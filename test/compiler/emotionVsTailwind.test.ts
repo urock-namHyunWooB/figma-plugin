@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from "vitest";
-import { FigmaCompiler } from "@compiler/FigmaCompiler";
+import { FigmaCodeGenerator } from "@compiler/FigmaCodeGenerator";
 import anySpec from "../fixtures/any/any-01.json";
 
 // ===== 컴파일 결과 캐시 =====
@@ -9,10 +9,10 @@ let cachedTailwindCode: string | null = null;
 beforeAll(async () => {
   // 테스트 시작 전 한 번만 컴파일
   const [emotionCode, tailwindCode] = await Promise.all([
-    new FigmaCompiler(anySpec as any, {
+    new FigmaCodeGenerator(anySpec as any, {
       styleStrategy: { type: "emotion" },
     }).compile(),
-    new FigmaCompiler(anySpec as any, {
+    new FigmaCodeGenerator(anySpec as any, {
       styleStrategy: { type: "tailwind" },
     }).compile(),
   ]);

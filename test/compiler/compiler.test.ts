@@ -12,7 +12,7 @@ import airtableButtonWithDeps from "../fixtures/any-component-set/airtable-butto
 import urockChipsMockData from "../fixtures/chip/urock-chips.json";
 import airtableSelectButton from "../fixtures/select-button/airtable-select-button.json";
 
-import FigmaCompiler, {
+import FigmaCodeGenerator, {
   FinalAstTree,
   SuperTreeNode,
   TempAstTree,
@@ -1033,7 +1033,7 @@ describe("compiler 테스트", () => {
       let Component: React.ComponentType<any>;
 
       beforeAll(async () => {
-        const compiler = new FigmaCompiler(taptapButtonMockData as any);
+        const compiler = new FigmaCodeGenerator(taptapButtonMockData as any);
         const code = await compiler.getGeneratedCode();
 
         Component = await renderReactComponent(code!);
@@ -1186,7 +1186,7 @@ describe("compiler 테스트", () => {
       let Component: React.ComponentType<any>;
 
       beforeAll(async () => {
-        const compiler = new FigmaCompiler(urockButtonSampleMockData as any);
+        const compiler = new FigmaCodeGenerator(urockButtonSampleMockData as any);
         const code = await compiler.getGeneratedCode();
 
         Component = await renderReactComponent(code!);
@@ -1227,7 +1227,7 @@ describe("compiler 테스트", () => {
          * }
          * 이 경우 type이 겹치는데 customType으로 이름이 변경된다.
          */
-        const compiler = new FigmaCompiler(urockButtonSampleMockData as any);
+        const compiler = new FigmaCodeGenerator(urockButtonSampleMockData as any);
         const code = await compiler.getGeneratedCode();
 
         // type이 customType으로 변경되었는지 확인
@@ -1238,7 +1238,7 @@ describe("compiler 테스트", () => {
       });
 
       test("스타일 Record 객체에 모든 customType 값이 포함되어야 한다.", async () => {
-        const compiler = new FigmaCompiler(urockButtonSampleMockData as any);
+        const compiler = new FigmaCodeGenerator(urockButtonSampleMockData as any);
         const code = await compiler.getGeneratedCode();
 
         // 모든 customType 값이 스타일 Record에 포함되어야 함
@@ -1299,7 +1299,7 @@ describe("compiler 테스트", () => {
       let Component: React.ComponentType<any>;
 
       beforeAll(async () => {
-        const compiler = new FigmaCompiler(tadaButtonMockData as any);
+        const compiler = new FigmaCodeGenerator(tadaButtonMockData as any);
         const code = await compiler.getGeneratedCode();
 
         Component = await renderReactComponent(code!);
@@ -1330,7 +1330,7 @@ describe("compiler 테스트", () => {
 
       test("prop에서 nativeProp과 겹치는 prop이 있으면 custom prop으로 이름이 변경된다.", async () => {
         // disabled가 customDisabled로 변해야 함
-        const compiler = new FigmaCompiler(tadaButtonMockData as any);
+        const compiler = new FigmaCodeGenerator(tadaButtonMockData as any);
         const code = await compiler.getGeneratedCode();
 
         // disabled가 customDisabled로 변경되었는지 확인
@@ -1340,7 +1340,7 @@ describe("compiler 테스트", () => {
       });
 
       test("props에서 customDisabled는 boolean이다", async () => {
-        const compiler = new FigmaCompiler(tadaButtonMockData as any);
+        const compiler = new FigmaCodeGenerator(tadaButtonMockData as any);
         const code = await compiler.getGeneratedCode();
 
         // customDisabled가 boolean 타입으로 정의되어 있는지 확인
@@ -1349,7 +1349,7 @@ describe("compiler 테스트", () => {
       });
 
       test("disabled의 타입값은 Boolean이다", async () => {
-        const compiler = new FigmaCompiler(tadaButtonMockData as any);
+        const compiler = new FigmaCodeGenerator(tadaButtonMockData as any);
         const propDefs = compiler.getPropsDefinition();
 
         // customDisabled prop을 찾아서 타입이 BOOLEAN인지 확인
@@ -1369,7 +1369,7 @@ describe("compiler 테스트", () => {
       let Component: React.ComponentType<any>;
 
       beforeAll(async () => {
-        const compiler = new FigmaCompiler(urockChipsMockData as any);
+        const compiler = new FigmaCodeGenerator(urockChipsMockData as any);
         const code = await compiler.getGeneratedCode();
 
         Component = await renderReactComponent(code!);
@@ -1398,7 +1398,7 @@ describe("compiler 테스트", () => {
       let Component: React.ComponentType<any>;
 
       beforeAll(async () => {
-        const compiler = new FigmaCompiler(airtableSelectButton as any);
+        const compiler = new FigmaCodeGenerator(airtableSelectButton as any);
         const code = await compiler.getGeneratedCode();
 
         Component = await renderReactComponent(code!);
@@ -1424,7 +1424,7 @@ describe("compiler 테스트", () => {
         let generatedCode: string;
 
         beforeAll(async () => {
-          const compiler = new FigmaCompiler(airtableSelectButton as any);
+          const compiler = new FigmaCodeGenerator(airtableSelectButton as any);
           generatedCode = (await compiler.getGeneratedCode()) || "";
         });
 
@@ -1470,7 +1470,7 @@ describe("compiler 테스트", () => {
       let error: Error | null = null;
 
       try {
-        new FigmaCompiler(emptyData as any);
+        new FigmaCodeGenerator(emptyData as any);
       } catch (e) {
         error = e as Error;
       }
@@ -1490,7 +1490,7 @@ describe("compiler 테스트", () => {
       let error: Error | null = null;
 
       try {
-        new FigmaCompiler(invalidData as any);
+        new FigmaCodeGenerator(invalidData as any);
       } catch (e) {
         error = e as Error;
       }
@@ -1523,7 +1523,7 @@ describe("compiler 테스트", () => {
       let error: Error | null = null;
 
       try {
-        new FigmaCompiler(emptyChildrenData as any);
+        new FigmaCodeGenerator(emptyChildrenData as any);
       } catch (e) {
         error = e as Error;
       }
@@ -1565,7 +1565,7 @@ describe("compiler 테스트", () => {
           ],
         },
       };
-      expect(() => new FigmaCompiler(noPropsData as any)).not.toThrow();
+      expect(() => new FigmaCodeGenerator(noPropsData as any)).not.toThrow();
     });
 
     test("유효한 데이터로 컴파일러가 정상 동작해야 한다", async () => {
@@ -1654,18 +1654,18 @@ describe("compiler 테스트", () => {
         },
       };
 
-      const compiler = new FigmaCompiler(validData as any);
+      const compiler = new FigmaCodeGenerator(validData as any);
       expect(compiler).toBeDefined();
     });
   });
 
   describe("INSTANCE 노드 처리", () => {
     describe("tadaButtonComponent (INSTANCE)", () => {
-      let compiler: FigmaCompiler;
+      let compiler: FigmaCodeGenerator;
       let code: string | null;
 
       beforeAll(async () => {
-        compiler = new FigmaCompiler(tadaButtonComponentMockData as any);
+        compiler = new FigmaCodeGenerator(tadaButtonComponentMockData as any);
         code = await compiler.getGeneratedCode("Badge");
       });
 
@@ -1718,7 +1718,7 @@ describe("compiler 테스트", () => {
 
     beforeAll(async () => {
       specDataManager = new SpecDataManager(airtableButtonWithDeps as any);
-      const compiler = new FigmaCompiler(airtableButtonWithDeps as any);
+      const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
       code = await compiler.getGeneratedCode();
     });
 
@@ -1777,7 +1777,7 @@ describe("한글 컴포넌트 이름 처리", () => {
   });
 
   test("한글만 있는 컴포넌트 이름도 유효한 함수 이름으로 변환되어야 한다", () => {
-    const compiler = new FigmaCompiler(createMockData("버튼 컴포넌트") as any);
+    const compiler = new FigmaCodeGenerator(createMockData("버튼 컴포넌트") as any);
     const componentName = compiler.getComponentName();
 
     // 유효한 JavaScript 식별자여야 함 (Component + hash)
@@ -1786,7 +1786,7 @@ describe("한글 컴포넌트 이름 처리", () => {
   });
 
   test("한글+영문 혼합 컴포넌트 이름은 영문만 추출되어야 한다", () => {
-    const compiler = new FigmaCompiler(createMockData("Button 버튼") as any);
+    const compiler = new FigmaCodeGenerator(createMockData("Button 버튼") as any);
     const componentName = compiler.getComponentName();
 
     // "Button"이 추출되어야 함
@@ -1794,7 +1794,7 @@ describe("한글 컴포넌트 이름 처리", () => {
   });
 
   test("특수문자만 있는 컴포넌트 이름도 유효한 함수 이름으로 변환되어야 한다", () => {
-    const compiler = new FigmaCompiler(createMockData("🎉✨") as any);
+    const compiler = new FigmaCodeGenerator(createMockData("🎉✨") as any);
     const componentName = compiler.getComponentName();
 
     // 유효한 JavaScript 식별자여야 함 (Component + hash)
@@ -1803,7 +1803,7 @@ describe("한글 컴포넌트 이름 처리", () => {
   });
 
   test("숫자로 시작하는 이름은 앞에 _가 추가되어야 한다", () => {
-    const compiler = new FigmaCompiler(createMockData("123Button") as any);
+    const compiler = new FigmaCodeGenerator(createMockData("123Button") as any);
     const componentName = compiler.getComponentName();
 
     // _로 시작해야 함
@@ -1812,7 +1812,7 @@ describe("한글 컴포넌트 이름 처리", () => {
   });
 
   test("빈 문자열도 유효한 함수 이름으로 변환되어야 한다", () => {
-    const compiler = new FigmaCompiler(createMockData("") as any);
+    const compiler = new FigmaCodeGenerator(createMockData("") as any);
     const componentName = compiler.getComponentName();
 
     // 유효한 JavaScript 식별자여야 함

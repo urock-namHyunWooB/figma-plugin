@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import FigmaCompiler from "../../src/frontend/ui/domain/compiler/index";
+import FigmaCodeGenerator from "../../src/frontend/ui/domain/compiler/index";
 import fs from "fs";
 import path from "path";
 
@@ -24,7 +24,7 @@ describe("컴포넌트 이름 충돌 처리", () => {
 
   it("의존성 컴포넌트 이름이 _ 접두사로 변경됨", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // 의존성 컴포넌트가 _Label로 변경되어야 함
@@ -33,7 +33,7 @@ describe("컴포넌트 이름 충돌 처리", () => {
 
   it("메인 컴포넌트는 원래 이름 유지", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // 메인 컴포넌트는 Label로 유지
@@ -42,7 +42,7 @@ describe("컴포넌트 이름 충돌 처리", () => {
 
   it("메인 컴포넌트가 의존성을 _Label로 참조함", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // 메인 컴포넌트 함수 추출
@@ -64,7 +64,7 @@ describe("컴포넌트 이름 충돌 처리", () => {
 
   it("의존성 컴포넌트가 올바르게 렌더링됨", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // _Label 함수 추출
@@ -87,7 +87,7 @@ describe("컴포넌트 이름 충돌 처리", () => {
 
   it("메인 컴포넌트 텍스트가 올바름", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // 메인 컴포넌트는 "Interaction" 텍스트를 가져야 함
@@ -96,7 +96,7 @@ describe("컴포넌트 이름 충돌 처리", () => {
 
   it("의존성 컴포넌트 텍스트가 올바름", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // 의존성 컴포넌트는 "Normal", "Pressed" 텍스트를 가져야 함
@@ -106,7 +106,7 @@ describe("컴포넌트 이름 충돌 처리", () => {
 
   it("컴파일이 성공적으로 완료됨", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // 결과가 비어있지 않아야 함
@@ -116,7 +116,7 @@ describe("컴포넌트 이름 충돌 처리", () => {
 
   it("무한 재귀 방지: 메인에서 자기 자신을 호출하지 않음", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // 메인 컴포넌트 함수 추출

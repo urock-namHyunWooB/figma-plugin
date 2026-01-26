@@ -1,5 +1,5 @@
 import { describe, expect, test, beforeAll } from "vitest";
-import FigmaCompiler from "@compiler";
+import FigmaCodeGenerator from "@compiler";
 import airtableButtonWithDeps from "../fixtures/any-component-set/airtable-button.json";
 
 /**
@@ -17,7 +17,7 @@ describe("External Component Wrapper", () => {
   let codeWithDeps: string;
 
   beforeAll(async () => {
-    const compiler = new FigmaCompiler(airtableButtonWithDeps as any);
+    const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
     code = (await compiler.compile()) || "";
     
     const result = await compiler.getGeneratedCodeWithDependencies("AirtableButton");
@@ -27,7 +27,7 @@ describe("External Component Wrapper", () => {
 
   describe("Dependency 컴포넌트 루트 스타일", () => {
     test("dependency 컴포넌트 루트에 width: 100%가 있어야 한다", async () => {
-      const compiler = new FigmaCompiler(airtableButtonWithDeps as any);
+      const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
       const result = await compiler.getGeneratedCodeWithDependencies("AirtableButton");
       
       // 각 dependency 코드에 100%가 포함되어야 함
@@ -40,7 +40,7 @@ describe("External Component Wrapper", () => {
     });
 
     test("dependency 컴포넌트 루트에 height: 100%가 있어야 한다", async () => {
-      const compiler = new FigmaCompiler(airtableButtonWithDeps as any);
+      const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
       const result = await compiler.getGeneratedCodeWithDependencies("AirtableButton");
       
       for (const dep of Object.values(result.dependencies)) {
@@ -75,7 +75,7 @@ describe("Layout Styles Extraction", () => {
     // COMPONENT_SET인 경우 INSTANCE는 slot으로 변환됨
     // 그 외의 경우 external component로 wrapper div와 함께 렌더링됨
 
-    const compiler = new FigmaCompiler(airtableButtonWithDeps as any);
+    const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
     const code = await compiler.compile();
 
     // 컴파일된 코드가 있어야 함
@@ -88,7 +88,7 @@ describe("Layout Styles Extraction", () => {
   });
 
   test("flexGrow/flex 속성이 wrapper에 적용되어야 한다", async () => {
-    const compiler = new FigmaCompiler(airtableButtonWithDeps as any);
+    const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
     const code = await compiler.compile();
     
     // 코드가 정상 생성되어야 함
@@ -102,7 +102,7 @@ describe("Layout Styles Extraction", () => {
  */
 describe("Make Root Flexible", () => {
   test("dependency 루트의 고정 크기가 100%로 변환되어야 한다", async () => {
-    const compiler = new FigmaCompiler(airtableButtonWithDeps as any);
+    const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
     const result = await compiler.getGeneratedCodeWithDependencies("Test");
     
     // dependencies가 있으면 각각 100% 스타일을 가져야 함
@@ -120,7 +120,7 @@ describe("Make Root Flexible", () => {
   });
 
   test("dependency 루트에 고정 px 크기가 없어야 한다", async () => {
-    const compiler = new FigmaCompiler(airtableButtonWithDeps as any);
+    const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
     const result = await compiler.getGeneratedCodeWithDependencies("Test");
     
     // dependencies의 루트 스타일에 고정 px가 없어야 함
@@ -135,7 +135,7 @@ describe("Make Root Flexible", () => {
  */
 describe("External Component Size Integration", () => {
   test("컴파일된 코드가 유효한 React 컴포넌트여야 한다", async () => {
-    const compiler = new FigmaCompiler(airtableButtonWithDeps as any);
+    const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
     const code = await compiler.compile();
     
     expect(code).toBeDefined();
@@ -144,7 +144,7 @@ describe("External Component Size Integration", () => {
   });
 
   test("인라인 dependencies가 포함된 코드가 생성되어야 한다", async () => {
-    const compiler = new FigmaCompiler(airtableButtonWithDeps as any);
+    const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
     const result = await compiler.getGeneratedCodeWithDependencies("AirtableButton");
     
     // 메인 컴포넌트

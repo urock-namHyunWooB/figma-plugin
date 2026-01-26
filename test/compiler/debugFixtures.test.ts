@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import { FigmaCompiler } from "@compiler/FigmaCompiler";
+import { FigmaCodeGenerator } from "@compiler/FigmaCodeGenerator";
 import Engine from "@compiler/core/Engine";
 import generate from "@babel/generator";
 
@@ -27,7 +27,7 @@ describe("Debug Failing Fixtures", () => {
         const filePath = path.join(FAILING_FIXTURES_DIR, fixture);
         const nodeData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
 
-        const compiler = new FigmaCompiler(nodeData, { debug: true });
+        const compiler = new FigmaCodeGenerator(nodeData, { debug: true });
         const code = await compiler.compile();
 
         // 컴파일 결과를 파일로 저장
@@ -48,7 +48,7 @@ describe("Debug Headerroot Dynamic Styles", () => {
     }
 
     const nodeData = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-    const compiler = new FigmaCompiler(nodeData, { debug: true });
+    const compiler = new FigmaCodeGenerator(nodeData, { debug: true });
 
     // Engine 생성 시 이미 컴파일이 완료됨
     const astTree = compiler.Engine.getFinalAstTree();

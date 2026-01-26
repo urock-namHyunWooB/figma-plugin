@@ -4,7 +4,7 @@ import taptapNavigation from "../fixtures/item-slot-likes/taptap-navigation.json
 import tadaList from "../fixtures/item-slot-likes/tada-list.json";
 import ArraySlotDetector from "@compiler/core/ArraySlotDetector";
 import { FigmaNodeData } from "@compiler/types/baseType";
-import FigmaCompiler from "@compiler";
+import FigmaCodeGenerator from "@compiler";
 
 /**
  * ArraySlot 감지 조건:
@@ -545,7 +545,7 @@ describe("ArraySlot 감지", () => {
 
     test("병합된 SuperTree에서도 ArraySlot이 정상적으로 감지되어야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
-      const compiler = new FigmaCompiler(data);
+      const compiler = new FigmaCodeGenerator(data);
 
       // AST 트리 생성
       await compiler.compile();
@@ -584,7 +584,7 @@ describe("ArraySlot 감지", () => {
 
     test("생성된 코드에 .map() 렌더링이 포함되어야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
-      const compiler = new FigmaCompiler(data);
+      const compiler = new FigmaCodeGenerator(data);
       const code = await compiler.compile();
 
       expect(code).not.toBeNull();
@@ -594,7 +594,7 @@ describe("ArraySlot 감지", () => {
 
     test("ArraySlot instance는 개별 렌더링되지 않아야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
-      const compiler = new FigmaCompiler(data);
+      const compiler = new FigmaCodeGenerator(data);
       const code = await compiler.compile();
 
       expect(code).not.toBeNull();
@@ -616,7 +616,7 @@ describe("ArraySlot 감지", () => {
 
     test("배열 슬롯은 .map() 형태로 렌더링되어야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
-      const compiler = new FigmaCompiler(data);
+      const compiler = new FigmaCodeGenerator(data);
       const generatedCode = await compiler.getGeneratedCode("SelectButtons");
 
       // .map( 패턴이 있어야 함
@@ -625,7 +625,7 @@ describe("ArraySlot 감지", () => {
 
     test("배열 슬롯 map에 key prop이 있어야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
-      const compiler = new FigmaCompiler(data);
+      const compiler = new FigmaCodeGenerator(data);
       const generatedCode = await compiler.getGeneratedCode("SelectButtons");
 
       // key={index} 또는 key={item.id} 등의 패턴
@@ -634,7 +634,7 @@ describe("ArraySlot 감지", () => {
 
     test("배열 슬롯 아이템은 외부 컴포넌트로 렌더링되어야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
-      const compiler = new FigmaCompiler(data);
+      const compiler = new FigmaCodeGenerator(data);
       const generatedCode = await compiler.getGeneratedCode("SelectButtons");
 
       // SelectButton 컴포넌트가 map 안에서 사용되어야 함
@@ -645,7 +645,7 @@ describe("ArraySlot 감지", () => {
 
     test("배열 슬롯 아이템에 props가 전달되어야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
-      const compiler = new FigmaCompiler(data);
+      const compiler = new FigmaCodeGenerator(data);
       const generatedCode = await compiler.getGeneratedCode("SelectButtons");
 
       // item.size, item.selected, item.text 등의 props 전달
@@ -655,7 +655,7 @@ describe("ArraySlot 감지", () => {
 
     test("기존 조건부 렌더링 (options === '...')이 제거되어야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
-      const compiler = new FigmaCompiler(data);
+      const compiler = new FigmaCodeGenerator(data);
       const generatedCode = await compiler.getGeneratedCode("SelectButtons");
 
       // options === "2 options" 같은 조건이 없어야 함

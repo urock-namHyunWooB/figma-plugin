@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import FigmaCompiler from "@compiler";
+import FigmaCodeGenerator from "@compiler";
 import statusBar from "../fixtures/any/BarsstatusBariphoneblack.json";
 import { FigmaNodeData } from "@/frontend/ui/domain/compiler";
 
@@ -17,7 +17,7 @@ import { FigmaNodeData } from "@/frontend/ui/domain/compiler";
  */
 describe("BOOLEAN_OPERATION 노드 처리", () => {
   test("BOOLEAN_OPERATION 노드가 SVG로 렌더링되어야 한다", async () => {
-    const compiler = new FigmaCompiler(statusBar as unknown as FigmaNodeData);
+    const compiler = new FigmaCodeGenerator(statusBar as unknown as FigmaNodeData);
     const code = await compiler.compile();
 
     expect(code).toBeDefined();
@@ -46,7 +46,7 @@ describe("BOOLEAN_OPERATION 노드 처리", () => {
   });
 
   test("BOOLEAN_OPERATION 노드의 semanticRole이 vector여야 한다", async () => {
-    const compiler = new FigmaCompiler(statusBar as unknown as FigmaNodeData);
+    const compiler = new FigmaCodeGenerator(statusBar as unknown as FigmaNodeData);
     const code = await compiler.compile();
 
     expect(code).toBeDefined();
@@ -56,7 +56,7 @@ describe("BOOLEAN_OPERATION 노드 처리", () => {
   });
 
   test("복합 도형(배터리 아이콘 등)이 단일 SVG로 렌더링되어야 한다", async () => {
-    const compiler = new FigmaCompiler(statusBar as unknown as FigmaNodeData);
+    const compiler = new FigmaCodeGenerator(statusBar as unknown as FigmaNodeData);
     const code = await compiler.compile();
 
     expect(code).toBeDefined();

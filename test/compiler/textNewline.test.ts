@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import FigmaCompiler from "@compiler";
+import FigmaCodeGenerator from "@compiler";
 import textNewline from "../fixtures/text-newline.json";
 import { FigmaNodeData } from "@/frontend/ui/domain/compiler";
 
@@ -12,7 +12,7 @@ import { FigmaNodeData } from "@/frontend/ui/domain/compiler";
  */
 describe("텍스트 줄바꿈 처리", () => {
   test("줄바꿈이 있는 텍스트가 <br /> 태그로 변환되어야 한다", async () => {
-    const compiler = new FigmaCompiler(textNewline as unknown as FigmaNodeData);
+    const compiler = new FigmaCodeGenerator(textNewline as unknown as FigmaNodeData);
     const code = await compiler.compile();
 
     expect(code).toBeDefined();
@@ -26,7 +26,7 @@ describe("텍스트 줄바꿈 처리", () => {
   });
 
   test("줄바꿈 없는 텍스트는 <br /> 태그가 없어야 한다", async () => {
-    const compiler = new FigmaCompiler(textNewline as unknown as FigmaNodeData);
+    const compiler = new FigmaCodeGenerator(textNewline as unknown as FigmaNodeData);
     const code = await compiler.compile();
 
     expect(code).toBeDefined();

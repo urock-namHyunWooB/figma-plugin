@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import FigmaCompiler from "../../src/frontend/ui/domain/compiler/index";
+import FigmaCodeGenerator from "../../src/frontend/ui/domain/compiler/index";
 import fs from "fs";
 import path from "path";
 
@@ -23,7 +23,7 @@ describe("COMPONENT_SET 내부 TEXT 노드 slot 변환", () => {
 
   it("COMPONENT_SET의 TEXT 노드가 slot으로 변환되어야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     expect(result).toBeTruthy();
@@ -34,7 +34,7 @@ describe("COMPONENT_SET 내부 TEXT 노드 slot 변환", () => {
 
   it("세 개의 slot이 모두 생성되어야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // Props interface에 slot들이 있어야 함
@@ -61,7 +61,7 @@ describe("COMPONENT_SET 내부 TEXT 노드 slot 변환", () => {
 
   it("slot이 JSX에서 올바르게 렌더링되어야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // 컴포넌트 함수 추출
@@ -83,7 +83,7 @@ describe("COMPONENT_SET 내부 TEXT 노드 slot 변환", () => {
 
   it("slot이 null로 렌더링되어야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // 컴포넌트 함수 추출
@@ -105,7 +105,7 @@ describe("COMPONENT_SET 내부 TEXT 노드 slot 변환", () => {
 
   it("TEXT slot이 isTextSlot 플래그로 표시되어야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     expect(result).toBeTruthy();
@@ -117,7 +117,7 @@ describe("COMPONENT_SET 내부 TEXT 노드 slot 변환", () => {
 
   it("camelCase로 slot 이름이 변환되어야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // "normal-responsive" → "normalResponsive"
@@ -129,7 +129,7 @@ describe("COMPONENT_SET 내부 TEXT 노드 slot 변환", () => {
 
   it("INSTANCE slot과 boolean variant slot이 모두 생성되어야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // normalResponsive (왼쪽 INSTANCE slot)과 rightIcon (Right Icon boolean variant)
@@ -139,7 +139,7 @@ describe("COMPONENT_SET 내부 TEXT 노드 slot 변환", () => {
 
   it("컴파일이 성공적으로 완료되어야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // 결과가 비어있지 않아야 함

@@ -157,7 +157,7 @@ const ACss = ($color, $customDisabled) => css`
 
 ```typescript
 import { describe, test, expect } from "vitest";
-import FigmaCompiler from "@compiler";
+import FigmaCodeGenerator from "@compiler";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -167,7 +167,7 @@ describe("[이슈 설명]", () => {
   const figmaData = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
 
   test("[테스트 케이스 1]", async () => {
-    const compiler = new FigmaCompiler(figmaData);
+    const compiler = new FigmaCodeGenerator(figmaData);
     const code = await compiler.compile();
 
     expect(code).toBeTruthy();
@@ -193,7 +193,7 @@ describe("[이슈 설명]", () => {
 ```typescript
 describe("Disabled 상태 텍스트 색상 처리", () => {
   test("Color별 Disabled 텍스트 색상이 다르게 적용되어야 한다", async () => {
-    const compiler = new FigmaCompiler(figmaData);
+    const compiler = new FigmaCodeGenerator(figmaData);
     const code = await compiler.compile();
 
     // ADisabledColorStyles 레코드가 생성되어야 함

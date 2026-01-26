@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "fs";
 import path from "path";
-import FigmaCompiler from "@compiler/FigmaCompiler";
+import FigmaCodeGenerator from "@compiler/FigmaCodeGenerator";
 
 describe("Case.json visible override 이슈", () => {
   const fixturePath = path.join(
@@ -12,7 +12,7 @@ describe("Case.json visible override 이슈", () => {
   it("should generate showInteraction prop for Large dependency", async () => {
     const fixtureData = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
-    const compiler = new FigmaCompiler(fixtureData);
+    const compiler = new FigmaCodeGenerator(fixtureData);
     const result = await compiler.getGeneratedCodeWithDependencies();
 
     // Large dependency에 showInteraction prop이 있어야 함
@@ -32,7 +32,7 @@ describe("Case.json visible override 이슈", () => {
   it("should pass showInteraction={true} for Pressed button", async () => {
     const fixtureData = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
-    const compiler = new FigmaCompiler(fixtureData);
+    const compiler = new FigmaCodeGenerator(fixtureData);
     const result = await compiler.getGeneratedCodeWithDependencies();
 
     // 메인 코드 확인
@@ -45,7 +45,7 @@ describe("Case.json visible override 이슈", () => {
   it("should apply correct styles to Large dependency (width: 343px, position: relative)", async () => {
     const fixtureData = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
-    const compiler = new FigmaCompiler(fixtureData);
+    const compiler = new FigmaCodeGenerator(fixtureData);
     const result = await compiler.getGeneratedCodeWithDependencies();
 
     const deps = result.dependencies || {};
@@ -66,7 +66,7 @@ describe("Case.json visible override 이슈", () => {
   it("should apply transparent background to Decorateinteractive", async () => {
     const fixtureData = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
-    const compiler = new FigmaCompiler(fixtureData);
+    const compiler = new FigmaCodeGenerator(fixtureData);
     const result = await compiler.getGeneratedCodeWithDependencies();
 
     const deps = result.dependencies || {};
@@ -84,7 +84,7 @@ describe("Case.json visible override 이슈", () => {
   it("should apply correct opacity: 0.24 to DecorateInteractive", async () => {
     const fixtureData = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
-    const compiler = new FigmaCompiler(fixtureData);
+    const compiler = new FigmaCodeGenerator(fixtureData);
     const result = await compiler.getGeneratedCodeWithDependencies();
 
     const deps = result.dependencies || {};

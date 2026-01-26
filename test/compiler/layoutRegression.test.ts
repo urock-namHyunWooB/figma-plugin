@@ -10,7 +10,7 @@
 import { describe, it, expect } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import { FigmaCompiler } from "@compiler/FigmaCompiler";
+import { FigmaCodeGenerator } from "@compiler/FigmaCodeGenerator";
 import { FigmaNodeData } from "@compiler/types/compiler";
 import { extractFigmaLayout } from "@compiler/utils/layoutComparison";
 
@@ -55,7 +55,7 @@ describe("Layout Regression Tests", () => {
       });
 
       it("should compile without errors", async () => {
-        const compiler = new FigmaCompiler(nodeData, { debug: true });
+        const compiler = new FigmaCodeGenerator(nodeData, { debug: true });
         compiledCode = await compiler.compile();
         expect(compiledCode).not.toBeNull();
         expect(compiledCode).toContain("function");

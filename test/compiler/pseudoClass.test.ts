@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import FigmaCompiler from "@compiler";
+import FigmaCodeGenerator from "@compiler";
 import airtableButton from "../fixtures/any-component-set/airtable-button.json";
 import { FigmaNodeData } from "@/frontend/ui/domain/compiler";
 
@@ -12,7 +12,7 @@ import { FigmaNodeData } from "@/frontend/ui/domain/compiler";
  */
 describe("Pseudo-class 처리", () => {
   test("컴파일이 성공해야 한다", async () => {
-    const compiler = new FigmaCompiler(
+    const compiler = new FigmaCodeGenerator(
       airtableButton as unknown as FigmaNodeData
     );
     const code = await compiler.compile();
@@ -22,7 +22,7 @@ describe("Pseudo-class 처리", () => {
   });
 
   test(":hover 스타일이 생성되어야 한다", async () => {
-    const compiler = new FigmaCompiler(
+    const compiler = new FigmaCodeGenerator(
       airtableButton as unknown as FigmaNodeData
     );
     const code = await compiler.compile();
@@ -36,7 +36,7 @@ describe("Pseudo-class 처리", () => {
   });
 
   test(":disabled 스타일이 생성되어야 한다", async () => {
-    const compiler = new FigmaCompiler(
+    const compiler = new FigmaCodeGenerator(
       airtableButton as unknown as FigmaNodeData
     );
     const code = await compiler.compile();
@@ -53,7 +53,7 @@ describe("Pseudo-class 처리", () => {
   });
 
   test("SVG fill 색상이 원본 그대로 유지되어야 한다", async () => {
-    const compiler = new FigmaCompiler(
+    const compiler = new FigmaCodeGenerator(
       airtableButton as unknown as FigmaNodeData
     );
     const code = await compiler.compile();

@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import FigmaCompiler from "@compiler";
+import FigmaCodeGenerator from "@compiler";
 import group02 from "../fixtures/any/group-02.json";
 import type { FigmaNodeData } from "@compiler/types/index";
 
@@ -16,7 +16,7 @@ describe("group-02 TEXT 노드 렌더링 테스트", () => {
       characters: (c as any).characters 
     })));
     
-    const compiler = new FigmaCompiler(data);
+    const compiler = new FigmaCodeGenerator(data);
     const code = await compiler.getGeneratedCode("Group21737");
     
     console.log("=== Generated Code ===");

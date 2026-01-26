@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import FigmaCompiler from "@compiler";
+import FigmaCodeGenerator from "@compiler";
 import measure from "../fixtures/any/Measure.json";
 import { FigmaNodeData } from "@/frontend/ui/domain/compiler";
 
@@ -12,7 +12,7 @@ import { FigmaNodeData } from "@/frontend/ui/domain/compiler";
  */
 describe("VECTOR 스타일 처리", () => {
   test("SVG 전용 속성이 CSS에서 제거되어야 한다", async () => {
-    const compiler = new FigmaCompiler(measure as unknown as FigmaNodeData);
+    const compiler = new FigmaCodeGenerator(measure as unknown as FigmaNodeData);
     const code = await compiler.compile();
 
     expect(code).toBeDefined();
@@ -27,7 +27,7 @@ describe("VECTOR 스타일 처리", () => {
   });
 
   test("VECTOR 노드에 overflow: visible이 있어야 한다", async () => {
-    const compiler = new FigmaCompiler(measure as unknown as FigmaNodeData);
+    const compiler = new FigmaCodeGenerator(measure as unknown as FigmaNodeData);
     const code = await compiler.compile();
 
     expect(code).toBeDefined();
@@ -39,7 +39,7 @@ describe("VECTOR 스타일 처리", () => {
   });
 
   test("회전된 요소에 transform: rotate가 제거되어야 한다", async () => {
-    const compiler = new FigmaCompiler(measure as unknown as FigmaNodeData);
+    const compiler = new FigmaCodeGenerator(measure as unknown as FigmaNodeData);
     const code = await compiler.compile();
 
     expect(code).toBeDefined();
@@ -51,7 +51,7 @@ describe("VECTOR 스타일 처리", () => {
   });
 
   test("SVG path에 stroke 속성이 유지되어야 한다", async () => {
-    const compiler = new FigmaCompiler(measure as unknown as FigmaNodeData);
+    const compiler = new FigmaCodeGenerator(measure as unknown as FigmaNodeData);
     const code = await compiler.compile();
 
     expect(code).toBeDefined();

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import FigmaCompiler from "../../src/frontend/ui/domain/compiler/index";
+import FigmaCodeGenerator from "../../src/frontend/ui/domain/compiler/index";
 import fs from "fs";
 import path from "path";
 
@@ -22,7 +22,7 @@ describe("Popup 중첩 의존성 렌더링", () => {
 
   it("Popup: Popupbottom 의존 컴포넌트가 생성됨", async () => {
     const fixture = JSON.parse(fs.readFileSync(popupFixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // Popupbottom 컴포넌트가 생성되어야 함
@@ -31,7 +31,7 @@ describe("Popup 중첩 의존성 렌더링", () => {
 
   it("Popup: Popupbottom에 Large 버튼이 렌더링됨 (children만 있으면 안됨)", async () => {
     const fixture = JSON.parse(fs.readFileSync(popupFixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // Popupbottom 함수 추출
@@ -57,7 +57,7 @@ describe("Popup 중첩 의존성 렌더링", () => {
 
   it("Popup: Large 버튼 컴포넌트가 생성됨", async () => {
     const fixture = JSON.parse(fs.readFileSync(popupFixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // Large 컴포넌트가 생성되어야 함
@@ -66,7 +66,7 @@ describe("Popup 중첩 의존성 렌더링", () => {
 
   it("Popup: 버튼 텍스트가 렌더링됨", async () => {
     const fixture = JSON.parse(fs.readFileSync(popupFixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // Log out 텍스트가 렌더링되어야 함 (버튼 내부 텍스트)
@@ -75,7 +75,7 @@ describe("Popup 중첩 의존성 렌더링", () => {
 
   it("Popup: ArraySlot이 visible: false INSTANCE를 잘못 포함하지 않음", async () => {
     const fixture = JSON.parse(fs.readFileSync(popupFixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // Left Button + Right Button이 ArraySlot으로 잘못 감지되지 않아야 함
@@ -87,7 +87,7 @@ describe("Popup 중첩 의존성 렌더링", () => {
 
   it("Popup: 모든 주요 의존 컴포넌트가 생성됨", async () => {
     const fixture = JSON.parse(fs.readFileSync(popupFixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // 주요 의존 컴포넌트들이 생성되어야 함
@@ -104,7 +104,7 @@ describe("Popup 중첩 의존성 렌더링", () => {
 
   it("Popup: Popupbottom이 I... 노드를 올바르게 유지함", async () => {
     const fixture = JSON.parse(fs.readFileSync(popupFixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // Popupbottom 함수 추출

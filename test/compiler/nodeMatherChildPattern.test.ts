@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import FigmaCompiler from "../../src/frontend/ui/domain/compiler/index";
+import FigmaCodeGenerator from "../../src/frontend/ui/domain/compiler/index";
 import fs from "fs";
 import path from "path";
 
@@ -24,7 +24,7 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
 
   it("variant 간 자식 개수가 다른 경우에도 같은 노드로 매칭되어야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     expect(result).toBeTruthy();
@@ -49,7 +49,7 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
 
   it("정확히 3개의 커스텀 slot prop이 있어야 한다 (normalResponsive, text, rightIcon)", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     const headersubPropsMatch = result?.match(
@@ -78,7 +78,7 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
 
   it("variant 간 선택적 자식 노드가 올바르게 처리되어야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // 컴포넌트 함수에서 세 개의 slot이 모두 렌더링되어야 함
@@ -100,7 +100,7 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
 
   it("prefix 패턴 매칭이 동작해야 한다 (INSTANCE-TEXT ⊆ INSTANCE-TEXT-INSTANCE)", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
 
     // 컴파일이 성공적으로 완료되어야 함 (prefix 매칭이 동작하지 않으면 실패)
     const result = await compiler.compile();
@@ -111,7 +111,7 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
 
   it("props interface에 중복 slot이 생성되지 않아야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     const headersubPropsMatch = result?.match(
@@ -131,7 +131,7 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
 
   it("Basic variant의 노드들이 별도 slot으로 생성되지 않아야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     const headersubPropsMatch = result?.match(
@@ -154,7 +154,7 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
 
   it("컴파일이 성공적으로 완료되어야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCompiler(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
     // 결과가 비어있지 않아야 함

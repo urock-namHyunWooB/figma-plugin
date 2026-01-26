@@ -5,7 +5,7 @@
  * 모든 테스트 파일이 동일한 프로세스에서 실행되어 모듈 캐시가 공유됩니다.
  */
 
-import FigmaCompiler from "@compiler";
+import FigmaCodeGenerator from "@compiler";
 
 // 컴파일 결과 타입
 export interface CachedCompileResult {
@@ -25,8 +25,8 @@ export async function getCachedCompile(
   data: unknown
 ): Promise<CachedCompileResult> {
   if (!compileCache.has(name)) {
-    const emotionCompiler = new FigmaCompiler(data as any);
-    const tailwindCompiler = new FigmaCompiler(data as any, {
+    const emotionCompiler = new FigmaCodeGenerator(data as any);
+    const tailwindCompiler = new FigmaCodeGenerator(data as any, {
       styleStrategy: { type: "tailwind" },
     });
 
