@@ -296,4 +296,61 @@ describe("DependencyAnalyzer", () => {
       expect(graph.nodes.get("button-set-1")?.name).toBe("Button");
     });
   });
+
+  describe("실제 fixture 테스트", () => {
+    it("Case.json - 중첩 의존성 관계 탐지", async () => {
+      const fs = await import("fs");
+      const path = await import("path");
+
+      const fixturePath = path.join(
+        process.cwd(),
+        "test/fixtures/any/Case.json"
+      );
+      const fixtureData = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+
+      const analyzer = new DependencyAnalyzer();
+      const graph = analyzer.buildGraph(fixtureData);
+
+      // Case.json 의존성: Case → Large, Decorate/Interactive, label
+      // Large 내부에 Decorate/Interactive INSTANCE 있음
+
+      // 노드 확인
+      expect(graph.nodes.size).toBe(4); // Case, Large, Decorate/Interactive, label
+
+      // Large → Decorate/Interactive 엣지가 있어야 함 (children의 INSTANCE에서)
+      const largeId = "14:1636";
+      const decorateId = "14:1558";
+
+      const largeEdges = graph.edges.get(largeId);
+      expect(largeEdges).toBeDefined();
+      expect(largeEdges?.has(decorateId)).toBe(true);
+    });
+
+    it("Case.json - 토폴로지 정렬 순서", async () => {
+      const fs = await import("fs");
+      const path = await import("path");
+
+      const fixturePath = path.join(
+        process.cwd(),
+        "test/fixtures/any/Case.json"
+      );
+      const fixtureData = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
+
+      const analyzer = new DependencyAnalyzer();
+      const graph = analyzer.buildGraph(fixtureData);
+      const order = analyzer.topologicalSort(graph);
+
+      // Decorate/Interactive가 Large보다 먼저 와야 함
+      const decorateId = "14:1558";
+      const largeId = "14:1636";
+      const caseId = "14:1614";
+
+      const decorateIndex = order.indexOf(decorateId);
+      const largeIndex = order.indexOf(largeId);
+      const caseIndex = order.indexOf(caseId);
+
+      expect(decorateIndex).toBeLessThan(largeIndex);
+      expect(largeIndex).toBeLessThan(caseIndex);
+    });
+  });
 });

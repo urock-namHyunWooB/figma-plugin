@@ -26,69 +26,33 @@ import { CircularDependencyError } from "@compiler/types/architecture";
  * DependencyAnalyzer 구현체
  */
 class DependencyAnalyzer implements IDependencyAnalyzer {
+  // ===========================================================================
+  // Public API
+  // ===========================================================================
+
   /**
    * 의존성 그래프 구축
    *
-   * 루트 컴포넌트에서 시작하여 모든 의존성을 DFS로 탐색합니다.
+   * 루트 컴포넌트에서 시작하여 모든 의존성을 탐색합니다.
    * 각 컴포넌트는 ComponentSet ID로 식별됩니다.
-   *
-   * @param rootData 루트 컴포넌트 데이터
-   * @returns 의존성 그래프
    */
   public buildGraph(rootData: FigmaNodeData): DependencyGraph {
     const nodes = new Map<ComponentId, ComponentInfo>();
     const edges = new Map<ComponentId, Set<ComponentId>>();
 
-    // 루트 컴포넌트 ID 결정
     const rootId = this._getComponentSetId(rootData);
     if (!rootId) {
       return { nodes, edges };
     }
 
-    // 루트 노드 추가
-    nodes.set(rootId, {
-      id: rootId,
-      name: this._getComponentName(rootData),
-      data: rootData,
-    });
-    edges.set(rootId, new Set());
+    // 루트의 모든 dependencies (flatten된 상태)
+    const allDependencies = rootData.dependencies || {};
 
-    // BFS로 모든 의존성 탐색
-    const queue: FigmaNodeData[] = [rootData];
-    const visited = new Set<ComponentId>([rootId]);
+    // 1차 패스: dependencies 필드에서 노드와 엣지 구축
+    this._buildNodesFromDependencies(rootData, rootId, nodes, edges);
 
-    while (queue.length > 0) {
-      const current = queue.shift()!;
-      const currentId = this._getComponentSetId(current);
-      if (!currentId) continue;
-
-      // 현재 컴포넌트의 직접 의존성 수집
-      const dependencies = this._extractDirectDependencies(current);
-
-      for (const dep of dependencies) {
-        const depId = this._getComponentSetId(dep.data);
-        if (!depId) continue;
-
-        // 노드 추가 (아직 없으면)
-        if (!nodes.has(depId)) {
-          nodes.set(depId, {
-            id: depId,
-            name: dep.name,
-            data: dep.data,
-          });
-          edges.set(depId, new Set());
-        }
-
-        // 엣지 추가: currentId → depId (currentId가 depId를 의존)
-        edges.get(currentId)!.add(depId);
-
-        // 아직 방문하지 않은 노드면 큐에 추가
-        if (!visited.has(depId)) {
-          visited.add(depId);
-          queue.push(dep.data);
-        }
-      }
-    }
+    // 2차 패스: children의 INSTANCE에서 누락된 엣지 추가
+    this._addEdgesFromInstanceChildren(rootId, nodes, edges, allDependencies);
 
     return { nodes, edges };
   }
@@ -99,58 +63,23 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
    * Kahn's algorithm을 사용하여 의존되는 컴포넌트부터 정렬합니다.
    * 결과: [의존되는 것들, ..., 루트]
    *
-   * @param graph 의존성 그래프
-   * @returns 컴파일 순서 (의존되는 것부터)
    * @throws CircularDependencyError 순환 의존성 발견 시
    */
   public topologicalSort(graph: DependencyGraph): ComponentId[] {
-    // 순환 의존성 먼저 체크
     const cycles = this.detectCycles(graph);
     if (cycles && cycles.length > 0) {
       throw new CircularDependencyError(cycles);
     }
 
     const { nodes, edges } = graph;
-    const result: ComponentId[] = [];
 
-    // in-degree 계산 (각 노드가 몇 번 의존되는지)
-    const inDegree = new Map<ComponentId, number>();
-    for (const nodeId of nodes.keys()) {
-      inDegree.set(nodeId, 0);
-    }
+    // in-degree 계산
+    const inDegree = this._calculateInDegree(nodes, edges);
 
-    for (const [_from, deps] of edges) {
-      for (const to of deps) {
-        inDegree.set(to, (inDegree.get(to) || 0) + 1);
-      }
-    }
+    // Kahn's algorithm
+    const result = this._kahnSort(nodes, edges, inDegree);
 
-    // in-degree가 0인 노드들로 시작 (아무도 의존하지 않는 노드)
-    const queue: ComponentId[] = [];
-    for (const [nodeId, degree] of inDegree) {
-      if (degree === 0) {
-        queue.push(nodeId);
-      }
-    }
-
-    while (queue.length > 0) {
-      const current = queue.shift()!;
-      result.push(current);
-
-      // current가 의존하는 노드들의 in-degree 감소
-      const deps = edges.get(current) || new Set();
-      for (const dep of deps) {
-        const newDegree = (inDegree.get(dep) || 1) - 1;
-        inDegree.set(dep, newDegree);
-
-        if (newDegree === 0) {
-          queue.push(dep);
-        }
-      }
-    }
-
-    // 결과를 뒤집어서 반환 (의존되는 것이 먼저 오도록)
-    // Kahn's algorithm 결과: 의존하는 순서 → 반대로 하면 의존되는 순서
+    // 의존되는 것이 먼저 오도록 뒤집기
     return result.reverse();
   }
 
@@ -158,9 +87,6 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
    * 순환 의존성 감지
    *
    * DFS를 사용하여 그래프에서 순환을 찾습니다.
-   *
-   * @param graph 의존성 그래프
-   * @returns 순환 경로 배열, 없으면 null
    */
   public detectCycles(graph: DependencyGraph): Cycle[] | null {
     const { nodes, edges } = graph;
@@ -172,11 +98,10 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
       state.set(nodeId, 0);
     }
 
-    // 현재 DFS 경로 추적
     const path: ComponentId[] = [];
 
-    const dfs = (nodeId: ComponentId): boolean => {
-      state.set(nodeId, 1); // 방문 중
+    const dfs = (nodeId: ComponentId): void => {
+      state.set(nodeId, 1);
       path.push(nodeId);
 
       const deps = edges.get(nodeId) || new Set();
@@ -184,25 +109,19 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
         const depState = state.get(dep);
 
         if (depState === 1) {
-          // 방문 중인 노드를 다시 만남 = 순환 발견
+          // 순환 발견
           const cycleStart = path.indexOf(dep);
-          const cycle = path.slice(cycleStart);
-          cycle.push(dep); // 순환 완성 (시작점으로 돌아옴)
+          const cycle = [...path.slice(cycleStart), dep];
           cycles.push(cycle);
-          return true;
-        }
-
-        if (depState === 0) {
+        } else if (depState === 0) {
           dfs(dep);
         }
       }
 
-      state.set(nodeId, 2); // 방문 완료
+      state.set(nodeId, 2);
       path.pop();
-      return false;
     };
 
-    // 모든 노드에서 DFS 시작
     for (const nodeId of nodes.keys()) {
       if (state.get(nodeId) === 0) {
         dfs(nodeId);
@@ -212,9 +131,234 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
     return cycles.length > 0 ? cycles : null;
   }
 
-  // =========================================================================
-  // Private Methods
-  // =========================================================================
+  // ===========================================================================
+  // Graph Building - 1차 패스: dependencies 필드 탐색
+  // ===========================================================================
+
+  /**
+   * dependencies 필드를 BFS로 탐색하여 노드와 엣지 구축
+   */
+  private _buildNodesFromDependencies(
+    rootData: FigmaNodeData,
+    rootId: ComponentId,
+    nodes: Map<ComponentId, ComponentInfo>,
+    edges: Map<ComponentId, Set<ComponentId>>
+  ): void {
+    // 루트 노드 추가
+    nodes.set(rootId, {
+      id: rootId,
+      name: this._getComponentName(rootData),
+      data: rootData,
+    });
+    edges.set(rootId, new Set());
+
+    // BFS
+    const queue: FigmaNodeData[] = [rootData];
+    const visited = new Set<ComponentId>([rootId]);
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      const currentId = this._getComponentSetId(current);
+      if (!currentId) continue;
+
+      const dependencies = this._extractDirectDependencies(current);
+
+      for (const dep of dependencies) {
+        const depId = this._getComponentSetId(dep.data);
+        if (!depId) continue;
+
+        if (!nodes.has(depId)) {
+          nodes.set(depId, { id: depId, name: dep.name, data: dep.data });
+          edges.set(depId, new Set());
+        }
+
+        edges.get(currentId)!.add(depId);
+
+        if (!visited.has(depId)) {
+          visited.add(depId);
+          queue.push(dep.data);
+        }
+      }
+    }
+  }
+
+  /**
+   * 컴포넌트의 직접 의존성 추출 (dependencies 필드에서)
+   */
+  private _extractDirectDependencies(
+    data: FigmaNodeData
+  ): Array<{ name: string; data: FigmaNodeData }> {
+    const dependencies = data.dependencies;
+    if (!dependencies) return [];
+
+    return Object.entries(dependencies).map(([componentId, depData]) => ({
+      name: this._resolveComponentName(componentId, depData),
+      data: depData,
+    }));
+  }
+
+  // ===========================================================================
+  // Graph Building - 2차 패스: INSTANCE children 탐색
+  // ===========================================================================
+
+  /**
+   * 각 노드의 children에서 INSTANCE를 찾아 누락된 엣지 추가
+   *
+   * dependencies 필드가 flatten되어 있어 중첩 관계가 손실된 경우를 보완합니다.
+   * 같은 ComponentSet의 여러 variant가 서로 다른 INSTANCE를 가질 수 있으므로
+   * 모든 variant를 탐색합니다.
+   */
+  private _addEdgesFromInstanceChildren(
+    rootId: ComponentId,
+    nodes: Map<ComponentId, ComponentInfo>,
+    edges: Map<ComponentId, Set<ComponentId>>,
+    allDependencies: Record<string, FigmaNodeData>
+  ): void {
+    const processedComponentSets = new Set<ComponentId>();
+
+    for (const [nodeId] of nodes) {
+      if (nodeId === rootId) continue;
+      if (processedComponentSets.has(nodeId)) continue;
+      processedComponentSets.add(nodeId);
+
+      // 같은 ComponentSet의 모든 variant 탐색
+      const variants = this._getAllVariantsForComponentSet(
+        nodeId,
+        allDependencies
+      );
+
+      for (const variantData of variants) {
+        this._addEdgesFromSingleVariant(
+          variantData,
+          nodeId,
+          edges,
+          allDependencies
+        );
+      }
+    }
+  }
+
+  /**
+   * 단일 variant의 children에서 INSTANCE를 찾아 엣지 추가
+   */
+  private _addEdgesFromSingleVariant(
+    data: FigmaNodeData,
+    currentId: ComponentId,
+    edges: Map<ComponentId, Set<ComponentId>>,
+    allDependencies: Record<string, FigmaNodeData>
+  ): void {
+    const document = data.info?.document;
+    if (!document) return;
+
+    const instanceComponentIds = this._findInstanceComponentIds(document);
+
+    for (const componentId of instanceComponentIds) {
+      const depData = allDependencies[componentId];
+      if (!depData) continue;
+
+      const depId = this._getComponentSetId(depData);
+      if (!depId || depId === currentId) continue;
+
+      edges.get(currentId)?.add(depId);
+    }
+  }
+
+  /**
+   * 같은 ComponentSet에 속한 모든 variant 반환
+   */
+  private _getAllVariantsForComponentSet(
+    componentSetId: ComponentId,
+    allDependencies: Record<string, FigmaNodeData>
+  ): FigmaNodeData[] {
+    return Object.values(allDependencies).filter(
+      (depData) => this._getComponentSetId(depData) === componentSetId
+    );
+  }
+
+  /**
+   * 노드의 children을 재귀 순회하여 INSTANCE의 componentId 수집
+   */
+  private _findInstanceComponentIds(node: any): string[] {
+    const result: string[] = [];
+
+    if (node.type === "INSTANCE" && node.componentId) {
+      result.push(node.componentId);
+    }
+
+    if (node.children && Array.isArray(node.children)) {
+      for (const child of node.children) {
+        result.push(...this._findInstanceComponentIds(child));
+      }
+    }
+
+    return result;
+  }
+
+  // ===========================================================================
+  // Topological Sort Helpers
+  // ===========================================================================
+
+  /**
+   * in-degree 계산 (각 노드가 몇 번 의존되는지)
+   */
+  private _calculateInDegree(
+    nodes: Map<ComponentId, ComponentInfo>,
+    edges: Map<ComponentId, Set<ComponentId>>
+  ): Map<ComponentId, number> {
+    const inDegree = new Map<ComponentId, number>();
+
+    for (const nodeId of nodes.keys()) {
+      inDegree.set(nodeId, 0);
+    }
+
+    for (const [, deps] of edges) {
+      for (const to of deps) {
+        inDegree.set(to, (inDegree.get(to) || 0) + 1);
+      }
+    }
+
+    return inDegree;
+  }
+
+  /**
+   * Kahn's algorithm 실행
+   */
+  private _kahnSort(
+    nodes: Map<ComponentId, ComponentInfo>,
+    edges: Map<ComponentId, Set<ComponentId>>,
+    inDegree: Map<ComponentId, number>
+  ): ComponentId[] {
+    const result: ComponentId[] = [];
+    const queue: ComponentId[] = [];
+
+    // in-degree가 0인 노드로 시작
+    for (const [nodeId, degree] of inDegree) {
+      if (degree === 0) {
+        queue.push(nodeId);
+      }
+    }
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      result.push(current);
+
+      const deps = edges.get(current) || new Set();
+      for (const dep of deps) {
+        const newDegree = (inDegree.get(dep) || 1) - 1;
+        inDegree.set(dep, newDegree);
+
+        if (newDegree === 0) {
+          queue.push(dep);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  // ===========================================================================
+  // Component ID/Name Resolution
+  // ===========================================================================
 
   /**
    * FigmaNodeData에서 ComponentSet ID 추출
@@ -223,19 +367,16 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
     const document = data.info?.document;
     if (!document) return null;
 
-    // COMPONENT_SET인 경우 자신의 ID 반환
     if (document.type === "COMPONENT_SET") {
       return document.id;
     }
 
-    // COMPONENT인 경우 componentSetId 찾기
     if (document.type === "COMPONENT") {
       const componentId = document.id;
       const componentInfo = data.info?.components?.[componentId] as any;
       return componentInfo?.componentSetId || componentId;
     }
 
-    // 그 외의 경우 document ID 사용
     return document.id;
   }
 
@@ -246,12 +387,10 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
     const document = data.info?.document;
     if (!document) return "Unknown";
 
-    // COMPONENT_SET인 경우 이름 반환
     if (document.type === "COMPONENT_SET") {
       return document.name;
     }
 
-    // COMPONENT인 경우 componentSets에서 이름 찾기
     if (document.type === "COMPONENT") {
       const componentId = document.id;
       const componentInfo = data.info?.components?.[componentId] as any;
@@ -269,37 +408,25 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
   }
 
   /**
-   * 컴포넌트의 직접 의존성 추출
-   *
-   * dependencies 필드에서 직접 참조하는 컴포넌트들을 추출합니다.
+   * componentId와 depData에서 ComponentSet 이름 결정
    */
-  private _extractDirectDependencies(
-    data: FigmaNodeData
-  ): Array<{ name: string; data: FigmaNodeData }> {
-    const dependencies = data.dependencies;
-    if (!dependencies) return [];
+  private _resolveComponentName(
+    componentId: string,
+    depData: FigmaNodeData
+  ): string {
+    const componentInfo = depData.info?.components?.[componentId] as any;
+    const componentSetId = componentInfo?.componentSetId;
 
-    const result: Array<{ name: string; data: FigmaNodeData }> = [];
-
-    for (const [componentId, depData] of Object.entries(dependencies)) {
-      // ComponentSet 이름 결정
-      const componentInfo = depData.info?.components?.[componentId] as any;
-      const componentSetId = componentInfo?.componentSetId;
-
-      let name: string;
-      if (componentSetId) {
-        const componentSetInfo = depData.info?.componentSets?.[
-          componentSetId
-        ] as any;
-        name = componentSetInfo?.name || depData.info?.document?.name || componentId;
-      } else {
-        name = depData.info?.document?.name || componentId;
-      }
-
-      result.push({ name, data: depData });
+    if (componentSetId) {
+      const componentSetInfo = depData.info?.componentSets?.[
+        componentSetId
+      ] as any;
+      return (
+        componentSetInfo?.name || depData.info?.document?.name || componentId
+      );
     }
 
-    return result;
+    return depData.info?.document?.name || componentId;
   }
 }
 
