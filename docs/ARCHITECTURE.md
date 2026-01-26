@@ -676,11 +676,14 @@ const code = await generator.generate();
 
 > 구현: `src/frontend/ui/domain/compiler/types/architecture.ts`
 
-### Phase 2: DependencyAnalyzer 구현
-- [ ] 의존성 그래프 구축 로직 (analyze → buildGraph)
-- [ ] 토폴로지 정렬 구현 (topologicalSort)
-- [ ] 순환 의존성 감지 (detectCycles)
-- [ ] 기존 DependencyManager 재귀 로직 대체
+### Phase 2: DependencyAnalyzer 구현 ✅
+- [x] 의존성 그래프 구축 로직 (buildGraph)
+- [x] 토폴로지 정렬 구현 (topologicalSort) - Kahn's algorithm
+- [x] 순환 의존성 감지 (detectCycles) - DFS 기반
+- [ ] 기존 DependencyManager 재귀 로직 대체 (Phase 3 이후)
+
+> 구현: `src/frontend/ui/domain/compiler/core/DependencyAnalyzer.ts`
+> 테스트: `test/compiler/dependencyAnalyzer.test.ts`
 
 ### Phase 3: DataPreparer 통합
 - [ ] SpecDataManager, OverrideManager, VariantEnrichManager, PropsExtractor 통합
