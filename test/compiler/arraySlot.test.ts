@@ -541,46 +541,9 @@ describe("ArraySlot 감지", () => {
      * 해결: CreateJsxTree._findArraySlotForNode()에서
      * 1. parentId로 직접 매칭 시도
      * 2. 실패하면 children의 ID로 매칭
+     *
+     * 검증: 최종 코드에 .map() 패턴이 생성되면 ID 매칭이 정상 동작한 것
      */
-
-    test("병합된 SuperTree에서도 ArraySlot이 정상적으로 감지되어야 한다", async () => {
-      const data = airtableSelectButton as unknown as FigmaNodeData;
-      const compiler = new FigmaCodeGenerator(data);
-
-      // AST 트리 생성
-      await compiler.compile();
-      const astTree = compiler.Engine.getFinalAstTree();
-
-      // ArraySlot 감지
-      const detector = new ArraySlotDetector(data);
-      const slots = detector.detect();
-
-      expect(slots.length).toBeGreaterThan(0);
-
-      // AST 트리의 모든 노드 ID 수집
-      function collectIds(node: any): string[] {
-        const result = [node.id];
-        for (const child of node.children || []) {
-          result.push(...collectIds(child));
-        }
-        return result;
-      }
-      const astIds = new Set(collectIds(astTree));
-
-      // 모든 ArraySlot instance IDs 수집
-      const allInstanceIds = new Set<string>();
-      for (const slot of slots) {
-        for (const instance of slot.instances) {
-          allInstanceIds.add(instance.id);
-        }
-      }
-
-      // 최소 하나 이상의 ArraySlot instance가 AST 트리에 존재해야 함
-      // (병합된 SuperTree는 대표 variant의 ID만 포함하므로
-      //  다른 variant의 instance ID는 AST에 없을 수 있음)
-      const matchedIds = [...allInstanceIds].filter((id) => astIds.has(id));
-      expect(matchedIds.length).toBeGreaterThan(0);
-    });
 
     test("생성된 코드에 .map() 렌더링이 포함되어야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;

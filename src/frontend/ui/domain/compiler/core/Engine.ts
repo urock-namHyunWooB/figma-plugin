@@ -1,4 +1,4 @@
-import FigmaCodeGenerator, { RenderTree } from "@compiler";
+import { RenderTree } from "@compiler";
 import NodeMatcher from "@compiler/core/NodeMatcher";
 import CreateAstTree from "@compiler/core/ast-tree/CreateAstTree";
 import ReactGenerator, {
@@ -8,6 +8,16 @@ import CreateSuperTree from "./super-tree/CreateSuperTree";
 
 import ArraySlotDetector, { ArraySlot } from "@compiler/core/ArraySlotDetector";
 import type { StyleStrategyOptions } from "@compiler/core/react-generator/style-strategy";
+import type SpecDataManager from "@compiler/manager/SpecDataManager";
+import type { PropsDef } from "@compiler/manager/PropsExtractor";
+
+/**
+ * Engine 의존성
+ */
+export interface EngineDependencies {
+  specDataManager: SpecDataManager;
+  extractedProps: PropsDef;
+}
 
 /**
  * Engine 옵션
@@ -26,30 +36,30 @@ class Engine {
   private arraySlots: ArraySlot[];
 
   constructor(
-    root: FigmaCodeGenerator,
+    deps: EngineDependencies,
     renderTree: RenderTree,
     options?: EngineOptions
   ) {
-    const specManager = root.SpecDataManager;
-    const matcher = new NodeMatcher(specManager);
+    const { specDataManager, extractedProps } = deps;
+    const matcher = new NodeMatcher(specDataManager);
 
     // 배열 슬롯 감지
     this.arraySlots = new ArraySlotDetector(
-      root.SpecDataManager.getSpec()
+      specDataManager.getSpec()
     ).detect();
 
     this.CreateSuperTree = new CreateSuperTree(
       renderTree,
-      specManager,
+      specDataManager,
       matcher
     );
 
-    const refinedProps = root.propsManager.extractedProps;
+    const refinedProps = extractedProps;
 
     const superNodeTree = this.CreateSuperTree.getSuperTree();
 
     const createFinalAstTree = (this.CreateFinalAstTree = new CreateAstTree(
-      specManager,
+      specDataManager,
       superNodeTree,
       refinedProps
     ));

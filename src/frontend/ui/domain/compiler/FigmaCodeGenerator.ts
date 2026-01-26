@@ -28,15 +28,15 @@ export interface FigmaCodeGeneratorOptions {
 }
 
 export class FigmaCodeGenerator {
-  public readonly SpecDataManager: SpecDataManager;
-  public readonly Engine: Engine;
+  private readonly specDataManager: SpecDataManager;
+  private readonly engine: Engine;
   private readonly options: FigmaCodeGeneratorOptions;
   private readonly dependencyManager: DependencyManager;
-  public readonly propsManager: PropsManager;
+  private readonly propsManager: PropsManager;
 
   constructor(spec: FigmaNodeData, options?: FigmaCodeGeneratorOptions) {
     this.options = options || {};
-    const specDataManager = (this.SpecDataManager = new SpecDataManager(spec));
+    const specDataManager = (this.specDataManager = new SpecDataManager(spec));
     const instanceOverrideManager = new InstanceOverrideManager(
       specDataManager
     );
@@ -47,10 +47,17 @@ export class FigmaCodeGenerator {
       variantEnrichManager
     );
     this.propsManager = new PropsManager(specDataManager);
-    this.Engine = new Engine(this, specDataManager.getRenderTree(), {
-      styleStrategy: this.options.styleStrategy,
-      debug: this.options.debug,
-    });
+    this.engine = new Engine(
+      {
+        specDataManager,
+        extractedProps: this.propsManager.extractedProps,
+      },
+      specDataManager.getRenderTree(),
+      {
+        styleStrategy: this.options.styleStrategy,
+        debug: this.options.debug,
+      }
+    );
   }
 
   /**
@@ -74,12 +81,12 @@ export class FigmaCodeGenerator {
 
     // dependencies가 있는지 확인
     const groupedDeps =
-      this.SpecDataManager.getDependenciesGroupedByComponentSet();
+      this.specDataManager.getDependenciesGroupedByComponentSet();
     const hasDependencies = Object.keys(groupedDeps).length > 0;
 
     if (!hasDependencies) {
       // dependencies가 없으면 기존 방식으로 생성
-      return await this.Engine.getGeneratedCode(resolvedName);
+      return await this.engine.getGeneratedCode(resolvedName);
     }
 
     // dependencies가 있으면 함께 생성
@@ -93,7 +100,7 @@ export class FigmaCodeGenerator {
     componentName: string
   ): Promise<string> {
     const result = await this.getGeneratedCodeWithDependencies(componentName);
-    const rootDocument = this.SpecDataManager.getDocument();
+    const rootDocument = this.specDataManager.getDocument();
     return this.dependencyManager.bundleWithDependencies(result, rootDocument);
   }
 
@@ -101,7 +108,7 @@ export class FigmaCodeGenerator {
    * Props 정의 반환 (UI 컨트롤러 생성용)
    */
   public getPropsDefinition(): PropDefinition[] {
-    const astTree = this.Engine.getFinalAstTree();
+    const astTree = this.engine.getFinalAstTree();
     return this.propsManager.getPropsDefinition(astTree, (name) =>
       normalizeComponentName(name)
     );
@@ -111,7 +118,7 @@ export class FigmaCodeGenerator {
    * 컴포넌트 이름 반환
    */
   public getComponentName(): string {
-    const document = this.SpecDataManager.getDocument();
+    const document = this.specDataManager.getDocument();
     return normalizeComponentName(document.name);
   }
 
@@ -124,7 +131,7 @@ export class FigmaCodeGenerator {
     const name = componentName || this.getComponentName();
 
     // 메인 컴포넌트 컴파일 (순환 참조 방지를 위해 Engine 직접 호출)
-    const mainCode = await this.Engine.getGeneratedCode(name);
+    const mainCode = await this.engine.getGeneratedCode(name);
 
     // 의존성 컴파일을 DependencyManager에 위임
     return this.dependencyManager.compileWithDependencies(
