@@ -1,5 +1,6 @@
 import type { FigmaNodeData, StyleTree } from "@compiler/types/baseType";
 import type { PropsDef } from "@compiler/manager/PropsExtractor";
+import type { PreparedDesignData as IPreparedDesignData } from "@compiler/types/architecture";
 
 /**
  * 준비된 디자인 데이터
@@ -7,7 +8,7 @@ import type { PropsDef } from "@compiler/manager/PropsExtractor";
  * DataPreparer가 원본 FigmaNodeData를 처리하여 생성하는 결과물
  * HashMap 기반 O(1) 조회와 정규화된 Props를 제공
  */
-class PreparedDesignData {
+class PreparedDesignData implements IPreparedDesignData {
   /** 원본 FigmaNodeData (깊은 복사본) */
   public readonly spec: FigmaNodeData;
 

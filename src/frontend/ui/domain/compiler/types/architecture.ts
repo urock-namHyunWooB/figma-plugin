@@ -6,7 +6,7 @@
  */
 
 import type { FigmaNodeData, StyleTree } from "./baseType";
-import type { ConditionNode, StyleObject } from "./customType";
+import type { ConditionNode, StyleObject, PseudoClass } from "./customType";
 
 // ============================================================================
 // Shared Types
@@ -197,9 +197,27 @@ export interface PreparedDesignData {
   /** 스타일 ID → StyleTree 빠른 조회 (O(1)) */
   styleMap: Map<string, StyleTree>;
 
+  /** 이미지 URL 맵 */
+  imageUrls: Map<string, string>;
+
+  /** Vector SVG 맵 */
+  vectorSvgs: Map<string, string>;
+
   // 조회 메서드
   getNodeById(id: string): SceneNode | undefined;
   getStyleById(id: string): StyleTree | undefined;
+  getDependencyById?(componentId: string): FigmaNodeData | undefined;
+  getImageUrlByRef?(imageRef: string): string | undefined;
+  getImageRefByNodeId?(nodeId: string): string | undefined;
+  getImageUrlByNodeId?(nodeId: string): string | undefined;
+  getVectorSvgByNodeId?(nodeId: string): string | undefined;
+  getComponentPropertyDefinitions?(): Record<string, unknown> | null;
+  getComponentProperties?(): Record<string, unknown> | null;
+  getRootNodeType?(): string;
+  getFirstVectorSvgByInstanceId?(instanceId: string): string | undefined;
+  getVectorSvgsByInstanceId?(instanceId: string): { nodeId: string; svg: string; boundingBox?: any }[];
+  mergeInstanceVectorSvgs?(instanceId: string): string | undefined;
+  getDependenciesGroupedByComponentSet?(): Record<string, FigmaNodeData[]>;
 }
 
 /**
@@ -260,6 +278,8 @@ export interface PropDefinition {
   defaultValue?: unknown;
   required: boolean;
   description?: string;
+  /** Figma componentPropertyDefinitions의 원본 키 (예: "showIcon#123:456") */
+  originalKey?: string;
 }
 
 export interface VariantPropDefinition extends PropDefinition {
@@ -336,7 +356,25 @@ export interface DesignNode {
 
   /** 외부 컴포넌트 참조 */
   externalRef?: ExternalRef;
+
+  /** Semantic role (root, button, text, icon, container, image, vector) */
+  semanticRole?: SemanticRole;
+
+  /** SVG 데이터 (vector/icon 노드용) */
+  vectorSvg?: string;
 }
+
+/**
+ * Semantic Role 타입
+ */
+export type SemanticRole =
+  | "root"
+  | "button"
+  | "text"
+  | "icon"
+  | "container"
+  | "image"
+  | "vector";
 
 export type DesignNodeType =
   | "container"
@@ -366,12 +404,7 @@ export interface StyleDefinition {
   }>;
 
   /** pseudo-class 스타일 */
-  pseudo?: {
-    hover?: Record<string, string | number>;
-    active?: Record<string, string | number>;
-    focus?: Record<string, string | number>;
-    disabled?: Record<string, string | number>;
-  };
+  pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
 }
 
 /**

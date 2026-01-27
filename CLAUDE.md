@@ -184,3 +184,36 @@ Detailed technical docs in `docs/`:
 - 컴파일러 이슈가 해결됨
 - 회귀 테스트 추가 필요
 - 해결된 버그 문서화 필요
+
+## TreeBuilder 설계 메모 (Phase 4)
+
+### 현재 상태
+- Phase 1~3 완료: 타입 정의, DependencyAnalyzer, DataPreparer
+- Phase 4: TreeBuilder 구현 필요
+
+### TreeBuilder 핵심 역할
+```
+PreparedDesignData → TreeBuilder.build() → DesignTree (플랫폼 독립적 IR)
+```
+
+### 입출력 타입
+- **입력**: `PreparedDesignData` (nodeMap, styleMap, props, dependencies)
+- **출력**: `DesignTree` (root: DesignNode, props, slots, conditionals, arraySlots)
+
+### 핵심 변환 로직 (레거시 참조)
+1. **VariantMerger**: CreateSuperTree.ts의 IoU 기반 variant 병합
+2. **StyleExtractor**: _TempAstTree.ts의 base/dynamic/pseudo 분류
+3. **ConditionInferrer**: _TempAstTree.ts의 visibility 조건 추론
+4. **PropsBinder**: componentPropertyReferences → propBindings
+5. **SlotDetector**: _FinalAstTree.ts의 slot 감지
+
+### 레거시 복잡도 주의
+- _TempAstTree: 1,647줄, 11개 변환 단계
+- _FinalAstTree: 3,497줄, 9개 변환 단계
+- 핵심 로직만 추출하여 단순화 필요
+
+### 참고 파일
+- `types/architecture.ts`: DesignTree, DesignNode, ITreeBuilder 정의
+- `core/super-tree/CreateSuperTree.ts`: variant 병합 알고리즘
+- `core/ast-tree/_TempAstTree.ts`: 스타일/조건 추론
+- `core/ast-tree/_FinalAstTree.ts`: slot/외부컴포넌트 처리

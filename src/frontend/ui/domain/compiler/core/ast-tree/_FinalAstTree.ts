@@ -1633,17 +1633,28 @@ class _FinalAstTree {
           }
         } else if (conditionCode.match(stateConditionPattern)) {
           // 복합 조건에 state가 포함된 경우
-          // state 부분을 제거한 새로운 조건 생성
-          const newCondition = this._removeStateFromCondition(
-            node.visible.condition,
-            STATE_PROP_NAMES
-          );
+          // 먼저 state 값이 CSS 변환 가능한지 확인
+          const stateValueMatch = conditionCode.match(stateConditionPattern);
+          const stateValue = stateValueMatch ? stateValueMatch[1] : null;
 
-          if (newCondition) {
-            node.visible = { type: "condition", condition: newCondition };
+          // CSS 변환 불가능한 state가 포함되어 있으면 조건 유지
+          if (stateValue && STATE_TO_PSEUDO[stateValue] === undefined) {
+            // Error, Insert, Loading 등 CSS 변환 불가 → condition 그대로 유지
+            hasUnresolvableStateCondition = true;
+            // visible condition을 변경하지 않음 (state 조건 유지)
           } else {
-            // 조건이 모두 제거되면 항상 보임
-            node.visible = { type: "static", value: true };
+            // CSS 변환 가능한 state → state 부분만 제거
+            const newCondition = this._removeStateFromCondition(
+              node.visible.condition,
+              STATE_PROP_NAMES
+            );
+
+            if (newCondition) {
+              node.visible = { type: "condition", condition: newCondition };
+            } else {
+              // 조건이 모두 제거되면 항상 보임
+              node.visible = { type: "static", value: true };
+            }
           }
         }
       }
@@ -2842,7 +2853,7 @@ class _FinalAstTree {
 
           if (shouldBeSlot) {
             // slot 이름 생성 (중복 시 번호 추가)
-            let baseSlotName = toCamelCase(info.componentName);
+            const baseSlotName = toCamelCase(info.componentName);
             let slotName = baseSlotName;
             let counter = 2;
             while (collectedSlotNames.has(slotName)) {
@@ -2924,7 +2935,7 @@ class _FinalAstTree {
       // - 모든 variant에서 동일한 TEXT는 하드코딩 유지
       if (isComponentSetRoot && node.type === "TEXT" && node.metaData?.shouldBeTextSlot) {
         // slot 이름 생성: TEXT 노드의 name을 camelCase로 변환
-        let baseSlotName = toCamelCase(node.name) || "text";
+        const baseSlotName = toCamelCase(node.name) || "text";
         let slotName = baseSlotName;
         let counter = 2;
         while (collectedSlotNames.has(slotName)) {
