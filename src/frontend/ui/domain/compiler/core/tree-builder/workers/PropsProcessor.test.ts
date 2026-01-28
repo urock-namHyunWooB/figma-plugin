@@ -4,8 +4,8 @@ import type { PropDefinition } from "@compiler/types/architecture";
 
 const processor = new PropsProcessor();
 
-describe("PropsLinker", () => {
-  describe("processor.linkProps()", () => {
+describe("PropsProcessor", () => {
+  describe("linkProps()", () => {
     it("should return empty object for undefined refs", () => {
       const propsMap = new Map<string, PropDefinition>();
 
@@ -81,7 +81,7 @@ describe("PropsLinker", () => {
     });
   });
 
-  describe("processor.extractPropBindings()", () => {
+  describe("extractPropBindings()", () => {
     it("should return empty array for undefined refs", () => {
       const result = processor.extractPropBindings(undefined);
 
@@ -132,7 +132,7 @@ describe("PropsLinker", () => {
     });
   });
 
-  describe("processor.hasAnyBinding()", () => {
+  describe("hasAnyBinding()", () => {
     it("should return false for undefined refs", () => {
       expect(processor.hasAnyBinding(undefined)).toBe(false);
     });

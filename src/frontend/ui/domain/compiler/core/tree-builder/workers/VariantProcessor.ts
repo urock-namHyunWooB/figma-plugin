@@ -17,6 +17,7 @@ import type {
 } from "./interfaces";
 import { isInstanceChildId } from "./utils/instanceUtils";
 import { hasChildren } from "./utils/typeGuards";
+import { TreeBuilderConstants } from "./constants";
 
 // Re-export InternalNode for backward compatibility
 export type { InternalNode };
@@ -42,18 +43,7 @@ interface SquashGroup {
   iou: number;
 }
 
-// ============================================================================
-// Constants
-// ============================================================================
-
-/** IoU 임계값 (80%) - 같은 노드로 판단하는 기준 */
-const IOU_THRESHOLD = 0.8;
-
-/** TEXT 노드 IoU 임계값 (10%) - 텍스트는 크기가 자주 변하므로 낮은 임계값 */
-const TEXT_IOU_THRESHOLD = 0.1;
-
-/** 스쿼시 IoU 임계값 (50%) */
-const SQUASH_IOU_THRESHOLD = 0.5;
+// Constants imported from ./constants
 
 // ============================================================================
 // VariantProcessor Class
@@ -196,7 +186,7 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
   public isSameNode(
     node1: SceneNode,
     node2: SceneNode,
-    threshold: number = IOU_THRESHOLD
+    threshold: number = TreeBuilderConstants.IOU_THRESHOLD
   ): boolean {
     // 타입이 다르면 다른 노드
     if (node1.type !== node2.type) return false;
@@ -227,7 +217,7 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
    * @param threshold - IoU 임계값 (기본값 0.5)
    * @returns 스쿼시된 단일 트리
    */
-  public squashByIou(trees: InternalNode[], threshold: number = SQUASH_IOU_THRESHOLD): InternalNode {
+  public squashByIou(trees: InternalNode[], threshold: number = TreeBuilderConstants.SQUASH_IOU_THRESHOLD): InternalNode {
     if (trees.length === 0) {
       throw new Error("No trees to squash");
     }
@@ -266,7 +256,7 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
   public squashWithFunction(
     root: InternalNode,
     getIou: (nodeA: InternalNode, nodeB: InternalNode) => number | null,
-    threshold: number = SQUASH_IOU_THRESHOLD
+    threshold: number = TreeBuilderConstants.SQUASH_IOU_THRESHOLD
   ): InternalNode {
     // 1. 타입별 노드 그룹핑
     const nodesByType = groupNodesByType(root);
@@ -406,7 +396,9 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
         const iou = calculateIoU(relBox1, relBox2);
 
         // TEXT는 낮은 임계값 (10%), 그 외는 80%
-        const threshold = node1.type === "TEXT" ? TEXT_IOU_THRESHOLD : IOU_THRESHOLD;
+        const threshold = node1.type === "TEXT"
+          ? TreeBuilderConstants.TEXT_IOU_THRESHOLD
+          : TreeBuilderConstants.IOU_THRESHOLD;
         if (iou < threshold) return false;
       }
     }
@@ -584,7 +576,7 @@ function groupNodesByType(root: InternalNode): Map<string, InternalNode[]> {
 function findSquashGroups(
   nodesByType: Map<string, InternalNode[]>,
   getIou: (nodeA: InternalNode, nodeB: InternalNode) => number | null,
-  threshold: number = SQUASH_IOU_THRESHOLD
+  threshold: number = TreeBuilderConstants.SQUASH_IOU_THRESHOLD
 ): SquashGroup[] {
   const groups: SquashGroup[] = [];
 

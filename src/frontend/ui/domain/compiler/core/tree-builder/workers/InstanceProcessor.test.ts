@@ -3,8 +3,8 @@ import { InstanceProcessor } from "./InstanceProcessor";
 
 const processor = new InstanceProcessor();
 
-describe("InstanceOverrideHandler", () => {
-  describe("processor.getOriginalId()", () => {
+describe("InstanceProcessor", () => {
+  describe("getOriginalId()", () => {
     it("should extract original ID from INSTANCE child ID", () => {
       expect(processor.getOriginalId("I704:56;704:29;692:1613")).toBe("692:1613");
       expect(processor.getOriginalId("I123:456;789:012")).toBe("789:012");
@@ -21,7 +21,7 @@ describe("InstanceOverrideHandler", () => {
     });
   });
 
-  describe("processor.isInstanceChildId()", () => {
+  describe("isInstanceChildId()", () => {
     it("should return true for INSTANCE child IDs", () => {
       expect(processor.isInstanceChildId("I704:56;704:29;692:1613")).toBe(true);
       expect(processor.isInstanceChildId("I123:456")).toBe(true);
@@ -33,7 +33,7 @@ describe("InstanceOverrideHandler", () => {
     });
   });
 
-  describe("processor.extractOverrides()", () => {
+  describe("extractOverrides()", () => {
     it("should extract character overrides", () => {
       const instanceChildren = [
         { id: "I1;100:1", characters: "New Text", children: [] },
@@ -118,7 +118,7 @@ describe("InstanceOverrideHandler", () => {
     });
   });
 
-  describe("processor.mergeOverridesToOriginal()", () => {
+  describe("mergeOverridesToOriginal()", () => {
     it("should merge character overrides", () => {
       const originalChildren = [
         { id: "100:1", characters: "Original", children: [] },
@@ -168,7 +168,7 @@ describe("InstanceOverrideHandler", () => {
     });
   });
 
-  describe("processor.extractOverrideProps()", () => {
+  describe("extractOverrideProps()", () => {
     it("should extract fills as Bg prop", () => {
       const instanceNode = {
         children: [

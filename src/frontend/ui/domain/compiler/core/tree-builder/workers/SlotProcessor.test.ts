@@ -3,8 +3,8 @@ import { SlotProcessor } from "./SlotProcessor";
 
 const processor = new SlotProcessor();
 
-describe("SlotDetector", () => {
-  describe("processor.shouldConvertToSlot()", () => {
+describe("SlotProcessor", () => {
+  describe("shouldConvertToSlot()", () => {
     it("should return true for INSTANCE with visible BOOLEAN binding", () => {
       expect(processor.shouldConvertToSlot("INSTANCE", "showIcon#123", "BOOLEAN")).toBe(true);
     });
@@ -22,7 +22,7 @@ describe("SlotDetector", () => {
     });
   });
 
-  describe("processor.extractSlotDefinition()", () => {
+  describe("extractSlotDefinition()", () => {
     it("should create slot definition from prop name", () => {
       const result = processor.extractSlotDefinition("node1", "IconInstance", "showIcon");
 
@@ -43,7 +43,7 @@ describe("SlotDetector", () => {
     });
   });
 
-  describe("processor.detectArraySlot()", () => {
+  describe("detectArraySlot()", () => {
     it("should detect array slot when multiple INSTANCES reference same component", () => {
       const children = [
         { id: "inst1", name: "Item 1", type: "INSTANCE", componentId: "comp1" },
@@ -91,7 +91,7 @@ describe("SlotDetector", () => {
     });
   });
 
-  describe("processor.findSlotCandidates()", () => {
+  describe("findSlotCandidates()", () => {
     it("should find INSTANCE with BOOLEAN visible binding", () => {
       const nodes = [
         {
