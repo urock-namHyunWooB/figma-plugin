@@ -21,6 +21,7 @@ import type {
   BuildContext,
 } from "./interfaces";
 import { VisibilityProcessor } from "./VisibilityProcessor";
+import { traverseTree } from "./utils/treeUtils";
 
 // ============================================================================
 // Types
@@ -97,17 +98,13 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
     const instance = new StyleProcessor();
     const nodeStyles = new Map<string, StyleDefinition>();
 
-    const traverse = (node: InternalNode) => {
+    traverseTree(ctx.internalTree, (node) => {
       const styles = instance.buildFromMergedNodes(
         { mergedNodes: node.mergedNode, data: ctx.data },
         VisibilityProcessor.parseVariantCondition
       );
       nodeStyles.set(node.id, styles);
-      for (const child of node.children) {
-        traverse(child);
-      }
-    };
-    traverse(ctx.internalTree);
+    });
 
     return { ...ctx, nodeStyles };
   }
@@ -120,17 +117,13 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
     const instance = new StyleProcessor();
     const nodeStyles = new Map(ctx.nodeStyles);
 
-    const traverse = (node: InternalNode) => {
+    traverseTree(ctx.internalTree, (node) => {
       const currentStyles = nodeStyles.get(node.id);
       if (currentStyles) {
         const updatedStyles = instance.applyToStyleDefinition(node, currentStyles, ctx.data);
         nodeStyles.set(node.id, updatedStyles);
       }
-      for (const child of node.children) {
-        traverse(child);
-      }
-    };
-    traverse(ctx.internalTree);
+    });
 
     return { ...ctx, nodeStyles };
   }
@@ -143,18 +136,14 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
     const instance = new StyleProcessor();
     const nodeStyles = new Map(ctx.nodeStyles);
 
-    const traverse = (node: InternalNode) => {
-      const nodeSpec = (ctx.data).getNodeById(node.id);
+    traverseTree(ctx.internalTree, (node) => {
+      const nodeSpec = ctx.data.getNodeById(node.id);
       const currentStyles = nodeStyles.get(node.id);
       if (nodeSpec && currentStyles) {
         const updatedBase = instance.handleRotatedElement(nodeSpec, currentStyles.base);
         nodeStyles.set(node.id, { ...currentStyles, base: updatedBase });
       }
-      for (const child of node.children) {
-        traverse(child);
-      }
-    };
-    traverse(ctx.internalTree);
+    });
 
     return { ...ctx, nodeStyles };
   }

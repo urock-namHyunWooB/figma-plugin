@@ -58,3 +58,9 @@ export {
   isComponentSetNode,
   getComponentId,
 } from "./workers/utils/typeGuards";
+
+export {
+  traverseTree,
+  flattenTree,
+  mapTree,
+} from "./workers/utils/treeUtils";

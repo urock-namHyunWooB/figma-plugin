@@ -1,11 +1,14 @@
 /**
  * Tree Traversal Utilities
+ *
+ * InternalNode 트리를 순회/변환하기 위한 공유 유틸리티.
+ * 각 Processor에서 반복되는 인라인 순회 클로저를 이 유틸리티로 대체합니다.
  */
 
-import type { InternalNode } from "../VariantProcessor";
+import type { InternalNode } from "../interfaces";
 
 /**
- * InternalNode 트리를 순회하며 각 노드에 대해 콜백 실행
+ * InternalNode 트리를 순회하며 각 노드에 대해 콜백 실행 (DFS)
  */
 export function traverseTree(
   root: InternalNode,
@@ -27,4 +30,20 @@ export function flattenTree(root: InternalNode): InternalNode[] {
   const result: InternalNode[] = [];
   traverseTree(root, (node) => result.push(node));
   return result;
+}
+
+/**
+ * InternalNode 트리를 다른 타입의 트리로 재귀적 변환 (map)
+ *
+ * NodeConverter.assemble 등에서 InternalNode → DesignNode 변환에 사용
+ */
+export function mapTree<T>(
+  root: InternalNode,
+  mapper: (node: InternalNode, mappedChildren: T[]) => T
+): T {
+  const map = (node: InternalNode): T => {
+    const mappedChildren = node.children.map(map);
+    return mapper(node, mappedChildren);
+  };
+  return map(root);
 }

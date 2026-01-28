@@ -20,6 +20,7 @@ import type {
 } from "./interfaces";
 import type { FigmaFill } from "./utils/instanceUtils";
 import { FIGMA_TO_DESIGN_TYPE } from "./utils/nodeTypeUtils";
+import { traverseTree } from "./utils/treeUtils";
 
 // ============================================================================
 // NodeProcessor Class
@@ -60,13 +61,9 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
     const instance = new NodeProcessor();
     const nodeTypes = new Map<string, DesignNodeType>();
 
-    const traverse = (node: InternalNode) => {
+    traverseTree(ctx.internalTree, (node) => {
       nodeTypes.set(node.id, instance.mapNodeType(node.type));
-      for (const child of node.children) {
-        traverse(child);
-      }
-    };
-    traverse(ctx.internalTree);
+    });
 
     return { ...ctx, nodeTypes };
   }

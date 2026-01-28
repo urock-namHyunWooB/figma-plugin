@@ -9,7 +9,13 @@
  */
 
 import type { PropDefinition } from "@compiler/types/architecture";
-import type { IPropsExtractor, IPropsLinker, PropBinding, BuildContext, InternalNode } from "./interfaces";
+import type {
+  IPropsExtractor,
+  IPropsLinker,
+  PropBinding,
+  BuildContext,
+} from "./interfaces";
+import { traverseTree } from "./utils/treeUtils";
 
 // ============================================================================
 // Types
@@ -35,10 +41,6 @@ const FIGMA_PROP_TYPE_MAP: Record<string, PropDefinition["type"]> = {
  * Props 추출(Extractor)과 바인딩(Linker) 기능을 통합
  */
 export class PropsProcessor implements IPropsExtractor, IPropsLinker {
-  // ==========================================================================
-  // Static Pipeline Method
-  // ==========================================================================
-
   static extract(ctx: BuildContext): BuildContext {
     const instance = new PropsProcessor();
     const propsMap = instance.extractProps(ctx.data.props);
@@ -47,25 +49,26 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
 
   static bindProps(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree || !ctx.propsMap) {
-      throw new Error("PropsProcessor.bindProps: internalTree and propsMap are required.");
+      throw new Error(
+        "PropsProcessor.bindProps: internalTree and propsMap are required."
+      );
     }
 
     const instance = new PropsProcessor();
     const nodePropBindings = new Map<string, Record<string, string>>();
 
-    const traverse = (node: InternalNode) => {
+    traverseTree(ctx.internalTree, (node) => {
       const nodeSpec = ctx.data.getNodeById(node.id);
       if (nodeSpec?.componentPropertyReferences) {
-        const bindings = instance.linkProps(nodeSpec.componentPropertyReferences, ctx.propsMap!);
+        const bindings = instance.linkProps(
+          nodeSpec.componentPropertyReferences,
+          ctx.propsMap!
+        );
         if (Object.keys(bindings).length > 0) {
           nodePropBindings.set(node.id, bindings);
         }
       }
-      for (const child of node.children) {
-        traverse(child);
-      }
-    };
-    traverse(ctx.internalTree);
+    });
 
     return { ...ctx, nodePropBindings };
   }
@@ -135,7 +138,10 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
 
     // characters → text prop binding
     if (refs.characters) {
-      const propName = this.findPropNameByOriginalKey(propsDefinitions, refs.characters);
+      const propName = this.findPropNameByOriginalKey(
+        propsDefinitions,
+        refs.characters
+      );
       if (propName) {
         bindings.characters = propName;
       }
@@ -143,7 +149,10 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
 
     // visible → boolean prop binding
     if (refs.visible) {
-      const propName = this.findPropNameByOriginalKey(propsDefinitions, refs.visible);
+      const propName = this.findPropNameByOriginalKey(
+        propsDefinitions,
+        refs.visible
+      );
       if (propName) {
         bindings.visible = propName;
       }
@@ -151,7 +160,10 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
 
     // mainComponent → slot prop binding (INSTANCE_SWAP)
     if (refs.mainComponent) {
-      const propName = this.findPropNameByOriginalKey(propsDefinitions, refs.mainComponent);
+      const propName = this.findPropNameByOriginalKey(
+        propsDefinitions,
+        refs.mainComponent
+      );
       if (propName) {
         bindings.mainComponent = propName;
       }
@@ -163,7 +175,9 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
   /**
    * prop 바인딩 정보 추출 (상세 정보 포함)
    */
-  public extractPropBindings(refs: Record<string, string> | undefined): PropBinding[] {
+  public extractPropBindings(
+    refs: Record<string, string> | undefined
+  ): PropBinding[] {
     if (!refs) return [];
 
     const bindings: PropBinding[] = [];

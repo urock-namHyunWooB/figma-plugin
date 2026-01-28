@@ -16,7 +16,6 @@ import type {
   ExternalRefInput,
   ExternalRefResult,
   BuildContext,
-  InternalNode,
   ExternalRefData,
   FigmaFill,
   FigmaStroke,
@@ -24,6 +23,7 @@ import type {
   ComponentPropertyValue,
 } from "./interfaces";
 import { NodeProcessor } from "./NodeProcessor";
+import { traverseTree } from "./utils/treeUtils";
 import { toPascalCase, toCamelCase } from "./utils/stringUtils";
 import { hasChildren, getComponentId } from "./utils/typeGuards";
 import {
@@ -75,7 +75,7 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
     const instance = new InstanceProcessor();
     const nodeExternalRefs = new Map<string, ExternalRefData>();
 
-    const traverse = (node: InternalNode) => {
+    traverseTree(ctx.internalTree, (node) => {
       if (NodeProcessor.isComponentReference(node.type)) {
         const nodeSpec = ctx.data.getNodeById(node.id);
         const result = instance.buildExternalRef(
@@ -96,12 +96,7 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
           });
         }
       }
-
-      for (const child of node.children) {
-        traverse(child);
-      }
-    };
-    traverse(ctx.internalTree);
+    });
 
     return { ...ctx, nodeExternalRefs };
   }

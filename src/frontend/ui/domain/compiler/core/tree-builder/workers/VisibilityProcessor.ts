@@ -25,6 +25,7 @@ import type {
 } from "./interfaces";
 import type { InternalNode } from "./VariantProcessor";
 import { toCamelCase } from "./utils/stringUtils";
+import { traverseTree } from "./utils/treeUtils";
 
 // ============================================================================
 // Types
@@ -101,8 +102,8 @@ export class VisibilityProcessor
     const instance = new VisibilityProcessor();
     const conditionals = [...ctx.conditionals];
 
-    const traverse = (node: InternalNode) => {
-      const nodeSpec = (ctx.data).getNodeById(node.id);
+    traverseTree(ctx.internalTree, (node) => {
+      const nodeSpec = ctx.data.getNodeById(node.id);
       const result = instance.resolveVisibility(
         {
           nodeId: node.id,
@@ -117,11 +118,7 @@ export class VisibilityProcessor
       if (result.conditionalRule) {
         conditionals.push(result.conditionalRule);
       }
-      for (const child of node.children) {
-        traverse(child);
-      }
-    };
-    traverse(ctx.internalTree);
+    });
 
     return { ...ctx, conditionals };
   }
@@ -396,7 +393,7 @@ export class VisibilityProcessor
   public collectFromTree(root: InternalNode, data: PreparedDesignData): HiddenProcessableNode[] {
     const nodes: HiddenProcessableNode[] = [];
 
-    const traverse = (n: InternalNode) => {
+    traverseTree(root, (n) => {
       const spec = data.getNodeById(n.id);
       const pn: HiddenProcessableNode = {
         id: n.id,
@@ -409,11 +406,8 @@ export class VisibilityProcessor
       if (this.isHiddenNode(pn, data)) {
         nodes.push(pn);
       }
+    });
 
-      n.children.forEach(traverse);
-    };
-
-    traverse(root);
     return nodes;
   }
 

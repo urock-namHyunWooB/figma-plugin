@@ -9,7 +9,7 @@
 
 import type { BuildContext } from "./interfaces";
 import type { DesignNode } from "@compiler/types/architecture";
-import type { InternalNode } from "./VariantProcessor";
+import { mapTree } from "./utils/treeUtils";
 
 // ============================================================================
 // NodeConverter Class
@@ -33,7 +33,7 @@ export class NodeConverter {
       throw new Error("NodeConverter.assemble: nodeStyles is required.");
     }
 
-    const assembleNode = (internal: InternalNode): DesignNode => {
+    const root = mapTree<DesignNode>(ctx.internalTree, (internal, children) => {
       // 미리 계산된 값들 조회
       const nodeType = ctx.nodeTypes!.get(internal.id) ?? "container";
       const styles = ctx.nodeStyles!.get(internal.id) ?? { base: {}, dynamic: [] };
@@ -50,9 +50,6 @@ export class NodeConverter {
           }
         : undefined;
 
-      // 자식 노드 재귀 조립
-      const children = internal.children.map((child) => assembleNode(child));
-
       return {
         id: internal.id,
         type: nodeType,
@@ -64,9 +61,7 @@ export class NodeConverter {
         semanticRole: semanticResult?.role,
         vectorSvg: semanticResult?.vectorSvg,
       };
-    };
-
-    const root = assembleNode(ctx.internalTree);
+    });
 
     return { ...ctx, root };
   }

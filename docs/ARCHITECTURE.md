@@ -155,41 +155,79 @@ DataPreparer
 ### 책임
 
 - 정규화된 데이터를 플랫폼 독립적인 IR(Intermediate Representation)로 변환
-- Variant 병합 (SuperTree)
-- AST 트리 구조 생성
+- Variant 병합 (IoU 기반 노드 매칭)
+- 스타일 분류 (base/dynamic/pseudo)
 - 조건부 렌더링 로직 결정
-- 배열 슬롯 감지 및 반영
+- Slot 및 배열 슬롯 감지
 
 ### Input / Output
 
 ```typescript
-Input:  NormalizedDesignData
+Input:  PreparedDesignData
 Output: DesignTree (Platform-Independent IR)
 ```
 
-### 인터페이스
+### 변환 파이프라인
 
-```typescript
-interface TreeBuilder {
-  build(data: NormalizedDesignData): DesignTree;
-}
+```
+PreparedDesignData
+    │
+    ▼
+Phase 1: 구조 생성
+    VariantProcessor.merge()     → internalTree (IoU 기반 variant 병합)
+    PropsProcessor.extract()     → propsMap
+    │
+    ▼
+Phase 2: 분석
+    NodeProcessor.detectSemanticRoles() → semanticRoles
+    VisibilityProcessor.processHidden() → hiddenConditions
+    │
+    ▼
+Phase 3: 노드별 변환
+    NodeProcessor.mapTypes()             → nodeTypes
+    StyleProcessor.build()               → nodeStyles
+    StyleProcessor.applyPositions()      → nodeStyles (position 추가)
+    StyleProcessor.handleRotation()      → nodeStyles (rotation 처리)
+    PropsProcessor.bindProps()           → nodePropBindings
+    SlotProcessor.detectTextSlots()      → propsMap, nodePropBindings 업데이트
+    VisibilityProcessor.resolve()        → conditionals
+    SlotProcessor.detectSlots()          → slots
+    SlotProcessor.detectArraySlots()     → arraySlots
+    InstanceProcessor.buildExternalRefs() → nodeExternalRefs
+    │
+    ▼
+Phase 4: 최종 조립
+    NodeConverter.assemble()             → root (DesignNode 트리)
+    │
+    ▼
+DesignTree { root, props, slots, conditionals, arraySlots }
+```
 
-interface DesignTree {
-  root: DesignNode;
-  props: PropDefinition[];
-  slots: SlotDefinition[];
-  conditionals: ConditionalRule[];
-}
+### 내부 구성
 
-interface DesignNode {
-  id: string;
-  type: 'container' | 'text' | 'image' | 'vector' | 'slot' | 'component';
-  name: string;
-  styles: StyleDefinition;
-  children: DesignNode[];
-  conditions?: ConditionalRule[];  // 조건부 렌더링
-  loop?: LoopDefinition;           // 배열 렌더링
-}
+```
+tree-builder/
+├── TreeBuilder.ts           # 파이프라인 오케스트레이터
+├── index.ts                 # 모듈 public API
+│
+├── workers/                 # 각 변환 단계의 Processor들
+│   ├── VariantProcessor.ts  # IoU 기반 variant 병합 + 스쿼시
+│   ├── PropsProcessor.ts    # Props 추출 + 바인딩
+│   ├── NodeProcessor.ts     # 타입 매핑 + 의미론적 역할 감지
+│   ├── StyleProcessor.ts    # 스타일 분류 + Position + Rotation
+│   ├── VisibilityProcessor.ts # 조건 파싱 + visibility 추론 + hidden 처리
+│   ├── SlotProcessor.ts     # Slot 감지 (text/instance/array)
+│   ├── InstanceProcessor.ts # INSTANCE override + 외부 참조
+│   ├── NodeConverter.ts     # InternalNode → DesignNode 최종 조립
+│   ├── interfaces.ts        # Worker 인터페이스 + 공유 타입
+│   ├── constants.ts         # IoU 임계값 등 상수
+│   │
+│   └── utils/               # 공유 유틸리티
+│       ├── treeUtils.ts     # traverseTree, flattenTree, mapTree
+│       ├── typeGuards.ts    # hasChildren, isInstanceNode, isComponentSetNode
+│       ├── instanceUtils.ts # INSTANCE ID 처리, FigmaFill
+│       ├── stringUtils.ts   # toCamelCase, toPascalCase, toKebabCase
+│       └── nodeTypeUtils.ts # Figma → DesignNodeType 매핑 테이블
 ```
 
 ### Policy Hooks
@@ -210,14 +248,18 @@ interface TreeBuilderPolicy {
 }
 ```
 
-### 현재 코드 매핑
+### 레거시 코드 매핑
 
-| 현재 | 새 구조 |
-|------|---------|
-| CreateSuperTree | TreeBuilder 내부 |
-| CreateAstTree | TreeBuilder 내부 |
-| NodeMatcher | TreeBuilder 내부 |
-| ArraySlotDetector | TreeBuilder 내부 |
+| 레거시 | TreeBuilder |
+|--------|-------------|
+| CreateSuperTree | VariantProcessor.merge() |
+| _TempAstTree (스타일) | StyleProcessor.build/applyPositions/handleRotation() |
+| _TempAstTree (visibility) | VisibilityProcessor.processHidden/resolve() |
+| _TempAstTree (props) | PropsProcessor.bindProps() |
+| _FinalAstTree (slots) | SlotProcessor.detectSlots/detectTextSlots/detectArraySlots() |
+| _FinalAstTree (외부참조) | InstanceProcessor.buildExternalRefs() |
+| NodeMatcher (IoU) | VariantProcessor.calculateIoU() |
+| ArraySlotDetector | SlotProcessor.detectArraySlot() |
 
 ---
 
@@ -707,10 +749,28 @@ const code = await generator.generate();
 - `architecture.ts`의 `PreparedDesignData` 인터페이스에서 `PreparedNode` → `SceneNode`로 수정 필요
 - 또는 Phase 4에서 TreeBuilder 구현 시 PreparedNode 정규화 포함
 
-### Phase 4: TreeBuilder 분리
-- [ ] CreateSuperTree, CreateAstTree 통합
-- [ ] 플랫폼 독립적 DesignTree 구조 정의
-- [ ] ArraySlotDetector 통합
+### Phase 4: TreeBuilder 구현 ✅
+- [x] VariantProcessor: IoU 기반 variant 병합 (CreateSuperTree 대체)
+- [x] StyleProcessor: 스타일 분류 + position + rotation
+- [x] VisibilityProcessor: 조건 파싱 + visibility 추론
+- [x] PropsProcessor: props 추출 + 바인딩
+- [x] SlotProcessor: text/instance/array slot 감지
+- [x] InstanceProcessor: override 처리 + 외부 참조
+- [x] NodeConverter: InternalNode → DesignNode 최종 조립
+- [x] TreeBuilder: BuildContext 기반 파이프라인 오케스트레이터
+- [x] 155개 단위 테스트 작성
+
+> 구현: `src/frontend/ui/domain/compiler/core/tree-builder/`
+
+#### Phase 4 리팩토링 (진행 중)
+- [x] Magic Number 상수화 (constants.ts)
+- [x] 테스트 파일명 정리 (Processor 1:1 매핑)
+- [x] 레거시 코드 제거 (MergedNodeInfo 등)
+- [x] any 타입 제거 (FigmaFill, InstanceChildNode 등 구체 타입)
+- [x] TreeTraverser 유틸리티 (traverseTree/mapTree로 13개 인라인 순회 통합)
+- [ ] BuildContext 타입 분리
+- [ ] ProcessorFactory
+- [ ] interfaces.ts 분리
 
 ### Phase 5: CodeEmitter 정리
 - [ ] ReactGenerator를 CodeEmitter 인터페이스로 래핑 (ReactEmitter)

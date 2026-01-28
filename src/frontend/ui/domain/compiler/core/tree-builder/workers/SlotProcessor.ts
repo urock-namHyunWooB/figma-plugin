@@ -9,9 +9,10 @@
  */
 
 import type { SlotDefinition, ArraySlotInfo, PropDefinition, PreparedDesignData } from "@compiler/types/architecture";
-import type { ISlotDetector, ITextSlotDetector, SlotCandidate, TextSlotInput, TextSlotResult, BuildContext, InternalNode } from "./interfaces";
+import type { ISlotDetector, ITextSlotDetector, SlotCandidate, TextSlotInput, TextSlotResult, BuildContext } from "./interfaces";
 import { toCamelCase } from "./utils/stringUtils";
 import { getComponentId } from "./utils/typeGuards";
+import { traverseTree } from "./utils/treeUtils";
 import { NodeProcessor } from "./NodeProcessor";
 
 // ============================================================================
@@ -32,7 +33,7 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
     const propsMap = new Map(ctx.propsMap);
     const nodePropBindings = new Map(ctx.nodePropBindings);
 
-    const traverse = (node: InternalNode) => {
+    traverseTree(ctx.internalTree, (node) => {
       const result = instance.detectTextSlot(
         {
           nodeId: node.id,
@@ -51,12 +52,7 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
         const existing = nodePropBindings.get(node.id) || {};
         nodePropBindings.set(node.id, { ...existing, characters: result.propName });
       }
-
-      for (const child of node.children) {
-        traverse(child);
-      }
-    };
-    traverse(ctx.internalTree);
+    });
 
     return { ...ctx, propsMap, nodePropBindings };
   }
@@ -70,7 +66,7 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
     const slots: SlotDefinition[] = [...ctx.slots];
     const propsDefinitions = ctx.data.props as unknown as Record<string, { type: string }>;
 
-    const traverse = (node: InternalNode) => {
+    traverseTree(ctx.internalTree, (node) => {
       if (NodeProcessor.isComponentReference(node.type)) {
         const nodeSpec = ctx.data.getNodeById(node.id);
         const candidates = instance.findSlotCandidates(
@@ -88,11 +84,7 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
           }
         }
       }
-      for (const child of node.children) {
-        traverse(child);
-      }
-    };
-    traverse(ctx.internalTree);
+    });
 
     return { ...ctx, slots };
   }
@@ -105,7 +97,7 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
     const instance = new SlotProcessor();
     const arraySlots: ArraySlotInfo[] = [...ctx.arraySlots];
 
-    const traverse = (node: InternalNode) => {
+    traverseTree(ctx.internalTree, (node) => {
       if (node.children.length >= 2) {
         const childrenInfo = node.children.map((child) => ({
           id: child.id,
@@ -116,11 +108,7 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
         const arraySlot = instance.detectArraySlot(childrenInfo);
         if (arraySlot) arraySlots.push(arraySlot);
       }
-      for (const child of node.children) {
-        traverse(child);
-      }
-    };
-    traverse(ctx.internalTree);
+    });
 
     return { ...ctx, arraySlots };
   }
