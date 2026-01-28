@@ -18,7 +18,7 @@ import type {
   PreparedDesignData,
 } from "@compiler/types/architecture";
 import type { ConditionNode } from "@compiler/types/customType";
-import type { InternalNode } from "./interfaces";
+import type { InternalNode } from "./interfaces/core";
 
 // ============================================================================
 // BuildContext 관련 타입
