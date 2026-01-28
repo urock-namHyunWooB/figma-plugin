@@ -26,16 +26,6 @@ export type { InternalNode };
 // Types
 // ============================================================================
 
-/**
- * 병합 정보가 포함된 노드
- * @deprecated Use MergedNodeWithVariant from ./interfaces instead
- */
-export interface MergedNodeInfo {
-  id: string;
-  name: string;
-  variantName?: string | null;
-}
-
 /** 스쿼시 그룹 */
 interface SquashGroup {
   nodeA: InternalNode;

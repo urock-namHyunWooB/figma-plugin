@@ -20,7 +20,6 @@ export {
   getRelativeBounds,
   calculateIouFromRoot,
   type InternalNode,
-  type MergedNodeInfo,
 } from "./workers/VariantProcessor";
 export { InstanceProcessor } from "./workers/InstanceProcessor";
 

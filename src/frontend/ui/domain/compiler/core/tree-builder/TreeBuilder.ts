@@ -29,70 +29,40 @@ import { VisibilityProcessor } from "./workers/VisibilityProcessor";
 import { InstanceProcessor } from "./workers/InstanceProcessor";
 import { NodeConverter } from "./workers/NodeConverter";
 
-// Re-export for backwards compatibility
-export type { SemanticRoleEntry };
-
-// ============================================================================
-// Context Factory
-// ============================================================================
-
-function createBuildContext(
-  data: PreparedDesignData,
-  policy?: TreeBuilderPolicy
-): BuildContext {
-  const isComponentSet = data.document.type === "COMPONENT_SET";
-  const doc = data.document as { children?: unknown[] };
-  const totalVariantCount =
-    isComponentSet && doc.children ? doc.children.length : 1;
-
-  return {
-    data,
-    policy,
-    totalVariantCount,
-    conditionals: [],
-    slots: [],
-    arraySlots: [],
-  };
-}
-
-// ============================================================================
-// TreeBuilder - Flat Pipeline
-// ============================================================================
-
 class TreeBuilder implements ITreeBuilder {
-  public build(data: PreparedDesignData, policy?: TreeBuilderPolicy): DesignTree {
-    let ctx = createBuildContext(data, policy);
+  public build(
+    data: PreparedDesignData,
+    policy?: TreeBuilderPolicy
+  ): DesignTree {
+    let ctx = this.createBuildContext(data, policy);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Phase 1: 구조 생성
     // ─────────────────────────────────────────────────────────────────────────
-    ctx = VariantProcessor.merge(ctx);           // → internalTree
-    ctx = PropsProcessor.extract(ctx);           // → propsMap
+    ctx = VariantProcessor.merge(ctx); // → internalTree
+    ctx = PropsProcessor.extract(ctx); // → propsMap
 
     // ─────────────────────────────────────────────────────────────────────────
     // Phase 2: 분석
     // ─────────────────────────────────────────────────────────────────────────
-    ctx = NodeProcessor.detectSemanticRoles(ctx);     // → semanticRoles
-    ctx = VisibilityProcessor.processHidden(ctx);     // → hiddenConditions
+    ctx = NodeProcessor.detectSemanticRoles(ctx); // → semanticRoles
+    ctx = VisibilityProcessor.processHidden(ctx); // → hiddenConditions
 
     // ─────────────────────────────────────────────────────────────────────────
     // Phase 3: 노드별 변환
     // ─────────────────────────────────────────────────────────────────────────
-    ctx = NodeProcessor.mapTypes(ctx);                // → nodeTypes
-    ctx = StyleProcessor.build(ctx);                  // → nodeStyles
-    ctx = StyleProcessor.applyPositions(ctx);         // nodeStyles에 position 추가
-    ctx = StyleProcessor.handleRotation(ctx);         // nodeStyles에 rotation 처리
-    ctx = PropsProcessor.bindProps(ctx);              // → nodePropBindings
-    ctx = SlotProcessor.detectTextSlots(ctx);         // propsMap, nodePropBindings 업데이트
-    ctx = VisibilityProcessor.resolve(ctx);           // → conditionals
-    ctx = SlotProcessor.detectSlots(ctx);             // → slots
-    ctx = SlotProcessor.detectArraySlots(ctx);        // → arraySlots
-    ctx = InstanceProcessor.buildExternalRefs(ctx);   // → nodeExternalRefs
+    ctx = NodeProcessor.mapTypes(ctx); // → nodeTypes
+    ctx = StyleProcessor.build(ctx); // → nodeStyles
+    ctx = StyleProcessor.applyPositions(ctx); // nodeStyles에 position 추가
+    ctx = StyleProcessor.handleRotation(ctx); // nodeStyles에 rotation 처리
+    ctx = PropsProcessor.bindProps(ctx); // → nodePropBindings
+    ctx = SlotProcessor.detectTextSlots(ctx); // propsMap, nodePropBindings 업데이트
+    ctx = VisibilityProcessor.resolve(ctx); // → conditionals
+    ctx = SlotProcessor.detectSlots(ctx); // → slots
+    ctx = SlotProcessor.detectArraySlots(ctx); // → arraySlots
+    ctx = InstanceProcessor.buildExternalRefs(ctx); // → nodeExternalRefs
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Phase 4: 최종 조립
-    // ─────────────────────────────────────────────────────────────────────────
-    ctx = NodeConverter.assemble(ctx);                // → root
+    ctx = NodeConverter.assemble(ctx); // → root
 
     return {
       root: ctx.root!,
@@ -102,6 +72,27 @@ class TreeBuilder implements ITreeBuilder {
       arraySlots: ctx.arraySlots,
     };
   }
+
+  private createBuildContext(
+    data: PreparedDesignData,
+    policy?: TreeBuilderPolicy
+  ): BuildContext {
+    const isComponentSet = data.document.type === "COMPONENT_SET";
+    const doc = data.document as { children?: unknown[] };
+    const totalVariantCount =
+      isComponentSet && doc.children ? doc.children.length : 1;
+
+    return {
+      data,
+      policy,
+      totalVariantCount,
+      conditionals: [],
+      slots: [],
+      arraySlots: [],
+    };
+  }
 }
 
 export default TreeBuilder;
+
+export type { SemanticRoleEntry };
