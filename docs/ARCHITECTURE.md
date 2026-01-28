@@ -210,7 +210,7 @@ tree-builder/
 ├── TreeBuilder.ts           # 파이프라인 오케스트레이터
 ├── index.ts                 # 모듈 public API
 │
-├── workers/                 # 각 변환 단계의 Processor들
+├── workers/
 │   ├── VariantProcessor.ts  # IoU 기반 variant 병합 + 스쿼시
 │   ├── PropsProcessor.ts    # Props 추출 + 바인딩
 │   ├── NodeProcessor.ts     # 타입 매핑 + 의미론적 역할 감지
@@ -219,8 +219,19 @@ tree-builder/
 │   ├── SlotProcessor.ts     # Slot 감지 (text/instance/array)
 │   ├── InstanceProcessor.ts # INSTANCE override + 외부 참조
 │   ├── NodeConverter.ts     # InternalNode → DesignNode 최종 조립
-│   ├── interfaces.ts        # Worker 인터페이스 + 공유 타입
+│   ├── BuildContext.ts      # 파이프라인 상태 타입 (BuildContext, SemanticRoleEntry, ExternalRefData)
 │   ├── constants.ts         # IoU 임계값 등 상수
+│   │
+│   ├── interfaces/          # Worker 인터페이스 (도메인별 분리)
+│   │   ├── index.ts         # barrel re-export
+│   │   ├── core.ts          # InternalNode, MergedNodeWithVariant, Figma 타입
+│   │   ├── variant.ts       # IVariantMerger, ISquashByIou
+│   │   ├── node.ts          # INodeTypeMapper, ISemanticRoleDetector
+│   │   ├── style.ts         # IStyleClassifier, IPositionStyler
+│   │   ├── props.ts         # IPropsExtractor, IPropsLinker
+│   │   ├── slot.ts          # ISlotDetector, ITextSlotDetector
+│   │   ├── visibility.ts    # IVisibilityDetector, IVisibilityResolver, IConditionParser, IHiddenNodeProcessor
+│   │   └── instance.ts      # IInstanceOverrideHandler, IExternalRefBuilder
 │   │
 │   └── utils/               # 공유 유틸리티
 │       ├── treeUtils.ts     # traverseTree, flattenTree, mapTree
@@ -762,15 +773,14 @@ const code = await generator.generate();
 
 > 구현: `src/frontend/ui/domain/compiler/core/tree-builder/`
 
-#### Phase 4 리팩토링 (진행 중)
+#### Phase 4 리팩토링 ✅
 - [x] Magic Number 상수화 (constants.ts)
 - [x] 테스트 파일명 정리 (Processor 1:1 매핑)
 - [x] 레거시 코드 제거 (MergedNodeInfo 등)
 - [x] any 타입 제거 (FigmaFill, InstanceChildNode 등 구체 타입)
 - [x] TreeTraverser 유틸리티 (traverseTree/mapTree로 13개 인라인 순회 통합)
-- [ ] BuildContext 타입 분리
-- [ ] ProcessorFactory
-- [ ] interfaces.ts 분리
+- [x] BuildContext 타입 분리 (BuildContext.ts)
+- [x] interfaces.ts 분리 (interfaces/ 디렉토리, 8개 파일)
 
 ### Phase 5: CodeEmitter 정리
 - [ ] ReactGenerator를 CodeEmitter 인터페이스로 래핑 (ReactEmitter)
