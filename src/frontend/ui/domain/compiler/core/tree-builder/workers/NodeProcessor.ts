@@ -18,6 +18,7 @@ import type {
   BuildContext,
   SemanticRoleEntry,
 } from "./interfaces";
+import type { FigmaFill } from "./utils/instanceUtils";
 import { FIGMA_TO_DESIGN_TYPE } from "./utils/nodeTypeUtils";
 
 // ============================================================================
@@ -220,13 +221,13 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
     return result;
   }
 
-  private detectRectangleRole(nodeSpec: any): SemanticRoleResult {
+  private detectRectangleRole(nodeSpec: SceneNode | undefined): SemanticRoleResult {
     if (!nodeSpec) return { role: "container" };
 
-    const fills = nodeSpec.fills;
+    const fills = (nodeSpec as { fills?: FigmaFill[] }).fills;
     if (Array.isArray(fills)) {
       const hasImageFill = fills.some(
-        (fill: any) => fill.type === "IMAGE" && fill.visible !== false
+        (fill) => fill.type === "IMAGE" && fill.visible !== false
       );
       if (hasImageFill) {
         return { role: "image" };

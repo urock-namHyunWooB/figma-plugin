@@ -16,7 +16,7 @@ import type {
   BuildContext,
 } from "./interfaces";
 import { isInstanceChildId } from "./utils/instanceUtils";
-import { hasChildren } from "./utils/typeGuards";
+import { hasChildren, isComponentSetNode } from "./utils/typeGuards";
 import { TreeBuilderConstants } from "./constants";
 
 // Re-export InternalNode for backward compatibility
@@ -54,17 +54,16 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   static merge(ctx: BuildContext): BuildContext {
     const data = ctx.data;
-    const doc = data.document as any;
-    const isComponentSet = doc.type === "COMPONENT_SET";
+    const doc = data.document;
 
     const instance = new VariantProcessor();
-    let internalTree;
+    let internalTree: InternalNode;
 
-    if (isComponentSet && hasChildren(doc)) {
-      const variants = doc.children as any[];
+    if (isComponentSetNode(doc) && hasChildren(doc)) {
+      const variants = doc.children;
       internalTree =
         variants.length > 0
-          ? instance.mergeVariants(variants, data)
+          ? instance.mergeVariants(variants as SceneNode[], data)
           : instance.convertToInternalNode(doc, null, doc.name, data);
     } else {
       internalTree = instance.convertToInternalNode(doc, null, doc.name, data);

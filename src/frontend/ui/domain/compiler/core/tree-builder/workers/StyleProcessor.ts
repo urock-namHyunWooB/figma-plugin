@@ -9,13 +9,14 @@
  */
 
 import type { StyleDefinition, PreparedDesignData } from "@compiler/types/architecture";
-import type { ConditionNode, PseudoClass, StyleObject } from "@compiler/types/customType";
+import type { ConditionNode, PseudoClass } from "@compiler/types/customType";
 import type {
   IStyleClassifier,
   IPositionStyler,
   VariantStyle,
   MergedNodeWithVariant,
   PositionResult,
+  PositionableNode,
   InternalNode,
   BuildContext,
 } from "./interfaces";
@@ -33,20 +34,7 @@ export interface StyleBuildInput {
   data: PreparedDesignData;
 }
 
-/**
- * 위치 정보를 가진 노드
- */
-export interface PositionableNode {
-  id: string;
-  type: string;
-  name: string;
-  children: PositionableNode[];
-  styles: {
-    base: StyleObject;
-    dynamic?: Record<string, StyleObject>;
-    pseudo?: Record<string, StyleObject>;
-  };
-}
+// PositionableNode is imported from ./interfaces
 
 /**
  * State prop 값과 CSS pseudo-class 매핑
@@ -330,8 +318,8 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
    * Auto-layout이 아닌 부모의 자식에게 position 스타일 계산
    */
   public calculatePosition(
-    node: { id: string; type: string; name: string; children: any[]; styles: any },
-    parent: { id: string; type: string; name: string; children: any[]; styles: any } | null,
+    node: PositionableNode,
+    parent: PositionableNode | null,
     data: PreparedDesignData
   ): PositionResult | null {
     if (!parent) return null;
@@ -365,7 +353,7 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
   /**
    * 노드가 auto-layout인지 확인
    */
-  public isAutoLayout(nodeSpec: any): boolean {
+  public isAutoLayout(nodeSpec: SceneNode): boolean {
     if (!nodeSpec) return false;
     const layoutMode = nodeSpec.layoutMode;
     return layoutMode && layoutMode !== "NONE";
@@ -403,7 +391,7 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
   /**
    * 회전된 요소의 스타일 처리
    */
-  public handleRotatedElement(nodeSpec: any, styles: Record<string, any>): Record<string, any> {
+  public handleRotatedElement(nodeSpec: SceneNode, styles: Record<string, string>): Record<string, string> {
     const rotation = nodeSpec?.rotation;
     if (rotation === undefined || rotation === 0) return styles;
 

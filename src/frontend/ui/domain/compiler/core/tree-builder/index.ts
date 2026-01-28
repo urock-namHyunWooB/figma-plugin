@@ -11,7 +11,7 @@ export { default as TreeBuilder, type SemanticRoleEntry } from "./TreeBuilder";
 // Processors
 export { NodeProcessor } from "./workers/NodeProcessor";
 export { PropsProcessor } from "./workers/PropsProcessor";
-export { StyleProcessor, type StyleBuildInput, type PositionableNode } from "./workers/StyleProcessor";
+export { StyleProcessor, type StyleBuildInput } from "./workers/StyleProcessor";
 export { VisibilityProcessor, type VisibleState } from "./workers/VisibilityProcessor";
 export { SlotProcessor } from "./workers/SlotProcessor";
 export {
@@ -31,6 +31,7 @@ export type {
   PropBinding,
   VariantStyle,
   PositionResult,
+  PositionableNode,
   MergedNodeWithVariant,
   VisibilityInput,
   VisibilityResult,
@@ -54,5 +55,6 @@ export {
 export {
   hasChildren,
   isInstanceNode,
+  isComponentSetNode,
   getComponentId,
 } from "./workers/utils/typeGuards";

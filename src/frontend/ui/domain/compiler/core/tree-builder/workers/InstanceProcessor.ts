@@ -18,6 +18,10 @@ import type {
   BuildContext,
   InternalNode,
   ExternalRefData,
+  FigmaFill,
+  FigmaStroke,
+  FigmaEffect,
+  ComponentPropertyValue,
 } from "./interfaces";
 import { NodeProcessor } from "./NodeProcessor";
 import { toPascalCase, toCamelCase } from "./utils/stringUtils";
@@ -27,6 +31,26 @@ import {
   getOriginalId as getOriginalIdUtil,
   isInstanceChildId as isInstanceChildIdUtil,
 } from "./utils/instanceUtils";
+
+// ============================================================================
+// Types
+// ============================================================================
+
+/** INSTANCE children에서 사용되는 노드 속성 */
+interface InstanceChildNode {
+  id: string;
+  name: string;
+  type: string;
+  characters?: string;
+  visible?: boolean;
+  fills?: FigmaFill[];
+  strokes?: FigmaStroke[];
+  effects?: FigmaEffect[];
+  opacity?: number;
+  cornerRadius?: number;
+  componentProperties?: Record<string, ComponentPropertyValue>;
+  children?: InstanceChildNode[];
+}
 
 // ============================================================================
 // InstanceProcessor Class
@@ -112,14 +136,14 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
    * @returns Override 정보 목록
    */
   public extractOverrides(
-    instanceChildren: any[],
-    originalChildren: any[]
+    instanceChildren: SceneNode[],
+    originalChildren: SceneNode[]
   ): IOverrideInfo[] {
     const overrides: IOverrideInfo[] = [];
 
     // 원본 children을 ID로 매핑
-    const originalMap = new Map<string, any>();
-    const buildOriginalMap = (children: any[]) => {
+    const originalMap = new Map<string, InstanceChildNode>();
+    const buildOriginalMap = (children: InstanceChildNode[]) => {
       for (const child of children) {
         originalMap.set(child.id, child);
         if (child.children) {
@@ -127,10 +151,10 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
         }
       }
     };
-    buildOriginalMap(originalChildren);
+    buildOriginalMap(originalChildren as unknown as InstanceChildNode[]);
 
     // INSTANCE children 순회하며 override 추출
-    const extractFromChildren = (children: any[]) => {
+    const extractFromChildren = (children: InstanceChildNode[]) => {
       for (const child of children) {
         const originalId = this.getOriginalId(child.id);
         const original = originalMap.get(originalId);
@@ -219,7 +243,7 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
       }
     };
 
-    extractFromChildren(instanceChildren);
+    extractFromChildren(instanceChildren as unknown as InstanceChildNode[]);
     return overrides;
   }
 
@@ -231,12 +255,12 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
    * @returns 병합된 children (원본 ID 유지)
    */
   public mergeOverridesToOriginal(
-    originalChildren: any[],
-    instanceChildren: any[]
-  ): any[] {
+    originalChildren: SceneNode[],
+    instanceChildren: SceneNode[]
+  ): SceneNode[] {
     // instanceChildren을 원본 ID로 매핑
-    const overrideMap = new Map<string, any>();
-    const buildOverrideMap = (children: any[]) => {
+    const overrideMap = new Map<string, InstanceChildNode>();
+    const buildOverrideMap = (children: InstanceChildNode[]) => {
       for (const child of children) {
         const originalId = this.getOriginalId(child.id);
         overrideMap.set(originalId, child);
@@ -245,10 +269,10 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
         }
       }
     };
-    buildOverrideMap(instanceChildren);
+    buildOverrideMap(instanceChildren as unknown as InstanceChildNode[]);
 
     // 원본 children에 override 적용
-    const applyOverrides = (children: any[]): any[] => {
+    const applyOverrides = (children: InstanceChildNode[]): InstanceChildNode[] => {
       return children.map((child) => {
         const override = overrideMap.get(child.id);
         const mergedChild = { ...child };
@@ -307,7 +331,7 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
       });
     };
 
-    return applyOverrides(originalChildren);
+    return applyOverrides(originalChildren as unknown as InstanceChildNode[]) as unknown as SceneNode[];
   }
 
   /**
@@ -317,15 +341,16 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
    * 예: "Size=Large, State=Default" → { size: "large", state: "default" }
    */
   public extractVariantProps(
-    instanceNode: any,
+    instanceNode: SceneNode,
     _data: PreparedDesignData
   ): Record<string, string> {
     const props: Record<string, string> = {};
 
     // componentProperties에서 variant props 추출
-    if (instanceNode.componentProperties) {
-      for (const [key, value] of Object.entries(instanceNode.componentProperties)) {
-        const propValue = value as any;
+    const nodeWithProps = instanceNode as unknown as { componentProperties?: Record<string, ComponentPropertyValue> };
+    if (nodeWithProps.componentProperties) {
+      for (const [key, value] of Object.entries(nodeWithProps.componentProperties)) {
+        const propValue = value as { type?: string; value?: string };
         if (propValue.type === "VARIANT" && propValue.value) {
           const propName = toCamelCase(key);
           props[propName] = propValue.value.toLowerCase();
@@ -342,16 +367,17 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
    * 예: { rectangle1Bg: "#D6D6D6", labelText: "Click me" }
    */
   public extractOverrideProps(
-    instanceNode: any,
-    originalChildren: any[]
+    instanceNode: SceneNode,
+    originalChildren: SceneNode[]
   ): Record<string, string> {
     const overrideProps: Record<string, string> = {};
 
-    if (!instanceNode?.children) return overrideProps;
+    const instanceWithChildren = instanceNode as unknown as { children?: InstanceChildNode[] };
+    if (!instanceWithChildren?.children) return overrideProps;
 
     // 원본 children을 ID로 매핑
-    const originalMap = new Map<string, any>();
-    const buildOriginalMap = (children: any[]) => {
+    const originalMap = new Map<string, InstanceChildNode>();
+    const buildOriginalMap = (children: InstanceChildNode[]) => {
       for (const child of children) {
         originalMap.set(child.id, child);
         if (child.children) {
@@ -359,10 +385,10 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
         }
       }
     };
-    buildOriginalMap(originalChildren);
+    buildOriginalMap(originalChildren as unknown as InstanceChildNode[]);
 
     // INSTANCE children 순회
-    const extractFromChildren = (children: any[]) => {
+    const extractFromChildren = (children: InstanceChildNode[]) => {
       for (const child of children) {
         const originalId = this.getOriginalId(child.id);
         const original = originalMap.get(originalId);
@@ -423,7 +449,7 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
       }
     };
 
-    extractFromChildren(instanceNode.children);
+    extractFromChildren(instanceWithChildren.children);
     return overrideProps;
   }
 

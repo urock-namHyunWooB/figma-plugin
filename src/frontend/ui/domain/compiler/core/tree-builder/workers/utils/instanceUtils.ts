@@ -4,6 +4,18 @@
  * INSTANCE 노드 ID 처리를 위한 공유 함수들
  */
 
+/** Figma Fill 타입 */
+export interface FigmaFill {
+  type: string;
+  visible?: boolean;
+  color?: {
+    r: number;
+    g: number;
+    b: number;
+    a?: number;
+  };
+}
+
 /**
  * ID가 INSTANCE 자식 노드인지 확인
  *
@@ -30,7 +42,7 @@ export function getOriginalId(instanceId: string): string {
 /**
  * fills 배열에서 색상 추출
  */
-export function extractColorFromFills(fills: any[]): string | null {
+export function extractColorFromFills(fills: FigmaFill[]): string | null {
   if (!fills || fills.length === 0) return null;
 
   const fill = fills[0];

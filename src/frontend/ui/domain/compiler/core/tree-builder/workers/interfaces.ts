@@ -18,6 +18,30 @@ import type {
   PreparedDesignData,
 } from "@compiler/types/architecture";
 import type { ConditionNode, VisibleValue, PseudoClass } from "@compiler/types/customType";
+import type { FigmaFill } from "./utils/instanceUtils";
+
+// ============================================================================
+// Figma Types for Override Handling
+// ============================================================================
+
+/** Figma Stroke 타입 */
+export interface FigmaStroke {
+  type: string;
+  visible?: boolean;
+  color?: { r: number; g: number; b: number; a?: number };
+}
+
+/** Figma Effect 타입 */
+export interface FigmaEffect {
+  type: string;
+  visible?: boolean;
+  radius?: number;
+  color?: { r: number; g: number; b: number; a?: number };
+  offset?: { x: number; y: number };
+}
+
+/** Component Property Value 타입 */
+export type ComponentPropertyValue = string | boolean | { type: string; [key: string]: unknown };
 
 // ============================================================================
 // Core Types - 다른 인터페이스에서 사용되는 기본 타입
@@ -248,12 +272,12 @@ export interface OverrideInfo {
   overrides: {
     characters?: string;
     visible?: boolean;
-    fills?: any[];
-    strokes?: any[];
-    effects?: any[];
+    fills?: FigmaFill[];
+    strokes?: FigmaStroke[];
+    effects?: FigmaEffect[];
     opacity?: number;
     cornerRadius?: number;
-    componentProperties?: Record<string, any>;
+    componentProperties?: Record<string, ComponentPropertyValue>;
   };
 }
 
@@ -265,16 +289,16 @@ export interface IInstanceOverrideHandler {
   isInstanceChildId(id: string): boolean;
 
   /** INSTANCE children에서 override 정보 추출 */
-  extractOverrides(instanceChildren: any[], originalChildren: any[]): OverrideInfo[];
+  extractOverrides(instanceChildren: SceneNode[], originalChildren: SceneNode[]): OverrideInfo[];
 
   /** INSTANCE override를 원본 노드에 적용 */
-  mergeOverridesToOriginal(originalChildren: any[], instanceChildren: any[]): any[];
+  mergeOverridesToOriginal(originalChildren: SceneNode[], instanceChildren: SceneNode[]): SceneNode[];
 
   /** INSTANCE 노드에서 variant props 추출 */
-  extractVariantProps(instanceNode: any, data: PreparedDesignData): Record<string, string>;
+  extractVariantProps(instanceNode: SceneNode, data: PreparedDesignData): Record<string, string>;
 
   /** INSTANCE에서 오버라이드된 속성을 props 형태로 추출 */
-  extractOverrideProps(instanceNode: any, originalChildren: any[]): Record<string, string>;
+  extractOverrideProps(instanceNode: SceneNode, originalChildren: SceneNode[]): Record<string, string>;
 }
 
 // ============================================================================
@@ -359,19 +383,28 @@ export interface PositionResult {
   bottom?: string;
 }
 
+/** Position 계산에 사용되는 노드 구조 */
+export interface PositionableNode {
+  id: string;
+  type: string;
+  name: string;
+  children: PositionableNode[];
+  styles: StyleDefinition | Record<string, string>;
+}
+
 export interface IPositionStyler {
   /** 노드의 position 스타일 계산 */
   calculatePosition(
-    node: { id: string; type: string; name: string; children: any[]; styles: any },
-    parent: { id: string; type: string; name: string; children: any[]; styles: any } | null,
+    node: PositionableNode,
+    parent: PositionableNode | null,
     data: PreparedDesignData
   ): PositionResult | null;
 
   /** auto-layout 여부 확인 */
-  isAutoLayout(node: any): boolean;
+  isAutoLayout(node: SceneNode): boolean;
 
   /** 회전된 요소 처리 */
-  handleRotatedElement(nodeSpec: any, styles: Record<string, any>): Record<string, any>;
+  handleRotatedElement(nodeSpec: SceneNode, styles: Record<string, string>): Record<string, string>;
 }
 
 // ============================================================================

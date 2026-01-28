@@ -21,6 +21,13 @@ export function isInstanceNode(node: SceneNode): node is InstanceNode {
 }
 
 /**
+ * COMPONENT_SET 노드인지 확인
+ */
+export function isComponentSetNode(node: SceneNode): node is ComponentSetNode {
+  return node.type === "COMPONENT_SET";
+}
+
+/**
  * INSTANCE 노드에서 componentId 추출
  * Figma 데이터에는 componentId가 있지만 타입 정의에는 포함되지 않음
  */

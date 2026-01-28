@@ -303,15 +303,15 @@ export class VisibilityProcessor
     node: HiddenProcessableNode & { visible?: VisibleState },
     data: PreparedDesignData
   ): boolean {
-    if ((node as any).visible?.type === "static" && (node as any).visible?.value === false) {
+    if (node.visible?.type === "static" && node.visible?.value === false) {
       return true;
     }
     const spec = data.getNodeById(node.id);
     if (
       spec &&
-      (spec as any).visible === false &&
+      spec.visible === false &&
       !node.componentPropertyReferences?.visible &&
-      (node as any).visible?.type !== "condition"
+      node.visible?.type !== "condition"
     ) {
       return true;
     }
