@@ -546,9 +546,13 @@ export interface ITreeBuilder {
 /**
  * CodeEmitter 인터페이스
  * IR을 플랫폼별 코드로 변환
+ *
+ * NOTE: emit()이 async인 이유:
+ * - 내부적으로 Prettier 포맷팅이 async로 동작
+ * - 향후 외부 서비스 호출 (예: LLM 기반 코드 생성) 지원 가능
  */
 export interface ICodeEmitter {
-  emit(tree: DesignTree, policy: CodeEmitterPolicy): EmittedCode;
+  emit(tree: DesignTree, policy: CodeEmitterPolicy): Promise<EmittedCode>;
 }
 
 /**

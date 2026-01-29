@@ -629,4 +629,134 @@ export default Button;
 
 ---
 
+## 새 파이프라인 (Phase 5 완료)
+
+> 레거시 파이프라인과 병행 운영 중. Engine.ts 마이그레이션 후 레거시 제거 예정.
+
+### 전체 흐름도
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           FigmaNodeData (입력)                           │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      DataPreparer                                        │
+│  - SpecDataManager: HashMap 구축                                         │
+│  - PropsExtractor: Props 정의 추출                                       │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      PreparedDesignData                                  │
+│  { document, styleTree, props, nodeMap, styleMap }                      │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      TreeBuilder                                         │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ Phase 1: 구조 생성                                               │   │
+│  │   VariantProcessor.merge()   → internalTree (IoU 병합)          │   │
+│  │   PropsProcessor.extract()   → propsMap                          │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ Phase 2: 분석                                                    │   │
+│  │   NodeProcessor.detectSemanticRoles() → semanticRoles            │   │
+│  │   VisibilityProcessor.processHidden() → hiddenConditions         │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ Phase 3: 노드별 변환                                             │   │
+│  │   StyleProcessor.build()              → nodeStyles (base/dynamic)│   │
+│  │   VisibilityProcessor.resolve()       → conditionals             │   │
+│  │   SlotProcessor.detect*()             → slots, arraySlots        │   │
+│  │   InstanceProcessor.buildExternalRefs() → externalRefs           │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ Phase 4: 최종 조립                                               │   │
+│  │   NodeConverter.assemble()            → root (DesignNode 트리)   │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      DesignTree (플랫폼 독립적 IR)                       │
+│  { root, props, slots, conditionals, arraySlots }                       │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      ReactEmitter (code-emitter/)                        │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ 1. ImportsGenerator                                              │   │
+│  │    - import React from "react";                                  │   │
+│  │    - import { css } from "@emotion/react"; (또는 Tailwind)       │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ 2. InterfaceGenerator                                            │   │
+│  │    - type Size = "Large" | "Medium";                             │   │
+│  │    - interface ButtonProps extends React.ButtonHTMLAttributes    │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ 3. StylesGenerator → StyleStrategy                               │   │
+│  │    Emotion: const btnCss = (size) => [baseCss, sizeStyles[size]] │   │
+│  │    Tailwind: const btnClass = (size) => cn(base, variants[size]) │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ 4. ComponentGenerator                                            │   │
+│  │    - Props 구조 분해: const { size = "Medium", ...restProps }    │   │
+│  │    - JSX 트리 생성 (재귀)                                         │   │
+│  │    - 조건부 렌더링: {leftIcon && <span>{leftIcon}</span>}        │   │
+│  │    - 배열 슬롯: {options.map((item, i) => <Option key={i} />)}   │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────────────┐   │
+│  │ 5. Prettier 포맷팅                                               │   │
+│  └─────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      EmittedCode (출력)                                  │
+│  { code, imports, types, componentName }                                │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 레거시 vs 새 파이프라인 비교
+
+| 구분 | 레거시 | 새 파이프라인 |
+|------|--------|--------------|
+| 데이터 준비 | SpecDataManager | DataPreparer |
+| 트리 변환 | SuperTree → TempAst → FinalAst | PreparedData → DesignTree |
+| 코드 생성 | ReactGenerator | ReactEmitter |
+| 스타일 전략 | StyleStrategy (FinalAstTree) | IStyleStrategy (DesignTree) |
+| Adapter | 필요 (Adapter 패턴) | 불필요 (직접 생성) |
+
+### 새 파이프라인 사용 예시
+
+```typescript
+import { DataPreparer } from "@compiler/core/data-preparer";
+import { TreeBuilder } from "@compiler/core/tree-builder";
+import { ReactEmitter } from "@compiler/core/code-emitter";
+
+// 1. 데이터 준비
+const preparer = new DataPreparer();
+const prepared = preparer.prepare(figmaNodeData);
+
+// 2. IR 생성
+const builder = new TreeBuilder();
+const designTree = builder.build(prepared);
+
+// 3. 코드 생성
+const emitter = new ReactEmitter();
+const result = await emitter.emit(designTree, {
+  platform: "react",
+  styleStrategy: "emotion",
+});
+
+console.log(result.code);
+```
+
+---
+
 *Last Updated: 2026-01*

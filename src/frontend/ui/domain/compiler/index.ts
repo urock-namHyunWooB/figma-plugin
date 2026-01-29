@@ -66,4 +66,28 @@ export type {
 
 import FigmaCodeGenerator from "./FigmaCodeGenerator";
 
+// CodeEmitter exports
+export {
+  ReactEmitter,
+  PolicyMapper,
+  mapPolicy,
+  createDefaultPolicy,
+  toPascalCase,
+  toCamelCase,
+} from "./core/code-emitter";
+
+// New Generators (DesignTree-based)
+export {
+  ImportsGenerator,
+  InterfaceGenerator,
+  StylesGenerator,
+  ComponentGenerator,
+} from "./core/code-emitter";
+
+// Style Strategies
+export {
+  EmotionStyleStrategy,
+  TailwindStyleStrategy,
+} from "./core/code-emitter";
+
 export default FigmaCodeGenerator;

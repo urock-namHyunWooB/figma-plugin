@@ -293,14 +293,83 @@ Output: EmittedCode
 ### 인터페이스
 
 ```typescript
-interface CodeEmitter {
-  emit(tree: DesignTree, policy: CodeEmitterPolicy): EmittedCode;
+interface ICodeEmitter {
+  emit(tree: DesignTree, policy: CodeEmitterPolicy): Promise<EmittedCode>;
 }
 
 interface EmittedCode {
   code: string;           // 컴포넌트 코드
   imports: ImportStatement[];
   types: string;          // TypeScript 타입 정의
+  componentName: string;  // 생성된 컴포넌트 이름
+}
+```
+
+### 내부 구성 (Phase 5 완료)
+
+```
+ReactEmitter
+  │
+  ├── ImportsGenerator
+  │     - React import 생성
+  │     - StyleStrategy import 위임
+  │     - 외부 컴포넌트 import
+  │
+  ├── InterfaceGenerator
+  │     - PropDefinition[] → type aliases (Size, Variant 등)
+  │     - PropDefinition[] → Props interface
+  │     - semanticRole → extends 타입 (ButtonHTMLAttributes 등)
+  │
+  ├── StylesGenerator
+  │     - StyleStrategy.generateDeclarations() 위임
+  │
+  ├── ComponentGenerator
+  │     - Props 구조 분해 생성
+  │     - JSX 트리 재귀 생성
+  │     - 조건부 렌더링 (ConditionNode → ts.Expression)
+  │     - 배열 슬롯 .map() 표현식
+  │     - SVG 문자열 → JSX 변환 (SvgToJsx)
+  │
+  └── IStyleStrategy (인터페이스)
+        │
+        ├── EmotionStyleStrategy
+        │     - css() 함수 호출
+        │     - Record<variant, css()> 객체
+        │     - css={variantCss(size, state)} 속성
+        │
+        └── TailwindStyleStrategy
+              - 클래스명 문자열
+              - cn() 유틸리티
+              - className={cn(base, variants[size])} 속성
+```
+
+### StyleStrategy 인터페이스 (DesignTree용)
+
+```typescript
+interface IStyleStrategy {
+  readonly name: "emotion" | "tailwind";
+
+  /** Import 문 생성 */
+  generateImports(): ts.ImportDeclaration[];
+
+  /** 스타일 선언부 생성 (CSS 변수, Record 객체 등) */
+  generateDeclarations(
+    tree: DesignTree,
+    componentName: string,
+    props: PropDefinition[]
+  ): ts.Statement[];
+
+  /** JSX 요소에 스타일 속성 추가 */
+  createStyleAttribute(
+    node: DesignNode,
+    props: PropDefinition[]
+  ): ts.JsxAttribute | null;
+
+  /** 동적 스타일 정보 조회 */
+  getDynamicStyleInfo(node: DesignNode): DynamicStyleInfo | null;
+
+  /** CSS 변수 이름 조회 */
+  getCssVariableName(node: DesignNode, componentName: string): string;
 }
 ```
 
@@ -314,38 +383,43 @@ interface CodeEmitterPolicy {
   /** 스타일 전략 */
   styleStrategy: 'emotion' | 'tailwind' | 'css-modules' | 'styled-components';
 
-  /** 코드 컨벤션 */
-  convention?: {
-    componentStyle: 'function' | 'arrow' | 'class';
-    naming: 'camelCase' | 'PascalCase' | 'kebab-case';
-    exportStyle: 'default' | 'named';
-  };
+  /** 디버그 모드: data-figma-id 속성 추가 */
+  debug?: boolean;
 
-  /** 메타데이터 삽입 */
-  injectMetadata?: (code: EmittedCode) => EmittedCode;
+  /** Prettier 설정 */
+  prettier?: PrettierConfig;
 
   /** 커스텀 import 추가 */
   additionalImports?: ImportStatement[];
-
-  /** 디자인 시스템 통합 */
-  designSystem?: {
-    name: string;
-    componentMapping: Map<string, string>;  // DesignNode type → DS component
-    tokenMapping: Map<string, string>;      // Figma token → DS token
-  };
 }
 ```
 
-### 현재 코드 매핑
+### 파이프라인 비교
 
-| 현재 | 새 구조 |
-|------|---------|
-| ReactGenerator | CodeEmitter 구현체 (ReactEmitter) |
-| StyleStrategy | CodeEmitterPolicy.styleStrategy |
-| generate-imports/ | CodeEmitter 내부 |
-| generate-interface/ | CodeEmitter 내부 |
-| generate-styles/ | CodeEmitter 내부 |
-| generate-component/ | CodeEmitter 내부 |
+**레거시 (react-generator/)**:
+```
+FinalAstTree → ReactGenerator → 코드
+     ↑
+ (Adapter 변환 필요)
+```
+
+**새 아키텍처 (code-emitter/)**:
+```
+DesignTree → ReactEmitter → 코드 (직접 생성, Adapter 불필요)
+```
+
+### 코드 매핑
+
+| 레거시 (react-generator/) | 새 구조 (code-emitter/) |
+|--------------------------|------------------------|
+| ReactGenerator | ReactEmitter |
+| GenerateImports | ImportsGenerator |
+| GenerateInterface | InterfaceGenerator |
+| GenerateStyles | StylesGenerator |
+| CreateJsxTree | ComponentGenerator |
+| StyleStrategy (FinalAstTree용) | IStyleStrategy (DesignTree용) |
+| EmotionStrategy | EmotionStyleStrategy |
+| TailwindStrategy | TailwindStyleStrategy |
 
 ---
 
@@ -573,6 +647,94 @@ class FigmaCodeGenerator {
 
 ---
 
+## 현재 상태: 두 파이프라인 공존
+
+### 레거시 파이프라인 (Engine.ts 사용)
+
+```
+FigmaNodeData
+     │
+     ▼
+┌────────────────┐
+│SpecDataManager│ HashMap 구축
+└───────┬────────┘
+        │
+        ▼
+┌────────────────┐
+│CreateSuperTree │ Variant 병합 (IoU)
+└───────┬────────┘
+        │
+        ▼
+┌────────────────┐
+│  _TempAstTree  │ Props/Style/Visible
+└───────┬────────┘
+        │
+        ▼
+┌────────────────┐
+│ _FinalAstTree  │ 정규화, 외부참조, Slot
+└───────┬────────┘
+        │
+        ▼
+┌────────────────┐
+│ReactGenerator  │ TypeScript AST 생성
+│(react-generator/)
+└───────┬────────┘
+        │
+        ▼
+   React Code
+```
+
+### 새 파이프라인 (ReactEmitter 사용)
+
+```
+FigmaNodeData
+     │
+     ▼
+┌────────────────┐
+│  DataPreparer  │ 데이터 준비 + Props 추출
+└───────┬────────┘
+        │
+        ▼
+ PreparedDesignData
+        │
+        ▼
+┌────────────────┐
+│  TreeBuilder   │ IR 생성 (DesignTree)
+│  - VariantProcessor
+│  - StyleProcessor
+│  - VisibilityProcessor
+│  - SlotProcessor
+│  - InstanceProcessor
+└───────┬────────┘
+        │
+        ▼
+   DesignTree (플랫폼 독립적 IR)
+        │
+        ▼
+┌────────────────┐
+│  ReactEmitter  │ 직접 코드 생성
+│  (code-emitter/)
+│  - ImportsGenerator
+│  - InterfaceGenerator
+│  - StylesGenerator
+│  - ComponentGenerator
+└───────┬────────┘
+        │
+        ▼
+   React Code
+```
+
+### 마이그레이션 계획
+
+| 단계 | 작업 | 상태 |
+|------|------|------|
+| 1 | ReactEmitter 구현 | ✅ 완료 |
+| 2 | Engine.ts → 새 파이프라인 마이그레이션 | ⏳ 예정 |
+| 3 | FigmaCodeGenerator 업데이트 | ⏳ 예정 |
+| 4 | react-generator/ 삭제 | ⏳ 예정 |
+
+---
+
 ## Compile Flow (전체 흐름)
 
 ```
@@ -782,9 +944,43 @@ const code = await generator.generate();
 - [x] BuildContext 타입 분리 (BuildContext.ts)
 - [x] interfaces.ts 분리 (interfaces/ 디렉토리, 8개 파일)
 
-### Phase 5: CodeEmitter 정리
-- [ ] ReactGenerator를 CodeEmitter 인터페이스로 래핑 (ReactEmitter)
-- [ ] StyleStrategy를 Policy로 이동
+### Phase 5: CodeEmitter 리팩토링 ✅
+- [x] ReactEmitter: DesignTree에서 직접 코드 생성 (Adapter 패턴 제거)
+- [x] 새 generators/ 모듈 구현:
+  - ImportsGenerator: React/스타일 import 생성
+  - InterfaceGenerator: Props 인터페이스 및 타입 별칭 생성
+  - StylesGenerator: StyleStrategy에 위임
+  - ComponentGenerator: JSX 트리 + 함수 컴포넌트 생성
+- [x] 새 style-strategy/ 모듈 구현 (DesignTree용):
+  - IStyleStrategy 인터페이스 정의
+  - EmotionStyleStrategy: css() 함수 + Record 객체 기반
+  - TailwindStyleStrategy: className + cn() 유틸리티 기반
+- [x] adapters/ 폴더 삭제 (DesignTreeAdapter, PropsAdapter, StyleAdapter)
+- [x] 155개 테스트 통과
+
+> 구현: `src/frontend/ui/domain/compiler/core/code-emitter/`
+
+**파일 구조**:
+```
+code-emitter/
+├── ReactEmitter.ts              # ICodeEmitter 구현체
+├── PolicyMapper.ts              # 레거시 호환용
+├── utils.ts
+├── generators/
+│   ├── index.ts
+│   ├── ImportsGenerator.ts
+│   ├── InterfaceGenerator.ts
+│   ├── StylesGenerator.ts
+│   └── ComponentGenerator.ts
+└── style-strategy/
+    ├── index.ts
+    ├── IStyleStrategy.ts        # DesignTree용 인터페이스
+    ├── EmotionStyleStrategy.ts
+    └── TailwindStyleStrategy.ts
+```
+
+**⚠️ 레거시 유지**: `react-generator/`는 `Engine.ts`와 `FigmaCodeGenerator`가 의존하므로 아직 삭제되지 않음.
+다음 Phase에서 마이그레이션 예정.
 
 ### Phase 6: Bundler 분리
 - [ ] DependencyManager에서 번들링 로직만 분리

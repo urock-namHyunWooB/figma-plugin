@@ -72,20 +72,28 @@ manager/
 
 ### Code Generation Pipeline
 
+**새 파이프라인 (권장)**:
 ```
 core/
-├── Engine.ts                    # Pipeline orchestration
-├── NodeMatcher.ts               # IoU-based node matching
-├── ArraySlotDetector.ts         # Detect repeated INSTANCEs for .map() rendering
-├── super-tree/                  # Variant merging
-├── ast-tree/                    # AST tree creation
-└── react-generator/
-    ├── ReactGenerator.ts
-    ├── generate-imports/
-    ├── generate-interface/
-    ├── generate-styles/
-    ├── generate-component/
-    └── style-strategy/          # Emotion/Tailwind strategies
+├── data-preparer/               # Phase 3: 데이터 준비
+│   └── DataPreparer.ts
+├── tree-builder/                # Phase 4: IR 생성
+│   ├── TreeBuilder.ts
+│   └── workers/                 # Processor 모듈들
+└── code-emitter/                # Phase 5: 코드 생성
+    ├── ReactEmitter.ts          # ICodeEmitter 구현
+    ├── generators/              # DesignTree용 생성기
+    └── style-strategy/          # DesignTree용 전략
+```
+
+**레거시 파이프라인 (Engine.ts)**:
+```
+core/
+├── Engine.ts                    # 레거시 오케스트레이터
+├── super-tree/                  # Variant 병합
+├── ast-tree/                    # TempAst → FinalAst
+└── react-generator/             # FinalAstTree → 코드
+    └── style-strategy/          # FinalAstTree용 전략
 ```
 
 ## Key Concepts
@@ -185,35 +193,44 @@ Detailed technical docs in `docs/`:
 - 회귀 테스트 추가 필요
 - 해결된 버그 문서화 필요
 
-## TreeBuilder 설계 메모 (Phase 4)
+## 리팩토링 진행 상태
 
-### 현재 상태
-- Phase 1~3 완료: 타입 정의, DependencyAnalyzer, DataPreparer
-- Phase 4: TreeBuilder 구현 필요
-
-### TreeBuilder 핵심 역할
+### 새 아키텍처 파이프라인
 ```
-PreparedDesignData → TreeBuilder.build() → DesignTree (플랫폼 독립적 IR)
+FigmaNodeData → DataPreparer → PreparedDesignData → TreeBuilder → DesignTree → CodeEmitter → 코드
 ```
 
-### 입출력 타입
-- **입력**: `PreparedDesignData` (nodeMap, styleMap, props, dependencies)
-- **출력**: `DesignTree` (root: DesignNode, props, slots, conditionals, arraySlots)
+### 완료된 Phase
+- ✅ Phase 1: 타입 정의 (`types/architecture.ts`)
+- ✅ Phase 2: DependencyAnalyzer
+- ✅ Phase 3: DataPreparer
+- ✅ Phase 4: TreeBuilder (`core/tree-builder/`)
+- ✅ Phase 5: CodeEmitter (새 generators 구현 완료)
 
-### 핵심 변환 로직 (레거시 참조)
-1. **VariantMerger**: CreateSuperTree.ts의 IoU 기반 variant 병합
-2. **StyleExtractor**: _TempAstTree.ts의 base/dynamic/pseudo 분류
-3. **ConditionInferrer**: _TempAstTree.ts의 visibility 조건 추론
-4. **PropsBinder**: componentPropertyReferences → propBindings
-5. **SlotDetector**: _FinalAstTree.ts의 slot 감지
+### Phase 5 완료 상태
 
-### 레거시 복잡도 주의
-- _TempAstTree: 1,647줄, 11개 변환 단계
-- _FinalAstTree: 3,497줄, 9개 변환 단계
-- 핵심 로직만 추출하여 단순화 필요
+**새 아키텍처 (code-emitter/)**:
+```
+code-emitter/
+├── ReactEmitter.ts              # ICodeEmitter 구현체 (직접 코드 생성)
+├── generators/
+│   ├── ImportsGenerator.ts      # React/스타일 import 생성
+│   ├── InterfaceGenerator.ts    # Props interface + type aliases
+│   ├── StylesGenerator.ts       # StyleStrategy 위임
+│   └── ComponentGenerator.ts    # JSX 트리 + 함수 컴포넌트
+└── style-strategy/
+    ├── IStyleStrategy.ts        # DesignTree용 인터페이스
+    ├── EmotionStyleStrategy.ts  # css() 함수 + Record 객체
+    └── TailwindStyleStrategy.ts # className + cn() 유틸리티
+```
 
-### 참고 파일
-- `types/architecture.ts`: DesignTree, DesignNode, ITreeBuilder 정의
-- `core/super-tree/CreateSuperTree.ts`: variant 병합 알고리즘
-- `core/ast-tree/_TempAstTree.ts`: 스타일/조건 추론
-- `core/ast-tree/_FinalAstTree.ts`: slot/외부컴포넌트 처리
+**레거시 유지 (Engine.ts에서 사용)**:
+- `react-generator/` - FinalAstTree 기반 코드 생성기
+- 레거시 경로: SuperTree → FinalAstTree → ReactGenerator → 코드
+
+**다음 단계**:
+1. Engine.ts를 새 파이프라인(DataPreparer → TreeBuilder → ReactEmitter)으로 마이그레이션
+2. FigmaCodeGenerator 업데이트
+3. 레거시 react-generator/ 폴더 삭제
+
+자세한 아키텍처 문서: `docs/ARCHITECTURE.md`
