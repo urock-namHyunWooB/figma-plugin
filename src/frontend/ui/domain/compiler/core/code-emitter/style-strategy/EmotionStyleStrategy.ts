@@ -37,6 +37,14 @@ interface ExtractedCondition {
   propValue: string;
 }
 
+/**
+ * kebab-case를 camelCase로 변환
+ * 예: "stroke-width" → "strokeWidth", "font-family" → "fontFamily"
+ */
+function kebabToCamel(str: string): string {
+  return str.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+}
+
 class EmotionStyleStrategy implements IStyleStrategy {
   readonly name = "emotion" as const;
 
@@ -302,23 +310,25 @@ class EmotionStyleStrategy implements IStyleStrategy {
     // Base 스타일 CSS 객체
     const styleProperties: ts.PropertyAssignment[] = [];
 
-    // Base 스타일 추가
+    // Base 스타일 추가 (kebab-case → camelCase 변환)
     for (const [key, value] of Object.entries(baseStyles)) {
+      const camelKey = kebabToCamel(key);
       styleProperties.push(
         this.factory.createPropertyAssignment(
-          this.factory.createIdentifier(key),
+          this.factory.createIdentifier(camelKey),
           this.factory.createStringLiteral(String(value))
         )
       );
     }
 
-    // Pseudo 스타일 추가
+    // Pseudo 스타일 추가 (kebab-case → camelCase 변환)
     for (const [pseudo, styles] of Object.entries(pseudoStyles)) {
       const pseudoProperties: ts.PropertyAssignment[] = [];
       for (const [key, value] of Object.entries(styles as Record<string, string>)) {
+        const camelKey = kebabToCamel(key);
         pseudoProperties.push(
           this.factory.createPropertyAssignment(
-            this.factory.createIdentifier(key),
+            this.factory.createIdentifier(camelKey),
             this.factory.createStringLiteral(String(value))
           )
         );
@@ -430,9 +440,10 @@ class EmotionStyleStrategy implements IStyleStrategy {
     const styleProperties: ts.PropertyAssignment[] = [];
 
     for (const [key, value] of Object.entries(style)) {
+      const camelKey = kebabToCamel(key);
       styleProperties.push(
         this.factory.createPropertyAssignment(
-          this.factory.createIdentifier(key),
+          this.factory.createIdentifier(camelKey),
           this.factory.createStringLiteral(String(value))
         )
       );
@@ -452,15 +463,31 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * ConditionNode에서 prop 이름과 값 추출
-   * 예: props.size === "Large" → { propName: "size", propValue: "Large" }
+   * 단순 조건: props.size === "Large" → { propName: "size", propValue: "Large" }
+   * 복합 조건: props.size === "Large" && props.leftIcon === "false" → 첫 번째 prop 추출
    */
   private extractCondition(condition: ConditionNode): ExtractedCondition | null {
-    if (!condition || condition.type !== "BinaryExpression") {
+    if (!condition) {
       return null;
     }
 
-    const binaryExpr = condition as any;
+    // BinaryExpression: props.X === "value"
+    if (condition.type === "BinaryExpression") {
+      return this.extractFromBinaryExpression(condition as any);
+    }
 
+    // LogicalExpression: 복합 조건에서 첫 번째 BinaryExpression 추출
+    if (condition.type === "LogicalExpression") {
+      return this.extractFromLogicalExpression(condition as any);
+    }
+
+    return null;
+  }
+
+  /**
+   * BinaryExpression에서 prop 추출
+   */
+  private extractFromBinaryExpression(binaryExpr: any): ExtractedCondition | null {
     // props.X === "value" 형태 처리
     if (
       binaryExpr.operator === "===" &&
@@ -478,6 +505,34 @@ class EmotionStyleStrategy implements IStyleStrategy {
           propName: camelPropName,
           propValue: String(propValue),
         };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * LogicalExpression에서 첫 번째 BinaryExpression 추출 (재귀)
+   * 구조: (left && right) && right → left부터 탐색
+   */
+  private extractFromLogicalExpression(logicalExpr: any): ExtractedCondition | null {
+    // 왼쪽부터 탐색 (가장 중요한 prop이 보통 먼저 옴)
+    if (logicalExpr.left) {
+      if (logicalExpr.left.type === "BinaryExpression") {
+        return this.extractFromBinaryExpression(logicalExpr.left);
+      }
+      if (logicalExpr.left.type === "LogicalExpression") {
+        return this.extractFromLogicalExpression(logicalExpr.left);
+      }
+    }
+
+    // 왼쪽에서 못 찾으면 오른쪽 탐색
+    if (logicalExpr.right) {
+      if (logicalExpr.right.type === "BinaryExpression") {
+        return this.extractFromBinaryExpression(logicalExpr.right);
+      }
+      if (logicalExpr.right.type === "LogicalExpression") {
+        return this.extractFromLogicalExpression(logicalExpr.right);
       }
     }
 

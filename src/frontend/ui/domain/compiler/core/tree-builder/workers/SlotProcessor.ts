@@ -331,7 +331,7 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
     const propDefinition: PropDefinition = {
       name: propName,
-      type: "string",
+      type: "slot",
       defaultValue: this.getDefaultTextValue(input.mergedNodeIds, data),
       required: false,
     };

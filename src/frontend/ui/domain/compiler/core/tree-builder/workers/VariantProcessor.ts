@@ -65,6 +65,12 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
         variants.length > 0
           ? instance.mergeVariants(variants as SceneNode[], data)
           : instance.convertToInternalNode(doc, null, doc.name, data);
+
+      // 병합된 트리의 루트 이름을 컴포넌트 세트 이름으로 설정
+      // (mergeVariants는 첫 번째 variant의 이름을 사용하므로, 여기서 교정)
+      if (variants.length > 0) {
+        internalTree.name = doc.name;
+      }
     } else {
       internalTree = instance.convertToInternalNode(doc, null, doc.name, data);
     }

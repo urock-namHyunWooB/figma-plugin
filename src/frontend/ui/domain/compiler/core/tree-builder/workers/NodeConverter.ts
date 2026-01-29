@@ -50,6 +50,15 @@ export class NodeConverter {
           }
         : undefined;
 
+      // TEXT 노드의 텍스트 내용 추출
+      let textContent: string | undefined;
+      if (internal.type === "TEXT") {
+        const nodeSpec = ctx.data.getNodeById(internal.id);
+        if (nodeSpec && "characters" in nodeSpec) {
+          textContent = (nodeSpec as { characters: string }).characters;
+        }
+      }
+
       return {
         id: internal.id,
         type: nodeType,
@@ -60,6 +69,7 @@ export class NodeConverter {
         externalRef,
         semanticRole: semanticResult?.role,
         vectorSvg: semanticResult?.vectorSvg,
+        textContent,
       };
     });
 

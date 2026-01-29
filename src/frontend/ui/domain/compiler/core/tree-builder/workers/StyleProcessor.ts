@@ -205,6 +205,8 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
     }
 
     // 3. dynamic 및 pseudo 스타일 분류
+    // - non-State 조건 (Size, LeftIcon 등)이 있으면 dynamic에 추가
+    // - State만 있으면 pseudo에 추가
     const dynamic: StyleDefinition["dynamic"] = [];
     const pseudo: StyleDefinition["pseudo"] = {};
 
@@ -221,16 +223,18 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
       if (Object.keys(dynamicStyle).length === 0) continue;
 
-      if (pseudoClass) {
+      // Always check for non-State conditions (Size, LeftIcon, etc.)
+      const condition = parseCondition(vs.variantName);
+
+      if (condition) {
+        // Has non-State conditions → add to dynamic
+        // This ensures Size-based styles are properly captured
+        dynamic.push({ condition, style: dynamicStyle });
+      } else if (pseudoClass) {
+        // Only State, no other conditions → add to pseudo
         pseudo[pseudoClass] = { ...pseudo[pseudoClass], ...dynamicStyle };
-      } else if (pseudoClass === null) {
-        continue;
-      } else {
-        const condition = parseCondition(vs.variantName);
-        if (condition) {
-          dynamic.push({ condition, style: dynamicStyle });
-        }
       }
+      // If pseudoClass === null (default state) and no condition, skip
     }
 
     return {

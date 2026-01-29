@@ -64,7 +64,14 @@ export type VisibleValue =
   | { type: "static"; value: boolean } // 항상 보임 or 항상 숨김
   | { type: "condition"; condition: ConditionNode }; // 복합 조건 (예: props.variant === 'hover')
 
-export type PseudoClass = ":hover" | ":active" | ":focus" | ":disabled" | ":focus-visible" | ":checked" | ":visited";
+export type PseudoClass =
+  | ":hover"
+  | ":active"
+  | ":focus"
+  | ":disabled"
+  | ":focus-visible"
+  | ":checked"
+  | ":visited";
 
 export type DynamicVariants = Record<
   string,

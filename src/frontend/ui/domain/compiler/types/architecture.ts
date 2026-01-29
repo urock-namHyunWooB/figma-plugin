@@ -362,6 +362,9 @@ export interface DesignNode {
 
   /** SVG 데이터 (vector/icon 노드용) */
   vectorSvg?: string;
+
+  /** TEXT 노드의 텍스트 내용 */
+  textContent?: string;
 }
 
 /**

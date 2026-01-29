@@ -508,10 +508,23 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
       | undefined;
     const componentSetId = components?.[componentId]?.componentSetId;
 
-    // 8. 결과 반환
+    // 8. ComponentSet 이름 결정
+    // componentSetId가 있으면 componentSets에서 이름 조회, 없으면 document.name 사용
+    let componentName: string;
+    if (componentSetId) {
+      const componentSets = depData.info.componentSets as
+        | Record<string, { name?: string }>
+        | undefined;
+      const componentSetInfo = componentSets?.[componentSetId];
+      componentName = componentSetInfo?.name || depData.info.document?.name || nodeName;
+    } else {
+      componentName = depData.info.document?.name || nodeName;
+    }
+
+    // 9. 결과 반환
     return {
       componentSetId: componentSetId || componentId,
-      componentName: toPascalCase(depData.info.document?.name || nodeName),
+      componentName: toPascalCase(componentName),
       props: { ...variantProps, ...overrideProps },
     };
   }

@@ -135,7 +135,8 @@ export class VisibilityProcessor
     for (const pair of variantName.split(",").map((s) => s.trim())) {
       const [key, value] = pair.split("=").map((s) => s.trim());
       if (!key || !value || key.toLowerCase() === "state") continue;
-      conditions.push(this.createBinaryCondition(toCamelCase(key), value.toLowerCase()));
+      // Keep original case for value (e.g., "Large", "Medium") to match prop values
+      conditions.push(this.createBinaryCondition(toCamelCase(key), value));
     }
 
     return this.combineConditionsWithAnd(conditions);

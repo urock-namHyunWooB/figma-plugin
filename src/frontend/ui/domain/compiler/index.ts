@@ -69,9 +69,6 @@ import FigmaCodeGenerator from "./FigmaCodeGenerator";
 // CodeEmitter exports
 export {
   ReactEmitter,
-  PolicyMapper,
-  mapPolicy,
-  createDefaultPolicy,
   toPascalCase,
   toCamelCase,
 } from "./core/code-emitter";

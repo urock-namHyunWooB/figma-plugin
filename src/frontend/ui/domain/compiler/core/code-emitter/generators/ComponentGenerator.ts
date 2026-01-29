@@ -30,7 +30,7 @@ import type {
 import type { ConditionNode } from "@compiler/types/customType";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
 import { capitalize } from "@compiler/utils/stringUtils";
-import SvgToJsx from "@compiler/core/react-generator/generate-component/jsx-tree/SvgToJsx";
+import SvgToJsx from "../utils/SvgToJsx";
 
 /**
  * ComponentGenerator 옵션
@@ -351,13 +351,11 @@ class ComponentGenerator {
       }
     }
 
-    // 고정 텍스트 (metaData.characters에서 가져오기)
-    if (node.metaData?.characters) {
-      const textContent = node.metaData.characters as string;
-
+    // 고정 텍스트 (textContent에서 가져오기)
+    if (node.textContent) {
       // 줄바꿈이 있으면 <br />로 분할하지 않고 그대로 출력
       // (줄바꿈 처리가 필요하면 별도 메서드로 분리)
-      return this.factory.createJsxText(textContent, false);
+      return this.factory.createJsxText(node.textContent, false);
     }
 
     return null;
@@ -451,7 +449,8 @@ class ComponentGenerator {
     slot: ArraySlotInfo,
     tree: DesignTree
   ): ts.JsxExpression {
-    const componentName = slot.itemType || "Item";
+    // itemType이 유효한 컴포넌트 이름인지 확인하고, 아니면 slot.name에서 파생
+    const componentName = this.resolveArraySlotComponentName(slot);
 
     // (item, index) => <ComponentName key={index} {...item} />
     const arrowFunction = this.factory.createArrowFunction(
@@ -869,6 +868,33 @@ class ComponentGenerator {
     );
 
     return this.factory.createJsxExpression(undefined, conditionalExpression);
+  }
+
+  /**
+   * 배열 슬롯의 컴포넌트 이름 결정
+   *
+   * itemType이 유효한 JavaScript 식별자인 경우 그대로 사용하고,
+   * 그렇지 않으면 (예: "1:98" 같은 Figma ID) slot.name에서 컴포넌트 이름 파생
+   */
+  private resolveArraySlotComponentName(slot: ArraySlotInfo): string {
+    const itemType = slot.itemType;
+
+    // itemType이 유효한 JavaScript 식별자인지 확인
+    // 유효: "Button", "IconArrow", "MyComponent"
+    // 무효: "1:98", "comp-1", "123abc"
+    if (itemType && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(itemType)) {
+      return itemType;
+    }
+
+    // slot.name에서 컴포넌트 이름 파생
+    // "iconArrows" → "IconArrow" (복수형 's' 제거 후 PascalCase)
+    const slotName = slot.name;
+    const singularName = slotName.endsWith("s")
+      ? slotName.slice(0, -1)
+      : slotName;
+
+    // PascalCase로 변환
+    return capitalize(singularName);
   }
 }
 

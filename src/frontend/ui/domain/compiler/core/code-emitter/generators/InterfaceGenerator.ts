@@ -138,8 +138,30 @@ class InterfaceGenerator {
       members.push(propSig);
     }
 
-    // 배열 슬롯 props 추가
+    // 일반 슬롯 props 추가 (INSTANCE slot 등)
     const processedSlotNames = new Set<string>();
+    for (const slot of tree.slots) {
+      if (processedSlotNames.has(slot.name)) {
+        continue;
+      }
+      processedSlotNames.add(slot.name);
+
+      const slotPropSig = this.factory.createPropertySignature(
+        undefined,
+        slot.name,
+        this.factory.createToken(ts.SyntaxKind.QuestionToken),
+        this.factory.createTypeReferenceNode(
+          this.factory.createQualifiedName(
+            this.factory.createIdentifier("React"),
+            "ReactNode"
+          ),
+          undefined
+        )
+      );
+      members.push(slotPropSig);
+    }
+
+    // 배열 슬롯 props 추가
     for (const slot of tree.arraySlots) {
       if (processedSlotNames.has(slot.name)) {
         continue;

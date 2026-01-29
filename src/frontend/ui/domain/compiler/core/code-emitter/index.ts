@@ -20,7 +20,6 @@
  */
 
 export { default as ReactEmitter } from "./ReactEmitter";
-export { default as PolicyMapper, mapPolicy, createDefaultPolicy } from "./PolicyMapper";
 
 // Generators (DesignTree에서 직접 코드 생성)
 export * from "./generators";
