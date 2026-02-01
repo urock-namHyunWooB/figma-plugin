@@ -118,6 +118,32 @@ class ComponentGenerator {
     tree: DesignTree,
     strategy: IStyleStrategy
   ): ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression {
+    // Slot 노드 체크 - slot으로 대체되는 노드는 {slotName}으로 렌더링
+    const slotDef = tree.slots.find((s) => s.targetNodeId === node.id);
+    if (slotDef) {
+      // slot prop 찾기
+      const slotProp = tree.props.find(
+        (p) => p.type === "slot" && p.name === slotDef.name
+      );
+
+      // slot이 optional인 경우 (defaultValue가 있거나 required=false)
+      const isOptional = slotProp && !slotProp.required;
+
+      if (isOptional) {
+        // {slotName ?? defaultContent} 또는 {slotName}
+        return this.factory.createJsxExpression(
+          undefined,
+          this.factory.createIdentifier(slotDef.name)
+        );
+      } else {
+        // 필수 slot: {slotName}
+        return this.factory.createJsxExpression(
+          undefined,
+          this.factory.createIdentifier(slotDef.name)
+        );
+      }
+    }
+
     // 외부 컴포넌트 참조
     if (node.externalRef) {
       return this.createExternalComponentJsx(node, tree);
@@ -130,14 +156,23 @@ class ComponentGenerator {
 
     // TEXT 노드 텍스트 처리
     if (node.type === "text") {
-      const textContent = this.getTextContent(node, tree);
-      if (textContent) {
-        children = [textContent, ...children];
+      // textSegments가 있으면 여러 span으로 분할
+      if (node.textSegments && node.textSegments.length > 0) {
+        const segmentElements = this.createTextSegments(node.textSegments);
+        children = [...segmentElements, ...children];
+      } else {
+        const textContent = this.getTextContent(node, tree);
+        if (textContent) {
+          children = [textContent, ...children];
+        }
       }
     }
 
     // VECTOR 노드 SVG 처리
-    if (node.vectorSvg) {
+    if (node.variantSvgs && Object.keys(node.variantSvgs).length > 1) {
+      // 조건부 SVG 렌더링 (variant별 다른 SVG)
+      return this.createConditionalSvgElement(node, attributes, tree);
+    } else if (node.vectorSvg) {
       return this.createVectorSvgElement(node, attributes);
     }
 
@@ -362,6 +397,49 @@ class ComponentGenerator {
   }
 
   /**
+   * textSegments를 span 요소들로 변환
+   */
+  private createTextSegments(
+    segments: Array<{ text: string; styleIndex: number; style: Record<string, string> | null }>
+  ): ts.JsxChild[] {
+    return segments.map((segment) => {
+      if (!segment.style || Object.keys(segment.style).length === 0) {
+        // 스타일이 없으면 텍스트만 반환
+        return this.factory.createJsxText(segment.text, false);
+      }
+
+      // 스타일이 있으면 span으로 감싸기
+      const styleProps: ts.PropertyAssignment[] = [];
+      for (const [key, value] of Object.entries(segment.style)) {
+        styleProps.push(
+          this.factory.createPropertyAssignment(
+            this.factory.createIdentifier(key),
+            this.factory.createStringLiteral(value)
+          )
+        );
+      }
+
+      const styleAttribute = this.factory.createJsxAttribute(
+        this.factory.createIdentifier("style"),
+        this.factory.createJsxExpression(
+          undefined,
+          this.factory.createObjectLiteralExpression(styleProps, false)
+        )
+      );
+
+      return this.factory.createJsxElement(
+        this.factory.createJsxOpeningElement(
+          this.factory.createIdentifier("span"),
+          undefined,
+          this.factory.createJsxAttributes([styleAttribute])
+        ),
+        [this.factory.createJsxText(segment.text, false)],
+        this.factory.createJsxClosingElement(this.factory.createIdentifier("span"))
+      );
+    });
+  }
+
+  /**
    * VECTOR 노드를 SVG로 렌더링
    */
   private createVectorSvgElement(
@@ -417,6 +495,93 @@ class ComponentGenerator {
   }
 
   /**
+   * 조건부 SVG 렌더링 (variant별 다른 SVG)
+   * variantSvgs: { "Size=Normal": "<svg>...", "Size=Large": "<svg>..." }
+   * 결과: size === "Normal" ? <SvgNormal /> : <SvgLarge />
+   */
+  private createConditionalSvgElement(
+    node: DesignNode,
+    attributes: ts.JsxAttributeLike[],
+    tree: DesignTree
+  ): ts.JsxExpression {
+    const variantSvgs = node.variantSvgs!;
+    const entries = Object.entries(variantSvgs);
+
+    // 첫 번째 entry에서 prop 이름 추출 ("Size=Normal" → "size")
+    const [firstKey] = entries[0];
+    const propMatch = firstKey.match(/^([^=]+)=(.+)$/);
+    const propName = propMatch
+      ? propMatch[1].toLowerCase()
+      : "variant";
+
+    // SVG를 JSX로 변환
+    const svgToJsx = new SvgToJsx();
+    const svgJsxMap: Array<{ value: string; jsx: ts.JsxChild }> = [];
+
+    for (const [variantName, svgString] of entries) {
+      const valueMatch = variantName.match(/^[^=]+=(.+)$/);
+      const value = valueMatch ? valueMatch[1] : variantName;
+
+      const svgJsx = svgToJsx.convert(svgString);
+      if (svgJsx) {
+        // css 속성 추가
+        if (ts.isJsxSelfClosingElement(svgJsx)) {
+          const existingAttrs = svgJsx.attributes.properties;
+          const mergedAttrs = [...attributes, ...Array.from(existingAttrs)];
+          const mergedSvg = this.factory.createJsxSelfClosingElement(
+            svgJsx.tagName,
+            undefined,
+            this.factory.createJsxAttributes(mergedAttrs)
+          );
+          svgJsxMap.push({ value, jsx: mergedSvg });
+        } else if (ts.isJsxElement(svgJsx)) {
+          const existingAttrs = svgJsx.openingElement.attributes.properties;
+          const mergedAttrs = [...attributes, ...Array.from(existingAttrs)];
+          const mergedSvg = this.factory.createJsxElement(
+            this.factory.createJsxOpeningElement(
+              svgJsx.openingElement.tagName,
+              undefined,
+              this.factory.createJsxAttributes(mergedAttrs)
+            ),
+            svgJsx.children,
+            svgJsx.closingElement
+          );
+          svgJsxMap.push({ value, jsx: mergedSvg });
+        }
+      }
+    }
+
+    if (svgJsxMap.length === 0) {
+      // fallback: 빈 svg
+      return this.factory.createJsxExpression(
+        undefined,
+        this.factory.createNull()
+      );
+    }
+
+    // 삼항 연산자 체인 생성: size === "Normal" ? svg1 : size === "Large" ? svg2 : null
+    let conditionalExpr: ts.Expression = svgJsxMap[svgJsxMap.length - 1].jsx as unknown as ts.Expression;
+
+    for (let i = svgJsxMap.length - 2; i >= 0; i--) {
+      const { value, jsx } = svgJsxMap[i];
+      const condition = this.factory.createBinaryExpression(
+        this.factory.createIdentifier(propName),
+        ts.SyntaxKind.EqualsEqualsEqualsToken,
+        this.factory.createStringLiteral(value)
+      );
+      conditionalExpr = this.factory.createConditionalExpression(
+        condition,
+        undefined,
+        jsx as unknown as ts.Expression,
+        undefined,
+        conditionalExpr
+      );
+    }
+
+    return this.factory.createJsxExpression(undefined, conditionalExpr);
+  }
+
+  /**
    * JSX Element 생성
    */
   private createJsxElement(
@@ -452,7 +617,41 @@ class ComponentGenerator {
     // itemType이 유효한 컴포넌트 이름인지 확인하고, 아니면 slot.name에서 파생
     const componentName = this.resolveArraySlotComponentName(slot);
 
-    // (item, index) => <ComponentName key={index} {...item} />
+    // 배열 슬롯 아이템의 props 생성
+    // 각 prop을 item.propName 형태로 생성
+    const attributes: ts.JsxAttributeLike[] = [
+      // key prop은 항상 필요
+      this.factory.createJsxAttribute(
+        this.factory.createIdentifier("key"),
+        this.factory.createJsxExpression(undefined, this.factory.createIdentifier("index"))
+      ),
+    ];
+
+    // itemProps가 있으면 개별 props 생성, 없으면 spread 사용
+    if (slot.itemProps && slot.itemProps.length > 0) {
+      // 개별 props 생성: size={item.size}, text={item.text} 등
+      for (const prop of slot.itemProps) {
+        const propAccess = this.factory.createPropertyAccessExpression(
+          this.factory.createIdentifier("item"),
+          this.factory.createIdentifier(prop.name)
+        );
+        attributes.push(
+          this.factory.createJsxAttribute(
+            this.factory.createIdentifier(prop.name),
+            this.factory.createJsxExpression(undefined, propAccess)
+          )
+        );
+      }
+    } else {
+      // itemProps가 없으면 spread 사용: {...item}
+      attributes.push(
+        this.factory.createJsxSpreadAttribute(
+          this.factory.createIdentifier("item")
+        )
+      );
+    }
+
+    // (item, index) => <ComponentName key={index} size={item.size} ... />
     const arrowFunction = this.factory.createArrowFunction(
       undefined,
       undefined,
@@ -465,15 +664,7 @@ class ComponentGenerator {
       this.factory.createJsxSelfClosingElement(
         this.factory.createIdentifier(componentName),
         undefined,
-        this.factory.createJsxAttributes([
-          this.factory.createJsxAttribute(
-            this.factory.createIdentifier("key"),
-            this.factory.createJsxExpression(undefined, this.factory.createIdentifier("index"))
-          ),
-          this.factory.createJsxSpreadAttribute(
-            this.factory.createIdentifier("item")
-          ),
-        ])
+        this.factory.createJsxAttributes(attributes)
       )
     );
 
@@ -873,27 +1064,30 @@ class ComponentGenerator {
   /**
    * 배열 슬롯의 컴포넌트 이름 결정
    *
-   * itemType이 유효한 JavaScript 식별자인 경우 그대로 사용하고,
-   * 그렇지 않으면 (예: "1:98" 같은 Figma ID) slot.name에서 컴포넌트 이름 파생
+   * 우선순위:
+   * 1. itemComponentName이 있으면 사용 (가장 정확)
+   * 2. itemType이 유효한 JS 식별자면 사용
+   * 3. slot.name에서 파생 (fallback)
    */
   private resolveArraySlotComponentName(slot: ArraySlotInfo): string {
-    const itemType = slot.itemType;
+    // 1. itemComponentName이 있으면 사용
+    if (slot.itemComponentName) {
+      return slot.itemComponentName;
+    }
 
-    // itemType이 유효한 JavaScript 식별자인지 확인
-    // 유효: "Button", "IconArrow", "MyComponent"
-    // 무효: "1:98", "comp-1", "123abc"
+    // 2. itemType이 유효한 JavaScript 식별자인지 확인
+    const itemType = slot.itemType;
     if (itemType && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(itemType)) {
       return itemType;
     }
 
-    // slot.name에서 컴포넌트 이름 파생
+    // 3. slot.name에서 컴포넌트 이름 파생 (fallback)
     // "iconArrows" → "IconArrow" (복수형 's' 제거 후 PascalCase)
     const slotName = slot.name;
     const singularName = slotName.endsWith("s")
       ? slotName.slice(0, -1)
       : slotName;
 
-    // PascalCase로 변환
     return capitalize(singularName);
   }
 }

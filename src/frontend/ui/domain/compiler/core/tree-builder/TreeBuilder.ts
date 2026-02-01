@@ -28,6 +28,7 @@ import { SlotProcessor } from "./workers/SlotProcessor";
 import { VisibilityProcessor } from "./workers/VisibilityProcessor";
 import { InstanceProcessor } from "./workers/InstanceProcessor";
 import { NodeConverter } from "./workers/NodeConverter";
+import { CleanupProcessor } from "./workers/CleanupProcessor";
 
 class TreeBuilder implements ITreeBuilder {
   public build(
@@ -40,6 +41,7 @@ class TreeBuilder implements ITreeBuilder {
     // Phase 1: 구조 생성
     // ─────────────────────────────────────────────────────────────────────────
     ctx = VariantProcessor.merge(ctx); // → internalTree
+    ctx = CleanupProcessor.removeInstanceInternalNodes(ctx); // INSTANCE 내부 노드 제거
     ctx = PropsProcessor.extract(ctx); // → propsMap
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -61,6 +63,7 @@ class TreeBuilder implements ITreeBuilder {
     ctx = SlotProcessor.detectSlots(ctx); // → slots
     ctx = SlotProcessor.detectArraySlots(ctx); // → arraySlots
     ctx = InstanceProcessor.buildExternalRefs(ctx); // → nodeExternalRefs
+    ctx = SlotProcessor.enrichArraySlotsWithComponentNames(ctx); // arraySlots에 itemComponentName 추가
 
     ctx = NodeConverter.assemble(ctx); // → root
 

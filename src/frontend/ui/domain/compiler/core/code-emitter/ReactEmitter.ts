@@ -111,8 +111,8 @@ class ReactEmitter implements ICodeEmitter {
     switch (policy.styleStrategy) {
       case "tailwind":
         return new TailwindStyleStrategy(this.factory, {
-          inlineCn: true,
-          cnImportPath: "@/lib/utils",
+          inlineCn: policy.tailwindOptions?.inlineCn ?? true,
+          cnImportPath: policy.tailwindOptions?.cnImportPath || "@/lib/utils",
         });
 
       case "emotion":

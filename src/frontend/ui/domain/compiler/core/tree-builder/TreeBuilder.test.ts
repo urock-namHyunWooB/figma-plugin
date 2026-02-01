@@ -169,7 +169,8 @@ describe("TreeBuilder", () => {
 
       expect(result.props).toHaveLength(3);
       expect(result.props.find((p) => p.name === "size")?.type).toBe("variant");
-      expect(result.props.find((p) => p.name === "disabled")?.type).toBe("boolean");
+      // disabled is renamed to customDisabled to avoid conflict with native HTML attribute
+      expect(result.props.find((p) => p.name === "customDisabled")?.type).toBe("boolean");
       expect(result.props.find((p) => p.name === "label")?.type).toBe("string");
     });
 

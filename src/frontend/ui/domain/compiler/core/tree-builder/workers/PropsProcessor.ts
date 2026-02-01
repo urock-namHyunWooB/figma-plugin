@@ -16,6 +16,7 @@ import type {
   BuildContext,
 } from "./interfaces";
 import { traverseTree } from "./utils/treeUtils";
+import { toCamelCase } from "./utils/stringUtils";
 
 // ============================================================================
 // Types
@@ -30,6 +31,26 @@ const FIGMA_PROP_TYPE_MAP: Record<string, PropDefinition["type"]> = {
   TEXT: "string",
   INSTANCE_SWAP: "slot",
 };
+
+/**
+ * 네이티브 HTML 속성과 충돌하는 prop 이름 목록
+ * 이 prop 이름들은 custom prefix가 추가됨
+ */
+const CONFLICTING_HTML_ATTRS = new Set([
+  "disabled",
+  "type",
+  "value",
+  "name",
+  "id",
+  "hidden",
+  "checked",
+  "selected",
+  "required",
+  "readonly",
+  "placeholder",
+  "autofocus",
+  "autocomplete",
+]);
 
 // ============================================================================
 // PropsProcessor Class
@@ -90,18 +111,54 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
       return map;
     }
 
-    for (const [name, def] of Object.entries(props)) {
+    for (const [originalName, def] of Object.entries(props)) {
       if (!def || typeof def !== "object") {
         continue;
       }
 
-      const d = def as { type?: string; defaultValue?: unknown };
-      map.set(name, {
+      // 유효한 JavaScript 식별자로 변환 (숫자로 시작하는 이름 처리)
+      let name = toCamelCase(originalName);
+
+      // 네이티브 HTML 속성과 충돌하는 prop 이름 rename
+      name = this.renameConflictingPropName(name);
+
+      const d = def as { type?: string; defaultValue?: unknown; variantOptions?: string[] };
+      const propType = this.mapPropType(d.type);
+      const options = d.variantOptions;
+
+      // Check if this is a boolean-like VARIANT (True/False options)
+      // These get converted to boolean type here.
+      // If they actually control INSTANCE visibility, SlotProcessor will upgrade them to slot later.
+      const isBooleanLikeVariant = propType === "variant" &&
+        options &&
+        options.length === 2 &&
+        options.some((o) => o === "True" || o === "true") &&
+        options.some((o) => o === "False" || o === "false");
+
+      // originalKey 저장: Figma 원본 키 (componentPropertyReferences와 매칭용)
+      // DataPreparer가 이미 설정한 originalKey를 우선 사용
+      const existingOriginalKey = (def as { originalKey?: string }).originalKey;
+
+      // Determine final prop type:
+      // - Boolean-like VARIANTs (True/False) → boolean type
+      // - Other VARIANTs → variant type
+      // SlotProcessor will later upgrade boolean to slot if it controls INSTANCE visibility
+      const finalType = isBooleanLikeVariant ? "boolean" : propType;
+
+      // Convert default value to boolean if it's a boolean-like VARIANT
+      let finalDefaultValue = d.defaultValue;
+      if (isBooleanLikeVariant && typeof d.defaultValue === "string") {
+        finalDefaultValue = d.defaultValue.toLowerCase() === "true";
+      }
+
+      map.set(originalName, {
         name,
-        type: this.mapPropType(d.type),
-        defaultValue: d.defaultValue,
+        type: finalType,
+        defaultValue: finalDefaultValue,
         required: false,
-      });
+        options,
+        originalKey: existingOriginalKey || (originalName !== name ? originalName : undefined),
+      } as PropDefinition);
     }
 
     return map;
@@ -231,6 +288,17 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
       }
     }
     return undefined;
+  }
+
+  /**
+   * 네이티브 HTML 속성과 충돌하는 prop 이름 rename
+   * type → customType, disabled → customDisabled 등
+   */
+  private renameConflictingPropName(propName: string): string {
+    if (CONFLICTING_HTML_ATTRS.has(propName.toLowerCase())) {
+      return `custom${propName.charAt(0).toUpperCase() + propName.slice(1)}`;
+    }
+    return propName;
   }
 }
 

@@ -34,6 +34,7 @@ export interface SemanticRoleResult {
   role: SemanticRole;
   isTextSlot?: boolean;
   vectorSvg?: string;
+  variantSvgs?: Record<string, string>;
 }
 
 export interface ISemanticRoleDetector {

@@ -88,6 +88,12 @@ export interface CodeEmitterPolicy {
   /** 스타일 전략 */
   styleStrategy: StyleStrategy;
 
+  /** Tailwind 옵션 */
+  tailwindOptions?: {
+    inlineCn?: boolean;
+    cnImportPath?: string;
+  };
+
   /** 코드 컨벤션 */
   convention?: CodeConvention;
 
@@ -99,6 +105,9 @@ export interface CodeEmitterPolicy {
 
   /** 디자인 시스템 통합 */
   designSystem?: DesignSystemConfig;
+
+  /** 디버그 모드 */
+  debug?: boolean;
 }
 
 /**
@@ -363,8 +372,27 @@ export interface DesignNode {
   /** SVG 데이터 (vector/icon 노드용) */
   vectorSvg?: string;
 
+  /** Variant별 다른 SVG (조건부 렌더링용) */
+  variantSvgs?: Record<string, string>;
+
   /** TEXT 노드의 텍스트 내용 */
   textContent?: string;
+
+  /** TEXT 노드의 스타일 세그먼트 (characterStyleOverrides 처리) */
+  textSegments?: TextSegment[];
+}
+
+/**
+ * 텍스트 스타일 세그먼트
+ * characterStyleOverrides로 인한 부분 스타일링 처리
+ */
+export interface TextSegment {
+  /** 텍스트 내용 */
+  text: string;
+  /** 스타일 인덱스 (0 = 기본 스타일) */
+  styleIndex: number;
+  /** CSS 스타일 */
+  style: Record<string, string> | null;
 }
 
 /**
@@ -454,6 +482,18 @@ export interface LoopDefinition {
 }
 
 /**
+ * 배열 슬롯 아이템 prop 정의
+ */
+export interface ArraySlotItemProp {
+  /** prop 이름 */
+  name: string;
+  /** prop 타입 (variant, boolean, string, text) */
+  type: string;
+  /** 가능한 값들 (VARIANT인 경우) */
+  values?: string[];
+}
+
+/**
  * 배열 슬롯 정보
  */
 export interface ArraySlotInfo {
@@ -463,8 +503,14 @@ export interface ArraySlotInfo {
   /** 반복되는 노드 ID들 */
   nodeIds: string[];
 
-  /** 아이템 타입 (컴포넌트 참조) */
+  /** 아이템 타입 (컴포넌트 참조 ID) */
   itemType?: string;
+
+  /** 아이템 컴포넌트 이름 (렌더링에 사용) */
+  itemComponentName?: string;
+
+  /** 아이템 props (개별 prop 전달에 사용) */
+  itemProps?: ArraySlotItemProp[];
 
   /** 최소/최대 아이템 수 */
   minItems?: number;

@@ -90,6 +90,22 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
   // Static Pipeline Methods
   // ==========================================================================
 
+  private static readonly VECTOR_TYPES = new Set([
+    "VECTOR", "LINE", "ELLIPSE", "STAR", "POLYGON", "BOOLEAN_OPERATION",
+  ]);
+
+  /** SVG 전용 속성 (CSS에서 제거해야 함) */
+  private static readonly SVG_ONLY_PROPERTIES = new Set([
+    "strokeWidth", "stroke-width",
+    "strokeLinecap", "stroke-linecap",
+    "strokeLinejoin", "stroke-linejoin",
+    "strokeMiterlimit", "stroke-miterlimit",
+    "strokeDasharray", "stroke-dasharray",
+    "strokeDashoffset", "stroke-dashoffset",
+    "fillRule", "fill-rule",
+    "clipRule", "clip-rule",
+  ]);
+
   static build(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {
       throw new Error("StyleProcessor.build: internalTree is required.");
@@ -103,6 +119,19 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
         { mergedNodes: node.mergedNode, data: ctx.data },
         VisibilityProcessor.parseVariantCondition
       );
+
+      // VECTOR/LINE 등 SVG 노드 처리
+      if (StyleProcessor.VECTOR_TYPES.has(node.type)) {
+        // SVG 전용 속성 제거 및 overflow: visible 추가
+        const filteredBase: Record<string, string | number> = { overflow: "visible" };
+        for (const [key, value] of Object.entries(styles.base || {})) {
+          if (!StyleProcessor.SVG_ONLY_PROPERTIES.has(key)) {
+            filteredBase[key] = value;
+          }
+        }
+        styles.base = filteredBase;
+      }
+
       nodeStyles.set(node.id, styles);
     });
 
@@ -117,11 +146,33 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
     const instance = new StyleProcessor();
     const nodeStyles = new Map(ctx.nodeStyles);
 
+    // First pass: apply position: absolute to children
     traverseTree(ctx.internalTree, (node) => {
       const currentStyles = nodeStyles.get(node.id);
       if (currentStyles) {
         const updatedStyles = instance.applyToStyleDefinition(node, currentStyles, ctx.data);
         nodeStyles.set(node.id, updatedStyles);
+      }
+    });
+
+    // Second pass: add position: relative to parents with absolute children
+    traverseTree(ctx.internalTree, (node) => {
+      const hasAbsoluteChild = node.children.some((child) => {
+        const childStyles = nodeStyles.get(child.id);
+        return childStyles?.base?.position === "absolute";
+      });
+
+      if (hasAbsoluteChild) {
+        const currentStyles = nodeStyles.get(node.id);
+        if (currentStyles && !currentStyles.base?.position) {
+          nodeStyles.set(node.id, {
+            ...currentStyles,
+            base: {
+              ...currentStyles.base,
+              position: "relative",
+            },
+          });
+        }
       }
     });
 

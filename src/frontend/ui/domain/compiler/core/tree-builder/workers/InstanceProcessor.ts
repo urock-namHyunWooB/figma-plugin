@@ -74,8 +74,14 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
 
     const instance = new InstanceProcessor();
     const nodeExternalRefs = new Map<string, ExternalRefData>();
+    const rootId = ctx.internalTree.id;
 
     traverseTree(ctx.internalTree, (node) => {
+      // Skip root node - root INSTANCE should render its children, not as external ref
+      if (node.id === rootId) {
+        return;
+      }
+
       if (NodeProcessor.isComponentReference(node.type)) {
         const nodeSpec = ctx.data.getNodeById(node.id);
         const result = instance.buildExternalRef(

@@ -36,6 +36,11 @@ export interface NewEngineDependencies {
 export interface NewEngineOptions {
   /** 스타일 전략 */
   styleStrategy?: "emotion" | "tailwind";
+  /** Tailwind 옵션 */
+  tailwindOptions?: {
+    inlineCn?: boolean;
+    cnImportPath?: string;
+  };
   /** 디버그 모드: true이면 data-figma-id 속성 추가 */
   debug?: boolean;
 }
@@ -140,6 +145,7 @@ class NewEngine {
     return {
       platform: "react",
       styleStrategy,
+      tailwindOptions: options?.tailwindOptions,
       debug: options?.debug,
     };
   }

@@ -132,6 +132,27 @@ class PreparedDesignData implements IPreparedDesignData {
   }
 
   /**
+   * 노드 ID로 SVG 문자열 반환 (suffix 매칭)
+   * vectorSvgs 키가 INSTANCE 경로 기반일 때 (예: I153:1214;55:1323;55:1327)
+   * 마지막 세그먼트 (55:1327)로 매칭
+   */
+  public getVectorSvgBySuffix(nodeId: string): string | undefined {
+    // 정확한 매칭 먼저 시도
+    const exact = this.vectorSvgs.get(nodeId);
+    if (exact) return exact;
+
+    // suffix 매칭 (;nodeId로 끝나거나 nodeId로 끝나는 키 찾기)
+    const suffix = `;${nodeId}`;
+    for (const [key, svg] of this.vectorSvgs) {
+      if (key.endsWith(suffix) || key === nodeId) {
+        return svg;
+      }
+    }
+
+    return undefined;
+  }
+
+  /**
    * componentPropertyDefinitions 반환
    */
   public getComponentPropertyDefinitions(): Record<string, unknown> | null {

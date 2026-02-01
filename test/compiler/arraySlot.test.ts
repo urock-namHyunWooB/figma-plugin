@@ -306,8 +306,8 @@ describe("ArraySlot 감지", () => {
       expect(slots.length).toBe(0);
     });
 
-    test.skip("tada-list에서 List/General 배열 슬롯을 감지해야 한다 (SECTION은 ArraySlot 미지원)", () => {
-      // SECTION 타입은 ArraySlot 감지 안함 - 이 테스트는 스킵
+    test("tada-list에서 List/General 배열 슬롯을 감지해야 한다 (SECTION은 ArraySlot 미지원)", () => {
+      // SECTION 타입은 ArraySlot 감지 안함
       const data = tadaList as unknown as FigmaNodeData;
 
       const detector = new ArraySlotDetector(data);

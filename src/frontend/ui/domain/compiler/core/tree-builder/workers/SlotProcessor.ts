@@ -64,7 +64,27 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
     const instance = new SlotProcessor();
     const slots: SlotDefinition[] = [...ctx.slots];
+    const propsMap = ctx.propsMap ? new Map(ctx.propsMap) : new Map();
     const propsDefinitions = ctx.data.props as unknown as Record<string, { type: string }>;
+
+    // Find boolean-like props (VARIANT with True/False options)
+    // These are candidates for visibility-pattern slots (if they control INSTANCE visibility)
+    const booleanLikeProps: Array<{ name: string; originalKey: string }> = [];
+    for (const [key, prop] of propsMap.entries()) {
+      // Access options with type assertion since PropsProcessor sets it
+      const propAny = prop as PropDefinition & { options?: string[] };
+      // Look for boolean type (converted from True/False VARIANT) with preserved options
+      if (prop.type === "boolean" && propAny.options && propAny.options.length === 2) {
+        const hasTrue = propAny.options.some((o: string) => o === "True" || o === "true");
+        const hasFalse = propAny.options.some((o: string) => o === "False" || o === "false");
+        if (hasTrue && hasFalse) {
+          booleanLikeProps.push({
+            name: prop.name,
+            originalKey: prop.originalKey || key,
+          });
+        }
+      }
+    }
 
     traverseTree(ctx.internalTree, (node) => {
       if (NodeProcessor.isComponentReference(node.type)) {
@@ -75,18 +95,71 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
             name: node.name,
             type: node.type,
             componentPropertyReferences: nodeSpec?.componentPropertyReferences as Record<string, string> | undefined,
+            isExposedInstance: (nodeSpec as { isExposedInstance?: boolean } | undefined)?.isExposedInstance,
           }],
           propsDefinitions
         );
         for (const c of candidates) {
           if (c.propName) {
             slots.push(instance.extractSlotDefinition(c.nodeId, c.nodeName, c.propName));
+
+            // Update prop type to "slot" for visibility-controlled INSTANCE props
+            if (c.propType === "boolean" && propsMap.has(c.propName)) {
+              const existingProp = propsMap.get(c.propName)!;
+              propsMap.set(c.propName, { ...existingProp, type: "slot" });
+            }
+
+            // Add prop for exposed instance slots
+            if (c.propType === "exposed_instance") {
+              const slotName = toCamelCase(c.nodeName);
+              propsMap.set(slotName, {
+                name: slotName,
+                type: "slot",
+                defaultValue: null,
+                required: false,
+              });
+            }
+          }
+        }
+
+        // Detect nodes controlled by boolean-like props (visibility-pattern)
+        // These are nodes that only exist in "True" variants of the prop
+        if (node.mergedNode && node.mergedNode.length > 0 && booleanLikeProps.length > 0) {
+          for (const blProp of booleanLikeProps) {
+            const truePattern = `${blProp.originalKey}=True`;
+            const falsePattern = `${blProp.originalKey}=False`;
+
+            const hasTrue = node.mergedNode.some((m) =>
+              m.variantName?.includes(truePattern)
+            );
+            const hasFalse = node.mergedNode.some((m) =>
+              m.variantName?.includes(falsePattern)
+            );
+
+            // Node only exists in True variants → controlled by this visibility prop
+            // Upgrade the prop from boolean to slot
+            if (hasTrue && !hasFalse) {
+              // Check if slot already exists for this node
+              if (!slots.some((s) => s.targetNodeId === node.id)) {
+                slots.push({
+                  name: blProp.name,
+                  targetNodeId: node.id,
+                });
+
+                // Upgrade the prop type from boolean to slot
+                const propKey = [...propsMap.entries()].find(([_, p]) => p.name === blProp.name)?.[0];
+                if (propKey && propsMap.has(propKey)) {
+                  const existingProp = propsMap.get(propKey)!;
+                  propsMap.set(propKey, { ...existingProp, type: "slot", defaultValue: null });
+                }
+              }
+            }
           }
         }
       }
     });
 
-    return { ...ctx, slots };
+    return { ...ctx, slots, propsMap };
   }
 
   static detectArraySlots(ctx: BuildContext): BuildContext {
@@ -111,6 +184,81 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
     });
 
     return { ...ctx, arraySlots };
+  }
+
+  /**
+   * Array slot에 컴포넌트 이름과 itemProps 추가
+   * nodeExternalRefs에서 첫 번째 노드의 componentName과 props를 가져옴
+   */
+  static enrichArraySlotsWithComponentNames(ctx: BuildContext): BuildContext {
+    if (!ctx.arraySlots || !ctx.nodeExternalRefs) {
+      return ctx;
+    }
+
+    const enrichedArraySlots = ctx.arraySlots.map((slot) => {
+      // 첫 번째 노드 ID에서 컴포넌트 정보 가져오기
+      if (slot.nodeIds.length > 0) {
+        const firstNodeId = slot.nodeIds[0];
+        const externalRef = ctx.nodeExternalRefs!.get(firstNodeId);
+        if (externalRef?.componentName) {
+          // dependencies에서 컴포넌트 props 추출
+          const itemProps = SlotProcessor.extractItemPropsFromDependencies(
+            externalRef.componentSetId,
+            ctx.data.dependencies
+          );
+
+          return {
+            ...slot,
+            itemComponentName: externalRef.componentName,
+            itemProps,
+          };
+        }
+      }
+      return slot;
+    });
+
+    return { ...ctx, arraySlots: enrichedArraySlots };
+  }
+
+  /**
+   * 의존성 컴포넌트에서 itemProps 추출
+   */
+  private static extractItemPropsFromDependencies(
+    componentSetId: string,
+    dependencies: Map<string, unknown>
+  ): Array<{ name: string; type: string; values?: string[] }> {
+    const itemProps: Array<{ name: string; type: string; values?: string[] }> = [];
+
+    // dependencies에서 componentSetId에 해당하는 컴포넌트 찾기
+    for (const [_id, data] of dependencies.entries()) {
+      const depData = data as { id?: string; componentPropertyDefinitions?: Record<string, unknown> };
+
+      // componentSetId로 매칭되는 의존성 찾기
+      if (depData.id === componentSetId && depData.componentPropertyDefinitions) {
+        for (const [name, def] of Object.entries(depData.componentPropertyDefinitions)) {
+          const propDef = def as { type?: string; variantOptions?: string[] };
+          if (propDef.type) {
+            // prop 이름에서 # 이후 부분 제거하고 camelCase로 변환
+            const cleanName = toCamelCase(name.split("#")[0]);
+            itemProps.push({
+              name: cleanName,
+              type: propDef.type.toLowerCase(),
+              values: propDef.variantOptions,
+            });
+          }
+        }
+        break;
+      }
+    }
+
+    // 기본 props도 추가 (text는 일반적인 prop)
+    if (itemProps.length === 0) {
+      // 의존성에서 찾지 못한 경우 기본 props 사용
+      itemProps.push({ name: "size", type: "variant" });
+      itemProps.push({ name: "text", type: "string" });
+    }
+
+    return itemProps;
   }
 
   // ==========================================================================
@@ -171,7 +319,12 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
     for (const [componentId, group] of byComponentId.entries()) {
       if (group.length >= 2) {
-        const baseName = toCamelCase(group[0].name);
+        // Extract base name by removing trailing numbers and normalizing
+        // "Option 1", "Option 2" → "option"
+        // "Item-1", "Item-2" → "item"
+        const firstName = group[0].name;
+        const baseNameWithoutNumber = firstName.replace(/[\s_-]*\d+$/, "");
+        const baseName = toCamelCase(baseNameWithoutNumber);
         const slotName = baseName.endsWith("s") ? baseName : `${baseName}s`;
 
         return {
@@ -196,12 +349,25 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
       name: string;
       type: string;
       componentPropertyReferences?: Record<string, string>;
+      isExposedInstance?: boolean;
     }>,
     propsDefinitions: Record<string, { type: string }>
   ): SlotCandidate[] {
     const candidates: SlotCandidate[] = [];
 
     for (const node of nodes) {
+      // isExposedInstance: true → 항상 slot으로 처리 (Figma에서 명시적으로 노출된 인스턴스)
+      if (node.isExposedInstance && node.type === "INSTANCE") {
+        candidates.push({
+          nodeId: node.id,
+          nodeName: node.name,
+          nodeType: node.type,
+          propName: node.name,
+          propType: "exposed_instance",
+        });
+        continue;
+      }
+
       const visibleRef = node.componentPropertyReferences?.visible;
 
       if (visibleRef && node.type === "INSTANCE") {
@@ -329,10 +495,13 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
     const propName = this.generateTextPropName(input.nodeName);
 
+    // Extract default text content from the first variant
+    const defaultTextContent = this.extractDefaultTextContent(input.nodeId, input.mergedNodeIds, data);
+
     const propDefinition: PropDefinition = {
       name: propName,
       type: "slot",
-      defaultValue: this.getDefaultTextValue(input.mergedNodeIds, data),
+      defaultValue: defaultTextContent,
       required: false,
     };
 
@@ -341,6 +510,33 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
       propName,
       propDefinition,
     };
+  }
+
+  /**
+   * Extract default text content from the first variant's TEXT node
+   */
+  private extractDefaultTextContent(
+    nodeId: string,
+    mergedNodeIds: string[],
+    data: PreparedDesignData
+  ): string | null {
+    // Try to get text from the main node first
+    const mainNode = data.getNodeById(nodeId);
+    if (mainNode && typeof mainNode === "object" && "characters" in mainNode) {
+      const characters = (mainNode as { characters?: string }).characters;
+      if (characters) return characters;
+    }
+
+    // Fallback: try merged nodes
+    for (const mergedId of mergedNodeIds) {
+      const node = data.getNodeById(mergedId);
+      if (node && typeof node === "object" && "characters" in node) {
+        const characters = (node as { characters?: string }).characters;
+        if (characters) return characters;
+      }
+    }
+
+    return null;
   }
 
   // ==========================================================================
@@ -353,11 +549,13 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
   private normalizeSlotName(propName: string, nodeName: string): string {
     if (!propName) return toCamelCase(nodeName);
 
+    // "showIcon" → "icon", "hasLabel" → "label"
     const normalized = propName
       .replace(/^show/i, "")
       .replace(/^has/i, "");
 
-    return normalized.charAt(0).toLowerCase() + normalized.slice(1);
+    // 항상 camelCase로 변환 (공백, 특수문자 처리)
+    return toCamelCase(normalized);
   }
 }
 

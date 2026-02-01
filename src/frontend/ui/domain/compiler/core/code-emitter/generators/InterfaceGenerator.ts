@@ -117,11 +117,26 @@ class InterfaceGenerator {
     const arraySlotRelatedProps = this.getArraySlotRelatedProps(tree.arraySlots);
 
     // 일반 props
+    // 먼저 tree.slots에 있는 슬롯 이름들을 수집 (중복 방지용)
+    const slotNamesFromSlots = new Set(tree.slots.map((s) => s.name));
+    const processedPropNames = new Set<string>();
+
     for (const prop of tree.props) {
       // 배열 슬롯과 연관된 prop은 건너뛰기
       if (arraySlotRelatedProps.has(prop.name.toLowerCase())) {
         continue;
       }
+
+      // slot 타입 prop이면서 tree.slots에도 있으면 건너뛰기 (중복 방지)
+      if (prop.type === "slot" && slotNamesFromSlots.has(prop.name)) {
+        continue;
+      }
+
+      // 이미 처리된 prop 이름은 건너뛰기
+      if (processedPropNames.has(prop.name)) {
+        continue;
+      }
+      processedPropNames.add(prop.name);
 
       const typeNode = this.createPropTypeNode(prop);
       const isOptional = prop.defaultValue !== undefined || !prop.required;
@@ -229,6 +244,21 @@ class InterfaceGenerator {
    * Prop 정의를 TypeScript TypeNode로 변환
    */
   private createPropTypeNode(prop: PropDefinition): ts.TypeNode {
+    // Override prop 처리: characters 오버라이드는 string | React.ReactNode
+    const overrideInfo = (prop as any)._overrideInfo;
+    if (overrideInfo?.type === "characters") {
+      return this.factory.createUnionTypeNode([
+        this.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword),
+        this.factory.createTypeReferenceNode(
+          this.factory.createQualifiedName(
+            this.factory.createIdentifier("React"),
+            "ReactNode"
+          ),
+          undefined
+        ),
+      ]);
+    }
+
     switch (prop.type) {
       case "variant": {
         const variantProp = prop as any;

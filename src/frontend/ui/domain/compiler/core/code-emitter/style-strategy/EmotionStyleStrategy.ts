@@ -122,12 +122,27 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
     const cssVarName = this.getCssVariableName(node, this.componentName || "");
     const dynamicProps = this.collectDynamicProps(node, props);
+    const groupedDynamicStyles = this.groupDynamicStylesByProp(
+      node.styles?.dynamic || []
+    );
+
+    // Slot props vs variant props 분리
+    const slotProps = this.getSlotDynamicProps(dynamicProps, props);
+    const variantProps = dynamicProps.filter((p) => !slotProps.includes(p));
 
     let cssExpression: ts.Expression;
 
-    if (dynamicProps.length > 0) {
-      // 함수 호출: cssVarName(size, variant)
-      const args = dynamicProps.map((p) =>
+    if (slotProps.length > 0) {
+      // Slot props: css={[HeaderrootCss, rightIcon != null ? WithCss : WithoutCss]}
+      cssExpression = this.createSlotCssArrayExpression(
+        cssVarName,
+        slotProps,
+        variantProps,
+        groupedDynamicStyles
+      );
+    } else if (variantProps.length > 0) {
+      // Variant props only: 함수 호출: cssVarName(size, variant)
+      const args = variantProps.map((p) =>
         this.factory.createIdentifier(p)
       );
       cssExpression = this.factory.createCallExpression(
@@ -144,6 +159,78 @@ class EmotionStyleStrategy implements IStyleStrategy {
       this.factory.createIdentifier("css"),
       this.factory.createJsxExpression(undefined, cssExpression)
     );
+  }
+
+  /**
+   * Slot props용 CSS 배열 표현식 생성
+   */
+  private createSlotCssArrayExpression(
+    cssVarName: string,
+    slotProps: string[],
+    variantProps: string[],
+    groupedDynamicStyles: Map<string, Map<string, Record<string, string | number>>>
+  ): ts.Expression {
+    const elements: ts.Expression[] = [];
+
+    // Base CSS
+    elements.push(this.factory.createIdentifier(cssVarName));
+
+    // Slot prop별 conditional expression
+    for (const slotProp of slotProps) {
+      const baseName = cssVarName.replace(/Css$/, "");
+      const slotCapitalized = capitalize(slotProp);
+      const withCssName = `${baseName}With${slotCapitalized}Css`;
+      const withoutCssName = `${baseName}Without${slotCapitalized}Css`;
+
+      // Check which styles actually exist
+      const variants = groupedDynamicStyles.get(slotProp.toLowerCase());
+      const hasWithStyle = variants?.get("True") || variants?.get("true");
+      const hasWithoutStyle = variants?.get("False") || variants?.get("false");
+
+      // Only add conditional if at least one style exists
+      if (hasWithStyle && hasWithoutStyle) {
+        // Both exist: slotProp != null ? WithCss : WithoutCss
+        const conditional = this.factory.createConditionalExpression(
+          this.factory.createBinaryExpression(
+            this.factory.createIdentifier(slotProp),
+            this.factory.createToken(ts.SyntaxKind.ExclamationEqualsToken),
+            this.factory.createNull()
+          ),
+          this.factory.createToken(ts.SyntaxKind.QuestionToken),
+          this.factory.createIdentifier(withCssName),
+          this.factory.createToken(ts.SyntaxKind.ColonToken),
+          this.factory.createIdentifier(withoutCssName)
+        );
+        elements.push(conditional);
+      } else if (hasWithStyle) {
+        // Only With style exists: slotProp != null && WithCss
+        const conditional = this.factory.createBinaryExpression(
+          this.factory.createBinaryExpression(
+            this.factory.createIdentifier(slotProp),
+            this.factory.createToken(ts.SyntaxKind.ExclamationEqualsToken),
+            this.factory.createNull()
+          ),
+          this.factory.createToken(ts.SyntaxKind.AmpersandAmpersandToken),
+          this.factory.createIdentifier(withCssName)
+        );
+        elements.push(conditional);
+      } else if (hasWithoutStyle) {
+        // Only Without style exists: slotProp == null && WithoutCss
+        const conditional = this.factory.createBinaryExpression(
+          this.factory.createBinaryExpression(
+            this.factory.createIdentifier(slotProp),
+            this.factory.createToken(ts.SyntaxKind.EqualsEqualsToken),
+            this.factory.createNull()
+          ),
+          this.factory.createToken(ts.SyntaxKind.AmpersandAmpersandToken),
+          this.factory.createIdentifier(withoutCssName)
+        );
+        elements.push(conditional);
+      }
+      // If neither exists, don't add anything
+    }
+
+    return this.factory.createArrayLiteralExpression(elements, false);
   }
 
   /**
@@ -209,20 +296,49 @@ class EmotionStyleStrategy implements IStyleStrategy {
     // 동적 스타일 Record 객체 생성 (prop별로 그룹화)
     const groupedDynamicStyles = this.groupDynamicStylesByProp(node.styles?.dynamic || []);
 
-    if (groupedDynamicStyles.size > 0) {
-      for (const [propName, variants] of groupedDynamicStyles.entries()) {
-        const recordVarName = `${cssVarName}${capitalize(propName)}Styles`;
-        const recordStatement = this.createRecordStatement(recordVarName, variants);
-        statements.push(recordStatement);
+    // Slot props vs variant props 분리
+    const slotProps = this.getSlotDynamicProps(dynamicProps, props);
+    const variantProps = dynamicProps.filter((p) => !slotProps.includes(p));
+
+    // Slot props: With/Without 별도 CSS 변수 생성 (template literal)
+    for (const slotProp of slotProps) {
+      const variants = groupedDynamicStyles.get(slotProp.toLowerCase());
+      if (!variants) continue;
+
+      const baseName = cssVarName.replace(/Css$/, "");
+      const slotCapitalized = capitalize(slotProp);
+
+      // With CSS (True/true 값)
+      const withStyle = variants.get("True") || variants.get("true");
+      if (withStyle) {
+        const withVarName = `${baseName}With${slotCapitalized}Css`;
+        statements.push(this.createTemplateLiteralCss(withVarName, withStyle));
+      }
+
+      // Without CSS (False/false 값)
+      const withoutStyle = variants.get("False") || variants.get("false");
+      if (withoutStyle) {
+        const withoutVarName = `${baseName}Without${slotCapitalized}Css`;
+        statements.push(this.createTemplateLiteralCss(withoutVarName, withoutStyle));
       }
     }
 
-    // CSS 함수 또는 변수 생성
+    // Variant props: 기존 Record 패턴 유지
+    for (const [propName, variants] of groupedDynamicStyles.entries()) {
+      // propName은 lowercase, slotProps도 실제 prop name과 비교 (lowercase로 비교)
+      if (slotProps.some((sp) => sp.toLowerCase() === propName)) continue;
+      const recordVarName = `${cssVarName}${capitalize(propName)}Styles`;
+      const recordStatement = this.createRecordStatement(recordVarName, variants);
+      statements.push(recordStatement);
+    }
+
+    // CSS 함수 또는 변수 생성 (slot props는 제외)
     const cssStatement = this.createCssStatement(
       node,
       cssVarName,
-      dynamicProps,
-      groupedDynamicStyles
+      variantProps,
+      groupedDynamicStyles,
+      slotProps
     );
     statements.push(cssStatement);
 
@@ -230,7 +346,63 @@ class EmotionStyleStrategy implements IStyleStrategy {
   }
 
   /**
+   * Template literal CSS 변수 생성
+   */
+  private createTemplateLiteralCss(
+    varName: string,
+    style: Record<string, string | number>
+  ): ts.VariableStatement {
+    const cssProperties = Object.entries(style)
+      .map(([key, value]) => {
+        const kebabKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+        return `  ${kebabKey}: ${value};`;
+      })
+      .join("\n");
+
+    const template = this.factory.createNoSubstitutionTemplateLiteral(
+      `\n${cssProperties}\n`
+    );
+
+    const taggedTemplate = this.factory.createTaggedTemplateExpression(
+      this.factory.createIdentifier("css"),
+      undefined,
+      template
+    );
+
+    return this.factory.createVariableStatement(
+      undefined,
+      this.factory.createVariableDeclarationList(
+        [
+          this.factory.createVariableDeclaration(
+            varName,
+            undefined,
+            undefined,
+            taggedTemplate
+          ),
+        ],
+        ts.NodeFlags.Const
+      )
+    );
+  }
+
+  /**
+   * dynamicProps 중 slot 타입인 것들만 필터링
+   */
+  private getSlotDynamicProps(
+    dynamicProps: string[],
+    props: PropDefinition[]
+  ): string[] {
+    return dynamicProps.filter((propName) => {
+      const prop = props.find(
+        (p) => p.name.toLowerCase() === propName.toLowerCase()
+      );
+      return prop?.type === "slot";
+    });
+  }
+
+  /**
    * dynamic 스타일을 prop별로 그룹화
+   * 복합 조건의 경우 모든 prop에 대해 그룹화
    */
   private groupDynamicStylesByProp(
     dynamicStyles: StyleDefinition["dynamic"]
@@ -238,16 +410,40 @@ class EmotionStyleStrategy implements IStyleStrategy {
     const grouped = new Map<string, Map<string, Record<string, string | number>>>();
 
     for (const { condition, style } of dynamicStyles) {
-      const extracted = this.extractCondition(condition);
-      if (!extracted) continue;
+      // 복합 조건에서 모든 prop 추출
+      const allConditions = this.extractAllConditions(condition);
+      if (allConditions.length === 0) continue;
 
-      if (!grouped.has(extracted.propName)) {
-        grouped.set(extracted.propName, new Map());
+      // 각 prop에 대해 그룹화 (lowercase key 사용)
+      for (const { propName, propValue } of allConditions) {
+        const normalizedPropName = propName.toLowerCase();
+        if (!grouped.has(normalizedPropName)) {
+          grouped.set(normalizedPropName, new Map());
+        }
+        grouped.get(normalizedPropName)!.set(propValue, style);
       }
-      grouped.get(extracted.propName)!.set(extracted.propValue, style);
     }
 
     return grouped;
+  }
+
+  /**
+   * 조건에서 모든 prop-value 쌍 추출 (복합 조건 지원)
+   */
+  private extractAllConditions(condition: ConditionNode): ExtractedCondition[] {
+    if (!condition) return [];
+    const results: ExtractedCondition[] = [];
+
+    if (condition.type === "BinaryExpression") {
+      const extracted = this.extractFromBinaryExpression(condition as any);
+      if (extracted) results.push(extracted);
+    } else if (condition.type === "LogicalExpression") {
+      const logical = condition as any;
+      results.push(...this.extractAllConditions(logical.left));
+      results.push(...this.extractAllConditions(logical.right));
+    }
+
+    return results;
   }
 
   /**
@@ -297,68 +493,17 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * CSS 함수 또는 변수 statement 생성
+   * 항상 template literal 형식 사용: css`...`
    */
   private createCssStatement(
     node: DesignNode,
     cssVarName: string,
     dynamicProps: string[],
-    groupedDynamicStyles: Map<string, Map<string, Record<string, string | number>>>
+    groupedDynamicStyles: Map<string, Map<string, Record<string, string | number>>>,
+    slotProps: string[] = []
   ): ts.VariableStatement {
     const baseStyles = node.styles?.base || {};
     const pseudoStyles = node.styles?.pseudo || {};
-
-    // Base 스타일 CSS 객체
-    const styleProperties: ts.PropertyAssignment[] = [];
-
-    // Base 스타일 추가 (kebab-case → camelCase 변환)
-    for (const [key, value] of Object.entries(baseStyles)) {
-      const camelKey = kebabToCamel(key);
-      styleProperties.push(
-        this.factory.createPropertyAssignment(
-          this.factory.createIdentifier(camelKey),
-          this.factory.createStringLiteral(String(value))
-        )
-      );
-    }
-
-    // Pseudo 스타일 추가 (kebab-case → camelCase 변환)
-    for (const [pseudo, styles] of Object.entries(pseudoStyles)) {
-      const pseudoProperties: ts.PropertyAssignment[] = [];
-      for (const [key, value] of Object.entries(styles as Record<string, string>)) {
-        const camelKey = kebabToCamel(key);
-        pseudoProperties.push(
-          this.factory.createPropertyAssignment(
-            this.factory.createIdentifier(camelKey),
-            this.factory.createStringLiteral(String(value))
-          )
-        );
-      }
-
-      const pseudoObject = this.factory.createObjectLiteralExpression(
-        pseudoProperties,
-        true
-      );
-
-      // &:hover 형태로 키 생성
-      const pseudoKey = `&${pseudo}`;
-      styleProperties.push(
-        this.factory.createPropertyAssignment(
-          this.factory.createStringLiteral(pseudoKey),
-          pseudoObject
-        )
-      );
-    }
-
-    const styleObject = this.factory.createObjectLiteralExpression(
-      styleProperties,
-      true
-    );
-
-    const cssCall = this.factory.createCallExpression(
-      this.factory.createIdentifier("css"),
-      undefined,
-      [styleObject]
-    );
 
     if (dynamicProps.length > 0) {
       // 함수로 생성: const cssVarName = (size) => [baseCss, sizeStyles[size]]
@@ -373,8 +518,11 @@ class EmotionStyleStrategy implements IStyleStrategy {
         )
       );
 
+      // Base CSS as tagged template
+      const baseCssExpr = this.createCssTaggedTemplateExpression(baseStyles, pseudoStyles);
+
       // CSS 배열: [baseCss, sizeStyles[size], ...]
-      const cssArrayElements: ts.Expression[] = [cssCall];
+      const cssArrayElements: ts.Expression[] = [baseCssExpr];
 
       for (const propName of dynamicProps) {
         if (groupedDynamicStyles.has(propName)) {
@@ -389,7 +537,7 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
       const bodyExpression = cssArrayElements.length > 1
         ? this.factory.createArrayLiteralExpression(cssArrayElements, false)
-        : cssCall;
+        : baseCssExpr;
 
       const arrowFunction = this.factory.createArrowFunction(
         undefined,
@@ -415,22 +563,90 @@ class EmotionStyleStrategy implements IStyleStrategy {
         )
       );
     } else {
-      // 변수로 생성: const cssVarName = css({...})
-      return this.factory.createVariableStatement(
-        undefined,
-        this.factory.createVariableDeclarationList(
-          [
-            this.factory.createVariableDeclaration(
-              cssVarName,
-              undefined,
-              undefined,
-              cssCall
-            ),
-          ],
-          ts.NodeFlags.Const
-        )
-      );
+      // 변수로 생성: const cssVarName = css`...`
+      return this.createBaseCssAsTemplateLiteral(cssVarName, baseStyles, pseudoStyles);
     }
+  }
+
+  /**
+   * CSS tagged template expression 생성 (변수가 아닌 표현식 자체)
+   */
+  private createCssTaggedTemplateExpression(
+    baseStyles: Record<string, string | number>,
+    pseudoStyles: Record<string, Record<string, string | number>>
+  ): ts.TaggedTemplateExpression {
+    const cssLines: string[] = [];
+
+    for (const [key, value] of Object.entries(baseStyles)) {
+      const kebabKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+      cssLines.push(`  ${kebabKey}: ${value};`);
+    }
+
+    for (const [pseudo, styles] of Object.entries(pseudoStyles)) {
+      cssLines.push(`  &${pseudo} {`);
+      for (const [key, value] of Object.entries(styles)) {
+        const kebabKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+        cssLines.push(`    ${kebabKey}: ${value};`);
+      }
+      cssLines.push(`  }`);
+    }
+
+    const cssContent = cssLines.length > 0 ? `\n${cssLines.join("\n")}\n` : "";
+    const template = this.factory.createNoSubstitutionTemplateLiteral(cssContent);
+
+    return this.factory.createTaggedTemplateExpression(
+      this.factory.createIdentifier("css"),
+      undefined,
+      template
+    );
+  }
+
+  /**
+   * Base CSS를 template literal로 생성
+   */
+  private createBaseCssAsTemplateLiteral(
+    cssVarName: string,
+    baseStyles: Record<string, string | number>,
+    pseudoStyles: Record<string, Record<string, string | number>>
+  ): ts.VariableStatement {
+    const cssLines: string[] = [];
+
+    for (const [key, value] of Object.entries(baseStyles)) {
+      const kebabKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+      cssLines.push(`  ${kebabKey}: ${value};`);
+    }
+
+    for (const [pseudo, styles] of Object.entries(pseudoStyles)) {
+      cssLines.push(`  &${pseudo} {`);
+      for (const [key, value] of Object.entries(styles)) {
+        const kebabKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+        cssLines.push(`    ${kebabKey}: ${value};`);
+      }
+      cssLines.push(`  }`);
+    }
+
+    const cssContent = cssLines.length > 0 ? `\n${cssLines.join("\n")}\n` : "";
+    const template = this.factory.createNoSubstitutionTemplateLiteral(cssContent);
+    const taggedTemplate = this.factory.createTaggedTemplateExpression(
+      this.factory.createIdentifier("css"),
+      undefined,
+      template
+    );
+
+    return this.factory.createVariableStatement(
+      undefined,
+      this.factory.createVariableDeclarationList(
+        [
+          this.factory.createVariableDeclaration(
+            cssVarName,
+            undefined,
+            undefined,
+            taggedTemplate
+          ),
+        ],
+        ts.NodeFlags.Const
+      )
+    );
   }
 
   /**
@@ -569,10 +785,10 @@ class EmotionStyleStrategy implements IStyleStrategy {
       const extracted = this.extractCondition(condition);
       if (!extracted) continue;
 
-      // props에 존재하는지 확인
-      const exists = props.some((p) => p.name.toLowerCase() === extracted.propName.toLowerCase());
-      if (exists && !propNames.includes(extracted.propName)) {
-        propNames.push(extracted.propName);
+      // props에 존재하는지 확인하고, 실제 prop.name 사용 (case 일치 보장)
+      const matchedProp = props.find((p) => p.name.toLowerCase() === extracted.propName.toLowerCase());
+      if (matchedProp && !propNames.includes(matchedProp.name)) {
+        propNames.push(matchedProp.name);
       }
     }
 

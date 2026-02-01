@@ -63,6 +63,7 @@ export class FigmaCodeGenerator {
       { spec },
       {
         styleStrategy: this.options.styleStrategy?.type || "emotion",
+        tailwindOptions: this.options.styleStrategy?.tailwind,
         debug: this.options.debug,
       }
     );

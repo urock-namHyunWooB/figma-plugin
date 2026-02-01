@@ -180,7 +180,7 @@ class TailwindStyleStrategy implements IStyleStrategy {
   generateDeclarations(
     tree: DesignTree,
     componentName: string,
-    _props: PropDefinition[]
+    props: PropDefinition[]
   ): ts.Statement[] {
     this.componentName = componentName;
     const statements: ts.Statement[] = [];
@@ -203,7 +203,11 @@ class TailwindStyleStrategy implements IStyleStrategy {
       }
       const nodeVarNames = this.nodeClassVarNames.get(node.id)!;
 
-      for (const [propName, valueMap] of propMaps.entries()) {
+      for (const [origPropName, valueMap] of propMaps.entries()) {
+        // 실제 prop name 사용 (case 일치 보장)
+        const matchedProp = props.find((p) => p.name.toLowerCase() === origPropName.toLowerCase());
+        const propName = matchedProp?.name || origPropName;
+
         const properties: ts.PropertyAssignment[] = [];
 
         for (const [value, classes] of valueMap.entries()) {
@@ -248,10 +252,10 @@ class TailwindStyleStrategy implements IStyleStrategy {
    */
   createStyleAttribute(
     node: DesignNode,
-    _props: PropDefinition[]
+    props: PropDefinition[]
   ): ts.JsxAttribute | null {
     const baseClasses = this.classCache.get(node.id) || "";
-    const dynamicInfo = this.getDynamicStyleInfo(node);
+    const dynamicInfo = this.getDynamicStyleInfo(node, props);
 
     if (!baseClasses && !dynamicInfo) {
       return null;
@@ -272,7 +276,7 @@ class TailwindStyleStrategy implements IStyleStrategy {
   /**
    * 동적 스타일 정보 조회
    */
-  getDynamicStyleInfo(node: DesignNode): DynamicStyleInfo | null {
+  getDynamicStyleInfo(node: DesignNode, props?: PropDefinition[]): DynamicStyleInfo | null {
     const dynamicStyles = node.styles?.dynamic;
     if (!dynamicStyles || dynamicStyles.length === 0) {
       return null;
@@ -285,12 +289,16 @@ class TailwindStyleStrategy implements IStyleStrategy {
       const extracted = this.extractCondition(condition);
       if (!extracted) continue;
 
-      if (!propToVariants.has(extracted.propName)) {
-        propToVariants.set(extracted.propName, []);
-      }
-      propToVariants.get(extracted.propName)!.push(extracted.propValue);
+      // 실제 prop name 사용 (case 일치 보장)
+      const matchedProp = props?.find((p) => p.name.toLowerCase() === extracted.propName.toLowerCase());
+      const actualPropName = matchedProp?.name || extracted.propName;
 
-      const key = `${extracted.propName}:${extracted.propValue}`;
+      if (!propToVariants.has(actualPropName)) {
+        propToVariants.set(actualPropName, []);
+      }
+      propToVariants.get(actualPropName)!.push(extracted.propValue);
+
+      const key = `${actualPropName}:${extracted.propValue}`;
       const classes = this.cssObjectToTailwind(style);
       variantStyles.set(key, classes);
     }
@@ -361,29 +369,53 @@ class TailwindStyleStrategy implements IStyleStrategy {
   private cssPropertyToTailwind(property: string, value: string): string {
     const valueStr = value.trim();
 
+    // kebab-case → camelCase 변환
+    const camelProperty = this.kebabToCamel(property);
+
     // 정확히 일치하는 매핑
-    const exactMap = CSS_TO_TAILWIND_MAP[property];
+    const exactMap = CSS_TO_TAILWIND_MAP[camelProperty];
     if (exactMap && exactMap[valueStr]) {
       return exactMap[valueStr];
     }
 
+    // 100% → w-full/h-full
+    if (valueStr === "100%") {
+      if (camelProperty === "width") return "w-full";
+      if (camelProperty === "height") return "h-full";
+    }
+
     // Tailwind 접두사가 있는 속성
-    const prefix = CSS_PROPERTY_TO_PREFIX[property];
+    const prefix = CSS_PROPERTY_TO_PREFIX[camelProperty];
     if (prefix) {
+      // borderRadius → rounded-[value]
+      if (camelProperty === "borderRadius") {
+        return `rounded-[${this.escapeArbitraryValue(valueStr)}]`;
+      }
       return `${prefix}-[${this.escapeArbitraryValue(valueStr)}]`;
     }
 
     // 색상 관련
-    if (property === "color" || property === "fill") {
-      return `[${this.camelToKebab(property)}:${this.escapeArbitraryValue(valueStr)}]`;
+    if (camelProperty === "color" || camelProperty === "fill") {
+      return `[${this.camelToKebab(camelProperty)}:${this.escapeArbitraryValue(valueStr)}]`;
     }
-    if (property === "backgroundColor") {
+    if (camelProperty === "backgroundColor") {
+      return `[background-color:${this.escapeArbitraryValue(valueStr)}]`;
+    }
+    // background shorthand with CSS variable → use background-color to avoid background-image interpretation
+    if (camelProperty === "background" && valueStr.includes("var(")) {
       return `[background-color:${this.escapeArbitraryValue(valueStr)}]`;
     }
 
     // 기타: arbitrary property
-    const cssKey = this.camelToKebab(property);
+    const cssKey = this.camelToKebab(camelProperty);
     return `[${cssKey}:${this.escapeArbitraryValue(valueStr)}]`;
+  }
+
+  /**
+   * kebab-case를 camelCase로 변환
+   */
+  private kebabToCamel(str: string): string {
+    return str.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
   }
 
   /**
@@ -496,12 +528,27 @@ class TailwindStyleStrategy implements IStyleStrategy {
    * ConditionNode에서 prop 이름과 값 추출
    */
   private extractCondition(condition: ConditionNode): ExtractedCondition | null {
-    if (!condition || condition.type !== "BinaryExpression") {
+    if (!condition) {
       return null;
     }
 
-    const binaryExpr = condition as any;
+    // BinaryExpression: props.X === "value"
+    if (condition.type === "BinaryExpression") {
+      return this.extractFromBinaryExpression(condition as any);
+    }
 
+    // LogicalExpression: 복합 조건에서 첫 번째 BinaryExpression 추출
+    if (condition.type === "LogicalExpression") {
+      return this.extractFromLogicalExpression(condition as any);
+    }
+
+    return null;
+  }
+
+  /**
+   * BinaryExpression에서 prop 추출
+   */
+  private extractFromBinaryExpression(binaryExpr: any): ExtractedCondition | null {
     // props.X === "value" 형태 처리
     if (
       binaryExpr.operator === "===" &&
@@ -518,6 +565,33 @@ class TailwindStyleStrategy implements IStyleStrategy {
           propName: camelPropName,
           propValue: String(propValue),
         };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * LogicalExpression에서 첫 번째 BinaryExpression 추출 (재귀)
+   */
+  private extractFromLogicalExpression(logicalExpr: any): ExtractedCondition | null {
+    // 왼쪽부터 탐색
+    if (logicalExpr.left) {
+      if (logicalExpr.left.type === "BinaryExpression") {
+        return this.extractFromBinaryExpression(logicalExpr.left);
+      }
+      if (logicalExpr.left.type === "LogicalExpression") {
+        return this.extractFromLogicalExpression(logicalExpr.left);
+      }
+    }
+
+    // 왼쪽에서 못 찾으면 오른쪽 탐색
+    if (logicalExpr.right) {
+      if (logicalExpr.right.type === "BinaryExpression") {
+        return this.extractFromBinaryExpression(logicalExpr.right);
+      }
+      if (logicalExpr.right.type === "LogicalExpression") {
+        return this.extractFromLogicalExpression(logicalExpr.right);
       }
     }
 
@@ -567,6 +641,8 @@ class TailwindStyleStrategy implements IStyleStrategy {
    */
   private escapeArbitraryValue(value: string): string {
     return value
+      .trim()
+      .replace(/\/\*.*?\*\//g, "") // Remove CSS comments
       .trim()
       .replace(/_/g, "\\_")
       .replace(/\s+/g, "_")
