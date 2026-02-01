@@ -199,8 +199,7 @@ const saveButtonStyle = css`
 
 function App() {
   const navigate = useNavigate();
-  const { selectionNodeData, scanState, startScan, resetScan } =
-    useMessageHandler();
+  const { selectionNodeData } = useMessageHandler();
 
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [propDefinitions, setPropDefinitions] = useState<PropDefinition[]>([]);
@@ -262,12 +261,12 @@ function App() {
         const display = style.display;
 
         // flex container인 경우 자식들의 실제 크기 + gap 계산
-        if (display === 'flex' || display === 'inline-flex') {
+        if (display === "flex" || display === "inline-flex") {
           const gap = parseInt(style.gap, 10) || 0;
           const flexDirection = style.flexDirection;
           const children = Array.from(el.children) as HTMLElement[];
 
-          if (flexDirection === 'row' || flexDirection === 'row-reverse') {
+          if (flexDirection === "row" || flexDirection === "row-reverse") {
             // 가로 방향: 자식 너비 합 + gap
             let totalWidth = 0;
             children.forEach((child, i) => {
@@ -324,7 +323,7 @@ function App() {
       const renderedChild = content.firstElementChild as HTMLElement;
       if (renderedChild && fitScale < 1) {
         renderedChild.style.transform = `scale(${fitScale})`;
-        renderedChild.style.transformOrigin = 'top left';
+        renderedChild.style.transformOrigin = "top left";
       }
     }
 
@@ -416,17 +415,6 @@ function App() {
         [name]: enabled ? createSlotMockup(propDef) : null,
       }));
     }
-  };
-
-  // 스캔 상태 텍스트
-  const getScanStatusText = () => {
-    if (scanState.isScanning) {
-      return `스캔 중... ${scanState.current}/${scanState.total}`;
-    }
-    if (scanState.total > 0) {
-      return `완료: ${scanState.succeeded}개 성공, ${scanState.failed}개 실패`;
-    }
-    return "";
   };
 
   // 로컬 failing 폴더에 저장 (dev 전용)
@@ -526,12 +514,6 @@ function App() {
               {saveStatus}
             </span>
           )}
-
-          <span
-            style={{ marginLeft: "auto", fontSize: "11px", color: "#6b7280" }}
-          >
-            {getScanStatusText()}
-          </span>
         </div>
 
         <ErrorBoundary key={errorBoundaryKey}>
@@ -541,7 +523,7 @@ function App() {
               css={previewContentStyle}
               style={{
                 // transform은 자식 컴포넌트에 직접 적용됨 (updateAutoScale에서)
-                transform: 'translate(-50%, -50%)',
+                transform: "translate(-50%, -50%)",
               }}
             >
               {isLoading && <span css={emptyPreviewStyle}>Loading...</span>}
