@@ -167,14 +167,21 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
           booleanLikeProps.length > 0
         ) {
           for (const blProp of booleanLikeProps) {
-            const truePattern = `${blProp.originalKey}=True`;
-            const falsePattern = `${blProp.originalKey}=False`;
+            // Case-insensitive pattern matching (True/true, False/false)
+            const truePatterns = [
+              `${blProp.originalKey}=True`,
+              `${blProp.originalKey}=true`,
+            ];
+            const falsePatterns = [
+              `${blProp.originalKey}=False`,
+              `${blProp.originalKey}=false`,
+            ];
 
             const hasTrue = node.mergedNode.some((m) =>
-              m.variantName?.includes(truePattern)
+              truePatterns.some((p) => m.variantName?.includes(p))
             );
             const hasFalse = node.mergedNode.some((m) =>
-              m.variantName?.includes(falsePattern)
+              falsePatterns.some((p) => m.variantName?.includes(p))
             );
 
             // Node only exists in True variants → controlled by this visibility prop
