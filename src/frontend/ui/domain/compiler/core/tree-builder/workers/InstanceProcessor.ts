@@ -24,7 +24,8 @@ import type {
 } from "./interfaces";
 import { NodeProcessor } from "./NodeProcessor";
 import { traverseTree } from "./utils/treeUtils";
-import { toPascalCase, toCamelCase } from "./utils/stringUtils";
+import { toPascalCase } from "./utils/stringUtils";
+import { toCamelCase } from "@compiler/utils/normalizeString";
 import { hasChildren, getComponentId } from "./utils/typeGuards";
 import {
   extractColorFromFills,
@@ -365,7 +366,10 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
   /**
    * INSTANCE에서 오버라이드된 속성을 props 형태로 추출
    *
-   * 예: { rectangle1Bg: "#D6D6D6", labelText: "Click me" }
+   * Figma의 overrides 배열을 활용하여 명시적으로 오버라이드된 필드만 추출합니다.
+   * 이 방식은 원본 컴포넌트의 children 데이터가 없어도 동작합니다.
+   *
+   * 예: { rectangle1Bg: "#D6D6D6", aaText: "90" }
    */
   public extractOverrideProps(
     instanceNode: SceneNode,
@@ -373,10 +377,22 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
   ): Record<string, string> {
     const overrideProps: Record<string, string> = {};
 
-    const instanceWithChildren = instanceNode as unknown as { children?: InstanceChildNode[] };
-    if (!instanceWithChildren?.children) return overrideProps;
+    const instanceWithOverrides = instanceNode as unknown as {
+      children?: InstanceChildNode[];
+      overrides?: Array<{ id: string; overriddenFields: string[] }>;
+    };
 
-    // 원본 children을 ID로 매핑
+    if (!instanceWithOverrides?.children) return overrideProps;
+
+    // overrides 배열에서 노드별 오버라이드 필드 맵 생성
+    const overriddenFieldsMap = new Map<string, Set<string>>();
+    if (instanceWithOverrides.overrides) {
+      for (const override of instanceWithOverrides.overrides) {
+        overriddenFieldsMap.set(override.id, new Set(override.overriddenFields));
+      }
+    }
+
+    // 원본 children을 ID로 매핑 (이름 조회용, 비교용 아님)
     const originalMap = new Map<string, InstanceChildNode>();
     const buildOriginalMap = (children: InstanceChildNode[]) => {
       for (const child of children) {
@@ -391,13 +407,52 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
     // INSTANCE children 순회
     const extractFromChildren = (children: InstanceChildNode[]) => {
       for (const child of children) {
+        const overriddenFields = overriddenFieldsMap.get(child.id);
         const originalId = this.getOriginalId(child.id);
         const original = originalMap.get(originalId);
 
-        if (original) {
-          const baseName = toCamelCase(original.name);
+        // 노드 이름 결정 (원본 또는 현재 child에서)
+        const nodeName = original?.name || child.name;
+        const baseName = toCamelCase(nodeName);
 
-          // fills override → Bg prop
+        // overrides 배열이 있으면 명시적 오버라이드만 추출
+        // overrides 배열이 없으면 원본과 비교 (fallback)
+        if (overriddenFields) {
+          // fills 또는 inheritFillStyleId 오버라이드 → Bg prop
+          if (
+            (overriddenFields.has("fills") || overriddenFields.has("inheritFillStyleId")) &&
+            child.fills !== undefined
+          ) {
+            const bgColor = extractColorFromFills(child.fills);
+            if (bgColor) {
+              overrideProps[`${baseName}Bg`] = bgColor;
+            }
+          }
+
+          // strokes 오버라이드 → Stroke prop
+          if (overriddenFields.has("strokes") && child.strokes !== undefined) {
+            const strokeColor = extractColorFromFills(child.strokes);
+            if (strokeColor) {
+              overrideProps[`${baseName}Stroke`] = strokeColor;
+            }
+          }
+
+          // characters 오버라이드 → Text prop
+          if (overriddenFields.has("characters") && child.characters !== undefined) {
+            overrideProps[`${baseName}Text`] = child.characters;
+          }
+
+          // opacity 오버라이드 → Opacity prop
+          if (overriddenFields.has("opacity") && child.opacity !== undefined) {
+            overrideProps[`${baseName}Opacity`] = String(child.opacity);
+          }
+
+          // visible 오버라이드 → Show prop
+          if (overriddenFields.has("visible") && child.visible !== undefined) {
+            overrideProps[`show${baseName.charAt(0).toUpperCase() + baseName.slice(1)}`] = String(child.visible);
+          }
+        } else if (original) {
+          // Fallback: overrides 배열이 없으면 원본과 비교
           if (
             child.fills !== undefined &&
             JSON.stringify(child.fills) !== JSON.stringify(original.fills)
@@ -408,7 +463,6 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
             }
           }
 
-          // strokes override → Stroke prop
           if (
             child.strokes !== undefined &&
             JSON.stringify(child.strokes) !== JSON.stringify(original.strokes)
@@ -419,7 +473,6 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
             }
           }
 
-          // characters override → Text prop
           if (
             child.characters !== undefined &&
             child.characters !== original.characters
@@ -427,7 +480,6 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
             overrideProps[`${baseName}Text`] = child.characters;
           }
 
-          // opacity override → Opacity prop
           if (
             child.opacity !== undefined &&
             child.opacity !== original.opacity
@@ -435,7 +487,6 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
             overrideProps[`${baseName}Opacity`] = String(child.opacity);
           }
 
-          // visible override → Show prop
           if (
             child.visible !== undefined &&
             child.visible !== original.visible
@@ -450,7 +501,7 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
       }
     };
 
-    extractFromChildren(instanceWithChildren.children);
+    extractFromChildren(instanceWithOverrides.children);
     return overrideProps;
   }
 

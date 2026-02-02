@@ -33,7 +33,16 @@ class DataPreparer implements IDataPreparer {
     const styleMap = this.buildStyleMap(styleTree);
 
     // Props 추출
-    const props = this.extractProps(document, policy);
+    let props = this.extractProps(document, policy);
+
+    // _overrideableProps 처리 (의존 컴포넌트 컴파일 시)
+    // DependencyManager._collectAllOverrideableProps()에서 수집된 오버라이드 가능한 props
+    if ((spec as any)._overrideableProps) {
+      props = this.mergeOverrideableProps(
+        props,
+        (spec as any)._overrideableProps
+      );
+    }
 
     // 의존성 Map 구축
     const dependencies = this.buildDependenciesMap(spec.dependencies);
@@ -257,6 +266,39 @@ class DataPreparer implements IDataPreparer {
     });
 
     return props;
+  }
+
+  /**
+   * _overrideableProps를 PropsDef에 병합
+   *
+   * 의존 컴포넌트가 부모로부터 오버라이드 값을 받을 수 있도록
+   * props interface에 추가합니다.
+   *
+   * - fills 오버라이드 (xxxBg) → string (CSS 색상)
+   * - characters 오버라이드 (xxxText) → string | React.ReactNode
+   */
+  private mergeOverrideableProps(
+    props: PropsDef,
+    overrideableProps: Record<
+      string,
+      { nodeId: string; nodeName: string; type: string }
+    >
+  ): PropsDef {
+    const mergedProps = { ...props };
+
+    for (const [propName, info] of Object.entries(overrideableProps)) {
+      // 이미 존재하면 건너뛰기
+      if (mergedProps[propName]) continue;
+
+      // fills → TEXT (색상 문자열), characters → TEXT (텍스트)
+      mergedProps[propName] = {
+        type: "TEXT",
+        defaultValue: "",
+        originalKey: propName,
+      };
+    }
+
+    return mergedProps;
   }
 
   /**
