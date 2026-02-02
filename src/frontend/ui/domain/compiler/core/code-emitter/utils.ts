@@ -14,9 +14,13 @@
  * toPascalCase("06")            // "Component06" (숫자로 시작하면 접두사 추가)
  */
 export function toPascalCase(str: string): string {
+  // _ 접두사 보존 (의존성 컴포넌트 이름 충돌 방지용)
+  const hasUnderscorePrefix = str.startsWith("_");
+  const input = hasUnderscorePrefix ? str.slice(1) : str;
+
   // 1. 특수문자를 공백으로 변환
   // 2. camelCase/PascalCase 경계에서 분리 (예: "testButton" → "test Button")
-  let result = str
+  let result = input
     .replace(/[^a-zA-Z0-9]/g, " ")
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .split(" ")
@@ -29,7 +33,8 @@ export function toPascalCase(str: string): string {
     result = `Component${result}`;
   }
 
-  return result;
+  // _ 접두사 복원
+  return hasUnderscorePrefix ? `_${result}` : result;
 }
 
 /**

@@ -234,12 +234,27 @@ class DependencyManager {
               instanceNode
             );
         } else {
-          // 그 외의 경우: INSTANCE children 사용 (기존 동작)
-          enrichedVariant =
-            this.instanceOverrideManager.enrichVariantWithInstanceChildren(
-              enrichedVariant,
-              instanceNode
-            );
+          // 원본 children에 INSTANCE가 포함되어 있는지 확인
+          const hasInstanceInOriginal =
+            this._hasInstanceChildren(originalChildren);
+
+          if (hasInstanceInOriginal) {
+            // 원본에 INSTANCE가 있으면 INSTANCE children 사용
+            // (INSTANCE의 내부 노드는 CleanupProcessor에서 삭제됨)
+            enrichedVariant =
+              this.instanceOverrideManager.enrichVariantWithInstanceChildren(
+                enrichedVariant,
+                instanceNode
+              );
+          } else {
+            // 원본에 INSTANCE가 없으면 원본 children 유지
+            // (TEXT 등 단순 노드는 원본을 유지해야 함)
+            enrichedVariant =
+              this.instanceOverrideManager.enrichVariantWithInstanceContext(
+                enrichedVariant,
+                instanceNode
+              );
+          }
         }
       }
 
@@ -642,6 +657,21 @@ class DependencyManager {
         return true;
       }
       if (child.children && this._hasHiddenChildren(child.children)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * children 중에 INSTANCE 타입 노드가 있는지 재귀적으로 확인
+   */
+  private _hasInstanceChildren(children: any[]): boolean {
+    for (const child of children) {
+      if (child.type === "INSTANCE") {
+        return true;
+      }
+      if (child.children && this._hasInstanceChildren(child.children)) {
         return true;
       }
     }
