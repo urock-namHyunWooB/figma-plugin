@@ -142,9 +142,7 @@ class EmotionStyleStrategy implements IStyleStrategy {
       );
     } else if (variantProps.length > 0) {
       // Variant props only: 함수 호출: cssVarName(size, variant)
-      const args = variantProps.map((p) =>
-        this.factory.createIdentifier(p)
-      );
+      const args = variantProps.map((p) => this.factory.createIdentifier(p));
       cssExpression = this.factory.createCallExpression(
         this.factory.createIdentifier(cssVarName),
         undefined,
@@ -168,7 +166,10 @@ class EmotionStyleStrategy implements IStyleStrategy {
     cssVarName: string,
     slotProps: string[],
     variantProps: string[],
-    groupedDynamicStyles: Map<string, Map<string, Record<string, string | number>>>
+    groupedDynamicStyles: Map<
+      string,
+      Map<string, Record<string, string | number>>
+    >
   ): ts.Expression {
     const elements: ts.Expression[] = [];
 
@@ -294,7 +295,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
     const dynamicProps = this.collectDynamicProps(node, props);
 
     // 동적 스타일 Record 객체 생성 (prop별로 그룹화)
-    const groupedDynamicStyles = this.groupDynamicStylesByProp(node.styles?.dynamic || []);
+    const groupedDynamicStyles = this.groupDynamicStylesByProp(
+      node.styles?.dynamic || []
+    );
 
     // Slot props vs variant props 분리
     const slotProps = this.getSlotDynamicProps(dynamicProps, props);
@@ -319,7 +322,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
       const withoutStyle = variants.get("False") || variants.get("false");
       if (withoutStyle) {
         const withoutVarName = `${baseName}Without${slotCapitalized}Css`;
-        statements.push(this.createTemplateLiteralCss(withoutVarName, withoutStyle));
+        statements.push(
+          this.createTemplateLiteralCss(withoutVarName, withoutStyle)
+        );
       }
     }
 
@@ -328,7 +333,10 @@ class EmotionStyleStrategy implements IStyleStrategy {
       // propName은 lowercase, slotProps도 실제 prop name과 비교 (lowercase로 비교)
       if (slotProps.some((sp) => sp.toLowerCase() === propName)) continue;
       const recordVarName = `${cssVarName}${capitalize(propName)}Styles`;
-      const recordStatement = this.createRecordStatement(recordVarName, variants);
+      const recordStatement = this.createRecordStatement(
+        recordVarName,
+        variants
+      );
       statements.push(recordStatement);
     }
 
@@ -407,7 +415,10 @@ class EmotionStyleStrategy implements IStyleStrategy {
   private groupDynamicStylesByProp(
     dynamicStyles: StyleDefinition["dynamic"]
   ): Map<string, Map<string, Record<string, string | number>>> {
-    const grouped = new Map<string, Map<string, Record<string, string | number>>>();
+    const grouped = new Map<
+      string,
+      Map<string, Record<string, string | number>>
+    >();
 
     for (const { condition, style } of dynamicStyles) {
       // 복합 조건에서 모든 prop 추출
@@ -499,7 +510,10 @@ class EmotionStyleStrategy implements IStyleStrategy {
     node: DesignNode,
     cssVarName: string,
     dynamicProps: string[],
-    groupedDynamicStyles: Map<string, Map<string, Record<string, string | number>>>,
+    groupedDynamicStyles: Map<
+      string,
+      Map<string, Record<string, string | number>>
+    >,
     slotProps: string[] = []
   ): ts.VariableStatement {
     const baseStyles = node.styles?.base || {};
@@ -519,14 +533,33 @@ class EmotionStyleStrategy implements IStyleStrategy {
       );
 
       // Base CSS as tagged template
-      const baseCssExpr = this.createCssTaggedTemplateExpression(baseStyles, pseudoStyles);
+      const baseCssExpr = this.createCssTaggedTemplateExpression(
+        baseStyles,
+        pseudoStyles
+      );
 
       // CSS 배열: [baseCss, sizeStyles[size], ...]
       const cssArrayElements: ts.Expression[] = [baseCssExpr];
 
       for (const propName of dynamicProps) {
-        if (groupedDynamicStyles.has(propName)) {
-          const recordVarName = `${cssVarName}${capitalize(propName)}Styles`;
+        // groupedDynamicStyles는 조건에서 추출된 원래 prop 이름을 키로 사용
+        // dynamicProps는 rename된 이름 (customType)을 사용
+        // 둘 다 확인: customType → type, customDisabled → disabled 등
+        const propNameLower = propName.toLowerCase();
+        const originalPropName = propNameLower.startsWith("custom")
+          ? propNameLower.slice(6)
+          : propNameLower;
+
+        // groupedDynamicStyles에서 실제 사용하는 키 찾기
+        const recordKey = groupedDynamicStyles.has(propNameLower)
+          ? propNameLower
+          : groupedDynamicStyles.has(originalPropName)
+            ? originalPropName
+            : null;
+
+        if (recordKey) {
+          // Record 변수명은 groupedDynamicStyles의 키와 일치해야 함
+          const recordVarName = `${cssVarName}${capitalize(recordKey)}Styles`;
           const elementAccess = this.factory.createElementAccessExpression(
             this.factory.createIdentifier(recordVarName),
             this.factory.createIdentifier(propName)
@@ -535,9 +568,10 @@ class EmotionStyleStrategy implements IStyleStrategy {
         }
       }
 
-      const bodyExpression = cssArrayElements.length > 1
-        ? this.factory.createArrayLiteralExpression(cssArrayElements, false)
-        : baseCssExpr;
+      const bodyExpression =
+        cssArrayElements.length > 1
+          ? this.factory.createArrayLiteralExpression(cssArrayElements, false)
+          : baseCssExpr;
 
       const arrowFunction = this.factory.createArrowFunction(
         undefined,
@@ -564,7 +598,11 @@ class EmotionStyleStrategy implements IStyleStrategy {
       );
     } else {
       // 변수로 생성: const cssVarName = css`...`
-      return this.createBaseCssAsTemplateLiteral(cssVarName, baseStyles, pseudoStyles);
+      return this.createBaseCssAsTemplateLiteral(
+        cssVarName,
+        baseStyles,
+        pseudoStyles
+      );
     }
   }
 
@@ -592,7 +630,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
     }
 
     const cssContent = cssLines.length > 0 ? `\n${cssLines.join("\n")}\n` : "";
-    const template = this.factory.createNoSubstitutionTemplateLiteral(cssContent);
+    const template =
+      this.factory.createNoSubstitutionTemplateLiteral(cssContent);
 
     return this.factory.createTaggedTemplateExpression(
       this.factory.createIdentifier("css"),
@@ -626,7 +665,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
     }
 
     const cssContent = cssLines.length > 0 ? `\n${cssLines.join("\n")}\n` : "";
-    const template = this.factory.createNoSubstitutionTemplateLiteral(cssContent);
+    const template =
+      this.factory.createNoSubstitutionTemplateLiteral(cssContent);
     const taggedTemplate = this.factory.createTaggedTemplateExpression(
       this.factory.createIdentifier("css"),
       undefined,
@@ -652,7 +692,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
   /**
    * css() 호출 생성
    */
-  private createCssCall(style: Record<string, string | number>): ts.CallExpression {
+  private createCssCall(
+    style: Record<string, string | number>
+  ): ts.CallExpression {
     const styleProperties: ts.PropertyAssignment[] = [];
 
     for (const [key, value] of Object.entries(style)) {
@@ -682,7 +724,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
    * 단순 조건: props.size === "Large" → { propName: "size", propValue: "Large" }
    * 복합 조건: props.size === "Large" && props.leftIcon === "false" → 첫 번째 prop 추출
    */
-  private extractCondition(condition: ConditionNode): ExtractedCondition | null {
+  private extractCondition(
+    condition: ConditionNode
+  ): ExtractedCondition | null {
     if (!condition) {
       return null;
     }
@@ -703,7 +747,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
   /**
    * BinaryExpression에서 prop 추출
    */
-  private extractFromBinaryExpression(binaryExpr: any): ExtractedCondition | null {
+  private extractFromBinaryExpression(
+    binaryExpr: any
+  ): ExtractedCondition | null {
     // props.X === "value" 형태 처리
     if (
       binaryExpr.operator === "===" &&
@@ -716,7 +762,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
       if (propName && propValue !== undefined) {
         // camelCase로 변환 (Size → size)
-        const camelPropName = propName.charAt(0).toLowerCase() + propName.slice(1);
+        const camelPropName =
+          propName.charAt(0).toLowerCase() + propName.slice(1);
         return {
           propName: camelPropName,
           propValue: String(propValue),
@@ -731,7 +778,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
    * LogicalExpression에서 첫 번째 BinaryExpression 추출 (재귀)
    * 구조: (left && right) && right → left부터 탐색
    */
-  private extractFromLogicalExpression(logicalExpr: any): ExtractedCondition | null {
+  private extractFromLogicalExpression(
+    logicalExpr: any
+  ): ExtractedCondition | null {
     // 왼쪽부터 탐색 (가장 중요한 prop이 보통 먼저 옴)
     if (logicalExpr.left) {
       if (logicalExpr.left.type === "BinaryExpression") {
@@ -771,6 +820,7 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * 노드에서 동적 prop 이름들 수집
+   * 복합 조건(A && B)에서 모든 prop을 추출
    */
   private collectDynamicProps(
     node: DesignNode,
@@ -782,13 +832,21 @@ class EmotionStyleStrategy implements IStyleStrategy {
     const propNames: string[] = [];
 
     for (const { condition } of dynamicStyles) {
-      const extracted = this.extractCondition(condition);
-      if (!extracted) continue;
+      // 복합 조건에서 모든 prop 추출
+      const allConditions = this.extractAllConditions(condition);
 
-      // props에 존재하는지 확인하고, 실제 prop.name 사용 (case 일치 보장)
-      const matchedProp = props.find((p) => p.name.toLowerCase() === extracted.propName.toLowerCase());
-      if (matchedProp && !propNames.includes(matchedProp.name)) {
-        propNames.push(matchedProp.name);
+      for (const extracted of allConditions) {
+        // props에 존재하는지 확인하고, 실제 prop.name 사용 (case 일치 보장)
+        // HTML 충돌 prop도 매칭 (type → customType, disabled → customDisabled 등)
+        const matchedProp = props.find(
+          (p) =>
+            p.name.toLowerCase() === extracted.propName.toLowerCase() ||
+            p.name.toLowerCase() ===
+              `custom${extracted.propName}`.toLowerCase()
+        );
+        if (matchedProp && !propNames.includes(matchedProp.name)) {
+          propNames.push(matchedProp.name);
+        }
       }
     }
 

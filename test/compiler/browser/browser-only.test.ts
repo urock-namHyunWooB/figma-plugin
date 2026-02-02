@@ -1,7 +1,7 @@
 /**
  * 브라우저 전용 테스트
  * getComputedStyle 등 실제 브라우저 CSS 엔진이 필요한 테스트
- * 
+ *
  * 실행: npm run test:browser
  */
 import { describe, test, expect, beforeAll } from "vitest";
@@ -11,9 +11,9 @@ import * as React from "react";
 import FigmaCodeGenerator from "@compiler";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
 
-import taptapButtonMockData from "../fixtures/button/taptapButton.json";
-import urockButtonSampleMockData from "../fixtures/button/urockButton.json";
-import urockChipsMockData from "../fixtures/chip/urock-chips.json";
+import taptapButtonMockData from "../../fixtures/button/taptapButton.json";
+import urockButtonSampleMockData from "../../fixtures/button/urockButton.json";
+import urockChipsMockData from "../../fixtures/chip/urock-chips.json";
 
 describe("브라우저 전용 스타일 테스트", () => {
   describe("taptapButton", () => {
