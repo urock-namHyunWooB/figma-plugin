@@ -219,9 +219,17 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
     const instance = new SlotProcessor();
     const arraySlots: ArraySlotInfo[] = [...ctx.arraySlots];
 
+    // 이미 개별 slot으로 감지된 노드 ID 수집
+    const slotNodeIds = new Set(ctx.slots.map((s) => s.targetNodeId));
+
     traverseTree(ctx.internalTree, (node) => {
-      if (node.children.length >= 2) {
-        const childrenInfo = node.children.map((child) => ({
+      // 개별 slot으로 감지된 노드는 제외하고 배열 슬롯 감지
+      const nonSlotChildren = node.children.filter(
+        (child) => !slotNodeIds.has(child.id)
+      );
+
+      if (nonSlotChildren.length >= 2) {
+        const childrenInfo = nonSlotChildren.map((child) => ({
           id: child.id,
           name: child.name,
           type: child.type,

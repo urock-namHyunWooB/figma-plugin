@@ -47,6 +47,8 @@ interface SquashGroup {
  */
 export class VariantProcessor implements IVariantMerger, ISquashByIou {
   private getIouFn: ((nodeA: InternalNode, nodeB: InternalNode) => number | null) | null = null;
+  /** 노드 ID → 원본 variant 루트 ID 매핑 */
+  private nodeToVariantRoot: Map<string, string> = new Map();
 
   // ==========================================================================
   // Static Pipeline Method
@@ -97,6 +99,9 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
       throw new Error("No variants to merge");
     }
 
+    // 노드 ID → 원본 variant 루트 ID 매핑 구축
+    this.buildNodeToVariantRootMap(variants);
+
     // 각 variant를 InternalNode로 변환
     const internalTrees = variants.map((variant) =>
       this.convertToInternalNode(variant, null, variant.name, data)
@@ -113,7 +118,183 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
       this.getIouFromRoot(nodeA, nodeB, data)
     );
 
+    // Wrapper FRAME flatten (일부 variant에만 존재하는 FRAME 제거)
+    mergedTree = this.flattenWrapperFrames(mergedTree, variants.length, data);
+
     return mergedTree;
+  }
+
+  /**
+   * Wrapper FRAME flatten
+   *
+   * 일부 variant에만 존재하는 FRAME을 찾아서,
+   * 그 children이 다른 variant에서 상위 레벨에 존재하면 FRAME을 제거하고 children을 상위로 올림
+   */
+  private flattenWrapperFrames(
+    root: InternalNode,
+    totalVariantCount: number,
+    data: PreparedDesignData
+  ): InternalNode {
+    // BFS로 순회하면서 flatten 대상 찾기
+    const toFlatten: InternalNode[] = [];
+
+    const findFlattenTargets = (node: InternalNode) => {
+      for (const child of node.children) {
+        findFlattenTargets(child);
+      }
+
+      // FRAME이 일부 variant에만 존재하는지 확인
+      if (node.type === "FRAME" && node.parent) {
+        const existsInAllVariants = node.mergedNode.length >= totalVariantCount;
+
+        if (!existsInAllVariants) {
+          // FRAME의 children 중 하나라도 형제 노드와 같은 타입/위치면 flatten 대상
+          const siblings = node.parent.children.filter((s) => s.id !== node.id);
+
+          for (const child of node.children) {
+            const matchingSibling = siblings.find(
+              (sibling) =>
+                sibling.type === child.type &&
+                this.isSamePositionY(child, sibling, data)
+            );
+
+            if (matchingSibling) {
+              toFlatten.push(node);
+              break;
+            }
+          }
+        }
+      }
+    };
+
+    findFlattenTargets(root);
+
+    // 같은 y 좌표의 FRAME들을 그룹핑하여 하나만 남기고 나머지는 flatten
+    const frameGroups = new Map<string, InternalNode[]>();
+    for (const frame of toFlatten) {
+      const y = this.getNormalizedY(frame, data);
+      const key = y !== null ? y.toFixed(2) : frame.id;
+      if (!frameGroups.has(key)) {
+        frameGroups.set(key, []);
+      }
+      frameGroups.get(key)!.push(frame);
+    }
+
+    // 각 그룹에서 첫 번째 FRAME만 유지하고 나머지는 제거 (children을 첫 번째로 병합)
+    for (const [_key, frames] of frameGroups) {
+      if (frames.length > 1) {
+        const primary = frames[0];
+        for (let i = 1; i < frames.length; i++) {
+          this.mergeFrameInto(frames[i], primary, data);
+        }
+      }
+    }
+
+    // 남은 FRAME 중 flatten 대상 처리
+    for (const frame of toFlatten) {
+      if (frame.parent) {
+        this.flattenFrame(frame, data);
+      }
+    }
+
+    return root;
+  }
+
+  /**
+   * 한 FRAME의 내용을 다른 FRAME으로 병합
+   */
+  private mergeFrameInto(
+    source: InternalNode,
+    target: InternalNode,
+    data: PreparedDesignData
+  ): void {
+    // mergedNode 병합
+    target.mergedNode.push(...source.mergedNode);
+
+    // children 병합
+    for (const sourceChild of source.children) {
+      const matchingChild = target.children.find(
+        (c) => c.type === sourceChild.type && this.isSamePositionY(c, sourceChild, data)
+      );
+
+      if (matchingChild) {
+        matchingChild.mergedNode.push(...sourceChild.mergedNode);
+      } else {
+        sourceChild.parent = target;
+        target.children.push(sourceChild);
+      }
+    }
+
+    // source FRAME 제거
+    if (source.parent) {
+      source.parent.children = source.parent.children.filter((c) => c.id !== source.id);
+    }
+  }
+
+  /**
+   * 두 노드의 정규화된 y 좌표가 같은지 확인
+   */
+  private isSamePositionY(
+    node1: InternalNode,
+    node2: InternalNode,
+    data: PreparedDesignData
+  ): boolean {
+    const y1 = this.getNormalizedY(node1, data);
+    const y2 = this.getNormalizedY(node2, data);
+    if (y1 === null || y2 === null) return false;
+    return Math.abs(y1 - y2) <= 0.1;
+  }
+
+  /**
+   * FRAME을 flatten하여 children을 상위로 올림
+   *
+   * FRAME 안의 children 중:
+   * - 형제와 매칭되는 노드 → 형제에 병합 (FRAME에서 제거)
+   * - 매칭 안 되는 노드 → 상위로 이동
+   *
+   * 모든 children 처리 후 FRAME 제거
+   */
+  private flattenFrame(frame: InternalNode, data: PreparedDesignData): void {
+    if (!frame.parent) return;
+
+    const parent = frame.parent;
+    const frameIndex = parent.children.indexOf(frame);
+
+    // FRAME의 children 처리
+    const childrenToMove: InternalNode[] = [];
+
+    for (const child of frame.children) {
+      // 같은 타입/위치의 형제가 있으면 병합
+      const existingSibling = parent.children.find(
+        (sibling) =>
+          sibling.id !== frame.id &&
+          sibling.type === child.type &&
+          this.isSamePositionY(child, sibling, data)
+      );
+
+      if (existingSibling) {
+        // 기존 형제에 mergedNode 병합
+        existingSibling.mergedNode.push(...child.mergedNode);
+        // children도 병합
+        for (const grandChild of child.children) {
+          grandChild.parent = existingSibling;
+          existingSibling.children.push(grandChild);
+        }
+        // child는 FRAME에서 제거됨 (상위로 이동 안 함)
+      } else {
+        // 상위로 이동할 노드
+        childrenToMove.push(child);
+      }
+    }
+
+    // 상위로 이동할 children 추가
+    for (const child of childrenToMove) {
+      child.parent = parent;
+      parent.children.splice(frameIndex, 0, child);
+    }
+
+    // FRAME 제거
+    parent.children = parent.children.filter((c) => c.id !== frame.id);
   }
 
   /**
@@ -279,6 +460,8 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
   /**
    * 두 트리를 병합 (내부 사용)
    * BFS로 탐색하여 같은 노드는 mergedNode에 추가, 다른 노드는 트리에 추가
+   *
+   * depth 제한 없이 전체 트리에서 타입이 같고 위치가 비슷한 노드를 매칭
    */
   private mergeTree(
     pivot: InternalNode,
@@ -286,30 +469,33 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
     data: PreparedDesignData
   ): InternalNode {
     const nodesToAdd: Array<{ parent: InternalNode; node: InternalNode }> = [];
+    // 이미 매칭된 pivot 노드 추적 (중복 매칭 방지)
+    const matchedPivotIds = new Set<string>();
 
     // BFS로 target 트리 순회
-    const queue: Array<{ node: InternalNode; depth: number }> = [
-      { node: target, depth: 0 },
-    ];
+    const queue: Array<{ node: InternalNode }> = [{ node: target }];
 
     while (queue.length > 0) {
       const item = queue.shift();
       if (!item) continue;
-      const { node: targetNode, depth } = item;
+      const { node: targetNode } = item;
 
-      // 1. 같은 depth에서 동일 노드 찾기
-      const sameDepthNodes = this.getNodesAtDepth(pivot, depth);
-      const matchedNode = sameDepthNodes.find((pivotNode) =>
-        this.isSameInternalNode(targetNode, pivotNode, data)
+      // 1. 전체 트리에서 타입이 같은 노드 중 매칭되는 노드 찾기
+      const allNodesOfSameType = this.getAllNodesOfType(pivot, targetNode.type);
+      const matchedNode = allNodesOfSameType.find(
+        (pivotNode) =>
+          !matchedPivotIds.has(pivotNode.id) &&
+          this.isSameInternalNode(targetNode, pivotNode, data)
       );
 
       if (matchedNode) {
         // 같은 노드 발견 → mergedNode에 추가
         matchedNode.mergedNode.push(...targetNode.mergedNode);
+        matchedPivotIds.add(matchedNode.id);
       } else if (targetNode.parent) {
         // 부모와 매칭되는 pivot 노드 찾기
-        const parentDepthNodes = this.getNodesAtDepth(pivot, depth - 1);
-        const matchedParent = parentDepthNodes.find((pivotNode) =>
+        const allParentTypeNodes = this.getAllNodesOfType(pivot, targetNode.parent.type);
+        const matchedParent = allParentTypeNodes.find((pivotNode) =>
           this.isSameInternalNode(targetNode.parent!, pivotNode, data)
         );
 
@@ -320,7 +506,7 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
       // 자식 노드들을 큐에 추가
       for (const child of targetNode.children) {
-        queue.push({ node: child, depth: depth + 1 });
+        queue.push({ node: child });
       }
     }
 
@@ -331,6 +517,26 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
     }
 
     return pivot;
+  }
+
+  /**
+   * 트리에서 특정 타입의 모든 노드 반환
+   */
+  private getAllNodesOfType(root: InternalNode, type: string): InternalNode[] {
+    const result: InternalNode[] = [];
+    const queue: InternalNode[] = [root];
+
+    while (queue.length > 0) {
+      const node = queue.shift()!;
+      if (node.type === type) {
+        result.push(node);
+      }
+      for (const child of node.children) {
+        queue.push(child);
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -359,6 +565,9 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   /**
    * 두 InternalNode가 같은 노드인지 확인 (내부 사용)
+   *
+   * 루트 기준 정규화된 좌표로 비교하여 depth가 달라도 매칭 가능
+   * 정규화된 x, y 좌표(시작점) 차이가 0.1 이내면 같은 노드로 인식
    */
   private isSameInternalNode(
     node1: InternalNode,
@@ -368,37 +577,100 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
     // 타입이 다르면 다른 노드
     if (node1.type !== node2.type) return false;
 
-    // 같은 ID면 같은 노드 (경고 상황)
+    // 같은 ID면 같은 노드
     if (node1.id === node2.id) return true;
 
     // 부모가 없으면 (루트) → 루트끼리는 같음
     if (!node1.parent && !node2.parent) return true;
 
-    // IoU 계산
-    if (node1.bounds && node2.bounds && node1.parent && node2.parent) {
-      const parent1Spec = data.getNodeById(node1.parent.id);
-      const parent2Spec = data.getNodeById(node2.parent.id);
+    // 정규화된 좌표(시작점) 비교
+    const pos1 = this.getNormalizedPosition(node1, data);
+    const pos2 = this.getNormalizedPosition(node2, data);
+    if (!pos1 || !pos2) return false;
 
-      if (
-        parent1Spec?.absoluteBoundingBox &&
-        parent2Spec?.absoluteBoundingBox &&
-        parent1Spec.absoluteBoundingBox.width === parent2Spec.absoluteBoundingBox.width &&
-        parent1Spec.absoluteBoundingBox.height === parent2Spec.absoluteBoundingBox.height
-      ) {
-        const relBox1 = getRelativeBounds(node1.bounds, parent1Spec.absoluteBoundingBox);
-        const relBox2 = getRelativeBounds(node2.bounds, parent2Spec.absoluteBoundingBox);
+    // x, y 좌표 차이가 0.1 이내면 같은 노드
+    return Math.abs(pos1.x - pos2.x) <= 0.1 && Math.abs(pos1.y - pos2.y) <= 0.1;
+  }
 
-        const iou = calculateIoU(relBox1, relBox2);
-
-        // TEXT는 낮은 임계값 (10%), 그 외는 80%
-        const threshold = node1.type === "TEXT"
-          ? TreeBuilderConstants.TEXT_IOU_THRESHOLD
-          : TreeBuilderConstants.IOU_THRESHOLD;
-        if (iou < threshold) return false;
-      }
+  /**
+   * 노드의 정규화된 좌표 (원본 variant 루트 기준) 반환
+   *
+   * InternalNode 트리가 아닌 SceneNode 트리를 순회하여 원본 variant 루트를 찾음.
+   * 이렇게 해야 병합된 트리에서도 각 노드의 원래 variant 기준으로 정규화됨.
+   */
+  private getNormalizedPosition(node: InternalNode, data: PreparedDesignData): { x: number; y: number } | null {
+    const nodeSpec = data.getNodeById(node.id);
+    if (!nodeSpec?.absoluteBoundingBox) {
+      return null;
     }
 
-    return true;
+    // SceneNode 트리를 순회하여 원본 variant 루트 찾기
+    const rootSpec = this.findOriginalRoot(node.id, data);
+    if (!rootSpec?.absoluteBoundingBox) {
+      return null;
+    }
+
+    const rootBox = rootSpec.absoluteBoundingBox;
+    const nodeBox = nodeSpec.absoluteBoundingBox;
+
+    if (rootBox.width === 0 || rootBox.height === 0) return null;
+
+    return {
+      x: (nodeBox.x - rootBox.x) / rootBox.width,
+      y: (nodeBox.y - rootBox.y) / rootBox.height,
+    };
+  }
+
+  /**
+   * 노드의 정규화된 y 좌표 (원본 variant 루트 기준) 반환
+   *
+   * getNormalizedPosition의 y 좌표만 반환하는 헬퍼
+   */
+  private getNormalizedY(node: InternalNode, data: PreparedDesignData): number | null {
+    const pos = this.getNormalizedPosition(node, data);
+    return pos ? pos.y : null;
+  }
+
+  /**
+   * 노드 ID → 원본 variant 루트 ID 매핑 구축
+   *
+   * 각 variant의 모든 노드를 순회하여 원본 variant 루트 ID를 기록
+   */
+  private buildNodeToVariantRootMap(variants: SceneNode[]): void {
+    this.nodeToVariantRoot.clear();
+
+    const traverse = (node: SceneNode, variantRootId: string) => {
+      this.nodeToVariantRoot.set(node.id, variantRootId);
+      if ("children" in node && node.children) {
+        for (const child of node.children) {
+          traverse(child, variantRootId);
+        }
+      }
+    };
+
+    for (const variant of variants) {
+      traverse(variant, variant.id);
+    }
+  }
+
+  /**
+   * 노드 ID로 원본 variant 루트 SceneNode 찾기
+   */
+  private findOriginalRoot(nodeId: string, data: PreparedDesignData): SceneNode | null {
+    const variantRootId = this.nodeToVariantRoot.get(nodeId);
+    if (!variantRootId) return null;
+    return data.getNodeById(variantRootId) || null;
+  }
+
+  /**
+   * 노드의 루트 찾기 (InternalNode 트리 기준 - deprecated, 참조용으로 유지)
+   */
+  private getRoot(node: InternalNode): InternalNode {
+    let current = node;
+    while (current.parent) {
+      current = current.parent;
+    }
+    return current;
   }
 
   /**
