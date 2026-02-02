@@ -180,7 +180,9 @@ describe("compiler 테스트", () => {
       let Component: React.ComponentType<any>;
 
       beforeAll(async () => {
-        const compiler = new FigmaCodeGenerator(urockButtonSampleMockData as any);
+        const compiler = new FigmaCodeGenerator(
+          urockButtonSampleMockData as any
+        );
         const code = await compiler.getGeneratedCode();
 
         Component = await renderReactComponent(code!);
@@ -221,7 +223,9 @@ describe("compiler 테스트", () => {
          * }
          * 이 경우 type이 겹치는데 customType으로 이름이 변경된다.
          */
-        const compiler = new FigmaCodeGenerator(urockButtonSampleMockData as any);
+        const compiler = new FigmaCodeGenerator(
+          urockButtonSampleMockData as any
+        );
         const code = await compiler.getGeneratedCode();
 
         // type이 customType으로 변경되었는지 확인
@@ -232,7 +236,9 @@ describe("compiler 테스트", () => {
       });
 
       test("스타일 Record 객체에 모든 customType 값이 포함되어야 한다.", async () => {
-        const compiler = new FigmaCodeGenerator(urockButtonSampleMockData as any);
+        const compiler = new FigmaCodeGenerator(
+          urockButtonSampleMockData as any
+        );
         const code = await compiler.getGeneratedCode();
 
         // 모든 customType 값이 스타일 Record에 포함되어야 함
@@ -749,7 +755,6 @@ describe("compiler 테스트", () => {
   });
 });
 
-
 // === 한글 컴포넌트 이름 처리 테스트 ===
 describe("한글 컴포넌트 이름 처리", () => {
   // 간단한 mock 데이터 생성 함수 (FigmaNodeData 형태)
@@ -771,7 +776,9 @@ describe("한글 컴포넌트 이름 처리", () => {
   });
 
   test("한글만 있는 컴포넌트 이름도 유효한 함수 이름으로 변환되어야 한다", () => {
-    const compiler = new FigmaCodeGenerator(createMockData("버튼 컴포넌트") as any);
+    const compiler = new FigmaCodeGenerator(
+      createMockData("버튼 컴포넌트") as any
+    );
     const componentName = compiler.getComponentName();
 
     // 유효한 JavaScript 식별자여야 함 (Component + hash)
@@ -780,7 +787,9 @@ describe("한글 컴포넌트 이름 처리", () => {
   });
 
   test("한글+영문 혼합 컴포넌트 이름은 영문만 추출되어야 한다", () => {
-    const compiler = new FigmaCodeGenerator(createMockData("Button 버튼") as any);
+    const compiler = new FigmaCodeGenerator(
+      createMockData("Button 버튼") as any
+    );
     const componentName = compiler.getComponentName();
 
     // "Button"이 추출되어야 함

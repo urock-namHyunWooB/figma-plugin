@@ -173,8 +173,19 @@ class EmotionStyleStrategy implements IStyleStrategy {
   ): ts.Expression {
     const elements: ts.Expression[] = [];
 
-    // Base CSS
-    elements.push(this.factory.createIdentifier(cssVarName));
+    // Base CSS (variantProps가 있으면 함수 호출)
+    if (variantProps.length > 0) {
+      const args = variantProps.map((p) => this.factory.createIdentifier(p));
+      elements.push(
+        this.factory.createCallExpression(
+          this.factory.createIdentifier(cssVarName),
+          undefined,
+          args
+        )
+      );
+    } else {
+      elements.push(this.factory.createIdentifier(cssVarName));
+    }
 
     // Slot prop별 conditional expression
     for (const slotProp of slotProps) {
@@ -411,31 +422,81 @@ class EmotionStyleStrategy implements IStyleStrategy {
   /**
    * dynamic 스타일을 prop별로 그룹화
    * 복합 조건의 경우 모든 prop에 대해 그룹화
+   * 같은 prop/value에 여러 스타일이 있으면 공통 속성만 추출
    */
   private groupDynamicStylesByProp(
     dynamicStyles: StyleDefinition["dynamic"]
   ): Map<string, Map<string, Record<string, string | number>>> {
+    // 1단계: 모든 스타일 수집 (덮어쓰지 않고 배열로)
+    const collected = new Map<
+      string,
+      Map<string, Array<Record<string, string | number>>>
+    >();
+
+    for (const { condition, style } of dynamicStyles) {
+      const allConditions = this.extractAllConditions(condition);
+      if (allConditions.length === 0) continue;
+
+      for (const { propName, propValue } of allConditions) {
+        const normalizedPropName = propName.toLowerCase();
+        if (!collected.has(normalizedPropName)) {
+          collected.set(normalizedPropName, new Map());
+        }
+        const variants = collected.get(normalizedPropName)!;
+        if (!variants.has(propValue)) {
+          variants.set(propValue, []);
+        }
+        variants.get(propValue)!.push(style);
+      }
+    }
+
+    // 2단계: 각 prop/value에 대해 공통 속성만 추출
     const grouped = new Map<
       string,
       Map<string, Record<string, string | number>>
     >();
 
-    for (const { condition, style } of dynamicStyles) {
-      // 복합 조건에서 모든 prop 추출
-      const allConditions = this.extractAllConditions(condition);
-      if (allConditions.length === 0) continue;
-
-      // 각 prop에 대해 그룹화 (lowercase key 사용)
-      for (const { propName, propValue } of allConditions) {
-        const normalizedPropName = propName.toLowerCase();
-        if (!grouped.has(normalizedPropName)) {
-          grouped.set(normalizedPropName, new Map());
+    for (const [propName, variants] of collected.entries()) {
+      grouped.set(propName, new Map());
+      for (const [propValue, styles] of variants.entries()) {
+        if (styles.length === 1) {
+          // 스타일이 하나뿐이면 그대로 사용
+          grouped.get(propName)!.set(propValue, styles[0]);
+        } else {
+          // 여러 스타일이 있으면 공통 속성만 추출
+          const commonStyle = this.extractCommonStyles(styles);
+          if (Object.keys(commonStyle).length > 0) {
+            grouped.get(propName)!.set(propValue, commonStyle);
+          }
         }
-        grouped.get(normalizedPropName)!.set(propValue, style);
       }
     }
 
     return grouped;
+  }
+
+  /**
+   * 여러 스타일에서 공통 속성만 추출
+   * Size에 따라 달라지는 속성(fontSize 등)은 제외됨
+   */
+  private extractCommonStyles(
+    styles: Array<Record<string, string | number>>
+  ): Record<string, string | number> {
+    if (styles.length === 0) return {};
+    if (styles.length === 1) return styles[0];
+
+    const common: Record<string, string | number> = {};
+    const firstStyle = styles[0];
+
+    for (const [key, value] of Object.entries(firstStyle)) {
+      // 모든 스타일에서 동일한 값인지 확인
+      const isCommon = styles.every((s) => s[key] === value);
+      if (isCommon) {
+        common[key] = value;
+      }
+    }
+
+    return common;
   }
 
   /**
