@@ -57,13 +57,16 @@ class TreeBuilder implements ITreeBuilder {
     ctx = StyleProcessor.build(ctx); // → nodeStyles
     ctx = StyleProcessor.applyPositions(ctx); // nodeStyles에 position 추가
     ctx = StyleProcessor.handleRotation(ctx); // nodeStyles에 rotation 처리
-    ctx = PropsProcessor.bindProps(ctx); // → nodePropBindings
-    ctx = SlotProcessor.detectTextSlots(ctx); // propsMap, nodePropBindings 업데이트
-    ctx = VisibilityProcessor.resolve(ctx); // → conditionals
-    ctx = SlotProcessor.detectSlots(ctx); // → slots
-    ctx = SlotProcessor.detectArraySlots(ctx); // → arraySlots
     ctx = InstanceProcessor.buildExternalRefs(ctx); // → nodeExternalRefs
-    ctx = SlotProcessor.enrichArraySlotsWithComponentNames(ctx); // arraySlots에 itemComponentName 추가
+    ctx = VisibilityProcessor.resolve(ctx); // → conditionals
+
+    if (ctx.data.document.type === "COMPONENT_SET") {
+      ctx = PropsProcessor.bindProps(ctx); // → nodePropBindings
+      ctx = SlotProcessor.detectArraySlots(ctx); // → arraySlots
+      ctx = SlotProcessor.detectTextSlots(ctx); // propsMap, nodePropBindings 업데이트
+      ctx = SlotProcessor.detectSlots(ctx); // → slots
+      ctx = SlotProcessor.enrichArraySlotsWithComponentNames(ctx); // arraySlots에 itemComponentName 추가
+    }
 
     ctx = NodeConverter.assemble(ctx); // → root
 

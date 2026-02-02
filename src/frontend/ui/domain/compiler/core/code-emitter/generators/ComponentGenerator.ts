@@ -510,9 +510,11 @@ class ComponentGenerator {
     // 첫 번째 entry에서 prop 이름 추출 ("Size=Normal" → "size")
     const [firstKey] = entries[0];
     const propMatch = firstKey.match(/^([^=]+)=(.+)$/);
-    const propName = propMatch
+    const rawPropName = propMatch
       ? propMatch[1].toLowerCase()
       : "variant";
+    // HTML 속성과 충돌하는 이름은 custom prefix 적용 (checked → customChecked)
+    const propName = this.renameConflictingPropName(rawPropName);
 
     // SVG를 JSX로 변환
     const svgToJsx = new SvgToJsx();

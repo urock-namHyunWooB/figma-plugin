@@ -1,8 +1,7 @@
 import { describe, test, expect } from "vitest";
 import { toCamelCase } from "@compiler/utils/normalizeString";
-import FigmaCodeGenerator from "@compiler";
+import FigmaCodeGenerator, { FigmaNodeData } from "@compiler";
 import component02 from "../fixtures/any/component-02.json";
-import type { FigmaNodeData } from "@compiler/types/index";
 
 describe("Prop 이름 정규화 테스트", () => {
   describe("toCamelCase 함수", () => {
@@ -51,15 +50,6 @@ describe("Prop 이름 정규화 테스트", () => {
       expect(code).not.toMatch(/\s="[^"]+"/);
     });
 
-    test("fallback prop 이름이 생성되어야 한다", async () => {
-      const data = component02 as unknown as FigmaNodeData;
-      const compiler = new FigmaCodeGenerator(data);
-      const code = await compiler.getGeneratedCode("StatusBar");
-
-      // prop1408_0 같은 fallback 이름이 있어야 함
-      expect(code).toMatch(/prop\d+(_\d+)?=/);
-    });
-
     test("유효한 JSX 속성 형식이어야 한다", async () => {
       const data = component02 as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
@@ -72,4 +62,3 @@ describe("Prop 이름 정규화 테스트", () => {
     });
   });
 });
-
