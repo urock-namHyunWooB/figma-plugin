@@ -454,7 +454,67 @@ class DependencyManager {
     }
     codeParts.push(finalMainCode);
 
-    return codeParts.join("\n");
+    const bundledCode = codeParts.join("\n");
+    return this._deduplicateCssVariables(bundledCode);
+  }
+
+  /**
+   * CSS 변수 중복 제거
+   * 동일한 CSS 내용을 가진 변수들을 하나로 합침
+   */
+  private _deduplicateCssVariables(code: string): string {
+    // CSS 변수 선언 추출: const VarName = css`...`
+    const cssVarPattern = /const\s+(\w+)\s*=\s*css\s*`([^`]+)`/g;
+
+    // 내용별로 변수명 그룹핑
+    const contentToVarNames = new Map<string, string[]>();
+
+    let match;
+    while ((match = cssVarPattern.exec(code)) !== null) {
+      const varName = match[1];
+      const cssContent = match[2];
+      // 정규화: 공백 통일
+      const normalizedContent = cssContent.replace(/\s+/g, " ").trim();
+
+      if (!contentToVarNames.has(normalizedContent)) {
+        contentToVarNames.set(normalizedContent, []);
+      }
+      contentToVarNames.get(normalizedContent)!.push(varName);
+    }
+
+    // 중복 변수 → 대표 변수 매핑
+    const renameMap = new Map<string, string>();
+    for (const varNames of contentToVarNames.values()) {
+      if (varNames.length > 1) {
+        const primaryVar = varNames[0]; // 첫 번째 것을 유지
+        for (let i = 1; i < varNames.length; i++) {
+          renameMap.set(varNames[i], primaryVar);
+        }
+      }
+    }
+
+    if (renameMap.size === 0) {
+      return code; // 중복 없음
+    }
+
+    let result = code;
+
+    // 1. 중복 변수의 선언 제거
+    for (const duplicateVar of renameMap.keys()) {
+      const declarationPattern = new RegExp(
+        `const\\s+${duplicateVar}\\s*=\\s*css\\s*\`[^\`]+\`;?\\s*\\n?`,
+        "g"
+      );
+      result = result.replace(declarationPattern, "");
+    }
+
+    // 2. 참조 치환 (css={DuplicateVar} → css={PrimaryVar})
+    for (const [oldVar, newVar] of renameMap.entries()) {
+      const usagePattern = new RegExp(`\\b${oldVar}\\b`, "g");
+      result = result.replace(usagePattern, newVar);
+    }
+
+    return result;
   }
 
   /**
