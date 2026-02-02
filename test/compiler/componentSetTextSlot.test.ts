@@ -16,10 +16,7 @@ import path from "path";
  * - TEXT 노드 slot 변환 로직 추가
  */
 describe("COMPONENT_SET 내부 TEXT 노드 slot 변환", () => {
-  const fixturePath = path.join(
-    __dirname,
-    "../fixtures/any/Headersub.json"
-  );
+  const fixturePath = path.join(__dirname, "../fixtures/any/Headersub.json");
 
   it("COMPONENT_SET의 TEXT 노드가 slot으로 변환되어야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
@@ -81,7 +78,7 @@ describe("COMPONENT_SET 내부 TEXT 노드 slot 변환", () => {
     }
   });
 
-  it("slot이 null로 렌더링되어야 한다", async () => {
+  it("slot이 적절한 기본값으로 렌더링되어야 한다", async () => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
     const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
@@ -96,10 +93,12 @@ describe("COMPONENT_SET 내부 TEXT 노드 slot 변환", () => {
     if (functionMatch) {
       const functionCode = functionMatch[0];
 
-      // slot이 null로 기본값 설정되어야 함
+      // INSTANCE slot은 null로 기본값 설정
       expect(functionCode).toMatch(/normalResponsive\s*=\s*null/);
-      expect(functionCode).toMatch(/text\s*=\s*null/);
       expect(functionCode).toMatch(/rightIcon\s*=\s*null/);
+
+      // TEXT slot은 원본 텍스트를 기본값으로 사용
+      expect(functionCode).toMatch(/text\s*=\s*["'].*["']/);
     }
   });
 
