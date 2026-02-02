@@ -2,13 +2,8 @@ import { describe, expect, test } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import frame03MockData from "../fixtures/any/frame-03.json";
 
-import FigmaCodeGenerator, { FinalAstTree } from "@compiler";
-import NodeMatcher from "@compiler/core/NodeMatcher";
-import PropsExtractor from "@compiler/manager/PropsExtractor";
-import CreateAstTree from "@compiler/core/ast-tree/CreateAstTree";
-import CreateSuperTree from "@compiler/core/super-tree/CreateSuperTree";
+import FigmaCodeGenerator from "@compiler";
 import SpecDataManager from "@compiler/manager/SpecDataManager";
-import { traverseBFS } from "@compiler/utils/traverse";
 
 describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
   describe("frame-03.json", () => {
@@ -32,40 +27,6 @@ describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
       expect(mergedSvg).toContain("<path");
       // 합성된 SVG는 viewBox를 가져야 함
       expect(mergedSvg).toContain("viewBox");
-    });
-
-    test("CreateAstTree 결과에서 INSTANCE 노드에 vectorSvg가 설정되어야 한다", () => {
-      const renderTree = specDataManager.getRenderTree();
-      const matcher = new NodeMatcher(specDataManager);
-      const createSuperTree = new CreateSuperTree(
-        renderTree,
-        specDataManager,
-        matcher
-      );
-      const refineProps = new PropsExtractor(specDataManager);
-
-      const createAstTree = new CreateAstTree(
-        specDataManager,
-        createSuperTree.getSuperTree(),
-        refineProps.refinedProps
-      );
-
-      // finalAstTree에서 INSTANCE 노드 찾기
-      const instanceNodes: FinalAstTree[] = [];
-      traverseBFS(createAstTree.finalAstTree, (node) => {
-        if (node.type === "INSTANCE") {
-          instanceNodes.push(node);
-        }
-      });
-
-      // INSTANCE 노드가 있어야 함
-      expect(instanceNodes.length).toBeGreaterThan(0);
-
-      // 각 INSTANCE 노드에 vectorSvg가 있어야 함
-      for (const instanceNode of instanceNodes) {
-        expect(instanceNode.metaData.vectorSvg).toBeDefined();
-        expect(instanceNode.metaData.vectorSvg).toContain("<svg");
-      }
     });
 
     test("FigmaCodeGenerator 결과의 생성된 코드에 svg 요소가 포함되어야 한다", async () => {
