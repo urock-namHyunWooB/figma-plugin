@@ -114,7 +114,8 @@ export class VisibilityProcessor
         },
         ctx.totalVariantCount,
         ctx.propsMap!,
-        instance.parseVariantCondition.bind(instance)
+        // visibility용으로 State 조건만 파싱 (Size, Left Icon 등은 CSS 동적 스타일로 처리)
+        instance.parseStateConditionOnly.bind(instance)
       );
       if (result.conditionalRule) {
         conditionals.push(result.conditionalRule);
@@ -133,6 +134,10 @@ export class VisibilityProcessor
   // ConditionParser Methods
   // ==========================================================================
 
+  /**
+   * variant 이름에서 모든 조건 파싱 (스타일 동적 적용용)
+   * Size, Left Icon 등 모든 prop 조건 포함
+   */
   public parseVariantCondition(variantName: string): ConditionNode | null {
     if (!variantName) return null;
 
@@ -149,6 +154,28 @@ export class VisibilityProcessor
     }
 
     return this.combineConditionsWithAnd(conditions);
+  }
+
+  /**
+   * variant 이름에서 State 조건만 파싱 (visibility용)
+   * CSS 변환 불가능한 State만 조건으로 반환 (Error, Insert 등)
+   * Size, Left Icon 등 다른 prop은 무시
+   */
+  public parseStateConditionOnly(variantName: string): ConditionNode | null {
+    if (!variantName) return null;
+
+    for (const pair of variantName.split(",").map((s) => s.trim())) {
+      const [key, value] = pair.split("=").map((s) => s.trim());
+      if (!key || !value) continue;
+      // State만 처리
+      if (key.toLowerCase() !== "state") continue;
+      // CSS 변환 가능한 State는 무시
+      if (isCssConvertibleState(value)) continue;
+      // CSS 변환 불가능한 State만 조건으로 반환
+      return this.createBinaryCondition(toCamelCase(key), value);
+    }
+
+    return null;
   }
 
   public createPropCondition(propName: string): ConditionNode {
