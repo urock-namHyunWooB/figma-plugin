@@ -29,7 +29,7 @@ describe("Case.json visible override 이슈", () => {
     expect(largeCode).toMatch(/showInteraction\?:\s*boolean/);
   });
 
-  it("should pass showInteraction={true} for Pressed button", async () => {
+  it("should not pass showInteraction when visible is not overridden", async () => {
     const fixtureData = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
     const compiler = new FigmaCodeGenerator(fixtureData);
@@ -38,8 +38,11 @@ describe("Case.json visible override 이슈", () => {
     // 메인 코드 확인
     const mainCode = result.mainComponent.code;
 
-    // Pressed 버튼 (decorateInteractiveBg prop이 있는 Large)에 showInteraction={true} 확인
-    expect(mainCode).toContain("showInteraction={true}");
+    // fixture에서 Interaction 노드의 visible override가 없으므로
+    // showInteraction prop이 전달되지 않아야 함
+    // (opacity override만 있음: decorateInteractiveOpacity)
+    expect(mainCode).not.toContain("showInteraction={true}");
+    expect(mainCode).toContain("decorateInteractiveOpacity");
   });
 
   it("should apply correct styles to Large dependency (width: 343px, position: relative)", async () => {
