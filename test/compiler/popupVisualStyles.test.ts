@@ -41,10 +41,10 @@ describe("Popup 시각적 스타일 제거 검증", () => {
 
     // Left Button: Neutral (#595B5E)
     expect(leftBtnMatch![1]).toContain("background");
-    expect(leftBtnMatch![1]).toContain("#595B5E");
+    expect(leftBtnMatch![1].toLowerCase()).toContain("#595b5e");
 
     // Right Button: Primary (#0050FF)
     expect(rightBtnMatch![1]).toContain("background");
-    expect(rightBtnMatch![1]).toMatch(/#0050FF|--Primary-Normal/);
+    expect(rightBtnMatch![1].toLowerCase()).toMatch(/#0050ff|--primary-normal/);
   });
 });
