@@ -99,6 +99,7 @@ export class NodeConverter {
         variantSvgs: semanticResult?.variantSvgs,
         textContent,
         textSegments,
+        conditions: internal.conditions,
       };
     });
 

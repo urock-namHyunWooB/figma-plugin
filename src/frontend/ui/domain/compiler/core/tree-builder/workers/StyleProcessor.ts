@@ -9,7 +9,7 @@
  */
 
 import type { StyleDefinition, PreparedDesignData } from "@compiler/types/architecture";
-import type { ConditionNode, PseudoClass } from "@compiler/types/customType";
+import type { ConditionNode } from "@compiler/types/customType";
 import type {
   IStyleClassifier,
   IPositionStyler,
@@ -22,6 +22,7 @@ import type {
 } from "./interfaces";
 import { VisibilityProcessor } from "./VisibilityProcessor";
 import { traverseTree } from "./utils/treeUtils";
+import { stateToPseudo } from "./utils/stateUtils";
 
 // ============================================================================
 // Types
@@ -36,45 +37,6 @@ export interface StyleBuildInput {
 }
 
 // PositionableNode is imported from ./interfaces
-
-/**
- * State prop 값과 CSS pseudo-class 매핑
- */
-const STATE_TO_PSEUDO: Record<string, PseudoClass | null> = {
-  // Hover states
-  hover: ":hover",
-  hovered: ":hover",
-  hovering: ":hover",
-
-  // Active states
-  active: ":active",
-  pressed: ":active",
-  pressing: ":active",
-  clicked: ":active",
-
-  // Focus states
-  focus: ":focus",
-  focused: ":focus",
-  "focus-visible": ":focus-visible",
-
-  // Disabled states
-  disabled: ":disabled",
-  inactive: ":disabled",
-
-  // Default states (no pseudo-class)
-  default: null,
-  normal: null,
-  enabled: null,
-  rest: null,
-  idle: null,
-
-  // Checked/Selected states
-  selected: ":checked",
-  checked: ":checked",
-
-  // Visited state
-  visited: ":visited",
-};
 
 // ============================================================================
 // StyleProcessor Class
@@ -213,17 +175,6 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
   }
 
   /**
-   * State 값을 CSS pseudo-class로 변환
-   */
-  public stateToPseudo(state: string): PseudoClass | null | undefined {
-    const normalizedState = state.toLowerCase();
-    if (normalizedState in STATE_TO_PSEUDO) {
-      return STATE_TO_PSEUDO[normalizedState];
-    }
-    return undefined;
-  }
-
-  /**
    * variant 스타일들을 분류하여 StyleDefinition 생성
    */
   public classifyStyles(
@@ -263,7 +214,7 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
     for (const vs of variantStyles) {
       const state = this.extractStateFromVariantName(vs.variantName);
-      const pseudoClass = state ? this.stateToPseudo(state) : undefined;
+      const pseudoClass = state ? stateToPseudo(state) : undefined;
 
       const dynamicStyle: Record<string, string | number> = {};
       for (const key of dynamicKeys) {

@@ -347,11 +347,27 @@ class ComponentGenerator {
         const condition = this.convertConditionToTsExpression(
           child.conditions[0].condition
         );
-        const conditionalJsx = this.wrapWithConditionalRendering(
-          condition,
-          childJsx as ts.JsxElement | ts.JsxSelfClosingElement
-        );
-        children.push(conditionalJsx);
+        // JsxExpression인 경우 (slot 등) 조건을 앞에 결합
+        if (ts.isJsxExpression(childJsx)) {
+          const innerExpr = childJsx.expression;
+          if (innerExpr) {
+            // condition && (기존 expression)
+            const combinedExpr = this.factory.createBinaryExpression(
+              condition,
+              this.factory.createToken(ts.SyntaxKind.AmpersandAmpersandToken),
+              this.factory.createParenthesizedExpression(innerExpr)
+            );
+            children.push(this.factory.createJsxExpression(undefined, combinedExpr));
+          } else {
+            children.push(childJsx);
+          }
+        } else {
+          const conditionalJsx = this.wrapWithConditionalRendering(
+            condition,
+            childJsx as ts.JsxElement | ts.JsxSelfClosingElement
+          );
+          children.push(conditionalJsx);
+        }
       } else {
         children.push(childJsx as ts.JsxChild);
       }

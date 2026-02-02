@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { StyleProcessor } from "./StyleProcessor";
+import { stateToPseudo, isCssConvertibleState } from "./utils/stateUtils";
 
 const processor = new StyleProcessor();
 
@@ -29,37 +30,37 @@ describe("StyleProcessor", () => {
   describe("stateToPseudo()", () => {
     it("should map State values to CSS pseudo-classes (case-insensitive)", () => {
       // Hover states
-      expect(processor.stateToPseudo("Hover")).toBe(":hover");
-      expect(processor.stateToPseudo("hover")).toBe(":hover");
-      expect(processor.stateToPseudo("HOVER")).toBe(":hover");
-      expect(processor.stateToPseudo("Hovered")).toBe(":hover");
+      expect(stateToPseudo("Hover")).toBe(":hover");
+      expect(stateToPseudo("hover")).toBe(":hover");
+      expect(stateToPseudo("HOVER")).toBe(":hover");
+      expect(stateToPseudo("Hovered")).toBe(":hover");
 
       // Active states
-      expect(processor.stateToPseudo("Active")).toBe(":active");
-      expect(processor.stateToPseudo("Pressed")).toBe(":active");
+      expect(stateToPseudo("Active")).toBe(":active");
+      expect(stateToPseudo("Pressed")).toBe(":active");
 
       // Focus states
-      expect(processor.stateToPseudo("Focus")).toBe(":focus");
-      expect(processor.stateToPseudo("Focused")).toBe(":focus");
+      expect(stateToPseudo("Focus")).toBe(":focus");
+      expect(stateToPseudo("Focused")).toBe(":focus");
 
       // Disabled states
-      expect(processor.stateToPseudo("Disabled")).toBe(":disabled");
-      expect(processor.stateToPseudo("Inactive")).toBe(":disabled");
+      expect(stateToPseudo("Disabled")).toBe(":disabled");
+      expect(stateToPseudo("Inactive")).toBe(":disabled");
 
       // Selected/Checked states
-      expect(processor.stateToPseudo("Selected")).toBe(":checked");
-      expect(processor.stateToPseudo("Checked")).toBe(":checked");
+      expect(stateToPseudo("Selected")).toBe(":checked");
+      expect(stateToPseudo("Checked")).toBe(":checked");
     });
 
     it("should return null for default/normal states (no pseudo-class)", () => {
-      expect(processor.stateToPseudo("Default")).toBeNull();
-      expect(processor.stateToPseudo("Normal")).toBeNull();
-      expect(processor.stateToPseudo("Rest")).toBeNull();
+      expect(stateToPseudo("Default")).toBeNull();
+      expect(stateToPseudo("Normal")).toBeNull();
+      expect(stateToPseudo("Rest")).toBeNull();
     });
 
     it("should return undefined for unknown states", () => {
-      expect(processor.stateToPseudo("Unknown")).toBeUndefined();
-      expect(processor.stateToPseudo("CustomState")).toBeUndefined();
+      expect(stateToPseudo("Unknown")).toBeUndefined();
+      expect(stateToPseudo("CustomState")).toBeUndefined();
     });
   });
 

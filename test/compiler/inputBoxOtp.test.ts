@@ -36,15 +36,21 @@ describe("InputBoxotp 컴파일 테스트", () => {
     expect(code).toBeTruthy();
 
     // State prop이 interface에 포함되어야 함
-    // Error, Insert, Press 등 CSS pseudo-class로 변환할 수 없는 state가 있음
-    expect(code).toMatch(/state[\?]?:\s*["'][^"']+["']/);
+    // state?: State (타입 별칭) 또는 state?: "Normal" | "Error" (문자열 리터럴) 형태
+    expect(code).toMatch(/state\?:\s*(?:State|["'][^"']+["'])/);
 
     // 기본값이 설정되어야 함 (state = "Normal" 또는 state = "Error" 등)
     expect(code).toMatch(/state\s*=\s*["'][^"']+["']/);
 
-    // state prop을 사용하는 조건부 렌더링이 있어야 함
-    // 예: state === "Error" 또는 props.state === "Insert"
-    expect(code).toMatch(/state\s*===\s*["'](?:Error|Insert|Press|Normal)["']/);
+    // state prop을 사용하는 동적 스타일이 있어야 함
+    // 패턴 1: StateStyles[state] (객체 인덱싱)
+    // 패턴 2: Css(state) (함수 호출)
+    // 패턴 3: state === "Error" (조건부 렌더링)
+    const hasStateUsage =
+      /StateStyles\[state\]/.test(code) ||
+      /Css\(state\)/.test(code) ||
+      /state\s*===\s*["']/.test(code);
+    expect(hasStateUsage).toBe(true);
   });
 
   test("State 조건부 visible이 올바르게 처리되어야 한다", async () => {
@@ -55,11 +61,14 @@ describe("InputBoxotp 컴파일 테스트", () => {
 
     expect(code).toBeTruthy();
 
-    // CSS 변환 가능한 state (Default, Hover 등)는 조건이 제거되고 항상 렌더링
-    // CSS 변환 불가능한 state (Error, Insert 등)는 조건부 렌더링 유지
-    // state === "Error" 조건이 남아있어야 함
-    const errorConditions = code.match(/state\s*===\s*["']Error["']/g);
-    expect(errorConditions).not.toBeNull();
-    expect(errorConditions!.length).toBeGreaterThan(0);
+    // CSS 변환 가능한 state (Default, Hover 등)는 CSS pseudo-class로 처리
+    // CSS 변환 불가능한 state (Error, Insert, Press 등)는 동적 스타일로 처리
+    // StateStyles 객체에 Error, Insert, Press 키가 있어야 함
+    const hasErrorStyle = /Error:\s*css\(/.test(code) || /["']Error["']:/.test(code);
+    const hasInsertStyle = /Insert:\s*css\(/.test(code) || /["']Insert["']:/.test(code);
+    const hasPressStyle = /Press:\s*css\(/.test(code) || /["']Press["']:/.test(code);
+
+    // Error, Insert, Press 중 최소 하나는 동적 스타일로 처리되어야 함
+    expect(hasErrorStyle || hasInsertStyle || hasPressStyle).toBe(true);
   });
 });

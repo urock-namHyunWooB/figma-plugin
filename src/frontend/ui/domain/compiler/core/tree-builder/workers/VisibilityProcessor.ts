@@ -26,6 +26,7 @@ import type {
 import type { InternalNode } from "./VariantProcessor";
 import { toCamelCase } from "./utils/stringUtils";
 import { traverseTree } from "./utils/treeUtils";
+import { isCssConvertibleState } from "./utils/stateUtils";
 
 // ============================================================================
 // Types
@@ -117,6 +118,11 @@ export class VisibilityProcessor
       );
       if (result.conditionalRule) {
         conditionals.push(result.conditionalRule);
+        // 노드에 직접 조건 설정
+        if (!node.conditions) {
+          node.conditions = [];
+        }
+        node.conditions.push(result.conditionalRule);
       }
     });
 
@@ -134,7 +140,10 @@ export class VisibilityProcessor
 
     for (const pair of variantName.split(",").map((s) => s.trim())) {
       const [key, value] = pair.split("=").map((s) => s.trim());
-      if (!key || !value || key.toLowerCase() === "state") continue;
+      if (!key || !value) continue;
+      // CSS 변환 가능한 State만 무시 (hover, active, focus, disabled, default 등)
+      // Error, Insert, Press 등 CSS 변환 불가능한 State는 조건으로 파싱
+      if (key.toLowerCase() === "state" && isCssConvertibleState(value)) continue;
       // Keep original case for value (e.g., "Large", "Medium") to match prop values
       conditions.push(this.createBinaryCondition(toCamelCase(key), value));
     }

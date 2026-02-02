@@ -5,6 +5,7 @@
  */
 
 import type { FigmaFill } from "../utils/instanceUtils";
+import type { ConditionalRule } from "@compiler/types/architecture";
 
 // ============================================================================
 // Figma Types for Override Handling
@@ -52,6 +53,8 @@ export interface InternalNode {
     width: number;
     height: number;
   };
+  /** Visibility 조건 (CSS 변환 불가능한 State 등) */
+  conditions?: ConditionalRule[];
 }
 
 // Re-export FigmaFill for convenience
