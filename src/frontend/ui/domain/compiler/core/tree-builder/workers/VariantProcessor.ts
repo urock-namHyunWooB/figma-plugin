@@ -566,8 +566,8 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
   /**
    * 두 InternalNode가 같은 노드인지 확인 (내부 사용)
    *
-   * 루트 기준 정규화된 좌표로 비교하여 depth가 달라도 매칭 가능
-   * 정규화된 x, y 좌표(시작점) 차이가 0.1 이내면 같은 노드로 인식
+   * 1차: 정규화된 좌표 비교 (0.1 이내면 같은 노드)
+   * 2차: TEXT 노드만 이름 기반 매칭 (size variant에서 같은 텍스트 병합)
    */
   private isSameInternalNode(
     node1: InternalNode,
@@ -583,13 +583,27 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
     // 부모가 없으면 (루트) → 루트끼리는 같음
     if (!node1.parent && !node2.parent) return true;
 
-    // 정규화된 좌표(시작점) 비교
+    // 1차: 정규화된 좌표(시작점) 비교
     const pos1 = this.getNormalizedPosition(node1, data);
     const pos2 = this.getNormalizedPosition(node2, data);
-    if (!pos1 || !pos2) return false;
+    if (pos1 && pos2) {
+      const posMatch = Math.abs(pos1.x - pos2.x) <= 0.1 && Math.abs(pos1.y - pos2.y) <= 0.1;
+      if (posMatch) return true;
+    }
 
-    // x, y 좌표 차이가 0.1 이내면 같은 노드
-    return Math.abs(pos1.x - pos2.x) <= 0.1 && Math.abs(pos1.y - pos2.y) <= 0.1;
+    // 2차: TEXT 노드만 이름 기반 매칭
+    // size variant에서 같은 텍스트가 다른 위치에 있어도 병합되도록
+    // 단, 부모 타입이 같아야 함 (다른 구조의 같은 이름 텍스트 구분)
+    if (node1.type === "TEXT" && node1.name === node2.name) {
+      const parent1Type = node1.parent?.type;
+      const parent2Type = node2.parent?.type;
+      // 부모 타입이 같으면 같은 역할의 텍스트로 간주
+      if (parent1Type && parent2Type && parent1Type === parent2Type) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**

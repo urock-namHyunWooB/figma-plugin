@@ -105,16 +105,23 @@ export class VisibilityProcessor
 
     traverseTree(ctx.internalTree, (node) => {
       const nodeSpec = ctx.data.getNodeById(node.id);
+      // Type별 visibility 차이 분석
+      const typeBasedCondition = instance.analyzeTypeBasedVisibility(
+        node.mergedNode || [],
+        ctx.totalVariantCount,
+        ctx.data
+      );
+
       const result = instance.resolveVisibility(
         {
           nodeId: node.id,
           mergedNodes: node.mergedNode || [],
           visibleRef: nodeSpec?.componentPropertyReferences?.visible,
-          hiddenCondition: ctx.hiddenConditions!.get(node.id),
+          hiddenCondition: ctx.hiddenConditions!.get(node.id) || typeBasedCondition,
         },
         ctx.totalVariantCount,
         ctx.propsMap!,
-        // visibility용으로 State 조건만 파싱 (Size, Left Icon 등은 CSS 동적 스타일로 처리)
+        // visibility용으로 State 조건만 파싱 (Type은 별도 분석)
         instance.parseStateConditionOnly.bind(instance)
       );
       if (result.conditionalRule) {
@@ -167,8 +174,9 @@ export class VisibilityProcessor
     for (const pair of variantName.split(",").map((s) => s.trim())) {
       const [key, value] = pair.split("=").map((s) => s.trim());
       if (!key || !value) continue;
-      // State만 처리
-      if (key.toLowerCase() !== "state") continue;
+      const keyLower = key.toLowerCase();
+      // State 또는 States만 처리
+      if (keyLower !== "state" && keyLower !== "states") continue;
       // CSS 변환 가능한 State는 무시
       if (isCssConvertibleState(value)) continue;
       // CSS 변환 불가능한 State만 조건으로 반환
@@ -176,6 +184,97 @@ export class VisibilityProcessor
     }
 
     return null;
+  }
+
+  /**
+   * Type 기반 visibility 분석
+   * 특정 Type(예: icon-*)에서만 노드가 없으면 해당 조건 생성
+   */
+  public analyzeTypeBasedVisibility(
+    mergedNodes: MergedNodeWithVariant[],
+    totalVariantCount: number,
+    data: PreparedDesignData
+  ): ConditionNode | null {
+    // 모든 variant에 존재하면 조건 불필요
+    if (mergedNodes.length >= totalVariantCount) return null;
+    // 아무 variant에도 없으면 다른 로직에서 처리
+    if (mergedNodes.length === 0) return null;
+
+    // variant에서 Type 값 추출
+    const presentTypes = new Set<string>();
+    for (const node of mergedNodes) {
+      const type = this.extractTypeFromVariantName(node.variantName);
+      if (type) presentTypes.add(type);
+    }
+
+    // Type 값이 없으면 (Type prop이 없는 컴포넌트) 조건 불필요
+    if (presentTypes.size === 0) return null;
+
+    // 모든 가능한 Type 값 수집 (COMPONENT_SET의 componentPropertyDefinitions에서)
+    const allTypes = this.getAllTypeValues(data);
+    if (allTypes.size === 0) return null;
+
+    // 노드가 없는 Type들
+    const absentTypes = new Set<string>();
+    for (const type of allTypes) {
+      if (!presentTypes.has(type)) {
+        absentTypes.add(type);
+      }
+    }
+
+    // 노드가 없는 Type이 없으면 조건 불필요
+    if (absentTypes.size === 0) return null;
+
+    // icon-* 패턴 분석: 모든 absent types가 icon-으로 시작하면 icon 패턴
+    const allAbsentAreIcon = Array.from(absentTypes).every(t => t.startsWith("icon-") || t.startsWith("icon_"));
+
+    if (allAbsentAreIcon && absentTypes.size > 0) {
+      // icon-* 타입이 아닐 때만 보임
+      // customType이 presentTypes 중 하나일 때 보임
+      const conditions = Array.from(presentTypes).map(type =>
+        this.createBinaryCondition("customType", type)
+      );
+      if (conditions.length > 0) {
+        return this.combineConditionsWithOr(conditions);
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * variant 이름에서 Type 값 추출
+   */
+  private extractTypeFromVariantName(variantName: string): string | null {
+    if (!variantName) return null;
+    for (const pair of variantName.split(",").map(s => s.trim())) {
+      const [key, value] = pair.split("=").map(s => s.trim());
+      if (key?.toLowerCase() === "type" && value) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * COMPONENT_SET에서 모든 Type 값 수집
+   */
+  private getAllTypeValues(data: PreparedDesignData): Set<string> {
+    const types = new Set<string>();
+    const propDefs = data.document.componentPropertyDefinitions;
+    if (!propDefs) return types;
+
+    // "type" 또는 "Type" prop 찾기
+    for (const [key, def] of Object.entries(propDefs)) {
+      if (key.toLowerCase() === "type" && def.type === "VARIANT" && def.variantOptions) {
+        for (const option of def.variantOptions) {
+          types.add(option);
+        }
+        break;
+      }
+    }
+
+    return types;
   }
 
   public createPropCondition(propName: string): ConditionNode {
