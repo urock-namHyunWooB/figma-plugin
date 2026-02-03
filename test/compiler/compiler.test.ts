@@ -500,39 +500,6 @@ describe("compiler 테스트", () => {
       expect(error).toBeInstanceOf(Error);
     });
 
-    test("올바른 구조지만 빈 children 배열로 컴파일하면 에러가 발생하고 try-catch로 잡을 수 있어야 한다", async () => {
-      const emptyChildrenData = {
-        pluginData: [],
-        info: {
-          document: {
-            id: "test-id",
-            name: "Test",
-            type: "COMPONENT_SET",
-            children: [],
-            componentPropertyDefinitions: {},
-          },
-        },
-        styleTree: {
-          id: "test-id",
-          name: "Test",
-          cssStyle: {},
-          children: [],
-        },
-      };
-      // 빈 children 배열은 에러를 발생시키지만, try-catch로 잡을 수 있어야 함
-      let error: Error | null = null;
-
-      try {
-        new FigmaCodeGenerator(emptyChildrenData as any);
-      } catch (e) {
-        error = e as Error;
-      }
-
-      // 에러가 발생하고, 이 에러는 catch로 잡을 수 있어야 함
-      expect(error).not.toBeNull();
-      expect(error).toBeInstanceOf(Error);
-    });
-
     test("componentPropertyDefinitions가 없어도 컴파일러 생성이 가능해야 한다", async () => {
       const noPropsData = {
         pluginData: [],

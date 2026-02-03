@@ -476,8 +476,25 @@ class EmotionStyleStrategy implements IStyleStrategy {
   }
 
   /**
+   * CSS 변수에서 fallback 값 추출
+   * "var(--Color-text-00, #FFF)" → "#FFF"
+   * "18px" → "18px" (그대로)
+   */
+  private extractCssVarFallback(value: string | number): string {
+    if (typeof value !== "string") return String(value);
+
+    // var(--xxx, fallback) 패턴 매칭
+    const match = value.match(/^var\([^,]+,\s*(.+)\)$/);
+    if (match) {
+      return match[1].trim();
+    }
+    return value;
+  }
+
+  /**
    * 여러 스타일에서 공통 속성만 추출
    * Size에 따라 달라지는 속성(fontSize 등)은 제외됨
+   * CSS 변수와 raw 값이 섞여 있어도 fallback 값이 같으면 동일하게 처리
    */
   private extractCommonStyles(
     styles: Array<Record<string, string | number>>
@@ -489,10 +506,21 @@ class EmotionStyleStrategy implements IStyleStrategy {
     const firstStyle = styles[0];
 
     for (const [key, value] of Object.entries(firstStyle)) {
-      // 모든 스타일에서 동일한 값인지 확인
-      const isCommon = styles.every((s) => s[key] === value);
+      // 모든 스타일에서 동일한 값인지 확인 (CSS 변수 fallback 고려)
+      const normalizedValue = this.extractCssVarFallback(value);
+      const isCommon = styles.every((s) => {
+        const otherValue = s[key];
+        if (otherValue === undefined) return false;
+        return this.extractCssVarFallback(otherValue) === normalizedValue;
+      });
+
       if (isCommon) {
-        common[key] = value;
+        // CSS 변수가 있는 값을 우선 사용 (더 의미 있는 값)
+        const preferredValue =
+          styles.find(
+            (s) => typeof s[key] === "string" && String(s[key]).startsWith("var(")
+          )?.[key] ?? value;
+        common[key] = preferredValue;
       }
     }
 
