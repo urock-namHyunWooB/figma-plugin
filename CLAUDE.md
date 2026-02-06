@@ -50,7 +50,7 @@ npm run format:check   # Prettier check
    - Entry: `main.tsx`, `App.tsx`
    - Builds to: `dist/index.html` (single-file bundle)
 
-### Compiler Pipeline (`src/frontend/ui/domain/compiler/`)
+### Code Generator Pipeline (`src/frontend/ui/domain/code-generator/`)
 
 Two pipelines exist - the new architecture is preferred:
 

@@ -2,8 +2,8 @@ import { describe, test, expect } from "vitest";
 import airtableSelectButton from "../fixtures/item-slot-likes/airtable-select-button.json";
 import taptapNavigation from "../fixtures/item-slot-likes/taptap-navigation.json";
 import tadaList from "../fixtures/item-slot-likes/tada-list.json";
-import { FigmaNodeData } from "@compiler/types/baseType";
-import FigmaCodeGenerator from "@compiler";
+import { FigmaNodeData } from "@code-generator/types/baseType";
+import FigmaCodeGenerator from "@code-generator";
 
 /**
  * ArraySlot 감지 조건:

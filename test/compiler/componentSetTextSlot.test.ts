@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import FigmaCodeGenerator from "../../src/frontend/ui/domain/compiler/index";
+import FigmaCodeGenerator from "../../src/frontend/ui/domain/code-generator/index";
 import fs from "fs";
 import path from "path";
 

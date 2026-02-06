@@ -1,7 +1,7 @@
 import { describe, test, expect, beforeAll } from "vitest";
-import FigmaCodeGenerator from "@compiler";
+import FigmaCodeGenerator from "@code-generator";
 import taptapAnchorData from "../fixtures/any/taptap-anchor.json";
-import type { FigmaNodeData } from "@compiler/types/index";
+import type { FigmaNodeData } from "@code-generator/types/index";
 
 describe("CSS 최적화 - 중복 제거", () => {
   let generatedCode: string;

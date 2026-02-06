@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "fs";
 import path from "path";
-import FigmaCodeGenerator from "@compiler/FigmaCodeGenerator";
+import FigmaCodeGenerator from "@code-generator/FigmaCodeGenerator";
 
 describe("Case.json visible override 이슈", () => {
   const fixturePath = path.join(

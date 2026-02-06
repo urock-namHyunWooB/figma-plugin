@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
-import { toCamelCase } from "@compiler/utils/normalizeString";
-import FigmaCodeGenerator, { FigmaNodeData } from "@compiler";
+import { toCamelCase } from "@code-generator/utils/normalizeString";
+import FigmaCodeGenerator, { FigmaNodeData } from "@code-generator";
 import component02 from "../fixtures/any/component-02.json";
 
 describe("Prop 이름 정규화 테스트", () => {

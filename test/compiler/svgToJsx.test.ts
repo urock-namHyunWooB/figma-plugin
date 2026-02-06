@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import SvgToJsx from "@compiler/core/code-emitter/utils/SvgToJsx";
+import SvgToJsx from "@code-generator/core/code-emitter/utils/SvgToJsx";
 import ts from "typescript";
 
 describe("SvgToJsx", () => {

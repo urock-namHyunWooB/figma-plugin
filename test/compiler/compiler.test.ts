@@ -12,8 +12,8 @@ import airtableButtonWithDeps from "../fixtures/any-component-set/airtable-butto
 import urockChipsMockData from "../fixtures/chip/urock-chips.json";
 import airtableSelectButton from "../fixtures/select-button/airtable-select-button.json";
 
-import FigmaCodeGenerator from "@compiler";
-import SpecDataManager from "@compiler/manager/SpecDataManager";
+import FigmaCodeGenerator from "@code-generator";
+import SpecDataManager from "@code-generator/manager/SpecDataManager";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
 import { fireEvent, render, screen } from "@testing-library/react";
 import * as React from "react";

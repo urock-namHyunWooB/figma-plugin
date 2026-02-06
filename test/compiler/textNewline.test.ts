@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import FigmaCodeGenerator from "@compiler";
+import FigmaCodeGenerator from "@code-generator";
 import textNewline from "../fixtures/text-newline.json";
-import { FigmaNodeData } from "@/frontend/ui/domain/compiler";
+import { FigmaNodeData } from "@/frontend/ui/domain/code-generator";
 
 /**
  * 텍스트 줄바꿈 테스트

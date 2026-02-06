@@ -1,8 +1,8 @@
 import { describe, test, expect } from "vitest";
-import FigmaCodeGenerator from "@compiler";
+import FigmaCodeGenerator from "@code-generator";
 import group02 from "../fixtures/any/group-02.json";
 import any07 from "../fixtures/any/any-07.json";
-import type { FigmaNodeData } from "@compiler/types/index";
+import type { FigmaNodeData } from "@code-generator/types/index";
 
 describe("Position 스타일 테스트", () => {
   describe("GROUP 노드 (오토레이아웃 없음)", () => {

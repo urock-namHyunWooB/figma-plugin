@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
-import FigmaCodeGenerator from "@compiler";
+import FigmaCodeGenerator from "@code-generator";
 import taptapCheckbox from "../../fixtures/checkbox/taptap-checkbox.json";
-import type { FigmaNodeData } from "@compiler/types/index";
+import type { FigmaNodeData } from "@code-generator/types/index";
 
 describe("Checkbox ComponentSet 컴파일 테스트", () => {
   test("컴파일이 성공해야 한다", async () => {

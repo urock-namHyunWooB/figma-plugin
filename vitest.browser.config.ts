@@ -78,10 +78,10 @@ export default defineConfig({
       "@backend/*": path.resolve(__dirname, "./src/backend/*"),
       "@frontend/ui": path.resolve(__dirname, "./src/frontend/ui"),
       "@frontend/ui/*": path.resolve(__dirname, "./src/frontend/ui/*"),
-      "@compiler": path.resolve(__dirname, "./src/frontend/ui/domain/compiler"),
-      "@compiler/*": path.resolve(
+      "@code-generator": path.resolve(__dirname, "./src/frontend/ui/domain/code-generator"),
+      "@code-generator/*": path.resolve(
         __dirname,
-        "./src/frontend/ui/domain/compiler/*"
+        "./src/frontend/ui/domain/code-generator/*"
       ),
     },
   },

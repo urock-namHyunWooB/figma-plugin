@@ -59,7 +59,7 @@ FigmaCodeGenerator (Facade)
 ### 파일 구조
 
 ```
-src/frontend/ui/domain/compiler/
+src/frontend/ui/domain/code-generator/
 ├── FigmaCodeGenerator.ts           # 진입점 (Facade)
 ├── index.ts                   # 타입 export
 ├── core/

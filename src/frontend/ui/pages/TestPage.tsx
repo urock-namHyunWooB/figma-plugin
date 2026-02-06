@@ -2,14 +2,14 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { createRoot, Root } from "react-dom/client";
 import { css } from "@emotion/react";
 import { useNavigate } from "react-router-dom";
-import FigmaCodeGenerator, { PropDefinition } from "@compiler";
-import { FigmaNodeData } from "../domain/compiler";
+import FigmaCodeGenerator, { PropDefinition } from "@code-generator";
+import { FigmaNodeData } from "../domain/code-generator";
 import { renderReactComponent } from "../domain/renderer/component-render";
-import { loadFontsFromNodeData } from "../domain/compiler/utils/fontLoader";
+import { loadFontsFromNodeData } from "../domain/code-generator/utils/fontLoader";
 import {
   compareNodeStyles,
   StyleDiff,
-} from "../domain/compiler/utils/styleComparison";
+} from "../domain/code-generator/utils/styleComparison";
 import { PropController } from "../components/PropController";
 // twind - main.tsx에서 export한 전역 인스턴스 사용
 import { twindTw } from "../main";

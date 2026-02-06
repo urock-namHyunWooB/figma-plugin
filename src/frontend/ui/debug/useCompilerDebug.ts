@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useReducer, useRef } from "react";
 
-import FigmaCodeGenerator from "@frontend/ui/domain/compiler";
-import type { FigmaCodeGeneratorOptions } from "@compiler/FigmaCodeGenerator";
+import FigmaCodeGenerator from "@frontend/ui/domain/code-generator";
+import type { FigmaCodeGeneratorOptions } from "@code-generator/FigmaCodeGenerator";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
-import { toCamelCase } from "@compiler/utils/normalizeString";
-import type { FigmaNodeData } from "@compiler/types/baseType";
+import { toCamelCase } from "@code-generator/utils/normalizeString";
+import type { FigmaNodeData } from "@code-generator/types/baseType";
 
 export type StyleStrategyType = "emotion" | "tailwind";
 

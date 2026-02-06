@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import FigmaCodeGenerator from "@compiler";
+import FigmaCodeGenerator from "@code-generator";
 import tadaButtonMockData from "../fixtures/button/tadaButton.json";
 import taptapButtonSampleMockData from "../fixtures/button/taptapButton_sample.json";
 

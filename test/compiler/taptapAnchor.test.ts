@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
-import FigmaCodeGenerator from "@compiler";
+import FigmaCodeGenerator from "@code-generator";
 import taptapAnchor from "../fixtures/any/taptap-anchor.json";
-import type { FigmaNodeData } from "@compiler/types/index";
+import type { FigmaNodeData } from "@code-generator/types/index";
 
 describe("taptap-anchor 렌더링 테스트", () => {
   test("Anchor INSTANCE가 컴파일되어야 한다", async () => {

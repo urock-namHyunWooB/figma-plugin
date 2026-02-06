@@ -1,5 +1,5 @@
 import { describe, expect, test, beforeAll } from "vitest";
-import FigmaCodeGenerator from "@compiler";
+import FigmaCodeGenerator from "@code-generator";
 import airtableButtonWithDeps from "../fixtures/any-component-set/airtable-button.json";
 
 /**

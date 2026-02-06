@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { css } from "@emotion/react";
 import { useNavigate } from "react-router-dom";
 import useMessageHandler from "./useMessageHandler";
-import FigmaCodeGenerator, { PropDefinition } from "@compiler";
+import FigmaCodeGenerator, { PropDefinition } from "@code-generator";
 import { useComponentRenderer } from "./hooks/useComponentRenderer";
 import { PropController } from "./components/PropController";
 import { CodeViewer } from "./components/CodeViewer";

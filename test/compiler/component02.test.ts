@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
-import FigmaCodeGenerator from "@compiler";
+import FigmaCodeGenerator from "@code-generator";
 import component02 from "../fixtures/any/component-02.json";
-import type { FigmaNodeData } from "@compiler/types/index";
+import type { FigmaNodeData } from "@code-generator/types/index";
 
 describe("component-02 렌더링 테스트", () => {
   test("StatusBar INSTANCE가 컴파일되어야 한다", async () => {

@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import FigmaCodeGenerator from "@compiler";
+import FigmaCodeGenerator from "@code-generator";
 import error02Fixture from "../fixtures/any/error-02.json";
 
 describe("INSTANCE 컨텍스트 병합 - visible 처리", () => {

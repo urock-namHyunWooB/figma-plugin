@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
-import FigmaCodeGenerator from "@compiler";
+import FigmaCodeGenerator from "@code-generator";
 import measure from "../fixtures/any/Measure.json";
-import { FigmaNodeData } from "@/frontend/ui/domain/compiler";
+import { FigmaNodeData } from "@/frontend/ui/domain/code-generator";
 
 /**
  * VECTOR 노드 스타일 처리 테스트

@@ -10,9 +10,9 @@
 import { describe, it, expect } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import { FigmaCodeGenerator } from "@compiler/FigmaCodeGenerator";
-import { FigmaNodeData } from "@compiler/types/compiler";
-import { extractFigmaLayout } from "@compiler/utils/layoutComparison";
+import { FigmaCodeGenerator } from "@code-generator/FigmaCodeGenerator";
+import { FigmaNodeData } from "@code-generator/types/compiler";
+import { extractFigmaLayout } from "@code-generator/utils/layoutComparison";
 
 // fixtures/failing 폴더의 모든 JSON 파일 자동 로드
 const FAILING_FIXTURES_DIR = path.join(__dirname, "../fixtures/failing");

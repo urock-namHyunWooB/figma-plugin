@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
-import FigmaCodeGenerator from "@compiler";
+import FigmaCodeGenerator from "@code-generator";
 import group02 from "../fixtures/any/group-02.json";
-import type { FigmaNodeData } from "@compiler/types/index";
+import type { FigmaNodeData } from "@code-generator/types/index";
 
 describe("group-02 TEXT 노드 렌더링 테스트", () => {
   test("TEXT 노드가 렌더링되어야 한다", async () => {

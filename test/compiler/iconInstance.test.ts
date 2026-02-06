@@ -2,8 +2,8 @@ import { describe, expect, test } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import frame03MockData from "../fixtures/any/frame-03.json";
 
-import FigmaCodeGenerator from "@compiler";
-import SpecDataManager from "@compiler/manager/SpecDataManager";
+import FigmaCodeGenerator from "@code-generator";
+import SpecDataManager from "@code-generator/manager/SpecDataManager";
 
 describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
   describe("frame-03.json", () => {

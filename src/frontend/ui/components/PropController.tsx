@@ -1,6 +1,6 @@
 import React from "react";
 import { css } from "@emotion/react";
-import type { PropDefinition } from "@compiler";
+import type { PropDefinition } from "@code-generator";
 
 interface PropControllerProps {
   propDefinitions: PropDefinition[];

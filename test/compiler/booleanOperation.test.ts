@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
-import FigmaCodeGenerator from "@compiler";
+import FigmaCodeGenerator from "@code-generator";
 import statusBar from "../fixtures/any/BarsstatusBariphoneblack.json";
-import { FigmaNodeData } from "@/frontend/ui/domain/compiler";
+import { FigmaNodeData } from "@/frontend/ui/domain/code-generator";
 
 /**
  * BOOLEAN_OPERATION 노드 처리 테스트

@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
-import FigmaCodeGenerator from "@compiler";
+import FigmaCodeGenerator from "@code-generator";
 import airtableButton from "../fixtures/any-component-set/airtable-button.json";
-import { FigmaNodeData } from "@/frontend/ui/domain/compiler";
+import { FigmaNodeData } from "@/frontend/ui/domain/code-generator";
 
 /**
  * Pseudo-class 처리 테스트

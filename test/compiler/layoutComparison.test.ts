@@ -1,12 +1,12 @@
 import { describe, test, expect } from "vitest";
 import any07 from "../fixtures/any/any-07.json";
-import type { FigmaNodeData } from "@compiler/types/index";
+import type { FigmaNodeData } from "@code-generator/types/index";
 import {
   extractFigmaLayout,
   compareLayout,
   compareLayouts,
   type LayoutData,
-} from "@compiler/utils/layoutComparison";
+} from "@code-generator/utils/layoutComparison";
 
 describe("레이아웃 비교 유틸리티", () => {
   describe("extractFigmaLayout", () => {

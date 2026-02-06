@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "fs";
 import path from "path";
-import FigmaCodeGenerator from "../../src/frontend/ui/domain/compiler/index";
+import FigmaCodeGenerator from "../../src/frontend/ui/domain/code-generator/index";
 
 describe("Popup 시각적 스타일 제거 검증", () => {
   const popupFixturePath = path.join(__dirname, "../fixtures/any/Popup.json");

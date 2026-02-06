@@ -889,7 +889,7 @@ const code = await generator.generate();
 - [x] 중간 데이터 구조 (PreparedDesignData, DesignTree) 정의
 - [x] DependencyGraph 타입 정의
 
-> 구현: `src/frontend/ui/domain/compiler/types/architecture.ts`
+> 구현: `src/frontend/ui/domain/code-generator/types/architecture.ts`
 
 ### Phase 2: DependencyAnalyzer 구현 ✅
 - [x] 의존성 그래프 구축 로직 (buildGraph)
@@ -897,7 +897,7 @@ const code = await generator.generate();
 - [x] 순환 의존성 감지 (detectCycles) - DFS 기반
 - [ ] 기존 DependencyManager 재귀 로직 대체 (Phase 3 이후)
 
-> 구현: `src/frontend/ui/domain/compiler/core/DependencyAnalyzer.ts`
+> 구현: `src/frontend/ui/domain/code-generator/core/DependencyAnalyzer.ts`
 > 테스트: `test/compiler/dependencyAnalyzer.test.ts`
 
 ### Phase 3: DataPreparer 통합 ✅
@@ -907,8 +907,8 @@ const code = await generator.generate();
 - [ ] ~~InstanceOverrideManager, VariantEnrichManager 통합~~ → 분리 유지 결정 (DependencyManager 전용)
 
 > 구현:
-> - `src/frontend/ui/domain/compiler/core/data-preparer/DataPreparer.ts`
-> - `src/frontend/ui/domain/compiler/core/data-preparer/PreparedDesignData.ts`
+> - `src/frontend/ui/domain/code-generator/core/data-preparer/DataPreparer.ts`
+> - `src/frontend/ui/domain/code-generator/core/data-preparer/PreparedDesignData.ts`
 
 #### ⚠️ TODO: PreparedNode 정규화 (Phase 4에서 검토)
 
@@ -933,7 +933,7 @@ const code = await generator.generate();
 - [x] TreeBuilder: BuildContext 기반 파이프라인 오케스트레이터
 - [x] 155개 단위 테스트 작성
 
-> 구현: `src/frontend/ui/domain/compiler/core/tree-builder/`
+> 구현: `src/frontend/ui/domain/code-generator/core/tree-builder/`
 
 #### Phase 4 리팩토링 ✅
 - [x] Magic Number 상수화 (constants.ts)
@@ -958,7 +958,7 @@ const code = await generator.generate();
 - [x] adapters/ 폴더 삭제 (DesignTreeAdapter, PropsAdapter, StyleAdapter)
 - [x] 155개 테스트 통과
 
-> 구현: `src/frontend/ui/domain/compiler/core/code-emitter/`
+> 구현: `src/frontend/ui/domain/code-generator/core/code-emitter/`
 
 **파일 구조**:
 ```
