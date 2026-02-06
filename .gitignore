@@ -37,3 +37,6 @@ src/wasm-engine/build/*
 __screenshots__
 **/__screenshots__/**
 **/__screenshots__/**/*
+
+# 컴파일된 테스트 결과물
+**/compiled/

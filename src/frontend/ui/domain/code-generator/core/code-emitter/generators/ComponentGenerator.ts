@@ -44,10 +44,7 @@ class ComponentGenerator {
   private factory: ts.NodeFactory;
   private options: ComponentGeneratorOptions;
 
-  constructor(
-    factory: ts.NodeFactory,
-    options?: ComponentGeneratorOptions
-  ) {
+  constructor(factory: ts.NodeFactory, options?: ComponentGeneratorOptions) {
     this.factory = factory;
     this.options = options || {};
   }
@@ -194,7 +191,7 @@ class ComponentGenerator {
   private createExternalComponentJsx(
     node: DesignNode,
     tree: DesignTree
-  ): ts.JsxSelfClosingElement | ts.JsxElement {
+  ): ts.JsxSelfClosingElement {
     const extRef = node.externalRef!;
     const tagIdentifier = this.factory.createIdentifier(extRef.componentName);
 
@@ -203,7 +200,9 @@ class ComponentGenerator {
     // props 전달
     for (const [propName, propValue] of Object.entries(extRef.props)) {
       const resolvedPropName = this.renameConflictingPropName(propName);
-      const parentHasSameProp = tree.props.some(p => p.name === resolvedPropName);
+      const parentHasSameProp = tree.props.some(
+        (p) => p.name === resolvedPropName
+      );
 
       let jsxAttr: ts.JsxAttribute;
       if (parentHasSameProp) {
@@ -270,12 +269,20 @@ class ComponentGenerator {
    */
   private renameConflictingPropName(propName: string): string {
     const conflictingAttrs = [
-      "disabled", "type", "value", "name", "id", "hidden",
-      "checked", "selected", "required", "readOnly",
+      "disabled",
+      "type",
+      "value",
+      "name",
+      "id",
+      "hidden",
+      "checked",
+      "selected",
+      "required",
+      "readOnly",
     ];
 
     const lowerPropName = propName.toLowerCase();
-    if (conflictingAttrs.some(attr => attr.toLowerCase() === lowerPropName)) {
+    if (conflictingAttrs.some((attr) => attr.toLowerCase() === lowerPropName)) {
       return `custom${propName.charAt(0).toUpperCase() + propName.slice(1)}`;
     }
 
@@ -357,7 +364,9 @@ class ComponentGenerator {
               this.factory.createToken(ts.SyntaxKind.AmpersandAmpersandToken),
               this.factory.createParenthesizedExpression(innerExpr)
             );
-            children.push(this.factory.createJsxExpression(undefined, combinedExpr));
+            children.push(
+              this.factory.createJsxExpression(undefined, combinedExpr)
+            );
           } else {
             children.push(childJsx);
           }
@@ -416,7 +425,11 @@ class ComponentGenerator {
    * textSegments를 span 요소들로 변환
    */
   private createTextSegments(
-    segments: Array<{ text: string; styleIndex: number; style: Record<string, string> | null }>
+    segments: Array<{
+      text: string;
+      styleIndex: number;
+      style: Record<string, string> | null;
+    }>
   ): ts.JsxChild[] {
     return segments.map((segment) => {
       if (!segment.style || Object.keys(segment.style).length === 0) {
@@ -450,7 +463,9 @@ class ComponentGenerator {
           this.factory.createJsxAttributes([styleAttribute])
         ),
         [this.factory.createJsxText(segment.text, false)],
-        this.factory.createJsxClosingElement(this.factory.createIdentifier("span"))
+        this.factory.createJsxClosingElement(
+          this.factory.createIdentifier("span")
+        )
       );
     });
   }
@@ -526,9 +541,7 @@ class ComponentGenerator {
     // 첫 번째 entry에서 prop 이름 추출 ("Size=Normal" → "size")
     const [firstKey] = entries[0];
     const propMatch = firstKey.match(/^([^=]+)=(.+)$/);
-    const rawPropName = propMatch
-      ? propMatch[1].toLowerCase()
-      : "variant";
+    const rawPropName = propMatch ? propMatch[1].toLowerCase() : "variant";
     // HTML 속성과 충돌하는 이름은 custom prefix 적용 (checked → customChecked)
     const propName = this.renameConflictingPropName(rawPropName);
 
@@ -578,7 +591,8 @@ class ComponentGenerator {
     }
 
     // 삼항 연산자 체인 생성: size === "Normal" ? svg1 : size === "Large" ? svg2 : null
-    let conditionalExpr: ts.Expression = svgJsxMap[svgJsxMap.length - 1].jsx as unknown as ts.Expression;
+    let conditionalExpr: ts.Expression = svgJsxMap[svgJsxMap.length - 1]
+      .jsx as unknown as ts.Expression;
 
     for (let i = svgJsxMap.length - 2; i >= 0; i--) {
       const { value, jsx } = svgJsxMap[i];
@@ -619,7 +633,11 @@ class ComponentGenerator {
     }
 
     return this.factory.createJsxElement(
-      this.factory.createJsxOpeningElement(tagIdentifier, undefined, jsxAttributes),
+      this.factory.createJsxOpeningElement(
+        tagIdentifier,
+        undefined,
+        jsxAttributes
+      ),
       children,
       this.factory.createJsxClosingElement(tagIdentifier)
     );
@@ -641,7 +659,10 @@ class ComponentGenerator {
       // key prop은 항상 필요
       this.factory.createJsxAttribute(
         this.factory.createIdentifier("key"),
-        this.factory.createJsxExpression(undefined, this.factory.createIdentifier("index"))
+        this.factory.createJsxExpression(
+          undefined,
+          this.factory.createIdentifier("index")
+        )
       ),
     ];
 
@@ -708,7 +729,7 @@ class ComponentGenerator {
   } {
     const bindingElements: ts.BindingElement[] = [];
     const arraySlotSafeStatements: ts.VariableStatement[] = [];
-    const arraySlotNames = new Set(tree.arraySlots.map(s => s.name));
+    const arraySlotNames = new Set(tree.arraySlots.map((s) => s.name));
 
     // 일반 props
     for (const prop of tree.props) {
@@ -716,9 +737,10 @@ class ComponentGenerator {
         continue;
       }
 
-      const defaultValue = prop.defaultValue !== undefined
-        ? this.valueToExpression(prop.defaultValue)
-        : undefined;
+      const defaultValue =
+        prop.defaultValue !== undefined
+          ? this.valueToExpression(prop.defaultValue)
+          : undefined;
 
       bindingElements.push(
         this.factory.createBindingElement(
@@ -858,8 +880,14 @@ class ComponentGenerator {
   /**
    * 노드의 부모 찾기
    */
-  private findParentNode(node: DesignNode, tree: DesignTree): DesignNode | null {
-    const findParent = (current: DesignNode, target: DesignNode): DesignNode | null => {
+  private findParentNode(
+    node: DesignNode,
+    tree: DesignTree
+  ): DesignNode | null {
+    const findParent = (
+      current: DesignNode,
+      target: DesignNode
+    ): DesignNode | null => {
       for (const child of current.children) {
         if (child.id === target.id) {
           return current;

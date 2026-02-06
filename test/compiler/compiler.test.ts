@@ -446,11 +446,11 @@ describe("compiler 테스트", () => {
           expect(generatedCode).not.toMatch(/SizedefaultSelectedfalseCss/i);
         });
 
-        test("INSTANCE 노드도 레이아웃 스타일이 있으면 CSS가 생성되어야 한다", () => {
+        test("INSTANCE 노드도 레이아웃 스타일이 있으면 wrapper CSS가 생성되어야 한다", () => {
           // Option1, Option2 등 INSTANCE 노드도 부모 레이아웃에서의 배치 스타일이 필요
-          // (flex-shrink, margin 등)
-          expect(generatedCode).toMatch(/const\s+Option1Css\s*=/);
-          expect(generatedCode).toMatch(/const\s+Option2Css\s*=/);
+          // (flex-shrink, margin 등) - wrapper 노드로 스타일 분리
+          expect(generatedCode).toMatch(/const\s+Option1_wrapperCss\s*=/);
+          expect(generatedCode).toMatch(/const\s+Option2_wrapperCss\s*=/);
         });
 
         test("TEXT 노드의 텍스트 내용이 비어있지 않아야 한다", () => {

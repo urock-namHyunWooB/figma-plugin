@@ -8,8 +8,18 @@
  */
 
 import type { BuildContext } from "./interfaces";
-import type { DesignNode, TextSegment } from "@code-generator/types/architecture";
+import type { DesignNode, TextSegment, StyleDefinition } from "@code-generator/types/architecture";
 import { mapTree } from "./utils/treeUtils";
+
+/**
+ * 스타일이 비어있지 않은지 확인
+ */
+function hasNonEmptyStyles(styles: StyleDefinition): boolean {
+  return (
+    Object.keys(styles.base || {}).length > 0 ||
+    (styles.dynamic || []).length > 0
+  );
+}
 
 // ============================================================================
 // NodeConverter Class
@@ -84,6 +94,31 @@ export class NodeConverter {
             );
           }
         }
+      }
+
+      // 외부 컴포넌트: wrapper 컨테이너 노드로 감싸기
+      if (externalRefData && hasNonEmptyStyles(styles)) {
+        const externalNode: DesignNode = {
+          id: internal.id,
+          type: "component",
+          name: internal.name,
+          styles: { base: {}, dynamic: [] },
+          children: [],
+          externalRef,
+          conditions: internal.conditions,
+        };
+
+        // wrapper 컨테이너가 스타일과 children을 담당
+        return {
+          id: `wrapper:${internal.id}`,
+          type: "container",
+          name: `${internal.name}_wrapper`,
+          styles: finalStyles,
+          children: [externalNode, ...children],
+          propBindings: propBindings && Object.keys(propBindings).length > 0 ? propBindings : undefined,
+          semanticRole: semanticResult?.role,
+          conditions: internal.conditions,
+        };
       }
 
       return {

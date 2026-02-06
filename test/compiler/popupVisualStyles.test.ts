@@ -27,14 +27,14 @@ describe("Popup 시각적 스타일 제거 검증", () => {
     expect(largeCss).not.toContain("border-radius");
   });
 
-  it("wrapper(LeftButtonCss, RightButtonCss)에는 background가 있어야 한다", async () => {
+  it("wrapper(LeftButton_wrapperCss, RightButton_wrapperCss)에는 background가 있어야 한다", async () => {
     const popup = JSON.parse(fs.readFileSync(popupFixturePath, "utf8"));
     const compiler = new FigmaCodeGenerator(popup, { strategy: "emotion" });
     const result = await compiler.compile();
 
-    // Wrapper CSS 확인
-    const leftBtnMatch = result.match(/const LeftButtonCss = css`([^`]+)`/);
-    const rightBtnMatch = result.match(/const RightButtonCss = css`([^`]+)`/);
+    // Wrapper CSS 확인 (wrapper 노드는 _wrapperCss suffix)
+    const leftBtnMatch = result.match(/const LeftButton_wrapperCss = css`([^`]+)`/);
+    const rightBtnMatch = result.match(/const RightButton_wrapperCss = css`([^`]+)`/);
 
     expect(leftBtnMatch).toBeTruthy();
     expect(rightBtnMatch).toBeTruthy();

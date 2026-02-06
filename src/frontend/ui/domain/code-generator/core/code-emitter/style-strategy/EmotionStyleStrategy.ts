@@ -900,6 +900,13 @@ class EmotionStyleStrategy implements IStyleStrategy {
     const styles = node.styles;
     if (!styles) return false;
 
+    return this.hasStylesInDefinition(styles);
+  }
+
+  /**
+   * StyleDefinition에 스타일이 있는지 확인
+   */
+  private hasStylesInDefinition(styles: StyleDefinition): boolean {
     const hasBase = styles.base && Object.keys(styles.base).length > 0;
     const hasDynamic = styles.dynamic && styles.dynamic.length > 0;
     const hasPseudo = styles.pseudo && Object.keys(styles.pseudo).length > 0;

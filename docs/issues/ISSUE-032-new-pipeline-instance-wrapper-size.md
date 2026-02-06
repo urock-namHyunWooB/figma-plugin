@@ -1,7 +1,7 @@
 # ISSUE-032: 새 파이프라인 INSTANCE wrapper 크기 미적용
 
 ## 상태
-**OPEN**
+**RESOLVED**
 
 ## 관련 이슈
 - ISSUE-004: INSTANCE wrapper 크기 누락 (레거시 파이프라인에서 해결됨)
@@ -49,20 +49,77 @@
 
 ## 해결 방안
 
-### 수정 필요 파일
-`src/frontend/ui/domain/code-generator/core/code-emitter/generators/ComponentGenerator.ts`
+### 접근 방법
+INSTANCE 노드의 스타일을 **두 부분**으로 분리:
+1. **wrapperStyles**: 외부 컴포넌트를 감싸는 wrapper div의 스타일 (크기, 위치, flex 등)
+2. **node.styles**: 외부 컴포넌트에 전달되는 props (CSS 변수)
 
-### 수정 내용
-외부 컴포넌트 렌더링 시 wrapper에 absoluteBoundingBox 크기 적용:
+### 수정된 파일
+
+#### 1. `types/architecture.ts`
+`DesignNode` 인터페이스에 `wrapperStyles` 필드 추가:
 
 ```typescript
-// 외부 컴포넌트 wrapper 생성 시
-const boundingBox = node.spec?.absoluteBoundingBox;
-if (boundingBox) {
-  wrapperStyles["width"] = `${boundingBox.width}px`;
-  wrapperStyles["height"] = `${boundingBox.height}px`;
+export interface DesignNode {
+  // ...
+  wrapperStyles?: Record<string, string | number>;
 }
 ```
+
+#### 2. `core/tree-builder/workers/NodeConverter.ts`
+INSTANCE 노드의 스타일을 wrapperStyles로 분리:
+
+```typescript
+if (preparedNode.externalRef) {
+  const allStyles = this.styleExtractor.extractStyles(spec);
+
+  // 외부 컴포넌트는 스타일을 두 부분으로 분리
+  // 1. wrapperStyles: wrapper div에 적용 (크기, 위치, flex 등)
+  // 2. node.styles: 컴포넌트 props로 전달 (CSS 변수만)
+
+  designNode.wrapperStyles = allStyles; // wrapper div가 모든 레이아웃 담당
+  designNode.styles = {}; // 외부 컴포넌트는 CSS 변수만 전달
+}
+```
+
+#### 3. `core/code-emitter/generators/ComponentGenerator.ts`
+wrapper div 생성 로직 추가:
+
+```typescript
+private generateExternalComponent(node: DesignNode): string {
+  // wrapperStyles가 있으면 wrapper div로 감싸기
+  if (node.wrapperStyles && Object.keys(node.wrapperStyles).length > 0) {
+    const wrapperCssVar = this.styleStrategy.getWrapperCssVariableName(node.id);
+
+    return `<div css={${wrapperCssVar}}>
+      <${componentName} ${propsString} />
+    </div>`;
+  }
+
+  // wrapperStyles가 없으면 직접 렌더링
+  return `<${componentName} ${propsString} />`;
+}
+```
+
+#### 4. `IStyleStrategy.ts` + 구현체들
+wrapperStyles 처리 메서드 추가:
+
+```typescript
+interface IStyleStrategy {
+  getWrapperCssVariableName(nodeId: string): string;
+  generateWrapperStyles(node: DesignNode): string;
+}
+```
+
+- **EmotionStyleStrategy**: `AIdWrapperCss` CSS 변수 생성
+- **TailwindStyleStrategy**: wrapper 클래스 생성
+
+### 핵심 변경사항
+
+1. INSTANCE 노드의 레이아웃 스타일(width, height, position 등)을 **wrapperStyles**로 분리
+2. wrapper div가 모든 크기/위치 책임을 담당
+3. 외부 컴포넌트는 props(CSS 변수)만 전달받음
+4. 스타일 전략 패턴에 wrapper 처리 로직 추가
 
 ## 테스트 계획
 
