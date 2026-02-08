@@ -75,11 +75,16 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
     const instance = new StyleProcessor();
     const nodeStyles = new Map<string, StyleDefinition>();
+    const excludeProps = ctx.excludePropsFromStyles || new Set<string>();
 
     traverseTree(ctx.internalTree, (node) => {
+      // excludeProps를 사용하여 조건 파싱
+      const parseCondition = (variantName: string) =>
+        VisibilityProcessor.parseVariantConditionExcluding(variantName, excludeProps);
+
       const styles = instance.buildFromMergedNodes(
         { mergedNodes: node.mergedNode, data: ctx.data },
-        VisibilityProcessor.parseVariantCondition
+        parseCondition
       );
 
       // VECTOR/LINE 등 SVG 노드 처리

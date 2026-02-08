@@ -29,6 +29,7 @@ import { VisibilityProcessor } from "./workers/VisibilityProcessor";
 import { InstanceProcessor } from "./workers/InstanceProcessor";
 import { NodeConverter } from "./workers/NodeConverter";
 import { CleanupProcessor } from "./workers/CleanupProcessor";
+import { HeuristicsRunner } from "./heuristics";
 
 class TreeBuilder implements ITreeBuilder {
   public build(
@@ -49,6 +50,15 @@ class TreeBuilder implements ITreeBuilder {
     // ─────────────────────────────────────────────────────────────────────────
     ctx = NodeProcessor.detectSemanticRoles(ctx); // → semanticRoles
     ctx = VisibilityProcessor.processHidden(ctx); // → hiddenConditions
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Heuristics: COMPONENT_SET 전용 패턴 감지 (Phase 3 전에 실행)
+    // 스타일 생성 전에 실행하여 linkedProp이 스타일에서 제거되도록 함
+    // ─────────────────────────────────────────────────────────────────────────
+    if (ctx.data.document.type === "COMPONENT_SET") {
+      ctx = HeuristicsRunner.run(ctx); // → nodeSemanticTypes, excludePropsFromStyles
+      ctx = this.removeExcludedProps(ctx); // propsMap에서 excludePropsFromStyles 제거
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Phase 3: 노드별 변환
@@ -72,10 +82,33 @@ class TreeBuilder implements ITreeBuilder {
 
     return {
       root: ctx.root!,
+      componentType: ctx.componentType,
       props: Array.from(ctx.propsMap!.values()),
       slots: ctx.slots,
       conditionals: ctx.conditionals,
       arraySlots: ctx.arraySlots,
+    };
+  }
+
+  /**
+   * excludePropsFromStyles에 포함된 prop을 propsMap에서 제거
+   *
+   * 휴리스틱에서 제거 대상으로 마킹된 prop(guideText 등)은
+   * 불필요하므로 propsMap에서 제거합니다.
+   */
+  private removeExcludedProps(ctx: BuildContext): BuildContext {
+    if (!ctx.excludePropsFromStyles || ctx.excludePropsFromStyles.size === 0 || !ctx.propsMap) {
+      return ctx;
+    }
+
+    const newPropsMap = new Map(ctx.propsMap);
+    for (const propName of ctx.excludePropsFromStyles) {
+      newPropsMap.delete(propName);
+    }
+
+    return {
+      ...ctx,
+      propsMap: newPropsMap,
     };
   }
 

@@ -183,6 +183,10 @@ Phase 2: 분석
     VisibilityProcessor.processHidden() → hiddenConditions
     │
     ▼
+Heuristics: 컴포넌트 패턴 감지 (COMPONENT_SET만)
+    HeuristicsRunner.run()       → componentType, nodeSemanticTypes
+    │
+    ▼
 Phase 3: 노드별 변환
     NodeProcessor.mapTypes()             → nodeTypes
     StyleProcessor.build()               → nodeStyles
@@ -209,6 +213,13 @@ DesignTree { root, props, slots, conditionals, arraySlots }
 tree-builder/
 ├── TreeBuilder.ts           # 파이프라인 오케스트레이터
 ├── index.ts                 # 모듈 public API
+│
+├── heuristics/              # 컴포넌트 패턴 감지
+│   ├── HeuristicsRunner.ts  # 휴리스틱 오케스트레이터
+│   ├── index.ts             # 모듈 export
+│   └── components/          # 컴포넌트별 휴리스틱
+│       ├── IComponentHeuristic.ts  # canProcess + process 인터페이스
+│       └── InputHeuristic.ts       # Input 판별 + 처리
 │
 ├── workers/
 │   ├── VariantProcessor.ts  # IoU 기반 variant 병합 + 스쿼시
@@ -271,6 +282,52 @@ interface TreeBuilderPolicy {
 | _FinalAstTree (외부참조) | InstanceProcessor.buildExternalRefs() |
 | NodeMatcher (IoU) | VariantProcessor.calculateIoU() |
 | ArraySlotDetector | SlotProcessor.detectArraySlot() |
+
+### Heuristics 시스템
+
+COMPONENT_SET에서 특정 UX 패턴(Input, Button 등)을 감지하는 시스템.
+
+#### 설계 원칙
+
+1. **각 Heuristic이 판별과 처리를 모두 담당** - 중앙 Detector 없음
+2. **canProcess()로 자신이 처리할 컴포넌트인지 판별**
+3. **process()로 세부 패턴 감지 및 semanticType 설정**
+
+#### 인터페이스
+
+```typescript
+interface IComponentHeuristic {
+  componentType: ComponentType;
+  canProcess(ctx: BuildContext): boolean;  // 판별
+  process(ctx: BuildContext): BuildContext; // 처리
+}
+```
+
+#### InputHeuristic 판별 기준
+
+| 기준 | 설명 |
+|------|------|
+| 이름 패턴 | `input`, `textfield`, `searchbar` 등 |
+| Caret 패턴 | `\|` 문자 또는 얇은 세로 막대 (width ≤ 3px) |
+
+#### 데이터 흐름
+
+```
+1. InputHeuristic.canProcess() → true
+2. InputHeuristic.process() → nodeSemanticTypes.set(id, { type: "textInput", placeholder })
+3. NodeProcessor.mapTypes() → if (semanticType === "textInput") nodeTypes.set(id, "input")
+4. NodeConverter.assemble() → DesignNode.type = "input"
+5. ComponentGenerator → if (node.type === "input") createInputElement()
+```
+
+#### 관심사 분리
+
+| 레이어 | 책임 |
+|--------|------|
+| InputHeuristic | 판별 + semanticType 설정 |
+| NodeProcessor | semanticType → nodeType 매핑 |
+| NodeConverter | Map 조회 → DesignNode 조립 |
+| ComponentGenerator | type 기반 렌더링 (판단 없음) |
 
 ---
 

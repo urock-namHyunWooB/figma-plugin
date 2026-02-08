@@ -22,10 +22,7 @@ import ts from "typescript";
 import type {
   DesignTree,
   DesignNode,
-  PropDefinition,
-  ConditionalRule,
   ArraySlotInfo,
-  SemanticRole,
 } from "@code-generator/types/architecture";
 import type { ConditionNode } from "@code-generator/types/customType";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
@@ -115,6 +112,11 @@ class ComponentGenerator {
     tree: DesignTree,
     strategy: IStyleStrategy
   ): ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxExpression {
+    // 타입 기반 렌더링: input 타입은 input 요소로 렌더링
+    if (node.type === "input") {
+      return this.createInputElement(node, tree, strategy);
+    }
+
     // Slot 노드 체크 - slot으로 대체되는 노드는 {slotName}으로 렌더링
     const slotDef = tree.slots.find((s) => s.targetNodeId === node.id);
     if (slotDef) {
@@ -853,6 +855,59 @@ class ComponentGenerator {
       return this.factory.createNull();
     }
     return this.factory.createStringLiteral(String(value));
+  }
+
+  /**
+   *
+   * semanticType이 textInput인 노드를 input 요소로 렌더링:
+   * - node.placeholder를 input의 placeholder 속성으로 사용
+   */
+  private createInputElement(
+    node: DesignNode,
+    tree: DesignTree,
+    strategy: IStyleStrategy
+  ): ts.JsxSelfClosingElement {
+    const attrs: ts.JsxAttributeLike[] = [];
+
+    // debug 모드: data-figma-id 속성
+    if (this.options.debug && node.id) {
+      attrs.push(
+        this.factory.createJsxAttribute(
+          this.factory.createIdentifier("data-figma-id"),
+          this.factory.createStringLiteral(node.id)
+        )
+      );
+    }
+
+    // 1. type 속성
+    attrs.push(
+      this.factory.createJsxAttribute(
+        this.factory.createIdentifier("type"),
+        this.factory.createStringLiteral("text")
+      )
+    );
+
+    // 2. placeholder 속성 (node.placeholder에서 가져옴)
+    if (node.placeholder) {
+      attrs.push(
+        this.factory.createJsxAttribute(
+          this.factory.createIdentifier("placeholder"),
+          this.factory.createStringLiteral(node.placeholder)
+        )
+      );
+    }
+
+    // 3. 스타일 속성 (폰트, 크기 등 유지)
+    const styleAttr = strategy.createStyleAttribute(node, tree.props);
+    if (styleAttr) {
+      attrs.push(styleAttr);
+    }
+
+    return this.factory.createJsxSelfClosingElement(
+      this.factory.createIdentifier("input"),
+      undefined,
+      this.factory.createJsxAttributes(attrs)
+    );
   }
 
   /**

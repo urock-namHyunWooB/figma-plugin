@@ -13,9 +13,11 @@ import type {
   ArraySlotInfo,
   ConditionalRule,
   SemanticRole,
+  SemanticType,
   TreeBuilderPolicy,
   DesignNode,
   PreparedDesignData,
+  ComponentType,
 } from "@code-generator/types/architecture";
 import type { ConditionNode } from "@code-generator/types/customType";
 import type { InternalNode } from "./interfaces/core";
@@ -33,6 +35,15 @@ export interface ExternalRefData {
   componentSetId: string;
   componentName: string;
   props: Record<string, string>;
+}
+
+/**
+ * 노드의 시맨틱 정보 (휴리스틱 결과)
+ */
+export interface SemanticTypeEntry {
+  type: SemanticType;
+  /** textInput일 때 placeholder 텍스트 */
+  placeholder?: string;
 }
 
 // ============================================================================
@@ -58,10 +69,18 @@ export interface BuildContext {
   nodeStyles?: Map<string, StyleDefinition>;
   nodePropBindings?: Map<string, Record<string, string>>;
   nodeExternalRefs?: Map<string, ExternalRefData>;
+  nodeSemanticTypes?: Map<string, SemanticTypeEntry>;
 
   // Phase 4: 최종 결과
   root?: DesignNode;
   conditionals: ConditionalRule[];
   slots: SlotDefinition[];
   arraySlots: ArraySlotInfo[];
+
+  // Heuristics 결과
+  /** 컴포넌트 유형 (ComponentTypeDetector 결과) */
+  componentType?: ComponentType;
+
+  /** 스타일/조건에서 제외할 prop 이름들 (휴리스틱으로 제거된 prop) */
+  excludePropsFromStyles?: Set<string>;
 }

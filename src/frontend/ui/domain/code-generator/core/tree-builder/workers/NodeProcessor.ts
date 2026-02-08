@@ -62,7 +62,13 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
     const nodeTypes = new Map<string, DesignNodeType>();
 
     traverseTree(ctx.internalTree, (node) => {
-      nodeTypes.set(node.id, instance.mapNodeType(node.type));
+      // Heuristics에서 semanticType이 설정된 경우 해당 타입으로 매핑
+      const semanticEntry = ctx.nodeSemanticTypes?.get(node.id);
+      if (semanticEntry?.type === "textInput") {
+        nodeTypes.set(node.id, "input");
+      } else {
+        nodeTypes.set(node.id, instance.mapNodeType(node.type));
+      }
     });
 
     return { ...ctx, nodeTypes };

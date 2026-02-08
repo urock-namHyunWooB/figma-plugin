@@ -26,7 +26,7 @@ import type {
 import type { InternalNode } from "./VariantProcessor";
 import { toCamelCase } from "./utils/stringUtils";
 import { traverseTree } from "./utils/treeUtils";
-import { isCssConvertibleState } from "./utils/stateUtils";
+import { stateToPseudo, isCssConvertibleState } from "./utils/stateUtils";
 
 // ============================================================================
 // Types
@@ -61,6 +61,18 @@ export class VisibilityProcessor
   static parseVariantCondition(variantName: string): ConditionNode | null {
     const instance = new VisibilityProcessor();
     return instance.parseVariantCondition(variantName);
+  }
+
+  /**
+   * variant 조건 파싱 (특정 prop 제외)
+   * 휴리스틱으로 제거된 prop (guideText 등)을 조건에서 제외
+   */
+  static parseVariantConditionExcluding(
+    variantName: string,
+    excludeProps: Set<string>
+  ): ConditionNode | null {
+    const instance = new VisibilityProcessor();
+    return instance.parseVariantConditionExcluding(variantName, excludeProps);
   }
 
   // ==========================================================================
@@ -146,6 +158,17 @@ export class VisibilityProcessor
    * Size, Left Icon 등 모든 prop 조건 포함
    */
   public parseVariantCondition(variantName: string): ConditionNode | null {
+    return this.parseVariantConditionExcluding(variantName, new Set());
+  }
+
+  /**
+   * variant 이름에서 조건 파싱 (특정 prop 제외)
+   * excludeProps에 포함된 prop은 조건에서 제외
+   */
+  public parseVariantConditionExcluding(
+    variantName: string,
+    excludeProps: Set<string>
+  ): ConditionNode | null {
     if (!variantName) return null;
 
     const conditions: ConditionNode[] = [];
@@ -153,11 +176,19 @@ export class VisibilityProcessor
     for (const pair of variantName.split(",").map((s) => s.trim())) {
       const [key, value] = pair.split("=").map((s) => s.trim());
       if (!key || !value) continue;
-      // CSS 변환 가능한 State만 무시 (hover, active, focus, disabled, default 등)
-      // Error, Insert, Press 등 CSS 변환 불가능한 State는 조건으로 파싱
-      if (key.toLowerCase() === "state" && isCssConvertibleState(value)) continue;
+      // pseudo-class가 있는 State만 무시 (hover → :hover, active → :active 등)
+      // default state (Normal, Default 등)는 조건으로 파싱 (null이므로 조건 생성됨)
+      if (key.toLowerCase() === "state") {
+        const pseudoClass = stateToPseudo(value);
+        if (pseudoClass) continue; // pseudo-class 있으면 제외 (null/undefined는 포함)
+      }
+
+      const propName = toCamelCase(key);
+      // 제외할 prop은 건너뛰기
+      if (excludeProps.has(propName)) continue;
+
       // Keep original case for value (e.g., "Large", "Medium") to match prop values
-      conditions.push(this.createBinaryCondition(toCamelCase(key), value));
+      conditions.push(this.createBinaryCondition(propName, value));
     }
 
     return this.combineConditionsWithAnd(conditions);

@@ -315,12 +315,29 @@ export type PropType = "variant" | "boolean" | "slot" | "string" | "number";
 // ============================================================================
 
 /**
+ * Placeholder 감지 결과 (휴리스틱)
+ */
+export interface PlaceholderInfo {
+  /** 해당 TEXT 노드 ID */
+  nodeId: string;
+
+  /** Placeholder 텍스트 내용 */
+  placeholderText: string;
+
+  /** 제거할 variant prop 이름 (guideText 등) */
+  linkedPropName: string;
+}
+
+/**
  * TreeBuilder의 출력
  * 플랫폼 독립적인 중간 표현 (Intermediate Representation)
  */
 export interface DesignTree {
   /** 루트 노드 */
   root: DesignNode;
+
+  /** 컴포넌트 타입 (휴리스틱으로 판별) */
+  componentType?: ComponentType;
 
   /** Props 정의 */
   props: PropDefinition[];
@@ -369,6 +386,12 @@ export interface DesignNode {
   /** Semantic role (root, button, text, icon, container, image, vector) */
   semanticRole?: SemanticRole;
 
+  /** Semantic type (휴리스틱 결과: textInput, placeholder, clearButton 등) */
+  semanticType?: SemanticType;
+
+  /** Input placeholder 텍스트 (semanticType이 textInput일 때) */
+  placeholder?: string;
+
   /** SVG 데이터 (vector/icon 노드용) */
   vectorSvg?: string;
 
@@ -413,12 +436,36 @@ export type DesignNodeType =
   | "image"
   | "vector"
   | "slot"
-  | "component";
+  | "component"
+  | "input";
 
 /**
- * 컴포넌트 타입 (interpretAs에서 사용)
+ * 컴포넌트 타입 (COMPONENT_SET 레벨에서 판별)
+ * Heuristics에서 사용하여 컴포넌트의 전체적인 역할을 결정
  */
-export type ComponentType = "button" | "input" | "checkbox" | "icon" | "custom";
+export type ComponentType =
+  | "input"      // 입력 필드 컴포넌트
+  | "button"     // 버튼 컴포넌트
+  | "modal"      // 모달/다이얼로그
+  | "card"       // 카드
+  | "list"       // 리스트
+  | "checkbox"   // 체크박스
+  | "toggle"     // 토글 스위치
+  | "dropdown"   // 드롭다운/셀렉트
+  | "icon"       // 아이콘
+  | "custom"     // 커스텀/기타
+  | "unknown";   // 판별 불가
+
+/**
+ * 노드 레벨 시맨틱 타입
+ * 개별 노드의 역할을 나타냄 (휴리스틱 결과)
+ */
+export type SemanticType =
+  | "textInput"      // 텍스트 입력 필드
+  | "placeholder"    // placeholder 텍스트
+  | "clearButton"    // 클리어 버튼
+  | "prefixIcon"     // 앞쪽 아이콘
+  | "suffixIcon";    // 뒤쪽 아이콘
 
 /**
  * 스타일 정의

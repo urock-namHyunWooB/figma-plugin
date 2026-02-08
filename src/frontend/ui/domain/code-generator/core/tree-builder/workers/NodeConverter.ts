@@ -50,6 +50,7 @@ export class NodeConverter {
       const propBindings = ctx.nodePropBindings?.get(internal.id);
       const externalRefData = ctx.nodeExternalRefs?.get(internal.id);
       const semanticResult = ctx.semanticRoles?.get(internal.id);
+      const semanticTypeEntry = ctx.nodeSemanticTypes?.get(internal.id);
 
       // 외부 참조 변환
       const externalRef = externalRefData
@@ -130,6 +131,8 @@ export class NodeConverter {
         propBindings: propBindings && Object.keys(propBindings).length > 0 ? propBindings : undefined,
         externalRef,
         semanticRole: semanticResult?.role,
+        semanticType: semanticTypeEntry?.type,
+        placeholder: semanticTypeEntry?.placeholder,
         vectorSvg: semanticResult?.vectorSvg,
         variantSvgs: semanticResult?.variantSvgs,
         textContent,
