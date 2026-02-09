@@ -19,16 +19,18 @@ import type {
   PreparedDesignData,
 } from "@code-generator/types/architecture";
 
-import type { BuildContext, SemanticRoleEntry } from "./workers/interfaces";
-import { VariantProcessor } from "./workers/VariantProcessor";
-import { PropsProcessor } from "./workers/PropsProcessor";
-import { NodeProcessor } from "./workers/NodeProcessor";
-import { StyleProcessor } from "./workers/StyleProcessor";
-import { SlotProcessor } from "./workers/SlotProcessor";
-import { VisibilityProcessor } from "./workers/VisibilityProcessor";
-import { InstanceProcessor } from "./workers/InstanceProcessor";
-import { NodeConverter } from "./workers/NodeConverter";
-import { CleanupProcessor } from "./workers/CleanupProcessor";
+import type { BuildContext, SemanticRoleEntry } from "./workers";
+import {
+  VariantProcessor,
+  PropsProcessor,
+  NodeProcessor,
+  StyleProcessor,
+  SlotProcessor,
+  VisibilityProcessor,
+  InstanceProcessor,
+  NodeConverter,
+  CleanupProcessor,
+} from "./workers";
 import { HeuristicsRunner } from "./heuristics";
 
 class TreeBuilder implements ITreeBuilder {
