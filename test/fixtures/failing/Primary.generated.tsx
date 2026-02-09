@@ -48,8 +48,8 @@ export interface PrimaryProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: Size;
   state?: State;
-  rightIcon?: React.ReactNode;
   leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
   children?: React.ReactNode;
 }
 const PrimaryCssSizeStyles = {
@@ -99,35 +99,10 @@ const MinWidthCss = (size: Size, state: State) => [
   css`
     overflow: visible;
     height: 1px;
+    display: none;
   `,
   MinWidthCssSizeStyles[size],
   MinWidthCssStateStyles[state],
-];
-const TextCssSizeStyles = {
-  Large: css({
-    fontSize: "16px",
-    lineHeight: "24px /* 150% */",
-  }),
-  Medium: css({
-    fontSize: "14px",
-    lineHeight: "22px /* 157.143% */",
-  }),
-  Small: css({
-    fontSize: "12px",
-    lineHeight: "18px /* 150% */",
-  }),
-};
-const TextCssStateStyles = {};
-const TextCss = (size: Size, state: State) => [
-  css`
-    color: var(--black-white-white, #fff);
-    text-align: center;
-    font-family: "PingFang SC";
-    font-style: normal;
-    font-weight: 500;
-  `,
-  TextCssSizeStyles[size],
-  TextCssStateStyles[state],
 ];
 const Plus_wrapperCssSizeStyles = {
   Large: css({
@@ -171,6 +146,32 @@ const UnionCss = (size: Size, state: State) => [
   `,
   UnionCssSizeStyles[size],
   UnionCssStateStyles[state],
+];
+const TextCssSizeStyles = {
+  Large: css({
+    fontSize: "16px",
+    lineHeight: "24px /* 150% */",
+  }),
+  Medium: css({
+    fontSize: "14px",
+    lineHeight: "22px /* 157.143% */",
+  }),
+  Small: css({
+    fontSize: "12px",
+    lineHeight: "18px /* 150% */",
+  }),
+};
+const TextCssStateStyles = {};
+const TextCss = (size: Size, state: State) => [
+  css`
+    color: var(--black-white-white, #fff);
+    text-align: center;
+    font-family: "PingFang SC";
+    font-style: normal;
+    font-weight: 500;
+  `,
+  TextCssSizeStyles[size],
+  TextCssStateStyles[state],
 ];
 const Plus_wrapperCss_2SizeStyles = {
   Large: css({
@@ -227,37 +228,9 @@ export default function Primary(props: PrimaryProps) {
   return (
     <button css={[PrimaryCss(size)]} {...restProps}>
       <div css={[MinWidthCss(size, state)]} />
+      <span css={[Plus_wrapperCss(size, state)]}>{leftIcon}</span>
       <span css={[TextCss(size, state)]}>Text</span>
-      <span css={[Plus_wrapperCss(size, state)]}>
-        {rightIcon}
-        <svg
-          css={[UnionCss(size, state)]}
-          width={15}
-          height={15}
-          viewBox="0 0 15 15"
-          fill="none"
-        >
-          <path
-            d="M8.25 0H6.75V6.75H0V8.25H6.75V15H8.25V8.25H15V6.75H8.25V0Z"
-            fill="white"
-          />
-        </svg>
-      </span>
-      <span css={[Plus_wrapperCss_2(size, state)]}>
-        {leftIcon}
-        <svg
-          css={[UnionCss_2(size, state)]}
-          width={15}
-          height={15}
-          viewBox="0 0 15 15"
-          fill="none"
-        >
-          <path
-            d="M8.25 0H6.75V6.75H0V8.25H6.75V15H8.25V8.25H15V6.75H8.25V0Z"
-            fill="white"
-          />
-        </svg>
-      </span>
+      <span css={[Plus_wrapperCss_2(size, state)]}>{rightIcon}</span>
       {children}
     </button>
   );

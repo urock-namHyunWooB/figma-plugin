@@ -343,9 +343,18 @@ class ComponentGenerator {
     const arraySlot = this.findArraySlotForNode(node, tree.arraySlots);
     const arraySlotNodeIds = new Set(arraySlot?.nodeIds ?? []);
 
+    // 개별 슬롯 노드 및 그 자손 ID 수집
+    // variant 병합 과정에서 slot 노드의 자식이 형제로 올라올 수 있으므로 모두 제외
+    const slotDescendantIds = this.collectSlotDescendantIds(node, tree);
+
     for (const child of node.children) {
       // 배열 슬롯에 포함된 노드는 건너뛰기
       if (arraySlotNodeIds.has(child.id)) {
+        continue;
+      }
+
+      // 슬롯 노드의 자손은 건너뛰기 (slot이 대체하므로 렌더링 불필요)
+      if (slotDescendantIds.has(child.id)) {
         continue;
       }
 
@@ -1160,6 +1169,51 @@ class ComponentGenerator {
     );
 
     return this.factory.createJsxExpression(undefined, conditionalExpression);
+  }
+
+  /**
+   * 슬롯 노드의 자손 ID 수집
+   *
+   * variant 병합 과정에서 슬롯 노드(예: INSTANCE)의 자식들이
+   * 상위 노드의 형제로 올라올 수 있음. 이들은 슬롯이 대체하므로 렌더링에서 제외해야 함.
+   *
+   * SlotDefinition.descendantIds에서 원본 Figma 데이터 기반의 자손 ID를 사용합니다.
+   */
+  private collectSlotDescendantIds(
+    parentNode: DesignNode,
+    tree: DesignTree
+  ): Set<string> {
+    const descendantIds = new Set<string>();
+
+    // 현재 노드의 children 중 slot인 노드 찾기
+    for (const child of parentNode.children) {
+      const slotDef = tree.slots.find((s) => s.targetNodeId === child.id);
+      if (slotDef) {
+        // SlotDefinition에 저장된 원본 자손 ID들 사용
+        if (slotDef.descendantIds) {
+          for (const id of slotDef.descendantIds) {
+            descendantIds.add(id);
+          }
+        }
+        // 현재 DesignTree의 자손도 추가 (보조)
+        this.collectAllDescendantIds(child, descendantIds);
+      }
+    }
+
+    return descendantIds;
+  }
+
+  /**
+   * 노드의 모든 자손 ID를 재귀적으로 수집
+   */
+  private collectAllDescendantIds(
+    node: DesignNode,
+    ids: Set<string>
+  ): void {
+    for (const child of node.children) {
+      ids.add(child.id);
+      this.collectAllDescendantIds(child, ids);
+    }
   }
 
   /**

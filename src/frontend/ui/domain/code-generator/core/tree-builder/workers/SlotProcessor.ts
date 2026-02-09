@@ -189,9 +189,16 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
             if (hasTrue && !hasFalse) {
               // Check if slot already exists for this node
               if (!slots.some((s) => s.targetNodeId === node.id)) {
+                // slot 노드의 원래 자손 ID들 계산 (variant 병합으로 형제로 올라간 노드들 추적)
+                const descendantIds = SlotProcessor.collectOriginalDescendantIds(
+                  node.mergedNode,
+                  ctx.data
+                );
+
                 slots.push({
                   name: blProp.name,
                   targetNodeId: node.id,
+                  descendantIds,
                 });
 
                 // Upgrade the prop type from boolean to slot
@@ -368,6 +375,51 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
       name: slotName,
       targetNodeId: nodeId,
     };
+  }
+
+  /**
+   * slot 노드의 원래 자손 ID들을 계산
+   * variant 병합 과정에서 자손이 형제로 올라갈 수 있으므로, 원본 Figma 데이터에서 계산
+   */
+  static collectOriginalDescendantIds(
+    mergedNodes: Array<{ id: string }>,
+    data: PreparedDesignData
+  ): string[] {
+    const descendantIds: string[] = [];
+
+    for (const merged of mergedNodes) {
+      const originalNode = data.getNodeById(merged.id);
+      if (originalNode && "children" in originalNode && originalNode.children) {
+        SlotProcessor.collectDescendantIdsRecursive(
+          originalNode.children as SceneNode[],
+          descendantIds,
+          data
+        );
+      }
+    }
+
+    // 중복 제거
+    return [...new Set(descendantIds)];
+  }
+
+  /**
+   * 자손 ID 재귀 수집
+   */
+  private static collectDescendantIdsRecursive(
+    children: SceneNode[],
+    ids: string[],
+    data: PreparedDesignData
+  ): void {
+    for (const child of children) {
+      ids.push(child.id);
+      if ("children" in child && child.children) {
+        SlotProcessor.collectDescendantIdsRecursive(
+          child.children as SceneNode[],
+          ids,
+          data
+        );
+      }
+    }
   }
 
   /**

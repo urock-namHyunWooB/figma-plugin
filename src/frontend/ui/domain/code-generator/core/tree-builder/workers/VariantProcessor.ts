@@ -121,7 +121,50 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
     // Wrapper FRAME flatten (일부 variant에만 존재하는 FRAME 제거)
     mergedTree = this.flattenWrapperFrames(mergedTree, variants.length, data);
 
+    // Children을 x 좌표 기준으로 정렬 (가로 배치 시 올바른 순서 보장)
+    this.sortChildrenByPosition(mergedTree, data);
+
     return mergedTree;
+  }
+
+  /**
+   * 트리 전체의 children을 x 좌표 기준으로 정렬 (재귀)
+   */
+  private sortChildrenByPosition(
+    node: InternalNode,
+    data: PreparedDesignData
+  ): void {
+    // 자식들의 평균 x 좌표 계산하여 정렬
+    node.children.sort((a, b) => {
+      const aX = this.getAverageX(a, data);
+      const bX = this.getAverageX(b, data);
+      return aX - bX;
+    });
+
+    // 재귀적으로 자식들도 정렬
+    for (const child of node.children) {
+      this.sortChildrenByPosition(child, data);
+    }
+  }
+
+  /**
+   * 노드의 평균 x 좌표 계산 (여러 variant에서 merge된 경우)
+   */
+  private getAverageX(node: InternalNode, data: PreparedDesignData): number {
+    if (node.mergedNode.length === 0) return 0;
+
+    let totalX = 0;
+    let count = 0;
+
+    for (const merged of node.mergedNode) {
+      const nodeSpec = data.getNodeById(merged.id);
+      if (nodeSpec?.absoluteBoundingBox) {
+        totalX += nodeSpec.absoluteBoundingBox.x;
+        count++;
+      }
+    }
+
+    return count > 0 ? totalX / count : 0;
   }
 
   /**

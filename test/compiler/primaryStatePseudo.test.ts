@@ -12,7 +12,7 @@ describe("Primary Button State Pseudo-class 테스트", () => {
     expect(code).not.toBeNull();
     expect(code!.length).toBeGreaterThan(0);
 
-    // 생성된 코드를 파일에 저장 (디버깅용)
+    // 생성된 코드 저장 (디버깅용)
     const outputPath = path.join(__dirname, "..", "fixtures", "failing", "Primary.generated.tsx");
     fs.writeFileSync(outputPath, code!);
 

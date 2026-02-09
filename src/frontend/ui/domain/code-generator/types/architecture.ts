@@ -492,6 +492,8 @@ export interface SlotDefinition {
   name: string;
   targetNodeId: string;
   defaultContent?: DesignNode;
+  /** slot 노드의 원래 자손 ID들 (variant 병합으로 형제로 올라간 노드들 추적) */
+  descendantIds?: string[];
 }
 
 /**

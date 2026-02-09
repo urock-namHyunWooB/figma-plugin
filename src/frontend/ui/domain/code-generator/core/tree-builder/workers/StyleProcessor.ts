@@ -97,6 +97,16 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
           }
         }
         styles.base = filteredBase;
+
+        // LINE 노드의 height: 0 처리
+        // Figma에서 height: 0인 LINE은 시각적으로 보이지 않는 레이아웃 제약 요소
+        // display: none으로 처리하여 flex 레이아웃에서 공간을 차지하지 않도록 함
+        if (node.type === "LINE" && node.mergedNode.length > 0) {
+          const originalNode = ctx.data.getNodeById(node.mergedNode[0].id);
+          if (originalNode?.absoluteBoundingBox?.height === 0) {
+            styles.base.display = "none";
+          }
+        }
       }
 
       // flatten된 FRAME의 layoutMode 상속 처리
