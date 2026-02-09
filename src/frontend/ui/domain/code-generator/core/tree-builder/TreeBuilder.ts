@@ -74,8 +74,13 @@ class TreeBuilder implements ITreeBuilder {
 
     if (ctx.data.document.type === "COMPONENT_SET") {
       ctx = PropsProcessor.bindProps(ctx); // → nodePropBindings
+
+      // Heuristic 처리 (컴포넌트 유형별 props/slot 생성)
+      ctx = HeuristicsRunner.processProps(ctx); // props 추가/수정
+      ctx = HeuristicsRunner.processSlots(ctx); // slot 생성
+
       ctx = SlotProcessor.detectTextSlots(ctx); // propsMap, nodePropBindings 업데이트
-      ctx = SlotProcessor.detectSlots(ctx); // → slots (개별 slot 먼저 감지)
+      ctx = SlotProcessor.detectSlots(ctx); // → slots (Heuristic이 처리 안 한 것 + fallback)
       ctx = SlotProcessor.detectArraySlots(ctx); // → arraySlots (slot으로 감지된 노드 제외)
       ctx = SlotProcessor.enrichArraySlotsWithComponentNames(ctx); // arraySlots에 itemComponentName 추가
     }

@@ -7,17 +7,24 @@
  * - 이름 패턴: input, textfield, searchbar 등
  * - Caret 패턴: "|" 문자 또는 얇은 세로 막대
  *
- * 감지 항목 (process):
+ * Phase 2 - 감지 항목 (process):
  * - Placeholder 텍스트 (회색 텍스트 → 실제 값 텍스트 패턴)
- * - Clear 버튼 (향후)
- * - Prefix/Suffix 아이콘 (향후)
+ *
+ * Phase 3 - Slot 생성 (processSlots):
+ * - leftIcon: left/prefix/leading + icon 패턴
+ * - rightIcon: right/suffix/trailing + icon 패턴
+ * - clearButton: clear/close/x/cancel 패턴
  *
  * 처리 결과:
  * - nodeSemanticTypes에 semanticType 설정 (textInput 등)
  * - excludePropsFromStyles에 제외할 prop 추가
+ * - slots에 icon/button slot 추가
  */
 
-import type { PreparedDesignData } from "@code-generator/types/architecture";
+import type {
+  PreparedDesignData,
+  SlotDefinition,
+} from "@code-generator/types/architecture";
 import type { BuildContext, SemanticTypeEntry } from "../../workers/BuildContext";
 import type { InternalNode } from "../../workers/interfaces/core";
 import type { IComponentHeuristic } from "./IComponentHeuristic";
@@ -303,5 +310,84 @@ export class InputHeuristic implements IComponentHeuristic {
    */
   private isBlackColor(color: RGB): boolean {
     return color.r < 0.1 && color.g < 0.1 && color.b < 0.1;
+  }
+
+  // ===========================================================================
+  // processSlots - Input 컴포넌트 slot 생성 (Phase 3)
+  // ===========================================================================
+
+  /**
+   * Input 컴포넌트의 slot 생성
+   *
+   * 감지 대상:
+   * - leftIcon: left/prefix/leading + icon 패턴의 INSTANCE
+   * - rightIcon: right/suffix/trailing + icon 패턴의 INSTANCE
+   * - clearButton: clear/close/x/cancel 패턴의 INSTANCE
+   *
+   * @param ctx BuildContext (nodePropBindings 포함)
+   * @returns slot이 추가된 BuildContext
+   */
+  processSlots(ctx: BuildContext): BuildContext {
+    if (!ctx.internalTree) return ctx;
+
+    const slots: SlotDefinition[] = [...ctx.slots];
+    const existingSlotNodeIds = new Set(slots.map((s) => s.targetNodeId));
+
+    traverseTree(ctx.internalTree, (node) => {
+      // 이미 slot으로 등록된 노드는 skip
+      if (existingSlotNodeIds.has(node.id)) return;
+
+      // INSTANCE 노드만 처리
+      if (node.type !== "INSTANCE") return;
+
+      const nodeName = node.name;
+
+      // leftIcon 감지: left/prefix/leading + icon
+      if (this.isLeftIconPattern(nodeName)) {
+        slots.push({ name: "leftIcon", targetNodeId: node.id });
+        existingSlotNodeIds.add(node.id);
+        return;
+      }
+
+      // rightIcon 감지: right/suffix/trailing + icon
+      if (this.isRightIconPattern(nodeName)) {
+        slots.push({ name: "rightIcon", targetNodeId: node.id });
+        existingSlotNodeIds.add(node.id);
+        return;
+      }
+
+      // clearButton 감지: clear/close/x/cancel
+      if (this.isClearButtonPattern(nodeName)) {
+        slots.push({ name: "clearButton", targetNodeId: node.id });
+        existingSlotNodeIds.add(node.id);
+        return;
+      }
+    });
+
+    return { ...ctx, slots };
+  }
+
+  /**
+   * leftIcon 패턴 매칭
+   * left/prefix/leading + icon
+   */
+  private isLeftIconPattern(name: string): boolean {
+    return /^(left|prefix|leading)[\s_-]*(icon|icn)/i.test(name);
+  }
+
+  /**
+   * rightIcon 패턴 매칭
+   * right/suffix/trailing + icon
+   */
+  private isRightIconPattern(name: string): boolean {
+    return /^(right|suffix|trailing)[\s_-]*(icon|icn)/i.test(name);
+  }
+
+  /**
+   * clearButton 패턴 매칭
+   * clear/close/x/cancel (버튼 또는 아이콘)
+   */
+  private isClearButtonPattern(name: string): boolean {
+    return /^(clear|close|x|cancel)[\s_-]*(button|btn|icon|icn)?$/i.test(name);
   }
 }
