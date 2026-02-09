@@ -260,6 +260,15 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
     const parent = frame.parent;
     const frameIndex = parent.children.indexOf(frame);
 
+    // FRAME의 layoutMode 확인 - HORIZONTAL이면 부모에 상속
+    // 일부 variant에만 존재하는 FRAME이 HORIZONTAL이면, 전체 컴포넌트가 가로 배치여야 함
+    if (frame.mergedNode.length > 0) {
+      const frameNodeSpec = data.getNodeById(frame.mergedNode[0].id);
+      if (frameNodeSpec?.layoutMode === "HORIZONTAL") {
+        parent.inheritedLayoutMode = "HORIZONTAL";
+      }
+    }
+
     // FRAME의 children 처리
     const childrenToMove: InternalNode[] = [];
 

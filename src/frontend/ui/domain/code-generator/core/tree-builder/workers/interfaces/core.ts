@@ -55,6 +55,8 @@ export interface InternalNode {
   };
   /** Visibility 조건 (CSS 변환 불가능한 State 등) */
   conditions?: ConditionalRule[];
+  /** flatten된 FRAME의 layoutMode를 상속 (HORIZONTAL이면 flex-direction: row 적용) */
+  inheritedLayoutMode?: "HORIZONTAL" | "VERTICAL";
 }
 
 // Re-export FigmaFill for convenience

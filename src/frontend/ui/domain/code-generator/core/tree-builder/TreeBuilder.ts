@@ -19,6 +19,7 @@ import type {
   PreparedDesignData,
 } from "@code-generator/types/architecture";
 
+//TODO 배럴 import
 import type { BuildContext, SemanticRoleEntry } from "./workers/interfaces";
 import { VariantProcessor } from "./workers/VariantProcessor";
 import { PropsProcessor } from "./workers/PropsProcessor";
@@ -70,6 +71,7 @@ class TreeBuilder implements ITreeBuilder {
     ctx = InstanceProcessor.buildExternalRefs(ctx); // → nodeExternalRefs
     ctx = VisibilityProcessor.resolve(ctx); // → conditionals
 
+    //TODO 여기도 각 휴리스틱에 위임해야 하지 않나?
     if (ctx.data.document.type === "COMPONENT_SET") {
       ctx = PropsProcessor.bindProps(ctx); // → nodePropBindings
       ctx = SlotProcessor.detectTextSlots(ctx); // propsMap, nodePropBindings 업데이트
@@ -97,7 +99,11 @@ class TreeBuilder implements ITreeBuilder {
    * 불필요하므로 propsMap에서 제거합니다.
    */
   private removeExcludedProps(ctx: BuildContext): BuildContext {
-    if (!ctx.excludePropsFromStyles || ctx.excludePropsFromStyles.size === 0 || !ctx.propsMap) {
+    if (
+      !ctx.excludePropsFromStyles ||
+      ctx.excludePropsFromStyles.size === 0 ||
+      !ctx.propsMap
+    ) {
       return ctx;
     }
 

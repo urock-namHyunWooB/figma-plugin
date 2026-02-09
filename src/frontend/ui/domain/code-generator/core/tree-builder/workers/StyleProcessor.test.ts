@@ -108,6 +108,80 @@ describe("StyleProcessor", () => {
       expect(result.pseudo?.[":disabled"]).toBeDefined();
     });
 
+    it("should classify State-specific styles as pseudo even with other conditions (Primary button case)", () => {
+      // Primary 버튼: 4 State × 3 Size = 12 variants
+      // background는 State에 따라 변함 (State-specific)
+      // padding은 Size에 따라 변함 (Size-specific)
+      const variantStyles = [
+        { variantName: "State=Default, Size=Large", cssStyle: { background: "#F64C4C", padding: "8px" } },
+        { variantName: "State=Default, Size=Medium", cssStyle: { background: "#F64C4C", padding: "7px" } },
+        { variantName: "State=Default, Size=Small", cssStyle: { background: "#F64C4C", padding: "3px" } },
+        { variantName: "State=Hover, Size=Large", cssStyle: { background: "#EC2D30", padding: "8px" } },
+        { variantName: "State=Hover, Size=Medium", cssStyle: { background: "#EC2D30", padding: "7px" } },
+        { variantName: "State=Hover, Size=Small", cssStyle: { background: "#EC2D30", padding: "3px" } },
+        { variantName: "State=Pressed, Size=Large", cssStyle: { background: "#EB6F70", padding: "8px" } },
+        { variantName: "State=Pressed, Size=Medium", cssStyle: { background: "#EB6F70", padding: "7px" } },
+        { variantName: "State=Pressed, Size=Small", cssStyle: { background: "#EB6F70", padding: "3px" } },
+        { variantName: "State=Disabled, Size=Large", cssStyle: { background: "#FFCCD2", padding: "8px" } },
+        { variantName: "State=Disabled, Size=Medium", cssStyle: { background: "#FFCCD2", padding: "7px" } },
+        { variantName: "State=Disabled, Size=Small", cssStyle: { background: "#FFCCD2", padding: "3px" } },
+      ];
+
+      // parseCondition: State를 제외한 조건만 반환 (Size만 있으면 Size 조건 반환)
+      const parseCondition = (name: string) => {
+        const sizeMatch = name.match(/Size=(\w+)/);
+        if (sizeMatch) {
+          return { type: "Literal" as const, value: `Size=${sizeMatch[1]}` };
+        }
+        return null;
+      };
+
+      const result = processor.classifyStyles(variantStyles, parseCondition);
+
+      // background는 State-specific → Default는 base, 나머지는 pseudo
+      expect(result.base.background).toBe("#F64C4C");
+      expect(result.pseudo?.[":hover"]?.background).toBe("#EC2D30");
+      expect(result.pseudo?.[":active"]?.background).toBe("#EB6F70");
+      expect(result.pseudo?.[":disabled"]?.background).toBe("#FFCCD2");
+
+      // padding은 Size-specific → dynamic으로 분류
+      expect(result.dynamic.length).toBeGreaterThan(0);
+      const paddingInDynamic = result.dynamic.some((d) => d.style.padding !== undefined);
+      expect(paddingInDynamic).toBe(true);
+
+      // background는 dynamic에 없어야 함
+      const backgroundInDynamic = result.dynamic.some((d) => d.style.background !== undefined);
+      expect(backgroundInDynamic).toBe(false);
+    });
+
+    it("should handle mixed State and non-State conditions correctly", () => {
+      // State=Default는 State-only, Size=Large는 non-State condition
+      const variantStyles = [
+        { variantName: "State=Default, Size=Large", cssStyle: { color: "#000", fontSize: "16px" } },
+        { variantName: "State=Default, Size=Small", cssStyle: { color: "#000", fontSize: "12px" } },
+        { variantName: "State=Hover, Size=Large", cssStyle: { color: "#333", fontSize: "16px" } },
+        { variantName: "State=Hover, Size=Small", cssStyle: { color: "#333", fontSize: "12px" } },
+      ];
+
+      const parseCondition = (name: string) => {
+        const sizeMatch = name.match(/Size=(\w+)/);
+        if (sizeMatch) {
+          return { type: "Literal" as const, value: `Size=${sizeMatch[1]}` };
+        }
+        return null;
+      };
+
+      const result = processor.classifyStyles(variantStyles, parseCondition);
+
+      // color는 State-specific → Default는 base, Hover는 pseudo
+      expect(result.base.color).toBe("#000");
+      expect(result.pseudo?.[":hover"]?.color).toBe("#333");
+
+      // fontSize는 Size-specific → dynamic
+      const fontSizeInDynamic = result.dynamic.some((d) => d.style.fontSize !== undefined);
+      expect(fontSizeInDynamic).toBe(true);
+    });
+
     it("should return empty styles for empty input", () => {
       const result = processor.classifyStyles([], () => null);
 

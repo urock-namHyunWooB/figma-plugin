@@ -339,10 +339,19 @@ class EmotionStyleStrategy implements IStyleStrategy {
       }
     }
 
+    // pseudo 스타일이 있으면 state prop은 CSS pseudo-class로 처리되므로 제외
+    const hasPseudoStyles = node.styles?.pseudo && Object.keys(node.styles.pseudo).length > 0;
+    const pseudoHandledProps = new Set<string>();
+    if (hasPseudoStyles) {
+      pseudoHandledProps.add("state");
+    }
+
     // Variant props: 기존 Record 패턴 유지
     for (const [propName, variants] of groupedDynamicStyles.entries()) {
       // propName은 lowercase, slotProps도 실제 prop name과 비교 (lowercase로 비교)
       if (slotProps.some((sp) => sp.toLowerCase() === propName)) continue;
+      // pseudo로 처리되는 prop은 Record 생성 제외
+      if (pseudoHandledProps.has(propName)) continue;
       const recordVarName = `${cssVarName}${capitalize(propName)}Styles`;
       const recordStatement = this.createRecordStatement(
         recordVarName,
@@ -917,6 +926,7 @@ class EmotionStyleStrategy implements IStyleStrategy {
   /**
    * 노드에서 동적 prop 이름들 수집
    * 복합 조건(A && B)에서 모든 prop을 추출
+   * 단, pseudo 스타일로 처리되는 prop(state)은 제외
    */
   private collectDynamicProps(
     node: DesignNode,
@@ -925,6 +935,14 @@ class EmotionStyleStrategy implements IStyleStrategy {
     const dynamicStyles = node.styles?.dynamic;
     if (!dynamicStyles || dynamicStyles.length === 0) return [];
 
+    // pseudo 스타일이 있으면 state prop은 CSS pseudo-class로 처리되므로 제외
+    const hasPseudoStyles = node.styles?.pseudo && Object.keys(node.styles.pseudo).length > 0;
+    const pseudoHandledProps = new Set<string>();
+    if (hasPseudoStyles) {
+      // state prop은 pseudo로 처리됨
+      pseudoHandledProps.add("state");
+    }
+
     const propNames: string[] = [];
 
     for (const { condition } of dynamicStyles) {
@@ -932,6 +950,11 @@ class EmotionStyleStrategy implements IStyleStrategy {
       const allConditions = this.extractAllConditions(condition);
 
       for (const extracted of allConditions) {
+        // pseudo로 처리되는 prop은 건너뜀
+        if (pseudoHandledProps.has(extracted.propName.toLowerCase())) {
+          continue;
+        }
+
         // props에 존재하는지 확인하고, 실제 prop.name 사용 (case 일치 보장)
         // HTML 충돌 prop도 매칭 (type → customType, disabled → customDisabled 등)
         const matchedProp = props.find(

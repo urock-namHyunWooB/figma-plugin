@@ -62,6 +62,7 @@ class NewEngine {
     this.policy = this.createPolicy(options);
 
     // 4. ReactEmitter 인스턴스 생성
+    //TODO 여기서는 ReactEmitter 라던지 그런걸 주입받아야 하지 않나?
     this.emitter = new ReactEmitter();
   }
 
@@ -70,9 +71,7 @@ class NewEngine {
    * @param componentName 컴포넌트 이름 (기본값: DesignTree.root.name)
    * @returns 생성된 TypeScript/TSX 코드 문자열
    */
-  public async getGeneratedCode(
-    componentName?: string
-  ): Promise<string> {
+  public async getGeneratedCode(componentName?: string): Promise<string> {
     // 컴포넌트 이름이 지정된 경우 루트 노드 이름 변경
     if (componentName) {
       this.designTree.root.name = componentName;

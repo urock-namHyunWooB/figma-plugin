@@ -99,6 +99,19 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
         styles.base = filteredBase;
       }
 
+      // flatten된 FRAME의 layoutMode 상속 처리
+      // 일부 variant에만 존재하던 HORIZONTAL FRAME이 flatten되면, 부모에 flex-direction: row 적용
+      if (node.inheritedLayoutMode === "HORIZONTAL") {
+        styles.base = {
+          ...styles.base,
+          "flex-direction": "row",
+        };
+        // VERTICAL이 있으면 제거
+        if (styles.base["flex-direction"] === "column") {
+          styles.base["flex-direction"] = "row";
+        }
+      }
+
       nodeStyles.set(node.id, styles);
     });
 
@@ -211,18 +224,54 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
       }
     }
 
-    // 3. dynamic 및 pseudo 스타일 분류
-    // - non-State 조건 (Size, LeftIcon 등)이 있으면 dynamic에 추가
-    // - State만 있으면 pseudo에 추가
+    // 3. State별로 variant 그룹화
+    const stateGroups = this.groupByState(variantStyles);
+
+    // 4. dynamic 및 pseudo 스타일 분류
     const dynamic: StyleDefinition["dynamic"] = [];
     const pseudo: StyleDefinition["pseudo"] = {};
 
-    for (const vs of variantStyles) {
-      const state = this.extractStateFromVariantName(vs.variantName);
-      const pseudoClass = state ? stateToPseudo(state) : undefined;
+    // 5. State-specific 스타일 분리 (여러 State가 있는 경우에만)
+    const stateSpecificKeys = new Set<string>();
+    const nonStateSpecificKeys = new Set<string>();
 
-      const dynamicStyle: Record<string, string | number> = {};
+    if (stateGroups.size > 1) {
       for (const key of dynamicKeys) {
+        if (this.isStateSpecific(key, stateGroups)) {
+          stateSpecificKeys.add(key);
+        } else {
+          nonStateSpecificKeys.add(key);
+        }
+      }
+
+      // State-specific 스타일을 pseudo 또는 base로 분류
+      for (const key of stateSpecificKeys) {
+        for (const [state, variants] of stateGroups) {
+          const value = variants.find((v) => v.cssStyle[key] !== undefined)?.cssStyle[key];
+          if (value === undefined) continue;
+
+          const pseudoClass = stateToPseudo(state);
+          if (pseudoClass) {
+            // Hover, Active, Disabled 등 → pseudo-class
+            pseudo[pseudoClass] = pseudo[pseudoClass] || {};
+            pseudo[pseudoClass]![key] = value;
+          } else {
+            // Default/Normal → base 스타일
+            base[key] = value;
+          }
+        }
+      }
+    } else {
+      // State가 1개 이하면 모든 dynamic 키를 non-state-specific으로 처리
+      for (const key of dynamicKeys) {
+        nonStateSpecificKeys.add(key);
+      }
+    }
+
+    // 6. Non-state-specific 스타일을 dynamic으로 분류 (기존 로직)
+    for (const vs of variantStyles) {
+      const dynamicStyle: Record<string, string | number> = {};
+      for (const key of nonStateSpecificKeys) {
         if (vs.cssStyle[key] !== undefined) {
           dynamicStyle[key] = vs.cssStyle[key];
         }
@@ -230,18 +279,13 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
       if (Object.keys(dynamicStyle).length === 0) continue;
 
-      // Always check for non-State conditions (Size, LeftIcon, etc.)
       const condition = parseCondition(vs.variantName);
 
       if (condition) {
-        // Has non-State conditions → add to dynamic
-        // This ensures Size-based styles are properly captured
+        // Has non-State conditions (Size, LeftIcon 등) → add to dynamic
         dynamic.push({ condition, style: dynamicStyle });
-      } else if (pseudoClass) {
-        // Only State, no other conditions → add to pseudo
-        pseudo[pseudoClass] = { ...pseudo[pseudoClass], ...dynamicStyle };
       }
-      // If pseudoClass === null (default state) and no condition, skip
+      // State-only variants with non-state-specific keys는 이미 처리됨
     }
 
     return {
@@ -249,6 +293,46 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
       dynamic,
       ...(Object.keys(pseudo).length > 0 ? { pseudo } : {}),
     };
+  }
+
+  /**
+   * State별로 variant 그룹화
+   */
+  private groupByState(variantStyles: VariantStyle[]): Map<string, VariantStyle[]> {
+    const groups = new Map<string, VariantStyle[]>();
+    for (const vs of variantStyles) {
+      const state = this.extractStateFromVariantName(vs.variantName) || "Default";
+      if (!groups.has(state)) groups.set(state, []);
+      groups.get(state)!.push(vs);
+    }
+    return groups;
+  }
+
+  /**
+   * 스타일 속성이 State-specific인지 판별
+   * State-specific: 같은 State 내에서 모든 Size/Icon 조합이 동일한 값을 가짐
+   */
+  private isStateSpecific(key: string, stateGroups: Map<string, VariantStyle[]>): boolean {
+    // State가 1개 이하면 State-specific 아님
+    if (stateGroups.size <= 1) return false;
+
+    // 같은 State 내에서 모든 variant가 동일한 값을 가지면 true
+    for (const [, variants] of stateGroups) {
+      const values = variants.map((v) => v.cssStyle[key]).filter((v) => v !== undefined);
+      // 값이 여러 개이고 서로 다르면 State-specific 아님
+      if (values.length > 0 && new Set(values).size > 1) return false;
+    }
+
+    // 추가 검증: State마다 다른 값을 가져야 State-specific
+    const valuePerState = new Map<string, string | number | undefined>();
+    for (const [state, variants] of stateGroups) {
+      const value = variants.find((v) => v.cssStyle[key] !== undefined)?.cssStyle[key];
+      valuePerState.set(state, value);
+    }
+    const uniqueStateValues = new Set([...valuePerState.values()].filter((v) => v !== undefined));
+
+    // State별로 최소 2개 이상의 다른 값이 있어야 State-specific
+    return uniqueStateValues.size > 1;
   }
 
   /**
