@@ -61,4 +61,90 @@ describe("Primary Button State Pseudo-class 테스트", () => {
     const hasStateStyles = /PrimaryCssStateStyles/.test(code!);
     expect(hasStateStyles).toBe(false);
   });
+
+  test("flex-direction: row가 적용되어야 함 (HORIZONTAL FRAME 상속)", async () => {
+    const compiler = new FigmaCodeGenerator(PrimaryFixture as any);
+    const code = await compiler.compile();
+
+    expect(code).not.toBeNull();
+
+    // flex-direction: row가 있어야 함
+    const hasFlexRow = /flex-direction:\s*row/.test(code!);
+    expect(hasFlexRow).toBe(true);
+
+    // flex-direction: column이 루트에 없어야 함 (Primary 버튼은 가로 배치)
+    // PrimaryCss에 column이 있으면 안 됨
+    const primaryCssMatch = code!.match(/const PrimaryCss[^;]*css`([^`]*)`/s);
+    if (primaryCssMatch) {
+      const primaryCssContent = primaryCssMatch[1];
+      const hasColumnInPrimary = /flex-direction:\s*column/.test(primaryCssContent);
+      expect(hasColumnInPrimary).toBe(false);
+    }
+  });
+
+  test("LINE height: 0 노드는 display: none이어야 함", async () => {
+    const compiler = new FigmaCodeGenerator(PrimaryFixture as any);
+    const code = await compiler.compile();
+
+    expect(code).not.toBeNull();
+
+    // MinWidth 관련 CSS에 display: none이 있어야 함
+    const minWidthCssMatch = code!.match(/const MinWidthCss[^;]*css`([^`]*)`/s);
+    if (minWidthCssMatch) {
+      const minWidthContent = minWidthCssMatch[1];
+      const hasDisplayNone = /display:\s*none/.test(minWidthContent);
+      expect(hasDisplayNone).toBe(true);
+    }
+  });
+
+  test("Slot 노드의 자손이 별도로 렌더링되지 않아야 함", async () => {
+    const compiler = new FigmaCodeGenerator(PrimaryFixture as any);
+    const code = await compiler.compile();
+
+    expect(code).not.toBeNull();
+
+    // leftIcon, rightIcon slot이 있어야 함
+    const hasLeftIconSlot = /leftIcon/.test(code!);
+    const hasRightIconSlot = /rightIcon/.test(code!);
+    expect(hasLeftIconSlot).toBe(true);
+    expect(hasRightIconSlot).toBe(true);
+
+    // SVG가 직접 렌더링되지 않아야 함 (slot 자손으로 있던 SVG)
+    // Plus, Minus 같은 아이콘 SVG가 하드코딩되어 있으면 안 됨
+    const hasSvgElement = /<svg[^>]*>/.test(code!);
+    // SVG가 있더라도 슬롯 외부에 있으면 안 됨
+    // 버튼 내부에 직접 svg 태그가 렌더링되는지 확인
+    const buttonJsxMatch = code!.match(/return\s*\(\s*<button[^]*<\/button>\s*\)/s);
+    if (buttonJsxMatch) {
+      const buttonContent = buttonJsxMatch[0];
+      // slot 변수({leftIcon}, {rightIcon})는 있어야 하지만
+      // 직접적인 <svg> 태그는 없어야 함
+      const hasSvgInButton = /<svg/.test(buttonContent);
+      expect(hasSvgInButton).toBe(false);
+    }
+  });
+
+  test("children 순서가 x좌표 기준으로 정렬되어야 함", async () => {
+    const compiler = new FigmaCodeGenerator(PrimaryFixture as any);
+    const code = await compiler.compile();
+
+    expect(code).not.toBeNull();
+
+    // JSX에서 요소 순서 확인
+    // 예상 순서: MinWidth(또는 생략) -> leftIcon -> Text -> rightIcon
+    const buttonJsxMatch = code!.match(/return\s*\(\s*<button[^]*<\/button>\s*\)/s);
+    if (buttonJsxMatch) {
+      const buttonContent = buttonJsxMatch[0];
+
+      const leftIconPos = buttonContent.indexOf("{leftIcon}");
+      const textPos = buttonContent.indexOf("Text");
+      const rightIconPos = buttonContent.indexOf("{rightIcon}");
+
+      // 순서 검증: leftIcon < Text < rightIcon
+      if (leftIconPos !== -1 && textPos !== -1 && rightIconPos !== -1) {
+        expect(leftIconPos).toBeLessThan(textPos);
+        expect(textPos).toBeLessThan(rightIconPos);
+      }
+    }
+  });
 });
