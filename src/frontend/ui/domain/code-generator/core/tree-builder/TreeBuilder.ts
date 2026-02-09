@@ -19,17 +19,18 @@ import type {
   PreparedDesignData,
 } from "@code-generator/types/architecture";
 
-//TODO 배럴 import
-import type { BuildContext, SemanticRoleEntry } from "./workers/interfaces";
-import { VariantProcessor } from "./workers/VariantProcessor";
-import { PropsProcessor } from "./workers/PropsProcessor";
-import { NodeProcessor } from "./workers/NodeProcessor";
-import { StyleProcessor } from "./workers/StyleProcessor";
-import { SlotProcessor } from "./workers/SlotProcessor";
-import { VisibilityProcessor } from "./workers/VisibilityProcessor";
-import { InstanceProcessor } from "./workers/InstanceProcessor";
-import { NodeConverter } from "./workers/NodeConverter";
-import { CleanupProcessor } from "./workers/CleanupProcessor";
+import type { BuildContext, SemanticRoleEntry } from "./workers";
+import {
+  VariantProcessor,
+  PropsProcessor,
+  NodeProcessor,
+  StyleProcessor,
+  SlotProcessor,
+  VisibilityProcessor,
+  InstanceProcessor,
+  NodeConverter,
+  CleanupProcessor,
+} from "./workers";
 import { HeuristicsRunner } from "./heuristics";
 
 class TreeBuilder implements ITreeBuilder {
@@ -71,11 +72,15 @@ class TreeBuilder implements ITreeBuilder {
     ctx = InstanceProcessor.buildExternalRefs(ctx); // → nodeExternalRefs
     ctx = VisibilityProcessor.resolve(ctx); // → conditionals
 
-    //TODO 여기도 각 휴리스틱에 위임해야 하지 않나?
     if (ctx.data.document.type === "COMPONENT_SET") {
       ctx = PropsProcessor.bindProps(ctx); // → nodePropBindings
+
+      // Heuristic 처리 (컴포넌트 유형별 props/slot 생성)
+      ctx = HeuristicsRunner.processProps(ctx); // props 추가/수정
+      ctx = HeuristicsRunner.processSlots(ctx); // slot 생성
+
       ctx = SlotProcessor.detectTextSlots(ctx); // propsMap, nodePropBindings 업데이트
-      ctx = SlotProcessor.detectSlots(ctx); // → slots (개별 slot 먼저 감지)
+      ctx = SlotProcessor.detectSlots(ctx); // → slots (Heuristic이 처리 안 한 것 + fallback)
       ctx = SlotProcessor.detectArraySlots(ctx); // → arraySlots (slot으로 감지된 노드 제외)
       ctx = SlotProcessor.enrichArraySlotsWithComponentNames(ctx); // arraySlots에 itemComponentName 추가
     }
@@ -99,11 +104,7 @@ class TreeBuilder implements ITreeBuilder {
    * 불필요하므로 propsMap에서 제거합니다.
    */
   private removeExcludedProps(ctx: BuildContext): BuildContext {
-    if (
-      !ctx.excludePropsFromStyles ||
-      ctx.excludePropsFromStyles.size === 0 ||
-      !ctx.propsMap
-    ) {
+    if (!ctx.excludePropsFromStyles || ctx.excludePropsFromStyles.size === 0 || !ctx.propsMap) {
       return ctx;
     }
 

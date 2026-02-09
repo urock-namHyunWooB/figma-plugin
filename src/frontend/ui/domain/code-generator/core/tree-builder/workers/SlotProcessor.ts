@@ -87,6 +87,9 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
       { type: string }
     >;
 
+    // 이미 slot으로 등록된 노드 ID 수집 (Heuristic에서 처리된 것 포함)
+    const existingSlotNodeIds = new Set(slots.map((s) => s.targetNodeId));
+
     // Find boolean-like props (VARIANT with True/False options)
     // These are candidates for visibility-pattern slots (if they control INSTANCE visibility)
     const booleanLikeProps: Array<{ name: string; originalKey: string }> = [];
@@ -115,6 +118,9 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
     }
 
     traverseTree(ctx.internalTree, (node) => {
+      // 이미 Heuristic에서 처리된 노드는 skip
+      if (existingSlotNodeIds.has(node.id)) return;
+
       if (NodeProcessor.isComponentReference(node.type)) {
         const nodeSpec = ctx.data.getNodeById(node.id);
         const candidates = instance.findSlotCandidates(
