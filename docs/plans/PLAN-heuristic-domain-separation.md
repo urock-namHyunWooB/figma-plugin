@@ -5,36 +5,7 @@
 현재 Processor 중심 구조에서 **Heuristic 중심 구조**로 전환.
 모든 분석/변환 로직을 휴리스틱에 위임하여 컴포넌트 유형별 처리를 일원화.
 
-## 현재 구조 (Processor 중심)
-
-```
-TreeBuilder.build()
-├── Phase 1: 구조 생성
-│   ├── VariantProcessor.merge()
-│   └── InstanceProcessor.resolveWrappers()
-│
-├── Phase 2: 분석
-│   └── HeuristicsRunner.run()  ← 일부만 위임
-│
-├── Phase 3: 노드 변환
-│   ├── NodeProcessor.mapTypes()
-│   ├── StyleProcessor.build()           ← stateToPseudo (전역)
-│   ├── StyleProcessor.applyPositions()
-│   ├── StyleProcessor.handleRotation()
-│   ├── InstanceProcessor.buildExternalRefs()
-│   ├── VisibilityProcessor.resolve()
-│   ├── PropsProcessor.bindProps()
-│   ├── HeuristicsRunner.processProps()  ← 일부만 위임
-│   ├── HeuristicsRunner.processSlots()  ← 일부만 위임
-│   ├── SlotProcessor.detectTextSlots()
-│   └── SlotProcessor.detectArraySlots()
-│
-└── Phase 4: 최종 조립
-    ├── NodeBuilder.build()
-    └── CleanupProcessor.removeHiddenNodes()
-```
-
-**문제점**:
+## 현재 구조의 문제점
 - 로직이 10개+ Processor에 분산
 - 컴포넌트별 특수 처리 어려움
 - stateToPseudo 등 전역 함수 의존
@@ -44,13 +15,18 @@ TreeBuilder.build()
 
 ```
 TreeBuilder.build()
-├── HeuristicsRunner.getActiveHeuristic(ctx)
 │
-└── ActiveHeuristic.process(ctx)  ← 전체 파이프라인 위임
-    ├── processStructure()      # Phase 1
-    ├── processAnalysis()       # Phase 2
-    ├── processTransform()      # Phase 3
-    └── processBuild()          # Phase 4
+├── [COMPONENT_SET] → HeuristicsRunner.run(ctx)  ← 전부 위임
+│   │
+│   ├── HeuristicsRunner.getActiveHeuristic(ctx)
+│   │
+│   └── ActiveHeuristic.process(ctx)
+│       ├── processStructure()      # Phase 1: 구조 생성
+│       ├── processAnalysis()       # Phase 2: 분석
+│       ├── processTransform()      # Phase 3: 노드 변환
+│       └── processBuild()          # Phase 4: 최종 조립
+│
+└── [Other: COMPONENT, FRAME, INSTANCE] → 기본 처리 (processorUtils 직접 사용)
 ```
 
 ### 휴리스틱 계층 구조
@@ -136,33 +112,35 @@ export interface IComponentHeuristic {
   // 세부 처리 메서드 (override 가능)
   // =========================================================================
 
+  // Phase 1: 구조 생성
   /** 구조: Variant 병합 */
   processVariants(ctx: BuildContext): BuildContext;
+  /** 구조: Instance 내부 노드 정리 */
+  processInstanceCleanup(ctx: BuildContext): BuildContext;
+  /** 구조: Props 추출 */
+  processPropsExtract(ctx: BuildContext): BuildContext;
 
-  /** 구조: Instance wrapper 처리 */
-  processInstances(ctx: BuildContext): BuildContext;
-
+  // Phase 3: 노드 변환
   /** 변환: Node type 매핑 */
   processNodeTypes(ctx: BuildContext): BuildContext;
-
   /** 변환: Style 분류 (base/dynamic/pseudo) */
   processStyles(ctx: BuildContext): BuildContext;
-
   /** 변환: Position 스타일 */
   processPositions(ctx: BuildContext): BuildContext;
-
+  /** 변환: Rotation 처리 */
+  processRotation(ctx: BuildContext): BuildContext;
+  /** 변환: External refs 생성 */
+  processExternalRefs(ctx: BuildContext): BuildContext;
   /** 변환: Visibility 조건 */
   processVisibility(ctx: BuildContext): BuildContext;
-
   /** 변환: Props 바인딩 */
   processProps(ctx: BuildContext): BuildContext;
-
   /** 변환: Slot 감지 */
   processSlots(ctx: BuildContext): BuildContext;
 
+  // Phase 4: 최종 조립
   /** 조립: DesignNode 트리 생성 */
   buildDesignTree(ctx: BuildContext): BuildContext;
-
   /** 조립: 정리 (hidden 노드 제거 등) */
   processCleanup(ctx: BuildContext): BuildContext;
 }
@@ -179,17 +157,29 @@ import type { IComponentHeuristic } from "./IComponentHeuristic";
 
 // 현재 Processor들의 로직을 유틸리티로 import
 import {
+  // Phase 1: 구조 생성
   mergeVariants,
-  resolveInstanceWrappers,
+  removeInstanceInternalNodes,
+  extractProps,
+  // Phase 2: 분석
+  detectSemanticRoles,
+  processHidden,
+  // Phase 3: 노드 변환
   mapNodeTypes,
   buildStyles,
   applyPositions,
+  handleRotation,
+  buildExternalRefs,
   resolveVisibility,
   bindProps,
   detectSlots,
+  detectTextSlots,
+  detectArraySlots,
+  enrichArraySlotsWithComponentNames,
+  // Phase 4: 최종 조립
   buildDesignTree,
   cleanupNodes,
-} from "./utils/processorUtils";
+} from "../utils/processorUtils";
 
 export class GenericHeuristic implements IComponentHeuristic {
   readonly componentType: ComponentType = "unknown";
@@ -276,7 +266,8 @@ export class GenericHeuristic implements IComponentHeuristic {
   processStructure(ctx: BuildContext): BuildContext {
     let result = ctx;
     result = this.processVariants(result);
-    result = this.processInstances(result);
+    result = this.processInstanceCleanup(result);
+    result = this.processPropsExtract(result);
     return result;
   }
 
@@ -284,8 +275,12 @@ export class GenericHeuristic implements IComponentHeuristic {
     return mergeVariants(ctx);
   }
 
-  processInstances(ctx: BuildContext): BuildContext {
-    return resolveInstanceWrappers(ctx);
+  processInstanceCleanup(ctx: BuildContext): BuildContext {
+    return removeInstanceInternalNodes(ctx);
+  }
+
+  processPropsExtract(ctx: BuildContext): BuildContext {
+    return extractProps(ctx);
   }
 
   // =========================================================================
@@ -293,9 +288,11 @@ export class GenericHeuristic implements IComponentHeuristic {
   // =========================================================================
 
   processAnalysis(ctx: BuildContext): BuildContext {
-    // GenericHeuristic은 기본 분석 없음
-    // 서브클래스에서 override (예: InputHeuristic의 placeholder 감지)
-    return ctx;
+    let result = ctx;
+    result = detectSemanticRoles(result);
+    result = processHidden(result);
+    // 서브클래스에서 추가 분석 (예: InputHeuristic의 placeholder 감지)
+    return result;
   }
 
   // =========================================================================
@@ -307,6 +304,8 @@ export class GenericHeuristic implements IComponentHeuristic {
     result = this.processNodeTypes(result);
     result = this.processStyles(result);
     result = this.processPositions(result);
+    result = this.processRotation(result);
+    result = this.processExternalRefs(result);
     result = this.processVisibility(result);
     result = this.processProps(result);
     result = this.processSlots(result);
@@ -326,6 +325,14 @@ export class GenericHeuristic implements IComponentHeuristic {
     return applyPositions(ctx);
   }
 
+  processRotation(ctx: BuildContext): BuildContext {
+    return handleRotation(ctx);
+  }
+
+  processExternalRefs(ctx: BuildContext): BuildContext {
+    return buildExternalRefs(ctx);
+  }
+
   processVisibility(ctx: BuildContext): BuildContext {
     return resolveVisibility(ctx, (state) => this.stateToPseudo(state));
   }
@@ -335,7 +342,12 @@ export class GenericHeuristic implements IComponentHeuristic {
   }
 
   processSlots(ctx: BuildContext): BuildContext {
-    return detectSlots(ctx);
+    let result = ctx;
+    result = detectTextSlots(result);
+    result = detectSlots(result);
+    result = detectArraySlots(result);
+    result = enrichArraySlotsWithComponentNames(result);
+    return result;
   }
 
   // =========================================================================
@@ -430,10 +442,14 @@ export class InputHeuristic extends GenericHeuristic {
 
   // Override: 분석 단계에서 placeholder 감지
   processAnalysis(ctx: BuildContext): BuildContext {
-    // 기존 InputHeuristic의 process 로직
+    // 부모 분석 먼저 실행
+    let result = super.processAnalysis(ctx);
+
+    // Input 특화 분석 추가
     // placeholder 텍스트 감지
     // nodeSemanticTypes, excludePropsFromStyles 설정
-    return ctx;
+    // 기존 InputHeuristic의 process 로직
+    return result;
   }
 
   // Override: Slot 감지에서 Input 특화 slot 추가
@@ -488,7 +504,7 @@ const RADIO_NAME_PATTERNS: RegExp[] = [
 ];
 
 export class RadioHeuristic extends GenericHeuristic {
-  readonly componentType = "checkbox" as const; // HTML radio도 :checked
+  readonly componentType = "radio" as const;
   readonly name = "RadioHeuristic";
 
   canProcess(ctx: BuildContext): boolean {
@@ -549,7 +565,7 @@ const LINK_NAME_PATTERNS: RegExp[] = [
 ];
 
 export class LinkHeuristic extends GenericHeuristic {
-  readonly componentType = "custom" as const;
+  readonly componentType = "link" as const;
   readonly name = "LinkHeuristic";
 
   canProcess(ctx: BuildContext): boolean {
@@ -622,21 +638,33 @@ export class HeuristicsRunner {
 // TreeBuilder.ts
 import type { BuildContext } from "./workers/BuildContext";
 import { HeuristicsRunner } from "./heuristics";
+import {
+  mergeVariants,
+  mapNodeTypes,
+  buildStyles,
+  applyPositions,
+  buildDesignTree,
+} from "./heuristics/utils/processorUtils";
 
 class TreeBuilder implements ITreeBuilder {
   build(data: PreparedDesignData, policy?: TreeBuilderPolicy): DesignTree {
-    // 초기 context 생성
-    let ctx: BuildContext = {
-      data,
-      policy,
-      totalVariantCount: this.countVariants(data),
-      conditionals: [],
-      slots: [],
-      arraySlots: [],
-    };
+    let ctx = this.createBuildContext(data, policy);
 
-    // 전체 파이프라인을 휴리스틱에 위임
-    ctx = HeuristicsRunner.run(ctx);
+    // ─────────────────────────────────────────────────────────────────
+    // 파이프라인 분기
+    // ─────────────────────────────────────────────────────────────────
+    if (data.document.type === "COMPONENT_SET") {
+      // ─── COMPONENT_SET: 휴리스틱에 전부 위임 ───
+      ctx = HeuristicsRunner.run(ctx);
+    } else {
+      // ─── Non-COMPONENT_SET: processorUtils 직접 사용 ───
+      // (Processor 클래스 삭제 후에도 동작)
+      ctx = mergeVariants(ctx);
+      ctx = mapNodeTypes(ctx);
+      ctx = buildStyles(ctx, () => undefined); // pseudo-class 없음
+      ctx = applyPositions(ctx);
+      ctx = buildDesignTree(ctx);
+    }
 
     // 결과 반환
     return {
@@ -653,19 +681,47 @@ class TreeBuilder implements ITreeBuilder {
 
 ### 11. Processor → Utility 변환
 
-현재 Processor들의 static 메서드를 순수 함수로 추출:
+#### 11-1. Processor 간 의존성 (순환 참조 주의)
+
+현재 Processor 간 cross-dependency가 존재:
+
+| Processor | 호출하는 함수 | 출처 |
+|-----------|-------------|------|
+| StyleProcessor | `parseVariantConditionExcluding()` | VisibilityProcessor |
+| InstanceProcessor | `isComponentReference()` | NodeProcessor |
+| SlotProcessor | `isComponentReference()` | NodeProcessor |
+
+**순환 참조 방지**: 공통 유틸리티를 먼저 추출한 후, 메인 함수에서 사용.
+
+#### 11-2. processorUtils.ts 구조
 
 ```typescript
 // utils/processorUtils.ts
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 1. 공통 유틸리티 (먼저 정의 - 다른 함수들이 의존)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// VisibilityProcessor에서 추출
+export function parseVariantConditionExcluding(
+  variantName: string,
+  excludeProps: Set<string>
+): ConditionNode | null {
+  // 기존 VisibilityProcessor.parseVariantConditionExcluding() 로직
+}
+
+// NodeProcessor에서 추출
+export function isComponentReference(nodeType: string): boolean {
+  // 기존 NodeProcessor.isComponentReference() 로직
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 2. 메인 Processor 함수 (위 유틸리티 사용)
+// ═══════════════════════════════════════════════════════════════════════════
+
 // VariantProcessor → mergeVariants
 export function mergeVariants(ctx: BuildContext): BuildContext {
   // 기존 VariantProcessor.merge() 로직
-}
-
-// InstanceProcessor → resolveInstanceWrappers
-export function resolveInstanceWrappers(ctx: BuildContext): BuildContext {
-  // 기존 InstanceProcessor.resolveWrappers() 로직
 }
 
 // NodeProcessor → mapNodeTypes
@@ -678,8 +734,7 @@ export function buildStyles(
   ctx: BuildContext,
   stateToPseudo: (state: string) => PseudoClass | null | undefined
 ): BuildContext {
-  // 기존 StyleProcessor.build() 로직
-  // stateToPseudo를 파라미터로 받음
+  // parseVariantConditionExcluding() 사용
 }
 
 // StyleProcessor → applyPositions
@@ -695,24 +750,69 @@ export function resolveVisibility(
   // 기존 VisibilityProcessor.resolve() 로직
 }
 
+// PropsProcessor → extractProps
+export function extractProps(ctx: BuildContext): BuildContext {
+  // 기존 PropsProcessor.extract() 로직
+}
+
 // PropsProcessor → bindProps
 export function bindProps(ctx: BuildContext): BuildContext {
   // 기존 PropsProcessor.bindProps() 로직
 }
 
-// SlotProcessor → detectSlots
-export function detectSlots(ctx: BuildContext): BuildContext {
-  // 기존 SlotProcessor 로직 통합
+// NodeProcessor → detectSemanticRoles
+export function detectSemanticRoles(ctx: BuildContext): BuildContext {
+  // 기존 NodeProcessor.detectSemanticRoles() 로직
 }
 
-// NodeBuilder → buildDesignTree
+// VisibilityProcessor → processHidden
+export function processHidden(ctx: BuildContext): BuildContext {
+  // 기존 VisibilityProcessor.processHidden() 로직
+}
+
+// StyleProcessor → handleRotation
+export function handleRotation(ctx: BuildContext): BuildContext {
+  // 기존 StyleProcessor.handleRotation() 로직
+}
+
+// InstanceProcessor → buildExternalRefs
+export function buildExternalRefs(ctx: BuildContext): BuildContext {
+  // 기존 InstanceProcessor.buildExternalRefs() 로직
+}
+
+// SlotProcessor → detectSlots
+export function detectSlots(ctx: BuildContext): BuildContext {
+  // isComponentReference() 사용
+}
+
+// SlotProcessor → detectTextSlots
+export function detectTextSlots(ctx: BuildContext): BuildContext {
+  // 기존 SlotProcessor.detectTextSlots() 로직
+}
+
+// SlotProcessor → detectArraySlots
+export function detectArraySlots(ctx: BuildContext): BuildContext {
+  // 기존 SlotProcessor.detectArraySlots() 로직
+}
+
+// SlotProcessor → enrichArraySlotsWithComponentNames
+export function enrichArraySlotsWithComponentNames(ctx: BuildContext): BuildContext {
+  // 기존 SlotProcessor.enrichArraySlotsWithComponentNames() 로직
+}
+
+// NodeConverter → buildDesignTree
 export function buildDesignTree(ctx: BuildContext): BuildContext {
-  // 기존 NodeBuilder.build() 로직
+  // 기존 NodeConverter.assemble() 로직
 }
 
 // CleanupProcessor → cleanupNodes
 export function cleanupNodes(ctx: BuildContext): BuildContext {
-  // 기존 CleanupProcessor 로직
+  // 기존 CleanupProcessor.removeHiddenNodes() 로직
+}
+
+// CleanupProcessor → removeInstanceInternalNodes
+export function removeInstanceInternalNodes(ctx: BuildContext): BuildContext {
+  // 기존 CleanupProcessor.removeInstanceInternalNodes() 로직
 }
 ```
 
@@ -746,7 +846,7 @@ tree-builder/
 
 ```
 tree-builder/
-├── TreeBuilder.ts              # 간소화
+├── TreeBuilder.ts              # 간소화 (파이프라인 분기)
 ├── heuristics/
 │   ├── HeuristicsRunner.ts     # 간소화
 │   ├── components/
@@ -770,14 +870,19 @@ tree-builder/
 ## 마이그레이션 단계
 
 ### Phase 1: 인터페이스 준비
-1. [ ] IComponentHeuristic 확장 (파이프라인 메서드 추가)
-2. [ ] processorUtils.ts 생성 (빈 파일)
+1. [ ] ComponentType에 "radio", "link" 추가 (architecture.ts)
+2. [ ] IComponentHeuristic 확장 (파이프라인 메서드 추가)
+3. [ ] processorUtils.ts 생성 (빈 파일)
 
 ### Phase 2: GenericHeuristic 구현
 1. [ ] GenericHeuristic 생성
 2. [ ] baseStateMapping 이동 (stateUtils.ts → GenericHeuristic)
-3. [ ] 각 Processor 로직을 processorUtils.ts로 추출
-4. [ ] GenericHeuristic에서 processorUtils 호출
+3. [ ] processorUtils.ts에 공통 유틸리티 먼저 추출:
+   - [ ] `parseVariantConditionExcluding()` (VisibilityProcessor에서)
+   - [ ] `isComponentReference()` (NodeProcessor에서)
+4. [ ] processorUtils.ts에 메인 함수 추출 (공통 유틸리티 사용):
+   - [ ] `mergeVariants()`, `buildStyles()`, `detectSlots()` 등
+5. [ ] GenericHeuristic에서 processorUtils 호출
 
 ### Phase 3: 특정 휴리스틱 구현
 1. [ ] ButtonHeuristic 생성
@@ -789,8 +894,8 @@ tree-builder/
 
 ### Phase 4: HeuristicsRunner/TreeBuilder 수정
 1. [ ] HeuristicsRunner 간소화
-2. [ ] TreeBuilder 간소화
-3. [ ] 기존 Processor import 제거
+2. [ ] TreeBuilder 간소화 (COMPONENT_SET → 휴리스틱 전체 위임)
+3. [ ] 기존 Processor import 정리
 
 ### Phase 5: 정리
 1. [ ] 기존 Processor 파일 삭제 또는 deprecated
@@ -811,17 +916,47 @@ tree-builder/
 
 ## 테스트 계획
 
+### 테스트 파일 구조
+
+```
+test/
+└── compiler/
+    └── heuristics/
+        ├── GenericHeuristic.test.ts
+        ├── ButtonHeuristic.test.ts
+        ├── InputHeuristic.test.ts
+        ├── CheckboxHeuristic.test.ts
+        ├── RadioHeuristic.test.ts
+        ├── ToggleHeuristic.test.ts
+        ├── LinkHeuristic.test.ts
+        └── processorUtils.test.ts
+```
+
 ### Unit Tests
-1. GenericHeuristic 전체 파이프라인 테스트
-2. 각 휴리스틱 canProcess 테스트
-3. ToggleHeuristic stateMapping 테스트
-4. processorUtils 각 함수 테스트
+
+| 파일 | 테스트 내용 |
+|------|-----------|
+| `GenericHeuristic.test.ts` | 전체 파이프라인, stateMapping, 기본 처리 |
+| `ButtonHeuristic.test.ts` | canProcess (button, btn, cta 패턴) |
+| `InputHeuristic.test.ts` | canProcess, placeholder 감지, slot 생성 |
+| `CheckboxHeuristic.test.ts` | canProcess (checkbox 패턴) |
+| `RadioHeuristic.test.ts` | canProcess (radio 패턴) |
+| `ToggleHeuristic.test.ts` | canProcess, stateMapping (on/off → :checked) |
+| `LinkHeuristic.test.ts` | canProcess (link, anchor 패턴) |
+| `processorUtils.test.ts` | 각 유틸리티 함수 단위 테스트 |
 
 ### Integration Tests
-1. Primary.json → ButtonHeuristic 처리
-2. InputBoxstandard.json → InputHeuristic 처리
-3. 미지정 컴포넌트 → GenericHeuristic 처리
-4. 기존 658개 테스트 전체 통과
+
+| 테스트 | Fixture | 예상 휴리스틱 |
+|--------|---------|-------------|
+| Primary 버튼 | `Primary.json` | ButtonHeuristic |
+| Input 컴포넌트 | `InputBoxstandard.json` | InputHeuristic |
+| 미지정 컴포넌트 | 기타 | GenericHeuristic |
+
+### 통과 조건
+
+- [ ] 기존 658개 테스트 전체 통과
+- [ ] 새 휴리스틱 테스트 전체 통과
 
 ## 위험 요소
 
