@@ -10,7 +10,12 @@
  *
  * 휴리스틱 우선순위:
  * 1. InputHeuristic (input, textfield, searchbar, caret 패턴)
- * 2. GenericHeuristic (fallback - 항상 true)
+ * 2. CheckboxHeuristic (checkbox 패턴)
+ * 3. RadioHeuristic (radio 패턴)
+ * 4. ToggleHeuristic (toggle, switch 패턴)
+ * 5. LinkHeuristic (link, anchor 패턴)
+ * 6. ButtonHeuristic (button, btn, cta 패턴)
+ * 7. GenericHeuristic (fallback - 항상 true)
  *
  * 새 휴리스틱 추가 시:
  * 1. components/ 폴더에 XxxHeuristic.ts 파일 생성
@@ -24,6 +29,11 @@ import type { BuildContext } from "../workers/BuildContext";
 import type { IComponentHeuristic } from "./components/IComponentHeuristic";
 import { GenericHeuristic } from "./components/GenericHeuristic";
 import { InputHeuristic } from "./components/InputHeuristic";
+import { ButtonHeuristic } from "./components/ButtonHeuristic";
+import { CheckboxHeuristic } from "./components/CheckboxHeuristic";
+import { RadioHeuristic } from "./components/RadioHeuristic";
+import { ToggleHeuristic } from "./components/ToggleHeuristic";
+import { LinkHeuristic } from "./components/LinkHeuristic";
 
 export class HeuristicsRunner {
   /**
@@ -33,12 +43,11 @@ export class HeuristicsRunner {
    */
   private static readonly heuristics: IComponentHeuristic[] = [
     new InputHeuristic(),
-    // 향후 휴리스틱 추가:
-    // new CheckboxHeuristic(),
-    // new RadioHeuristic(),
-    // new ToggleHeuristic(),
-    // new LinkHeuristic(),
-    // new ButtonHeuristic(),
+    new CheckboxHeuristic(),
+    new RadioHeuristic(),
+    new ToggleHeuristic(),
+    new LinkHeuristic(),
+    new ButtonHeuristic(),
     new GenericHeuristic(), // fallback - 항상 마지막
   ];
 

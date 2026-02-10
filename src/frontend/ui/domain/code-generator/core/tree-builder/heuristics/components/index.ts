@@ -10,10 +10,8 @@
 export type { IComponentHeuristic } from "./IComponentHeuristic";
 export { GenericHeuristic } from "./GenericHeuristic";
 export { InputHeuristic } from "./InputHeuristic";
-
-// 향후 확장:
-// export { ButtonHeuristic } from "./ButtonHeuristic";
-// export { CheckboxHeuristic } from "./CheckboxHeuristic";
-// export { RadioHeuristic } from "./RadioHeuristic";
-// export { ToggleHeuristic } from "./ToggleHeuristic";
-// export { LinkHeuristic } from "./LinkHeuristic";
+export { ButtonHeuristic } from "./ButtonHeuristic";
+export { CheckboxHeuristic } from "./CheckboxHeuristic";
+export { RadioHeuristic } from "./RadioHeuristic";
+export { ToggleHeuristic } from "./ToggleHeuristic";
+export { LinkHeuristic } from "./LinkHeuristic";
