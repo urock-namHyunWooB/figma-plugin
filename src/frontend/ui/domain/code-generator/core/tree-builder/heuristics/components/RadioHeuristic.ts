@@ -13,19 +13,33 @@
 import type { BuildContext } from "../../workers/BuildContext";
 import { GenericHeuristic } from "./GenericHeuristic";
 
-const RADIO_NAME_PATTERNS: RegExp[] = [
-  /radio/i,
-  /radio.?button/i,
-  /radio.?group/i,
-];
-
 export class RadioHeuristic extends GenericHeuristic {
   readonly componentType = "radio" as const;
   readonly name = "RadioHeuristic";
 
-  canProcess(ctx: BuildContext): boolean {
+  /** 매칭 임계점 */
+  private static readonly MATCH_THRESHOLD = 10;
+
+  /**
+   * Radio 컴포넌트 매칭 점수 계산
+   *
+   * 점수 기준:
+   * - radio: +10
+   * - radio-button, radio-group: +12
+   */
+  score(ctx: BuildContext): number {
+    let score = 0;
     const name = ctx.data.document.name;
-    return RADIO_NAME_PATTERNS.some((pattern) => pattern.test(name));
+
+    if (/radio/i.test(name)) score += 10;
+    if (/radio.?button/i.test(name)) score += 12;
+    if (/radio.?group/i.test(name)) score += 12;
+
+    return score;
+  }
+
+  canProcess(ctx: BuildContext): boolean {
+    return this.score(ctx) >= RadioHeuristic.MATCH_THRESHOLD;
   }
 
   // 향후 Radio 특수 처리

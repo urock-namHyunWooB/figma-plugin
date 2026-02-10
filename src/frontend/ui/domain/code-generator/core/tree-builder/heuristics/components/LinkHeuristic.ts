@@ -13,20 +13,36 @@
 import type { BuildContext } from "../../workers/BuildContext";
 import { GenericHeuristic } from "./GenericHeuristic";
 
-const LINK_NAME_PATTERNS: RegExp[] = [
-  /^link$/i,
-  /text.?link/i,
-  /anchor/i,
-  /hyperlink/i,
-];
-
 export class LinkHeuristic extends GenericHeuristic {
   readonly componentType = "link" as const;
   readonly name = "LinkHeuristic";
 
-  canProcess(ctx: BuildContext): boolean {
+  /** 매칭 임계점 */
+  private static readonly MATCH_THRESHOLD = 10;
+
+  /**
+   * Link 컴포넌트 매칭 점수 계산
+   *
+   * 점수 기준:
+   * - link (독립): +10
+   * - text-link: +12
+   * - anchor: +10
+   * - hyperlink: +10
+   */
+  score(ctx: BuildContext): number {
+    let score = 0;
     const name = ctx.data.document.name;
-    return LINK_NAME_PATTERNS.some((pattern) => pattern.test(name));
+
+    if (/^link$/i.test(name)) score += 10;
+    if (/text.?link/i.test(name)) score += 12;
+    if (/anchor/i.test(name)) score += 10;
+    if (/hyperlink/i.test(name)) score += 10;
+
+    return score;
+  }
+
+  canProcess(ctx: BuildContext): boolean {
+    return this.score(ctx) >= LinkHeuristic.MATCH_THRESHOLD;
   }
 
   // Link는 :visited pseudo-class 활용

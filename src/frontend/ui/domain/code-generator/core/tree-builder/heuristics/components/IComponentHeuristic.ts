@@ -32,11 +32,26 @@ export interface IComponentHeuristic {
 
   /**
    * 이 휴리스틱이 해당 컴포넌트를 처리할 수 있는지 판별
+   * score() >= MATCH_THRESHOLD 이면 true
    *
    * @param ctx BuildContext
    * @returns 처리 가능 여부
    */
   canProcess(ctx: BuildContext): boolean;
+
+  /**
+   * 컴포넌트와의 매칭 점수 계산
+   * 높을수록 더 적합한 휴리스틱
+   *
+   * 점수 기준:
+   * - 0: 불일치 (GenericHeuristic fallback)
+   * - 10+: 기본 키워드 매칭 (button, input 등)
+   * - 15+: 구조 패턴 매칭 (caret, toggle knob 등)
+   *
+   * @param ctx BuildContext
+   * @returns 매칭 점수 (0 이상)
+   */
+  score(ctx: BuildContext): number;
 
   /**
    * State → pseudo-class 변환

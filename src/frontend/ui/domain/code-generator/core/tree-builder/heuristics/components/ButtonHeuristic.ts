@@ -13,19 +13,40 @@
 import type { BuildContext } from "../../workers/BuildContext";
 import { GenericHeuristic } from "./GenericHeuristic";
 
-const BUTTON_NAME_PATTERNS: RegExp[] = [
-  /button/i,
-  /^btn$/i,
-  /^cta$/i,
-];
-
 export class ButtonHeuristic extends GenericHeuristic {
   readonly componentType = "button" as const;
   readonly name = "ButtonHeuristic";
 
-  canProcess(ctx: BuildContext): boolean {
+  /** 매칭 임계점 */
+  private static readonly MATCH_THRESHOLD = 10;
+
+  /**
+   * Button 컴포넌트 매칭 점수 계산
+   *
+   * 점수 기준:
+   * - button: +10
+   * - btn (독립): +10
+   * - cta (독립): +10
+   * - primary, secondary 등 수식어: +3
+   */
+  score(ctx: BuildContext): number {
+    let score = 0;
     const name = ctx.data.document.name;
-    return BUTTON_NAME_PATTERNS.some((pattern) => pattern.test(name));
+
+    if (/button/i.test(name)) score += 10;
+    if (/^btn$/i.test(name)) score += 10;
+    if (/^cta$/i.test(name)) score += 10;
+
+    // 버튼 수식어 가산점
+    if (/primary/i.test(name)) score += 3;
+    if (/secondary/i.test(name)) score += 3;
+    if (/tertiary/i.test(name)) score += 3;
+
+    return score;
+  }
+
+  canProcess(ctx: BuildContext): boolean {
+    return this.score(ctx) >= ButtonHeuristic.MATCH_THRESHOLD;
   }
 
   // 버튼은 GenericHeuristic의 stateMapping 그대로 사용

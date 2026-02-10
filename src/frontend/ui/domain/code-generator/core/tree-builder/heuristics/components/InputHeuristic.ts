@@ -78,38 +78,45 @@ export class InputHeuristic extends GenericHeuristic {
     "helper",
   ];
 
+  /** 매칭 임계점 */
+  private static readonly MATCH_THRESHOLD = 10;
+
   // ===========================================================================
-  // canProcess - Input 컴포넌트 판별
+  // 점수 기반 컴포넌트 판별
   // ===========================================================================
 
   /**
-   * Input 컴포넌트인지 판별
+   * Input 컴포넌트 매칭 점수 계산
    *
-   * 판별 기준:
-   * 1. 이름 패턴 (input, textfield 등)
-   * 2. Caret 패턴 ("|" 문자 또는 얇은 세로 막대)
+   * 점수 기준:
+   * - input, textfield, textinput: +10
+   * - searchbar, searchfield: +10
+   * - Caret 패턴 (구조): +15
    */
-  canProcess(ctx: BuildContext): boolean {
+  score(ctx: BuildContext): number {
+    let score = 0;
     const name = ctx.data.document.name;
 
-    // 1. 이름 패턴 매칭
-    if (this.matchesNamePattern(name)) {
-      return true;
-    }
+    // 이름 패턴 점수
+    if (/input/i.test(name)) score += 10;
+    if (/textfield/i.test(name)) score += 10;
+    if (/text.?field/i.test(name)) score += 10;
+    if (/text.?input/i.test(name)) score += 10;
+    if (/search.?bar/i.test(name)) score += 10;
+    if (/search.?field/i.test(name)) score += 10;
 
-    // 2. Caret 패턴 감지
-    if (this.hasCaretPattern(ctx)) {
-      return true;
-    }
+    // 구조 패턴 점수 (Caret)
+    if (this.hasCaretPattern(ctx)) score += 15;
 
-    return false;
+    return score;
   }
 
   /**
-   * 이름이 Input 패턴과 매칭되는지 확인
+   * Input 컴포넌트인지 판별
+   * score >= MATCH_THRESHOLD 이면 true
    */
-  private matchesNamePattern(name: string): boolean {
-    return INPUT_NAME_PATTERNS.some((pattern) => pattern.test(name));
+  canProcess(ctx: BuildContext): boolean {
+    return this.score(ctx) >= InputHeuristic.MATCH_THRESHOLD;
   }
 
   /**

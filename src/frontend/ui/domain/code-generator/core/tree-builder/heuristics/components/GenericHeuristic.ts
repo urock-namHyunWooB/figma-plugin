@@ -85,8 +85,20 @@ export class GenericHeuristic implements IComponentHeuristic {
   // 컴포넌트 판별
   // ===========================================================================
 
+  /**
+   * 매칭 점수 계산
+   * GenericHeuristic은 fallback이므로 항상 0 반환
+   */
+  score(_ctx: BuildContext): number {
+    return 0;
+  }
+
+  /**
+   * 처리 가능 여부 판별
+   * GenericHeuristic은 fallback이므로 항상 true
+   */
   canProcess(_ctx: BuildContext): boolean {
-    return true; // Fallback - 항상 처리
+    return true;
   }
 
   // ===========================================================================
