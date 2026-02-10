@@ -2,15 +2,16 @@
  * InputHeuristic
  *
  * Input 컴포넌트의 판별과 세부 패턴 감지를 담당합니다.
+ * GenericHeuristic을 상속하여 공통 로직을 재사용합니다.
  *
  * 판별 기준 (canProcess):
  * - 이름 패턴: input, textfield, searchbar 등
  * - Caret 패턴: "|" 문자 또는 얇은 세로 막대
  *
- * Phase 2 - 감지 항목 (process):
- * - Placeholder 텍스트 (회색 텍스트 → 실제 값 텍스트 패턴)
+ * Override: processAnalysis
+ * - Placeholder 텍스트 감지 (회색 텍스트 → 실제 값 텍스트 패턴)
  *
- * Phase 3 - Slot 생성 (processSlots):
+ * Override: processSlots
  * - leftIcon: left/prefix/leading + icon 패턴
  * - rightIcon: right/suffix/trailing + icon 패턴
  * - clearButton: clear/close/x/cancel 패턴
@@ -27,7 +28,7 @@ import type {
 } from "@code-generator/types/architecture";
 import type { BuildContext, SemanticTypeEntry } from "../../workers/BuildContext";
 import type { InternalNode } from "../../workers/interfaces/core";
-import type { IComponentHeuristic } from "./IComponentHeuristic";
+import { GenericHeuristic } from "./GenericHeuristic";
 import { traverseTree } from "../../workers/utils/treeUtils";
 import { toCamelCase } from "../../workers/utils/stringUtils";
 
@@ -62,7 +63,7 @@ interface PlaceholderDetectionResult {
   linkedPropName: string;
 }
 
-export class InputHeuristic implements IComponentHeuristic {
+export class InputHeuristic extends GenericHeuristic {
   readonly componentType = "input" as const;
   readonly name = "InputHeuristic";
 
@@ -154,10 +155,29 @@ export class InputHeuristic implements IComponentHeuristic {
   }
 
   // ===========================================================================
-  // process - Input 컴포넌트 처리
+  // processAnalysis - 분석 단계 확장 (placeholder 감지)
   // ===========================================================================
 
-  process(ctx: BuildContext): BuildContext {
+  /**
+   * 분석 단계 확장
+   *
+   * 부모 분석 먼저 실행 후 Input 특화 분석 추가:
+   * - Placeholder 텍스트 감지
+   */
+  processAnalysis(ctx: BuildContext): BuildContext {
+    // 부모 분석 먼저 실행
+    let result = super.processAnalysis(ctx);
+
+    // Input 특화 분석: placeholder 감지
+    result = this.detectPlaceholders(result);
+
+    return result;
+  }
+
+  /**
+   * placeholder 감지 처리
+   */
+  private detectPlaceholders(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) return ctx;
 
     const nodeSemanticTypes = new Map<string, SemanticTypeEntry>(ctx.nodeSemanticTypes);
@@ -313,21 +333,31 @@ export class InputHeuristic implements IComponentHeuristic {
   }
 
   // ===========================================================================
-  // processSlots - Input 컴포넌트 slot 생성 (Phase 3)
+  // processSlots - Slot 감지 단계 확장
   // ===========================================================================
 
   /**
-   * Input 컴포넌트의 slot 생성
+   * Slot 감지 확장
    *
-   * 감지 대상:
+   * 부모 slot 감지 먼저 실행 후 Input 특화 slot 추가:
    * - leftIcon: left/prefix/leading + icon 패턴의 INSTANCE
    * - rightIcon: right/suffix/trailing + icon 패턴의 INSTANCE
    * - clearButton: clear/close/x/cancel 패턴의 INSTANCE
-   *
-   * @param ctx BuildContext (nodePropBindings 포함)
-   * @returns slot이 추가된 BuildContext
    */
   processSlots(ctx: BuildContext): BuildContext {
+    // 부모 slot 감지 먼저 실행
+    let result = super.processSlots(ctx);
+
+    // Input 특화 slot 추가
+    result = this.detectInputSlots(result);
+
+    return result;
+  }
+
+  /**
+   * Input 특화 slot 감지
+   */
+  private detectInputSlots(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) return ctx;
 
     const slots: SlotDefinition[] = [...ctx.slots];

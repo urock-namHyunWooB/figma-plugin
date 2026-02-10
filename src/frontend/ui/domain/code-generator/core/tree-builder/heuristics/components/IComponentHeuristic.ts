@@ -6,11 +6,14 @@
  *
  * 각 휴리스틱은:
  * 1. canProcess()로 자신이 처리할 수 있는 컴포넌트인지 판별
- * 2. process()로 컴포넌트 구조 분석 및 semanticType 설정 (Phase 2)
- * 3. processProps()로 propsMap 수정 (Phase 3, optional)
- * 4. processSlots()로 컴포넌트별 slot 생성 (Phase 3, optional)
+ * 2. process()로 전체 파이프라인 실행
+ *   - processStructure(): 구조 생성 (variant 병합, props 추출)
+ *   - processAnalysis(): 분석 (semantic roles, hidden 처리)
+ *   - processTransform(): 노드 변환 (스타일, props 바인딩)
+ *   - processBuild(): 최종 조립 (DesignTree 생성)
  */
 
+import type { PseudoClass } from "@code-generator/types/customType";
 import type { ComponentType } from "@code-generator/types/architecture";
 import type { BuildContext } from "../../workers/BuildContext";
 
@@ -24,6 +27,9 @@ export interface IComponentHeuristic {
   /** 휴리스틱 이름 (디버깅용) */
   readonly name: string;
 
+  /** State → pseudo-class 매핑 */
+  readonly stateMapping: Record<string, PseudoClass | null>;
+
   /**
    * 이 휴리스틱이 해당 컴포넌트를 처리할 수 있는지 판별
    *
@@ -33,28 +39,90 @@ export interface IComponentHeuristic {
   canProcess(ctx: BuildContext): boolean;
 
   /**
-   * 컴포넌트 분석 및 처리 (Phase 2: 메타데이터 생성)
+   * State → pseudo-class 변환
+   *
+   * @param state State 문자열 (예: "hover", "pressed")
+   * @returns 대응하는 pseudo-class (예: ":hover", ":active") 또는 null/undefined
+   */
+  stateToPseudo(state: string): PseudoClass | null | undefined;
+
+  // ===========================================================================
+  // 파이프라인 메서드 (전체 위임)
+  // ===========================================================================
+
+  /**
+   * 전체 처리 (메인 엔트리포인트)
+   * processStructure → processAnalysis → processTransform → processBuild
    *
    * @param ctx BuildContext
-   * @returns 처리된 BuildContext (semanticType 등 추가)
+   * @returns 처리된 BuildContext
    */
   process(ctx: BuildContext): BuildContext;
 
   /**
-   * 컴포넌트별 props 수정 (Phase 3: bindProps 이후)
-   * propsMap에 props 추가/수정/삭제
-   *
-   * @param ctx BuildContext (propsMap 포함)
-   * @returns propsMap이 수정된 BuildContext
+   * Phase 1: 구조 생성
+   * - Variant 병합
+   * - Instance 내부 노드 정리
+   * - Props 추출
    */
-  processProps?(ctx: BuildContext): BuildContext;
+  processStructure(ctx: BuildContext): BuildContext;
 
   /**
-   * 컴포넌트별 slot 생성 (Phase 3: processProps 이후)
-   * nodePropBindings가 생성된 후 호출됨
-   *
-   * @param ctx BuildContext (nodePropBindings 포함)
-   * @returns slot이 추가된 BuildContext
+   * Phase 2: 분석
+   * - Semantic roles 감지
+   * - Hidden 노드 처리
    */
-  processSlots?(ctx: BuildContext): BuildContext;
+  processAnalysis(ctx: BuildContext): BuildContext;
+
+  /**
+   * Phase 3: 노드 변환
+   * - Node type 매핑
+   * - Style 분류
+   * - Props 바인딩
+   * - Slot 감지
+   */
+  processTransform(ctx: BuildContext): BuildContext;
+
+  /**
+   * Phase 4: 최종 조립
+   * - DesignNode 트리 생성
+   * - 정리 (hidden 노드 제거 등)
+   */
+  processBuild(ctx: BuildContext): BuildContext;
+
+  // ===========================================================================
+  // 세부 처리 메서드 (override 가능)
+  // ===========================================================================
+
+  // Phase 1: 구조 생성
+  /** 구조: Variant 병합 */
+  processVariants(ctx: BuildContext): BuildContext;
+  /** 구조: Instance 내부 노드 정리 */
+  processInstanceCleanup(ctx: BuildContext): BuildContext;
+  /** 구조: Props 추출 */
+  processPropsExtract(ctx: BuildContext): BuildContext;
+
+  // Phase 3: 노드 변환
+  /** 변환: Node type 매핑 */
+  processNodeTypes(ctx: BuildContext): BuildContext;
+  /** 변환: Style 분류 (base/dynamic/pseudo) */
+  processStyles(ctx: BuildContext): BuildContext;
+  /** 변환: Position 스타일 */
+  processPositions(ctx: BuildContext): BuildContext;
+  /** 변환: Rotation 처리 */
+  processRotation(ctx: BuildContext): BuildContext;
+  /** 변환: External refs 생성 */
+  processExternalRefs(ctx: BuildContext): BuildContext;
+  /** 변환: Visibility 조건 */
+  processVisibility(ctx: BuildContext): BuildContext;
+  /** 변환: Props 바인딩 */
+  processProps(ctx: BuildContext): BuildContext;
+  /** 변환: Slot 감지 */
+  processSlots(ctx: BuildContext): BuildContext;
+
+  // Phase 4: 최종 조립
+  /** 조립: DesignNode 트리 생성 */
+  buildDesignTree(ctx: BuildContext): BuildContext;
+  /** 조립: 정리 (hidden 노드 제거 등) */
+  processCleanup(ctx: BuildContext): BuildContext;
 }

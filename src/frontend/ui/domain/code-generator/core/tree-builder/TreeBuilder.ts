@@ -4,10 +4,9 @@
  * PreparedDesignData를 DesignTree로 변환하는 파이프라인 오케스트레이터.
  *
  * 변환 파이프라인:
- * 1. 구조 생성: VariantProcessor.merge → PropsProcessor.extract
- * 2. 분석: NodeProcessor.detectSemanticRoles → VisibilityProcessor.processHidden
- * 3. 노드별 변환: mapTypes → build → applyPositions → handleRotation → bindProps → ...
- * 4. 최종 조립: NodeConverter.assemble
+ * - COMPONENT_SET: HeuristicsRunner에 전체 위임
+ *   (processStructure → processAnalysis → processTransform → processBuild)
+ * - 그 외: 기본 Processor 파이프라인 사용
  *
  * @see types/architecture.ts - ITreeBuilder 인터페이스
  */
@@ -22,14 +21,13 @@ import type {
 import type { BuildContext, SemanticRoleEntry } from "./workers";
 import {
   VariantProcessor,
-  PropsProcessor,
   NodeProcessor,
   StyleProcessor,
-  SlotProcessor,
-  VisibilityProcessor,
   InstanceProcessor,
   NodeConverter,
+  PropsProcessor,
   CleanupProcessor,
+  VisibilityProcessor,
 } from "./workers";
 import { HeuristicsRunner } from "./heuristics";
 
@@ -41,56 +39,23 @@ class TreeBuilder implements ITreeBuilder {
     let ctx = this.createBuildContext(data, policy);
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Phase 1: 구조 생성
+    // 파이프라인 분기
     // ─────────────────────────────────────────────────────────────────────────
-    ctx = VariantProcessor.merge(ctx); // → internalTree
-    ctx = CleanupProcessor.removeInstanceInternalNodes(ctx); // INSTANCE 내부 노드 제거
-    ctx = PropsProcessor.extract(ctx); // → propsMap
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Phase 2: 분석
-    // ─────────────────────────────────────────────────────────────────────────
-    ctx = NodeProcessor.detectSemanticRoles(ctx); // → semanticRoles
-    ctx = VisibilityProcessor.processHidden(ctx); // → hiddenConditions
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Heuristics: COMPONENT_SET 전용 패턴 감지 (Phase 3 전에 실행)
-    // 스타일 생성 전에 실행하여 linkedProp이 스타일에서 제거되도록 함
-    // ─────────────────────────────────────────────────────────────────────────
-    if (ctx.data.document.type === "COMPONENT_SET") {
-      ctx = HeuristicsRunner.run(ctx); // → nodeSemanticTypes, excludePropsFromStyles
-      ctx = this.removeExcludedProps(ctx); // propsMap에서 excludePropsFromStyles 제거
+    if (data.document.type === "COMPONENT_SET") {
+      // ─── COMPONENT_SET: 휴리스틱에 전체 위임 ───
+      ctx = HeuristicsRunner.run(ctx);
+    } else {
+      // ─── Non-COMPONENT_SET: 기본 파이프라인 ───
+      ctx = this.buildNonComponentSet(ctx);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Phase 3: 노드별 변환
+    // 결과 반환
     // ─────────────────────────────────────────────────────────────────────────
-    ctx = NodeProcessor.mapTypes(ctx); // → nodeTypes
-    ctx = StyleProcessor.build(ctx); // → nodeStyles
-    ctx = StyleProcessor.applyPositions(ctx); // nodeStyles에 position 추가
-    ctx = StyleProcessor.handleRotation(ctx); // nodeStyles에 rotation 처리
-    ctx = InstanceProcessor.buildExternalRefs(ctx); // → nodeExternalRefs
-    ctx = VisibilityProcessor.resolve(ctx); // → conditionals
-
-    if (ctx.data.document.type === "COMPONENT_SET") {
-      ctx = PropsProcessor.bindProps(ctx); // → nodePropBindings
-
-      // Heuristic 처리 (컴포넌트 유형별 props/slot 생성)
-      ctx = HeuristicsRunner.processProps(ctx); // props 추가/수정
-      ctx = HeuristicsRunner.processSlots(ctx); // slot 생성
-
-      ctx = SlotProcessor.detectTextSlots(ctx); // propsMap, nodePropBindings 업데이트
-      ctx = SlotProcessor.detectSlots(ctx); // → slots (Heuristic이 처리 안 한 것 + fallback)
-      ctx = SlotProcessor.detectArraySlots(ctx); // → arraySlots (slot으로 감지된 노드 제외)
-      ctx = SlotProcessor.enrichArraySlotsWithComponentNames(ctx); // arraySlots에 itemComponentName 추가
-    }
-
-    ctx = NodeConverter.assemble(ctx); // → root
-
     return {
       root: ctx.root!,
       componentType: ctx.componentType,
-      props: Array.from(ctx.propsMap!.values()),
+      props: Array.from(ctx.propsMap?.values() ?? []),
       slots: ctx.slots,
       conditionals: ctx.conditionals,
       arraySlots: ctx.arraySlots,
@@ -98,25 +63,40 @@ class TreeBuilder implements ITreeBuilder {
   }
 
   /**
-   * excludePropsFromStyles에 포함된 prop을 propsMap에서 제거
+   * Non-COMPONENT_SET 처리 (COMPONENT, FRAME, INSTANCE 등)
    *
-   * 휴리스틱에서 제거 대상으로 마킹된 prop(guideText 등)은
-   * 불필요하므로 propsMap에서 제거합니다.
+   * 간단한 파이프라인:
+   * 1. Variant 병합 (단일 variant이므로 그대로)
+   * 2. Node type 매핑
+   * 3. Style 빌드
+   * 4. Position 적용
+   * 5. External refs 빌드
+   * 6. DesignTree 생성
    */
-  private removeExcludedProps(ctx: BuildContext): BuildContext {
-    if (!ctx.excludePropsFromStyles || ctx.excludePropsFromStyles.size === 0 || !ctx.propsMap) {
-      return ctx;
-    }
+  private buildNonComponentSet(ctx: BuildContext): BuildContext {
+    let result = ctx;
 
-    const newPropsMap = new Map(ctx.propsMap);
-    for (const propName of ctx.excludePropsFromStyles) {
-      newPropsMap.delete(propName);
-    }
+    // Phase 1: 구조 생성
+    result = VariantProcessor.merge(result);
+    result = CleanupProcessor.removeInstanceInternalNodes(result);
+    result = PropsProcessor.extract(result);
 
-    return {
-      ...ctx,
-      propsMap: newPropsMap,
-    };
+    // Phase 2: 분석
+    result = NodeProcessor.detectSemanticRoles(result);
+    result = VisibilityProcessor.processHidden(result);
+
+    // Phase 3: 노드 변환
+    result = NodeProcessor.mapTypes(result);
+    result = StyleProcessor.build(result);
+    result = StyleProcessor.applyPositions(result);
+    result = StyleProcessor.handleRotation(result);
+    result = InstanceProcessor.buildExternalRefs(result);
+    result = VisibilityProcessor.resolve(result);
+
+    // Phase 4: 최종 조립
+    result = NodeConverter.assemble(result);
+
+    return result;
   }
 
   private createBuildContext(

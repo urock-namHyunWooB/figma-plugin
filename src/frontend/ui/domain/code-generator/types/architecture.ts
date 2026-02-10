@@ -450,8 +450,10 @@ export type ComponentType =
   | "card"       // 카드
   | "list"       // 리스트
   | "checkbox"   // 체크박스
+  | "radio"      // 라디오 버튼
   | "toggle"     // 토글 스위치
   | "dropdown"   // 드롭다운/셀렉트
+  | "link"       // 링크/앵커
   | "icon"       // 아이콘
   | "custom"     // 커스텀/기타
   | "unknown";   // 판별 불가

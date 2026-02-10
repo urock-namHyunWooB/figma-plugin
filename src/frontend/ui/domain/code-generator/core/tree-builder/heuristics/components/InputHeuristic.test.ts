@@ -22,15 +22,20 @@ function createMockCtx(options: {
     id: "root",
     name: options.name,
     type: "FRAME",
-    children: (options.nodes ?? []).map((n, i) => ({
-      id: n.id ?? `node-${i}`,
-      name: n.name ?? `Node ${i}`,
-      type: n.type ?? "FRAME",
-      children: n.children ?? [],
-      mergedNode: n.mergedNode ?? [],
-    })) as InternalNode[],
+    parent: null,
+    children: [],
     mergedNode: [],
   };
+
+  // children 추가 (parent 참조 설정)
+  internalTree.children = (options.nodes ?? []).map((n, i) => ({
+    id: n.id ?? `node-${i}`,
+    name: n.name ?? `Node ${i}`,
+    type: n.type ?? "FRAME",
+    parent: internalTree,
+    children: n.children ?? [],
+    mergedNode: n.mergedNode ?? [],
+  })) as InternalNode[];
 
   return {
     data: {
@@ -45,6 +50,8 @@ function createMockCtx(options: {
     conditionals: [],
     slots: [],
     arraySlots: [],
+    propsMap: new Map(), // processAnalysis에서 필요
+    semanticRoles: new Map(), // processAnalysis에서 필요
   } as unknown as BuildContext;
 }
 
@@ -192,10 +199,10 @@ describe("InputHeuristic", () => {
   });
 
   // ============================================================================
-  // process() Tests - Placeholder 감지
+  // processAnalysis() Tests - Placeholder 감지
   // ============================================================================
 
-  describe("process() - Placeholder 감지", () => {
+  describe("processAnalysis() - Placeholder 감지", () => {
     it("회색 텍스트 + 검정 텍스트 variant → nodeSemanticTypes에 textInput 설정", () => {
       const ctx = createMockCtx({
         name: "InputBox",
@@ -204,8 +211,8 @@ describe("InputHeuristic", () => {
             id: "text-node",
             type: "TEXT",
             mergedNode: [
-              { id: "text-gray", variantName: "Guide Text=True" },
-              { id: "text-black", variantName: "Guide Text=False" },
+              { id: "text-gray", name: "text", variantName: "Guide Text=True" },
+              { id: "text-black", name: "text", variantName: "Guide Text=False" },
             ],
           },
         ],
@@ -221,7 +228,8 @@ describe("InputHeuristic", () => {
         },
       });
 
-      const result = heuristic.process(ctx);
+      // processAnalysis 직접 호출 (placeholder 감지 테스트)
+      const result = heuristic.processAnalysis(ctx);
 
       expect(result.nodeSemanticTypes?.get("text-node")).toEqual({
         type: "textInput",
@@ -237,8 +245,8 @@ describe("InputHeuristic", () => {
             id: "text-node",
             type: "TEXT",
             mergedNode: [
-              { id: "text-gray", variantName: "Guide Text=True" },
-              { id: "text-black", variantName: "Guide Text=False" },
+              { id: "text-gray", name: "text", variantName: "Guide Text=True" },
+              { id: "text-black", name: "text", variantName: "Guide Text=False" },
             ],
           },
         ],
@@ -254,7 +262,8 @@ describe("InputHeuristic", () => {
         },
       });
 
-      const result = heuristic.process(ctx);
+      // processAnalysis 직접 호출
+      const result = heuristic.processAnalysis(ctx);
 
       expect(result.excludePropsFromStyles?.has("guideText")).toBe(true);
     });
@@ -267,8 +276,8 @@ describe("InputHeuristic", () => {
             id: "text-node",
             type: "TEXT",
             mergedNode: [
-              { id: "text-gray", variantName: "State=Disabled" },
-              { id: "text-black", variantName: "State=Normal" },
+              { id: "text-gray", name: "text", variantName: "State=Disabled" },
+              { id: "text-black", name: "text", variantName: "State=Normal" },
             ],
           },
         ],
@@ -284,7 +293,8 @@ describe("InputHeuristic", () => {
         },
       });
 
-      const result = heuristic.process(ctx);
+      // processAnalysis 직접 호출
+      const result = heuristic.processAnalysis(ctx);
 
       expect(result.nodeSemanticTypes?.get("text-node")).toBeUndefined();
     });
