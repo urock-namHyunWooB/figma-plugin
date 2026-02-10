@@ -9,6 +9,6 @@
  */
 
 export { HeuristicsRunner } from "./HeuristicsRunner";
-export type { IHeuristic, PlaceholderInfo } from "./IHeuristic";
 export type { IComponentHeuristic } from "./components/IComponentHeuristic";
+export type { PlaceholderInfo } from "@code-generator/types/architecture";
 export { InputHeuristic } from "./components/InputHeuristic";
