@@ -89,6 +89,23 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
           nodePropBindings.set(node.id, bindings);
         }
       }
+
+      // TEXT 노드에 대해 nodeId 또는 nodeName으로 매칭되는 prop 찾기
+      // (componentPropertyReferences가 없는 경우, _overrideableProps에서 설정된 nodeId/nodeName으로 바인딩)
+      if (node.type === "TEXT" && !nodePropBindings.has(node.id)) {
+        // 1차: nodeId로 매칭
+        let textProp = instance.findPropByNodeId(node.id, ctx.propsMap!);
+
+        // 2차: nodeName으로 fallback 매칭
+        // (variant가 다른 경우 nodeId가 다르지만 노드 이름은 같을 수 있음)
+        if (!textProp) {
+          textProp = instance.findPropByNodeName(node.name, ctx.propsMap!);
+        }
+
+        if (textProp) {
+          nodePropBindings.set(node.id, { characters: textProp });
+        }
+      }
     });
 
     return { ...ctx, nodePropBindings };
@@ -139,6 +156,19 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
       // DataPreparer가 이미 설정한 originalKey를 우선 사용
       const existingOriginalKey = (def as { originalKey?: string }).originalKey;
 
+      // nodeId 저장: TEXT 오버라이드 prop 바인딩용
+      // DataPreparer.mergeOverrideableProps()에서 설정됨
+      const existingNodeId = (def as { nodeId?: string }).nodeId;
+
+      // nodeName 저장: nodeId 매칭 실패 시 fallback 매칭용
+      const existingNodeName = (def as { nodeName?: string }).nodeName;
+
+      // variantValue 저장: 어느 variant에서 왔는지 (조건부 렌더링용)
+      const existingVariantValue = (def as { variantValue?: string }).variantValue;
+
+      // cssStyle 저장: 원본 노드의 CSS 스타일 (조건부 스타일 적용용)
+      const existingCssStyle = (def as { cssStyle?: Record<string, string> }).cssStyle;
+
       // Determine final prop type:
       // - Boolean-like VARIANTs (True/False) → boolean type
       // - Other VARIANTs → variant type
@@ -158,6 +188,10 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
         required: false,
         options,
         originalKey: existingOriginalKey || (originalName !== name ? originalName : undefined),
+        nodeId: existingNodeId,
+        nodeName: existingNodeName,
+        variantValue: existingVariantValue,
+        cssStyle: existingCssStyle,
       } as PropDefinition);
     }
 
@@ -285,6 +319,48 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
     for (const [name, def] of propsDefinitions.entries()) {
       if (def.originalKey === originalKey) {
         return name;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * 노드 ID로 prop 이름 찾기
+   * (_overrideableProps에서 설정된 nodeId와 매칭)
+   * TEXT 바인딩용이므로 prop 이름이 "Text"로 끝나는 것만 매칭
+   */
+  private findPropByNodeId(
+    nodeId: string,
+    propsDefinitions: Map<string, PropDefinition>
+  ): string | undefined {
+    for (const [, def] of propsDefinitions.entries()) {
+      // TEXT 바인딩용이므로 Text로 끝나는 prop만 매칭 (Bg가 아닌)
+      if (def.nodeId === nodeId && def.name.endsWith("Text")) {
+        return def.name;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * 노드 이름으로 prop 이름 찾기 (fallback)
+   * (_overrideableProps에서 설정된 nodeName과 매칭)
+   * 대소문자 무시하여 비교
+   * TEXT 바인딩용이므로 prop 이름이 "Text"로 끝나는 것만 매칭
+   */
+  private findPropByNodeName(
+    nodeName: string,
+    propsDefinitions: Map<string, PropDefinition>
+  ): string | undefined {
+    const normalizedName = nodeName.toLowerCase().replace(/\s+/g, "");
+    for (const [, def] of propsDefinitions.entries()) {
+      // TEXT 바인딩용이므로 Text로 끝나는 prop만 매칭 (Bg가 아닌)
+      if (
+        def.nodeName &&
+        def.nodeName.toLowerCase() === normalizedName &&
+        def.name.endsWith("Text")
+      ) {
+        return def.name;
       }
     }
     return undefined;

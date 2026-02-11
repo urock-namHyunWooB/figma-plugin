@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import ghostMockData from "../fixtures/failing/Ghost.json";
+import ghostMockData from "../fixtures/any/Ghost.json";
 
 import FigmaCodeGenerator from "@code-generator";
 

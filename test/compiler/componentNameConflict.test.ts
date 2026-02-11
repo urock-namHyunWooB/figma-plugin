@@ -80,8 +80,9 @@ describe("컴포넌트 이름 충돌 처리", () => {
       // 의존성 컴포넌트가 실제 콘텐츠를 렌더링해야 함
       expect(depCode).toMatch(/css=\{.*Css\}/);
 
-      // "Normal" 텍스트가 의존성 컴포넌트에 있어야 함
-      expect(depCode).toContain("Normal");
+      // TEXT 노드가 prop으로 바인딩되거나 하드코딩된 텍스트여야 함
+      // (prop 바인딩: {titleText}, 하드코딩: "Normal")
+      expect(depCode).toMatch(/\{titleText\}|Normal/);
     }
   });
 

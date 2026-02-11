@@ -317,6 +317,14 @@ class ComponentGenerator {
       attributes.push(styleAttr);
     }
 
+    // TEXT 노드의 variant별 조건부 스타일 (color 등)
+    if (node.type === "text" && node.propBindings) {
+      const conditionalStyleAttr = this.createConditionalStyleAttribute(node, tree);
+      if (conditionalStyleAttr) {
+        attributes.push(conditionalStyleAttr);
+      }
+    }
+
     // 루트 노드에 restProps 추가
     if (!this.findParentNode(node, tree)) {
       attributes.push(
@@ -327,6 +335,103 @@ class ComponentGenerator {
     }
 
     return attributes;
+  }
+
+  /**
+   * TEXT 노드의 variant별 조건부 inline style 생성
+   * 예: style={variant === "primary" ? { color: "var(--White, #FFF)" } : undefined}
+   */
+  private createConditionalStyleAttribute(
+    node: DesignNode,
+    tree: DesignTree
+  ): ts.JsxAttribute | null {
+    // propBindings에서 text 바인딩 찾기
+    let boundPropName: string | undefined;
+    for (const [bindingKey, propName] of Object.entries(node.propBindings || {})) {
+      if (bindingKey.includes("characters") || bindingKey.includes("text")) {
+        boundPropName = propName;
+        break;
+      }
+    }
+
+    if (!boundPropName) return null;
+
+    // bound prop의 정의 찾기
+    const boundProp = tree.props.find((p) => p.name === boundPropName);
+    if (!boundProp?.variantValue) return null;
+
+    // 다른 variant의 관련 Text props 찾기
+    const relatedTextProps = tree.props.filter(
+      (p) =>
+        p.name !== boundPropName &&
+        p.name.endsWith("Text") &&
+        p.variantValue &&
+        p.variantValue !== boundProp.variantValue &&
+        p.cssStyle // CSS 스타일이 있어야 함
+    );
+
+    if (relatedTextProps.length === 0) return null;
+
+    // variant prop 찾기
+    const allVariantValues = [
+      boundProp.variantValue,
+      ...relatedTextProps.map((p) => p.variantValue!),
+    ];
+    const variantProp = tree.props.find(
+      (p) =>
+        p.type === "variant" &&
+        p.options &&
+        allVariantValues.some((v) =>
+          p.options!.some((opt) => opt.toLowerCase() === v.toLowerCase())
+        )
+    );
+    if (!variantProp) return null;
+
+    // 조건부 스타일 표현식 생성
+    // style={variant === "primary" ? { color: "var(--White, #FFF)" } : undefined}
+    let styleExpr: ts.Expression = this.factory.createIdentifier("undefined");
+
+    for (const relatedProp of relatedTextProps) {
+      if (!relatedProp.cssStyle) continue;
+
+      // 스타일 객체 리터럴 생성 (color 속성만)
+      const styleProps: ts.PropertyAssignment[] = [];
+      if (relatedProp.cssStyle.color) {
+        styleProps.push(
+          this.factory.createPropertyAssignment(
+            this.factory.createIdentifier("color"),
+            this.factory.createStringLiteral(relatedProp.cssStyle.color)
+          )
+        );
+      }
+
+      if (styleProps.length === 0) continue;
+
+      const styleObject = this.factory.createObjectLiteralExpression(styleProps);
+
+      // variant === "relatedVariantValue" ? styleObject : currentExpr
+      styleExpr = this.factory.createConditionalExpression(
+        this.factory.createBinaryExpression(
+          this.factory.createIdentifier(variantProp.name),
+          this.factory.createToken(ts.SyntaxKind.EqualsEqualsEqualsToken),
+          this.factory.createStringLiteral(relatedProp.variantValue!)
+        ),
+        this.factory.createToken(ts.SyntaxKind.QuestionToken),
+        styleObject,
+        this.factory.createToken(ts.SyntaxKind.ColonToken),
+        styleExpr
+      );
+    }
+
+    // undefined만 있으면 필요 없음
+    if (ts.isIdentifier(styleExpr) && styleExpr.text === "undefined") {
+      return null;
+    }
+
+    return this.factory.createJsxAttribute(
+      this.factory.createIdentifier("style"),
+      this.factory.createJsxExpression(undefined, styleExpr)
+    );
   }
 
   /**
@@ -413,7 +518,13 @@ class ComponentGenerator {
     if (node.propBindings) {
       for (const [bindingKey, propName] of Object.entries(node.propBindings)) {
         if (bindingKey.includes("characters") || bindingKey.includes("text")) {
-          // prop 참조
+          // variant에 따른 조건부 렌더링 확인
+          const conditionalExpr = this.createConditionalTextExpression(propName, tree);
+          if (conditionalExpr) {
+            return this.factory.createJsxExpression(undefined, conditionalExpr);
+          }
+
+          // 단순 prop 참조
           return this.factory.createJsxExpression(
             undefined,
             this.factory.createIdentifier(propName)
@@ -430,6 +541,72 @@ class ComponentGenerator {
     }
 
     return null;
+  }
+
+  /**
+   * variant에 따른 조건부 텍스트 표현식 생성
+   * 예: variant === "primary" ? labelText : secondaryText
+   */
+  private createConditionalTextExpression(
+    boundPropName: string,
+    tree: DesignTree
+  ): ts.Expression | null {
+    // bound prop의 정의 찾기
+    const boundProp = tree.props.find((p) => p.name === boundPropName);
+    if (!boundProp?.variantValue) {
+      return null; // variantValue가 없으면 조건부 렌더링 불필요
+    }
+
+    // Text로 끝나는 다른 prop 중 다른 variantValue를 가진 것 찾기
+    const relatedTextProps = tree.props.filter(
+      (p) =>
+        p.name !== boundPropName &&
+        p.name.endsWith("Text") &&
+        p.variantValue &&
+        p.variantValue !== boundProp.variantValue
+    );
+
+    if (relatedTextProps.length === 0) {
+      return null; // 관련 prop이 없으면 조건부 렌더링 불필요
+    }
+
+    // variant prop 찾기: variantValue들을 옵션으로 가진 prop 찾기
+    const allVariantValues = [
+      boundProp.variantValue,
+      ...relatedTextProps.map((p) => p.variantValue!),
+    ];
+    const variantProp = tree.props.find(
+      (p) =>
+        p.type === "variant" &&
+        p.options &&
+        allVariantValues.some((v) =>
+          p.options!.some((opt) => opt.toLowerCase() === v.toLowerCase())
+        )
+    );
+    if (!variantProp) {
+      return null; // variant prop이 없으면 조건부 렌더링 불가
+    }
+
+    // 조건부 표현식 생성: variant === "primary" ? labelText : secondaryText
+    // 여러 variant가 있으면 체인으로 연결
+    let expr: ts.Expression = this.factory.createIdentifier(boundPropName);
+
+    for (const relatedProp of relatedTextProps) {
+      // variant === "relatedVariantValue" ? relatedProp : currentExpr
+      expr = this.factory.createConditionalExpression(
+        this.factory.createBinaryExpression(
+          this.factory.createIdentifier(variantProp.name),
+          this.factory.createToken(ts.SyntaxKind.EqualsEqualsEqualsToken),
+          this.factory.createStringLiteral(relatedProp.variantValue!)
+        ),
+        this.factory.createToken(ts.SyntaxKind.QuestionToken),
+        this.factory.createIdentifier(relatedProp.name),
+        this.factory.createToken(ts.SyntaxKind.ColonToken),
+        expr
+      );
+    }
+
+    return expr;
   }
 
   /**

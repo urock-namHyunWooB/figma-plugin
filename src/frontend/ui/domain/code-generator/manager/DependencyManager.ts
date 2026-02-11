@@ -643,12 +643,14 @@ class DependencyManager {
   /**
    * INSTANCE children에서 오버라이드된 속성(fills, characters)을 추출
    * styleTree 기반 비교 (dependency의 info.document.children이 비어있을 수 있음)
+   *
+   * 반환값에 원본 nodeId 포함 (prop 바인딩용)
    */
   private _extractOverridePropsFromStyle(
     instanceNode: any,
     variantStyleChildren: any[]
-  ): Record<string, string> {
-    const overrideProps: Record<string, string> = {};
+  ): Record<string, { value: string; originalNodeId: string }> {
+    const overrideProps: Record<string, { value: string; originalNodeId: string }> = {};
     const instanceChildren = instanceNode?.children || [];
 
     if (instanceChildren.length === 0) {
@@ -670,14 +672,35 @@ class DependencyManager {
     };
     buildStyleMap(variantStyleChildren);
 
+    // variantStyleChildren을 ID로도 매핑 (원본 노드 이름 조회용)
+    const variantStyleByIdMap = new Map<string, any>();
+    const buildStyleByIdMap = (children: any[]) => {
+      for (const child of children) {
+        if (child.id) {
+          variantStyleByIdMap.set(child.id, child);
+        }
+        if (child.children) {
+          buildStyleByIdMap(child.children);
+        }
+      }
+    };
+    buildStyleByIdMap(variantStyleChildren);
+
     // INSTANCE children 순회하며 오버라이드 추출
     const extractFromChildren = (children: any[]) => {
       for (const child of children) {
         const normalizedName = child.name?.toLowerCase().replace(/\s+/g, "");
         const originalStyle = variantStyleMap.get(normalizedName);
 
-        // 노드 이름을 prop 이름으로 변환 (camelCase)
-        const baseName = this._toCamelCase(child.name || "");
+        // INSTANCE child ID에서 원본 노드 ID 추출
+        const originalNodeId = this._getOriginalIdFromInstanceId(child.id);
+
+        // 원본 variant의 노드 이름 조회 (INSTANCE override로 이름이 변경될 수 있으므로)
+        const originalNode = variantStyleByIdMap.get(originalNodeId);
+        const originalNodeName = originalNode?.name || child.name;
+
+        // 노드 이름을 prop 이름으로 변환 (camelCase) - 원본 이름 사용
+        const baseName = this._toCamelCase(originalNodeName || "");
 
         if (baseName) {
           // fills 오버라이드 (background color)
@@ -686,14 +709,20 @@ class DependencyManager {
             if (bgColor) {
               const originalBg = originalStyle?.cssStyle?.background;
               if (!originalBg || !originalBg.includes(bgColor)) {
-                overrideProps[`${baseName}Bg`] = bgColor;
+                overrideProps[`${baseName}Bg`] = {
+                  value: bgColor,
+                  originalNodeId,
+                };
               }
             }
           }
 
           // characters 오버라이드 (text)
           if (child.characters !== undefined) {
-            overrideProps[`${baseName}Text`] = child.characters;
+            overrideProps[`${baseName}Text`] = {
+              value: child.characters,
+              originalNodeId,
+            };
           }
         }
 
@@ -819,16 +848,34 @@ class DependencyManager {
   private _collectAllOverrideableProps(
     variants: FigmaNodeData[],
     instancesByComponentId: Map<string, string[]>
-  ): Record<string, { nodeId: string; nodeName: string; type: string }> {
+  ): Record<string, { nodeId: string; nodeName: string; type: string; variantValue?: string; cssStyle?: Record<string, string> }> {
     const overrideableProps: Record<
       string,
-      { nodeId: string; nodeName: string; type: string }
+      { nodeId: string; nodeName: string; type: string; variantValue?: string; cssStyle?: Record<string, string> }
     > = {};
 
     for (const variant of variants) {
       const variantId = variant.info.document.id;
       // info.document.children이 비어있을 수 있으므로 styleTree.children 사용
       const variantStyleChildren = variant.styleTree?.children || [];
+
+      // variant 이름에서 Variant 값 추출 (예: "Size=default, Variant=secondary, Icon=false" → "secondary")
+      const variantName = variant.styleTree?.name || "";
+      const variantValue = this._extractVariantValueFromName(variantName);
+
+      // styleTree children을 ID로 매핑 (CSS 스타일 조회용)
+      const styleByIdMap = new Map<string, any>();
+      const buildStyleByIdMap = (children: any[]) => {
+        for (const child of children) {
+          if (child.id) {
+            styleByIdMap.set(child.id, child);
+          }
+          if (child.children) {
+            buildStyleByIdMap(child.children);
+          }
+        }
+      };
+      buildStyleByIdMap(variantStyleChildren);
 
       // 해당 variant를 참조하는 모든 INSTANCE 찾기
       const instanceNodes =
@@ -843,17 +890,23 @@ class DependencyManager {
         );
 
         // 오버라이드 정보 수집
-        for (const [propName, _value] of Object.entries(overrides)) {
+        for (const [propName, override] of Object.entries(overrides)) {
           if (!overrideableProps[propName]) {
             // propName에서 타입 추론: Bg로 끝나면 fills, Text로 끝나면 characters
             const type = propName.endsWith("Bg") ? "fills" : "characters";
             // nodeName은 propName에서 Bg/Text 제거
             const nodeName = propName.replace(/Bg$|Text$/, "");
 
+            // 원본 노드의 CSS 스타일 추출 (variant별 스타일 조건부 적용용)
+            const originalNode = styleByIdMap.get(override.originalNodeId);
+            const cssStyle = originalNode?.cssStyle;
+
             overrideableProps[propName] = {
-              nodeId: "", // 실제 ID는 나중에 매핑
+              nodeId: override.originalNodeId, // 원본 노드 ID 저장
               nodeName,
               type,
+              variantValue, // 어느 variant에서 왔는지 추적
+              cssStyle, // 원본 노드의 CSS 스타일 (color 등)
             };
           }
         }
@@ -861,6 +914,15 @@ class DependencyManager {
     }
 
     return overrideableProps;
+  }
+
+  /**
+   * variant 이름에서 Variant prop 값 추출
+   * 예: "Size=default, Variant=secondary, Icon=false" → "secondary"
+   */
+  private _extractVariantValueFromName(variantName: string): string | undefined {
+    const match = variantName.match(/Variant=([^,]+)/i);
+    return match ? match[1].trim() : undefined;
   }
 
   /**

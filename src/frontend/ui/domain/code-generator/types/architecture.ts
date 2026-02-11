@@ -289,6 +289,14 @@ export interface PropDefinition {
   description?: string;
   /** Figma componentPropertyDefinitions의 원본 키 (예: "showIcon#123:456") */
   originalKey?: string;
+  /** 원본 노드 ID (TEXT 오버라이드 prop 바인딩용) */
+  nodeId?: string;
+  /** 노드 이름 (fallback 매칭용, 예: "label", "secondary") */
+  nodeName?: string;
+  /** 어느 variant에서 왔는지 (조건부 렌더링용, 예: "secondary", "primary") */
+  variantValue?: string;
+  /** 원본 노드의 CSS 스타일 (조건부 스타일 적용용, 예: { color: "var(--White, #FFF)" }) */
+  cssStyle?: Record<string, string>;
 }
 
 export interface VariantPropDefinition extends PropDefinition {

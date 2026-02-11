@@ -281,7 +281,7 @@ class DataPreparer implements IDataPreparer {
     props: PropsDef,
     overrideableProps: Record<
       string,
-      { nodeId: string; nodeName: string; type: string }
+      { nodeId: string; nodeName: string; type: string; variantValue?: string; cssStyle?: Record<string, string> }
     >
   ): PropsDef {
     const mergedProps = { ...props };
@@ -295,6 +295,10 @@ class DataPreparer implements IDataPreparer {
         type: "TEXT",
         defaultValue: "",
         originalKey: propName,
+        nodeId: info.nodeId, // 원본 노드 ID 저장 (prop 바인딩용)
+        nodeName: info.nodeName, // 노드 이름 저장 (fallback 매칭용)
+        variantValue: info.variantValue, // 어느 variant에서 왔는지 (조건부 렌더링용)
+        cssStyle: info.cssStyle, // 원본 노드의 CSS 스타일 (조건부 스타일 적용용)
       };
     }
 

@@ -93,6 +93,9 @@ class TreeBuilder implements ITreeBuilder {
     result = InstanceProcessor.buildExternalRefs(result);
     result = VisibilityProcessor.resolve(result);
 
+    // Phase 3.5: Props 바인딩 (dependency의 TEXT override prop 지원)
+    result = PropsProcessor.bindProps(result);
+
     // Phase 4: 최종 조립
     result = NodeConverter.assemble(result);
 
