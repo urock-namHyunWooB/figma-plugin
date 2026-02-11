@@ -52,33 +52,23 @@ npm run format:check   # Prettier check
 
 ### Code Generator Pipeline (`src/frontend/ui/domain/code-generator/`)
 
-Two pipelines exist - the new architecture is preferred:
-
-**New Pipeline (Recommended)**:
+**3-Layer Pipeline**:
 ```
 FigmaNodeData → DataPreparer → PreparedDesignData → TreeBuilder → DesignTree → CodeEmitter → Code
 ```
 
 ```
 core/
-├── data-preparer/               # Phase 3: Data preparation
+├── data-preparer/               # Layer 1: Data preparation
 │   └── DataPreparer.ts
-├── tree-builder/                # Phase 4: IR generation
+├── tree-builder/                # Layer 2: IR generation (heuristic-based)
 │   ├── TreeBuilder.ts
-│   └── workers/                 # Processor modules
-└── code-emitter/                # Phase 5: Code generation
+│   ├── workers/                 # Processor modules
+│   └── heuristics/              # Score-based component matching
+└── code-emitter/                # Layer 3: Code generation
     ├── ReactEmitter.ts          # ICodeEmitter implementation
     ├── generators/              # DesignTree generators
     └── style-strategy/          # Emotion/Tailwind strategies
-```
-
-**Legacy Pipeline (Engine.ts)**:
-```
-core/
-├── Engine.ts                    # Legacy orchestrator
-├── super-tree/                  # Variant merging
-├── ast-tree/                    # TempAst → FinalAst
-└── react-generator/             # FinalAstTree → Code
 ```
 
 ### Key Manager Classes
@@ -158,7 +148,8 @@ All 5 phases of the new architecture are complete:
 - ✅ Phase 4: TreeBuilder
 - ✅ Phase 5: CodeEmitter
 
-**Next Steps**:
-1. Migrate Engine.ts to new pipeline (DataPreparer → TreeBuilder → ReactEmitter)
-2. Update FigmaCodeGenerator
-3. Remove legacy `react-generator/` folder
+**Completed Milestones**:
+- ✅ Engine.ts → NewEngine.ts 마이그레이션 완료
+- ✅ FigmaCodeGenerator 새 파이프라인 사용
+- ✅ 레거시 폴더 제거 (react-generator/, super-tree/, ast-tree/)
+- ✅ 휴리스틱 중심 아키텍처 구현 (점수 기반 매칭)
