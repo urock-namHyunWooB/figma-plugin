@@ -109,13 +109,13 @@ export class NodeConverter {
           conditions: internal.conditions,
         };
 
-        // wrapper 컨테이너가 스타일과 children을 담당
+        // wrapper 컨테이너가 스타일을 담당 (외부 컴포넌트가 내부 노드를 포함하므로 children 제외)
         return {
           id: `wrapper:${internal.id}`,
           type: "container",
           name: `${internal.name}_wrapper`,
           styles: finalStyles,
-          children: [externalNode, ...children],
+          children: [externalNode],
           propBindings: propBindings && Object.keys(propBindings).length > 0 ? propBindings : undefined,
           semanticRole: semanticResult?.role,
           conditions: internal.conditions,
