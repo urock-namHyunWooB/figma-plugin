@@ -149,16 +149,18 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
 
       // 루트 노드에 vectorSvg가 있으면 추가 (dependency 컴포넌트의 경우)
       // DependencyManager가 enrichWithVectorSvg로 루트에 SVG를 설정함
+      // 단, 아이콘 패턴인 경우에만 적용 (Select 같은 컨테이너 컴포넌트는 제외)
       const rootVectorSvg = data.getVectorSvgByNodeId?.(node.id);
-      if (rootVectorSvg) {
+      if (rootVectorSvg && this.isIconPattern(node, rootName)) {
         result.role = "icon";
         result.vectorSvg = rootVectorSvg;
       }
 
       // _variantSvgs가 있으면 조건부 SVG 렌더링 설정
+      // 단, 아이콘 패턴인 경우에만 적용
       const spec = data.spec as any;
       const variantSvgs = spec?._variantSvgs;
-      if (variantSvgs && Object.keys(variantSvgs).length > 0) {
+      if (variantSvgs && Object.keys(variantSvgs).length > 0 && this.isIconPattern(node, rootName)) {
         result.role = "icon";
         // 첫 번째 SVG를 기본값으로 설정
         result.vectorSvg = Object.values(variantSvgs)[0] as string;
@@ -251,6 +253,15 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
   // ==========================================================================
 
   private detectInstanceRole(node: SemanticNode, data: PreparedDesignData): SemanticRoleResult {
+    // 아이콘 패턴인지 확인
+    // INSTANCE가 외부 컴포넌트로 처리되면 externalRef가 설정되어 이 role은 무시됨
+    // externalRef가 없는 INSTANCE만 이 로직이 적용됨
+    if (!this.isIconPatternInstance(node)) {
+      // 아이콘 패턴이 아니면 container로 처리
+      return { role: "container" };
+    }
+
+    // 아이콘 패턴이면 SVG 찾기
     const result: SemanticRoleResult = { role: "icon" };
 
     const mergedSvg = data.mergeInstanceVectorSvgs?.(node.id);
@@ -263,7 +274,49 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
       }
     }
 
+    // SVG가 없으면 container로 폴백
+    if (!result.vectorSvg) {
+      return { role: "container" };
+    }
+
     return result;
+  }
+
+  /**
+   * INSTANCE가 아이콘 패턴인지 확인
+   *
+   * 아이콘 패턴 조건:
+   * 1. 이름에 아이콘 관련 키워드가 포함 (icon, arrow, caret, chevron, glyph)
+   * 2. children이 없거나 모두 VECTOR 타입
+   */
+  private isIconPatternInstance(node: SemanticNode): boolean {
+    const lowerName = node.name.toLowerCase();
+
+    // 이름에 아이콘 관련 키워드가 포함
+    const iconKeywords = ["icon", "arrow", "caret", "chevron", "glyph"];
+    if (iconKeywords.some((keyword) => lowerName.includes(keyword))) {
+      return true;
+    }
+
+    // children이 없음
+    if (node.children.length === 0) {
+      return true;
+    }
+
+    // children이 모두 VECTOR 타입
+    const vectorTypes = new Set([
+      "VECTOR",
+      "LINE",
+      "ELLIPSE",
+      "STAR",
+      "POLYGON",
+      "BOOLEAN_OPERATION",
+    ]);
+    const allChildrenAreVectors = node.children.every((child) =>
+      vectorTypes.has(child.type)
+    );
+
+    return allChildrenAreVectors;
   }
 
   private detectVectorRole(node: SemanticNode, data: PreparedDesignData): SemanticRoleResult {
@@ -290,6 +343,51 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
     }
 
     return { role: "container" };
+  }
+
+  /**
+   * 컴포넌트가 아이콘 패턴인지 확인
+   *
+   * 아이콘 패턴 조건 (하나라도 만족하면 true):
+   * 1. 이름에 아이콘 관련 키워드가 포함 (icon, arrow, caret, chevron, glyph)
+   * 2. children이 없음
+   * 3. children이 모두 VECTOR 타입 (VECTOR, LINE, ELLIPSE, STAR, POLYGON, BOOLEAN_OPERATION)
+   *
+   * @param node - 루트 노드
+   * @param rootName - 컴포넌트 이름
+   * @returns 아이콘 패턴이면 true
+   */
+  private isIconPattern(node: SemanticNode, rootName: string): boolean {
+    const lowerName = rootName.toLowerCase();
+
+    // 1. 이름에 아이콘 관련 키워드가 포함
+    const iconKeywords = ["icon", "arrow", "caret", "chevron", "glyph"];
+    if (iconKeywords.some((keyword) => lowerName.includes(keyword))) {
+      return true;
+    }
+
+    // 2. children이 없음
+    if (node.children.length === 0) {
+      return true;
+    }
+
+    // 3. children이 모두 VECTOR 타입
+    const vectorTypes = new Set([
+      "VECTOR",
+      "LINE",
+      "ELLIPSE",
+      "STAR",
+      "POLYGON",
+      "BOOLEAN_OPERATION",
+    ]);
+    const allChildrenAreVectors = node.children.every((child) =>
+      vectorTypes.has(child.type)
+    );
+    if (allChildrenAreVectors) {
+      return true;
+    }
+
+    return false;
   }
 }
 
