@@ -35,6 +35,12 @@ export interface ExternalRefData {
   componentSetId: string;
   componentName: string;
   props: Record<string, string>;
+  /**
+   * Prop 이름 매핑 (외부 컴포넌트 prop → 부모 컴포넌트 prop)
+   * 예: { labelText: "option1Text" }
+   * ComponentGenerator에서 labelText 대신 option1Text를 참조하도록 함
+   */
+  propMappings?: Record<string, string>;
 }
 
 /**

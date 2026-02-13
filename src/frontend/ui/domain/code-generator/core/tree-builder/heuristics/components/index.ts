@@ -11,6 +11,7 @@ export type { IComponentHeuristic } from "./IComponentHeuristic";
 export { GenericHeuristic } from "./GenericHeuristic";
 export { InputHeuristic } from "./InputHeuristic";
 export { ButtonHeuristic } from "./ButtonHeuristic";
+export { ButtonSetHeuristic } from "./ButtonSetHeuristic";
 export { CheckboxHeuristic } from "./CheckboxHeuristic";
 export { RadioHeuristic } from "./RadioHeuristic";
 export { ToggleHeuristic } from "./ToggleHeuristic";

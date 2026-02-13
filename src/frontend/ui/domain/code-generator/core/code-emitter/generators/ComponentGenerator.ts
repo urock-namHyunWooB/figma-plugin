@@ -202,18 +202,24 @@ class ComponentGenerator {
     // props 전달
     for (const [propName, propValue] of Object.entries(extRef.props)) {
       const resolvedPropName = this.renameConflictingPropName(propName);
+
+      // propMappings가 있으면 부모 prop 이름으로 매핑
+      // 예: labelText → option1Text
+      const mappedPropName = extRef.propMappings?.[propName];
+      const parentPropName = mappedPropName || resolvedPropName;
+
       const parentHasSameProp = tree.props.some(
-        (p) => p.name === resolvedPropName
+        (p) => p.name === parentPropName
       );
 
       let jsxAttr: ts.JsxAttribute;
       if (parentHasSameProp) {
-        // 부모 prop 참조
+        // 부모 prop 참조 (매핑된 이름 사용)
         jsxAttr = this.factory.createJsxAttribute(
           this.factory.createIdentifier(resolvedPropName),
           this.factory.createJsxExpression(
             undefined,
-            this.factory.createIdentifier(resolvedPropName)
+            this.factory.createIdentifier(parentPropName)
           )
         );
       } else {

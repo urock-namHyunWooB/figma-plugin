@@ -588,6 +588,13 @@ export interface ExternalRef {
 
   /** 전달할 props */
   props: Record<string, unknown>;
+
+  /**
+   * Prop 이름 매핑 (외부 컴포넌트 prop → 부모 컴포넌트 prop)
+   * 예: { labelText: "option1Text" }
+   * ComponentGenerator에서 labelText 대신 option1Text를 참조하도록 함
+   */
+  propMappings?: Record<string, string>;
 }
 
 // ============================================================================

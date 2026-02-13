@@ -17,58 +17,44 @@ import FigmaCodeGenerator from "@code-generator";
  */
 
 describe("ArraySlot 감지", () => {
-  describe("airtable-select-button", () => {
-    test("Option들이 배열로 감지되어 .map() 렌더링되어야 한다", async () => {
+  /**
+   * airtable-select-button은 ButtonSetHeuristic으로 처리됨
+   * Options variant("2 options", "3 options" 패턴)가 있으면 ArraySlot 대신 조건부 렌더링 사용
+   */
+  describe("airtable-select-button (ButtonSetHeuristic)", () => {
+    test("Option들이 개별 렌더링되고, Option 3에 조건부 렌더링이 적용되어야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
       const code = await compiler.compile();
 
       expect(code).not.toBeNull();
-      // .map() 패턴이 있어야 함
-      expect(code).toContain(".map(");
-      // options.map( 패턴이 있어야 함
-      expect(code).toContain("options.map(");
+      // Options prop 타입이 올바르게 정의되어야 함
+      expect(code).toMatch(/Options\s*=\s*["']2 options["']\s*\|\s*["']3 options["']/);
+      // Option 3에 조건부 렌더링이 있어야 함
+      expect(code).toMatch(/options\s*===\s*["']3 options["']/);
     });
 
-    test("조건부 렌더링 (options === '...')이 제거되어야 한다", async () => {
+    test("각 버튼에 labelText가 prop 참조로 전달되어야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
       const code = await compiler.compile();
 
       expect(code).not.toBeNull();
-      // options === "2 options" 같은 조건이 없어야 함
-      expect(code).not.toMatch(/options\s*===\s*["'].*options["']/);
+      // SelectButton에 labelText prop이 optionNText 참조로 전달되어야 함
+      expect(code).toMatch(/labelText\s*=\s*\{\s*option1Text\s*\}/);
+      expect(code).toMatch(/labelText\s*=\s*\{\s*option2Text\s*\}/);
     });
 
-    test("배열 슬롯 map에 key prop이 있어야 한다", async () => {
+    test("options prop의 타입이 VARIANT 리터럴이어야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
       const code = await compiler.compile();
 
       expect(code).not.toBeNull();
-      // key={index} 또는 key={item.id} 등의 패턴
-      expect(code).toMatch(/key\s*=\s*\{/);
-    });
-
-    test("배열 슬롯 아이템은 외부 컴포넌트로 렌더링되어야 한다", async () => {
-      const data = airtableSelectButton as unknown as FigmaNodeData;
-      const compiler = new FigmaCodeGenerator(data);
-      const code = await compiler.compile();
-
-      expect(code).not.toBeNull();
-      // SelectButton 컴포넌트가 map 안에서 사용되어야 함
-      expect(code).toMatch(/\.map\s*\([^)]*\)\s*=>\s*.*<SelectButton/s);
-    });
-
-    test("배열 슬롯 아이템에 props가 전달되어야 한다", async () => {
-      const data = airtableSelectButton as unknown as FigmaNodeData;
-      const compiler = new FigmaCodeGenerator(data);
-      const code = await compiler.compile();
-
-      expect(code).not.toBeNull();
-      // item.size, item.selected, item.text 등의 props 전달
-      expect(code).toMatch(/size\s*=\s*\{.*item/);
-      expect(code).toMatch(/text\s*=\s*\{.*item\.text/);
+      // options?: Options 형태
+      expect(code).toMatch(/options\??\s*:\s*Options/);
+      // Options 타입이 "2 options" | "3 options" 형태
+      expect(code).toMatch(/type\s+Options\s*=\s*["']2 options["']\s*\|\s*["']3 options["']/);
     });
   });
 
@@ -135,14 +121,15 @@ describe("ArraySlot 감지", () => {
   });
 
   describe("Props 생성", () => {
-    test("생성된 코드의 interface에 options Array 타입이 있어야 한다", async () => {
+    // airtable-select-button은 ButtonSetHeuristic으로 처리되므로 Array가 아닌 VARIANT 타입
+    test("airtable-select-button의 options prop은 VARIANT 리터럴 타입이어야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
       const code = await compiler.compile();
 
       expect(code).not.toBeNull();
-      // interface에 options: Array<...> 패턴이 있어야 함
-      expect(code).toMatch(/options\s*:\s*Array</);
+      // Options 타입이 "2 options" | "3 options" 형태 (ButtonSetHeuristic)
+      expect(code).toMatch(/type\s+Options\s*=\s*["']2 options["']\s*\|\s*["']3 options["']/);
     });
 
     test("생성된 코드의 interface에 items Array 타입이 있어야 한다", async () => {
@@ -155,77 +142,74 @@ describe("ArraySlot 감지", () => {
       expect(code).toMatch(/items\s*:\s*Array</);
     });
 
-    test("배열 슬롯 감지 시 variant prop 중 개수 관련 prop은 제거되어야 한다", async () => {
+    test("ButtonSetHeuristic은 Options prop을 유지해야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
       const code = await compiler.compile();
 
       expect(code).not.toBeNull();
 
-      // "Options" prop (값: "2 options", "3 options")은 interface에서 제거되어야 함
-      // options?: "2 options" | "3 options" 같은 패턴이 없어야 함
-      expect(code).not.toMatch(/options\?\s*:\s*["']2 options["']/);
+      // ButtonSetHeuristic에서 Options prop은 유지됨 (조건부 렌더링에 사용)
+      expect(code).toMatch(/options\??\s*:\s*Options/);
     });
   });
 
-  describe("componentId 기반 그룹핑", () => {
-    test("같은 componentId를 가진 INSTANCE들만 ArraySlot으로 감지되어야 한다", async () => {
+  /**
+   * ButtonSetHeuristic은 componentId와 무관하게 이름 기반으로 처리
+   * Options variant 패턴이 있으면 조건부 렌더링 사용
+   */
+  describe("ButtonSetHeuristic componentId 처리", () => {
+    test("ButtonSetHeuristic은 모든 Option을 개별 렌더링한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
       const code = await compiler.compile();
 
       expect(code).not.toBeNull();
 
-      // componentId가 같은 것들만 .map()으로 렌더링
-      // Option 2, 3 (같은 componentId: 133:604)만 ArraySlot
-      // Option 1 (다른 componentId: 133:603)은 별도 처리
-      expect(code).toContain(".map(");
+      // Option 1, 2, 3이 모두 개별 SelectButton으로 렌더링되고 prop 참조 사용
+      expect(code).toMatch(/labelText\s*=\s*\{\s*option1Text\s*\}/);
+      expect(code).toMatch(/labelText\s*=\s*\{\s*option2Text\s*\}/);
     });
 
-    test("다른 componentId를 가진 INSTANCE는 별도로 렌더링되어야 한다", async () => {
+    test("다른 componentId를 가진 INSTANCE도 동일하게 처리된다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
       const code = await compiler.compile();
 
       expect(code).not.toBeNull();
 
-      // componentId가 다른 Option 1은 map 밖에서 렌더링되거나
-      // 별도의 조건부 렌더링으로 처리될 수 있음
-      // 핵심: 모든 Option이 하나의 .map()에 들어가면 안됨
-      // (같은 componentId인 것들만 그룹핑)
+      // componentId가 달라도 ButtonSetHeuristic은 이름 기반으로 병합
+      // Option 1, 2가 각각 렌더링됨
+      expect(code).toContain("<SelectButton");
     });
   });
 
-  describe("SuperTree 병합 ID 매칭", () => {
+  describe("ButtonSetHeuristic 조건부 렌더링", () => {
     /**
-     * ArraySlot의 parentId가 원본 Figma variant 노드 ID인데,
-     * AST는 병합된 SuperTree에서 생성되어 ID가 다름
-     *
-     * 검증: 최종 코드에 .map() 패턴이 생성되면 ID 매칭이 정상 동작한 것
+     * ButtonSetHeuristic은 Options variant를 조건부 렌더링으로 처리
+     * "3 options"일 때만 Option 3이 표시됨
      */
 
-    test("생성된 코드에 .map() 렌더링이 포함되어야 한다", async () => {
+    test("Option 3에 조건부 렌더링이 적용되어야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
       const code = await compiler.compile();
 
       expect(code).not.toBeNull();
-      expect(code).toContain(".map(");
-      expect(code).toContain("options.map(");
+      // options === "3 options" 조건이 있어야 함
+      expect(code).toMatch(/options\s*===\s*["']3 options["']/);
     });
 
-    test("ArraySlot instance는 개별 렌더링되지 않아야 한다", async () => {
+    test("Option 1, 2는 항상 표시되어야 한다", async () => {
       const data = airtableSelectButton as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
       const code = await compiler.compile();
 
       expect(code).not.toBeNull();
 
-      // 조건부 렌더링 (options === "2 options") 패턴이 없어야 함
-      expect(code).not.toMatch(/options\s*===\s*["'].*options["']/);
-
-      // .map()이 있어야 함
-      expect(code).toContain(".map(");
+      // Option 1, 2는 조건 없이 렌더링 (prop 참조 사용)
+      expect(code).toMatch(/labelText\s*=\s*\{\s*option1Text\s*\}/);
+      expect(code).toMatch(/labelText\s*=\s*\{\s*option2Text\s*\}/);
     });
   });
 });

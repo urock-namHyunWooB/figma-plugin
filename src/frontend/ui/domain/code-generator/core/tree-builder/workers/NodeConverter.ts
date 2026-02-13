@@ -58,6 +58,7 @@ export class NodeConverter {
             componentSetId: externalRefData.componentSetId,
             componentName: externalRefData.componentName,
             props: externalRefData.props,
+            propMappings: externalRefData.propMappings,
           }
         : undefined;
 

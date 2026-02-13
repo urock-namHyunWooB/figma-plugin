@@ -242,6 +242,13 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
     // 이미 개별 slot으로 감지된 노드 ID 수집
     const slotNodeIds = new Set(ctx.slots.map((s) => s.targetNodeId));
 
+    // 각 노드의 variant 출현 횟수 수집
+    const nodeVariantCounts = new Map<string, number>();
+    traverseTree(ctx.internalTree, (node) => {
+      const count = node.mergedNode?.length ?? ctx.totalVariantCount;
+      nodeVariantCounts.set(node.id, count);
+    });
+
     traverseTree(ctx.internalTree, (node) => {
       // 개별 slot으로 감지된 노드는 제외하고 배열 슬롯 감지
       const nonSlotChildren = node.children.filter(
@@ -254,8 +261,12 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
           name: child.name,
           type: child.type,
           componentId: getComponentId(ctx.data.getNodeById(child.id)),
+          variantCount: nodeVariantCounts.get(child.id) ?? ctx.totalVariantCount,
         }));
-        const arraySlot = instance.detectArraySlot(childrenInfo);
+        const arraySlot = instance.detectArraySlotWithVariantInfo(
+          childrenInfo,
+          ctx.totalVariantCount
+        );
         if (arraySlot) arraySlots.push(arraySlot);
       }
     });
@@ -458,6 +469,65 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
         // Extract base name by removing trailing numbers and normalizing
         // "Option 1", "Option 2" → "option"
         // "Item-1", "Item-2" → "item"
+        const firstName = group[0].name;
+        const baseNameWithoutNumber = firstName.replace(/[\s_-]*\d+$/, "");
+        const baseName = toCamelCase(baseNameWithoutNumber);
+        const slotName = baseName.endsWith("s") ? baseName : `${baseName}s`;
+
+        return {
+          name: slotName,
+          nodeIds: group.map((g) => g.id),
+          itemType: componentId,
+          minItems: 1,
+          maxItems: undefined,
+        };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * 배열 슬롯 감지 (variant 정보 포함)
+   *
+   * 같은 componentId를 가진 노드들이 같은 variant 세트에 존재해야 array slot으로 감지.
+   * 다른 variant 세트에 존재하는 노드는 제외 (조건부 렌더링으로 처리됨).
+   *
+   * 예: SelectButtons에서
+   * - Option 1, 2: 모든 6개 variant에 존재 → 같은 세트
+   * - Option 3: 3개 variant에만 존재 → 다른 세트 → 제외
+   */
+  public detectArraySlotWithVariantInfo(
+    children: Array<{
+      id: string;
+      name: string;
+      type: string;
+      componentId?: string;
+      variantCount: number;
+    }>,
+    totalVariantCount: number
+  ): ArraySlotInfo | null {
+    const instances = children.filter((c) => c.type === "INSTANCE");
+    if (instances.length < 2) return null;
+
+    // componentId와 variantCount로 그룹핑
+    // 같은 componentId + 같은 variantCount를 가진 노드들만 array slot 후보
+    const byComponentIdAndCount = new Map<string, typeof instances>();
+
+    for (const inst of instances) {
+      if (!inst.componentId) continue;
+      // variantCount를 키에 포함하여 같은 variant 세트에 있는 노드만 그룹핑
+      const key = `${inst.componentId}:${inst.variantCount}`;
+      if (!byComponentIdAndCount.has(key)) {
+        byComponentIdAndCount.set(key, []);
+      }
+      byComponentIdAndCount.get(key)!.push(inst);
+    }
+
+    for (const [key, group] of byComponentIdAndCount.entries()) {
+      if (group.length >= 2) {
+        const componentId = key.split(":")[0];
+        // Extract base name by removing trailing numbers and normalizing
         const firstName = group[0].name;
         const baseNameWithoutNumber = firstName.replace(/[\s_-]*\d+$/, "");
         const baseName = toCamelCase(baseNameWithoutNumber);

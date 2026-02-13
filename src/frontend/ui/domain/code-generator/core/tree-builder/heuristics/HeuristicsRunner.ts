@@ -22,6 +22,7 @@ import type { IComponentHeuristic } from "./components/IComponentHeuristic";
 import { GenericHeuristic } from "./components/GenericHeuristic";
 import { InputHeuristic } from "./components/InputHeuristic";
 import { ButtonHeuristic } from "./components/ButtonHeuristic";
+import { ButtonSetHeuristic } from "./components/ButtonSetHeuristic";
 import { CheckboxHeuristic } from "./components/CheckboxHeuristic";
 import { RadioHeuristic } from "./components/RadioHeuristic";
 import { ToggleHeuristic } from "./components/ToggleHeuristic";
@@ -44,6 +45,7 @@ export class HeuristicsRunner {
     new ToggleHeuristic(),
     new LinkHeuristic(),
     new ButtonHeuristic(),
+    new ButtonSetHeuristic(),
   ];
 
   /**
