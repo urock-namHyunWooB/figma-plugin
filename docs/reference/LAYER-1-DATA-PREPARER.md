@@ -1,129 +1,107 @@
 # Layer 1: DataPreparer
 
-> **핵심**: Figma 원본 데이터를 조회하기 편한 형태로 준비합니다.
+> "나중에 빨리 찾을 수 있게 미리 정리해둔다"
 
-## 요약
-
-| 입력 | 출력 | 역할 |
-|-----|------|------|
-| FigmaNodeData | PreparedDesignData | HashMap 구축, Props 정규화 |
+Figma 원본 데이터를 효율적으로 조회할 수 있는 형태로 변환합니다.
 
 ---
 
-## 왜 필요한가?
+## 문제 상황
 
-Figma API 응답은 **트리 구조**입니다. 특정 노드를 찾으려면 매번 트리 순회가 필요합니다.
+Figma에서 받은 데이터는 이렇게 생겼다:
 
 ```
-Before: getNodeById("123:456") → O(n) 트리 순회
-After:  nodeMap.get("123:456") → O(1) 조회
+Document
+├── Frame "Button"
+│   ├── Frame "Container"
+│   │   ├── Text "Label" (id: 123:456)
+│   │   └── Instance "Icon" (id: 789:012)
+│   └── ...
+└── ...
+```
+
+나중에 코드에서 이런 질문을 한다:
+- "ID `123:456` 노드의 폰트 사이즈 뭐야?"
+- "ID `789:012` 노드의 스타일 정보 줘"
+
+**문제**: 매번 트리 전체를 순회해야 한다. 노드가 1000개면 1000번 탐색.
+
+---
+
+## 해결 방법
+
+**미리 HashMap(색인)을 만들어둔다.**
+
+```
+nodeMap = {
+  "123:456": { type: "TEXT", characters: "Label", fontSize: 14, ... },
+  "789:012": { type: "INSTANCE", componentId: "xxx", ... },
+  ...
+}
+
+styleMap = {
+  "123:456": { color: "#000", fontWeight: 600, ... },
+  "789:012": { width: 24, height: 24, ... },
+  ...
+}
+```
+
+이제 질문에 바로 답할 수 있다:
+```
+nodeMap.get("123:456")  // O(1) - 즉시 반환
 ```
 
 ---
 
 ## 하는 일
 
-### 1. 깊은 복사
-
-원본 데이터를 변경하지 않도록 복사본을 만듭니다.
-
-```typescript
-const spec = JSON.parse(JSON.stringify(data));
-```
-
-### 2. HashMap 구축
-
-트리를 순회하며 Map을 생성합니다.
-
-| Map | 용도 |
-|-----|------|
-| `nodeMap` | 노드 ID → SceneNode |
-| `styleMap` | 노드 ID → StyleTree |
-| `imageUrls` | imageRef → URL |
-| `vectorSvgs` | 노드 ID → SVG 문자열 |
-| `dependencies` | componentId → FigmaNodeData |
-
-### 3. Props 추출 및 정규화
-
-Figma의 `componentPropertyDefinitions`를 정리합니다.
-
-**Before (Figma 원본)**:
-```
-"Show Icon#123:456": {
-  type: "VARIANT",
-  defaultValue: "True",
-  variantOptions: ["True", "False"]
-}
-```
-
-**After (정규화)**:
-```typescript
-{
-  name: "showIcon",        // camelCase
-  type: "boolean",         // True/False → boolean
-  defaultValue: true,      // "True" → true
-  originalKey: "Show Icon#123:456"
-}
-```
-
-### 4. 타입 변환
-
-| Figma 타입 | 내부 타입 |
-|-----------|----------|
-| VARIANT | variant |
-| VARIANT (True/False) | boolean |
-| BOOLEAN | boolean |
-| TEXT | string |
-| INSTANCE_SWAP | slot |
-
-### 5. HTML 속성 충돌 방지
-
-`disabled`, `type` 등 HTML 속성과 충돌하는 이름에 prefix 추가:
-
-```
-"disabled" → "customDisabled"
-"type" → "customType"
-```
+| 작업 | 설명 |
+|------|------|
+| **깊은 복사** | 원본 데이터 변질 방지 (원본은 건드리지 않음) |
+| **nodeMap 구축** | 노드 ID → 노드 데이터 (O(1) 조회) |
+| **styleMap 구축** | 노드 ID → 스타일 데이터 (O(1) 조회) |
+| **prop 이름 정규화** | `Show Icon#123:456` → `showIcon` (camelCase) |
 
 ---
 
-## 출력: PreparedDesignData
+## 비유
 
-```typescript
-interface PreparedDesignData {
-  spec: FigmaNodeData;              // 원본 (깊은 복사본)
-  document: SceneNode;              // 루트 노드
-  styleTree: StyleTree;             // 스타일 트리
+**도서관 색인 카드**
 
-  // O(1) 조회용 Map
-  nodeMap: Map<string, SceneNode>;
-  styleMap: Map<string, StyleTree>;
-  imageUrls: Map<string, string>;
-  vectorSvgs: Map<string, string>;
-  dependencies: Map<string, FigmaNodeData>;
+책(노드)을 찾을 때:
+- 모든 책장을 다 뒤진다 → 느림
+- 색인 카드를 본다 → 빠름
 
-  // 정규화된 Props
-  props: PropsDef;
-
-  // 조회 메서드
-  getNodeById(id: string): SceneNode | undefined;
-  getStyleById(id: string): StyleTree | undefined;
-  getImageUrlByNodeId(nodeId: string): string | undefined;
-  getVectorSvgByNodeId(nodeId: string): string | undefined;
-}
-```
+DataPreparer는 **색인 카드를 미리 만들어두는 작업**이다.
 
 ---
 
-## 다음 단계
+## 입력 vs 출력
 
-PreparedDesignData는 **TreeBuilder**로 전달됩니다.
+**입력 (FigmaNodeData)**:
+- Figma API에서 받은 원본 트리 구조
+- 특정 노드 찾으려면 순회 필요
 
-TreeBuilder는 이 데이터를 사용해 플랫폼 독립적 IR(DesignTree)을 생성합니다.
+**출력 (PreparedDesignData)**:
+- `nodeMap`: ID로 노드 즉시 조회
+- `styleMap`: ID로 스타일 즉시 조회
+- `props`: 정규화된 prop 정의
 
 ---
 
-## 관련 파일
+## 핵심
 
-- `core/data-preparer/DataPreparer.ts`
-- `core/data-preparer/PreparedDesignData.ts`
+> "나중에 빨리 찾을 수 있게 미리 정리해둔다"
+
+TreeBuilder와 CodeEmitter가 수시로 "이 노드 정보 줘"라고 요청한다. 그때마다 트리를 순회하면 느리니까, **미리 HashMap으로 정리**해둔다.
+
+---
+
+## 요약
+
+| 항목 | 내용 |
+|------|------|
+| 목적 | 데이터 조회 최적화 |
+| 핵심 작업 | HashMap 구축 (nodeMap, styleMap) |
+| 성능 | O(n) 순회 → O(1) 조회 |
+| 부가 작업 | 깊은 복사, prop 이름 정규화 |
