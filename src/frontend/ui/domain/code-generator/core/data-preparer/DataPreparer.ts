@@ -128,12 +128,22 @@ class DataPreparer implements IDataPreparer {
       );
     }
 
-    // componentPropertyReferences에서 참조하는 props 자동 추출
-    const referencedProps = this.extractPropsFromPropertyReferences(document);
-    propsDef = { ...propsDef, ...referencedProps };
-
-    // prop 이름 정규화 (camelCase)
+    // prop 이름 정규화 (camelCase) - componentPropertyDefinitions만 정규화
     propsDef = this.normalizePropsName(propsDef);
+
+    // componentPropertyReferences에서 참조하는 props 자동 추출
+    // (이미 componentPropertyDefinitions에 있는 prop은 제외)
+    // 원본 ref 키를 그대로 유지 (이름 생성은 PropsProcessor에서)
+    // 중복 체크: 정규화된 키 + 각 prop의 originalKey 모두 포함
+    const existingPropKeys = new Set<string>();
+    for (const [key, value] of Object.entries(propsDef)) {
+      existingPropKeys.add(key);
+      if (value.originalKey) {
+        existingPropKeys.add(value.originalKey);
+      }
+    }
+    const referencedProps = this.extractPropsFromPropertyReferences(document, existingPropKeys);
+    propsDef = { ...propsDef, ...referencedProps };
 
     // 커스텀 props 추출 (policy에서 제공된 경우)
     if (policy?.extractCustomProps) {
@@ -148,12 +158,13 @@ class DataPreparer implements IDataPreparer {
 
   /**
    * INSTANCE의 componentProperties를 componentPropertyDefinitions 형식으로 변환
+   *
+   * 원본 키를 그대로 사용합니다 (이름 생성은 PropsProcessor에서).
    */
   private convertComponentPropertiesToDefinitions(
     componentProperties: Record<string, any>
   ): PropsDef {
     const propsDef: PropsDef = {};
-    const typeCounters: Record<string, number> = {};
 
     for (const [key, value] of Object.entries(componentProperties)) {
       // VARIANT 타입은 INSTANCE에서 사용되지 않으므로 제외
@@ -161,9 +172,8 @@ class DataPreparer implements IDataPreparer {
         continue;
       }
 
-      const propName = this.generatePropName(key, value.type, typeCounters);
-
-      propsDef[propName] = {
+      // 원본 키를 그대로 사용 (이름 생성은 PropsProcessor에서)
+      propsDef[key] = {
         type: value.type,
         defaultValue: value.value,
         originalKey: key,
@@ -175,10 +185,17 @@ class DataPreparer implements IDataPreparer {
 
   /**
    * document를 순회하여 componentPropertyReferences에서 props 추출
+   *
+   * 원본 ref 키를 그대로 prop 키로 사용합니다.
+   * prop 이름 생성은 PropsProcessor에서 담당합니다.
+   *
+   * @param existingPropKeys 이미 componentPropertyDefinitions에 정의된 prop 키들 (중복 방지)
    */
-  private extractPropsFromPropertyReferences(document: SceneNode): PropsDef {
+  private extractPropsFromPropertyReferences(
+    document: SceneNode,
+    existingPropKeys: Set<string>
+  ): PropsDef {
     const propsDef: PropsDef = {};
-    const typeCounters: Record<string, number> = {};
     const processedRefs = new Set<string>();
 
     const traverse = (node: any) => {
@@ -188,37 +205,35 @@ class DataPreparer implements IDataPreparer {
       if (refs) {
         // characters 참조 → TEXT prop
         if (refs.characters && !processedRefs.has(refs.characters)) {
-          processedRefs.add(refs.characters);
-          const propName = this.generatePropName(
-            refs.characters,
-            "TEXT",
-            typeCounters
-          );
-          propsDef[propName] = {
-            type: "TEXT",
-            defaultValue: node.characters || node.name || "",
-            originalKey: refs.characters,
-          };
+          // 이미 componentPropertyDefinitions에 있으면 건너뛰기
+          if (!existingPropKeys.has(refs.characters)) {
+            processedRefs.add(refs.characters);
+            // 원본 ref 키를 그대로 사용 (이름 생성은 PropsProcessor에서)
+            propsDef[refs.characters] = {
+              type: "TEXT",
+              defaultValue: node.characters || node.name || "",
+              originalKey: refs.characters,
+            };
+          }
         }
 
         // visible 참조 → BOOLEAN prop
         if (refs.visible && !processedRefs.has(refs.visible)) {
-          processedRefs.add(refs.visible);
-          const propName = this.generatePropName(
-            refs.visible,
-            "BOOLEAN",
-            typeCounters
-          );
-          propsDef[propName] = {
-            type: "BOOLEAN",
-            defaultValue: node.visible !== false,
-            originalKey: refs.visible,
-          };
+          // 이미 componentPropertyDefinitions에 있으면 건너뛰기
+          if (!existingPropKeys.has(refs.visible)) {
+            processedRefs.add(refs.visible);
+            // 원본 ref 키를 그대로 사용 (이름 생성은 PropsProcessor에서)
+            propsDef[refs.visible] = {
+              type: "BOOLEAN",
+              defaultValue: node.visible !== false,
+              originalKey: refs.visible,
+            };
+          }
         }
       }
 
-      // children 순회
-      if (node.children && Array.isArray(node.children)) {
+      // children 순회 (INSTANCE 내부는 제외 - dependency의 내부 구조이므로)
+      if (node.children && Array.isArray(node.children) && node.type !== "INSTANCE") {
         for (const child of node.children) {
           traverse(child);
         }
@@ -227,26 +242,6 @@ class DataPreparer implements IDataPreparer {
 
     traverse(document);
     return propsDef;
-  }
-
-  /**
-   * 타입 기반으로 의미있는 prop 이름 생성
-   */
-  private generatePropName(
-    _originalKey: string,
-    type: string,
-    counters: Record<string, number>
-  ): string {
-    const baseNames: Record<string, string> = {
-      TEXT: "text",
-      BOOLEAN: "visible",
-      INSTANCE_SWAP: "slot",
-    };
-
-    const baseName = baseNames[type] || "prop";
-    counters[type] = (counters[type] || 0) + 1;
-
-    return counters[type] === 1 ? baseName : `${baseName}${counters[type]}`;
   }
 
   /**

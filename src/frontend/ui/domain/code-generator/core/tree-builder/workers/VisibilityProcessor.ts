@@ -353,10 +353,14 @@ export class VisibilityProcessor
     visibleRef: string,
     propsMap: Map<string, PropDefinition>
   ): string | null {
+    // 1. originalKey로 매칭 (componentPropertyReferences의 visibleRef와 일치하는 prop 찾기)
     for (const [propName, propDef] of propsMap.entries()) {
-      if (propDef.originalKey === visibleRef) return propName;
+      if (propDef.originalKey === visibleRef) return propDef.name;
     }
-    if (propsMap.has(visibleRef)) return visibleRef;
+    // 2. 직접 key로 존재하면 해당 prop의 name 반환
+    const directProp = propsMap.get(visibleRef);
+    if (directProp) return directProp.name;
+    // 3. fallback: ref에서 이름 추출하여 camelCase 변환
     const match = visibleRef.match(/^([^#]+)#/);
     if (match) return toCamelCase(match[1]);
     return null;

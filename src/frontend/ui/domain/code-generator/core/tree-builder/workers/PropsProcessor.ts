@@ -133,14 +133,18 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
         continue;
       }
 
-      // 유효한 JavaScript 식별자로 변환 (숫자로 시작하는 이름 처리)
-      let name = toCamelCase(originalName);
+      const d = def as { type?: string; defaultValue?: unknown; variantOptions?: string[] };
+      const propType = this.mapPropType(d.type);
+
+      // 의미 있는 prop 이름 생성
+      let name = this.generatePropName(originalName);
 
       // 네이티브 HTML 속성과 충돌하는 prop 이름 rename
       name = this.renameConflictingPropName(name);
 
-      const d = def as { type?: string; defaultValue?: unknown; variantOptions?: string[] };
-      const propType = this.mapPropType(d.type);
+      // 다른 prop과 이름 충돌 시 suffix 추가
+      name = this.resolveNameConflict(name, map);
+
       const options = d.variantOptions;
 
       // Check if this is a boolean-like VARIANT (True/False options)
@@ -181,13 +185,15 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
         finalDefaultValue = d.defaultValue.toLowerCase() === "true";
       }
 
-      map.set(originalName, {
+      // Map key는 normalized name 사용 (코드에서 직접 사용됨)
+      // originalKey는 Figma 원본 키 저장 (componentPropertyReferences 매칭용)
+      map.set(name, {
         name,
         type: finalType,
         defaultValue: finalDefaultValue,
         required: false,
         options,
-        originalKey: existingOriginalKey || (originalName !== name ? originalName : undefined),
+        originalKey: existingOriginalKey || originalName,
         nodeId: existingNodeId,
         nodeName: existingNodeName,
         variantValue: existingVariantValue,
@@ -364,6 +370,60 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
       }
     }
     return undefined;
+  }
+
+  /**
+   * 원본 키에서 prop 이름 생성
+   *
+   * Figma 원본 prop 이름을 그대로 camelCase로 변환합니다.
+   * # 뒤의 ID 부분은 제거합니다.
+   *
+   * @param originalKey - Figma 원본 키 (예: "Badge#796:0", "Show Label#123:0", "Size")
+   * @returns 정규화된 prop 이름
+   *
+   * @example
+   * - "Badge#796:0" → "badge"
+   * - "Show Label#123:0" → "showLabel"
+   * - "Label Text#123:0" → "labelText"
+   * - "Size" → "size"
+   */
+  private generatePropName(originalKey: string): string {
+    // # 앞부분 추출 (Figma prop 이름)
+    const keyPart = originalKey.split("#")[0].trim();
+
+    // camelCase로 변환
+    const camelName = toCamelCase(keyPart);
+
+    if (!camelName) {
+      return "prop";
+    }
+
+    return camelName;
+  }
+
+  /**
+   * 다른 prop과 이름 충돌 시 suffix 추가
+   *
+   * @example
+   * - "label" (이미 존재) → "label2"
+   * - "label2" (이미 존재) → "label3"
+   */
+  private resolveNameConflict(
+    name: string,
+    existingProps: Map<string, PropDefinition>
+  ): string {
+    if (!existingProps.has(name)) {
+      return name;
+    }
+
+    let suffix = 2;
+    let resolvedName = `${name}${suffix}`;
+    while (existingProps.has(resolvedName)) {
+      suffix++;
+      resolvedName = `${name}${suffix}`;
+    }
+
+    return resolvedName;
   }
 
   /**

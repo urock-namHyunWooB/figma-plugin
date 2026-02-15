@@ -192,7 +192,7 @@ describe("DataPreparer", () => {
       expect(prepared.props["withIcon"].type).toBe("BOOLEAN");
     });
 
-    it("componentPropertyReferences에서 props 추출", () => {
+    it("componentPropertyReferences에서 props 추출 (원본 ref 키 유지)", () => {
       const preparer = new DataPreparer();
       const mockData = createMockNodeData("root-1", "Button", "COMPONENT", [
         {
@@ -208,10 +208,10 @@ describe("DataPreparer", () => {
 
       const prepared = preparer.prepare(mockData);
 
-      // TEXT 타입으로 "text" prop이 추출되어야 함
-      expect(prepared.props["text"]).toBeDefined();
-      expect(prepared.props["text"].type).toBe("TEXT");
-      expect(prepared.props["text"].defaultValue).toBe("Click me");
+      // 원본 ref 키가 그대로 사용되어야 함 (이름 생성은 PropsProcessor에서)
+      expect(prepared.props["Text#123:0"]).toBeDefined();
+      expect(prepared.props["Text#123:0"].type).toBe("TEXT");
+      expect(prepared.props["Text#123:0"].defaultValue).toBe("Click me");
     });
   });
 
@@ -279,6 +279,140 @@ describe("DataPreparer", () => {
       expect(grouped["icon-set-1"].componentSetName).toBe("Icon");
       expect(grouped["icon-set-1"].variants).toHaveLength(2);
     });
+  });
+});
+
+describe("componentPropertyReferences에서 props 추출", () => {
+  it("visible ref를 원본 키로 props에 추가 (이름 생성은 PropsProcessor에서)", () => {
+    const preparer = new DataPreparer();
+    const mockData = createMockNodeData("root-1", "InputField", "COMPONENT_SET", [
+      {
+        id: "variant-1",
+        name: "State=Default",
+        type: "COMPONENT",
+        children: [
+          {
+            id: "label-frame",
+            name: "Label",
+            type: "FRAME",
+            componentPropertyReferences: {
+              visible: "Show Label#123:0",
+            },
+          },
+          {
+            id: "icon-frame",
+            name: "Icon",
+            type: "FRAME",
+            componentPropertyReferences: {
+              visible: "Icon Help#456:0",
+            },
+          },
+        ],
+      },
+    ]);
+
+    const prepared = preparer.prepare(mockData);
+
+    // 원본 ref 키가 그대로 props에 있어야 함 (이름 생성은 PropsProcessor에서)
+    expect(prepared.props["Show Label#123:0"]).toBeDefined();
+    expect(prepared.props["Icon Help#456:0"]).toBeDefined();
+    expect(prepared.props["Show Label#123:0"].type).toBe("BOOLEAN");
+  });
+
+  it("이미 componentPropertyDefinitions에 있는 prop은 중복 생성하지 않음", () => {
+    const preparer = new DataPreparer();
+    const mockData = createMockNodeData("root-1", "InputField", "COMPONENT_SET", [
+      {
+        id: "variant-1",
+        name: "State=Default",
+        type: "COMPONENT",
+        children: [
+          {
+            id: "label-frame",
+            name: "Label",
+            type: "FRAME",
+            componentPropertyReferences: {
+              visible: "Show Label#123:0", // componentPropertyDefinitions에 이미 있음
+            },
+          },
+        ],
+      },
+    ], {
+      componentPropertyDefinitions: {
+        "Show Label#123:0": {
+          type: "BOOLEAN",
+          defaultValue: true,
+        },
+      },
+    });
+
+    const prepared = preparer.prepare(mockData);
+
+    // componentPropertyDefinitions의 prop만 있어야 함 (중복 없음)
+    const propKeys = Object.keys(prepared.props);
+    const labelProps = propKeys.filter(k => k.includes("Label"));
+    expect(labelProps).toHaveLength(1);
+  });
+
+  it("INSTANCE 내부 노드의 ref는 main props로 전파되지 않음", () => {
+    const preparer = new DataPreparer();
+    const mockData = createMockNodeData("root-1", "InputField", "COMPONENT_SET", [
+      {
+        id: "variant-1",
+        name: "State=Default",
+        type: "COMPONENT",
+        children: [
+          {
+            id: "icon-instance",
+            name: "Button/Icon/Normal",
+            type: "INSTANCE",
+            children: [
+              {
+                id: "badge-inside-instance",
+                name: "Badge",
+                type: "FRAME",
+                componentPropertyReferences: {
+                  visible: "Badge#789:0", // INSTANCE 내부 - main으로 전파되면 안 됨
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const prepared = preparer.prepare(mockData);
+
+    // INSTANCE 내부 노드의 ref는 추출되지 않아야 함
+    expect(prepared.props["Badge#789:0"]).toBeUndefined();
+  });
+
+  it("characters ref를 원본 키로 props에 추가", () => {
+    const preparer = new DataPreparer();
+    const mockData = createMockNodeData("root-1", "InputField", "COMPONENT_SET", [
+      {
+        id: "variant-1",
+        name: "State=Default",
+        type: "COMPONENT",
+        children: [
+          {
+            id: "label-text",
+            name: "Label",
+            type: "TEXT",
+            characters: "Label Text",
+            componentPropertyReferences: {
+              characters: "Label Text#123:0",
+            },
+          },
+        ],
+      },
+    ]);
+
+    const prepared = preparer.prepare(mockData);
+
+    // 원본 ref 키가 그대로 props에 있어야 함
+    expect(prepared.props["Label Text#123:0"]).toBeDefined();
+    expect(prepared.props["Label Text#123:0"].type).toBe("TEXT");
   });
 });
 
