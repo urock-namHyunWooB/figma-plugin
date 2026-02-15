@@ -77,7 +77,9 @@ const CONFLICTING_HTML_ATTRS = [
  */
 function renameConflictingPropName(propName: string): string {
   const lowerPropName = propName.toLowerCase();
-  if (CONFLICTING_HTML_ATTRS.some((attr) => attr.toLowerCase() === lowerPropName)) {
+  if (
+    CONFLICTING_HTML_ATTRS.some((attr) => attr.toLowerCase() === lowerPropName)
+  ) {
     return `custom${propName.charAt(0).toUpperCase() + propName.slice(1)}`;
   }
   return propName;
@@ -224,8 +226,11 @@ export default function TestPage() {
   // Props Control 관련 상태 (플러그인 App.tsx와 동일)
   const [propDefinitions, setPropDefinitions] = useState<PropDefinition[]>([]);
   const [propValues, setPropValues] = useState<Record<string, any>>({});
-  const [slotMockupEnabled, setSlotMockupEnabled] = useState<Record<string, boolean>>({});
-  const [currentComponent, setCurrentComponent] = useState<React.ComponentType<any> | null>(null);
+  const [slotMockupEnabled, setSlotMockupEnabled] = useState<
+    Record<string, boolean>
+  >({});
+  const [currentComponent, setCurrentComponent] =
+    useState<React.ComponentType<any> | null>(null);
 
   // 선택된 fixture 렌더링 (Component Set이면 모든 variant 렌더링)
   const renderComponent = useCallback(
@@ -251,18 +256,16 @@ export default function TestPage() {
         }
 
         // 생성된 코드 출력
-        console.log(`📝 Generated Code for ${fixture.name} [${strategy}]:\n`, code);
+        console.log(
+          `📝 Generated Code for ${fixture.name} [${strategy}]:\n`,
+          code
+        );
 
         const Component = await renderReactComponent(code);
 
         // Props 정의 가져오기 (플러그인과 동일)
         const props = compiler.getPropsDefinition();
         setPropDefinitions(props);
-        console.log("📦 All Props:", props.map((p: any) => `${p.name} (${p.type})`));
-        console.log("📦 SLOT props with slotInfo:", props.filter((p: any) => p.type === "SLOT").map((p: any) => ({
-          name: p.name,
-          slotInfo: p.slotInfo
-        })));
 
         // Props 초기값 설정 (SLOT에는 목업 주입) - 플러그인 App.tsx와 동일한 로직
         const initialValues: Record<string, any> = {};
@@ -297,11 +300,11 @@ export default function TestPage() {
 
         // 테스트 페이지용: 큰 gap 값을 가진 요소의 gap을 조정하여 모든 slot이 보이게 함
         setTimeout(() => {
-          container.querySelectorAll('*').forEach((el) => {
+          container.querySelectorAll("*").forEach((el) => {
             const style = getComputedStyle(el);
             const gapValue = parseInt(style.gap, 10);
             if (gapValue > 100) {
-              (el as HTMLElement).style.gap = '16px';
+              (el as HTMLElement).style.gap = "16px";
             }
           });
         }, 100);
@@ -313,8 +316,10 @@ export default function TestPage() {
             elements.forEach((el) => {
               const className = el.getAttribute("class");
               if (className && !className.startsWith("css-")) {
-                const classes = className.split(/\s+/).filter(c => c && !c.startsWith("css-"));
-                classes.forEach(cls => twindTw(cls));
+                const classes = className
+                  .split(/\s+/)
+                  .filter((c) => c && !c.startsWith("css-"));
+                classes.forEach((cls) => twindTw(cls));
               }
             });
           });
@@ -335,21 +340,24 @@ export default function TestPage() {
   }, []);
 
   // SLOT 목업 토글 핸들러 (플러그인 App.tsx와 동일)
-  const handleSlotMockupToggle = useCallback((name: string, enabled: boolean) => {
-    setSlotMockupEnabled((prev) => ({
-      ...prev,
-      [name]: enabled,
-    }));
-
-    // 해당 prop 값 업데이트
-    const propDef = propDefinitions.find((p) => p.name === name);
-    if (propDef) {
-      setPropValues((prev) => ({
+  const handleSlotMockupToggle = useCallback(
+    (name: string, enabled: boolean) => {
+      setSlotMockupEnabled((prev) => ({
         ...prev,
-        [name]: enabled ? createSlotMockup(propDef) : null,
+        [name]: enabled,
       }));
-    }
-  }, [propDefinitions]);
+
+      // 해당 prop 값 업데이트
+      const propDef = propDefinitions.find((p) => p.name === name);
+      if (propDef) {
+        setPropValues((prev) => ({
+          ...prev,
+          [name]: enabled ? createSlotMockup(propDef) : null,
+        }));
+      }
+    },
+    [propDefinitions]
+  );
 
   // propValues 변경 시 컴포넌트 다시 렌더링 (플러그인과 동일하게 단일 컴포넌트)
   useEffect(() => {
@@ -614,7 +622,8 @@ export default function TestPage() {
             {/* 렌더링 결과 */}
             <div css={compareBox}>
               <div css={compareLabel}>
-                🖥️ 렌더링 결과 ({strategy === "emotion" ? "Emotion" : "Tailwind"})
+                🖥️ 렌더링 결과 (
+                {strategy === "emotion" ? "Emotion" : "Tailwind"})
               </div>
               <div ref={renderRef} css={renderBox} />
             </div>

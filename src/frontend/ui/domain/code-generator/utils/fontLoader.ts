@@ -163,7 +163,9 @@ function injectSFProFallback(): void {
  * Google Fonts 로드
  */
 async function loadGoogleFonts(fonts: string[]): Promise<void> {
-  const unloadedFonts = fonts.filter((f) => !loadedFonts.has(f) && GOOGLE_FONTS_MAP[f]);
+  const unloadedFonts = fonts.filter(
+    (f) => !loadedFonts.has(f) && GOOGLE_FONTS_MAP[f]
+  );
 
   if (unloadedFonts.length === 0) return;
 
@@ -196,8 +198,6 @@ export async function loadFonts(fonts: string[]): Promise<{
   fallback: string[];
   notFound: string[];
 }> {
-  console.log("🔤 [FontLoader] Loading fonts:", fonts);
-
   const result = {
     loaded: [] as string[],
     fallback: [] as string[],
@@ -216,7 +216,7 @@ export async function loadFonts(fonts: string[]): Promise<{
     if (isSFProFont(font)) {
       injectSFProFallback();
       result.fallback.push(font);
-      console.log(`🔤 [FontLoader] SF Pro fallback injected for: ${font}`);
+
       continue;
     }
 
@@ -224,7 +224,7 @@ export async function loadFonts(fonts: string[]): Promise<{
     if (font === "Pretendard") {
       await loadPretendard();
       result.loaded.push(font);
-      console.log("🔤 [FontLoader] Pretendard loaded");
+
       continue;
     }
 
@@ -238,12 +238,10 @@ export async function loadFonts(fonts: string[]): Promise<{
 
   // Google Fonts 일괄 로드
   if (googleFonts.length > 0) {
-    console.log("🔤 [FontLoader] Loading Google Fonts:", googleFonts);
     await loadGoogleFonts(googleFonts);
     result.loaded.push(...googleFonts);
   }
 
-  console.log("🔤 [FontLoader] Result:", result);
   return result;
 }
 
