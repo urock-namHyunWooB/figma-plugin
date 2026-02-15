@@ -478,6 +478,27 @@ export type SemanticType =
   | "suffixIcon";    // 뒤쪽 아이콘
 
 /**
+ * Prop별로 분리된 스타일 그룹
+ * TreeBuilder에서 분석 완료된 결과를 CodeEmitter에 전달
+ */
+export interface PropStyleGroup {
+  /** 스타일 그룹 타입 */
+  type: "variant" | "boolean" | "slot";
+
+  /** variant/slot 값별 스타일 */
+  variants: Record<string, Record<string, string | number>>;
+
+  /** Boolean prop이 다른 variant prop에 의존하는 경우 (예: disabled가 color에 의존) */
+  dependsOn?: string;
+
+  /** Boolean=True가 모든 variant에서 동일한 값일 때 (invariant) */
+  invariantTrue?: Record<string, string | number>;
+
+  /** Boolean=False가 모든 variant에서 동일한 값일 때 (invariant) */
+  invariantFalse?: Record<string, string | number>;
+}
+
+/**
  * 스타일 정의
  * 플랫폼 독립적인 스타일 표현
  */
@@ -493,6 +514,9 @@ export interface StyleDefinition {
 
   /** pseudo-class 스타일 */
   pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
+
+  /** Prop별로 분리된 스타일 (TreeBuilder에서 분석 완료) */
+  propStyles?: Record<string, PropStyleGroup>;
 }
 
 /**

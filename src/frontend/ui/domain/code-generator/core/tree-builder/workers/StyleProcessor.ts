@@ -8,7 +8,7 @@
  * - PositionStyler: absolute positioning 스타일 계산
  */
 
-import type { StyleDefinition, PreparedDesignData } from "@code-generator/types/architecture";
+import type { StyleDefinition, PreparedDesignData, PropStyleGroup, PropDefinition } from "@code-generator/types/architecture";
 import type { ConditionNode } from "@code-generator/types/customType";
 import type {
   IStyleClassifier,
@@ -507,6 +507,668 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
     newStyles["height"] = `${Math.round(renderBounds.height)}px`;
 
     return newStyles;
+  }
+
+  // ==========================================================================
+  // Single-Prop Condition Simplification
+  // ==========================================================================
+
+  // ==========================================================================
+  // Prop-based Style Separation (for EmotionStyleStrategy)
+  // ==========================================================================
+
+  /**
+   * 복합 조건 스타일을 prop별로 분리하여 propStyles에 저장
+   *
+   * EmotionStyleStrategy에서 수행하던 분석 로직을 TreeBuilder로 이동:
+   * - groupDynamicStylesByProp() 로직
+   * - extractBooleanStylesByVariant() 로직
+   * - findPropSpecificStyle() 로직
+   *
+   * 결과는 StyleDefinition.propStyles에 저장되어 EmotionStyleStrategy가
+   * 분석 없이 바로 코드 생성에 사용할 수 있습니다.
+   */
+  static separateByProp(ctx: BuildContext): BuildContext {
+    if (!ctx.nodeStyles || !ctx.propsMap) return ctx;
+
+    const newNodeStyles = new Map(ctx.nodeStyles);
+    const props = Array.from(ctx.propsMap.values());
+
+    // 각 prop의 기본값 맵 생성
+    const propDefaults = new Map<string, string>();
+    for (const prop of props) {
+      if (prop.defaultValue !== undefined) {
+        const name = prop.name.toLowerCase();
+        propDefaults.set(name, String(prop.defaultValue));
+        // customXxx → xxx 매핑
+        if (name.startsWith("custom")) {
+          propDefaults.set(name.slice(6), String(prop.defaultValue));
+        }
+      }
+    }
+
+    for (const [nodeId, styles] of ctx.nodeStyles) {
+      if (!styles.dynamic || styles.dynamic.length === 0) continue;
+
+      const propStyles = StyleProcessor.analyzePropStyles(
+        styles.dynamic,
+        styles.base,
+        props,
+        propDefaults
+      );
+
+      if (Object.keys(propStyles).length > 0) {
+        newNodeStyles.set(nodeId, {
+          ...styles,
+          propStyles,
+        });
+      }
+    }
+
+    return { ...ctx, nodeStyles: newNodeStyles };
+  }
+
+  /**
+   * dynamic 스타일을 prop별로 분석하여 PropStyleGroup 생성
+   */
+  private static analyzePropStyles(
+    dynamic: StyleDefinition["dynamic"],
+    base: Record<string, string | number>,
+    props: PropDefinition[],
+    propDefaults: Map<string, string>
+  ): Record<string, PropStyleGroup> {
+    const result: Record<string, PropStyleGroup> = {};
+
+    // 1단계: 모든 조건 수집 및 그룹화
+    const collected = new Map<string, Map<string, Array<{
+      style: Record<string, string | number>;
+      conditions: Array<{ propName: string; propValue: string }>;
+    }>>>();
+
+    for (const { condition, style } of dynamic) {
+      const allConditions = StyleProcessor.extractAllConditionsFromNode(condition);
+      if (allConditions.length === 0) continue;
+
+      for (const { propName, propValue } of allConditions) {
+        const normalizedPropName = propName.toLowerCase();
+        if (!collected.has(normalizedPropName)) {
+          collected.set(normalizedPropName, new Map());
+        }
+        const variants = collected.get(normalizedPropName)!;
+        if (!variants.has(propValue)) {
+          variants.set(propValue, []);
+        }
+        variants.get(propValue)!.push({ style, conditions: allConditions });
+      }
+    }
+
+    // 2단계: Boolean prop 식별 (True/False 키 존재 여부)
+    const booleanProps = new Set<string>();
+    for (const [propName, variants] of collected.entries()) {
+      const keys = Array.from(variants.keys());
+      const hasTrueFalse = keys.some(k => k.toLowerCase() === "true") &&
+                           keys.some(k => k.toLowerCase() === "false");
+      if (hasTrueFalse) {
+        booleanProps.add(propName);
+      }
+    }
+
+    // 3단계: 각 prop에 대해 PropStyleGroup 생성
+    for (const [propName, variants] of collected.entries()) {
+      const isBooleanProp = booleanProps.has(propName);
+      const isSlotProp = props.some(p =>
+        p.name.toLowerCase() === propName && p.type === "slot"
+      );
+
+      if (isBooleanProp) {
+        // Boolean prop 분석
+        const booleanResult = StyleProcessor.analyzeBooleanPropStyles(
+          propName,
+          dynamic,
+          props,
+          propDefaults
+        );
+        if (booleanResult) {
+          result[propName] = booleanResult;
+        }
+      } else if (isSlotProp) {
+        // Slot prop
+        const slotVariants: Record<string, Record<string, string | number>> = {};
+        for (const [value, entries] of variants) {
+          if (entries.length === 1) {
+            slotVariants[value] = entries[0].style;
+          } else {
+            const commonStyle = StyleProcessor.extractCommonFromStyles(
+              entries.map(e => e.style)
+            );
+            if (Object.keys(commonStyle).length > 0) {
+              slotVariants[value] = commonStyle;
+            }
+          }
+        }
+        if (Object.keys(slotVariants).length > 0) {
+          result[propName] = { type: "slot", variants: slotVariants };
+        }
+      } else {
+        // Variant prop (Size, Color 등)
+        const variantStyles = StyleProcessor.extractVariantPropStyles(
+          propName,
+          variants,
+          propDefaults,
+          base
+        );
+        if (Object.keys(variantStyles).length > 0) {
+          result[propName] = { type: "variant", variants: variantStyles };
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Boolean prop 스타일 분석
+   * True/False가 다른 variant prop에 의존하는지 확인
+   */
+  private static analyzeBooleanPropStyles(
+    boolPropName: string,
+    dynamic: StyleDefinition["dynamic"],
+    props: PropDefinition[],
+    propDefaults: Map<string, string>
+  ): PropStyleGroup | null {
+    const variantProps = props.filter(p => p.type === "variant");
+    if (variantProps.length === 0) return null;
+
+    const sizeDefault = props.find(p => p.name.toLowerCase() === "size")?.defaultValue?.toString().toLowerCase();
+
+    // Boolean prop의 True/False 스타일을 variant prop별로 수집
+    const trueByVariant = new Map<string, Map<string, Record<string, string | number>>>();
+    const falseByVariant = new Map<string, Map<string, Record<string, string | number>>>();
+
+    for (const { condition, style } of dynamic) {
+      const conditions = StyleProcessor.extractAllConditionsFromNode(condition);
+      if (conditions.length === 0) continue;
+
+      const boolCond = conditions.find(c => c.propName.toLowerCase() === boolPropName.toLowerCase());
+      if (!boolCond) continue;
+
+      // Size가 기본값이 아니면 스킵
+      const sizeCond = conditions.find(c => c.propName.toLowerCase() === "size");
+      if (sizeDefault && sizeCond && sizeCond.propValue.toLowerCase() !== sizeDefault) {
+        continue;
+      }
+
+      // 다른 variant prop별로 스타일 수집
+      for (const cond of conditions) {
+        const condName = cond.propName.toLowerCase();
+        if (condName === boolPropName.toLowerCase() || condName === "size") continue;
+
+        const isVariantProp = variantProps.some(p => p.name.toLowerCase() === condName);
+        if (!isVariantProp) continue;
+
+        const targetMap = boolCond.propValue.toLowerCase() === "true" ? trueByVariant : falseByVariant;
+        if (!targetMap.has(condName)) {
+          targetMap.set(condName, new Map());
+        }
+        targetMap.get(condName)!.set(cond.propValue, style);
+      }
+    }
+
+    // 가장 많은 variant를 가진 prop 선택
+    let bestProp: string | null = null;
+    let bestTrueMap: Map<string, Record<string, string | number>> = new Map();
+    let bestFalseMap: Map<string, Record<string, string | number>> = new Map();
+
+    for (const [propName, styles] of trueByVariant) {
+      if (styles.size > bestTrueMap.size) {
+        bestProp = propName;
+        bestTrueMap = styles;
+        bestFalseMap = falseByVariant.get(propName) || new Map();
+      }
+    }
+
+    // 의존성 없으면 단순 boolean 스타일
+    if (!bestProp || bestTrueMap.size <= 1) {
+      const trueStyles: Record<string, Record<string, string | number>> = {};
+      const falseStyles: Record<string, Record<string, string | number>> = {};
+
+      // 단일 True/False 스타일 찾기
+      for (const { condition, style } of dynamic) {
+        const conditions = StyleProcessor.extractAllConditionsFromNode(condition);
+        const boolCond = conditions.find(c => c.propName.toLowerCase() === boolPropName.toLowerCase());
+        if (!boolCond) continue;
+
+        // 다른 조건이 기본값인지 확인
+        let allDefault = true;
+        for (const cond of conditions) {
+          if (cond.propName.toLowerCase() === boolPropName.toLowerCase()) continue;
+          const defaultVal = propDefaults.get(cond.propName.toLowerCase());
+          if (defaultVal && defaultVal.toLowerCase() !== cond.propValue.toLowerCase()) {
+            allDefault = false;
+            break;
+          }
+        }
+
+        if (allDefault) {
+          if (boolCond.propValue.toLowerCase() === "true") {
+            trueStyles["True"] = style;
+          } else {
+            falseStyles["False"] = style;
+          }
+        }
+      }
+
+      const variants: Record<string, Record<string, string | number>> = {
+        ...trueStyles,
+        ...falseStyles,
+      };
+
+      if (Object.keys(variants).length > 0) {
+        return { type: "boolean", variants };
+      }
+      return null;
+    }
+
+    // True 스타일이 모두 같은지 확인 (invariant)
+    const trueStyleValues = Array.from(bestTrueMap.values());
+    const firstTrueStyle = trueStyleValues[0] || {};
+    const trueInvariantStyle: Record<string, string | number> = {};
+
+    for (const [key, value] of Object.entries(firstTrueStyle)) {
+      const normalized = StyleProcessor.extractCssVarFallbackValue(value);
+      const allTrueSame = trueStyleValues.every(s =>
+        StyleProcessor.extractCssVarFallbackValue(s[key] || "") === normalized
+      );
+      if (allTrueSame) {
+        trueInvariantStyle[key] = value;
+      }
+    }
+
+    // 결과 생성
+    const variants: Record<string, Record<string, string | number>> = {};
+
+    // True/False by variant
+    for (const [variantValue, style] of bestTrueMap) {
+      variants[`True:${variantValue}`] = style;
+    }
+    for (const [variantValue, style] of bestFalseMap) {
+      variants[`False:${variantValue}`] = style;
+    }
+
+    return {
+      type: "boolean",
+      variants,
+      dependsOn: bestProp,
+      invariantTrue: Object.keys(trueInvariantStyle).length > 0 ? trueInvariantStyle : undefined,
+    };
+  }
+
+  /**
+   * Variant prop 스타일 추출
+   */
+  private static extractVariantPropStyles(
+    propName: string,
+    variants: Map<string, Array<{
+      style: Record<string, string | number>;
+      conditions: Array<{ propName: string; propValue: string }>;
+    }>>,
+    propDefaults: Map<string, string>,
+    base: Record<string, string | number>
+  ): Record<string, Record<string, string | number>> {
+    const result: Record<string, Record<string, string | number>> = {};
+
+    // 해당 prop의 모든 값에 대한 스타일 수집 (비교용)
+    const allVariantsForProp = Array.from(variants.entries()).flatMap(
+      ([pv, entries]) => entries.map(e => ({ propValue: pv, ...e }))
+    );
+
+    for (const [propValue, styleEntries] of variants.entries()) {
+      if (styleEntries.length === 1) {
+        result[propValue] = styleEntries[0].style;
+      } else {
+        // 여러 스타일이 있으면 공통 속성 추출
+        const styles = styleEntries.map(e => e.style);
+        const commonStyle = StyleProcessor.extractCommonFromStyles(styles);
+
+        if (Object.keys(commonStyle).length > 0) {
+          result[propValue] = commonStyle;
+        } else {
+          // 공통 스타일이 없으면 해당 prop이 변경하는 속성만 추출
+          const propSpecificStyle = StyleProcessor.findPropSpecificStyleFromVariants(
+            propName,
+            propValue,
+            allVariantsForProp,
+            propDefaults,
+            base
+          );
+          if (propSpecificStyle && Object.keys(propSpecificStyle).length > 0) {
+            result[propValue] = propSpecificStyle;
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * 해당 prop이 실제로 변경하는 스타일 속성만 추출
+   */
+  private static findPropSpecificStyleFromVariants(
+    targetPropName: string,
+    targetPropValue: string,
+    allVariants: Array<{
+      propValue: string;
+      style: Record<string, string | number>;
+      conditions: Array<{ propName: string; propValue: string }>;
+    }>,
+    propDefaults: Map<string, string>,
+    _base: Record<string, string | number>
+  ): Record<string, string | number> | null {
+    // 다른 prop들이 기본값인 variant들만 필터
+    const defaultVariants: Array<{ propValue: string; style: Record<string, string | number> }> = [];
+
+    for (const entry of allVariants) {
+      let allOtherPropsAreDefault = true;
+
+      for (const cond of entry.conditions) {
+        const condPropName = cond.propName.toLowerCase();
+        if (condPropName === targetPropName.toLowerCase()) continue;
+
+        const defaultValue = propDefaults.get(condPropName);
+        if (defaultValue === undefined) continue;
+
+        if (cond.propValue.toLowerCase() !== defaultValue.toLowerCase()) {
+          allOtherPropsAreDefault = false;
+          break;
+        }
+      }
+
+      if (allOtherPropsAreDefault) {
+        defaultVariants.push({ propValue: entry.propValue, style: entry.style });
+      }
+    }
+
+    if (defaultVariants.length === 0) return null;
+
+    // 대상 prop 값의 스타일 찾기
+    const targetVariant = defaultVariants.find(v => v.propValue === targetPropValue);
+    if (!targetVariant) return null;
+
+    // 다른 prop 값들과 비교하여 변하는 속성만 추출
+    const result: Record<string, string | number> = {};
+
+    for (const [key, value] of Object.entries(targetVariant.style)) {
+      const normalizedValue = StyleProcessor.extractCssVarFallbackValue(value);
+
+      let variesByProp = false;
+      for (const other of defaultVariants) {
+        if (other.propValue === targetPropValue) continue;
+
+        const otherValue = other.style[key];
+        if (otherValue === undefined) {
+          variesByProp = true;
+          break;
+        }
+
+        if (StyleProcessor.extractCssVarFallbackValue(otherValue) !== normalizedValue) {
+          variesByProp = true;
+          break;
+        }
+      }
+
+      if (variesByProp) {
+        result[key] = value;
+      }
+    }
+
+    return Object.keys(result).length > 0 ? result : null;
+  }
+
+  /**
+   * 조건에서 모든 prop-value 쌍 추출
+   */
+  private static extractAllConditionsFromNode(
+    condition: ConditionNode
+  ): Array<{ propName: string; propValue: string }> {
+    if (!condition) return [];
+    const results: Array<{ propName: string; propValue: string }> = [];
+
+    if (condition.type === "BinaryExpression") {
+      const binary = condition as any;
+      if (
+        binary.operator === "===" &&
+        binary.left?.type === "MemberExpression" &&
+        binary.left.object?.name === "props" &&
+        binary.right?.type === "Literal"
+      ) {
+        const propName = binary.left.property?.name;
+        const propValue = binary.right.value;
+        if (propName && propValue !== undefined) {
+          results.push({
+            propName: propName.charAt(0).toLowerCase() + propName.slice(1),
+            propValue: String(propValue),
+          });
+        }
+      }
+    } else if (condition.type === "LogicalExpression") {
+      const logical = condition as any;
+      results.push(...StyleProcessor.extractAllConditionsFromNode(logical.left));
+      results.push(...StyleProcessor.extractAllConditionsFromNode(logical.right));
+    }
+
+    return results;
+  }
+
+  /**
+   * CSS 변수에서 fallback 값 추출
+   */
+  private static extractCssVarFallbackValue(value: string | number): string {
+    if (typeof value !== "string") return String(value);
+    const match = value.match(/^var\([^,]+,\s*(.+)\)$/);
+    if (match) return match[1].trim();
+    return value;
+  }
+
+  /**
+   * 복합 조건 스타일을 단일 prop 조건으로 분해
+   *
+   * 입력: Size=Large && Color=Primary && Disabled=False → { height, background }
+   * 출력:
+   *   - Size=Large → { height: 56px }
+   *   - Color=Primary → { background: #0050FF }
+   *   - Disabled=False → {} (base에 포함되거나 default 값이면 생략)
+   *
+   * 이 메서드는 버튼과 같이 여러 variant prop이 복합 조건으로 스타일을 결정하는
+   * 컴포넌트에서 각 prop별로 스타일을 분리하여 EmotionStyleStrategy가
+   * 올바른 Record 객체를 생성할 수 있도록 합니다.
+   */
+  static simplifyToSinglePropConditions(ctx: BuildContext): BuildContext {
+    if (!ctx.nodeStyles || !ctx.propsMap) return ctx;
+
+    const newNodeStyles = new Map(ctx.nodeStyles);
+    const props = Array.from(ctx.propsMap.values())
+      .filter(p => p.type === "variant" || p.type === "boolean");
+
+    for (const [nodeId, styles] of ctx.nodeStyles) {
+      if (!styles.dynamic || styles.dynamic.length === 0) continue;
+
+      const simplifiedDynamic = StyleProcessor.extractPropBasedStyles(
+        styles.dynamic,
+        props,
+        styles.base
+      );
+
+      newNodeStyles.set(nodeId, {
+        ...styles,
+        dynamic: simplifiedDynamic,
+      });
+    }
+
+    return { ...ctx, nodeStyles: newNodeStyles };
+  }
+
+  /**
+   * 복합 조건 스타일에서 각 prop별 스타일 추출
+   *
+   * 접근 방식:
+   * 1. 각 prop+option에 대해 공통 스타일 추출 (다른 prop에 무관한 스타일)
+   * 2. 원본 compound 조건도 함께 반환 (EmotionStyleStrategy에서 처리)
+   *
+   * EmotionStyleStrategy.groupDynamicStylesByProp()이 각 prop별로 스타일을 그룹화할 때
+   * 공통 스타일만 추출하므로, 여기서는 단일 prop 조건으로 분해만 수행.
+   */
+  private static extractPropBasedStyles(
+    dynamic: StyleDefinition["dynamic"],
+    props: Array<{ name: string; type: string; defaultValue?: unknown; options?: string[] }>,
+    base: Record<string, string | number>
+  ): StyleDefinition["dynamic"] {
+    const singlePropStyles: StyleDefinition["dynamic"] = [];
+
+    // 각 prop에 대해 처리
+    for (const prop of props) {
+      const options = (prop as any).options || [];
+      const defaultValue = prop.defaultValue;
+      const propName = prop.name;
+
+      // 각 option에 대해 스타일 수집
+      for (const option of options) {
+        // default 값은 base에 포함되므로 건너뛰기
+        const isDefault = String(defaultValue).toLowerCase() === String(option).toLowerCase();
+        if (isDefault) continue;
+
+        // 해당 prop=option 조건을 포함하는 모든 스타일 수집
+        const stylesForOption: Record<string, string | number>[] = [];
+        for (const d of dynamic) {
+          if (StyleProcessor.conditionMatchesProp(d.condition, propName, option)) {
+            stylesForOption.push(d.style);
+          }
+        }
+
+        if (stylesForOption.length === 0) continue;
+
+        // 수집된 스타일들에서 공통 속성 추출 (다른 prop의 영향 제거)
+        const commonStyle = StyleProcessor.extractCommonFromStyles(stylesForOption);
+
+        // base 스타일과 비교하여 차이만 추출
+        const diffStyle = StyleProcessor.diffFromBase(commonStyle, base);
+
+        if (Object.keys(diffStyle).length > 0) {
+          singlePropStyles.push({
+            condition: StyleProcessor.createSinglePropCondition(propName, option),
+            style: diffStyle,
+          });
+        }
+      }
+    }
+
+    // 원본 compound 조건도 함께 반환 (스타일 중복은 EmotionStyleStrategy에서 처리)
+    // 단, 이미 단일 prop으로 추출된 것과 동일한 스타일은 제외
+    const compoundWithUniqueStyles: StyleDefinition["dynamic"] = [];
+    for (const d of dynamic) {
+      // compound 조건인지 확인 (LogicalExpression)
+      if (d.condition.type !== "LogicalExpression") continue;
+      compoundWithUniqueStyles.push(d);
+    }
+
+    return [...singlePropStyles, ...compoundWithUniqueStyles];
+  }
+
+  /**
+   * 조건이 특정 prop=value를 포함하는지 확인
+   *
+   * prop 이름 매칭 시 customXxx → xxx 매핑도 처리
+   * (PropsProcessor에서 HTML 충돌 속성에 custom prefix 추가)
+   */
+  private static conditionMatchesProp(
+    condition: ConditionNode,
+    propName: string,
+    propValue: string
+  ): boolean {
+    if (!condition) return false;
+
+    if (condition.type === "BinaryExpression") {
+      const binary = condition as any;
+      const condPropName = binary.left?.property?.name?.toLowerCase();
+      const condPropValue = String(binary.right?.value);
+
+      // prop 이름 매칭: customDisabled → disabled 등
+      const propNameLower = propName.toLowerCase();
+      const originalPropName = propNameLower.startsWith("custom")
+        ? propNameLower.slice(6)
+        : propNameLower;
+
+      const nameMatches = condPropName === propNameLower || condPropName === originalPropName;
+      const valueMatches = condPropValue.toLowerCase() === propValue.toLowerCase();
+
+      return nameMatches && valueMatches;
+    }
+
+    if (condition.type === "LogicalExpression") {
+      const logical = condition as any;
+      return (
+        StyleProcessor.conditionMatchesProp(logical.left, propName, propValue) ||
+        StyleProcessor.conditionMatchesProp(logical.right, propName, propValue)
+      );
+    }
+
+    return false;
+  }
+
+  /**
+   * 여러 스타일에서 공통 속성만 추출
+   */
+  private static extractCommonFromStyles(
+    styles: Array<Record<string, string | number>>
+  ): Record<string, string | number> {
+    if (styles.length === 0) return {};
+    if (styles.length === 1) return { ...styles[0] };
+
+    const common: Record<string, string | number> = {};
+    const firstStyle = styles[0];
+
+    for (const [key, value] of Object.entries(firstStyle)) {
+      if (styles.every((s) => s[key] === value)) {
+        common[key] = value;
+      }
+    }
+
+    return common;
+  }
+
+  /**
+   * base 스타일과 비교하여 차이만 추출
+   */
+  private static diffFromBase(
+    style: Record<string, string | number>,
+    base: Record<string, string | number>
+  ): Record<string, string | number> {
+    const diff: Record<string, string | number> = {};
+    for (const [key, value] of Object.entries(style)) {
+      if (base[key] !== value) {
+        diff[key] = value;
+      }
+    }
+    return diff;
+  }
+
+  /**
+   * 단일 prop 조건 생성
+   */
+  private static createSinglePropCondition(propName: string, propValue: string): ConditionNode {
+    return {
+      type: "BinaryExpression",
+      operator: "===",
+      left: {
+        type: "MemberExpression",
+        object: { name: "props" },
+        property: { name: propName },
+      },
+      right: {
+        type: "Literal",
+        value: propValue,
+      },
+    } as ConditionNode;
   }
 }
 

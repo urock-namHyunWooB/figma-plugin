@@ -89,7 +89,34 @@ export class VisibilityProcessor
 
     const instance = new VisibilityProcessor();
     const dataClass = ctx.data;
-    const hiddenNodes = instance.collectFromTree(ctx.internalTree, dataClass);
+    const totalVariantCount = ctx.totalVariantCount || 1;
+
+    // hidden 노드 수집 (모든 variant에서 항상 숨겨진 노드는 제외)
+    const hiddenNodes: HiddenProcessableNode[] = [];
+
+    traverseTree(ctx.internalTree, (n) => {
+      const spec = dataClass.getNodeById(n.id);
+      const pn: HiddenProcessableNode = {
+        id: n.id,
+        name: n.name,
+        componentPropertyReferences: spec?.componentPropertyReferences as
+          | Record<string, string>
+          | undefined,
+      };
+
+      // hidden 노드인지 확인
+      if (!instance.isHiddenNode(pn, dataClass)) {
+        return;
+      }
+
+      // show* prop 생성 필요 여부 확인
+      // (shouldCreateShowProp이 "항상 숨겨진 노드" 체크를 포함)
+      const mergedNodes = n.mergedNode || [];
+      if (instance.shouldCreateShowProp(mergedNodes, totalVariantCount, dataClass)) {
+        hiddenNodes.push(pn);
+      }
+    });
+
     const { results, newProps } = instance.processAllHiddenNodes(hiddenNodes);
 
     // 새로운 props 추가
@@ -576,6 +603,57 @@ export class VisibilityProcessor
     });
 
     return nodes;
+  }
+
+  /**
+   * show* prop 생성 여부 판별
+   *
+   * visible=false인 노드는 show* prop을 생성하여 인스턴스에서 override 가능하게 함.
+   * 모든 variant에서 visible인 노드는 prop 생성 안 함.
+   *
+   * @param mergedNodes 노드의 variant별 존재 정보
+   * @param totalVariantCount 전체 variant 수
+   * @param data PreparedDesignData (visible 상태 확인용)
+   * @returns true면 prop 생성, false면 생성 안 함
+   */
+  public shouldCreateShowProp(
+    mergedNodes: MergedNodeWithVariant[],
+    _totalVariantCount: number,
+    data: PreparedDesignData
+  ): boolean {
+    // 노드가 없으면 prop 생성 안 함
+    if (mergedNodes.length === 0) return false;
+
+    // 하나라도 visible=false면 prop 생성 (hidden by default → can be shown)
+    for (const merged of mergedNodes) {
+      const spec = data.getNodeById(merged.id);
+      if (spec?.visible === false) {
+        return true;
+      }
+    }
+
+    // 모든 variant에서 visible → prop 생성 안 함
+    return false;
+  }
+
+  /**
+   * 노드가 모든 variant에서 항상 숨겨져 있는지 확인
+   */
+  public isAlwaysHidden(
+    mergedNodes: MergedNodeWithVariant[],
+    totalVariantCount: number,
+    data: PreparedDesignData
+  ): boolean {
+    // 모든 variant에 존재하는지 확인
+    if (mergedNodes.length !== totalVariantCount) {
+      return false;
+    }
+
+    // 모든 variant에서 visible=false인지 확인
+    return mergedNodes.every(merged => {
+      const spec = data.getNodeById(merged.id);
+      return spec?.visible === false;
+    });
   }
 
   /**

@@ -155,14 +155,29 @@ describe("NodeProcessor", () => {
       expect(result.role).toBe("text");
     });
 
-    it("should return icon role for INSTANCE node", () => {
+    it("should return icon role for INSTANCE node with SVG", () => {
+      const parent = { id: "parent", type: "FRAME", name: "Parent", parent: null, children: [] };
+      const node = { id: "icon1", type: "INSTANCE", name: "Icon", parent, children: [] };
+      // INSTANCE가 icon으로 판별되려면 SVG 데이터가 필요함
+      const data = {
+        ...createMockData(),
+        mergeInstanceVectorSvgs: (id: string) => id === "icon1" ? '<svg></svg>' : null,
+      } as any;
+
+      const result = processor.detectSemanticRole(node, data, "Parent");
+
+      expect(result.role).toBe("icon");
+    });
+
+    it("should return container role for INSTANCE node without SVG", () => {
       const parent = { id: "parent", type: "FRAME", name: "Parent", parent: null, children: [] };
       const node = { id: "icon1", type: "INSTANCE", name: "Icon", parent, children: [] };
       const data = createMockData();
 
       const result = processor.detectSemanticRole(node, data, "Parent");
 
-      expect(result.role).toBe("icon");
+      // SVG가 없으면 container로 폴백
+      expect(result.role).toBe("container");
     });
 
     it("should return vector role for VECTOR node", () => {
