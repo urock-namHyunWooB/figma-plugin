@@ -548,7 +548,9 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
     }
 
     for (const [nodeId, styles] of ctx.nodeStyles) {
-      if (!styles.dynamic || styles.dynamic.length === 0) continue;
+      if (!styles.dynamic || styles.dynamic.length === 0) {
+        continue;
+      }
 
       const propStyles = StyleProcessor.analyzePropStyles(
         styles.dynamic,
@@ -613,43 +615,15 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
       }
     }
 
-    // 3단계: 각 prop에 대해 PropStyleGroup 생성
+    // 3단계: Variant prop 스타일 먼저 추출 (slot에서 제외할 키 수집)
+    const variantStyleKeys = new Set<string>();
     for (const [propName, variants] of collected.entries()) {
       const isBooleanProp = booleanProps.has(propName);
       const isSlotProp = props.some(p =>
         p.name.toLowerCase() === propName && p.type === "slot"
       );
 
-      if (isBooleanProp) {
-        // Boolean prop 분석
-        const booleanResult = StyleProcessor.analyzeBooleanPropStyles(
-          propName,
-          dynamic,
-          props,
-          propDefaults
-        );
-        if (booleanResult) {
-          result[propName] = booleanResult;
-        }
-      } else if (isSlotProp) {
-        // Slot prop
-        const slotVariants: Record<string, Record<string, string | number>> = {};
-        for (const [value, entries] of variants) {
-          if (entries.length === 1) {
-            slotVariants[value] = entries[0].style;
-          } else {
-            const commonStyle = StyleProcessor.extractCommonFromStyles(
-              entries.map(e => e.style)
-            );
-            if (Object.keys(commonStyle).length > 0) {
-              slotVariants[value] = commonStyle;
-            }
-          }
-        }
-        if (Object.keys(slotVariants).length > 0) {
-          result[propName] = { type: "slot", variants: slotVariants };
-        }
-      } else {
+      if (!isBooleanProp && !isSlotProp) {
         // Variant prop (Size, Color 등)
         const variantStyles = StyleProcessor.extractVariantPropStyles(
           propName,
@@ -659,8 +633,74 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
         );
         if (Object.keys(variantStyles).length > 0) {
           result[propName] = { type: "variant", variants: variantStyles };
+          // 이 prop이 제어하는 스타일 키 수집
+          for (const style of Object.values(variantStyles)) {
+            for (const key of Object.keys(style)) {
+              variantStyleKeys.add(key);
+            }
+          }
         }
       }
+    }
+
+    // 4단계: Boolean/Slot prop 처리 (variant 스타일 키 제외)
+    for (const [propName, variants] of collected.entries()) {
+      const isBooleanProp = booleanProps.has(propName);
+      const isSlotProp = props.some(p =>
+        p.name.toLowerCase() === propName && p.type === "slot"
+      );
+
+      // Slot을 boolean보다 우선 (True/False 값이 있어도 type === "slot"이면 slot으로 처리)
+      if (isSlotProp) {
+        // Slot prop - variant prop이 제어하는 스타일 제외
+        const slotVariants: Record<string, Record<string, string | number>> = {};
+        for (const [value, entries] of variants) {
+          let style: Record<string, string | number>;
+          if (entries.length === 1) {
+            style = entries[0].style;
+          } else {
+            style = StyleProcessor.extractCommonFromStyles(
+              entries.map(e => e.style)
+            );
+          }
+          // variant prop이 제어하는 키 제외
+          const filteredStyle: Record<string, string | number> = {};
+          for (const [key, val] of Object.entries(style)) {
+            if (!variantStyleKeys.has(key)) {
+              filteredStyle[key] = val;
+            }
+          }
+          if (Object.keys(filteredStyle).length > 0) {
+            slotVariants[value] = filteredStyle;
+          }
+        }
+        // 빈 슬롯이라도 CSS 변수 참조를 위해 엔트리 생성
+        // (모든 스타일이 variant에 의해 제어되어도 빈 CSS가 생성되어야 함)
+        if (Object.keys(slotVariants).length > 0) {
+          result[propName] = { type: "slot", variants: slotVariants };
+        } else {
+          // 스타일이 없어도 True/False 엔트리는 생성 (빈 CSS용)
+          result[propName] = {
+            type: "slot",
+            variants: {
+              True: {},
+              False: {},
+            },
+          };
+        }
+      } else if (isBooleanProp) {
+        // Boolean prop 분석 (slot이 아닌 경우만)
+        const booleanResult = StyleProcessor.analyzeBooleanPropStyles(
+          propName,
+          dynamic,
+          props,
+          propDefaults
+        );
+        if (booleanResult) {
+          result[propName] = booleanResult;
+        }
+      }
+      // Variant props는 이미 3단계에서 처리됨
     }
 
     return result;
@@ -845,6 +885,30 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
             result[propValue] = propSpecificStyle;
           }
         }
+      }
+    }
+
+    // 기본 variant의 스타일 추가 (dynamic에 없으므로 base에서 추출)
+    const defaultValue = propDefaults.get(propName.toLowerCase());
+    if (defaultValue && !result[defaultValue] && Object.keys(result).length > 0) {
+      // 다른 variant들이 변경하는 속성들을 찾아서 base에서 추출
+      const varyingKeys = new Set<string>();
+      for (const variantStyle of Object.values(result)) {
+        for (const key of Object.keys(variantStyle)) {
+          varyingKeys.add(key);
+        }
+      }
+
+      // base에서 해당 속성들만 추출
+      const defaultStyle: Record<string, string | number> = {};
+      for (const key of varyingKeys) {
+        if (key in base) {
+          defaultStyle[key] = base[key];
+        }
+      }
+
+      if (Object.keys(defaultStyle).length > 0) {
+        result[defaultValue] = defaultStyle;
       }
     }
 

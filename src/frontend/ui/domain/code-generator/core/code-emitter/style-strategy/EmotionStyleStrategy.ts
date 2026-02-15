@@ -312,8 +312,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
     // propStyles가 있으면 TreeBuilder에서 분석된 결과 사용
     // 없으면 기존 분석 로직 사용 (하위 호환)
-    const groupedDynamicStyles = node.styles?.propStyles
-      ? this.convertPropStylesToGrouped(node.styles.propStyles)
+    const hasPropStyles = !!node.styles?.propStyles;
+    const groupedDynamicStyles = hasPropStyles
+      ? this.convertPropStylesToGrouped(node.styles!.propStyles!)
       : this.groupDynamicStylesByProp(node.styles?.dynamic || [], props);
 
     // Slot props vs variant props 분리

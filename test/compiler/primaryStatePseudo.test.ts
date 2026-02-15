@@ -1,8 +1,6 @@
 import { describe, test, expect } from "vitest";
 import FigmaCodeGenerator from "@code-generator";
 import PrimaryFixture from "../fixtures/any/Primary.json";
-import * as fs from "fs";
-import * as path from "path";
 
 describe("Primary Button State Pseudo-class 테스트", () => {
   test("State별 배경색이 CSS pseudo-class로 생성되어야 함", async () => {
@@ -11,16 +9,6 @@ describe("Primary Button State Pseudo-class 테스트", () => {
 
     expect(code).not.toBeNull();
     expect(code!.length).toBeGreaterThan(0);
-
-    // 생성된 코드 저장 (디버깅용)
-    const outputPath = path.join(
-      __dirname,
-      "..",
-      "fixtures",
-      "failing",
-      "Primary.generated.tsx"
-    );
-    fs.writeFileSync(outputPath, code!);
 
     // pseudo-class 확인
     // :hover, :active, :disabled 가 생성되어야 함

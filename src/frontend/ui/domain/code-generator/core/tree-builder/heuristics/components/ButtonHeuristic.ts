@@ -143,13 +143,16 @@ export class ButtonHeuristic implements IComponentHeuristic {
 
     // Phase 3: 노드 변환
     result = NodeProcessor.mapTypes(result);
-    result = this.processButtonStyles(result);  // 버튼 전용
+    result = this.processButtonStyles(result);  // 버튼 전용 (스타일 빌드 + 아이콘 색상)
     result = StyleProcessor.applyPositions(result);
     result = StyleProcessor.handleRotation(result);
     result = InstanceProcessor.buildExternalRefs(result);
     result = this.processButtonVisibility(result);  // 버튼 전용 (항상 숨겨진 노드 제외)
     result = PropsProcessor.bindProps(result);
-    result = this.processButtonSlots(result);  // 버튼 전용
+    result = this.processButtonSlots(result);  // 버튼 전용 (slot 타입 변경)
+
+    // Phase 3.5: prop 타입이 확정된 후 스타일 분리
+    result = StyleProcessor.separateByProp(result);
 
     // Phase 4: 최종 조립
     result = NodeConverter.assemble(result);
@@ -172,6 +175,7 @@ export class ButtonHeuristic implements IComponentHeuristic {
     let result = StyleProcessor.build(ctx);
 
     // 2. 아이콘 fill 색상을 CSS color로 변환
+    // (separateByProp는 slot 타입이 확정된 후 process()에서 호출)
     result = this.addIconColorStyles(result);
 
     return result;
