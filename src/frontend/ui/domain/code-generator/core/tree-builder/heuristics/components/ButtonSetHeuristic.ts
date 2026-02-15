@@ -1,7 +1,7 @@
 /**
  * ButtonSetHeuristic
  *
- * 버튼 세트 컴포넌트 휴리스틱.
+ * 버튼 세트 컴포넌트 휴리스틱 (Composition 패턴).
  * SelectButtons처럼 여러 버튼이 가로로 배열된 컴포넌트를 처리합니다.
  *
  * 판별 기준 (canProcess):
@@ -15,22 +15,59 @@
  * - 각 버튼의 Label 텍스트를 별도 props로 노출
  */
 
+import type { PseudoClass } from "@code-generator/types/customType";
+import type { ComponentType, PropDefinition } from "@code-generator/types/architecture";
 import type { BuildContext } from "../../workers/BuildContext";
+import type { IComponentHeuristic } from "./IComponentHeuristic";
 import type { InternalNode, ExternalRefData } from "../../workers/interfaces";
-import type { PropDefinition } from "@code-generator/types/architecture";
-import { GenericHeuristic } from "./GenericHeuristic";
-import { VariantProcessor } from "../../workers/VariantProcessor";
-import { SlotProcessor } from "../../workers/SlotProcessor";
-import { InstanceProcessor } from "../../workers/InstanceProcessor";
-import { hasChildren, isComponentSetNode } from "../../workers/utils/typeGuards";
-import { toCamelCase } from "../../workers/utils/stringUtils";
 
-export class ButtonSetHeuristic extends GenericHeuristic {
-  readonly componentType = "buttonSet" as const;
+// Processors (Composition)
+import { VariantProcessor } from "../../workers/VariantProcessor";
+import { CleanupProcessor } from "../../workers/CleanupProcessor";
+import { PropsProcessor } from "../../workers/PropsProcessor";
+import { NodeProcessor } from "../../workers/NodeProcessor";
+import { VisibilityProcessor } from "../../workers/VisibilityProcessor";
+import { StyleProcessor } from "../../workers/StyleProcessor";
+import { InstanceProcessor } from "../../workers/InstanceProcessor";
+import { SlotProcessor } from "../../workers/SlotProcessor";
+import { NodeConverter } from "../../workers/NodeConverter";
+import { hasChildren, isComponentSetNode } from "../../workers/utils/typeGuards";
+
+export class ButtonSetHeuristic implements IComponentHeuristic {
+  readonly componentType: ComponentType = "buttonSet";
   readonly name = "ButtonSetHeuristic";
 
   /** 매칭 임계점 */
   private static readonly MATCH_THRESHOLD = 10;
+
+  // ===========================================================================
+  // State Mapping
+  // ===========================================================================
+
+  private readonly stateMapping: Record<string, PseudoClass | null> = {
+    hover: ":hover",
+    hovered: ":hover",
+    active: ":active",
+    pressed: ":active",
+    focus: ":focus",
+    focused: ":focus",
+    disabled: ":disabled",
+    selected: ":checked",
+    default: null,
+    normal: null,
+  };
+
+  stateToPseudo(state: string): PseudoClass | null | undefined {
+    const normalized = state.toLowerCase();
+    if (normalized in this.stateMapping) {
+      return this.stateMapping[normalized];
+    }
+    return undefined;
+  }
+
+  // ===========================================================================
+  // 컴포넌트 판별
+  // ===========================================================================
 
   /**
    * ButtonSet 컴포넌트 매칭 점수 계산
@@ -100,10 +137,52 @@ export class ButtonSetHeuristic extends GenericHeuristic {
     return this.score(ctx) >= ButtonSetHeuristic.MATCH_THRESHOLD;
   }
 
+  // ===========================================================================
+  // 메인 파이프라인 (Composition - 직접 호출)
+  // ===========================================================================
+
+  process(ctx: BuildContext): BuildContext {
+    let result = ctx;
+
+    // Phase 1: 구조 생성 (이름 기반 variant 병합)
+    result = this.mergeVariantsByName(result);
+    result = CleanupProcessor.removeInstanceInternalNodes(result);
+    result = PropsProcessor.extract(result);
+
+    // Phase 2: 분석 (Options 기반 hidden 조건 추가)
+    result = NodeProcessor.detectSemanticRoles(result);
+    result = VisibilityProcessor.processHidden(result);
+    result = this.applyOptionsHiddenConditions(result);
+
+    // Phase 3: 노드 변환
+    result = NodeProcessor.mapTypes(result);
+    result = StyleProcessor.build(result);
+    result = StyleProcessor.applyPositions(result);
+    result = StyleProcessor.handleRotation(result);
+    result = InstanceProcessor.buildExternalRefs(result);
+    result = this.addOptionTextProps(result);  // ButtonSet 특화
+    result = VisibilityProcessor.resolve(result);
+    result = PropsProcessor.bindProps(result);
+    result = SlotProcessor.detectTextSlots(result);
+    result = SlotProcessor.detectSlots(result);
+    // ArraySlot 감지 건너뜀 (Options variant로 처리)
+
+    // Phase 4: 최종 조립
+    result = NodeConverter.assemble(result);
+
+    return result;
+  }
+
+  // ===========================================================================
+  // ButtonSet 특화 처리 - 이름 기반 variant 병합
+  // ===========================================================================
+
   /**
-   * Phase 1: 구조 생성 - 이름 기반 매칭 사용
+   * 이름 기반으로 variant 병합
+   *
+   * IoU 대신 노드 이름(Option 1, Option 2 등)으로 매칭
    */
-  processVariants(ctx: BuildContext): BuildContext {
+  private mergeVariantsByName(ctx: BuildContext): BuildContext {
     const data = ctx.data;
     const doc = data.document;
 
@@ -116,22 +195,6 @@ export class ButtonSetHeuristic extends GenericHeuristic {
       return VariantProcessor.merge(ctx);
     }
 
-    // 이름 기반으로 variant 병합
-    const internalTree = this.mergeVariantsByName(variants, data);
-    internalTree.name = doc.name;
-
-    return { ...ctx, internalTree };
-  }
-
-  /**
-   * 이름 기반 variant 병합
-   *
-   * IoU 대신 노드 이름(Option 1, Option 2 등)으로 매칭
-   */
-  private mergeVariantsByName(
-    variants: SceneNode[],
-    data: any
-  ): InternalNode {
     // 첫 번째 variant를 기준으로 시작
     const baseVariant = variants[0];
     const processor = new VariantProcessor();
@@ -154,19 +217,21 @@ export class ButtonSetHeuristic extends GenericHeuristic {
         data
       );
 
-      this.mergeByName(baseTree, variantTree);
+      this.mergeTreeByName(baseTree, variantTree);
     }
 
-    // 중복 노드 제거 (같은 이름의 노드가 여러 개 있으면 하나로 병합)
+    // 중복 노드 제거
     this.deduplicateByName(baseTree);
 
-    return baseTree;
+    baseTree.name = doc.name;
+
+    return { ...ctx, internalTree: baseTree };
   }
 
   /**
    * 이름 기반으로 두 트리 병합
    */
-  private mergeByName(base: InternalNode, target: InternalNode): void {
+  private mergeTreeByName(base: InternalNode, target: InternalNode): void {
     // 루트 노드 병합
     base.mergedNode.push(...target.mergedNode);
 
@@ -182,7 +247,7 @@ export class ButtonSetHeuristic extends GenericHeuristic {
         // 같은 이름의 노드 발견 → mergedNode에 추가
         matchingBase.mergedNode.push(...targetChild.mergedNode);
         // 재귀적으로 자식도 병합
-        this.mergeByName(matchingBase, targetChild);
+        this.mergeTreeByName(matchingBase, targetChild);
       } else {
         // 새로운 노드 → base에 추가
         targetChild.parent = base;
@@ -219,119 +284,47 @@ export class ButtonSetHeuristic extends GenericHeuristic {
     }
   }
 
-  /**
-   * Phase 3: Slot 처리 - ArraySlot 감지 비활성화
-   *
-   * ButtonSet에서는 Options variant를 ArraySlot이 아닌 Visibility로 처리
-   */
-  processSlots(ctx: BuildContext): BuildContext {
-    // TextSlot만 감지하고 ArraySlot은 건너뜀
-    let result = ctx;
-    result = SlotProcessor.detectTextSlots(result);
-    result = SlotProcessor.detectSlots(result);
-    // ArraySlot 감지 건너뜀
-    return result;
-  }
+  // ===========================================================================
+  // ButtonSet 특화 처리 - Options 기반 Hidden 조건
+  // ===========================================================================
 
   /**
-   * Phase 3: External refs 생성 - 버튼 텍스트 props 추가
-   *
-   * 각 Option 버튼의 labelText를 option1Text, option2Text 등으로 노출
+   * Options variant 기반 hiddenConditions 적용
    */
-  processExternalRefs(ctx: BuildContext): BuildContext {
-    // 기본 buildExternalRefs 실행
-    let result = InstanceProcessor.buildExternalRefs(ctx);
+  private applyOptionsHiddenConditions(ctx: BuildContext): BuildContext {
+    if (!ctx.internalTree) return ctx;
 
-    // Option 버튼 텍스트 props 추가
-    result = this.addOptionTextProps(result);
-
-    return result;
-  }
-
-  /**
-   * 각 Option 버튼의 텍스트를 별도 props로 노출
-   *
-   * Option 1 → option1Text
-   * Option 2 → option2Text
-   * Option 3 → option3Text
-   */
-  private addOptionTextProps(ctx: BuildContext): BuildContext {
-    if (!ctx.internalTree || !ctx.nodeExternalRefs) {
+    // Options variant 찾기
+    const optionsProp = this.findOptionsVariantProp(ctx);
+    if (!optionsProp) {
       return ctx;
     }
 
-    const propsMap = new Map(ctx.propsMap || []);
-    const nodeExternalRefs = new Map(ctx.nodeExternalRefs);
+    const hiddenConditions = new Map(ctx.hiddenConditions || []);
+    const totalVariantCount = this.getTotalVariantCount(ctx);
 
-    // 각 Option 노드 처리
+    // 각 Option 노드에 대해 visibility 조건 설정
     for (const child of ctx.internalTree.children) {
       // Option N 패턴 확인
       const optionMatch = child.name.match(/^Option\s*(\d+)$/i);
       if (!optionMatch) continue;
 
-      const optionNumber = optionMatch[1];
-      const propName = `option${optionNumber}Text`;
+      const optionNumber = parseInt(optionMatch[1], 10);
+      const variantCount = child.mergedNode.length;
 
-      // externalRef 찾기
-      const externalRef = nodeExternalRefs.get(child.id);
-      if (!externalRef) continue;
+      // 모든 variant에 존재하면 조건 없음
+      if (variantCount >= totalVariantCount) continue;
 
-      // 기존 labelText 값 가져오기
-      const labelTextValue = externalRef.props.labelText;
-      if (labelTextValue === undefined) continue;
+      // 특정 Options에서만 존재하는 경우 조건 추가
+      const minOptions = optionNumber;
+      const condition = this.buildOptionsConditionNode(optionsProp, minOptions);
 
-      // 새 prop 정의 추가
-      const propDef: PropDefinition = {
-        name: propName,
-        type: "string",
-        defaultValue: labelTextValue,
-        required: false,
-      };
-      propsMap.set(propName, propDef);
-
-      // externalRef.props.labelText를 prop 참조로 변경
-      // ComponentGenerator가 부모에 같은 이름의 prop이 있으면 prop 참조로 렌더링함
-      // 그래서 externalRef.props에는 prop 이름을 저장하고,
-      // propsMap에 해당 prop을 추가하면 됨
-      const updatedExternalRef: ExternalRefData = {
-        ...externalRef,
-        props: {
-          ...externalRef.props,
-          // labelText를 제거하고 새 prop 이름으로 대체하는 게 아니라,
-          // 부모 prop과 같은 이름으로 변경해야 함
-          // ComponentGenerator.createExternalComponentJsx에서
-          // parentHasSameProp 체크하므로, labelText를 option1Text로 변경
-        },
-        // 새로운 속성으로 prop 매핑 저장
-        propMappings: {
-          ...(externalRef as any).propMappings,
-          labelText: propName,
-        },
-      };
-
-      nodeExternalRefs.set(child.id, updatedExternalRef);
+      if (condition) {
+        hiddenConditions.set(child.id, condition);
+      }
     }
 
-    return { ...ctx, propsMap, nodeExternalRefs };
-  }
-
-  /**
-   * Phase 2: 분석 - Options variant 기반 hidden 조건 추가
-   */
-  processAnalysis(ctx: BuildContext): BuildContext {
-    // 기본 분석 실행
-    let result = super.processAnalysis(ctx);
-
-    // Options variant 찾기
-    const optionsProp = this.findOptionsVariantProp(ctx);
-    if (!optionsProp) {
-      return result;
-    }
-
-    // Options variant 기반으로 hiddenConditions 추가
-    result = this.applyOptionsHiddenConditions(result, optionsProp);
-
-    return result;
+    return { ...ctx, hiddenConditions };
   }
 
   /**
@@ -355,46 +348,6 @@ export class ButtonSetHeuristic extends GenericHeuristic {
     }
 
     return null;
-  }
-
-  /**
-   * Options variant 기반 hiddenConditions 적용
-   *
-   * "2 options" → Option 1, Option 2만 표시
-   * "3 options" → Option 1, Option 2, Option 3 표시
-   */
-  private applyOptionsHiddenConditions(
-    ctx: BuildContext,
-    optionsProp: { name: string; options: string[] }
-  ): BuildContext {
-    if (!ctx.internalTree) return ctx;
-
-    const hiddenConditions = new Map(ctx.hiddenConditions || []);
-    const totalVariantCount = this.getTotalVariantCount(ctx);
-
-    // 각 Option 노드에 대해 visibility 조건 설정
-    for (const child of ctx.internalTree.children) {
-      // Option N 패턴 확인
-      const optionMatch = child.name.match(/^Option\s*(\d+)$/i);
-      if (!optionMatch) continue;
-
-      const optionNumber = parseInt(optionMatch[1], 10);
-      const variantCount = child.mergedNode.length;
-
-      // 모든 variant에 존재하면 조건 없음
-      if (variantCount >= totalVariantCount) continue;
-
-      // 특정 Options에서만 존재하는 경우 조건 추가
-      // 예: Option 3은 "3 options"에서만 존재
-      const minOptions = optionNumber;
-      const condition = this.buildOptionsConditionNode(optionsProp, minOptions);
-
-      if (condition) {
-        hiddenConditions.set(child.id, condition);
-      }
-    }
-
-    return { ...ctx, hiddenConditions };
   }
 
   /**
@@ -455,5 +408,65 @@ export class ButtonSetHeuristic extends GenericHeuristic {
       return doc.children.length;
     }
     return 1;
+  }
+
+  // ===========================================================================
+  // ButtonSet 특화 처리 - Option 텍스트 Props
+  // ===========================================================================
+
+  /**
+   * 각 Option 버튼의 텍스트를 별도 props로 노출
+   *
+   * Option 1 → option1Text
+   * Option 2 → option2Text
+   * Option 3 → option3Text
+   */
+  private addOptionTextProps(ctx: BuildContext): BuildContext {
+    if (!ctx.internalTree || !ctx.nodeExternalRefs) {
+      return ctx;
+    }
+
+    const propsMap = new Map(ctx.propsMap || []);
+    const nodeExternalRefs = new Map(ctx.nodeExternalRefs);
+
+    // 각 Option 노드 처리
+    for (const child of ctx.internalTree.children) {
+      // Option N 패턴 확인
+      const optionMatch = child.name.match(/^Option\s*(\d+)$/i);
+      if (!optionMatch) continue;
+
+      const optionNumber = optionMatch[1];
+      const propName = `option${optionNumber}Text`;
+
+      // externalRef 찾기
+      const externalRef = nodeExternalRefs.get(child.id);
+      if (!externalRef) continue;
+
+      // 기존 labelText 값 가져오기
+      const labelTextValue = externalRef.props.labelText;
+      if (labelTextValue === undefined) continue;
+
+      // 새 prop 정의 추가
+      const propDef: PropDefinition = {
+        name: propName,
+        type: "string",
+        defaultValue: labelTextValue,
+        required: false,
+      };
+      propsMap.set(propName, propDef);
+
+      // externalRef에 prop 매핑 저장
+      const updatedExternalRef: ExternalRefData = {
+        ...externalRef,
+        propMappings: {
+          ...(externalRef as any).propMappings,
+          labelText: propName,
+        },
+      };
+
+      nodeExternalRefs.set(child.id, updatedExternalRef);
+    }
+
+    return { ...ctx, propsMap, nodeExternalRefs };
   }
 }

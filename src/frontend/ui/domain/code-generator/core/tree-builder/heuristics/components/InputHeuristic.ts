@@ -1,48 +1,39 @@
 /**
  * InputHeuristic
  *
- * Input 컴포넌트의 판별과 세부 패턴 감지를 담당합니다.
- * GenericHeuristic을 상속하여 공통 로직을 재사용합니다.
+ * Input 컴포넌트 휴리스틱 (Composition 패턴).
  *
  * 판별 기준 (canProcess):
  * - 이름 패턴: input, textfield, searchbar 등
  * - Caret 패턴: "|" 문자 또는 얇은 세로 막대
  *
- * Override: processAnalysis
+ * Input 특화 처리:
  * - Placeholder 텍스트 감지 (회색 텍스트 → 실제 값 텍스트 패턴)
- *
- * Override: processSlots
- * - leftIcon: left/prefix/leading + icon 패턴
- * - rightIcon: right/suffix/trailing + icon 패턴
- * - clearButton: clear/close/x/cancel 패턴
- *
- * 처리 결과:
- * - nodeSemanticTypes에 semanticType 설정 (textInput 등)
- * - excludePropsFromStyles에 제외할 prop 추가
- * - slots에 icon/button slot 추가
+ * - leftIcon, rightIcon, clearButton slot 감지
  */
 
+import type { PseudoClass } from "@code-generator/types/customType";
 import type {
+  ComponentType,
   PreparedDesignData,
   SlotDefinition,
 } from "@code-generator/types/architecture";
 import type { BuildContext, SemanticTypeEntry } from "../../workers/BuildContext";
+import type { IComponentHeuristic } from "./IComponentHeuristic";
 import type { InternalNode } from "../../workers/interfaces/core";
-import { GenericHeuristic } from "./GenericHeuristic";
+
+// Processors (Composition)
+import { VariantProcessor } from "../../workers/VariantProcessor";
+import { CleanupProcessor } from "../../workers/CleanupProcessor";
+import { PropsProcessor } from "../../workers/PropsProcessor";
+import { NodeProcessor } from "../../workers/NodeProcessor";
+import { VisibilityProcessor } from "../../workers/VisibilityProcessor";
+import { StyleProcessor } from "../../workers/StyleProcessor";
+import { InstanceProcessor } from "../../workers/InstanceProcessor";
+import { SlotProcessor } from "../../workers/SlotProcessor";
+import { NodeConverter } from "../../workers/NodeConverter";
 import { traverseTree } from "../../workers/utils/treeUtils";
 import { toCamelCase } from "../../workers/utils/stringUtils";
-
-/**
- * Input 컴포넌트 이름 패턴
- */
-const INPUT_NAME_PATTERNS: RegExp[] = [
-  /input/i,
-  /textfield/i,
-  /text.?field/i,
-  /text.?input/i,
-  /search.?bar/i,
-  /search.?field/i,
-];
 
 interface RGB {
   r: number;
@@ -63,9 +54,12 @@ interface PlaceholderDetectionResult {
   linkedPropName: string;
 }
 
-export class InputHeuristic extends GenericHeuristic {
-  readonly componentType = "input" as const;
+export class InputHeuristic implements IComponentHeuristic {
+  readonly componentType: ComponentType = "input";
   readonly name = "InputHeuristic";
+
+  /** 매칭 임계점 */
+  private static readonly MATCH_THRESHOLD = 10;
 
   /**
    * Placeholder 관련 키워드
@@ -78,11 +72,32 @@ export class InputHeuristic extends GenericHeuristic {
     "helper",
   ];
 
-  /** 매칭 임계점 */
-  private static readonly MATCH_THRESHOLD = 10;
+  // ===========================================================================
+  // State Mapping
+  // ===========================================================================
+
+  private readonly stateMapping: Record<string, PseudoClass | null> = {
+    hover: ":hover",
+    hovered: ":hover",
+    active: ":active",
+    pressed: ":active",
+    focus: ":focus",
+    focused: ":focus",
+    disabled: ":disabled",
+    default: null,
+    normal: null,
+  };
+
+  stateToPseudo(state: string): PseudoClass | null | undefined {
+    const normalized = state.toLowerCase();
+    if (normalized in this.stateMapping) {
+      return this.stateMapping[normalized];
+    }
+    return undefined;
+  }
 
   // ===========================================================================
-  // 점수 기반 컴포넌트 판별
+  // 컴포넌트 판별
   // ===========================================================================
 
   /**
@@ -111,13 +126,50 @@ export class InputHeuristic extends GenericHeuristic {
     return score;
   }
 
-  /**
-   * Input 컴포넌트인지 판별
-   * score >= MATCH_THRESHOLD 이면 true
-   */
   canProcess(ctx: BuildContext): boolean {
     return this.score(ctx) >= InputHeuristic.MATCH_THRESHOLD;
   }
+
+  // ===========================================================================
+  // 메인 파이프라인 (Composition - 직접 호출)
+  // ===========================================================================
+
+  process(ctx: BuildContext): BuildContext {
+    let result = ctx;
+
+    // Phase 1: 구조 생성
+    result = VariantProcessor.merge(result);
+    result = CleanupProcessor.removeInstanceInternalNodes(result);
+    result = PropsProcessor.extract(result);
+
+    // Phase 2: 분석
+    result = NodeProcessor.detectSemanticRoles(result);
+    result = VisibilityProcessor.processHidden(result);
+    result = this.detectPlaceholders(result);  // Input 특화
+
+    // Phase 3: 노드 변환
+    result = NodeProcessor.mapTypes(result);
+    result = StyleProcessor.build(result);
+    result = StyleProcessor.applyPositions(result);
+    result = StyleProcessor.handleRotation(result);
+    result = InstanceProcessor.buildExternalRefs(result);
+    result = VisibilityProcessor.resolve(result);
+    result = PropsProcessor.bindProps(result);
+    result = SlotProcessor.detectTextSlots(result);
+    result = SlotProcessor.detectSlots(result);
+    result = SlotProcessor.detectArraySlots(result);
+    result = SlotProcessor.enrichArraySlotsWithComponentNames(result);
+    result = this.detectInputSlots(result);  // Input 특화
+
+    // Phase 4: 최종 조립
+    result = NodeConverter.assemble(result);
+
+    return result;
+  }
+
+  // ===========================================================================
+  // Input 특화 처리 - Caret 패턴 감지
+  // ===========================================================================
 
   /**
    * Caret(커서) 패턴 감지
@@ -162,22 +214,19 @@ export class InputHeuristic extends GenericHeuristic {
   }
 
   // ===========================================================================
-  // processAnalysis - 분석 단계 확장 (placeholder 감지)
+  // Input 특화 처리 - Placeholder 감지
   // ===========================================================================
 
   /**
-   * 분석 단계 확장
+   * 분석 단계 (테스트용 public 메서드)
    *
-   * 부모 분석 먼저 실행 후 Input 특화 분석 추가:
-   * - Placeholder 텍스트 감지
+   * 기본 분석 + Input 특화 분석 (placeholder 감지)
    */
   processAnalysis(ctx: BuildContext): BuildContext {
-    // 부모 분석 먼저 실행
-    let result = super.processAnalysis(ctx);
-
-    // Input 특화 분석: placeholder 감지
+    let result = ctx;
+    result = NodeProcessor.detectSemanticRoles(result);
+    result = VisibilityProcessor.processHidden(result);
     result = this.detectPlaceholders(result);
-
     return result;
   }
 
@@ -318,10 +367,6 @@ export class InputHeuristic extends GenericHeuristic {
 
   /**
    * 색상이 회색인지 판단
-   *
-   * 조건:
-   * - R, G, B 값이 거의 같음 (monochrome)
-   * - 밝기가 중간 톤 (0.4 ~ 0.7)
    */
   private isGrayColor(color: RGB): boolean {
     const isMonochrome =
@@ -332,34 +377,14 @@ export class InputHeuristic extends GenericHeuristic {
 
   /**
    * 색상이 검정색인지 판단
-   *
-   * 조건: R, G, B 모두 0.1 이하
    */
   private isBlackColor(color: RGB): boolean {
     return color.r < 0.1 && color.g < 0.1 && color.b < 0.1;
   }
 
   // ===========================================================================
-  // processSlots - Slot 감지 단계 확장
+  // Input 특화 처리 - Slot 감지
   // ===========================================================================
-
-  /**
-   * Slot 감지 확장
-   *
-   * 부모 slot 감지 먼저 실행 후 Input 특화 slot 추가:
-   * - leftIcon: left/prefix/leading + icon 패턴의 INSTANCE
-   * - rightIcon: right/suffix/trailing + icon 패턴의 INSTANCE
-   * - clearButton: clear/close/x/cancel 패턴의 INSTANCE
-   */
-  processSlots(ctx: BuildContext): BuildContext {
-    // 부모 slot 감지 먼저 실행
-    let result = super.processSlots(ctx);
-
-    // Input 특화 slot 추가
-    result = this.detectInputSlots(result);
-
-    return result;
-  }
 
   /**
    * Input 특화 slot 감지
@@ -406,7 +431,6 @@ export class InputHeuristic extends GenericHeuristic {
 
   /**
    * leftIcon 패턴 매칭
-   * left/prefix/leading + icon
    */
   private isLeftIconPattern(name: string): boolean {
     return /^(left|prefix|leading)[\s_-]*(icon|icn)/i.test(name);
@@ -414,7 +438,6 @@ export class InputHeuristic extends GenericHeuristic {
 
   /**
    * rightIcon 패턴 매칭
-   * right/suffix/trailing + icon
    */
   private isRightIconPattern(name: string): boolean {
     return /^(right|suffix|trailing)[\s_-]*(icon|icn)/i.test(name);
@@ -422,7 +445,6 @@ export class InputHeuristic extends GenericHeuristic {
 
   /**
    * clearButton 패턴 매칭
-   * clear/close/x/cancel (버튼 또는 아이콘)
    */
   private isClearButtonPattern(name: string): boolean {
     return /^(clear|close|x|cancel)[\s_-]*(button|btn|icon|icn)?$/i.test(name);
