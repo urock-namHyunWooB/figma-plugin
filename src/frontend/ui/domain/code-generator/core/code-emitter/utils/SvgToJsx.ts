@@ -322,9 +322,17 @@ class SvgToJsx {
       if (jsxAttrName === "__REMOVE__") continue;
 
       // fill 속성 처리:
-      // - 원래 색상 유지 (currentColor 변환 시 부모에 color가 없으면 렌더링 문제 발생)
-      // - 부모 컴포넌트에서 CSS로 색상 제어가 필요하면 별도 처리
-      const finalValue = attrValue;
+      // - 단일 색상 SVG: currentColor로 변환 (부모의 color 상속)
+      // - 다중 색상 SVG: 원래 색상 유지
+      // - "none"은 변환하지 않음
+      let finalValue = attrValue;
+      if (
+        attrName === "fill" &&
+        !this._isMultiColorSvg &&
+        this._isColorValue(attrValue)
+      ) {
+        finalValue = "currentColor";
+      }
 
       // 값이 순수 숫자인 경우에만 JSX Expression으로 (공백 포함 시 문자열 유지)
       const numValue = parseFloat(finalValue);

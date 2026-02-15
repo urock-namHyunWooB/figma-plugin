@@ -33,7 +33,8 @@ export class HeuristicsRunner {
   private static readonly MATCH_THRESHOLD = 10;
 
   /** Fallback 휴리스틱 */
-  private static readonly fallback: IComponentHeuristic = new GenericHeuristic();
+  private static readonly fallback: IComponentHeuristic =
+    new GenericHeuristic();
 
   /**
    * 휴리스틱 목록 (점수 기반 선택이므로 순서 무관)
@@ -71,8 +72,8 @@ export class HeuristicsRunner {
           // 동점 경고 - 먼저 순회된 휴리스틱 유지
           console.warn(
             `[HeuristicsRunner] Tie detected for "${ctx.data.document.name}": ` +
-            `${bestHeuristic.name}(${bestScore}) vs ${heuristic.name}(${score}). ` +
-            `Using ${bestHeuristic.name}.`
+              `${bestHeuristic.name}(${bestScore}) vs ${heuristic.name}(${score}). ` +
+              `Using ${bestHeuristic.name}.`
           );
         }
       }
@@ -92,6 +93,7 @@ export class HeuristicsRunner {
    */
   static run(ctx: BuildContext): BuildContext {
     const heuristic = this.getHeuristic(ctx);
+
     return heuristic.process({
       ...ctx,
       componentType: heuristic.componentType,

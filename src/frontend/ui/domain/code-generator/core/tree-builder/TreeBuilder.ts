@@ -38,20 +38,12 @@ class TreeBuilder implements ITreeBuilder {
   ): DesignTree {
     let ctx = this.createBuildContext(data, policy);
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 파이프라인 분기
-    // ─────────────────────────────────────────────────────────────────────────
     if (data.document.type === "COMPONENT_SET") {
-      // ─── COMPONENT_SET: 휴리스틱에 전체 위임 ───
       ctx = HeuristicsRunner.run(ctx);
     } else {
-      // ─── Non-COMPONENT_SET: 기본 파이프라인 ───
       ctx = this.buildNonComponentSet(ctx);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // 결과 반환
-    // ─────────────────────────────────────────────────────────────────────────
     return {
       root: ctx.root!,
       componentType: ctx.componentType,
