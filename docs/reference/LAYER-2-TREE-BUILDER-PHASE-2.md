@@ -128,5 +128,5 @@ Map<string, ConditionNode> {
 
 ## 관련 파일
 
+- `workers/NodeProcessor.ts` (detectSemanticRoles)
 - `workers/VisibilityProcessor.ts`
-- `workers/SemanticAnalyzer.ts` (계획됨)

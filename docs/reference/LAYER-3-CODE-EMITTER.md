@@ -39,18 +39,18 @@ DesignTree
 │  └─────────────────────────────┘   │
 │                                     │
 │  ┌─────────────────────────────┐   │
-│  │       PropsGenerator         │   │  → Props interface
+│  │     InterfaceGenerator       │   │  → Props interface
 │  └─────────────────────────────┘   │
 │                                     │
 │  ┌─────────────────────────────┐   │
-│  │       StyleGenerator         │   │  → 스타일 코드
+│  │       StylesGenerator        │   │  → 스타일 코드
 │  │  ┌─────────────────────┐    │   │
 │  │  │   StyleStrategy     │    │   │     Emotion / Tailwind
 │  │  └─────────────────────┘    │   │
 │  └─────────────────────────────┘   │
 │                                     │
 │  ┌─────────────────────────────┐   │
-│  │        JsxGenerator          │   │  → JSX 트리
+│  │     ComponentGenerator       │   │  → JSX 트리
 │  └─────────────────────────────┘   │
 │                                     │
 └─────────────────────────────────────┘
@@ -80,7 +80,7 @@ import { Icon } from './Icon';
 import { Avatar } from './Avatar';
 ```
 
-### 2. Props Interface 생성 (PropsGenerator)
+### 2. Props Interface 생성 (InterfaceGenerator)
 
 TypeScript Props interface를 생성합니다.
 
@@ -104,7 +104,7 @@ interface ButtonProps {
 | string | `string` |
 | slot | `React.ReactNode` |
 
-### 3. 스타일 생성 (StyleGenerator + StyleStrategy)
+### 3. 스타일 생성 (StylesGenerator + StyleStrategy)
 
 DesignNode.styles를 스타일 코드로 변환합니다.
 
@@ -138,7 +138,7 @@ const getClassName = (props: ButtonProps) => cn(
 );
 ```
 
-### 4. JSX 생성 (JsxGenerator)
+### 4. 컴포넌트 생성 (ComponentGenerator)
 
 DesignNode 트리를 JSX로 변환합니다.
 
@@ -241,7 +241,7 @@ interface IStyleStrategy {
 }
 
 // 사용
-const strategy = useEmotionStrategy ? new EmotionStrategy() : new TailwindStrategy();
+const strategy = useEmotionStrategy ? new EmotionStyleStrategy() : new TailwindStyleStrategy();
 const emitter = new ReactEmitter(strategy);
 ```
 
@@ -254,11 +254,11 @@ core/code-emitter/
 ├── ReactEmitter.ts          # 메인 오케스트레이터
 ├── generators/
 │   ├── ImportsGenerator.ts
-│   ├── PropsGenerator.ts
-│   ├── StyleGenerator.ts
-│   └── JsxGenerator.ts
+│   ├── InterfaceGenerator.ts
+│   ├── StylesGenerator.ts
+│   └── ComponentGenerator.ts
 └── style-strategy/
     ├── IStyleStrategy.ts
-    ├── EmotionStrategy.ts
-    └── TailwindStrategy.ts
+    ├── EmotionStyleStrategy.ts
+    └── TailwindStyleStrategy.ts
 ```

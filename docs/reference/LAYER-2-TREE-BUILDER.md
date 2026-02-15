@@ -133,7 +133,6 @@ interface DesignTree {
 
 - [Phase 1: 구조 생성](./LAYER-2-TREE-BUILDER-PHASE-1.md)
 - [Phase 2: 분석](./LAYER-2-TREE-BUILDER-PHASE-2.md)
-- [Heuristics](./LAYER-2-TREE-BUILDER-HEURISTICS.md)
 - [Phase 3: 노드별 변환](./LAYER-2-TREE-BUILDER-PHASE-3.md)
 - [Phase 4: 최종 조립](./LAYER-2-TREE-BUILDER-PHASE-4.md)
 
@@ -157,5 +156,13 @@ core/tree-builder/
 └── heuristics/
     ├── HeuristicsRunner.ts
     └── components/
-        └── InputHeuristic.ts
+        ├── IComponentHeuristic.ts
+        ├── GenericHeuristic.ts
+        ├── ButtonHeuristic.ts
+        ├── ButtonSetHeuristic.ts
+        ├── InputHeuristic.ts
+        ├── CheckboxHeuristic.ts
+        ├── RadioHeuristic.ts
+        ├── ToggleHeuristic.ts
+        └── LinkHeuristic.ts
 ```
