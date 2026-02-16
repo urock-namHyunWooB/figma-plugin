@@ -64,8 +64,10 @@ interface PlaceholderDetectionResult {
 interface LabelHelperTextResult {
   labelNodeId?: string;
   labelText?: string;
+  labelY?: number;
   helperTextNodeId?: string;
   helperTextText?: string;
+  helperTextY?: number;
 }
 
 /** Error 상태 감지 결과 */
@@ -170,27 +172,24 @@ export class InputHeuristic implements IComponentHeuristic {
     result = CleanupProcessor.removeInstanceInternalNodes(result);
     result = PropsProcessor.extract(result);
 
-    // Phase 2: 분석
-    result = NodeProcessor.detectSemanticRoles(result);
-    result = VisibilityProcessor.processHidden(result);
-    result = this.detectPlaceholders(result); // Input 특화: Placeholder 감지 (slot 변환 전에 실행)
-    // Input 특화: Label/HelperText 감지 (VisibilityProcessor.resolve 전에 실행해야 조건이 설정되지 않음)
-    result = this.detectLabelAndHelperText(result);
-
     // Phase 3: 노드 변환
     result = NodeProcessor.mapTypes(result);
     result = StyleProcessor.build(result);
     result = StyleProcessor.applyPositions(result);
     result = StyleProcessor.handleRotation(result);
     result = InstanceProcessor.buildExternalRefs(result);
-    result = VisibilityProcessor.resolve(result);
+
     result = PropsProcessor.bindProps(result);
-    result = SlotProcessor.detectTextSlots(result);
-    result = SlotProcessor.detectSlots(result);
+
+    result = this.detectPlaceholders(result); // Input 특화: Placeholder 감지 (slot 변환 전에 실행)
+    // Input 특화: Label/HelperText 감지 (VisibilityProcessor.resolve 전에 실행해야 조건이 설정되지 않음)
+    result = this.detectLabelAndHelperText(result);
 
     result = this.detectInputSlots(result); // Input 특화
     // Input 특화: Error 상태 감지 및 boolean prop 생성
     result = this.detectErrorState(result);
+
+    //TODO input 태그로 렌더링 되어야함
 
     result = NodeConverter.assemble(result);
 
@@ -558,38 +557,54 @@ export class InputHeuristic implements IComponentHeuristic {
     );
     if (!detection.labelNodeId && !detection.helperTextNodeId) return ctx;
 
-    // 4. Props 처리 (바인딩은 PropsProcessor.bindProps에서 처리됨)
+    // 4. Props 처리
     const propsMap = new Map(ctx.propsMap);
+    const nodePropBindings = new Map(ctx.nodePropBindings);
 
     if (detection.labelNodeId && detection.labelText) {
       // 기존 관련 prop 제거
       this.removeRelatedProps(detection.labelNodeId, ctx, propsMap);
 
+      // 이름 충돌 시 다른 이름 사용
+      const labelPropName = propsMap.has("label") ? "inputLabel" : "label";
+
       // label prop 생성
-      propsMap.set("label", {
-        name: "label",
+      propsMap.set(labelPropName, {
+        name: labelPropName,
         type: "string",
         defaultValue: detection.labelText,
         required: false,
         nodeId: detection.labelNodeId, // TEXT 노드 바인딩용
       } as PropDefinition);
+
+      nodePropBindings.set(detection.labelNodeId, {
+        characters: labelPropName,
+      });
     }
 
     if (detection.helperTextNodeId && detection.helperTextText) {
       // 기존 관련 prop 제거
       this.removeRelatedProps(detection.helperTextNodeId, ctx, propsMap);
 
+      // 이름 충돌 시 다른 이름 사용
+      const helperTextPropName = propsMap.has("helperText")
+        ? "inputHelperText"
+        : "helperText";
+
       // helperText prop 생성
-      propsMap.set("helperText", {
-        name: "helperText",
+      propsMap.set(helperTextPropName, {
+        name: helperTextPropName,
         type: "string",
         defaultValue: detection.helperTextText,
         required: false,
         nodeId: detection.helperTextNodeId, // TEXT 노드 바인딩용
       } as PropDefinition);
+      nodePropBindings.set(detection.helperTextNodeId, {
+        characters: helperTextPropName,
+      });
     }
 
-    return { ...ctx, propsMap };
+    return { ...ctx, propsMap, nodePropBindings };
   }
 
   /**
@@ -856,19 +871,18 @@ export class InputHeuristic implements IComponentHeuristic {
       const characters = (spec as any).characters || "";
 
       if (nodeY < inputAreaY) {
-        // Input 위 → label
-        if (
-          !result.labelNodeId ||
-          nodeY < (result.labelNodeId ? nodeY : Infinity)
-        ) {
+        // Input 위 → label (가장 가까운 것 = y값이 큰 것)
+        if (!result.labelNodeId || nodeY > result.labelY!) {
           result.labelNodeId = textNode.id;
           result.labelText = characters;
+          result.labelY = nodeY;
         }
       } else if (inputAreaBottomY !== null && nodeY > inputAreaBottomY) {
-        // Input 아래 → helperText
-        if (!result.helperTextNodeId) {
+        // Input 아래 → helperText (가장 가까운 것 = y값이 작은 것)
+        if (!result.helperTextNodeId || nodeY < result.helperTextY!) {
           result.helperTextNodeId = textNode.id;
           result.helperTextText = characters;
+          result.helperTextY = nodeY;
         }
       }
     }
