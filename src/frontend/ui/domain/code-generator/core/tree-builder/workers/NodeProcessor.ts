@@ -39,6 +39,21 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
   // Static Pipeline Method
   // ==========================================================================
 
+  /**
+   * 각 노드의 의미론적 역할(semantic role) 감지
+   *
+   * Figma 노드 타입과 컨텍스트를 분석하여 React 컴포넌트에서의 역할을 결정합니다.
+   *
+   * 감지되는 역할:
+   * - root: 루트 컴포넌트 (button 여부도 판단)
+   * - text: TEXT 노드
+   * - icon: 아이콘 패턴의 INSTANCE 또는 VECTOR (SVG 포함)
+   * - image: IMAGE fill을 가진 RECTANGLE
+   * - vector: VECTOR, LINE, ELLIPSE 등 SVG 요소
+   * - container: FRAME, GROUP 등 컨테이너
+   *
+   * @returns semanticRoles Map이 설정된 BuildContext
+   */
   static detectSemanticRoles(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {
       throw new Error("NodeProcessor.detectSemanticRoles: internalTree is required.");
@@ -53,6 +68,21 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
     return { ...ctx, semanticRoles };
   }
 
+  /**
+   * Figma 노드 타입을 DesignNodeType으로 매핑
+   *
+   * 각 노드의 Figma 타입(FRAME, TEXT, INSTANCE 등)을
+   * 코드 생성에 사용할 DesignNodeType으로 변환합니다.
+   *
+   * 매핑 규칙:
+   * - TEXT → text
+   * - INSTANCE → component
+   * - VECTOR, LINE, ELLIPSE 등 → vector
+   * - FRAME, GROUP, COMPONENT → container
+   * - Heuristics에서 textInput으로 표시된 노드 → input
+   *
+   * @returns nodeTypes Map이 설정된 BuildContext
+   */
   static mapTypes(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {
       throw new Error("NodeProcessor.mapTypes: internalTree is required.");

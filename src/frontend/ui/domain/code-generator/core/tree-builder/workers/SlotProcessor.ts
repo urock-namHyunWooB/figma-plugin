@@ -36,6 +36,22 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
   // Static Pipeline Methods
   // ==========================================================================
 
+  /**
+   * TEXT 노드를 text slot(children prop)으로 변환
+   *
+   * variant간 characters가 다른 TEXT 노드를 찾아 slot으로 변환합니다.
+   * 이를 통해 텍스트 내용을 prop으로 전달할 수 있습니다.
+   *
+   * slot 변환 조건:
+   * - TEXT가 일부 variant에만 존재
+   * - 병합된 TEXT 노드들의 characters가 서로 다름
+   *
+   * 결과:
+   * - propsMap에 xxxText prop 추가 (type: "slot")
+   * - nodePropBindings에 characters 바인딩 추가
+   *
+   * @returns propsMap과 nodePropBindings가 업데이트된 BuildContext
+   */
   static detectTextSlots(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree || !ctx.propsMap || !ctx.nodePropBindings) {
       throw new Error(
@@ -48,6 +64,12 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
     const nodePropBindings = new Map(ctx.nodePropBindings);
 
     traverseTree(ctx.internalTree, (node) => {
+      // Skip nodes with special semantic types (e.g., textInput for placeholders)
+      const semanticType = ctx.nodeSemanticTypes?.get(node.id);
+      if (semanticType?.type === "textInput") {
+        return; // Don't convert placeholder text to slot
+      }
+
       const result = instance.detectTextSlot(
         {
           nodeId: node.id,
@@ -74,6 +96,24 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
     return { ...ctx, propsMap, nodePropBindings };
   }
 
+  /**
+   * INSTANCE 노드를 slot(React.ReactNode prop)으로 변환
+   *
+   * visibility prop으로 제어되는 INSTANCE나 INSTANCE_SWAP을 감지하여
+   * slot으로 변환합니다. slot은 컴포넌트 사용 시 커스텀 콘텐츠를 전달할 수 있게 합니다.
+   *
+   * slot 감지 유형:
+   * - isExposedInstance: true → 항상 slot (Figma에서 명시적으로 노출)
+   * - visible prop(BOOLEAN)으로 제어되는 INSTANCE → visibility slot
+   * - mainComponent prop(INSTANCE_SWAP)이 있는 노드 → swap slot
+   * - True variant에만 존재하는 INSTANCE → visibility-pattern slot
+   *
+   * 결과:
+   * - slots 배열에 SlotDefinition 추가
+   * - boolean prop을 slot 타입으로 업그레이드
+   *
+   * @returns slots와 propsMap이 업데이트된 BuildContext
+   */
   static detectSlots(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {
       throw new Error("SlotProcessor.detectSlots: internalTree is required.");

@@ -30,14 +30,18 @@ export class CleanupProcessor {
   ]);
 
   /**
-   * INSTANCE 내부 노드 제거
+   * INSTANCE 내부의 중복 노드 제거
    *
    * INSTANCE로 외부 컴포넌트를 참조할 때, 그 내부 children은
-   * 별도로 렌더링되면 안 됩니다. 이 메서드는 I...로 시작하는
-   * INSTANCE 자식 노드 ID를 가진 노드들을 제거합니다.
+   * 외부 컴포넌트에서 렌더링되므로 현재 트리에서 제거해야 합니다.
+   * I...;...;... 형태의 compound ID를 가진 노드들을 제거합니다.
    *
-   * 단, VECTOR/BOOLEAN_OPERATION 등 SVG로 렌더링되어야 하는 노드는
-   * vectorSvgs 데이터가 있으면 유지합니다.
+   * 예외 처리:
+   * - VECTOR/BOOLEAN_OPERATION 등 SVG 노드는 vectorSvgs 데이터가 있으면 유지
+   * - 루트가 INSTANCE인 경우 children 유지 (그 자체가 콘텐츠)
+   * - enrichedFromEmptyChildren 플래그가 true인 경우 유지
+   *
+   * @returns INSTANCE 내부 노드가 정리된 BuildContext
    */
   static removeInstanceInternalNodes(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {

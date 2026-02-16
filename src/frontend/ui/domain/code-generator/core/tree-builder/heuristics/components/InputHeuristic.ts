@@ -17,8 +17,14 @@ import type {
   ComponentType,
   PreparedDesignData,
   SlotDefinition,
+  PropDefinition,
+  PropStyleGroup,
+  StyleDefinition,
 } from "@code-generator/types/architecture";
-import type { BuildContext, SemanticTypeEntry } from "../../workers/BuildContext";
+import type {
+  BuildContext,
+  SemanticTypeEntry,
+} from "../../workers/BuildContext";
 import type { IComponentHeuristic } from "./IComponentHeuristic";
 import type { InternalNode } from "../../workers/interfaces/core";
 
@@ -52,6 +58,28 @@ interface PlaceholderDetectionResult {
   nodeId: string;
   placeholderText: string;
   linkedPropName: string;
+}
+
+/** Label/HelperText 감지 결과 */
+interface LabelHelperTextResult {
+  labelNodeId?: string;
+  labelText?: string;
+  helperTextNodeId?: string;
+  helperTextText?: string;
+}
+
+/** Error 상태 감지 결과 */
+interface ErrorStateResult {
+  hasError: boolean;
+  errorVariantNames: string[];
+  /** 노드별 error 상태 스타일 (nodeId → { true: 스타일, false: 스타일 }) */
+  errorStyles: Map<
+    string,
+    {
+      true: Record<string, string | number>;
+      false: Record<string, string | number>;
+    }
+  >;
 }
 
 export class InputHeuristic implements IComponentHeuristic {
@@ -145,7 +173,9 @@ export class InputHeuristic implements IComponentHeuristic {
     // Phase 2: 분석
     result = NodeProcessor.detectSemanticRoles(result);
     result = VisibilityProcessor.processHidden(result);
-    result = this.detectPlaceholders(result);  // Input 특화
+    result = this.detectPlaceholders(result); // Input 특화: Placeholder 감지 (slot 변환 전에 실행)
+    // Input 특화: Label/HelperText 감지 (VisibilityProcessor.resolve 전에 실행해야 조건이 설정되지 않음)
+    result = this.detectLabelAndHelperText(result);
 
     // Phase 3: 노드 변환
     result = NodeProcessor.mapTypes(result);
@@ -157,11 +187,11 @@ export class InputHeuristic implements IComponentHeuristic {
     result = PropsProcessor.bindProps(result);
     result = SlotProcessor.detectTextSlots(result);
     result = SlotProcessor.detectSlots(result);
-    result = SlotProcessor.detectArraySlots(result);
-    result = SlotProcessor.enrichArraySlotsWithComponentNames(result);
-    result = this.detectInputSlots(result);  // Input 특화
 
-    // Phase 4: 최종 조립
+    result = this.detectInputSlots(result); // Input 특화
+    // Input 특화: Error 상태 감지 및 boolean prop 생성
+    result = this.detectErrorState(result);
+
     result = NodeConverter.assemble(result);
 
     return result;
@@ -232,19 +262,28 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * placeholder 감지 처리
+   *
+   * placeholder 텍스트를 감지하여:
+   * 1. nodeSemanticTypes에 textInput 타입 설정 (slot 변환 방지)
+   * 2. propsMap에 placeholder string prop 추가
+   * 3. nodePropBindings에 characters 바인딩 설정
    */
   private detectPlaceholders(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) return ctx;
 
-    const nodeSemanticTypes = new Map<string, SemanticTypeEntry>(ctx.nodeSemanticTypes);
+    const nodeSemanticTypes = new Map<string, SemanticTypeEntry>(
+      ctx.nodeSemanticTypes
+    );
     const excludePropsFromStyles = new Set<string>(ctx.excludePropsFromStyles);
+    const propsMap = new Map(ctx.propsMap);
+    const nodePropBindings = new Map(ctx.nodePropBindings);
 
     traverseTree(ctx.internalTree, (node) => {
       if (node.type !== "TEXT") return;
 
       const result = this.detectPlaceholder(node, ctx);
       if (result) {
-        // 노드에 semanticType 설정
+        // 노드에 semanticType 설정 (slot 변환 방지용)
         nodeSemanticTypes.set(result.nodeId, {
           type: "textInput",
           placeholder: result.placeholderText,
@@ -254,6 +293,21 @@ export class InputHeuristic implements IComponentHeuristic {
         if (result.linkedPropName) {
           excludePropsFromStyles.add(result.linkedPropName);
         }
+
+        // placeholder string prop 생성 (slot 대신 string으로)
+        if (!propsMap.has("placeholder")) {
+          propsMap.set("placeholder", {
+            name: "placeholder",
+            type: "string",
+            defaultValue: result.placeholderText,
+            required: false,
+          } as PropDefinition);
+        }
+
+        // TEXT 노드에 바인딩 설정
+        nodePropBindings.set(result.nodeId, {
+          characters: "placeholder",
+        });
       }
     });
 
@@ -261,6 +315,8 @@ export class InputHeuristic implements IComponentHeuristic {
       ...ctx,
       nodeSemanticTypes,
       excludePropsFromStyles,
+      propsMap,
+      nodePropBindings,
     };
   }
 
@@ -295,9 +351,13 @@ export class InputHeuristic implements IComponentHeuristic {
     // 4. 연관된 variant prop 찾기 (variantName에서 추출)
     const linkedPropName = this.findLinkedProp(grayVariant.variantName);
 
-    // 5. linkedPropName이 placeholder 관련 키워드를 포함하는지 확인
+    // 5. placeholder 관련 확인:
+    // - linkedPropName이 placeholder 키워드 포함 (guide, placeholder, hint, helper)
+    // - 또는 노드 이름이 input/placeholder 관련 키워드 포함
     // 이 조건이 없으면 disabled 상태의 회색 텍스트도 placeholder로 인식됨
-    if (!this.isPlaceholderRelatedProp(linkedPropName)) {
+    const isPlaceholderByProp = this.isPlaceholderRelatedProp(linkedPropName);
+    const isPlaceholderByNodeName = this.isInputRelatedNodeName(node.name);
+    if (!isPlaceholderByProp && !isPlaceholderByNodeName) {
       return null;
     }
 
@@ -306,6 +366,20 @@ export class InputHeuristic implements IComponentHeuristic {
       placeholderText: grayVariant.characters,
       linkedPropName,
     };
+  }
+
+  /**
+   * 노드 이름이 input/placeholder 관련인지 확인
+   */
+  private isInputRelatedNodeName(nodeName: string): boolean {
+    if (!nodeName) return false;
+    const lowerName = nodeName.toLowerCase();
+    return (
+      lowerName.includes("input") ||
+      lowerName.includes("placeholder") ||
+      lowerName.includes("text field") ||
+      lowerName.includes("textfield")
+    );
   }
 
   /**
@@ -448,5 +522,611 @@ export class InputHeuristic implements IComponentHeuristic {
    */
   private isClearButtonPattern(name: string): boolean {
     return /^(clear|close|x|cancel)[\s_-]*(button|btn|icon|icn)?$/i.test(name);
+  }
+
+  // ===========================================================================
+  // Input 특화 처리 - Label/HelperText 감지
+  // ===========================================================================
+
+  /**
+   * Label 및 HelperText 감지
+   *
+   * Input 영역(Caret/Placeholder가 있는 영역) 기준:
+   * - 위에 있는 TEXT → label (string prop)
+   * - 아래에 있는 TEXT → helperText (string prop)
+   *
+   * 기존 관련 prop 제거:
+   * - visible 바인딩이 있으면 해당 boolean prop 제거 (showLabel 등)
+   * - characters 바인딩이 있으면 해당 text prop 제거 (labelText 등)
+   * - 부모 노드의 visible 바인딩도 확인
+   */
+  private detectLabelAndHelperText(ctx: BuildContext): BuildContext {
+    if (!ctx.internalTree) return ctx;
+
+    // 1. Input 영역의 y 좌표 찾기
+    const inputAreaY = this.findInputAreaY(ctx);
+    if (inputAreaY === null) return ctx;
+
+    // 2. Input 영역의 하단 y 좌표 찾기
+    const inputAreaBottomY = this.findInputAreaBottomY(ctx);
+
+    // 3. 루트 레벨 TEXT 노드에서 label/helperText 감지
+    const detection = this.detectLabelHelperTextNodes(
+      ctx,
+      inputAreaY,
+      inputAreaBottomY
+    );
+    if (!detection.labelNodeId && !detection.helperTextNodeId) return ctx;
+
+    // 4. Props 처리 (바인딩은 PropsProcessor.bindProps에서 처리됨)
+    const propsMap = new Map(ctx.propsMap);
+
+    if (detection.labelNodeId && detection.labelText) {
+      // 기존 관련 prop 제거
+      this.removeRelatedProps(detection.labelNodeId, ctx, propsMap);
+
+      // label prop 생성
+      propsMap.set("label", {
+        name: "label",
+        type: "string",
+        defaultValue: detection.labelText,
+        required: false,
+        nodeId: detection.labelNodeId, // TEXT 노드 바인딩용
+      } as PropDefinition);
+    }
+
+    if (detection.helperTextNodeId && detection.helperTextText) {
+      // 기존 관련 prop 제거
+      this.removeRelatedProps(detection.helperTextNodeId, ctx, propsMap);
+
+      // helperText prop 생성
+      propsMap.set("helperText", {
+        name: "helperText",
+        type: "string",
+        defaultValue: detection.helperTextText,
+        required: false,
+        nodeId: detection.helperTextNodeId, // TEXT 노드 바인딩용
+      } as PropDefinition);
+    }
+
+    return { ...ctx, propsMap };
+  }
+
+  /**
+   * TEXT 노드와 관련된 기존 prop들을 제거
+   *
+   * - visible 바인딩 → 해당 boolean prop 제거
+   * - 부모 노드의 visible 바인딩도 확인
+   *
+   * PropsProcessor.bindProps 이전에 실행되므로 ctx.data.getNodeById를 사용
+   */
+  private removeRelatedProps(
+    nodeId: string,
+    ctx: BuildContext,
+    propsMap: Map<string, PropDefinition>
+  ): void {
+    const node = this.findNodeById(ctx.internalTree!, nodeId);
+
+    // 1. 해당 노드의 visible 바인딩 확인 (Figma 노드 스펙에서 직접 조회)
+    const nodeSpec = ctx.data.getNodeById(nodeId) as any;
+    const visibleRef = nodeSpec?.componentPropertyReferences?.visible;
+    if (visibleRef) {
+      // originalKey로 prop 찾아서 제거
+      const propName = this.findPropByOriginalKey(propsMap, visibleRef);
+      if (propName) {
+        propsMap.delete(propName);
+      }
+    }
+
+    // 2. 부모 노드의 visible 바인딩 확인 (TEXT가 FRAME 안에 감싸진 경우)
+    if (node?.parent) {
+      const parentSpec = ctx.data.getNodeById(node.parent.id) as any;
+      const parentVisibleRef = parentSpec?.componentPropertyReferences?.visible;
+      if (parentVisibleRef) {
+        // originalKey로 prop 찾아서 제거
+        const propName = this.findPropByOriginalKey(propsMap, parentVisibleRef);
+        if (propName) {
+          propsMap.delete(propName);
+        }
+      }
+    }
+  }
+
+  /**
+   * originalKey로 prop 찾기
+   */
+  private findPropByOriginalKey(
+    propsMap: Map<string, PropDefinition>,
+    originalKey: string
+  ): string | null {
+    for (const [name, def] of propsMap.entries()) {
+      if (def.originalKey === originalKey) {
+        return name;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * InternalTree에서 노드 ID로 노드 찾기
+   */
+  private findNodeById(
+    root: InternalNode,
+    targetId: string
+  ): InternalNode | null {
+    if (root.id === targetId) return root;
+    for (const child of root.children) {
+      const found = this.findNodeById(child, targetId);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  /**
+   * Input 영역의 y 좌표 찾기
+   *
+   * 감지 기준 (우선순위):
+   * 1. Caret("|") 텍스트
+   * 2. semanticType이 textInput인 노드
+   * 3. "Placeholder" 텍스트 또는 노드 이름
+   * 4. "Input" 이름을 가진 FRAME 노드
+   */
+  private findInputAreaY(ctx: BuildContext): number | null {
+    if (!ctx.internalTree) return null;
+
+    let inputAreaY: number | null = null;
+
+    traverseTree(ctx.internalTree, (node) => {
+      if (inputAreaY !== null) return;
+
+      // 1. Caret 패턴 확인 ("|" 텍스트)
+      if (node.type === "TEXT") {
+        const spec = ctx.data.getNodeById(node.id) as any;
+        const characters = spec?.characters?.trim();
+        if (characters === "|") {
+          const y = spec?.absoluteBoundingBox?.y;
+          if (y !== undefined) {
+            inputAreaY = y;
+            return;
+          }
+        }
+      }
+
+      // 2. Placeholder로 감지된 노드 확인
+      const semanticType = ctx.nodeSemanticTypes?.get(node.id);
+      if (semanticType?.type === "textInput") {
+        const spec = ctx.data.getNodeById(node.id);
+        const y = spec?.absoluteBoundingBox?.y;
+        if (y !== undefined) {
+          inputAreaY = y;
+          return;
+        }
+      }
+
+      // 3. "Placeholder" 텍스트 또는 노드 이름 패턴
+      if (node.type === "TEXT") {
+        const spec = ctx.data.getNodeById(node.id) as any;
+        const characters = spec?.characters?.trim()?.toLowerCase();
+        const nodeName = node.name?.toLowerCase() ?? "";
+
+        if (
+          characters === "placeholder" ||
+          nodeName.includes("placeholder") ||
+          nodeName.includes("input")
+        ) {
+          const y = spec?.absoluteBoundingBox?.y;
+          if (y !== undefined) {
+            inputAreaY = y;
+            return;
+          }
+        }
+      }
+
+      // 4. "Input" 이름을 가진 FRAME 노드
+      if (node.type === "FRAME" && node.name && /input/i.test(node.name)) {
+        const spec = ctx.data.getNodeById(node.id);
+        const y = spec?.absoluteBoundingBox?.y;
+        if (y !== undefined) {
+          inputAreaY = y;
+          return;
+        }
+      }
+    });
+
+    return inputAreaY;
+  }
+
+  /**
+   * Input 영역의 하단 y 좌표 찾기
+   */
+  private findInputAreaBottomY(ctx: BuildContext): number | null {
+    if (!ctx.internalTree) return null;
+
+    let inputAreaBottomY: number | null = null;
+
+    traverseTree(ctx.internalTree, (node) => {
+      if (inputAreaBottomY !== null) return;
+
+      // 1. Caret ("|" 텍스트)
+      if (node.type === "TEXT") {
+        const spec = ctx.data.getNodeById(node.id) as any;
+        const characters = spec?.characters?.trim();
+        if (characters === "|") {
+          if (node.parent) {
+            const parentSpec = ctx.data.getNodeById(node.parent.id);
+            const bounds = parentSpec?.absoluteBoundingBox;
+            if (bounds) {
+              inputAreaBottomY = bounds.y + bounds.height;
+            }
+          }
+          return;
+        }
+      }
+
+      // 2. textInput semantic type
+      const semanticType = ctx.nodeSemanticTypes?.get(node.id);
+      if (semanticType?.type === "textInput" && node.parent) {
+        const parentSpec = ctx.data.getNodeById(node.parent.id);
+        const bounds = parentSpec?.absoluteBoundingBox;
+        if (bounds) {
+          inputAreaBottomY = bounds.y + bounds.height;
+        }
+        return;
+      }
+
+      // 3. "Placeholder" 텍스트 또는 노드 이름 패턴
+      if (node.type === "TEXT") {
+        const spec = ctx.data.getNodeById(node.id) as any;
+        const characters = spec?.characters?.trim()?.toLowerCase();
+        const nodeName = node.name?.toLowerCase() ?? "";
+
+        if (
+          characters === "placeholder" ||
+          nodeName.includes("placeholder") ||
+          nodeName.includes("input")
+        ) {
+          if (node.parent) {
+            const parentSpec = ctx.data.getNodeById(node.parent.id);
+            const bounds = parentSpec?.absoluteBoundingBox;
+            if (bounds) {
+              inputAreaBottomY = bounds.y + bounds.height;
+            }
+          }
+          return;
+        }
+      }
+
+      // 4. "Input" 이름을 가진 FRAME 노드
+      if (node.type === "FRAME" && node.name && /input/i.test(node.name)) {
+        const spec = ctx.data.getNodeById(node.id);
+        const bounds = spec?.absoluteBoundingBox;
+        if (bounds) {
+          inputAreaBottomY = bounds.y + bounds.height;
+        }
+      }
+    });
+
+    return inputAreaBottomY;
+  }
+
+  /**
+   * Label/HelperText TEXT 노드 감지
+   *
+   * 이미 바인딩된 노드도 감지하여 label/helperText로 변환합니다.
+   * (기존 showLabel, labelText 등의 prop은 제거되고 label로 통합됨)
+   *
+   * 감지 범위:
+   * - 루트 직계 자식 TEXT
+   * - 루트 직계 자식 FRAME/GROUP 안의 TEXT (1단계 중첩)
+   */
+  private detectLabelHelperTextNodes(
+    ctx: BuildContext,
+    inputAreaY: number,
+    inputAreaBottomY: number | null
+  ): LabelHelperTextResult {
+    const result: LabelHelperTextResult = {};
+
+    const rootChildren = ctx.internalTree?.children || [];
+
+    // TEXT 노드 후보 수집 (직계 자식 + 1단계 중첩)
+    const textCandidates: InternalNode[] = [];
+
+    for (const child of rootChildren) {
+      if (child.type === "TEXT") {
+        textCandidates.push(child);
+      } else if (child.type === "FRAME" || child.type === "GROUP") {
+        // FRAME/GROUP 안의 TEXT도 확인 (1단계 중첩)
+        for (const grandChild of child.children || []) {
+          if (grandChild.type === "TEXT") {
+            textCandidates.push(grandChild);
+          }
+        }
+      }
+    }
+
+    for (const textNode of textCandidates) {
+      // placeholder로 감지된 노드는 제외
+      const semanticType = ctx.nodeSemanticTypes?.get(textNode.id);
+      if (semanticType?.type === "textInput") continue;
+
+      const spec = ctx.data.getNodeById(textNode.id);
+      if (!spec?.absoluteBoundingBox) continue;
+
+      const nodeY = spec.absoluteBoundingBox.y;
+      const characters = (spec as any).characters || "";
+
+      if (nodeY < inputAreaY) {
+        // Input 위 → label
+        if (
+          !result.labelNodeId ||
+          nodeY < (result.labelNodeId ? nodeY : Infinity)
+        ) {
+          result.labelNodeId = textNode.id;
+          result.labelText = characters;
+        }
+      } else if (inputAreaBottomY !== null && nodeY > inputAreaBottomY) {
+        // Input 아래 → helperText
+        if (!result.helperTextNodeId) {
+          result.helperTextNodeId = textNode.id;
+          result.helperTextText = characters;
+        }
+      }
+    }
+
+    return result;
+  }
+
+  // ===========================================================================
+  // Input 특화 처리 - Error 상태 감지
+  // ===========================================================================
+
+  /**
+   * Error 상태 감지
+   *
+   * 빨간색이 사용된 variant를 찾아 error boolean prop 생성
+   * Status variant에서 해당 값 제거
+   */
+  private detectErrorState(ctx: BuildContext): BuildContext {
+    if (!ctx.internalTree || !ctx.propsMap) return ctx;
+
+    // 1. Error variant 감지 (빨간색 기반)
+    const errorResult = this.findErrorVariants(ctx);
+    if (!errorResult.hasError) return ctx;
+
+    // 2. error boolean prop 생성
+    const propsMap = new Map(ctx.propsMap);
+    propsMap.set("error", {
+      name: "error",
+      type: "boolean",
+      defaultValue: false,
+      required: false,
+    } as PropDefinition);
+
+    // 3. Status variant에서 Error 옵션 제거
+    const statusProp = this.findStatusProp(propsMap);
+    if (statusProp?.options) {
+      const filteredOptions = statusProp.options.filter(
+        (opt: string) => !this.isErrorVariantValue(opt)
+      );
+      if (filteredOptions.length !== statusProp.options.length) {
+        // options는 PropDefinition 타입에 선언적으로 없지만 런타임에 존재
+        const updatedProp = { ...statusProp, options: filteredOptions } as any;
+        propsMap.set(statusProp.name, updatedProp);
+      }
+    }
+
+    // 4. error prop 스타일을 nodeStyles.propStyles에 추가
+    const nodeStyles = this.applyErrorPropStyles(ctx, errorResult);
+
+    // 5. excludePropsFromStyles에 Status 추가 (Error 관련 스타일 분리됨)
+    const excludePropsFromStyles = new Set(ctx.excludePropsFromStyles || []);
+    // Status variant 값 중 error 관련 값들을 스타일에서 제외
+    for (const variantName of errorResult.errorVariantNames) {
+      excludePropsFromStyles.add(variantName);
+    }
+
+    return { ...ctx, propsMap, nodeStyles, excludePropsFromStyles };
+  }
+
+  /**
+   * Error variant 찾기 (빨간색 기반)
+   */
+  private findErrorVariants(ctx: BuildContext): ErrorStateResult {
+    const result: ErrorStateResult = {
+      hasError: false,
+      errorVariantNames: [],
+      errorStyles: new Map(),
+    };
+
+    if (!ctx.internalTree) return result;
+
+    // mergedNode에서 빨간색 요소가 있는 variant 찾기
+    traverseTree(ctx.internalTree, (node) => {
+      for (const merged of node.mergedNode) {
+        const variantName = merged.variantName || "";
+
+        // 이미 Error variant로 식별된 경우 스킵
+        const isErrorVariant =
+          this.isErrorVariantByName(variantName) ||
+          result.errorVariantNames.some((ev) => variantName.includes(ev));
+
+        // 빨간색 감지
+        const hasRedColor = this.hasRedColorInNode(merged.id, ctx.data);
+
+        if (hasRedColor) {
+          result.hasError = true;
+
+          // Status=Error 패턴에서 Error 값 추출
+          const errorValue = this.extractErrorValueFromVariantName(variantName);
+          if (errorValue && !result.errorVariantNames.includes(errorValue)) {
+            result.errorVariantNames.push(errorValue);
+          }
+
+          // 노드별 error 스타일 수집
+          const styleTree = ctx.data.getStyleById(merged.id);
+          if (styleTree?.cssStyle) {
+            const existing = result.errorStyles.get(node.id) || {
+              true: {},
+              false: {},
+            };
+            existing.true = { ...existing.true, ...styleTree.cssStyle };
+            result.errorStyles.set(node.id, existing);
+          }
+        } else if (!isErrorVariant) {
+          // Error가 아닌 variant의 스타일 (error=false 스타일)
+          const styleTree = ctx.data.getStyleById(merged.id);
+          if (styleTree?.cssStyle && result.errorStyles.has(node.id)) {
+            const existing = result.errorStyles.get(node.id)!;
+            // 첫 번째 non-error variant의 스타일만 사용
+            if (Object.keys(existing.false).length === 0) {
+              existing.false = { ...styleTree.cssStyle };
+            }
+          }
+        }
+      }
+    });
+
+    return result;
+  }
+
+  /**
+   * 노드에 빨간색이 있는지 확인
+   */
+  private hasRedColorInNode(nodeId: string, data: PreparedDesignData): boolean {
+    const spec = data.getNodeById(nodeId) as any;
+    if (!spec) return false;
+
+    // TEXT 노드의 fills 확인
+    if (spec.fills) {
+      for (const fill of spec.fills) {
+        if (
+          fill.type === "SOLID" &&
+          fill.color &&
+          this.isRedColor(fill.color)
+        ) {
+          return true;
+        }
+      }
+    }
+
+    // FRAME/RECTANGLE의 strokes 확인 (border)
+    if (spec.strokes) {
+      for (const stroke of spec.strokes) {
+        if (
+          stroke.type === "SOLID" &&
+          stroke.color &&
+          this.isRedColor(stroke.color)
+        ) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * 빨간색 판단
+   * r > 0.8, g < 0.4, b < 0.4
+   */
+  private isRedColor(color: RGB): boolean {
+    return color.r > 0.8 && color.g < 0.4 && color.b < 0.4;
+  }
+
+  /**
+   * variant 이름으로 Error 판단
+   */
+  private isErrorVariantByName(variantName: string): boolean {
+    return (
+      /status\s*=\s*error/i.test(variantName) ||
+      /state\s*=\s*error/i.test(variantName)
+    );
+  }
+
+  /**
+   * variant 값이 Error인지 확인
+   */
+  private isErrorVariantValue(value: string): boolean {
+    return /^error$/i.test(value);
+  }
+
+  /**
+   * variant 이름에서 Error 값 추출
+   * "Status=Error, Size=Large" → "Error"
+   */
+  private extractErrorValueFromVariantName(variantName: string): string | null {
+    const match = variantName.match(/(?:status|state)\s*=\s*(\w+)/i);
+    if (match && /error/i.test(match[1])) {
+      return match[1];
+    }
+    return null;
+  }
+
+  /**
+   * Status prop 찾기
+   */
+  private findStatusProp(
+    propsMap: Map<string, PropDefinition>
+  ): (PropDefinition & { options?: string[] }) | null {
+    for (const [, prop] of propsMap) {
+      if (/^(status|state)$/i.test(prop.name) && prop.type === "variant") {
+        return prop as PropDefinition & { options?: string[] };
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Error prop 스타일을 nodeStyles.propStyles에 적용
+   */
+  private applyErrorPropStyles(
+    ctx: BuildContext,
+    errorResult: ErrorStateResult
+  ): Map<string, StyleDefinition> {
+    if (!ctx.nodeStyles) return ctx.nodeStyles || new Map();
+
+    const nodeStyles = new Map(ctx.nodeStyles);
+
+    for (const [nodeId, errorStyle] of errorResult.errorStyles) {
+      const existingStyle = nodeStyles.get(nodeId);
+      if (!existingStyle) continue;
+
+      // error true/false 스타일에서 실제 차이가 있는 속성만 추출
+      const trueStyle = errorStyle.true;
+      const falseStyle = errorStyle.false;
+      const diffStyle: Record<string, string | number> = {};
+      const normalStyle: Record<string, string | number> = {};
+
+      for (const [key, value] of Object.entries(trueStyle)) {
+        const falseValue = falseStyle[key];
+        if (falseValue !== value) {
+          diffStyle[key] = value;
+          if (falseValue !== undefined) {
+            normalStyle[key] = falseValue;
+          }
+        }
+      }
+
+      // 차이가 있으면 propStyles에 추가
+      if (Object.keys(diffStyle).length > 0) {
+        const propStyles: Record<string, PropStyleGroup> = {
+          ...existingStyle.propStyles,
+          error: {
+            type: "boolean",
+            variants: {
+              true: diffStyle,
+              false: normalStyle,
+            },
+          },
+        };
+
+        nodeStyles.set(nodeId, {
+          ...existingStyle,
+          propStyles,
+        });
+      }
+    }
+
+    return nodeStyles;
   }
 }

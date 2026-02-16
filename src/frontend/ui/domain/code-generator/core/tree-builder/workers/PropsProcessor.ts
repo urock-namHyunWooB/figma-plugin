@@ -62,12 +62,42 @@ const CONFLICTING_HTML_ATTRS = new Set([
  * Props 추출(Extractor)과 바인딩(Linker) 기능을 통합
  */
 export class PropsProcessor implements IPropsExtractor, IPropsLinker {
+  /**
+   * componentPropertyDefinitions에서 props 정의 추출
+   *
+   * Figma의 componentPropertyDefinitions를 파싱하여 내부 PropDefinition Map으로 변환합니다.
+   *
+   * 처리 내용:
+   * - VARIANT → variant 타입 (True/False 옵션만 있으면 boolean으로 변환)
+   * - BOOLEAN → boolean 타입
+   * - TEXT → string 타입
+   * - INSTANCE_SWAP → slot 타입
+   * - prop 이름을 camelCase로 정규화
+   * - HTML 속성과 충돌하는 이름에 custom prefix 추가 (disabled → customDisabled)
+   *
+   * @returns propsMap이 설정된 BuildContext
+   */
   static extract(ctx: BuildContext): BuildContext {
     const instance = new PropsProcessor();
     const propsMap = instance.extractProps(ctx.data.props);
     return { ...ctx, propsMap };
   }
 
+  /**
+   * 노드의 componentPropertyReferences를 prop 바인딩으로 변환
+   *
+   * 각 노드의 componentPropertyReferences를 분석하여 어떤 속성이 어떤 prop에 바인딩되는지 매핑합니다.
+   *
+   * 바인딩 유형:
+   * - characters → TEXT 노드의 텍스트 내용
+   * - visible → 노드의 visibility 제어
+   * - mainComponent → INSTANCE_SWAP slot
+   *
+   * TEXT 노드의 경우 componentPropertyReferences가 없어도
+   * _overrideableProps의 nodeId/nodeName으로 prop 바인딩을 시도합니다.
+   *
+   * @returns nodePropBindings가 설정된 BuildContext
+   */
   static bindProps(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree || !ctx.propsMap) {
       throw new Error(
@@ -133,7 +163,11 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
         continue;
       }
 
-      const d = def as { type?: string; defaultValue?: unknown; variantOptions?: string[] };
+      const d = def as {
+        type?: string;
+        defaultValue?: unknown;
+        variantOptions?: string[];
+      };
       const propType = this.mapPropType(d.type);
 
       // 의미 있는 prop 이름 생성
@@ -150,7 +184,8 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
       // Check if this is a boolean-like VARIANT (True/False options)
       // These get converted to boolean type here.
       // If they actually control INSTANCE visibility, SlotProcessor will upgrade them to slot later.
-      const isBooleanLikeVariant = propType === "variant" &&
+      const isBooleanLikeVariant =
+        propType === "variant" &&
         options &&
         options.length === 2 &&
         options.some((o) => o === "True" || o === "true") &&
@@ -168,10 +203,12 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
       const existingNodeName = (def as { nodeName?: string }).nodeName;
 
       // variantValue 저장: 어느 variant에서 왔는지 (조건부 렌더링용)
-      const existingVariantValue = (def as { variantValue?: string }).variantValue;
+      const existingVariantValue = (def as { variantValue?: string })
+        .variantValue;
 
       // cssStyle 저장: 원본 노드의 CSS 스타일 (조건부 스타일 적용용)
-      const existingCssStyle = (def as { cssStyle?: Record<string, string> }).cssStyle;
+      const existingCssStyle = (def as { cssStyle?: Record<string, string> })
+        .cssStyle;
 
       // Determine final prop type:
       // - Boolean-like VARIANTs (True/False) → boolean type

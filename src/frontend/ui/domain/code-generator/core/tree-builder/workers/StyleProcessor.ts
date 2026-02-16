@@ -68,6 +68,23 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
     "clipRule", "clip-rule",
   ]);
 
+  /**
+   * 각 노드의 스타일을 StyleDefinition으로 빌드
+   *
+   * mergedNode의 variant별 CSS 스타일을 분석하여 base/dynamic/pseudo로 분류합니다.
+   *
+   * 분류 기준:
+   * - base: 모든 variant에서 동일한 스타일
+   * - dynamic: Size, Color 등 prop에 따라 달라지는 스타일
+   * - pseudo: State prop에 따른 :hover, :active 등 pseudo-class 스타일
+   *
+   * 특수 처리:
+   * - VECTOR/LINE 등 SVG 노드: SVG 전용 속성 제거, overflow: visible 추가
+   * - LINE height: 0 노드: display: none 처리
+   * - flatten된 FRAME의 HORIZONTAL layoutMode 상속
+   *
+   * @returns nodeStyles Map이 설정된 BuildContext
+   */
   static build(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {
       throw new Error("StyleProcessor.build: internalTree is required.");
@@ -128,6 +145,18 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
     return { ...ctx, nodeStyles };
   }
 
+  /**
+   * auto-layout이 아닌 부모의 자식에게 absolute position 스타일 적용
+   *
+   * Figma에서 auto-layout이 아닌 FRAME/GROUP의 자식들은
+   * 절대 좌표로 배치되므로 position: absolute를 적용합니다.
+   *
+   * 2-pass 처리:
+   * 1. 자식 노드에 position: absolute, left, top 적용
+   * 2. absolute 자식을 가진 부모에 position: relative 적용
+   *
+   * @returns nodeStyles가 업데이트된 BuildContext
+   */
   static applyPositions(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree || !ctx.nodeStyles) {
       throw new Error("StyleProcessor.applyPositions: internalTree and nodeStyles are required.");
@@ -169,6 +198,19 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
     return { ...ctx, nodeStyles };
   }
 
+  /**
+   * 90도 회전된 요소의 스타일 처리
+   *
+   * Figma에서 90도/270도 회전된 요소는 CSS transform 대신
+   * absoluteRenderBounds를 사용하여 실제 렌더링 크기로 변환합니다.
+   *
+   * 처리 내용:
+   * - rotation이 ±90도인 요소 감지
+   * - transform 속성 제거
+   * - absoluteRenderBounds에서 width/height 재계산
+   *
+   * @returns nodeStyles가 업데이트된 BuildContext
+   */
   static handleRotation(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree || !ctx.nodeStyles) {
       throw new Error("StyleProcessor.handleRotation: internalTree and nodeStyles are required.");

@@ -68,6 +68,22 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
   // Static Pipeline Method
   // ==========================================================================
 
+  /**
+   * INSTANCE 노드에 대한 외부 컴포넌트 참조 정보 생성
+   *
+   * 트리의 INSTANCE 노드들을 순회하며 외부 컴포넌트 참조 정보를 추출합니다.
+   * 이 정보는 CodeEmitter에서 <ExternalComponent {...props} /> 형태로 렌더링됩니다.
+   *
+   * 추출 내용:
+   * - componentSetId: 참조하는 컴포넌트 세트 ID
+   * - componentName: PascalCase로 변환된 컴포넌트 이름
+   * - props: variant props + override props (fills, characters 등)
+   *
+   * 주의: 루트 노드가 INSTANCE인 경우는 외부 참조로 처리하지 않음
+   *       (그 자체가 렌더링 대상)
+   *
+   * @returns nodeExternalRefs Map이 설정된 BuildContext
+   */
   static buildExternalRefs(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {
       throw new Error("InstanceProcessor.buildExternalRefs: internalTree is required.");

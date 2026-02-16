@@ -46,7 +46,9 @@ interface SquashGroup {
  * IoU가 높은 노드들을 스쿼시하는 통합 Processor
  */
 export class VariantProcessor implements IVariantMerger, ISquashByIou {
-  private getIouFn: ((nodeA: InternalNode, nodeB: InternalNode) => number | null) | null = null;
+  private getIouFn:
+    | ((nodeA: InternalNode, nodeB: InternalNode) => number | null)
+    | null = null;
   /** 노드 ID → 원본 variant 루트 ID 매핑 */
   private nodeToVariantRoot: Map<string, string> = new Map();
 
@@ -54,6 +56,21 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
   // Static Pipeline Method
   // ==========================================================================
 
+  /**
+   * COMPONENT_SET의 여러 variant를 단일 InternalNode 트리로 병합
+   *
+   * COMPONENT_SET인 경우:
+   * - 각 variant(children)를 InternalNode로 변환
+   * - IoU(Intersection over Union) 기반으로 같은 위치의 노드들을 하나로 병합
+   * - 병합된 노드는 mergedNode 배열에 원본 variant 정보 보존
+   * - 일부 variant에만 존재하는 wrapper FRAME은 flatten 처리
+   * - visible: false인 노드는 트리에서 제외
+   *
+   * 단일 컴포넌트인 경우:
+   * - 그대로 InternalNode로 변환
+   *
+   * @returns internalTree가 설정된 BuildContext
+   */
   static merge(ctx: BuildContext): BuildContext {
     const data = ctx.data;
     const doc = data.document;
@@ -257,7 +274,9 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
     // children 병합
     for (const sourceChild of source.children) {
       const matchingChild = target.children.find(
-        (c) => c.type === sourceChild.type && this.isSamePositionY(c, sourceChild, data)
+        (c) =>
+          c.type === sourceChild.type &&
+          this.isSamePositionY(c, sourceChild, data)
       );
 
       if (matchingChild) {
@@ -270,7 +289,9 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
     // source FRAME 제거
     if (source.parent) {
-      source.parent.children = source.parent.children.filter((c) => c.id !== source.id);
+      source.parent.children = source.parent.children.filter(
+        (c) => c.id !== source.id
+      );
     }
   }
 
@@ -445,7 +466,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
    * @param threshold - IoU 임계값 (기본값 0.5)
    * @returns 스쿼시된 단일 트리
    */
-  public squashByIou(trees: InternalNode[], threshold: number = TreeBuilderConstants.SQUASH_IOU_THRESHOLD): InternalNode {
+  public squashByIou(
+    trees: InternalNode[],
+    threshold: number = TreeBuilderConstants.SQUASH_IOU_THRESHOLD
+  ): InternalNode {
     if (trees.length === 0) {
       throw new Error("No trees to squash");
     }
@@ -458,13 +482,20 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
     let root = trees[0];
 
     // 간단한 IoU 함수 사용 (bounds 기반)
-    const simpleGetIou = (nodeA: InternalNode, nodeB: InternalNode): number | null => {
+    const simpleGetIou = (
+      nodeA: InternalNode,
+      nodeB: InternalNode
+    ): number | null => {
       if (!nodeA.bounds || !nodeB.bounds) return null;
       return calculateIouFromBounds(nodeA.bounds, nodeB.bounds);
     };
 
     // 스쿼시 수행
-    root = this.squashWithFunction(root, this.getIouFn || simpleGetIou, threshold);
+    root = this.squashWithFunction(
+      root,
+      this.getIouFn || simpleGetIou,
+      threshold
+    );
 
     return root;
   }
@@ -546,7 +577,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
         matchedPivotIds.add(matchedNode.id);
       } else if (targetNode.parent) {
         // 부모와 매칭되는 pivot 노드 찾기
-        const allParentTypeNodes = this.getAllNodesOfType(pivot, targetNode.parent.type);
+        const allParentTypeNodes = this.getAllNodesOfType(
+          pivot,
+          targetNode.parent.type
+        );
         const matchedParent = allParentTypeNodes.find((pivotNode) =>
           this.isSameInternalNode(targetNode.parent!, pivotNode, data)
         );
@@ -594,7 +628,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
   /**
    * 특정 depth의 모든 노드 반환 (내부 사용)
    */
-  private getNodesAtDepth(root: InternalNode, targetDepth: number): InternalNode[] {
+  private getNodesAtDepth(
+    root: InternalNode,
+    targetDepth: number
+  ): InternalNode[] {
     const result: InternalNode[] = [];
     const queue: Array<{ node: InternalNode; depth: number }> = [
       { node: root, depth: 0 },
@@ -639,7 +676,8 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
     const pos1 = this.getNormalizedPosition(node1, data);
     const pos2 = this.getNormalizedPosition(node2, data);
     if (pos1 && pos2) {
-      const posMatch = Math.abs(pos1.x - pos2.x) <= 0.1 && Math.abs(pos1.y - pos2.y) <= 0.1;
+      const posMatch =
+        Math.abs(pos1.x - pos2.x) <= 0.1 && Math.abs(pos1.y - pos2.y) <= 0.1;
       if (posMatch) return true;
     }
 
@@ -664,7 +702,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
    * InternalNode 트리가 아닌 SceneNode 트리를 순회하여 원본 variant 루트를 찾음.
    * 이렇게 해야 병합된 트리에서도 각 노드의 원래 variant 기준으로 정규화됨.
    */
-  private getNormalizedPosition(node: InternalNode, data: PreparedDesignData): { x: number; y: number } | null {
+  private getNormalizedPosition(
+    node: InternalNode,
+    data: PreparedDesignData
+  ): { x: number; y: number } | null {
     const nodeSpec = data.getNodeById(node.id);
     if (!nodeSpec?.absoluteBoundingBox) {
       return null;
@@ -692,7 +733,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
    *
    * getNormalizedPosition의 y 좌표만 반환하는 헬퍼
    */
-  private getNormalizedY(node: InternalNode, data: PreparedDesignData): number | null {
+  private getNormalizedY(
+    node: InternalNode,
+    data: PreparedDesignData
+  ): number | null {
     const pos = this.getNormalizedPosition(node, data);
     return pos ? pos.y : null;
   }
@@ -722,7 +766,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
   /**
    * 노드 ID로 원본 variant 루트 SceneNode 찾기
    */
-  private findOriginalRoot(nodeId: string, data: PreparedDesignData): SceneNode | null {
+  private findOriginalRoot(
+    nodeId: string,
+    data: PreparedDesignData
+  ): SceneNode | null {
     const variantRootId = this.nodeToVariantRoot.get(nodeId);
     if (!variantRootId) return null;
     return data.getNodeById(variantRootId) || null;
@@ -789,8 +836,14 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
       y2: (nodeBounds.y + nodeBounds.height - rootBounds.y) / rootBounds.height,
     });
 
-    const rect1 = normalize(node1Spec.absoluteBoundingBox, root1Spec.absoluteBoundingBox);
-    const rect2 = normalize(node2Spec.absoluteBoundingBox, root2Spec.absoluteBoundingBox);
+    const rect1 = normalize(
+      node1Spec.absoluteBoundingBox,
+      root1Spec.absoluteBoundingBox
+    );
+    const rect2 = normalize(
+      node2Spec.absoluteBoundingBox,
+      root2Spec.absoluteBoundingBox
+    );
 
     // IoU 계산
     const ix1 = Math.max(rect1.x1, rect2.x1);
@@ -801,8 +854,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
     const ih = Math.max(0, iy2 - iy1);
     const inter = iw * ih;
 
-    const areaA = Math.max(0, rect1.x2 - rect1.x1) * Math.max(0, rect1.y2 - rect1.y1);
-    const areaB = Math.max(0, rect2.x2 - rect2.x1) * Math.max(0, rect2.y2 - rect2.y1);
+    const areaA =
+      Math.max(0, rect1.x2 - rect1.x1) * Math.max(0, rect1.y2 - rect1.y1);
+    const areaB =
+      Math.max(0, rect2.x2 - rect2.x1) * Math.max(0, rect2.y2 - rect2.y1);
     const uni = areaA + areaB - inter;
 
     return uni <= 0 ? 0 : inter / uni;
@@ -837,11 +892,13 @@ export function calculateIoU(
 ): number {
   const xOverlap = Math.max(
     0,
-    Math.min(box1.x + box1.width, box2.x + box2.width) - Math.max(box1.x, box2.x)
+    Math.min(box1.x + box1.width, box2.x + box2.width) -
+      Math.max(box1.x, box2.x)
   );
   const yOverlap = Math.max(
     0,
-    Math.min(box1.y + box1.height, box2.y + box2.height) - Math.max(box1.y, box2.y)
+    Math.min(box1.y + box1.height, box2.y + box2.height) -
+      Math.max(box1.y, box2.y)
   );
 
   const intersectionArea = xOverlap * yOverlap;
@@ -849,8 +906,10 @@ export function calculateIoU(
   const area2 = box2.width * box2.height;
 
   if (area1 === 0 || area2 === 0) {
-    return box1.x === box2.x && box1.y === box2.y &&
-      box1.width === box2.width && box1.height === box2.height
+    return box1.x === box2.x &&
+      box1.y === box2.y &&
+      box1.width === box2.width &&
+      box1.height === box2.height
       ? 1
       : 0;
   }
@@ -949,7 +1008,10 @@ function isValidSquashGroup(nodeA: InternalNode, nodeB: InternalNode): boolean {
 /**
  * 조상-자손 관계인지 확인
  */
-function isAncestorDescendant(nodeA: InternalNode, nodeB: InternalNode): boolean {
+function isAncestorDescendant(
+  nodeA: InternalNode,
+  nodeB: InternalNode
+): boolean {
   // nodeA가 nodeB의 조상인지 확인
   let current: InternalNode | null = nodeB.parent;
   while (current) {
@@ -993,7 +1055,9 @@ function performSquash(nodeA: InternalNode, nodeB: InternalNode): void {
 export function calculateIouFromRoot(
   nodeA: InternalNode,
   nodeB: InternalNode,
-  getRootBounds: (node: InternalNode) => { x1: number; y1: number; x2: number; y2: number } | null
+  getRootBounds: (
+    node: InternalNode
+  ) => { x1: number; y1: number; x2: number; y2: number } | null
 ): number | null {
   const boundsA = getRootBounds(nodeA);
   const boundsB = getRootBounds(nodeB);
@@ -1010,8 +1074,10 @@ export function calculateIouFromRoot(
   const inter = iw * ih;
 
   // 합집합 영역
-  const areaA = Math.max(0, boundsA.x2 - boundsA.x1) * Math.max(0, boundsA.y2 - boundsA.y1);
-  const areaB = Math.max(0, boundsB.x2 - boundsB.x1) * Math.max(0, boundsB.y2 - boundsB.y1);
+  const areaA =
+    Math.max(0, boundsA.x2 - boundsA.x1) * Math.max(0, boundsA.y2 - boundsA.y1);
+  const areaB =
+    Math.max(0, boundsB.x2 - boundsB.x1) * Math.max(0, boundsB.y2 - boundsB.y1);
   const uni = areaA + areaB - inter;
 
   return uni <= 0 ? 0 : inter / uni;

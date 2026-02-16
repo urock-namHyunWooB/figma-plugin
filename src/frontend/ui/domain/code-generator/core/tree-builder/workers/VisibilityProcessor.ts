@@ -79,6 +79,19 @@ export class VisibilityProcessor
   // Static Pipeline Method
   // ==========================================================================
 
+  /**
+   * hidden 노드 처리 및 show* prop 생성
+   *
+   * visible=false인 노드들을 찾아 show* prop을 생성합니다.
+   * 이를 통해 기본적으로 숨겨진 요소를 인스턴스에서 보이게 할 수 있습니다.
+   *
+   * 처리 내용:
+   * - 모든 variant에서 항상 숨겨진 노드는 제외 (렌더링 안 함)
+   * - 일부 variant에서만 숨겨진 노드는 show* prop 생성
+   * - prop condition을 hiddenConditions Map에 저장
+   *
+   * @returns propsMap과 hiddenConditions가 업데이트된 BuildContext
+   */
   static processHidden(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {
       throw new Error("VisibilityProcessor.processHidden: internalTree is required.");
@@ -134,6 +147,21 @@ export class VisibilityProcessor
     return { ...ctx, propsMap, hiddenConditions };
   }
 
+  /**
+   * visibility 조건을 최종 결정하여 conditionalRule 생성
+   *
+   * 각 노드의 visibility 상태를 분석하여 조건부 렌더링 규칙을 생성합니다.
+   *
+   * 분석 순서:
+   * 1. hiddenCondition이 있으면 사용 (processHidden에서 설정)
+   * 2. visible prop 바인딩이 있으면 prop 조건 생성
+   * 3. Type별 visibility 차이 분석 (icon-* 타입 등)
+   * 4. variant 기반 visibility 추론
+   *
+   * 결과로 node.conditions와 ctx.conditionals에 조건 추가
+   *
+   * @returns conditionals가 업데이트된 BuildContext
+   */
   static resolve(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree || !ctx.propsMap || !ctx.hiddenConditions) {
       throw new Error("VisibilityProcessor.resolve: internalTree, propsMap, and hiddenConditions are required.");
