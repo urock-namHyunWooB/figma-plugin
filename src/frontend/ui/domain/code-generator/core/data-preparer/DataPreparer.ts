@@ -17,6 +17,9 @@ import PreparedDesignData from "./PreparedDesignData";
 class DataPreparer implements IDataPreparer {
   /**
    * FigmaNodeData를 PreparedDesignData로 변환
+   * @param data - Figma에서 추출한 원본 노드 데이터
+   * @param policy - 데이터 준비 정책 (커스텀 props 추출 함수 등)
+   * @returns HashMap 기반 O(1) 조회 구조를 가진 PreparedDesignData
    */
   public prepare(
     data: FigmaNodeData,
@@ -69,6 +72,8 @@ class DataPreparer implements IDataPreparer {
   /**
    * document 트리를 순회하여 nodeMap 구축
    * O(n) 구축, O(1) 조회
+   * @param document - 루트 SceneNode
+   * @returns 노드 ID를 키로 하는 SceneNode Map
    */
   private buildNodeMap(document: SceneNode): Map<string, SceneNode> {
     const nodeMap = new Map<string, SceneNode>();
@@ -90,6 +95,8 @@ class DataPreparer implements IDataPreparer {
   /**
    * styleTree를 순회하여 styleMap 구축
    * O(n) 구축, O(1) 조회
+   * @param styleTree - 루트 StyleTree
+   * @returns 스타일 ID를 키로 하는 StyleTree Map
    */
   private buildStyleMap(styleTree: StyleTree): Map<string, StyleTree> {
     const styleMap = new Map<string, StyleTree>();
@@ -114,6 +121,9 @@ class DataPreparer implements IDataPreparer {
    * - COMPONENT_SET: componentPropertyDefinitions 사용
    * - INSTANCE/COMPONENT: componentProperties를 definitions 형식으로 변환
    * - componentPropertyReferences에서 참조하는 props 자동 추출
+   * @param document - 루트 SceneNode
+   * @param policy - 데이터 준비 정책
+   * @returns 정규화된 Props 정의 객체
    */
   private extractProps(document: SceneNode, policy?: DataPreparerPolicy): PropsDef {
     let propsDef: PropsDef = {};
@@ -160,6 +170,8 @@ class DataPreparer implements IDataPreparer {
    * INSTANCE의 componentProperties를 componentPropertyDefinitions 형식으로 변환
    *
    * 원본 키를 그대로 사용합니다 (이름 생성은 PropsProcessor에서).
+   * @param componentProperties - INSTANCE의 componentProperties
+   * @returns componentPropertyDefinitions 형식으로 변환된 PropsDef
    */
   private convertComponentPropertiesToDefinitions(
     componentProperties: Record<string, any>
@@ -188,8 +200,9 @@ class DataPreparer implements IDataPreparer {
    *
    * 원본 ref 키를 그대로 prop 키로 사용합니다.
    * prop 이름 생성은 PropsProcessor에서 담당합니다.
-   *
-   * @param existingPropKeys 이미 componentPropertyDefinitions에 정의된 prop 키들 (중복 방지)
+   * @param document - 루트 SceneNode
+   * @param existingPropKeys - 이미 componentPropertyDefinitions에 정의된 prop 키들 (중복 방지)
+   * @returns 참조된 props 정의 객체
    */
   private extractPropsFromPropertyReferences(
     document: SceneNode,
@@ -246,6 +259,8 @@ class DataPreparer implements IDataPreparer {
 
   /**
    * prop 이름을 camelCase로 정규화
+   * @param propsDef - 정규화 전 Props 정의
+   * @returns camelCase로 정규화된 Props 정의
    */
   private normalizePropsName(propsDef: PropsDef): PropsDef {
     const props: PropsDef = {};
@@ -271,6 +286,9 @@ class DataPreparer implements IDataPreparer {
    *
    * - fills 오버라이드 (xxxBg) → string (CSS 색상)
    * - characters 오버라이드 (xxxText) → string | React.ReactNode
+   * @param props - 기존 Props 정의
+   * @param overrideableProps - 오버라이드 가능한 props 정보
+   * @returns 오버라이드 가능한 props가 병합된 Props 정의
    */
   private mergeOverrideableProps(
     props: PropsDef,
@@ -302,6 +320,8 @@ class DataPreparer implements IDataPreparer {
 
   /**
    * dependencies를 Map으로 변환
+   * @param dependencies - 의존성 컴포넌트 데이터 객체
+   * @returns 컴포넌트 ID를 키로 하는 FigmaNodeData Map
    */
   private buildDependenciesMap(
     dependencies?: Record<string, FigmaNodeData>
@@ -318,6 +338,8 @@ class DataPreparer implements IDataPreparer {
 
   /**
    * imageUrls를 Map으로 변환
+   * @param imageUrls - 이미지 참조와 URL 매핑 객체
+   * @returns 이미지 참조를 키로 하는 URL Map
    */
   private buildImageUrlsMap(
     imageUrls?: Record<string, string>
@@ -334,6 +356,8 @@ class DataPreparer implements IDataPreparer {
 
   /**
    * vectorSvgs를 Map으로 변환
+   * @param vectorSvgs - 벡터 노드 ID와 SVG 문자열 매핑 객체
+   * @returns 노드 ID를 키로 하는 SVG 문자열 Map
    */
   private buildVectorSvgsMap(
     vectorSvgs?: Record<string, string>

@@ -35,6 +35,8 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
    *
    * 루트 컴포넌트에서 시작하여 모든 의존성을 탐색합니다.
    * 각 컴포넌트는 ComponentSet ID로 식별됩니다.
+   * @param rootData - 루트 Figma 노드 데이터
+   * @returns 의존성 그래프
    */
   public buildGraph(rootData: FigmaNodeData): DependencyGraph {
     const nodes = new Map<ComponentId, ComponentInfo>();
@@ -62,7 +64,8 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
    *
    * Kahn's algorithm을 사용하여 의존되는 컴포넌트부터 정렬합니다.
    * 결과: [의존되는 것들, ..., 루트]
-   *
+   * @param graph - 의존성 그래프
+   * @returns 토폴로지 정렬된 컴포넌트 ID 배열
    * @throws CircularDependencyError 순환 의존성 발견 시
    */
   public topologicalSort(graph: DependencyGraph): ComponentId[] {
@@ -87,6 +90,8 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
    * 순환 의존성 감지
    *
    * DFS를 사용하여 그래프에서 순환을 찾습니다.
+   * @param graph - 의존성 그래프
+   * @returns 발견된 순환 배열 또는 순환이 없으면 null
    */
   public detectCycles(graph: DependencyGraph): Cycle[] | null {
     const { nodes, edges } = graph;
@@ -137,6 +142,10 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
 
   /**
    * dependencies 필드를 BFS로 탐색하여 노드와 엣지 구축
+   * @param rootData - 루트 Figma 노드 데이터
+   * @param rootId - 루트 컴포넌트 ID
+   * @param nodes - 노드 맵 (출력)
+   * @param edges - 엣지 맵 (출력)
    */
   private _buildNodesFromDependencies(
     rootData: FigmaNodeData,
@@ -184,6 +193,8 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
 
   /**
    * 컴포넌트의 직접 의존성 추출 (dependencies 필드에서)
+   * @param data - Figma 노드 데이터
+   * @returns 의존성 이름과 데이터 배열
    */
   private _extractDirectDependencies(
     data: FigmaNodeData
@@ -207,6 +218,10 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
    * dependencies 필드가 flatten되어 있어 중첩 관계가 손실된 경우를 보완합니다.
    * 같은 ComponentSet의 여러 variant가 서로 다른 INSTANCE를 가질 수 있으므로
    * 모든 variant를 탐색합니다.
+   * @param rootId - 루트 컴포넌트 ID
+   * @param nodes - 노드 맵
+   * @param edges - 엣지 맵 (출력)
+   * @param allDependencies - 모든 의존성 데이터
    */
   private _addEdgesFromInstanceChildren(
     rootId: ComponentId,
@@ -240,6 +255,10 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
 
   /**
    * 단일 variant의 children에서 INSTANCE를 찾아 엣지 추가
+   * @param data - variant Figma 노드 데이터
+   * @param currentId - 현재 컴포넌트 ID
+   * @param edges - 엣지 맵 (출력)
+   * @param allDependencies - 모든 의존성 데이터
    */
   private _addEdgesFromSingleVariant(
     data: FigmaNodeData,
@@ -265,6 +284,9 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
 
   /**
    * 같은 ComponentSet에 속한 모든 variant 반환
+   * @param componentSetId - ComponentSet ID
+   * @param allDependencies - 모든 의존성 데이터
+   * @returns 해당 ComponentSet의 variant 데이터 배열
    */
   private _getAllVariantsForComponentSet(
     componentSetId: ComponentId,
@@ -277,6 +299,8 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
 
   /**
    * 노드의 children을 재귀 순회하여 INSTANCE의 componentId 수집
+   * @param node - 탐색할 노드
+   * @returns INSTANCE의 componentId 배열
    */
   private _findInstanceComponentIds(node: any): string[] {
     const result: string[] = [];
@@ -300,6 +324,9 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
 
   /**
    * in-degree 계산 (각 노드가 몇 번 의존되는지)
+   * @param nodes - 노드 맵
+   * @param edges - 엣지 맵
+   * @returns 각 노드의 in-degree 맵
    */
   private _calculateInDegree(
     nodes: Map<ComponentId, ComponentInfo>,
@@ -322,6 +349,10 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
 
   /**
    * Kahn's algorithm 실행
+   * @param nodes - 노드 맵
+   * @param edges - 엣지 맵
+   * @param inDegree - 각 노드의 in-degree 맵
+   * @returns 토폴로지 정렬된 컴포넌트 ID 배열
    */
   private _kahnSort(
     nodes: Map<ComponentId, ComponentInfo>,
@@ -362,6 +393,8 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
 
   /**
    * FigmaNodeData에서 ComponentSet ID 추출
+   * @param data - Figma 노드 데이터
+   * @returns ComponentSet ID 또는 null
    */
   private _getComponentSetId(data: FigmaNodeData): ComponentId | null {
     const document = data.info?.document;
@@ -382,6 +415,8 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
 
   /**
    * FigmaNodeData에서 컴포넌트 이름 추출
+   * @param data - Figma 노드 데이터
+   * @returns 컴포넌트 이름
    */
   private _getComponentName(data: FigmaNodeData): string {
     const document = data.info?.document;
@@ -409,6 +444,9 @@ class DependencyAnalyzer implements IDependencyAnalyzer {
 
   /**
    * componentId와 depData에서 ComponentSet 이름 결정
+   * @param componentId - 컴포넌트 ID
+   * @param depData - 의존성 Figma 노드 데이터
+   * @returns ComponentSet 이름
    */
   private _resolveComponentName(
     componentId: string,

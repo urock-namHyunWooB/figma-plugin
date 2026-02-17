@@ -9,10 +9,15 @@ import type PreparedDesignData from "@code-generator/core/data-preparer/Prepared
  * 이 매니저는 INSTANCE의 오버라이드를 원본 데이터에 병합하는 역할을 담당합니다.
  */
 class InstanceOverrideManager {
+  /**
+   * InstanceOverrideManager 생성자
+   * @param data - PreparedDesignData 인스턴스
+   */
   constructor(private data: PreparedDesignData) {}
 
   /**
    * 메인 문서에서 componentId별 INSTANCE 노드 ID 목록 찾기
+   * @returns componentId를 키로, INSTANCE 노드 ID 배열을 값으로 하는 Map
    */
   public findInstancesByComponentId(): Map<string, string[]> {
     const result = new Map<string, string[]>();
@@ -41,6 +46,8 @@ class InstanceOverrideManager {
   /**
    * 메인 문서 및 dependency 문서에서 특정 componentId를 참조하는 INSTANCE 노드 전체 데이터 찾기
    * INSTANCE의 children을 사용하여 부모 컨텍스트의 visible 상태를 반영
+   * @param componentId - 찾을 컴포넌트 ID
+   * @returns 찾은 INSTANCE 노드 또는 null
    */
   public findInstanceNodeForComponentId(componentId: string): any | null {
     const traverse = (node: any): any | null => {
@@ -80,6 +87,9 @@ class InstanceOverrideManager {
   /**
    * INSTANCE 노드의 컨텍스트를 variant에 병합
    * INSTANCE의 children(I...로 시작하는 ID)을 사용하여 부모 컨텍스트 반영
+   * @param variant - 원본 FigmaNodeData variant
+   * @param instanceNode - 병합할 INSTANCE 노드 데이터
+   * @returns INSTANCE 컨텍스트가 병합된 FigmaNodeData
    */
   public enrichVariantWithInstanceContext(
     variant: FigmaNodeData,
@@ -130,6 +140,9 @@ class InstanceOverrideManager {
   /**
    * INSTANCE의 styleTree만 병합 (children은 원본 유지)
    * visible: false 노드가 있을 때 사용 - 크기 override는 적용하되 visible 상태는 원본 유지
+   * @param variant - 원본 FigmaNodeData variant
+   * @param instanceNode - 병합할 INSTANCE 노드 데이터
+   * @returns styleTree만 병합된 FigmaNodeData
    */
   public enrichVariantWithStyleTreeOnly(
     variant: FigmaNodeData,
@@ -164,6 +177,9 @@ class InstanceOverrideManager {
   /**
    * INSTANCE children을 그대로 사용 (오버라이드가 없는 경우)
    * I...로 시작하는 노드 ID가 유지되어 updateCleanupNodes에서 삭제됨
+   * @param variant - 원본 FigmaNodeData variant
+   * @param instanceNode - 병합할 INSTANCE 노드 데이터
+   * @returns INSTANCE children으로 교체된 FigmaNodeData
    */
   public enrichVariantWithInstanceChildren(
     variant: FigmaNodeData,
@@ -204,6 +220,9 @@ class InstanceOverrideManager {
   /**
    * INSTANCE children에 실제 오버라이드가 있는지 확인
    * (characters, fills 등이 원본과 다른 경우)
+   * @param variantChildren - 원본 variant children 배열
+   * @param instanceChildren - INSTANCE children 배열
+   * @returns 실제 오버라이드가 있으면 true
    */
   public hasActualOverride(
     variantChildren: any[],
@@ -251,7 +270,10 @@ class InstanceOverrideManager {
   /**
    * INSTANCE children의 오버라이드를 원본 variant children에 적용
    * - 원본 children의 ID를 유지 (I...로 시작하면 삭제되므로)
-   * - INSTANCE children에서 **실제로 변경된** 속성(characters 등)만 추출
+   * - INSTANCE children에서 실제로 변경된 속성(characters 등)만 추출
+   * @param variantChildren - 원본 variant children 배열
+   * @param instanceChildren - INSTANCE children 배열
+   * @returns 오버라이드가 적용된 children 배열
    */
   public mergeInstanceOverrides(
     variantChildren: any[],
@@ -333,6 +355,9 @@ class InstanceOverrideManager {
    * styleTree children도 원본 ID로 병합
    * INSTANCE의 styleTree ID는 I...로 시작하여 updateCleanupNodes에서 삭제되므로
    * 원본 variant ID를 유지하면서 스타일만 오버라이드
+   * @param variantStyleChildren - 원본 variant styleTree children 배열
+   * @param instanceStyleChildren - INSTANCE styleTree children 배열
+   * @returns 스타일이 병합된 children 배열
    */
   public mergeStyleTreeChildren(
     variantStyleChildren: any[],
@@ -382,6 +407,8 @@ class InstanceOverrideManager {
 
   /**
    * 메인 styleTree에서 특정 INSTANCE ID의 styleTree 부분 찾기
+   * @param instanceId - 찾을 INSTANCE 노드 ID
+   * @returns 찾은 styleTree 노드 또는 null
    */
   public findStyleTreeForInstance(instanceId: string): any | null {
     const styleTree = this.data.getRenderTree();
@@ -405,7 +432,9 @@ class InstanceOverrideManager {
 
   /**
    * INSTANCE child ID에서 원본 ID 추출
-   * 예: I704:56;704:29;692:1613 → 692:1613
+   * 예: I704:56;704:29;692:1613 -> 692:1613
+   * @param instanceId - INSTANCE child ID 문자열
+   * @returns 원본 노드 ID
    */
   private _getOriginalId(instanceId: string): string {
     if (!instanceId.startsWith("I")) return instanceId;
@@ -416,6 +445,9 @@ class InstanceOverrideManager {
   /**
    * INSTANCE의 children에서 오버라이드된 속성(fills, characters)을 추출
    * prop 형태로 반환: { rectangle1Bg: "#D6D6D6", aaText: "90" }
+   * @param instanceNode - INSTANCE 노드 데이터
+   * @param variantChildren - 원본 variant children 배열
+   * @returns prop 이름과 값의 Record 객체
    */
   public extractOverrideProps(
     instanceNode: any,
@@ -480,7 +512,9 @@ class InstanceOverrideManager {
   }
 
   /**
-   * fills 배열에서 색상 추출 (hex 형식)
+   * fills 배열에서 색상 추출 (hex 또는 rgba 형식)
+   * @param fills - Figma fills 배열
+   * @returns hex 또는 rgba 색상 문자열, 추출 실패 시 null
    */
   private _extractColorFromFills(fills: any[]): string | null {
     if (!fills || fills.length === 0) return null;
@@ -502,6 +536,8 @@ class InstanceOverrideManager {
 
   /**
    * 문자열을 camelCase로 변환
+   * @param str - 변환할 문자열
+   * @returns camelCase로 변환된 문자열
    */
   private _toCamelCase(str: string): string {
     return str
@@ -518,6 +554,8 @@ class InstanceOverrideManager {
 
   /**
    * 메인 문서 및 dependency 문서에서 특정 componentId를 참조하는 모든 INSTANCE 노드 찾기
+   * @param componentId - 찾을 컴포넌트 ID
+   * @returns 찾은 모든 INSTANCE 노드 배열
    */
   public findAllInstanceNodesForComponentId(componentId: string): any[] {
     const results: any[] = [];

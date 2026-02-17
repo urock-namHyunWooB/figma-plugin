@@ -51,13 +51,25 @@ export interface Policy {
  * DataPreparer 정책
  */
 export interface DataPreparerPolicy {
-  /** 특정 레이어 무시 */
+  /**
+   * 특정 레이어 무시 여부 판별
+   * @param node - 검사할 Figma 노드 데이터
+   * @returns 무시할 경우 true
+   */
   shouldIgnore?: (node: FigmaNodeData) => boolean;
 
-  /** 노드 변환 규칙 */
+  /**
+   * 노드 변환 규칙 적용
+   * @param node - 변환할 Figma 노드 데이터
+   * @returns 변환된 노드 데이터
+   */
   transformNode?: (node: FigmaNodeData) => FigmaNodeData;
 
-  /** 커스텀 props 추출 */
+  /**
+   * 커스텀 props 추출
+   * @param node - props를 추출할 Figma 노드 데이터
+   * @returns 추출된 커스텀 props 객체
+   */
   extractCustomProps?: (node: FigmaNodeData) => Record<string, unknown>;
 }
 
@@ -68,13 +80,25 @@ export interface TreeBuilderPolicy {
   /** 특정 레이어를 특정 컴포넌트로 해석 */
   interpretAs?: Map<string, ComponentType>;
 
-  /** 컴포넌트 분리 기준 */
+  /**
+   * 컴포넌트 분리 기준 판별
+   * @param node - 검사할 DesignNode
+   * @returns 분리해야 할 경우 true
+   */
   shouldSplitComponent?: (node: DesignNode) => boolean;
 
-  /** 커스텀 조건부 렌더링 규칙 */
+  /**
+   * 커스텀 조건부 렌더링 규칙 생성
+   * @param node - 검사할 DesignNode
+   * @returns 조건부 렌더링 규칙 또는 null
+   */
   customConditionals?: (node: DesignNode) => ConditionalRule | null;
 
-  /** 배열 슬롯 감지 커스터마이징 */
+  /**
+   * 배열 슬롯 감지 커스터마이징
+   * @param nodes - 검사할 DesignNode 배열
+   * @returns 배열 슬롯 정보 또는 null
+   */
   detectArraySlot?: (nodes: DesignNode[]) => ArraySlotInfo | null;
 }
 
@@ -97,7 +121,11 @@ export interface CodeEmitterPolicy {
   /** 코드 컨벤션 */
   convention?: CodeConvention;
 
-  /** 메타데이터 삽입 */
+  /**
+   * 메타데이터 삽입
+   * @param code - 원본 EmittedCode
+   * @returns 메타데이터가 삽입된 EmittedCode
+   */
   injectMetadata?: (code: EmittedCode) => EmittedCode;
 
   /** 커스텀 import 추가 */
@@ -126,7 +154,11 @@ export interface BundlerPolicy {
   /** 번들링 옵션 */
   bundling?: BundlingOptions;
 
-  /** 후처리 훅 */
+  /**
+   * 후처리 훅
+   * @param code - 원본 코드 문자열
+   * @returns 후처리된 코드 문자열
+   */
   postProcess?: (code: string) => string;
 }
 
@@ -213,19 +245,98 @@ export interface PreparedDesignData {
   vectorSvgs: Map<string, string>;
 
   // 조회 메서드
+  /**
+   * ID로 SceneNode 조회
+   * @param id - 노드 ID
+   * @returns 해당 SceneNode 또는 undefined
+   */
   getNodeById(id: string): SceneNode | undefined;
+
+  /**
+   * ID로 StyleTree 조회
+   * @param id - 스타일 ID
+   * @returns 해당 StyleTree 또는 undefined
+   */
   getStyleById(id: string): StyleTree | undefined;
+
+  /**
+   * 컴포넌트 ID로 의존성 FigmaNodeData 조회
+   * @param componentId - 컴포넌트 ID
+   * @returns 해당 FigmaNodeData 또는 undefined
+   */
   getDependencyById?(componentId: string): FigmaNodeData | undefined;
+
+  /**
+   * 이미지 참조로 이미지 URL 조회
+   * @param imageRef - 이미지 참조 해시
+   * @returns 이미지 URL 또는 undefined
+   */
   getImageUrlByRef?(imageRef: string): string | undefined;
+
+  /**
+   * 노드 ID로 이미지 참조 조회
+   * @param nodeId - 노드 ID
+   * @returns 이미지 참조 해시 또는 undefined
+   */
   getImageRefByNodeId?(nodeId: string): string | undefined;
+
+  /**
+   * 노드 ID로 이미지 URL 조회
+   * @param nodeId - 노드 ID
+   * @returns 이미지 URL 또는 undefined
+   */
   getImageUrlByNodeId?(nodeId: string): string | undefined;
+
+  /**
+   * 노드 ID로 Vector SVG 조회
+   * @param nodeId - 노드 ID
+   * @returns SVG 문자열 또는 undefined
+   */
   getVectorSvgByNodeId?(nodeId: string): string | undefined;
+
+  /**
+   * 컴포넌트 속성 정의 조회
+   * @returns 컴포넌트 속성 정의 객체 또는 null
+   */
   getComponentPropertyDefinitions?(): Record<string, unknown> | null;
+
+  /**
+   * 컴포넌트 속성 조회
+   * @returns 컴포넌트 속성 객체 또는 null
+   */
   getComponentProperties?(): Record<string, unknown> | null;
+
+  /**
+   * 루트 노드 타입 조회
+   * @returns 루트 노드 타입 문자열
+   */
   getRootNodeType?(): string;
+
+  /**
+   * 인스턴스 ID로 첫 번째 Vector SVG 조회
+   * @param instanceId - 인스턴스 ID
+   * @returns SVG 문자열 또는 undefined
+   */
   getFirstVectorSvgByInstanceId?(instanceId: string): string | undefined;
+
+  /**
+   * 인스턴스 ID로 모든 Vector SVG 조회
+   * @param instanceId - 인스턴스 ID
+   * @returns SVG 정보 배열 (nodeId, svg, boundingBox 포함)
+   */
   getVectorSvgsByInstanceId?(instanceId: string): { nodeId: string; svg: string; boundingBox?: any }[];
+
+  /**
+   * 인스턴스 ID에 해당하는 Vector SVG들을 병합
+   * @param instanceId - 인스턴스 ID
+   * @returns 병합된 SVG 문자열 또는 undefined
+   */
   mergeInstanceVectorSvgs?(instanceId: string): string | undefined;
+
+  /**
+   * 의존성을 ComponentSet별로 그룹화하여 조회
+   * @returns ComponentSet ID를 키로 하는 FigmaNodeData 배열 맵
+   */
   getDependenciesGroupedByComponentSet?(): Record<string, FigmaNodeData[]>;
 }
 
@@ -654,6 +765,10 @@ export type Cycle = ComponentId[];
  * 순환 의존성 에러
  */
 export class CircularDependencyError extends Error {
+  /**
+   * CircularDependencyError 생성자
+   * @param cycles - 감지된 순환 의존성 배열
+   */
   constructor(public cycles: Cycle[]) {
     super(
       `Circular dependency detected: ${cycles.map((c) => c.join(" → ")).join(", ")}`
@@ -671,6 +786,12 @@ export class CircularDependencyError extends Error {
  * Figma 원본 데이터를 준비된 형태로 변환
  */
 export interface IDataPreparer {
+  /**
+   * Figma 데이터를 준비된 형태로 변환
+   * @param data - 원본 Figma 노드 데이터
+   * @param policy - 데이터 준비 정책 (선택적)
+   * @returns 준비된 디자인 데이터
+   */
   prepare(data: FigmaNodeData, policy?: DataPreparerPolicy): PreparedDesignData;
 }
 
@@ -679,6 +800,12 @@ export interface IDataPreparer {
  * 준비된 데이터를 플랫폼 독립적 IR로 변환
  */
 export interface ITreeBuilder {
+  /**
+   * 준비된 데이터를 DesignTree로 변환
+   * @param data - 준비된 디자인 데이터
+   * @param policy - 트리 빌더 정책 (선택적)
+   * @returns 플랫폼 독립적 DesignTree
+   */
   build(data: PreparedDesignData, policy?: TreeBuilderPolicy): DesignTree;
 }
 
@@ -691,6 +818,12 @@ export interface ITreeBuilder {
  * - 향후 외부 서비스 호출 (예: LLM 기반 코드 생성) 지원 가능
  */
 export interface ICodeEmitter {
+  /**
+   * DesignTree를 플랫폼별 코드로 변환
+   * @param tree - 변환할 DesignTree
+   * @param policy - 코드 생성 정책
+   * @returns 생성된 코드 정보를 담은 Promise
+   */
   emit(tree: DesignTree, policy: CodeEmitterPolicy): Promise<EmittedCode>;
 }
 
@@ -699,6 +832,12 @@ export interface ICodeEmitter {
  * 여러 컴포넌트 코드를 번들링
  */
 export interface IBundler {
+  /**
+   * 여러 컴포넌트 코드를 단일 번들로 결합
+   * @param codes - 컴포넌트 ID별 EmittedCode 맵
+   * @param policy - 번들러 정책 (선택적)
+   * @returns 번들링된 코드 문자열
+   */
   bundle(codes: Map<ComponentId, EmittedCode>, policy?: BundlerPolicy): string;
 }
 
@@ -707,10 +846,34 @@ export interface IBundler {
  * 정책 관리 및 제공
  */
 export interface IPolicyManager {
+  /**
+   * 정책 로드
+   * @param policy - 로드할 부분 정책
+   */
   load(policy: Partial<Policy>): void;
+
+  /**
+   * DataPreparer 정책 조회
+   * @returns DataPreparer 정책
+   */
   getDataPreparerPolicy(): DataPreparerPolicy;
+
+  /**
+   * TreeBuilder 정책 조회
+   * @returns TreeBuilder 정책
+   */
   getTreeBuilderPolicy(): TreeBuilderPolicy;
+
+  /**
+   * CodeEmitter 정책 조회
+   * @returns CodeEmitter 정책
+   */
   getCodeEmitterPolicy(): CodeEmitterPolicy;
+
+  /**
+   * Bundler 정책 조회
+   * @returns Bundler 정책
+   */
   getBundlerPolicy(): BundlerPolicy;
 }
 
@@ -721,17 +884,23 @@ export interface IPolicyManager {
 export interface IDependencyAnalyzer {
   /**
    * 의존성 그래프 구축
+   * @param rootData - 루트 Figma 노드 데이터
+   * @returns 구축된 의존성 그래프
    */
   buildGraph(rootData: FigmaNodeData): DependencyGraph;
 
   /**
    * 토폴로지 정렬 (컴파일 순서 결정)
+   * @param graph - 의존성 그래프
+   * @returns 컴파일 순서대로 정렬된 컴포넌트 ID 배열
    * @throws CircularDependencyError 순환 의존성 발견 시
    */
   topologicalSort(graph: DependencyGraph): ComponentId[];
 
   /**
    * 순환 의존성 감지
+   * @param graph - 의존성 그래프
+   * @returns 감지된 순환 의존성 배열 또는 null
    */
   detectCycles(graph: DependencyGraph): Cycle[] | null;
 }

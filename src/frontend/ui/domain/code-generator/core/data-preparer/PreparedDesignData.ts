@@ -36,6 +36,18 @@ class PreparedDesignData implements IPreparedDesignData {
   /** Vector SVG 맵 */
   public readonly vectorSvgs: Map<string, string>;
 
+  /**
+   * PreparedDesignData 생성자
+   * @param spec - 원본 FigmaNodeData (깊은 복사본)
+   * @param document - 루트 document 노드
+   * @param styleTree - 스타일 트리
+   * @param nodeMap - 노드 ID → SceneNode 매핑
+   * @param styleMap - 스타일 ID → StyleTree 매핑
+   * @param props - 추출된 Props 정의
+   * @param dependencies - 의존성 맵
+   * @param imageUrls - 이미지 URL 맵
+   * @param vectorSvgs - Vector SVG 맵
+   */
   constructor(
     spec: FigmaNodeData,
     document: SceneNode,
@@ -60,6 +72,8 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * 노드 ID로 SceneNode 조회 (O(1))
+   * @param id - 조회할 노드 ID
+   * @returns 해당 ID의 SceneNode, 없으면 undefined
    */
   public getNodeById(id: string): SceneNode | undefined {
     return this.nodeMap.get(id);
@@ -67,6 +81,8 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * 노드 ID로 StyleTree 조회 (O(1))
+   * @param id - 조회할 노드 ID
+   * @returns 해당 ID의 StyleTree (이미지 URL 치환 적용됨), 없으면 undefined
    */
   public getStyleById(id: string): StyleTree | undefined {
     const styleTree = this.styleMap.get(id);
@@ -85,6 +101,8 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * 의존성 ID로 FigmaNodeData 조회 (O(1))
+   * @param componentId - 조회할 컴포넌트 ID
+   * @returns 해당 ID의 FigmaNodeData, 없으면 undefined
    */
   public getDependencyById(componentId: string): FigmaNodeData | undefined {
     return this.dependencies.get(componentId);
@@ -92,6 +110,8 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * 이미지 참조(imageRef)로 URL 조회 (O(1))
+   * @param imageRef - 이미지 참조 키
+   * @returns 해당 참조의 이미지 URL, 없으면 undefined
    */
   public getImageUrlByRef(imageRef: string): string | undefined {
     return this.imageUrls.get(imageRef);
@@ -99,6 +119,8 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * 노드 ID로 해당 노드의 imageRef 반환
+   * @param nodeId - 조회할 노드 ID
+   * @returns 해당 노드의 이미지 참조, 없으면 undefined
    */
   public getImageRefByNodeId(nodeId: string): string | undefined {
     const node = this.nodeMap.get(nodeId);
@@ -117,6 +139,8 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * 노드 ID로 실제 이미지 URL 반환
+   * @param nodeId - 조회할 노드 ID
+   * @returns 해당 노드의 이미지 URL, 없으면 undefined
    */
   public getImageUrlByNodeId(nodeId: string): string | undefined {
     const imageRef = this.getImageRefByNodeId(nodeId);
@@ -126,6 +150,8 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * 노드 ID로 SVG 문자열 반환
+   * @param nodeId - 조회할 노드 ID
+   * @returns 해당 노드의 SVG 문자열, 없으면 undefined
    */
   public getVectorSvgByNodeId(nodeId: string): string | undefined {
     return this.vectorSvgs.get(nodeId);
@@ -135,6 +161,8 @@ class PreparedDesignData implements IPreparedDesignData {
    * 노드 ID로 SVG 문자열 반환 (suffix 매칭)
    * vectorSvgs 키가 INSTANCE 경로 기반일 때 (예: I153:1214;55:1323;55:1327)
    * 마지막 세그먼트 (55:1327)로 매칭
+   * @param nodeId - 조회할 노드 ID
+   * @returns 매칭된 SVG 문자열, 없으면 undefined
    */
   public getVectorSvgBySuffix(nodeId: string): string | undefined {
     // 정확한 매칭 먼저 시도
@@ -154,6 +182,7 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * componentPropertyDefinitions 반환
+   * @returns componentPropertyDefinitions 객체, 없으면 null
    */
   public getComponentPropertyDefinitions(): Record<string, unknown> | null {
     return "componentPropertyDefinitions" in this.document
@@ -163,6 +192,7 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * componentProperties 반환
+   * @returns componentProperties 객체, 없으면 null
    */
   public getComponentProperties(): Record<string, unknown> | null {
     return "componentProperties" in this.document
@@ -172,6 +202,7 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * 루트 노드 타입 반환
+   * @returns 루트 document 노드의 타입 문자열
    */
   public getRootNodeType(): string {
     return this.document.type;
@@ -181,6 +212,7 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * 루트 document 반환 (SpecDataManager 호환)
+   * @returns 루트 document SceneNode
    */
   public getDocument(): SceneNode {
     return this.document;
@@ -188,6 +220,7 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * 전체 spec 반환 (SpecDataManager 호환)
+   * @returns 원본 FigmaNodeData (깊은 복사본)
    */
   public getSpec(): FigmaNodeData {
     return this.spec;
@@ -195,6 +228,7 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * styleTree 반환 (SpecDataManager 호환)
+   * @returns 스타일 트리
    */
   public getRenderTree(): StyleTree {
     return this.styleTree;
@@ -214,6 +248,8 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * 노드 ID로 SceneNode 조회 (SpecDataManager.getSpecById 호환)
+   * @param id - 조회할 노드 ID
+   * @returns 해당 ID의 SceneNode, 없으면 undefined
    */
   public getSpecById(id: string): SceneNode | undefined {
     return this.nodeMap.get(id);
@@ -221,6 +257,9 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * styleTree의 <path-to-image> placeholder를 실제 이미지 URL로 교체
+   * @param nodeId - 노드 ID
+   * @param styleTree - 원본 StyleTree
+   * @returns 이미지 URL이 치환된 StyleTree
    */
   private _replaceImagePlaceholders(
     nodeId: string,
@@ -258,6 +297,8 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * INSTANCE ID로 첫 번째 매칭되는 Vector SVG를 반환
+   * @param instanceId - INSTANCE 노드 ID
+   * @returns 첫 번째 매칭된 SVG 문자열, 없으면 undefined
    */
   public getFirstVectorSvgByInstanceId(instanceId: string): string | undefined {
     const prefix = `I${instanceId};`;
@@ -271,6 +312,8 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * INSTANCE 노드 ID로 해당 INSTANCE 내부의 모든 Vector SVG를 반환
+   * @param instanceId - INSTANCE 노드 ID
+   * @returns 내부 Vector SVG 정보 배열 (nodeId, svg, boundingBox)
    */
   public getVectorSvgsByInstanceId(
     instanceId: string
@@ -294,6 +337,8 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * INSTANCE 노드의 내부 Vector들을 하나의 SVG로 합성
+   * @param instanceId - INSTANCE 노드 ID
+   * @returns 합성된 SVG 문자열, 없으면 undefined
    */
   public mergeInstanceVectorSvgs(instanceId: string): string | undefined {
     const vectors = this.getVectorSvgsByInstanceId(instanceId);
@@ -334,6 +379,7 @@ class PreparedDesignData implements IPreparedDesignData {
 
   /**
    * dependencies를 componentSetId 기준으로 그룹핑
+   * @returns componentSetId를 키로 하는 그룹핑된 의존성 정보
    */
   public getDependenciesGroupedByComponentSet(): Record<
     string,

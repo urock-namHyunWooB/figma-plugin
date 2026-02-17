@@ -26,11 +26,23 @@ import { traverseTree } from "./utils/treeUtils";
 // NodeProcessor Class
 // ============================================================================
 
+/**
+ * NodeProcessor 클래스
+ *
+ * Figma 노드 타입을 DesignNodeType으로 매핑하고,
+ * 각 노드의 의미론적 역할을 감지하는 통합 Processor
+ */
 export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
   // ==========================================================================
   // Static Utility Methods
   // ==========================================================================
 
+  /**
+   * Figma 타입이 컴포넌트 참조인지 확인 (INSTANCE)
+   *
+   * @param figmaType - Figma 노드 타입
+   * @returns INSTANCE이면 true
+   */
   static isComponentReference(figmaType: string): boolean {
     return figmaType === "INSTANCE";
   }
@@ -52,7 +64,9 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
    * - vector: VECTOR, LINE, ELLIPSE 등 SVG 요소
    * - container: FRAME, GROUP 등 컨테이너
    *
+   * @param ctx - BuildContext
    * @returns semanticRoles Map이 설정된 BuildContext
+   * @throws internalTree가 없으면 에러
    */
   static detectSemanticRoles(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {
@@ -81,7 +95,9 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
    * - FRAME, GROUP, COMPONENT → container
    * - Heuristics에서 textInput으로 표시된 노드 → input
    *
+   * @param ctx - BuildContext
    * @returns nodeTypes Map이 설정된 BuildContext
+   * @throws internalTree가 없으면 에러
    */
   static mapTypes(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {
@@ -108,22 +124,52 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
   // NodeTypeMapper Methods
   // ==========================================================================
 
+  /**
+   * Figma 노드 타입을 DesignNodeType으로 매핑
+   *
+   * @param figmaType - Figma 노드 타입
+   * @returns DesignNodeType (기본값: "container")
+   */
   public mapNodeType(figmaType: string): DesignNodeType {
     return FIGMA_TO_DESIGN_TYPE[figmaType] ?? "container";
   }
 
+  /**
+   * Figma 타입이 컴포넌트 참조인지 확인 (INSTANCE)
+   *
+   * @param figmaType - Figma 노드 타입
+   * @returns INSTANCE이면 true
+   */
   public isComponentReference(figmaType: string): boolean {
     return NodeProcessor.isComponentReference(figmaType);
   }
 
+  /**
+   * Figma 타입이 컨테이너 타입인지 확인
+   *
+   * @param figmaType - Figma 노드 타입
+   * @returns 컨테이너 타입이면 true
+   */
   public isContainerType(figmaType: string): boolean {
     return this.mapNodeType(figmaType) === "container";
   }
 
+  /**
+   * Figma 타입이 벡터 타입인지 확인
+   *
+   * @param figmaType - Figma 노드 타입
+   * @returns 벡터 타입이면 true
+   */
   public isVectorType(figmaType: string): boolean {
     return this.mapNodeType(figmaType) === "vector";
   }
 
+  /**
+   * Figma 타입이 텍스트 타입인지 확인
+   *
+   * @param figmaType - Figma 노드 타입
+   * @returns TEXT이면 true
+   */
   public isTextType(figmaType: string): boolean {
     return figmaType === "TEXT";
   }
@@ -132,6 +178,15 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
   // SemanticRoleDetector Methods
   // ==========================================================================
 
+  /**
+   * 컴포넌트가 버튼인지 확인
+   *
+   * 이름 패턴과 State variant를 분석하여 버튼 여부를 판단합니다.
+   *
+   * @param componentName - 컴포넌트 이름
+   * @param data - PreparedDesignData (State variant 분석용)
+   * @returns 버튼이면 true
+   */
   public isButtonComponent(componentName: string, data?: PreparedDesignData): boolean {
     const lowerName = componentName.toLowerCase();
 
@@ -164,6 +219,16 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
     return false;
   }
 
+  /**
+   * 노드의 의미론적 역할 감지
+   *
+   * Figma 노드 타입과 컨텍스트를 분석하여 시맨틱 역할을 결정합니다.
+   *
+   * @param node - SemanticNode
+   * @param data - PreparedDesignData
+   * @param rootName - 루트 컴포넌트 이름 (버튼 판단용)
+   * @returns SemanticRoleResult (role, vectorSvg, variantSvgs)
+   */
   public detectSemanticRole(
     node: SemanticNode,
     data: PreparedDesignData,
@@ -231,6 +296,13 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
     }
   }
 
+  /**
+   * InternalNode를 SemanticNode로 변환
+   *
+   * @param node - InternalNode
+   * @param parent - 부모 SemanticNode (루트이면 null)
+   * @returns SemanticNode
+   */
   public convertToSemanticTree(
     node: InternalNode,
     parent: SemanticNode | null = null
@@ -250,6 +322,13 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
     return semanticNode;
   }
 
+  /**
+   * SemanticNode 트리의 모든 노드에 시맨틱 역할 적용
+   *
+   * @param root - 루트 SemanticNode
+   * @param data - PreparedDesignData
+   * @returns 노드 ID → SemanticRoleResult 맵
+   */
   public applySemanticRoles(
     root: SemanticNode,
     data: PreparedDesignData
@@ -270,6 +349,15 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
     return results;
   }
 
+  /**
+   * InternalNode 트리에 시맨틱 역할 적용
+   *
+   * InternalNode를 SemanticNode로 변환 후 시맨틱 역할을 적용합니다.
+   *
+   * @param root - 루트 InternalNode
+   * @param data - PreparedDesignData
+   * @returns 노드 ID → SemanticRoleResult 맵
+   */
   public applySemanticRolesFromInternalTree(
     root: InternalNode,
     data: PreparedDesignData
@@ -282,6 +370,13 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
   // Private Helpers
   // ==========================================================================
 
+  /**
+   * INSTANCE 노드의 시맨틱 역할 감지
+   *
+   * @param node - SemanticNode
+   * @param data - PreparedDesignData
+   * @returns SemanticRoleResult
+   */
   private detectInstanceRole(node: SemanticNode, data: PreparedDesignData): SemanticRoleResult {
     // 아이콘 패턴인지 확인
     // INSTANCE가 외부 컴포넌트로 처리되면 externalRef가 설정되어 이 role은 무시됨
@@ -318,6 +413,9 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
    * 아이콘 패턴 조건:
    * 1. 이름에 아이콘 관련 키워드가 포함 (icon, arrow, caret, chevron, glyph)
    * 2. children이 없거나 모두 VECTOR 타입
+   *
+   * @param node - SemanticNode
+   * @returns 아이콘 패턴이면 true
    */
   private isIconPatternInstance(node: SemanticNode): boolean {
     const lowerName = node.name.toLowerCase();
@@ -349,6 +447,13 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
     return allChildrenAreVectors;
   }
 
+  /**
+   * VECTOR 노드의 시맨틱 역할 감지
+   *
+   * @param node - SemanticNode
+   * @param data - PreparedDesignData
+   * @returns SemanticRoleResult (role: "vector", vectorSvg 포함 가능)
+   */
   private detectVectorRole(node: SemanticNode, data: PreparedDesignData): SemanticRoleResult {
     const result: SemanticRoleResult = { role: "vector" };
     // 정확한 매칭 먼저 시도, 없으면 suffix 매칭 시도
@@ -359,6 +464,14 @@ export class NodeProcessor implements INodeTypeMapper, ISemanticRoleDetector {
     return result;
   }
 
+  /**
+   * RECTANGLE 노드의 시맨틱 역할 감지
+   *
+   * IMAGE fill이 있으면 image, 없으면 container로 처리합니다.
+   *
+   * @param nodeSpec - SceneNode 스펙
+   * @returns SemanticRoleResult
+   */
   private detectRectangleRole(nodeSpec: SceneNode | undefined): SemanticRoleResult {
     if (!nodeSpec) return { role: "container" };
 

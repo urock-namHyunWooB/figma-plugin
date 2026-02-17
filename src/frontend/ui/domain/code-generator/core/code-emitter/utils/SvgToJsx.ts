@@ -8,9 +8,13 @@ import ts from "typescript";
  * 2. SVG 속성을 JSX 호환 형식으로 변환 (stroke-width → strokeWidth)
  * 3. TypeScript AST JsxElement로 생성
  */
+/**
+ * SVG 문자열을 TypeScript JSX AST로 변환하는 유틸리티 클래스
+ */
 class SvgToJsx {
+  /** TypeScript AST 노드 팩토리 */
   private factory = ts.factory;
-  // SVG가 다중 색상인지 여부 (convert 호출 시 설정됨)
+  /** SVG가 다중 색상인지 여부 (convert 호출 시 설정됨) */
   private _isMultiColorSvg = false;
 
   /**
@@ -81,7 +85,8 @@ class SvgToJsx {
 
   /**
    * SVG가 다중 색상인지 감지
-   * fill 속성에서 유니크한 색상이 2개 이상이면 다중 색상
+   * @param svgString - SVG 문자열
+   * @returns 유니크한 색상이 2개 이상이면 true
    */
   private _detectMultiColorSvg(svgString: string): boolean {
     // fill="xxx" 패턴에서 색상 추출
@@ -103,6 +108,8 @@ class SvgToJsx {
 
   /**
    * SVG 문자열을 파싱하여 구조화된 데이터로 변환
+   * @param svgString - SVG 문자열
+   * @returns ParsedElement 또는 null
    */
   private _parseSvgString(svgString: string): ParsedElement | null {
     // 공백 정리
@@ -113,7 +120,9 @@ class SvgToJsx {
   }
 
   /**
-   * 단일 요소 파싱
+   * 단일 SVG 요소 문자열을 ParsedElement로 파싱
+   * @param elementStr - SVG 요소 문자열
+   * @returns ParsedElement 또는 null
    */
   private _parseElement(elementStr: string): ParsedElement | null {
     // 여는 태그 매칭: <tagName attr1="value1" attr2="value2" ...>
@@ -166,7 +175,9 @@ class SvgToJsx {
   }
 
   /**
-   * 속성 문자열 파싱
+   * 속성 문자열을 파싱하여 속성 객체로 변환
+   * @param attrsString - 속성 문자열 (예: 'width="100" height="50"')
+   * @returns 속성 이름-값 쌍의 객체
    */
   private _parseAttributes(attrsString: string): Record<string, string> {
     const attributes: Record<string, string> = {};
@@ -186,7 +197,9 @@ class SvgToJsx {
   }
 
   /**
-   * 자식 요소들 파싱
+   * 내부 컨텐츠에서 자식 요소들을 파싱
+   * @param innerContent - 부모 태그 내부의 컨텐츠 문자열
+   * @returns ParsedElement 배열
    */
   private _parseChildren(innerContent: string): ParsedElement[] {
     const children: ParsedElement[] = [];
@@ -234,7 +247,10 @@ class SvgToJsx {
   }
 
   /**
-   * 중첩을 고려한 닫는 태그 위치 찾기
+   * 중첩을 고려하여 닫는 태그의 위치 찾기
+   * @param str - 검색할 문자열
+   * @param tagName - 찾을 태그 이름
+   * @returns 닫는 태그의 시작 인덱스, 없으면 -1
    */
   private _findClosingTag(str: string, tagName: string): number {
     let depth = 0;
@@ -275,6 +291,8 @@ class SvgToJsx {
 
   /**
    * 파싱된 구조를 JSX AST로 변환
+   * @param parsed - ParsedElement
+   * @returns JSX Element 또는 SelfClosingElement AST
    */
   private _createJsxFromParsed(
     parsed: ParsedElement
@@ -307,7 +325,9 @@ class SvgToJsx {
   }
 
   /**
-   * SVG 속성을 JSX 속성으로 변환
+   * SVG 속성 객체를 JSX 속성 배열로 변환
+   * @param attributes - SVG 속성 이름-값 쌍
+   * @returns JSX Attribute 배열
    */
   private _createJsxAttributes(
     attributes: Record<string, string>
@@ -386,8 +406,9 @@ class SvgToJsx {
   ]);
 
   /**
-   * 값이 색상 값인지 확인
-   * #RRGGBB, #RGB, rgb(), rgba(), 명명된 색상 등
+   * 값이 CSS 색상 값인지 확인
+   * @param value - 확인할 값
+   * @returns 색상 값이면 true (#RRGGBB, #RGB, rgb(), rgba(), 명명된 색상 등)
    */
   private _isColorValue(value: string): boolean {
     if (!value) return false;
@@ -404,6 +425,8 @@ class SvgToJsx {
 
   /**
    * SVG 속성 이름을 JSX camelCase로 변환
+   * @param attrName - SVG 속성 이름 (케밥 케이스)
+   * @returns JSX 속성 이름 (camelCase)
    */
   private _convertAttrName(attrName: string): string {
     // 매핑 테이블에 있으면 사용

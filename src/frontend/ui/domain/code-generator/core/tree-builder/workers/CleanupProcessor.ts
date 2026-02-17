@@ -41,6 +41,7 @@ export class CleanupProcessor {
    * - 루트가 INSTANCE인 경우 children 유지 (그 자체가 콘텐츠)
    * - enrichedFromEmptyChildren 플래그가 true인 경우 유지
    *
+   * @param ctx - BuildContext
    * @returns INSTANCE 내부 노드가 정리된 BuildContext
    */
   static removeInstanceInternalNodes(ctx: BuildContext): BuildContext {
@@ -74,6 +75,10 @@ export class CleanupProcessor {
 
   /**
    * 노드와 그 children을 정리
+   *
+   * @param node - 정리할 InternalNode
+   * @param ctx - BuildContext
+   * @returns 정리된 InternalNode
    */
   private static cleanNode(node: InternalNode, ctx: BuildContext): InternalNode {
     const cleanedChildren: InternalNode[] = [];
@@ -107,6 +112,12 @@ export class CleanupProcessor {
 
   /**
    * 높이 0인 노드 제거
+   *
+   * Figma에서 높이가 0인 노드는 시각적으로 렌더링되지 않으므로
+   * 트리에서 제거합니다. 단, TEXT 노드는 예외로 유지합니다.
+   *
+   * @param ctx - BuildContext
+   * @returns 높이 0인 노드가 제거된 BuildContext
    */
   static removeZeroHeightNodes(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {
@@ -120,6 +131,10 @@ export class CleanupProcessor {
 
   /**
    * 높이 0인 노드 필터링
+   *
+   * @param node - 필터링할 InternalNode
+   * @param ctx - BuildContext
+   * @returns 필터링된 InternalNode
    */
   private static removeZeroHeight(
     node: InternalNode,

@@ -4,6 +4,9 @@
  * IoU 임계값 등 TreeBuilder에서 사용하는 상수 정의
  */
 
+/**
+ * TreeBuilder에서 사용하는 상수 모음
+ */
 export const TreeBuilderConstants = {
   /**
    * 일반 노드 IoU 임계값 (80%)
@@ -27,5 +30,7 @@ export const TreeBuilderConstants = {
   SQUASH_IOU_THRESHOLD: 0.5,
 } as const;
 
-// 타입 추출을 위한 유틸리티
+/**
+ * TreeBuilderConstants 타입 추출을 위한 유틸리티 타입
+ */
 export type TreeBuilderConstantsType = typeof TreeBuilderConstants;

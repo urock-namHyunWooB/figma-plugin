@@ -10,9 +10,11 @@ import { SuperTreeNode } from "@code-generator";
  * children 배열을 가진 트리 노드 인터페이스
  */
 export interface TraversableNode {
+  /** 자식 노드 배열 (undefined 허용) */
   children: (TraversableNode | undefined)[];
   /** 부모 노드 (있으면 자동으로 사용됨) */
   parent?: TraversableNode | null;
+  /** 추가 속성 허용 */
   [key: string]: any;
 }
 
@@ -42,10 +44,9 @@ export interface TraverseOptions<T> {
 
 /**
  * BFS(너비 우선 탐색)로 트리를 순회합니다.
- *
- * @param node 시작 노드 (루트)
- * @param callback 각 노드에 대해 실행할 콜백. false를 반환하면 순회 중단
- * @param options 시작 노드의 초기 메타데이터 (부모, 인덱스, 깊이)
+ * @param node - 시작 노드 (루트)
+ * @param callback - 각 노드에 대해 실행할 콜백. false를 반환하면 순회 중단
+ * @param options - 시작 노드의 초기 메타데이터 (부모, 인덱스, 깊이)
  *
  * @example
  * // 기본 사용
@@ -122,9 +123,8 @@ export function traverseBFS<T extends TraversableNode>(
 
 /**
  * BFS로 조건에 맞는 첫 번째 노드를 찾습니다.
- *
- * @param node 시작 노드 (루트)
- * @param predicate 조건 함수
+ * @param node - 시작 노드 (루트)
+ * @param predicate - 조건 함수
  * @returns 찾은 노드 또는 null
  *
  * @example
@@ -148,9 +148,8 @@ export function findNodeBFS<T extends TraversableNode>(
 
 /**
  * BFS로 조건에 맞는 모든 노드를 찾습니다.
- *
- * @param node 시작 노드 (루트)
- * @param predicate 조건 함수
+ * @param node - 시작 노드 (루트)
+ * @param predicate - 조건 함수
  * @returns 찾은 노드 배열
  *
  * @example
@@ -173,9 +172,8 @@ export function findAllNodesBFS<T extends TraversableNode>(
 
 /**
  * BFS로 특정 깊이의 모든 노드를 가져옵니다.
- *
- * @param node 시작 노드 (루트)
- * @param targetDepth 찾을 깊이 (루트 = 0)
+ * @param node - 시작 노드 (루트)
+ * @param targetDepth - 찾을 깊이 (루트 = 0)
  * @returns 해당 깊이의 노드 배열
  *
  * @example

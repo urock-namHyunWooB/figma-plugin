@@ -118,6 +118,11 @@ export class InputHeuristic implements IComponentHeuristic {
     normal: null,
   };
 
+  /**
+   * State 문자열을 CSS pseudo-class로 변환
+   * @param state - State 문자열 (예: "hover", "focus")
+   * @returns 대응하는 pseudo-class 또는 null/undefined
+   */
   stateToPseudo(state: string): PseudoClass | null | undefined {
     const normalized = state.toLowerCase();
     if (normalized in this.stateMapping) {
@@ -137,6 +142,9 @@ export class InputHeuristic implements IComponentHeuristic {
    * - input, textfield, textinput: +10
    * - searchbar, searchfield: +10
    * - Caret 패턴 (구조): +15
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns 매칭 점수 (0 이상)
    */
   score(ctx: BuildContext): number {
     let score = 0;
@@ -156,6 +164,11 @@ export class InputHeuristic implements IComponentHeuristic {
     return score;
   }
 
+  /**
+   * 이 휴리스틱이 해당 컴포넌트를 처리할 수 있는지 판별
+   * @param ctx - 빌드 컨텍스트
+   * @returns 처리 가능 여부
+   */
   canProcess(ctx: BuildContext): boolean {
     return this.score(ctx) >= InputHeuristic.MATCH_THRESHOLD;
   }
@@ -164,6 +177,11 @@ export class InputHeuristic implements IComponentHeuristic {
   // 메인 파이프라인 (Composition - 직접 호출)
   // ===========================================================================
 
+  /**
+   * 전체 파이프라인 실행
+   * @param ctx - 빌드 컨텍스트
+   * @returns 처리된 BuildContext
+   */
   process(ctx: BuildContext): BuildContext {
     let result = ctx;
 
@@ -206,6 +224,9 @@ export class InputHeuristic implements IComponentHeuristic {
    * Input 컴포넌트의 디자인 특성:
    * - TEXT 노드에 "|" 문자만 있음 (커서 표현)
    * - 또는 얇은 세로 RECTANGLE (width 1-3px, height가 더 큼)
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns Caret 패턴 존재 여부
    */
   private hasCaretPattern(ctx: BuildContext): boolean {
     if (!ctx.internalTree) return false;
@@ -250,6 +271,9 @@ export class InputHeuristic implements IComponentHeuristic {
    * 분석 단계 (테스트용 public 메서드)
    *
    * 기본 분석 + Input 특화 분석 (placeholder 감지)
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns 분석이 완료된 BuildContext
    */
   processAnalysis(ctx: BuildContext): BuildContext {
     let result = ctx;
@@ -266,6 +290,9 @@ export class InputHeuristic implements IComponentHeuristic {
    * 1. nodeSemanticTypes에 textInput 타입 설정 (slot 변환 방지)
    * 2. propsMap에 placeholder string prop 추가
    * 3. nodePropBindings에 characters 바인딩 설정
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns placeholder가 감지된 BuildContext
    */
   private detectPlaceholders(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) return ctx;
@@ -321,6 +348,9 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * TEXT 노드에서 placeholder 패턴 감지
+   * @param node - TEXT InternalNode
+   * @param ctx - 빌드 컨텍스트
+   * @returns placeholder 감지 결과 또는 null
    */
   private detectPlaceholder(
     node: InternalNode,
@@ -369,6 +399,8 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * 노드 이름이 input/placeholder 관련인지 확인
+   * @param nodeName - 노드 이름
+   * @returns input/placeholder 관련 여부
    */
   private isInputRelatedNodeName(nodeName: string): boolean {
     if (!nodeName) return false;
@@ -383,6 +415,8 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * prop 이름이 placeholder 관련 키워드를 포함하는지 확인
+   * @param propName - prop 이름
+   * @returns placeholder 관련 키워드 포함 여부
    */
   private isPlaceholderRelatedProp(propName: string): boolean {
     if (!propName) return false;
@@ -394,6 +428,9 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * mergedNode에서 각 variant의 색상과 텍스트 정보 수집
+   * @param node - InternalNode
+   * @param data - PreparedDesignData
+   * @returns variant별 색상/텍스트 정보 배열
    */
   private collectVariantInfos(
     node: InternalNode,
@@ -421,6 +458,9 @@ export class InputHeuristic implements IComponentHeuristic {
    * variantName에서 연관된 prop 이름 추출
    *
    * "State=Normal, Guide Text=True" -> "guideText" (True인 prop)
+   *
+   * @param variantName - variant 이름 문자열
+   * @returns camelCase로 변환된 prop 이름
    */
   private findLinkedProp(variantName: string): string {
     // variantName 파싱: "State=Normal, Guide Text=True"
@@ -440,6 +480,8 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * 색상이 회색인지 판단
+   * @param color - RGB 색상 객체
+   * @returns 회색 여부
    */
   private isGrayColor(color: RGB): boolean {
     const isMonochrome =
@@ -450,6 +492,8 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * 색상이 검정색인지 판단
+   * @param color - RGB 색상 객체
+   * @returns 검정색 여부
    */
   private isBlackColor(color: RGB): boolean {
     return color.r < 0.1 && color.g < 0.1 && color.b < 0.1;
@@ -461,6 +505,8 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * Input 특화 slot 감지
+   * @param ctx - 빌드 컨텍스트
+   * @returns 슬롯이 감지된 BuildContext
    */
   private detectInputSlots(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) return ctx;
@@ -504,6 +550,8 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * leftIcon 패턴 매칭
+   * @param name - 노드 이름
+   * @returns leftIcon 패턴 일치 여부
    */
   private isLeftIconPattern(name: string): boolean {
     return /^(left|prefix|leading)[\s_-]*(icon|icn)/i.test(name);
@@ -511,6 +559,8 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * rightIcon 패턴 매칭
+   * @param name - 노드 이름
+   * @returns rightIcon 패턴 일치 여부
    */
   private isRightIconPattern(name: string): boolean {
     return /^(right|suffix|trailing)[\s_-]*(icon|icn)/i.test(name);
@@ -518,6 +568,8 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * clearButton 패턴 매칭
+   * @param name - 노드 이름
+   * @returns clearButton 패턴 일치 여부
    */
   private isClearButtonPattern(name: string): boolean {
     return /^(clear|close|x|cancel)[\s_-]*(button|btn|icon|icn)?$/i.test(name);
@@ -538,6 +590,9 @@ export class InputHeuristic implements IComponentHeuristic {
    * - visible 바인딩이 있으면 해당 boolean prop 제거 (showLabel 등)
    * - characters 바인딩이 있으면 해당 text prop 제거 (labelText 등)
    * - 부모 노드의 visible 바인딩도 확인
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns label/helperText가 감지된 BuildContext
    */
   private detectLabelAndHelperText(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) return ctx;
@@ -614,6 +669,10 @@ export class InputHeuristic implements IComponentHeuristic {
    * - 부모 노드의 visible 바인딩도 확인
    *
    * PropsProcessor.bindProps 이전에 실행되므로 ctx.data.getNodeById를 사용
+   *
+   * @param nodeId - TEXT 노드 ID
+   * @param ctx - 빌드 컨텍스트
+   * @param propsMap - props 맵 (직접 수정됨)
    */
   private removeRelatedProps(
     nodeId: string,
@@ -649,6 +708,9 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * originalKey로 prop 찾기
+   * @param propsMap - props 맵
+   * @param originalKey - 검색할 originalKey
+   * @returns prop 이름 또는 null
    */
   private findPropByOriginalKey(
     propsMap: Map<string, PropDefinition>,
@@ -664,6 +726,9 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * InternalTree에서 노드 ID로 노드 찾기
+   * @param root - 루트 InternalNode
+   * @param targetId - 찾을 노드 ID
+   * @returns 찾은 노드 또는 null
    */
   private findNodeById(
     root: InternalNode,
@@ -685,6 +750,9 @@ export class InputHeuristic implements IComponentHeuristic {
    * 2. semanticType이 textInput인 노드
    * 3. "Placeholder" 텍스트 또는 노드 이름
    * 4. "Input" 이름을 가진 FRAME 노드
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns Input 영역의 y 좌표 또는 null
    */
   private findInputAreaY(ctx: BuildContext): number | null {
     if (!ctx.internalTree) return null;
@@ -753,6 +821,8 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * Input 영역의 하단 y 좌표 찾기
+   * @param ctx - 빌드 컨텍스트
+   * @returns Input 영역의 하단 y 좌표 또는 null
    */
   private findInputAreaBottomY(ctx: BuildContext): number | null {
     if (!ctx.internalTree) return null;
@@ -833,6 +903,11 @@ export class InputHeuristic implements IComponentHeuristic {
    * 감지 범위:
    * - 루트 직계 자식 TEXT
    * - 루트 직계 자식 FRAME/GROUP 안의 TEXT (1단계 중첩)
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @param inputAreaY - Input 영역의 y 좌표
+   * @param inputAreaBottomY - Input 영역의 하단 y 좌표
+   * @returns label/helperText 감지 결과
    */
   private detectLabelHelperTextNodes(
     ctx: BuildContext,
@@ -899,6 +974,9 @@ export class InputHeuristic implements IComponentHeuristic {
    *
    * 빨간색이 사용된 variant를 찾아 error boolean prop 생성
    * Status variant에서 해당 값 제거
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns error 상태가 감지된 BuildContext
    */
   private detectErrorState(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree || !ctx.propsMap) return ctx;
@@ -944,6 +1022,8 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * Error variant 찾기 (빨간색 기반)
+   * @param ctx - 빌드 컨텍스트
+   * @returns Error 상태 감지 결과
    */
   private findErrorVariants(ctx: BuildContext): ErrorStateResult {
     const result: ErrorStateResult = {
@@ -1005,6 +1085,9 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * 노드에 빨간색이 있는지 확인
+   * @param nodeId - 노드 ID
+   * @param data - PreparedDesignData
+   * @returns 빨간색 존재 여부
    */
   private hasRedColorInNode(nodeId: string, data: PreparedDesignData): boolean {
     const spec = data.getNodeById(nodeId) as any;
@@ -1042,6 +1125,8 @@ export class InputHeuristic implements IComponentHeuristic {
   /**
    * 빨간색 판단
    * r > 0.8, g < 0.4, b < 0.4
+   * @param color - RGB 색상 객체
+   * @returns 빨간색 여부
    */
   private isRedColor(color: RGB): boolean {
     return color.r > 0.8 && color.g < 0.4 && color.b < 0.4;
@@ -1049,6 +1134,8 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * variant 이름으로 Error 판단
+   * @param variantName - variant 이름
+   * @returns Error variant 여부
    */
   private isErrorVariantByName(variantName: string): boolean {
     return (
@@ -1059,6 +1146,8 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * variant 값이 Error인지 확인
+   * @param value - variant 값
+   * @returns Error 값 여부
    */
   private isErrorVariantValue(value: string): boolean {
     return /^error$/i.test(value);
@@ -1067,6 +1156,8 @@ export class InputHeuristic implements IComponentHeuristic {
   /**
    * variant 이름에서 Error 값 추출
    * "Status=Error, Size=Large" → "Error"
+   * @param variantName - variant 이름
+   * @returns Error 값 또는 null
    */
   private extractErrorValueFromVariantName(variantName: string): string | null {
     const match = variantName.match(/(?:status|state)\s*=\s*(\w+)/i);
@@ -1078,6 +1169,8 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * Status prop 찾기
+   * @param propsMap - props 맵
+   * @returns Status prop 또는 null
    */
   private findStatusProp(
     propsMap: Map<string, PropDefinition>
@@ -1092,6 +1185,9 @@ export class InputHeuristic implements IComponentHeuristic {
 
   /**
    * Error prop 스타일을 nodeStyles.propStyles에 적용
+   * @param ctx - 빌드 컨텍스트
+   * @param errorResult - Error 상태 감지 결과
+   * @returns 업데이트된 nodeStyles 맵
    */
   private applyErrorPropStyles(
     ctx: BuildContext,

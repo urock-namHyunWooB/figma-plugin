@@ -75,6 +75,7 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
    * - prop 이름을 camelCase로 정규화
    * - HTML 속성과 충돌하는 이름에 custom prefix 추가 (disabled → customDisabled)
    *
+   * @param ctx - BuildContext
    * @returns propsMap이 설정된 BuildContext
    */
   static extract(ctx: BuildContext): BuildContext {
@@ -96,7 +97,9 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
    * TEXT 노드의 경우 componentPropertyReferences가 없어도
    * _overrideableProps의 nodeId/nodeName으로 prop 바인딩을 시도합니다.
    *
+   * @param ctx - BuildContext
    * @returns nodePropBindings가 설정된 BuildContext
+   * @throws internalTree와 propsMap이 없으면 에러
    */
   static bindProps(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree || !ctx.propsMap) {
@@ -149,7 +152,7 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
    * componentPropertyDefinitions에서 props 추출
    *
    * @param props - Figma의 componentPropertyDefinitions
-   * @returns PropDefinition Map
+   * @returns PropDefinition Map (key: prop 이름, value: PropDefinition)
    */
   public extractProps(props: unknown): Map<string, PropDefinition> {
     const map = new Map<string, PropDefinition>();
@@ -245,7 +248,7 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
    * Figma prop 타입을 내부 타입으로 매핑
    *
    * @param type - Figma의 prop 타입 (VARIANT, BOOLEAN, TEXT, INSTANCE_SWAP)
-   * @returns 내부 타입
+   * @returns 내부 PropDefinition 타입
    */
   public mapPropType(type?: string): PropDefinition["type"] {
     return FIGMA_PROP_TYPE_MAP[type ?? ""] ?? "string";
@@ -308,6 +311,9 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
 
   /**
    * prop 바인딩 정보 추출 (상세 정보 포함)
+   *
+   * @param refs - Figma 노드의 componentPropertyReferences
+   * @returns PropBinding 배열
    */
   public extractPropBindings(
     refs: Record<string, string> | undefined
@@ -342,6 +348,9 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
 
   /**
    * 노드에 prop 바인딩이 있는지 확인
+   *
+   * @param refs - Figma 노드의 componentPropertyReferences
+   * @returns 바인딩이 하나라도 있으면 true
    */
   public hasAnyBinding(refs: Record<string, string> | undefined): boolean {
     if (!refs) return false;
@@ -354,6 +363,10 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
 
   /**
    * 원본 키로 prop 이름 찾기
+   *
+   * @param propsDefinitions - PropDefinition Map
+   * @param originalKey - Figma 원본 키
+   * @returns prop 이름 또는 undefined
    */
   private findPropNameByOriginalKey(
     propsDefinitions: Map<string, PropDefinition>,
@@ -369,8 +382,13 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
 
   /**
    * 노드 ID로 prop 이름 찾기
-   * (_overrideableProps에서 설정된 nodeId와 매칭)
-   * TEXT 바인딩용이므로 prop 이름이 "Text"로 끝나는 것만 매칭
+   *
+   * _overrideableProps에서 설정된 nodeId와 매칭합니다.
+   * TEXT 바인딩용이므로 prop 이름이 "Text"로 끝나는 것만 매칭합니다.
+   *
+   * @param nodeId - 노드 ID
+   * @param propsDefinitions - PropDefinition Map
+   * @returns prop 이름 또는 undefined
    */
   private findPropByNodeId(
     nodeId: string,
@@ -387,9 +405,14 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
 
   /**
    * 노드 이름으로 prop 이름 찾기 (fallback)
-   * (_overrideableProps에서 설정된 nodeName과 매칭)
-   * 대소문자 무시하여 비교
-   * TEXT 바인딩용이므로 prop 이름이 "Text"로 끝나는 것만 매칭
+   *
+   * _overrideableProps에서 설정된 nodeName과 매칭합니다.
+   * 대소문자 무시하여 비교합니다.
+   * TEXT 바인딩용이므로 prop 이름이 "Text"로 끝나는 것만 매칭합니다.
+   *
+   * @param nodeName - 노드 이름
+   * @param propsDefinitions - PropDefinition Map
+   * @returns prop 이름 또는 undefined
    */
   private findPropByNodeName(
     nodeName: string,
@@ -441,6 +464,10 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
   /**
    * 다른 prop과 이름 충돌 시 suffix 추가
    *
+   * @param name - 원본 prop 이름
+   * @param existingProps - 기존 PropDefinition Map
+   * @returns 충돌이 해결된 prop 이름
+   *
    * @example
    * - "label" (이미 존재) → "label2"
    * - "label2" (이미 존재) → "label3"
@@ -465,7 +492,9 @@ export class PropsProcessor implements IPropsExtractor, IPropsLinker {
 
   /**
    * 네이티브 HTML 속성과 충돌하는 prop 이름 rename
-   * type → customType, disabled → customDisabled 등
+   *
+   * @param propName - 원본 prop 이름
+   * @returns rename된 prop 이름 (type → customType, disabled → customDisabled 등)
    */
   private renameConflictingPropName(propName: string): string {
     if (CONFLICTING_HTML_ATTRS.has(propName.toLowerCase())) {

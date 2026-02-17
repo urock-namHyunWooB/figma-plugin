@@ -13,6 +13,9 @@ import { mapTree } from "./utils/treeUtils";
 
 /**
  * 스타일이 비어있지 않은지 확인
+ *
+ * @param styles - StyleDefinition 객체
+ * @returns base 스타일이나 dynamic 스타일이 있으면 true
  */
 function hasNonEmptyStyles(styles: StyleDefinition): boolean {
   return (
@@ -25,12 +28,27 @@ function hasNonEmptyStyles(styles: StyleDefinition): boolean {
 // NodeConverter Class
 // ============================================================================
 
+/**
+ * NodeConverter 클래스
+ *
+ * InternalNode 트리를 최종 DesignNode 트리로 변환합니다.
+ * 미리 계산된 Map들을 조합하여 각 노드의 속성을 설정합니다.
+ */
 export class NodeConverter {
   /**
    * 이미 계산된 Map들을 사용해서 최종 DesignNode 트리를 조립
    *
    * 필요한 ctx 필드:
-   * - nodeTypes, nodeStyles, nodePropBindings, nodeExternalRefs, semanticRoles
+   * - nodeTypes: 노드별 DesignNodeType
+   * - nodeStyles: 노드별 StyleDefinition
+   * - nodePropBindings: 노드별 prop 바인딩 (선택사항)
+   * - nodeExternalRefs: 노드별 외부 참조 (선택사항)
+   * - semanticRoles: 노드별 시맨틱 역할 (선택사항)
+   * - nodeSemanticTypes: 노드별 시맨틱 타입 (선택사항)
+   *
+   * @param ctx - BuildContext
+   * @returns root DesignNode가 설정된 BuildContext
+   * @throws internalTree, nodeTypes, nodeStyles가 없으면 에러
    */
   static assemble(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {
@@ -147,6 +165,16 @@ export class NodeConverter {
 
   /**
    * characterStyleOverrides를 파싱하여 TextSegment 배열 생성
+   *
+   * Figma의 characterStyleOverrides와 styleOverrideTable을 분석하여
+   * 텍스트를 스타일별 세그먼트로 분리합니다.
+   *
+   * @param characters - 전체 텍스트 문자열
+   * @param styleOverrides - 문자별 스타일 인덱스 배열
+   * @param styleTable - 스타일 인덱스별 스타일 정의
+   * @param baseStyle - 기본 텍스트 스타일
+   * @param baseFills - 기본 fills 배열 (색상 추출용)
+   * @returns TextSegment 배열
    */
   static parseTextSegments(
     characters: string,
@@ -208,7 +236,14 @@ export class NodeConverter {
 
   /**
    * styleOverrideTable에서 CSS 스타일 추출
+   *
    * styleIndex가 0이면 기본 스타일 적용 (부모 CSS 상속 방지를 위해 명시적으로 설정)
+   *
+   * @param styleIndex - 스타일 테이블 인덱스 (0은 기본 스타일)
+   * @param styleTable - 스타일 인덱스별 스타일 정의
+   * @param baseStyle - 기본 텍스트 스타일
+   * @param baseFills - 기본 fills 배열 (색상 추출용)
+   * @returns CSS 스타일 객체 또는 null
    */
   static extractOverrideStyle(
     styleIndex: number,

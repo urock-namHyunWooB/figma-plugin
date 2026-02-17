@@ -33,6 +33,7 @@ export interface IStyleStrategy {
    * 필요한 import 문 생성
    * - Emotion: import { css } from '@emotion/react'
    * - Tailwind: (인라인 cn 사용 시 없음)
+   * @returns TypeScript import 선언 배열
    */
   generateImports(): ts.ImportDeclaration[];
 
@@ -40,10 +41,10 @@ export interface IStyleStrategy {
    * 스타일 선언부 생성
    * - Emotion: const FrameCss = css`...`, const sizeStyles = {...}
    * - Tailwind: const cn = ..., const sizeClasses = {...}
-   *
-   * @param tree - DesignTree
+   * @param tree - DesignTree 구조
    * @param componentName - 컴포넌트 이름 (CSS 변수명 생성에 사용)
    * @param props - Props 정의 (타입 생성에 사용)
+   * @returns TypeScript statement 배열
    */
   generateDeclarations(
     tree: DesignTree,
@@ -55,9 +56,9 @@ export interface IStyleStrategy {
    * JSX 요소에 적용할 스타일 속성 생성
    * - Emotion: css={frameCss(size)}
    * - Tailwind: className={cn("flex p-4", sizeClasses[size])}
-   *
-   * @param node - DesignNode
+   * @param node - 스타일을 적용할 DesignNode
    * @param props - Props 정의 (동적 스타일 참조용)
+   * @returns JSX 스타일 속성 또는 스타일이 없으면 null
    */
   createStyleAttribute(
     node: DesignNode,
@@ -67,12 +68,17 @@ export interface IStyleStrategy {
   /**
    * 노드의 동적 스타일 정보 조회
    * ComponentGenerator에서 동적 스타일 처리 시 사용
+   * @param node - 조회할 DesignNode
+   * @returns 동적 스타일 정보 또는 없으면 null
    */
   getDynamicStyleInfo(node: DesignNode): DynamicStyleInfo | null;
 
   /**
    * 노드별 CSS 변수 이름 조회
    * 스타일 생성과 JSX 참조 간 일관성을 위해 사용
+   * @param node - 조회할 DesignNode
+   * @param componentName - 컴포넌트 이름
+   * @returns CSS 변수 이름
    */
   getCssVariableName(node: DesignNode, componentName: string): string;
 }

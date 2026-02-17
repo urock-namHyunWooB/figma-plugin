@@ -79,6 +79,9 @@ export interface IComponentHeuristic {
    * - Variant 병합
    * - Instance 내부 노드 정리
    * - Props 추출
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns 구조가 생성된 BuildContext
    */
   processStructure(ctx: BuildContext): BuildContext;
 
@@ -86,6 +89,9 @@ export interface IComponentHeuristic {
    * Phase 2: 분석
    * - Semantic roles 감지
    * - Hidden 노드 처리
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns 분석이 완료된 BuildContext
    */
   processAnalysis(ctx: BuildContext): BuildContext;
 
@@ -95,6 +101,9 @@ export interface IComponentHeuristic {
    * - Style 분류
    * - Props 바인딩
    * - Slot 감지
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns 변환이 완료된 BuildContext
    */
   processTransform(ctx: BuildContext): BuildContext;
 
@@ -102,6 +111,9 @@ export interface IComponentHeuristic {
    * Phase 4: 최종 조립
    * - DesignNode 트리 생성
    * - 정리 (hidden 노드 제거 등)
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns 조립이 완료된 BuildContext
    */
   processBuild(ctx: BuildContext): BuildContext;
 
@@ -110,34 +122,86 @@ export interface IComponentHeuristic {
   // ===========================================================================
 
   // Phase 1: 구조 생성
-  /** 구조: Variant 병합 */
+  /**
+   * Variant 병합 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns variant가 병합된 BuildContext
+   */
   processVariants(ctx: BuildContext): BuildContext;
-  /** 구조: Instance 내부 노드 정리 */
+  /**
+   * Instance 내부 노드 정리
+   * @param ctx - 빌드 컨텍스트
+   * @returns 정리된 BuildContext
+   */
   processInstanceCleanup(ctx: BuildContext): BuildContext;
-  /** 구조: Props 추출 */
+  /**
+   * Props 추출 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns props가 추출된 BuildContext
+   */
   processPropsExtract(ctx: BuildContext): BuildContext;
 
   // Phase 3: 노드 변환
-  /** 변환: Node type 매핑 */
+  /**
+   * Node type 매핑 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns 노드 타입이 매핑된 BuildContext
+   */
   processNodeTypes(ctx: BuildContext): BuildContext;
-  /** 변환: Style 분류 (base/dynamic/pseudo) */
+  /**
+   * Style 분류 (base/dynamic/pseudo) 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns 스타일이 빌드된 BuildContext
+   */
   processStyles(ctx: BuildContext): BuildContext;
-  /** 변환: Position 스타일 */
+  /**
+   * Position 스타일 적용
+   * @param ctx - 빌드 컨텍스트
+   * @returns 위치 스타일이 적용된 BuildContext
+   */
   processPositions(ctx: BuildContext): BuildContext;
-  /** 변환: Rotation 처리 */
+  /**
+   * Rotation 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns 회전 스타일이 적용된 BuildContext
+   */
   processRotation(ctx: BuildContext): BuildContext;
-  /** 변환: External refs 생성 */
+  /**
+   * External refs 생성
+   * @param ctx - 빌드 컨텍스트
+   * @returns 외부 참조가 생성된 BuildContext
+   */
   processExternalRefs(ctx: BuildContext): BuildContext;
-  /** 변환: Visibility 조건 */
+  /**
+   * Visibility 조건 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns visibility가 처리된 BuildContext
+   */
   processVisibility(ctx: BuildContext): BuildContext;
-  /** 변환: Props 바인딩 */
+  /**
+   * Props 바인딩 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns props가 바인딩된 BuildContext
+   */
   processProps(ctx: BuildContext): BuildContext;
-  /** 변환: Slot 감지 */
+  /**
+   * Slot 감지 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns 슬롯이 감지된 BuildContext
+   */
   processSlots(ctx: BuildContext): BuildContext;
 
   // Phase 4: 최종 조립
-  /** 조립: DesignNode 트리 생성 */
+  /**
+   * DesignNode 트리 생성
+   * @param ctx - 빌드 컨텍스트
+   * @returns DesignTree가 생성된 BuildContext
+   */
   buildDesignTree(ctx: BuildContext): BuildContext;
-  /** 조립: 정리 (hidden 노드 제거 등) */
+  /**
+   * 정리 처리 (hidden 노드 제거 등)
+   * @param ctx - 빌드 컨텍스트
+   * @returns 정리된 BuildContext
+   */
   processCleanup(ctx: BuildContext): BuildContext;
 }

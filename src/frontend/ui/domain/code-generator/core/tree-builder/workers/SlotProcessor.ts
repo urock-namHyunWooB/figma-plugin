@@ -31,6 +31,12 @@ import { NodeProcessor } from "./NodeProcessor";
 // SlotProcessor Class
 // ============================================================================
 
+/**
+ * SlotProcessor 클래스
+ *
+ * INSTANCE 노드를 slot으로 변환하고, TEXT 노드를 text slot으로 변환하는
+ * 통합 Processor
+ */
 export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
   // ==========================================================================
   // Static Pipeline Methods
@@ -50,7 +56,9 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
    * - propsMap에 xxxText prop 추가 (type: "slot")
    * - nodePropBindings에 characters 바인딩 추가
    *
+   * @param ctx - BuildContext
    * @returns propsMap과 nodePropBindings가 업데이트된 BuildContext
+   * @throws internalTree, propsMap, nodePropBindings가 없으면 에러
    */
   static detectTextSlots(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree || !ctx.propsMap || !ctx.nodePropBindings) {
@@ -112,7 +120,9 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
    * - slots 배열에 SlotDefinition 추가
    * - boolean prop을 slot 타입으로 업그레이드
    *
+   * @param ctx - BuildContext
    * @returns slots와 propsMap이 업데이트된 BuildContext
+   * @throws internalTree가 없으면 에러
    */
   static detectSlots(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {
@@ -269,6 +279,15 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
     return { ...ctx, slots, propsMap };
   }
 
+  /**
+   * 배열 슬롯 감지
+   *
+   * 같은 컴포넌트의 반복 인스턴스를 감지하여 배열 슬롯으로 변환합니다.
+   *
+   * @param ctx - BuildContext
+   * @returns arraySlots가 업데이트된 BuildContext
+   * @throws internalTree가 없으면 에러
+   */
   static detectArraySlots(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {
       throw new Error(
@@ -316,7 +335,11 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
   /**
    * Array slot에 컴포넌트 이름과 itemProps 추가
-   * nodeExternalRefs에서 첫 번째 노드의 componentName과 props를 가져옴
+   *
+   * nodeExternalRefs에서 첫 번째 노드의 componentName과 props를 가져옵니다.
+   *
+   * @param ctx - BuildContext
+   * @returns arraySlots가 enriched된 BuildContext
    */
   static enrichArraySlotsWithComponentNames(ctx: BuildContext): BuildContext {
     if (!ctx.arraySlots || !ctx.nodeExternalRefs) {
@@ -350,6 +373,10 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
   /**
    * 의존성 컴포넌트에서 itemProps 추출
+   *
+   * @param componentSetId - 컴포넌트 세트 ID
+   * @param dependencies - 의존성 맵
+   * @returns itemProps 배열
    */
   private static extractItemPropsFromDependencies(
     componentSetId: string,
@@ -404,6 +431,11 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
   /**
    * INSTANCE 노드가 slot으로 변환될 조건 확인
+   *
+   * @param nodeType - 노드 타입
+   * @param visibleRef - visible componentPropertyReference
+   * @param propType - prop 타입
+   * @returns slot으로 변환해야 하면 true
    */
   public shouldConvertToSlot(
     nodeType: string,
@@ -421,6 +453,11 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
   /**
    * 노드에서 slot 정보 추출
+   *
+   * @param nodeId - 노드 ID
+   * @param nodeName - 노드 이름
+   * @param propName - prop 이름
+   * @returns SlotDefinition
    */
   public extractSlotDefinition(
     nodeId: string,
@@ -436,7 +473,12 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
   /**
    * slot 노드의 원래 자손 ID들을 계산
-   * variant 병합 과정에서 자손이 형제로 올라갈 수 있으므로, 원본 Figma 데이터에서 계산
+   *
+   * variant 병합 과정에서 자손이 형제로 올라갈 수 있으므로, 원본 Figma 데이터에서 계산합니다.
+   *
+   * @param mergedNodes - 병합된 노드 배열
+   * @param data - PreparedDesignData
+   * @returns 자손 노드 ID 배열
    */
   static collectOriginalDescendantIds(
     mergedNodes: Array<{ id: string }>,
@@ -461,6 +503,10 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
   /**
    * 자손 ID 재귀 수집
+   *
+   * @param children - 자식 노드 배열
+   * @param ids - 수집된 ID 배열
+   * @param data - PreparedDesignData
    */
   private static collectDescendantIdsRecursive(
     children: SceneNode[],
@@ -481,6 +527,11 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
   /**
    * 배열 슬롯 감지
+   *
+   * 같은 componentId를 가진 INSTANCE가 2개 이상이면 배열 슬롯으로 감지합니다.
+   *
+   * @param children - 자식 노드 정보 배열
+   * @returns ArraySlotInfo 또는 null
    */
   public detectArraySlot(
     children: Array<{
@@ -536,6 +587,10 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
    * 예: SelectButtons에서
    * - Option 1, 2: 모든 6개 variant에 존재 → 같은 세트
    * - Option 3: 3개 variant에만 존재 → 다른 세트 → 제외
+   *
+   * @param children - 자식 노드 정보 배열 (variantCount 포함)
+   * @param totalVariantCount - 전체 variant 수
+   * @returns ArraySlotInfo 또는 null
    */
   public detectArraySlotWithVariantInfo(
     children: Array<{
@@ -588,6 +643,10 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
   /**
    * 모든 slot 후보 찾기
+   *
+   * @param nodes - 노드 정보 배열
+   * @param propsDefinitions - props 정의
+   * @returns SlotCandidate 배열
    */
   public findSlotCandidates(
     nodes: Array<{
@@ -653,7 +712,13 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
   /**
    * TEXT 노드가 slot이 되어야 하는지 분석
-   * variant간 characters가 다르면 slot으로 변환
+   *
+   * variant간 characters가 다르면 slot으로 변환합니다.
+   *
+   * @param mergedNodeIds - 병합된 노드 ID 배열
+   * @param totalVariantCount - 전체 variant 수
+   * @param data - PreparedDesignData
+   * @returns slot으로 변환해야 하면 true
    */
   public shouldBeTextSlot(
     mergedNodeIds: string[],
@@ -695,6 +760,11 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
   /**
    * TEXT 노드가 text slot으로 변환되어야 하는지 확인
+   *
+   * @param mergedNodeIds - 병합된 노드 ID 배열
+   * @param totalVariantCount - 전체 variant 수
+   * @param data - PreparedDesignData
+   * @returns slot으로 변환해야 하면 true
    */
   public shouldConvertToTextSlot(
     mergedNodeIds: string[],
@@ -706,6 +776,9 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
   /**
    * text slot prop 이름 생성
+   *
+   * @param nodeName - 노드 이름
+   * @returns prop 이름 (xxxText 형식)
    */
   public generateTextPropName(nodeName: string): string {
     const baseName = toCamelCase(nodeName);
@@ -716,6 +789,10 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
   /**
    * text slot의 기본값 추출
+   *
+   * @param mergedNodeIds - 병합된 노드 ID 배열
+   * @param data - PreparedDesignData
+   * @returns 첫 번째 노드의 characters 또는 빈 문자열
    */
   public getDefaultTextValue(
     mergedNodeIds: string[],
@@ -731,6 +808,11 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
   /**
    * TEXT 노드를 text slot으로 변환
+   *
+   * @param input - TextSlotInput (nodeId, nodeName, nodeType, mergedNodeIds)
+   * @param totalVariantCount - 전체 variant 수
+   * @param data - PreparedDesignData
+   * @returns TextSlotResult
    */
   public detectTextSlot(
     input: TextSlotInput,
@@ -776,6 +858,11 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
   /**
    * Extract default text content from the first variant's TEXT node
+   *
+   * @param nodeId - 노드 ID
+   * @param mergedNodeIds - 병합된 노드 ID 배열
+   * @param data - PreparedDesignData
+   * @returns 기본 텍스트 내용 또는 null
    */
   private extractDefaultTextContent(
     nodeId: string,
@@ -807,6 +894,10 @@ export class SlotProcessor implements ISlotDetector, ITextSlotDetector {
 
   /**
    * slot 이름 정규화
+   *
+   * @param propName - prop 이름
+   * @param nodeName - 노드 이름
+   * @returns 정규화된 slot 이름
    */
   private normalizeSlotName(propName: string, nodeName: string): string {
     if (!propName) return toCamelCase(nodeName);

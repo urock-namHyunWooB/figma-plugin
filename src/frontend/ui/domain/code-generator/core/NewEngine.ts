@@ -38,6 +38,11 @@ class NewEngine {
   private policy: CodeEmitterPolicy;
   private emitter: ReactEmitter;
 
+  /**
+   * NewEngine 생성자
+   * @param preparedData - DataPreparer가 준비한 디자인 데이터
+   * @param options - 엔진 옵션 (스타일 전략, Tailwind 옵션, 디버그 모드)
+   */
   constructor(preparedData: PreparedDesignData, options?: NewEngineOptions) {
     // 1. TreeBuilder: PreparedDesignData → DesignTree
     const treeBuilder = new TreeBuilder();
@@ -67,6 +72,7 @@ class NewEngine {
 
   /**
    * DesignTree 반환
+   * @returns 빌드된 DesignTree 구조
    */
   public getDesignTree(): DesignTree {
     return this.designTree;
@@ -74,6 +80,8 @@ class NewEngine {
 
   /**
    * 옵션에서 CodeEmitterPolicy 생성
+   * @param options - NewEngine 옵션
+   * @returns CodeEmitter에 전달할 정책 객체
    */
   private createPolicy(options?: NewEngineOptions): CodeEmitterPolicy {
     const styleStrategy: StyleStrategy = options?.styleStrategy || "emotion";

@@ -51,6 +51,10 @@ import { toPascalCase } from "./utils";
 class ReactEmitter implements ICodeEmitter {
   private factory: ts.NodeFactory;
 
+  /**
+   * ReactEmitter 생성자
+   * TypeScript NodeFactory를 초기화합니다.
+   */
   constructor() {
     this.factory = ts.factory;
   }
@@ -106,6 +110,8 @@ class ReactEmitter implements ICodeEmitter {
 
   /**
    * Policy에 따라 StyleStrategy 생성
+   * @param policy - 코드 생성 정책
+   * @returns 스타일 전략 인스턴스 (Emotion 또는 Tailwind)
    */
   private createStyleStrategy(policy: CodeEmitterPolicy): IStyleStrategy {
     switch (policy.styleStrategy) {
@@ -123,6 +129,8 @@ class ReactEmitter implements ICodeEmitter {
 
   /**
    * TypeScript AST statements를 코드 문자열로 변환
+   * @param statements - TypeScript AST Statement 배열
+   * @returns 변환된 코드 문자열
    */
   private printStatements(statements: ts.Statement[]): string {
     const printer = ts.createPrinter({
@@ -145,6 +153,9 @@ class ReactEmitter implements ICodeEmitter {
 
   /**
    * Prettier로 코드 포맷팅
+   * @param code - 포맷팅할 코드 문자열
+   * @param prettierConfig - Prettier 설정 (선택적)
+   * @returns 포맷팅된 코드 문자열
    */
   private async formatCode(
     code: string,
@@ -171,6 +182,9 @@ class ReactEmitter implements ICodeEmitter {
 
   /**
    * 코드에서 import 문 추출
+   * @param code - 분석할 코드 문자열
+   * @param policy - 코드 생성 정책 (추가 imports 포함)
+   * @returns 추출된 ImportStatement 배열
    */
   private extractImports(
     code: string,
@@ -216,6 +230,9 @@ class ReactEmitter implements ICodeEmitter {
 
   /**
    * 코드에서 타입 정의 추출
+   * @param code - 분석할 코드 문자열
+   * @param componentName - 컴포넌트 이름 (Props 인터페이스 검색용)
+   * @returns 추출된 타입 정의 문자열
    */
   private extractTypes(code: string, componentName: string): string {
     const typeRegex = new RegExp(

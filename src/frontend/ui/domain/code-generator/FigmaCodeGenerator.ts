@@ -43,6 +43,11 @@ export class FigmaCodeGenerator {
   private readonly dependencyManager: DependencyManager;
   private readonly propsAdapter: UIPropsAdapter;
 
+  /**
+   * FigmaCodeGenerator 생성자
+   * @param spec - Figma에서 추출한 노드 데이터
+   * @param options - 코드 생성 옵션 (스타일 전략, 디버그 모드 등)
+   */
   constructor(spec: FigmaNodeData, options?: FigmaCodeGeneratorOptions) {
     this.spec = spec;
     this.options = options || {};
@@ -71,6 +76,8 @@ export class FigmaCodeGenerator {
 
   /**
    * 컴파일 실행 (getGeneratedCode의 별칭)
+   * @param componentName - 생성할 컴포넌트 이름 (생략 시 Figma 노드 이름에서 추출)
+   * @returns 생성된 TypeScript/TSX 코드 문자열, 또는 null
    */
   public async compile(componentName?: string): Promise<string | null> {
     return this.getGeneratedCode(componentName || this.getComponentName());
@@ -104,6 +111,8 @@ export class FigmaCodeGenerator {
 
   /**
    * dependencies를 같은 파일에 인라인으로 포함하여 코드 생성
+   * @param componentName - 메인 컴포넌트 이름
+   * @returns 의존성이 포함된 번들 코드 문자열
    */
   private async _generateCodeWithInlineDependencies(
     componentName: string
@@ -115,6 +124,7 @@ export class FigmaCodeGenerator {
 
   /**
    * Props 정의 반환 (UI 컨트롤러 생성용)
+   * @returns UI 컨트롤러에서 사용할 Props 정의 배열
    */
   public getPropsDefinition(): PropDefinition[] {
     const designTree = this.engine.getDesignTree();
@@ -123,6 +133,7 @@ export class FigmaCodeGenerator {
 
   /**
    * 컴포넌트 이름 반환
+   * @returns 정규화된 컴포넌트 이름 (PascalCase)
    */
   public getComponentName(): string {
     const document = this.preparedData.getDocument();
@@ -130,7 +141,9 @@ export class FigmaCodeGenerator {
   }
 
   /**
-   * 멀티 컴포넌트 컴파일 결과
+   * 멀티 컴포넌트 컴파일 결과 반환
+   * @param componentName - 메인 컴포넌트 이름 (생략 시 Figma 노드 이름에서 추출)
+   * @returns 메인 컴포넌트와 의존성 컴포넌트들의 컴파일 결과
    */
   public async getGeneratedCodeWithDependencies(
     componentName?: string

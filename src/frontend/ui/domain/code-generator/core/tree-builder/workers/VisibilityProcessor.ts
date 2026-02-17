@@ -32,6 +32,9 @@ import { stateToPseudo, isCssConvertibleState } from "./utils/stateUtils";
 // Types
 // ============================================================================
 
+/**
+ * 노드의 visibility 상태
+ */
 export interface VisibleState {
   type: "static" | "condition" | "propBinding";
   value?: boolean;
@@ -39,9 +42,30 @@ export interface VisibleState {
   propName?: string;
 }
 
+/**
+ * 조건 파서 인터페이스
+ */
 export interface IConditionParser {
+  /**
+   * variant 이름에서 조건 파싱
+   * @param variantName - variant 이름
+   * @returns ConditionNode 또는 null
+   */
   parseVariantCondition(variantName: string): ConditionNode | null;
+
+  /**
+   * prop 조건 생성
+   * @param propName - prop 이름
+   * @returns ConditionNode
+   */
   createPropCondition(propName: string): ConditionNode;
+
+  /**
+   * visible ref에서 prop 이름 추출
+   * @param visibleRef - componentPropertyReferences의 visible 값
+   * @param propsMap - PropDefinition 맵
+   * @returns prop 이름 또는 null
+   */
   extractPropNameFromRef(visibleRef: string, propsMap: Map<string, PropDefinition>): string | null;
 }
 
@@ -49,6 +73,11 @@ export interface IConditionParser {
 // VisibilityProcessor Class
 // ============================================================================
 
+/**
+ * VisibilityProcessor 클래스
+ *
+ * 노드의 visibility 상태를 분석하고 조건부 렌더링 규칙을 생성하는 통합 Processor
+ */
 export class VisibilityProcessor
   implements IVisibilityDetector, IVisibilityResolver, IHiddenNodeProcessor, IConditionParser
 {
@@ -58,6 +87,12 @@ export class VisibilityProcessor
   // Static Utility Method
   // ==========================================================================
 
+  /**
+   * variant 이름에서 조건 파싱 (static wrapper)
+   *
+   * @param variantName - variant 이름
+   * @returns ConditionNode 또는 null
+   */
   static parseVariantCondition(variantName: string): ConditionNode | null {
     const instance = new VisibilityProcessor();
     return instance.parseVariantCondition(variantName);
@@ -65,7 +100,12 @@ export class VisibilityProcessor
 
   /**
    * variant 조건 파싱 (특정 prop 제외)
-   * 휴리스틱으로 제거된 prop (guideText 등)을 조건에서 제외
+   *
+   * 휴리스틱으로 제거된 prop (guideText 등)을 조건에서 제외합니다.
+   *
+   * @param variantName - variant 이름
+   * @param excludeProps - 제외할 prop 이름 Set
+   * @returns ConditionNode 또는 null
    */
   static parseVariantConditionExcluding(
     variantName: string,
@@ -90,7 +130,9 @@ export class VisibilityProcessor
    * - 일부 variant에서만 숨겨진 노드는 show* prop 생성
    * - prop condition을 hiddenConditions Map에 저장
    *
+   * @param ctx - BuildContext
    * @returns propsMap과 hiddenConditions가 업데이트된 BuildContext
+   * @throws internalTree와 propsMap이 없으면 에러
    */
   static processHidden(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {
@@ -160,7 +202,9 @@ export class VisibilityProcessor
    *
    * 결과로 node.conditions와 ctx.conditionals에 조건 추가
    *
+   * @param ctx - BuildContext
    * @returns conditionals가 업데이트된 BuildContext
+   * @throws internalTree, propsMap, hiddenConditions가 없으면 에러
    */
   static resolve(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree || !ctx.propsMap || !ctx.hiddenConditions) {
@@ -210,7 +254,11 @@ export class VisibilityProcessor
 
   /**
    * variant 이름에서 모든 조건 파싱 (스타일 동적 적용용)
-   * Size, Left Icon 등 모든 prop 조건 포함
+   *
+   * Size, Left Icon 등 모든 prop 조건 포함합니다.
+   *
+   * @param variantName - variant 이름
+   * @returns ConditionNode 또는 null
    */
   public parseVariantCondition(variantName: string): ConditionNode | null {
     return this.parseVariantConditionExcluding(variantName, new Set());
@@ -218,7 +266,12 @@ export class VisibilityProcessor
 
   /**
    * variant 이름에서 조건 파싱 (특정 prop 제외)
-   * excludeProps에 포함된 prop은 조건에서 제외
+   *
+   * excludeProps에 포함된 prop은 조건에서 제외됩니다.
+   *
+   * @param variantName - variant 이름
+   * @param excludeProps - 제외할 prop 이름 Set
+   * @returns ConditionNode 또는 null
    */
   public parseVariantConditionExcluding(
     variantName: string,
@@ -251,8 +304,12 @@ export class VisibilityProcessor
 
   /**
    * variant 이름에서 State 조건만 파싱 (visibility용)
-   * CSS 변환 불가능한 State만 조건으로 반환 (Error, Insert 등)
-   * Size, Left Icon 등 다른 prop은 무시
+   *
+   * CSS 변환 불가능한 State만 조건으로 반환합니다 (Error, Insert 등).
+   * Size, Left Icon 등 다른 prop은 무시합니다.
+   *
+   * @param variantName - variant 이름
+   * @returns ConditionNode 또는 null
    */
   public parseStateConditionOnly(variantName: string): ConditionNode | null {
     if (!variantName) return null;
@@ -274,7 +331,13 @@ export class VisibilityProcessor
 
   /**
    * Type 기반 visibility 분석
-   * 특정 Type(예: icon-*)에서만 노드가 없으면 해당 조건 생성
+   *
+   * 특정 Type(예: icon-*)에서만 노드가 없으면 해당 조건 생성합니다.
+   *
+   * @param mergedNodes - 병합된 노드 배열
+   * @param totalVariantCount - 전체 variant 수
+   * @param data - PreparedDesignData
+   * @returns ConditionNode 또는 null
    */
   public analyzeTypeBasedVisibility(
     mergedNodes: MergedNodeWithVariant[],
@@ -330,6 +393,9 @@ export class VisibilityProcessor
 
   /**
    * variant 이름에서 Type 값 추출
+   *
+   * @param variantName - variant 이름
+   * @returns Type 값 또는 null
    */
   private extractTypeFromVariantName(variantName: string): string | null {
     if (!variantName) return null;
@@ -344,6 +410,9 @@ export class VisibilityProcessor
 
   /**
    * COMPONENT_SET에서 모든 Type 값 수집
+   *
+   * @param data - PreparedDesignData
+   * @returns Type 값 Set
    */
   private getAllTypeValues(data: PreparedDesignData): Set<string> {
     const types = new Set<string>();
@@ -363,6 +432,12 @@ export class VisibilityProcessor
     return types;
   }
 
+  /**
+   * prop 조건 생성
+   *
+   * @param propName - prop 이름
+   * @returns ConditionNode
+   */
   public createPropCondition(propName: string): ConditionNode {
     return {
       type: "BinaryExpression",
@@ -377,6 +452,13 @@ export class VisibilityProcessor
     } as ConditionNode;
   }
 
+  /**
+   * visible ref에서 prop 이름 추출
+   *
+   * @param visibleRef - componentPropertyReferences의 visible 값
+   * @param propsMap - PropDefinition 맵
+   * @returns prop 이름 또는 null
+   */
   public extractPropNameFromRef(
     visibleRef: string,
     propsMap: Map<string, PropDefinition>
@@ -398,6 +480,17 @@ export class VisibilityProcessor
   // VisibilityDetector Methods
   // ==========================================================================
 
+  /**
+   * visibility 추론
+   *
+   * mergedNodes와 totalVariantCount를 비교하여 노드의 visibility를 추론합니다.
+   *
+   * @param mergedNodes - 병합된 노드 배열
+   * @param totalVariantCount - 전체 variant 수
+   * @param visibleRef - visible componentPropertyReference
+   * @param parseCondition - 조건 파싱 함수
+   * @returns VisibleValue
+   */
   public inferVisibility(
     mergedNodes: MergedNodeWithVariant[],
     totalVariantCount: number,
@@ -436,10 +529,24 @@ export class VisibilityProcessor
     return { type: "static", value: true };
   }
 
+  /**
+   * 조건부 렌더링 규칙 생성
+   *
+   * @param nodeId - 노드 ID
+   * @param condition - ConditionNode
+   * @returns ConditionalRule
+   */
   public createConditionalRule(nodeId: string, condition: ConditionNode): ConditionalRule {
     return { condition, showNodeId: nodeId, fallback: "null" };
   }
 
+  /**
+   * visibility 패턴 분석
+   *
+   * @param mergedNodes - 병합된 노드 배열
+   * @param totalVariantCount - 전체 variant 수
+   * @returns "always" | "never" | "conditional"
+   */
   public analyzeVisibilityPattern(
     mergedNodes: MergedNodeWithVariant[],
     totalVariantCount: number
@@ -449,6 +556,13 @@ export class VisibilityProcessor
     return "conditional";
   }
 
+  /**
+   * 특정 variant에서 노드가 visible인지 확인
+   *
+   * @param mergedNodes - 병합된 노드 배열
+   * @param variantName - variant 이름
+   * @returns visible이면 true
+   */
   public isVisibleInVariant(mergedNodes: MergedNodeWithVariant[], variantName: string): boolean {
     return mergedNodes.some((node) => node.variantName === variantName);
   }
@@ -457,6 +571,15 @@ export class VisibilityProcessor
   // VisibilityResolver Methods
   // ==========================================================================
 
+  /**
+   * visibility 최종 결정
+   *
+   * @param input - VisibilityInput
+   * @param totalVariantCount - 전체 variant 수
+   * @param propsMap - PropDefinition 맵
+   * @param parseCondition - 조건 파싱 함수
+   * @returns VisibilityResult
+   */
   public resolveVisibility(
     input: VisibilityInput,
     totalVariantCount: number,
@@ -506,10 +629,19 @@ export class VisibilityProcessor
   // HiddenNodeProcessor Methods
   // ==========================================================================
 
+  /**
+   * 사용된 prop 이름 초기화
+   */
   public resetUsedPropNames(): void {
     this.usedPropNames.clear();
   }
 
+  /**
+   * show* prop 이름 생성
+   *
+   * @param nodeName - 노드 이름
+   * @returns 고유한 show* prop 이름
+   */
   public generateShowPropName(nodeName: string): string {
     const basePropName = `show${this.capitalizeFirstLetter(toCamelCase(nodeName) || "Hidden")}`;
     let propName = basePropName;
@@ -522,6 +654,13 @@ export class VisibilityProcessor
     return propName;
   }
 
+  /**
+   * 노드가 hidden 노드인지 확인
+   *
+   * @param node - HiddenProcessableNode
+   * @param data - PreparedDesignData
+   * @returns hidden 노드이면 true
+   */
   public isHiddenNode(
     node: HiddenProcessableNode & { visible?: VisibleState },
     data: PreparedDesignData
@@ -541,6 +680,13 @@ export class VisibilityProcessor
     return false;
   }
 
+  /**
+   * hidden 노드 처리
+   *
+   * @param node - HiddenProcessableNode
+   * @param usedPropNames - 사용된 prop 이름 Set (선택사항)
+   * @returns HiddenNodeResult
+   */
   public processHiddenNode(
     node: HiddenProcessableNode,
     usedPropNames?: Set<string>
@@ -574,6 +720,10 @@ export class VisibilityProcessor
 
   /**
    * 외부 Set을 사용하여 showProp 이름 생성 (레거시 호환)
+   *
+   * @param nodeName - 노드 이름
+   * @param usedPropNames - 사용된 prop 이름 Set
+   * @returns 고유한 show* prop 이름
    */
   private generateShowPropNameWithSet(nodeName: string, usedPropNames: Set<string>): string {
     const basePropName = `show${this.capitalizeFirstLetter(toCamelCase(nodeName) || "Hidden")}`;
@@ -589,6 +739,10 @@ export class VisibilityProcessor
 
   /**
    * 배열에서 hidden 노드 찾기 (레거시 호환)
+   *
+   * @param nodes - 노드 배열
+   * @param data - PreparedDesignData
+   * @returns hidden 노드 배열
    */
   public findHiddenNodes(
     nodes: Array<HiddenProcessableNode & { visible?: VisibleState }>,
@@ -597,6 +751,12 @@ export class VisibilityProcessor
     return nodes.filter((node) => this.isHiddenNode(node, data));
   }
 
+  /**
+   * 모든 hidden 노드 처리
+   *
+   * @param nodes - HiddenProcessableNode 배열
+   * @returns results와 newProps
+   */
   public processAllHiddenNodes(nodes: HiddenProcessableNode[]): {
     results: HiddenNodeResult[];
     newProps: PropDefinition[];
@@ -616,6 +776,13 @@ export class VisibilityProcessor
     return { results, newProps };
   }
 
+  /**
+   * 트리에서 hidden 노드 수집
+   *
+   * @param root - 루트 InternalNode
+   * @param data - PreparedDesignData
+   * @returns HiddenProcessableNode 배열
+   */
   public collectFromTree(root: InternalNode, data: PreparedDesignData): HiddenProcessableNode[] {
     const nodes: HiddenProcessableNode[] = [];
 
@@ -640,12 +807,12 @@ export class VisibilityProcessor
   /**
    * show* prop 생성 여부 판별
    *
-   * visible=false인 노드는 show* prop을 생성하여 인스턴스에서 override 가능하게 함.
-   * 모든 variant에서 visible인 노드는 prop 생성 안 함.
+   * visible=false인 노드는 show* prop을 생성하여 인스턴스에서 override 가능하게 합니다.
+   * 모든 variant에서 visible인 노드는 prop 생성 안 합니다.
    *
-   * @param mergedNodes 노드의 variant별 존재 정보
-   * @param totalVariantCount 전체 variant 수
-   * @param data PreparedDesignData (visible 상태 확인용)
+   * @param mergedNodes - 노드의 variant별 존재 정보
+   * @param _totalVariantCount - 전체 variant 수 (미사용)
+   * @param data - PreparedDesignData (visible 상태 확인용)
    * @returns true면 prop 생성, false면 생성 안 함
    */
   public shouldCreateShowProp(
@@ -670,6 +837,11 @@ export class VisibilityProcessor
 
   /**
    * 노드가 모든 variant에서 항상 숨겨져 있는지 확인
+   *
+   * @param mergedNodes - 병합된 노드 배열
+   * @param totalVariantCount - 전체 variant 수
+   * @param data - PreparedDesignData
+   * @returns 항상 숨겨져 있으면 true
    */
   public isAlwaysHidden(
     mergedNodes: MergedNodeWithVariant[],
@@ -690,6 +862,10 @@ export class VisibilityProcessor
 
   /**
    * 노드 ID로 업데이트된 visible 상태 반환 (레거시 호환)
+   *
+   * @param nodeId - 노드 ID
+   * @param results - HiddenNodeResult 배열
+   * @returns VisibleState 또는 null
    */
   public getUpdatedVisibleState(
     nodeId: string,
@@ -707,6 +883,13 @@ export class VisibilityProcessor
   // Private Helpers
   // ==========================================================================
 
+  /**
+   * 이항 조건 생성
+   *
+   * @param propName - prop 이름
+   * @param value - prop 값
+   * @returns ConditionNode
+   */
   private createBinaryCondition(propName: string, value: string): ConditionNode {
     return {
       type: "BinaryExpression",
@@ -721,6 +904,12 @@ export class VisibilityProcessor
     } as ConditionNode;
   }
 
+  /**
+   * 조건들을 AND로 결합
+   *
+   * @param conditions - ConditionNode 배열
+   * @returns 결합된 ConditionNode 또는 null
+   */
   private combineConditionsWithAnd(conditions: ConditionNode[]): ConditionNode | null {
     if (conditions.length === 0) return null;
     if (conditions.length === 1) return conditions[0];
@@ -729,6 +918,12 @@ export class VisibilityProcessor
     );
   }
 
+  /**
+   * 조건들을 OR로 결합
+   *
+   * @param conditions - ConditionNode 배열
+   * @returns 결합된 ConditionNode
+   */
   private combineConditionsWithOr(conditions: ConditionNode[]): ConditionNode {
     if (conditions.length === 1) return conditions[0];
     return conditions.reduce(
@@ -736,6 +931,12 @@ export class VisibilityProcessor
     );
   }
 
+  /**
+   * 첫 글자 대문자로 변환
+   *
+   * @param str - 문자열
+   * @returns 첫 글자가 대문자인 문자열
+   */
   private capitalizeFirstLetter(str: string): string {
     if (!str) return str;
     return str.charAt(0).toUpperCase() + str.slice(1);

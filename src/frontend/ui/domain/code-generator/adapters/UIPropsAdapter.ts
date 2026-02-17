@@ -45,10 +45,17 @@ export interface PropDefinition {
  * DesignTree → UI PropDefinition[] 변환
  */
 export class UIPropsAdapter {
+  /**
+   * UIPropsAdapter 생성자
+   * @param data - PreparedDesignData 인스턴스
+   */
   constructor(private data: PreparedDesignData) {}
 
   /**
    * DesignTree.props를 UI 컨트롤러용 형식으로 변환
+   * @param designTree - 변환할 DesignTree
+   * @param normalizeComponentName - 컴포넌트 이름 정규화 함수
+   * @returns UI용 PropDefinition 배열
    */
   public toUIFormat(
     designTree: DesignTree,
@@ -87,6 +94,8 @@ export class UIPropsAdapter {
 
   /**
    * 새 타입을 레거시 타입으로 변환
+   * @param type - 새 prop 타입 문자열
+   * @returns 레거시 prop 타입
    */
   private _convertPropTypeToLegacy(
     type: string
@@ -104,6 +113,9 @@ export class UIPropsAdapter {
 
   /**
    * DesignTree에서 slot 노드의 정보 추출
+   * @param designTree - 탐색할 DesignTree
+   * @param normalizeComponentName - 컴포넌트 이름 정규화 함수
+   * @returns slot 이름을 키로, SlotInfo를 값으로 하는 Map
    */
   private _extractSlotInfoFromDesignTree(
     designTree: DesignTree,

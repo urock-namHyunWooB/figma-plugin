@@ -45,6 +45,12 @@ type CompilerFactory = (spec: FigmaNodeData) => CompilerInterface;
  * - 변수명 충돌 해결
  */
 class DependencyManager {
+  /**
+   * DependencyManager 생성자
+   * @param data - PreparedDesignData 인스턴스
+   * @param instanceOverrideManager - INSTANCE 오버라이드 관리 매니저
+   * @param variantEnrichManager - Variant 데이터 풍부화 매니저
+   */
   constructor(
     private data: PreparedDesignData,
     private instanceOverrideManager: InstanceOverrideManager,
@@ -53,10 +59,11 @@ class DependencyManager {
 
   /**
    * 의존성 컴포넌트와 함께 컴파일
-   * @param mainCode 메인 컴포넌트 컴파일된 코드
-   * @param componentName 메인 컴포넌트 이름
-   * @param compilerFactory 재귀 컴파일용 팩토리 함수
-   * @param normalizeComponentName 컴포넌트 이름 정규화 함수
+   * @param mainCode - 메인 컴포넌트 컴파일된 코드
+   * @param componentName - 메인 컴포넌트 이름
+   * @param compilerFactory - 재귀 컴파일용 팩토리 함수
+   * @param normalizeComponentName - 컴포넌트 이름 정규화 함수
+   * @returns 메인 컴포넌트와 의존성 컴포넌트가 포함된 컴파일 결과
    */
   public async compileWithDependencies(
     mainCode: string,
@@ -339,6 +346,9 @@ class DependencyManager {
 
   /**
    * dependencies를 같은 파일에 인라인으로 번들링
+   * @param result - 컴파일된 메인 컴포넌트와 의존성 정보
+   * @param rootDocument - 루트 Figma 노드
+   * @returns 번들링된 코드 문자열
    */
   public bundleWithDependencies(
     result: MultiComponentResult,
@@ -461,6 +471,8 @@ class DependencyManager {
   /**
    * CSS 변수 중복 제거
    * 동일한 CSS 내용을 가진 변수들을 하나로 합침
+   * @param code - 번들링된 코드 문자열
+   * @returns 중복 CSS 변수가 제거된 코드 문자열
    */
   private _deduplicateCssVariables(code: string): string {
     // CSS 변수 선언 추출: const VarName = css`...`
@@ -519,6 +531,9 @@ class DependencyManager {
 
   /**
    * 의존성이 루트 INSTANCE가 참조하는 컴포넌트인지 확인
+   * @param depComponentSetId - 의존성 컴포넌트 세트 ID
+   * @param rootComponentId - 루트 INSTANCE의 컴포넌트 ID
+   * @returns 루트 INSTANCE가 참조하는 컴포넌트이면 true
    */
   private _isDependencyOfRootInstance(
     depComponentSetId: string,
@@ -541,6 +556,8 @@ class DependencyManager {
 
   /**
    * 코드에서 변수명 추출
+   * @param code - 분석할 코드 문자열
+   * @returns 추출된 변수명 배열
    */
   private _extractVariableNames(code: string): string[] {
     const varRegex = /const\s+(\w+)\s*=/g;
@@ -557,6 +574,8 @@ class DependencyManager {
   /**
    * 코드에서 export type 선언 추출
    * 예: export type Size = "Large" | "Small";
+   * @param code - 분석할 코드 문자열
+   * @returns 추출된 타입명 배열
    */
   private _extractTypeNames(code: string): string[] {
     const typeRegex = /export\s+type\s+(\w+)\s*=/g;
@@ -573,6 +592,9 @@ class DependencyManager {
   /**
    * 의존 컴포넌트의 타입 중복 해결
    * 동일한 타입이 이미 선언되었으면 해당 export type 라인 제거
+   * @param code - 의존 컴포넌트 코드 문자열
+   * @param usedTypeNames - 이미 사용된 타입명 Set
+   * @returns 타입 중복이 해결된 코드 문자열
    */
   private _resolveTypeConflicts(
     code: string,
@@ -600,6 +622,10 @@ class DependencyManager {
 
   /**
    * 의존 컴포넌트의 변수명 충돌 해결
+   * @param code - 의존 컴포넌트 코드 문자열
+   * @param usedVariableNames - 이미 사용된 변수명 Set
+   * @param componentName - 충돌 시 접두사로 사용할 컴포넌트 이름
+   * @returns 변수명 충돌이 해결된 코드 문자열
    */
   private _resolveVariableConflicts(
     code: string,
@@ -645,6 +671,9 @@ class DependencyManager {
    * styleTree 기반 비교 (dependency의 info.document.children이 비어있을 수 있음)
    *
    * 반환값에 원본 nodeId 포함 (prop 바인딩용)
+   * @param instanceNode - INSTANCE 노드 데이터
+   * @param variantStyleChildren - variant의 styleTree children 배열
+   * @returns prop 이름을 키로, 값과 원본 노드 ID를 포함하는 객체
    */
   private _extractOverridePropsFromStyle(
     instanceNode: any,
@@ -739,6 +768,8 @@ class DependencyManager {
 
   /**
    * children 중에 visible: false인 노드가 있는지 재귀적으로 확인
+   * @param children - 확인할 자식 노드 배열
+   * @returns visible: false인 노드가 있으면 true
    */
   private _hasHiddenChildren(children: any[]): boolean {
     for (const child of children) {
@@ -754,6 +785,8 @@ class DependencyManager {
 
   /**
    * children 중에 INSTANCE 타입 노드가 있는지 재귀적으로 확인
+   * @param children - 확인할 자식 노드 배열
+   * @returns INSTANCE 타입 노드가 있으면 true
    */
   private _hasInstanceChildren(children: any[]): boolean {
     for (const child of children) {
@@ -767,6 +800,11 @@ class DependencyManager {
     return false;
   }
 
+  /**
+   * 문자열을 camelCase로 변환
+   * @param str - 변환할 문자열
+   * @returns camelCase로 변환된 문자열
+   */
   private _toCamelCase(str: string): string {
     return str
       .replace(/[^a-zA-Z0-9]+/g, " ")
@@ -780,6 +818,11 @@ class DependencyManager {
       .join("");
   }
 
+  /**
+   * fills 배열에서 색상 추출 (hex 또는 rgba 형식)
+   * @param fills - Figma fills 배열
+   * @returns hex 또는 rgba 색상 문자열, 추출 실패 시 null
+   */
   private _extractColorFromFills(fills: any[]): string | null {
     if (!fills || fills.length === 0) return null;
 
@@ -801,6 +844,8 @@ class DependencyManager {
   /**
    * variant 이름에서 componentPropertyDefinitions 추론
    * 예: "Size=Large, Color=Primary, Disabled=False" → { Size: {...}, Color: {...}, Disabled: {...} }
+   * @param variants - FigmaNodeData variant 배열
+   * @returns 추론된 componentPropertyDefinitions 객체
    */
   private _inferComponentPropertyDefinitions(
     variants: FigmaNodeData[]
@@ -844,6 +889,9 @@ class DependencyManager {
   /**
    * 모든 INSTANCE에서 오버라이드 가능한 prop 수집
    * { propName: { nodeId: string, type: 'fills' | 'characters' } }
+   * @param variants - FigmaNodeData variant 배열
+   * @param instancesByComponentId - componentId별 INSTANCE 노드 ID 매핑
+   * @returns prop 이름을 키로, 노드 정보와 타입을 포함하는 객체
    */
   private _collectAllOverrideableProps(
     variants: FigmaNodeData[],
@@ -919,6 +967,8 @@ class DependencyManager {
   /**
    * variant 이름에서 Variant prop 값 추출
    * 예: "Size=default, Variant=secondary, Icon=false" → "secondary"
+   * @param variantName - variant 이름 문자열
+   * @returns Variant prop 값 또는 undefined
    */
   private _extractVariantValueFromName(variantName: string): string | undefined {
     const match = variantName.match(/Variant=([^,]+)/i);
@@ -927,6 +977,8 @@ class DependencyManager {
 
   /**
    * children에서 visible: false인 노드의 ID 목록 반환
+   * @param children - 확인할 자식 노드 배열
+   * @returns visible: false인 노드의 ID 배열
    */
   private _getHiddenNodeIds(children: any[]): string[] {
     const hiddenIds: string[] = [];
@@ -949,6 +1001,9 @@ class DependencyManager {
   /**
    * INSTANCE의 children 중에서 hiddenNodeIds에 해당하는 노드가
    * visible override (visible이 false가 아닌 값)를 가지고 있는지 확인
+   * @param instanceNode - INSTANCE 노드 데이터
+   * @param hiddenNodeIds - 숨겨진 노드 ID 배열
+   * @returns visible override가 있으면 true
    */
   private _hasVisibleOverrideForHiddenNodes(
     instanceNode: any,
@@ -981,6 +1036,8 @@ class DependencyManager {
   /**
    * INSTANCE child ID에서 원본 ID 추출
    * 예: I14:1633;14:1647 → 14:1647
+   * @param instanceId - INSTANCE child ID 문자열
+   * @returns 원본 노드 ID
    */
   private _getOriginalIdFromInstanceId(instanceId: string): string {
     if (!instanceId?.startsWith("I")) return instanceId;

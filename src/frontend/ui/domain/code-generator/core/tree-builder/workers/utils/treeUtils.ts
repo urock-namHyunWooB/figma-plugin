@@ -9,6 +9,8 @@ import type { InternalNode } from "../interfaces";
 
 /**
  * InternalNode 트리를 순회하며 각 노드에 대해 콜백 실행 (DFS)
+ * @param root - 루트 노드
+ * @param callback - 각 노드에 대해 실행할 콜백 함수
  */
 export function traverseTree(
   root: InternalNode,
@@ -25,6 +27,8 @@ export function traverseTree(
 
 /**
  * InternalNode 트리를 flat한 배열로 변환
+ * @param root - 루트 노드
+ * @returns 트리의 모든 노드를 담은 배열
  */
 export function flattenTree(root: InternalNode): InternalNode[] {
   const result: InternalNode[] = [];
@@ -36,6 +40,9 @@ export function flattenTree(root: InternalNode): InternalNode[] {
  * InternalNode 트리를 다른 타입의 트리로 재귀적 변환 (map)
  *
  * NodeConverter.assemble 등에서 InternalNode → DesignNode 변환에 사용
+ * @param root - 루트 노드
+ * @param mapper - 노드와 변환된 자식들을 받아 새 타입으로 변환하는 함수
+ * @returns 변환된 트리의 루트
  */
 export function mapTree<T>(
   root: InternalNode,

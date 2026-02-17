@@ -35,6 +35,8 @@ export const FIGMA_TO_DESIGN_TYPE: Record<string, DesignNodeType> = {
 
 /**
  * Figma 노드 타입을 DesignNodeType으로 변환
+ * @param figmaType - Figma 노드 타입
+ * @returns 매핑된 DesignNodeType (매핑되지 않으면 "container" 반환)
  */
 export function mapNodeType(figmaType: string): DesignNodeType {
   return FIGMA_TO_DESIGN_TYPE[figmaType] ?? "container";
@@ -42,6 +44,8 @@ export function mapNodeType(figmaType: string): DesignNodeType {
 
 /**
  * 노드가 외부 컴포넌트 참조(INSTANCE)인지 확인
+ * @param figmaType - Figma 노드 타입
+ * @returns INSTANCE 타입 여부
  */
 export function isComponentReference(figmaType: string): boolean {
   return figmaType === "INSTANCE";
@@ -49,6 +53,8 @@ export function isComponentReference(figmaType: string): boolean {
 
 /**
  * 노드가 컨테이너 타입인지 확인
+ * @param figmaType - Figma 노드 타입
+ * @returns 컨테이너 타입 여부
  */
 export function isContainerType(figmaType: string): boolean {
   return mapNodeType(figmaType) === "container";
@@ -56,6 +62,8 @@ export function isContainerType(figmaType: string): boolean {
 
 /**
  * 노드가 벡터 그래픽인지 확인
+ * @param figmaType - Figma 노드 타입
+ * @returns 벡터 타입 여부
  */
 export function isVectorType(figmaType: string): boolean {
   return mapNodeType(figmaType) === "vector";
@@ -63,6 +71,8 @@ export function isVectorType(figmaType: string): boolean {
 
 /**
  * 노드가 텍스트인지 확인
+ * @param figmaType - Figma 노드 타입
+ * @returns TEXT 타입 여부
  */
 export function isTextType(figmaType: string): boolean {
   return figmaType === "TEXT";

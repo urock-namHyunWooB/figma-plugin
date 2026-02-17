@@ -49,6 +49,11 @@ export class LinkHeuristic implements IComponentHeuristic {
     normal: null,
   };
 
+  /**
+   * State 문자열을 CSS pseudo-class로 변환
+   * @param state - State 문자열 (예: "hover", "visited")
+   * @returns 대응하는 pseudo-class 또는 null/undefined
+   */
   stateToPseudo(state: string): PseudoClass | null | undefined {
     const normalized = state.toLowerCase();
     if (normalized in this.stateMapping) {
@@ -69,6 +74,9 @@ export class LinkHeuristic implements IComponentHeuristic {
    * - text-link: +12
    * - anchor: +10
    * - hyperlink: +10
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns 매칭 점수 (0 이상)
    */
   score(ctx: BuildContext): number {
     let score = 0;
@@ -82,6 +90,11 @@ export class LinkHeuristic implements IComponentHeuristic {
     return score;
   }
 
+  /**
+   * 이 휴리스틱이 해당 컴포넌트를 처리할 수 있는지 판별
+   * @param ctx - 빌드 컨텍스트
+   * @returns 처리 가능 여부
+   */
   canProcess(ctx: BuildContext): boolean {
     return this.score(ctx) >= LinkHeuristic.MATCH_THRESHOLD;
   }
@@ -90,6 +103,11 @@ export class LinkHeuristic implements IComponentHeuristic {
   // 메인 파이프라인 (Composition - 직접 호출)
   // ===========================================================================
 
+  /**
+   * 전체 파이프라인 실행
+   * @param ctx - 빌드 컨텍스트
+   * @returns 처리된 BuildContext
+   */
   process(ctx: BuildContext): BuildContext {
     let result = ctx;
 

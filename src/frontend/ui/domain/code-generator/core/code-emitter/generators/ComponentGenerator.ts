@@ -37,17 +37,31 @@ export interface ComponentGeneratorOptions {
   debug?: boolean;
 }
 
+/**
+ * DesignTree에서 React 컴포넌트 함수를 생성하는 제너레이터
+ */
 class ComponentGenerator {
+  /** TypeScript AST 노드 팩토리 */
   private factory: ts.NodeFactory;
+  /** 생성 옵션 */
   private options: ComponentGeneratorOptions;
 
+  /**
+   * ComponentGenerator 생성자
+   * @param factory - TypeScript AST 노드 팩토리
+   * @param options - 생성 옵션 (debug 모드 등)
+   */
   constructor(factory: ts.NodeFactory, options?: ComponentGeneratorOptions) {
     this.factory = factory;
     this.options = options || {};
   }
 
   /**
-   * 컴포넌트 함수 생성
+   * 컴포넌트 함수 선언문 생성
+   * @param tree - DesignTree (컴포넌트 구조 정보)
+   * @param componentName - 컴포넌트 이름
+   * @param strategy - 스타일 전략 (Emotion/Tailwind)
+   * @returns TypeScript 함수 선언문 AST
    */
   generate(
     tree: DesignTree,
@@ -105,7 +119,11 @@ class ComponentGenerator {
   }
 
   /**
-   * JSX 트리 생성 (재귀)
+   * DesignNode에서 JSX 트리를 재귀적으로 생성
+   * @param node - 현재 처리 중인 DesignNode
+   * @param tree - 전체 DesignTree
+   * @param strategy - 스타일 전략
+   * @returns JSX Element, SelfClosingElement, 또는 Expression AST
    */
   private createJsxTree(
     node: DesignNode,
@@ -188,7 +206,10 @@ class ComponentGenerator {
   }
 
   /**
-   * 외부 컴포넌트 JSX 생성
+   * 외부(의존성) 컴포넌트 참조를 위한 JSX 생성
+   * @param node - externalRef가 있는 DesignNode
+   * @param tree - 전체 DesignTree
+   * @returns JSX SelfClosingElement AST
    */
   private createExternalComponentJsx(
     node: DesignNode,
@@ -240,7 +261,10 @@ class ComponentGenerator {
   }
 
   /**
-   * JSX 속성 생성 (값 타입에 따라)
+   * 값 타입에 따라 JSX 속성 생성
+   * @param name - 속성 이름
+   * @param value - 속성 값 (boolean, number, string 등)
+   * @returns JSX Attribute AST
    */
   private createJsxAttributeWithValue(
     name: string,
@@ -273,7 +297,9 @@ class ComponentGenerator {
   }
 
   /**
-   * 네이티브 HTML 속성과 충돌하는 prop 이름 rename
+   * 네이티브 HTML 속성과 충돌하는 prop 이름을 custom 접두사로 rename
+   * @param propName - 원본 prop 이름
+   * @returns 충돌 시 custom 접두사가 붙은 이름, 아니면 원본
    */
   private renameConflictingPropName(propName: string): string {
     const conflictingAttrs = [
@@ -298,7 +324,11 @@ class ComponentGenerator {
   }
 
   /**
-   * 노드의 JSX Attributes 생성
+   * DesignNode의 JSX Attributes 배열 생성
+   * @param node - 현재 노드
+   * @param tree - 전체 DesignTree
+   * @param strategy - 스타일 전략
+   * @returns JSX Attribute 배열
    */
   private createAttributes(
     node: DesignNode,
@@ -344,8 +374,11 @@ class ComponentGenerator {
   }
 
   /**
-   * TEXT 노드의 variant별 조건부 inline style 생성
-   * 예: style={variant === "primary" ? { color: "var(--White, #FFF)" } : undefined}
+   * TEXT 노드의 variant별 조건부 inline style 속성 생성
+   * @param node - TEXT 타입 DesignNode
+   * @param tree - 전체 DesignTree
+   * @returns 조건부 style 속성 또는 null
+   * @example style={variant === "primary" ? { color: "var(--White, #FFF)" } : undefined}
    */
   private createConditionalStyleAttribute(
     node: DesignNode,
@@ -441,7 +474,11 @@ class ComponentGenerator {
   }
 
   /**
-   * 노드의 Children 생성
+   * DesignNode의 자식 JSX 요소들 생성
+   * @param node - 부모 노드
+   * @param tree - 전체 DesignTree
+   * @param strategy - 스타일 전략
+   * @returns JSX Child 배열
    */
   private createChildren(
     node: DesignNode,
@@ -514,7 +551,10 @@ class ComponentGenerator {
   }
 
   /**
-   * 텍스트 노드 내용 가져오기
+   * TEXT 노드의 텍스트 내용을 JSX로 변환
+   * @param node - TEXT 타입 DesignNode
+   * @param tree - 전체 DesignTree
+   * @returns JSX Child 또는 null
    */
   private getTextContent(
     node: DesignNode,
@@ -551,7 +591,10 @@ class ComponentGenerator {
 
   /**
    * variant에 따른 조건부 텍스트 표현식 생성
-   * 예: variant === "primary" ? labelText : secondaryText
+   * @param boundPropName - 바인딩된 prop 이름
+   * @param tree - 전체 DesignTree
+   * @returns 조건부 삼항 연산 Expression 또는 null
+   * @example variant === "primary" ? labelText : secondaryText
    */
   private createConditionalTextExpression(
     boundPropName: string,
@@ -616,7 +659,9 @@ class ComponentGenerator {
   }
 
   /**
-   * textSegments를 span 요소들로 변환
+   * textSegments를 개별 스타일이 적용된 span 요소들로 변환
+   * @param segments - 텍스트 세그먼트 배열 (텍스트, 스타일 인덱스, 스타일 정보)
+   * @returns JSX Child 배열 (JsxText 또는 span JsxElement)
    */
   private createTextSegments(
     segments: Array<{
@@ -665,7 +710,10 @@ class ComponentGenerator {
   }
 
   /**
-   * VECTOR 노드를 SVG로 렌더링
+   * VECTOR 노드의 SVG 문자열을 JSX SVG 요소로 변환
+   * @param node - vectorSvg가 있는 DesignNode
+   * @param attributes - 추가 JSX 속성들
+   * @returns JSX Element 또는 SelfClosingElement
    */
   private createVectorSvgElement(
     node: DesignNode,
@@ -720,9 +768,13 @@ class ComponentGenerator {
   }
 
   /**
-   * 조건부 SVG 렌더링 (variant별 다른 SVG)
-   * variantSvgs: { "Size=Normal": "<svg>...", "Size=Large": "<svg>..." }
-   * 결과: size === "Normal" ? <SvgNormal /> : <SvgLarge />
+   * variant별 다른 SVG를 조건부로 렌더링하는 JSX 표현식 생성
+   * @param node - variantSvgs가 있는 DesignNode
+   * @param attributes - 추가 JSX 속성들
+   * @param tree - 전체 DesignTree
+   * @returns 조건부 삼항 연산 JSX Expression
+   * @example variantSvgs: { "Size=Normal": "<svg>...", "Size=Large": "<svg>..." }
+   *          결과: size === "Normal" ? <SvgNormal /> : <SvgLarge />
    */
   private createConditionalSvgElement(
     node: DesignNode,
@@ -808,7 +860,11 @@ class ComponentGenerator {
   }
 
   /**
-   * JSX Element 생성
+   * 태그 이름, 속성, 자식으로 JSX Element 생성
+   * @param tagName - HTML 태그 이름
+   * @param attributes - JSX 속성 배열
+   * @param children - 자식 JSX 요소 배열
+   * @returns 자식이 없으면 SelfClosingElement, 있으면 JsxElement
    */
   private createJsxElement(
     tagName: string,
@@ -838,7 +894,10 @@ class ComponentGenerator {
   }
 
   /**
-   * 배열 슬롯 .map() 표현식 생성
+   * 배열 슬롯을 위한 .map() 호출 JSX 표현식 생성
+   * @param slot - 배열 슬롯 정보
+   * @param tree - 전체 DesignTree
+   * @returns {slotName.map((item, index) => <Component key={index} {...item} />)} 형태의 JSX Expression
    */
   private createArraySlotMapExpression(
     slot: ArraySlotInfo,
@@ -915,7 +974,9 @@ class ComponentGenerator {
   }
 
   /**
-   * Props 구조 분해 선언 생성
+   * Props 구조 분해 할당 선언문 생성
+   * @param tree - DesignTree (props 정보 포함)
+   * @returns destructuring 선언문과 배열 슬롯 안전화 문장들
    */
   private createPropsDestructuring(tree: DesignTree): {
     destructuring: ts.VariableStatement;
@@ -1031,7 +1092,9 @@ class ComponentGenerator {
   }
 
   /**
-   * 값을 TypeScript Expression으로 변환
+   * JavaScript 값을 TypeScript Expression AST로 변환
+   * @param value - 변환할 값 (string, number, boolean, null 등)
+   * @returns TypeScript Expression AST
    */
   private valueToExpression(value: unknown): ts.Expression {
     if (typeof value === "string") {
@@ -1050,9 +1113,11 @@ class ComponentGenerator {
   }
 
   /**
-   *
-   * semanticType이 textInput인 노드를 input 요소로 렌더링:
-   * - node.placeholder를 input의 placeholder 속성으로 사용
+   * type이 input인 노드를 HTML input 요소로 렌더링
+   * @param node - input 타입 DesignNode
+   * @param tree - 전체 DesignTree
+   * @param strategy - 스타일 전략
+   * @returns input JSX SelfClosingElement
    */
   private createInputElement(
     node: DesignNode,
@@ -1103,7 +1168,9 @@ class ComponentGenerator {
   }
 
   /**
-   * 노드의 태그 이름 결정
+   * DesignNode의 semanticRole에 따라 HTML 태그 이름 결정
+   * @param node - DesignNode
+   * @returns HTML 태그 이름 (button, span, img, svg, div 등)
    */
   private getTagName(node: DesignNode): string {
     switch (node.semanticRole) {
@@ -1125,7 +1192,10 @@ class ComponentGenerator {
   }
 
   /**
-   * 노드의 부모 찾기
+   * DesignTree에서 특정 노드의 부모 노드 찾기
+   * @param node - 대상 노드
+   * @param tree - 전체 DesignTree
+   * @returns 부모 노드 또는 null (루트 노드인 경우)
    */
   private findParentNode(
     node: DesignNode,
@@ -1149,7 +1219,10 @@ class ComponentGenerator {
   }
 
   /**
-   * 노드의 배열 슬롯 찾기
+   * 노드의 자식 중 배열 슬롯에 포함된 노드가 있는지 확인
+   * @param node - 부모 노드
+   * @param arraySlots - 배열 슬롯 정보 목록
+   * @returns 해당하는 ArraySlotInfo 또는 undefined
    */
   private findArraySlotForNode(
     node: DesignNode,
@@ -1168,8 +1241,9 @@ class ComponentGenerator {
   }
 
   /**
-   * 조건 표현식을 TypeScript Expression으로 변환
-   * ConditionNode (BinaryExpression | UnaryExpression | MemberExpression | Literal) → ts.Expression
+   * 조건 표현식을 TypeScript Expression AST로 변환
+   * @param condition - ConditionNode (BinaryExpression, UnaryExpression, MemberExpression, Literal 등)
+   * @returns TypeScript Expression AST
    */
   private convertConditionToTsExpression(condition: unknown): ts.Expression {
     const node = condition as ConditionNode | null;
@@ -1210,7 +1284,10 @@ class ComponentGenerator {
   }
 
   /**
-   * BinaryExpression 변환 (예: props.size === 'L')
+   * BinaryExpression을 TypeScript BinaryExpression으로 변환
+   * @param node - BinaryExpression 조건 노드
+   * @returns TypeScript BinaryExpression AST
+   * @example props.size === 'L'
    */
   private convertBinaryExpression(node: any): ts.Expression {
     const left = this.convertConditionToTsExpression(node.left);
@@ -1245,7 +1322,10 @@ class ComponentGenerator {
   }
 
   /**
-   * UnaryExpression 변환 (예: !props.isOpen)
+   * UnaryExpression을 TypeScript PrefixUnaryExpression으로 변환
+   * @param node - UnaryExpression 조건 노드
+   * @returns TypeScript PrefixUnaryExpression AST
+   * @example !props.isOpen
    */
   private convertUnaryExpression(node: any): ts.PrefixUnaryExpression {
     const operand = this.convertConditionToTsExpression(node.argument);
@@ -1258,8 +1338,11 @@ class ComponentGenerator {
   }
 
   /**
-   * MemberExpression 변환 (예: props.size → size)
-   * props 객체를 참조하는 경우, 구조 분해된 변수를 직접 사용
+   * MemberExpression을 TypeScript Expression으로 변환
+   * props 객체 참조 시 구조 분해된 변수를 직접 사용
+   * @param node - MemberExpression 조건 노드
+   * @returns TypeScript Expression AST
+   * @example props.size → size
    */
   private convertMemberExpression(node: any): ts.Expression {
     // props.X 형태인 경우, 구조 분해된 변수 X를 직접 사용
@@ -1288,7 +1371,9 @@ class ComponentGenerator {
   }
 
   /**
-   * Identifier 변환
+   * Identifier를 TypeScript Identifier로 변환
+   * @param node - Identifier 조건 노드
+   * @returns TypeScript Identifier AST
    */
   private convertIdentifier(node: any): ts.Identifier {
     const name = node.name || "unknown";
@@ -1296,7 +1381,9 @@ class ComponentGenerator {
   }
 
   /**
-   * Literal 변환 (string, number, boolean 등)
+   * Literal을 TypeScript Literal Expression으로 변환
+   * @param node - Literal 조건 노드
+   * @returns TypeScript Literal Expression AST (StringLiteral, NumericLiteral, True, False, Null)
    */
   private convertLiteral(node: any): ts.Expression {
     const value = node.value;
@@ -1318,7 +1405,10 @@ class ComponentGenerator {
   }
 
   /**
-   * CallExpression 변환 (예: ["a", "b"].includes(prop))
+   * CallExpression을 TypeScript CallExpression으로 변환
+   * @param node - CallExpression 조건 노드
+   * @returns TypeScript CallExpression AST
+   * @example ["a", "b"].includes(prop)
    */
   private convertCallExpression(node: any): ts.CallExpression {
     const callee = this.convertConditionToTsExpression(node.callee);
@@ -1329,7 +1419,10 @@ class ComponentGenerator {
   }
 
   /**
-   * ArrayExpression 변환 (예: ["a", "b", "c"])
+   * ArrayExpression을 TypeScript ArrayLiteralExpression으로 변환
+   * @param node - ArrayExpression 조건 노드
+   * @returns TypeScript ArrayLiteralExpression AST
+   * @example ["a", "b", "c"]
    */
   private convertArrayExpression(node: any): ts.ArrayLiteralExpression {
     const elements = (node.elements || []).map((el: any) =>
@@ -1339,7 +1432,10 @@ class ComponentGenerator {
   }
 
   /**
-   * 조건부 렌더링으로 감싸기
+   * JSX 요소를 조건부 렌더링 표현식으로 감싸기
+   * @param condition - 조건 Expression
+   * @param element - 감쌀 JSX 요소
+   * @returns {condition && element} 형태의 JSX Expression
    */
   private wrapWithConditionalRendering(
     condition: ts.Expression,
@@ -1355,12 +1451,14 @@ class ComponentGenerator {
   }
 
   /**
-   * 슬롯 노드의 자손 ID 수집
+   * 슬롯 노드의 자손 ID들을 수집
    *
    * variant 병합 과정에서 슬롯 노드(예: INSTANCE)의 자식들이
    * 상위 노드의 형제로 올라올 수 있음. 이들은 슬롯이 대체하므로 렌더링에서 제외해야 함.
    *
-   * SlotDefinition.descendantIds에서 원본 Figma 데이터 기반의 자손 ID를 사용합니다.
+   * @param parentNode - 부모 노드
+   * @param tree - 전체 DesignTree
+   * @returns 슬롯 자손 ID들의 Set
    */
   private collectSlotDescendantIds(
     parentNode: DesignNode,
@@ -1388,6 +1486,8 @@ class ComponentGenerator {
 
   /**
    * 노드의 모든 자손 ID를 재귀적으로 수집
+   * @param node - 시작 노드
+   * @param ids - ID를 수집할 Set
    */
   private collectAllDescendantIds(
     node: DesignNode,
@@ -1400,12 +1500,15 @@ class ComponentGenerator {
   }
 
   /**
-   * 배열 슬롯의 컴포넌트 이름 결정
+   * 배열 슬롯의 아이템 컴포넌트 이름 결정
    *
    * 우선순위:
    * 1. itemComponentName이 있으면 사용 (가장 정확)
    * 2. itemType이 유효한 JS 식별자면 사용
    * 3. slot.name에서 파생 (fallback)
+   *
+   * @param slot - 배열 슬롯 정보
+   * @returns 컴포넌트 이름 (PascalCase)
    */
   private resolveArraySlotComponentName(slot: ArraySlotInfo): string {
     // 1. itemComponentName이 있으면 사용

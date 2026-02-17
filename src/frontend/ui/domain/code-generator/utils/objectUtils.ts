@@ -1,5 +1,17 @@
 type Obj = Record<string, any>;
 
+/**
+ * 여러 객체에서 공통된 (key, value) 쌍을 제거하고 차이점만 반환
+ * 얕은 비교(shallow comparison)를 수행하며, 모든 객체에서 동일한 값을 가진 키는 제거됨
+ * @param objs - 비교할 객체들 (가변 인자)
+ * @returns 각 객체에서 공통 속성이 제거된 부분 객체 배열
+ * @example
+ * const [a, b] = removeCommonShallow(
+ *   { x: 1, y: 2, z: 3 },
+ *   { x: 1, y: 5, z: 3 }
+ * );
+ * // a = { y: 2 }, b = { y: 5 } (x와 z는 공통이므로 제거됨)
+ */
 export function removeCommonShallow<T extends Obj>(
   ...objs: T[]
 ): Array<Partial<T>> {

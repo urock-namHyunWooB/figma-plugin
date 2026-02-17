@@ -26,7 +26,10 @@ export type { InternalNode };
 // Types
 // ============================================================================
 
-/** 스쿼시 그룹 */
+/**
+ * 스쿼시 그룹
+ * IoU 기반으로 병합할 두 노드와 IoU 값
+ */
 interface SquashGroup {
   nodeA: InternalNode;
   nodeB: InternalNode;
@@ -69,6 +72,7 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
    * 단일 컴포넌트인 경우:
    * - 그대로 InternalNode로 변환
    *
+   * @param ctx - BuildContext
    * @returns internalTree가 설정된 BuildContext
    */
   static merge(ctx: BuildContext): BuildContext {
@@ -104,9 +108,13 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
   /**
    * 여러 variant를 하나의 트리로 병합
    *
+   * 각 variant를 InternalNode로 변환 후 순차적으로 병합합니다.
+   * IoU 기반 스쿼시와 wrapper FRAME flatten도 수행합니다.
+   *
    * @param variants - COMPONENT_SET의 children (각 variant)
    * @param data - PreparedDesignData
    * @returns 병합된 InternalNode 트리
+   * @throws variants가 비어있으면 에러
    */
   public mergeVariants(
     variants: SceneNode[],
@@ -146,6 +154,9 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   /**
    * 트리 전체의 children을 x 좌표 기준으로 정렬 (재귀)
+   *
+   * @param node - 정렬할 InternalNode
+   * @param data - PreparedDesignData
    */
   private sortChildrenByPosition(
     node: InternalNode,
@@ -166,6 +177,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   /**
    * 노드의 평균 x 좌표 계산 (여러 variant에서 merge된 경우)
+   *
+   * @param node - InternalNode
+   * @param data - PreparedDesignData
+   * @returns 평균 x 좌표
    */
   private getAverageX(node: InternalNode, data: PreparedDesignData): number {
     if (node.mergedNode.length === 0) return 0;
@@ -188,7 +203,12 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
    * Wrapper FRAME flatten
    *
    * 일부 variant에만 존재하는 FRAME을 찾아서,
-   * 그 children이 다른 variant에서 상위 레벨에 존재하면 FRAME을 제거하고 children을 상위로 올림
+   * 그 children이 다른 variant에서 상위 레벨에 존재하면 FRAME을 제거하고 children을 상위로 올립니다.
+   *
+   * @param root - 루트 InternalNode
+   * @param totalVariantCount - 전체 variant 수
+   * @param data - PreparedDesignData
+   * @returns flatten된 InternalNode 트리
    */
   private flattenWrapperFrames(
     root: InternalNode,
@@ -262,6 +282,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   /**
    * 한 FRAME의 내용을 다른 FRAME으로 병합
+   *
+   * @param source - 병합될 소스 FRAME
+   * @param target - 병합 대상 FRAME
+   * @param data - PreparedDesignData
    */
   private mergeFrameInto(
     source: InternalNode,
@@ -297,6 +321,11 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   /**
    * 두 노드의 정규화된 y 좌표가 같은지 확인
+   *
+   * @param node1 - 첫 번째 노드
+   * @param node2 - 두 번째 노드
+   * @param data - PreparedDesignData
+   * @returns y 좌표가 0.1 이내로 같으면 true
    */
   private isSamePositionY(
     node1: InternalNode,
@@ -317,6 +346,9 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
    * - 매칭 안 되는 노드 → 상위로 이동
    *
    * 모든 children 처리 후 FRAME 제거
+   *
+   * @param frame - flatten할 FRAME 노드
+   * @param data - PreparedDesignData
    */
   private flattenFrame(frame: InternalNode, data: PreparedDesignData): void {
     if (!frame.parent) return;
@@ -374,9 +406,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
    * 단일 SceneNode를 InternalNode로 변환
    *
    * @param node - SceneNode
-   * @param parent - 부모 InternalNode
+   * @param parent - 부모 InternalNode (루트이면 null)
    * @param variantName - variant 이름
-   * @param data - PreparedDesignData
+   * @param _data - PreparedDesignData
+   * @returns InternalNode
    */
   public convertToInternalNode(
     node: SceneNode,
@@ -421,6 +454,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   /**
    * 두 노드의 IoU 계산 (DOMRect 기반 - 인터페이스 구현)
+   *
+   * @param box1 - 첫 번째 영역
+   * @param box2 - 두 번째 영역
+   * @returns IoU 값 (0~1)
    */
   public calculateIoU(box1: DOMRect, box2: DOMRect): number {
     return calculateIoU(
@@ -431,6 +468,11 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   /**
    * 두 노드가 같은 노드인지 확인 (IoU 기반 - 인터페이스 구현)
+   *
+   * @param node1 - 첫 번째 SceneNode
+   * @param node2 - 두 번째 SceneNode
+   * @param threshold - IoU 임계값 (기본값: 0.8)
+   * @returns 같은 노드이면 true
    */
   public isSameNode(
     node1: SceneNode,
@@ -465,6 +507,7 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
    * @param trees - 병합할 트리들
    * @param threshold - IoU 임계값 (기본값 0.5)
    * @returns 스쿼시된 단일 트리
+   * @throws trees가 비어있으면 에러
    */
   public squashByIou(
     trees: InternalNode[],
@@ -502,6 +545,8 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   /**
    * getIou 함수 설정 (레거시 호환)
+   *
+   * @param fn - IoU 계산 함수
    */
   public setGetIouFunction(
     fn: (nodeA: InternalNode, nodeB: InternalNode) => number | null
@@ -511,6 +556,11 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   /**
    * IoU 함수를 사용한 스쿼시 (내부 사용 및 레거시 호환)
+   *
+   * @param root - 루트 InternalNode
+   * @param getIou - IoU 계산 함수
+   * @param threshold - IoU 임계값 (기본값 0.5)
+   * @returns 스쿼시된 InternalNode 트리
    */
   public squashWithFunction(
     root: InternalNode,
@@ -542,9 +592,14 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   /**
    * 두 트리를 병합 (내부 사용)
-   * BFS로 탐색하여 같은 노드는 mergedNode에 추가, 다른 노드는 트리에 추가
    *
-   * depth 제한 없이 전체 트리에서 타입이 같고 위치가 비슷한 노드를 매칭
+   * BFS로 탐색하여 같은 노드는 mergedNode에 추가, 다른 노드는 트리에 추가합니다.
+   * depth 제한 없이 전체 트리에서 타입이 같고 위치가 비슷한 노드를 매칭합니다.
+   *
+   * @param pivot - 기준 트리
+   * @param target - 병합할 트리
+   * @param data - PreparedDesignData
+   * @returns 병합된 트리
    */
   private mergeTree(
     pivot: InternalNode,
@@ -607,6 +662,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   /**
    * 트리에서 특정 타입의 모든 노드 반환
+   *
+   * @param root - 루트 InternalNode
+   * @param type - 찾을 노드 타입
+   * @returns 해당 타입의 모든 노드 배열
    */
   private getAllNodesOfType(root: InternalNode, type: string): InternalNode[] {
     const result: InternalNode[] = [];
@@ -627,6 +686,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   /**
    * 특정 depth의 모든 노드 반환 (내부 사용)
+   *
+   * @param root - 루트 InternalNode
+   * @param targetDepth - 대상 depth
+   * @returns 해당 depth의 모든 노드 배열
    */
   private getNodesAtDepth(
     root: InternalNode,
@@ -657,6 +720,11 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
    *
    * 1차: 정규화된 좌표 비교 (0.1 이내면 같은 노드)
    * 2차: TEXT 노드만 이름 기반 매칭 (size variant에서 같은 텍스트 병합)
+   *
+   * @param node1 - 첫 번째 InternalNode
+   * @param node2 - 두 번째 InternalNode
+   * @param data - PreparedDesignData
+   * @returns 같은 노드이면 true
    */
   private isSameInternalNode(
     node1: InternalNode,
@@ -699,8 +767,12 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
   /**
    * 노드의 정규화된 좌표 (원본 variant 루트 기준) 반환
    *
-   * InternalNode 트리가 아닌 SceneNode 트리를 순회하여 원본 variant 루트를 찾음.
-   * 이렇게 해야 병합된 트리에서도 각 노드의 원래 variant 기준으로 정규화됨.
+   * InternalNode 트리가 아닌 SceneNode 트리를 순회하여 원본 variant 루트를 찾습니다.
+   * 이렇게 해야 병합된 트리에서도 각 노드의 원래 variant 기준으로 정규화됩니다.
+   *
+   * @param node - InternalNode
+   * @param data - PreparedDesignData
+   * @returns 정규화된 좌표 { x, y } 또는 null
    */
   private getNormalizedPosition(
     node: InternalNode,
@@ -732,6 +804,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
    * 노드의 정규화된 y 좌표 (원본 variant 루트 기준) 반환
    *
    * getNormalizedPosition의 y 좌표만 반환하는 헬퍼
+   *
+   * @param node - InternalNode
+   * @param data - PreparedDesignData
+   * @returns 정규화된 y 좌표 또는 null
    */
   private getNormalizedY(
     node: InternalNode,
@@ -744,7 +820,9 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
   /**
    * 노드 ID → 원본 variant 루트 ID 매핑 구축
    *
-   * 각 variant의 모든 노드를 순회하여 원본 variant 루트 ID를 기록
+   * 각 variant의 모든 노드를 순회하여 원본 variant 루트 ID를 기록합니다.
+   *
+   * @param variants - COMPONENT_SET의 children (각 variant)
    */
   private buildNodeToVariantRootMap(variants: SceneNode[]): void {
     this.nodeToVariantRoot.clear();
@@ -765,6 +843,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   /**
    * 노드 ID로 원본 variant 루트 SceneNode 찾기
+   *
+   * @param nodeId - 노드 ID
+   * @param data - PreparedDesignData
+   * @returns 원본 variant 루트 SceneNode 또는 null
    */
   private findOriginalRoot(
     nodeId: string,
@@ -777,6 +859,9 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   /**
    * 노드의 루트 찾기 (InternalNode 트리 기준 - deprecated, 참조용으로 유지)
+   *
+   * @param node - InternalNode
+   * @returns 루트 InternalNode
    */
   private getRoot(node: InternalNode): InternalNode {
     let current = node;
@@ -788,6 +873,11 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
   /**
    * Root Component 기준으로 IoU 계산 (내부 사용)
+   *
+   * @param node1 - 첫 번째 InternalNode
+   * @param node2 - 두 번째 InternalNode
+   * @param data - PreparedDesignData
+   * @returns IoU 값 (0~1) 또는 null
    */
   private getIouFromRoot(
     node1: InternalNode,
@@ -870,6 +960,10 @@ export class VariantProcessor implements IVariantMerger, ISquashByIou {
 
 /**
  * 부모 기준 상대 좌표 계산
+ *
+ * @param nodeBounds - 노드 영역
+ * @param parentBounds - 부모 영역
+ * @returns 상대 좌표 { x, y, width, height }
  */
 export function getRelativeBounds(
   nodeBounds: { x: number; y: number; width: number; height: number },
@@ -885,6 +979,10 @@ export function getRelativeBounds(
 
 /**
  * IoU (Intersection over Union) 계산
+ *
+ * @param box1 - 첫 번째 영역
+ * @param box2 - 두 번째 영역
+ * @returns IoU 값 (0~1)
  */
 export function calculateIoU(
   box1: { x: number; y: number; width: number; height: number },
@@ -920,6 +1018,10 @@ export function calculateIoU(
 
 /**
  * bounds에서 IoU 계산
+ *
+ * @param bounds1 - 첫 번째 영역
+ * @param bounds2 - 두 번째 영역
+ * @returns IoU 값 (0~1)
  */
 function calculateIouFromBounds(
   bounds1: { x: number; y: number; width: number; height: number },
@@ -943,6 +1045,9 @@ function calculateIouFromBounds(
 
 /**
  * 타입별로 노드 그룹핑
+ *
+ * @param root - 루트 InternalNode
+ * @returns 타입 → 노드 배열 맵
  */
 function groupNodesByType(root: InternalNode): Map<string, InternalNode[]> {
   const nodesByType = new Map<string, InternalNode[]>();
@@ -964,6 +1069,11 @@ function groupNodesByType(root: InternalNode): Map<string, InternalNode[]> {
 
 /**
  * IoU 기반 스쿼시 대상 그룹 찾기
+ *
+ * @param nodesByType - 타입별 노드 그룹
+ * @param getIou - IoU 계산 함수
+ * @param threshold - IoU 임계값
+ * @returns SquashGroup 배열
  */
 function findSquashGroups(
   nodesByType: Map<string, InternalNode[]>,
@@ -992,6 +1102,10 @@ function findSquashGroups(
 
 /**
  * 스쿼시 그룹이 유효한지 검증
+ *
+ * @param nodeA - 첫 번째 노드
+ * @param nodeB - 두 번째 노드
+ * @returns 유효하면 true
  */
 function isValidSquashGroup(nodeA: InternalNode, nodeB: InternalNode): boolean {
   // INSTANCE 자식 여부 확인 - 둘 다 INSTANCE 자식이거나 둘 다 아니어야 함
@@ -1007,6 +1121,10 @@ function isValidSquashGroup(nodeA: InternalNode, nodeB: InternalNode): boolean {
 
 /**
  * 조상-자손 관계인지 확인
+ *
+ * @param nodeA - 첫 번째 노드
+ * @param nodeB - 두 번째 노드
+ * @returns 조상-자손 관계이면 true
  */
 function isAncestorDescendant(
   nodeA: InternalNode,
@@ -1031,6 +1149,9 @@ function isAncestorDescendant(
 
 /**
  * 스쿼시 수행: nodeB를 nodeA로 병합
+ *
+ * @param nodeA - 병합 대상 노드
+ * @param nodeB - 병합될 노드
  */
 function performSquash(nodeA: InternalNode, nodeB: InternalNode): void {
   // mergedNode 병합

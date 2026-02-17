@@ -4,6 +4,11 @@ import { traverseBFS } from "../utils/traverse";
 import { AstTree } from "@frontend/ui/domain/transpiler/types/ast";
 
 class HelperManager {
+  /**
+   * Boolean 타입의 Variant props를 찾아 반환
+   * @param definitions - componentPropertyDefinitions 객체
+   * @returns Boolean variant prop 이름 배열
+   */
   public findBooleanVariantProps(definitions: Record<string, any>): string[] {
     return Object.entries(definitions)
       .filter(([_, def]) => {
@@ -19,6 +24,12 @@ class HelperManager {
       .map(([name]) => name);
   }
 
+  /**
+   * variant 이름을 파싱하여 key-value 객체로 반환
+   * 예: "Size=Large, State=Default" → { Size: "Large", State: "Default" }
+   * @param variantName - 파싱할 variant 이름 문자열
+   * @returns prop 이름과 값의 Record 객체
+   */
   public parseVariantName(variantName: string): Record<string, string> {
     const result: Record<string, string> = {};
 
@@ -34,6 +45,11 @@ class HelperManager {
     return result;
   }
 
+  /**
+   * 여러 조건을 AND(&&) 연산자로 결합
+   * @param conditions - 결합할 ConditionNode 배열
+   * @returns AND 연산자로 결합된 ConditionNode
+   */
   public combineWithAnd(conditions: ConditionNode[]): ConditionNode {
     return conditions.reduce((acc, curr) => ({
       type: "BinaryExpression",
@@ -43,6 +59,11 @@ class HelperManager {
     })) as unknown as ConditionNode;
   }
 
+  /**
+   * 여러 조건을 OR(||) 연산자로 결합
+   * @param conditions - 결합할 ConditionNode 배열
+   * @returns OR 연산자로 결합된 ConditionNode
+   */
   public combineWithOr(conditions: ConditionNode[]): ConditionNode {
     return conditions.reduce((acc, curr) => ({
       type: "BinaryExpression",
@@ -55,7 +76,10 @@ class HelperManager {
   /**
    * 배열 기반 includes 조건 생성
    * ["filled", "outlined"].includes(props.customType)
-   * → 이후 CreateJsxTree에서 props.X를 X로 변환
+   * -> 이후 CreateJsxTree에서 props.X를 X로 변환
+   * @param propName - prop 이름
+   * @param values - 포함 여부를 검사할 값 배열
+   * @returns includes 메소드 호출 형태의 ConditionNode
    */
   public createIncludesCondition(
     propName: string,
@@ -92,6 +116,13 @@ class HelperManager {
     } as unknown as ConditionNode;
   }
 
+  /**
+   * 이진 비교 조건(===) 생성
+   * props.propName === value 형태의 ConditionNode 생성
+   * @param propName - prop 이름
+   * @param value - 비교할 값
+   * @returns 이진 비교 형태의 ConditionNode
+   */
   public createBinaryCondition(propName: string, value: string): ConditionNode {
     return {
       type: "BinaryExpression",
@@ -111,6 +142,12 @@ class HelperManager {
     } as unknown as ConditionNode;
   }
 
+  /**
+   * SuperTreeNode를 깊은 복사
+   * 순환 참조(parent)를 제외하고 복사 후 parent 관계를 복원
+   * @param tree - 복사할 SuperTreeNode
+   * @returns 깊은 복사된 SuperTreeNode
+   */
   public deepCloneTree(tree: SuperTreeNode): SuperTreeNode {
     // 순환 참조(parent) 제외하고 복사 후, parent 관계 복원
     const clone = (node: SuperTreeNode, parentNode: SuperTreeNode | null = null): SuperTreeNode => {
@@ -129,6 +166,12 @@ class HelperManager {
     return clone(tree);
   }
 
+  /**
+   * 주어진 노드에서 루트 COMPONENT 노드를 찾아 반환
+   * 부모 방향으로 탐색하며 type이 "COMPONENT"인 노드를 찾음
+   * @param node - 시작 노드
+   * @returns 루트 COMPONENT 노드 또는 탐색 종료 시 현재 노드
+   */
   public getRootComponentNode(node: SuperTreeNode) {
     const visited = new Set<string>();
     while (node) {
@@ -145,6 +188,12 @@ class HelperManager {
     return node;
   }
 
+  /**
+   * ID로 노드를 찾아 반환 (BFS 탐색)
+   * @param tree - 탐색할 루트 노드
+   * @param id - 찾을 노드 ID
+   * @returns 찾은 노드 또는 null
+   */
   public findNodeById(
     tree: SuperTreeNode,
     id: string
@@ -161,6 +210,11 @@ class HelperManager {
     return foundNode;
   }
 
+  /**
+   * 노드의 형제 간 인덱스를 반환
+   * @param node - 인덱스를 확인할 노드
+   * @returns 형제 배열 내 인덱스, 부모가 없으면 -1
+   */
   public getSiblingIndex(node: SuperTreeNode) {
     const parent = node.parent as SuperTreeNode;
 
@@ -169,6 +223,11 @@ class HelperManager {
     return index;
   }
 
+  /**
+   * 다음 형제 노드를 반환
+   * @param node - 기준 노드
+   * @returns 다음 형제 노드 또는 null/undefined
+   */
   public getNextSiblingNode(node: SuperTreeNode) {
     const parent = node.parent;
     const index = this.getSiblingIndex(node);
@@ -179,7 +238,8 @@ class HelperManager {
 
   /**
    * ConditionNode AST를 { propName: value } 형태로 파싱
-   *
+   * @param condition - 파싱할 ConditionNode
+   * @returns prop 이름과 값의 Record 객체
    * @example
    * // 입력: props.Size === "Large" && props.Disabled === "True"
    * // 출력: { Size: "Large", Disabled: "True" }
@@ -222,10 +282,18 @@ class HelperManager {
   }
 }
 
-// Union-Find 헬퍼
+/**
+ * Union-Find 헬퍼 클래스
+ * 경로 압축을 지원하는 Disjoint Set 자료구조
+ */
 export class UnionFind {
   private parent: Map<string, string> = new Map();
 
+  /**
+   * ID의 루트를 찾아 반환 (경로 압축 적용)
+   * @param id - 찾을 노드 ID
+   * @returns 루트 노드 ID
+   */
   find(id: string): string {
     if (!this.parent.has(id)) this.parent.set(id, id);
     if (this.parent.get(id) !== id) {
@@ -234,6 +302,11 @@ export class UnionFind {
     return this.parent.get(id)!;
   }
 
+  /**
+   * 두 ID를 같은 집합으로 합침
+   * @param id1 - 첫 번째 노드 ID
+   * @param id2 - 두 번째 노드 ID
+   */
   union(id1: string, id2: string) {
     const root1 = this.find(id1);
     const root2 = this.find(id2);
@@ -243,11 +316,18 @@ export class UnionFind {
   }
 }
 
-// 방향 그래프 클래스
+/**
+ * 방향 그래프 클래스
+ * 인접 리스트 기반 방향 그래프 구현
+ */
 export class DirectedGraph {
   private adjacencyList: Map<string, Set<string>> = new Map();
   private nodes: Set<string> = new Set();
 
+  /**
+   * 그래프에 노드 추가
+   * @param nodeId - 추가할 노드 ID
+   */
   addNode(nodeId: string) {
     this.nodes.add(nodeId);
     if (!this.adjacencyList.has(nodeId)) {
@@ -255,20 +335,39 @@ export class DirectedGraph {
     }
   }
 
+  /**
+   * 그래프에 방향 간선 추가
+   * @param from - 출발 노드 ID
+   * @param to - 도착 노드 ID
+   */
   addEdge(from: string, to: string) {
     this.addNode(from);
     this.addNode(to);
     this.adjacencyList.get(from)!.add(to);
   }
 
+  /**
+   * 간선 존재 여부 확인
+   * @param from - 출발 노드 ID
+   * @param to - 도착 노드 ID
+   * @returns 간선이 존재하면 true
+   */
   hasEdge(from: string, to: string): boolean {
     return this.adjacencyList.get(from)?.has(to) ?? false;
   }
 
+  /**
+   * 모든 노드 반환
+   * @returns 노드 ID Set
+   */
   getNodes(): Set<string> {
     return this.nodes;
   }
 
+  /**
+   * 모든 간선 반환
+   * @returns [출발, 도착] 튜플 배열
+   */
   getEdges(): Array<[string, string]> {
     const edges: Array<[string, string]> = [];
     for (const [from, neighbors] of this.adjacencyList) {
@@ -280,8 +379,10 @@ export class DirectedGraph {
   }
 
   /**
-   * from → to edge를 추가했을 때 사이클이 생기는지 확인
+   * from -> to edge를 추가했을 때 사이클이 생기는지 확인
    * (실제로 edge를 추가하지 않고 검사만 함)
+   * @param from - 출발 노드 ID
+   * @param to - 도착 노드 ID
    * @returns 사이클이 생기면 true, 아니면 false
    */
   wouldCreateCycle(from: string, to: string): boolean {
@@ -313,6 +414,8 @@ export class DirectedGraph {
   /**
    * 노드 A를 노드 B로 병합했을 때 사이클이 생기는지 확인
    * A의 모든 incoming/outgoing edge를 B로 옮겼을 때를 시뮬레이션
+   * @param nodeA - 병합될 노드 ID
+   * @param nodeB - 병합 대상 노드 ID
    * @returns 사이클이 생기면 true, 아니면 false
    */
   wouldCreateCycleOnMerge(nodeA: string, nodeB: string): boolean {
@@ -368,14 +471,13 @@ export class DirectedGraph {
 
   /**
    * 노드를 제거했을 때 사이클이 생기는지 확인
-   * (노드 제거 시 incoming → outgoing을 연결하는 transitivity 적용)
+   * (노드 제거 시 incoming -> outgoing을 연결하는 transitivity 적용)
    * @param nodeToRemove - 제거할 노드 ID
    * @returns 사이클이 생기면 true, 아니면 false
-   *
    * @example
-   * // Icon1 → Text → Icon2 에서 Text 제거 시
-   * // Icon1 → Icon2 연결이 추가됨
-   * // 만약 이미 Icon2 → Icon1 경로가 있다면 사이클 발생
+   * // Icon1 -> Text -> Icon2 에서 Text 제거 시
+   * // Icon1 -> Icon2 연결이 추가됨
+   * // 만약 이미 Icon2 -> Icon1 경로가 있다면 사이클 발생
    */
   wouldCreateCycleOnRemove(nodeToRemove: string): boolean {
     if (!this.nodes.has(nodeToRemove)) return false;
@@ -408,6 +510,9 @@ export class DirectedGraph {
 
   /**
    * from에서 to로 가는 경로가 있는지 확인 (BFS)
+   * @param from - 출발 노드 ID
+   * @param to - 도착 노드 ID
+   * @returns 경로가 존재하면 true
    */
   hasPath(from: string, to: string): boolean {
     if (from === to) return true;

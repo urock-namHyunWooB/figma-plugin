@@ -68,10 +68,19 @@ export class GenericHeuristic implements IComponentHeuristic {
     idle: null,
   };
 
+  /**
+   * State → pseudo-class 매핑 반환
+   * @returns State → PseudoClass 매핑 객체
+   */
   get stateMapping(): Record<string, PseudoClass | null> {
     return this.baseStateMapping;
   }
 
+  /**
+   * State 문자열을 CSS pseudo-class로 변환
+   * @param state - State 문자열 (예: "hover", "disabled")
+   * @returns 대응하는 pseudo-class 또는 null/undefined
+   */
   stateToPseudo(state: string): PseudoClass | null | undefined {
     const normalized = state.toLowerCase();
     const mapping = this.stateMapping;
@@ -88,6 +97,8 @@ export class GenericHeuristic implements IComponentHeuristic {
   /**
    * 매칭 점수 계산
    * GenericHeuristic은 fallback이므로 항상 0 반환
+   * @param _ctx - 빌드 컨텍스트 (미사용)
+   * @returns 항상 0
    */
   score(_ctx: BuildContext): number {
     return 0;
@@ -96,6 +107,8 @@ export class GenericHeuristic implements IComponentHeuristic {
   /**
    * 처리 가능 여부 판별
    * GenericHeuristic은 fallback이므로 항상 true
+   * @param _ctx - 빌드 컨텍스트 (미사용)
+   * @returns 항상 true
    */
   canProcess(_ctx: BuildContext): boolean {
     return true;
@@ -105,6 +118,11 @@ export class GenericHeuristic implements IComponentHeuristic {
   // 메인 파이프라인
   // ===========================================================================
 
+  /**
+   * 전체 파이프라인 실행
+   * @param ctx - 빌드 컨텍스트
+   * @returns 처리된 BuildContext
+   */
   process(ctx: BuildContext): BuildContext {
     let result = ctx;
     result = this.processStructure(result);
@@ -118,6 +136,11 @@ export class GenericHeuristic implements IComponentHeuristic {
   // Phase 1: 구조 생성
   // ===========================================================================
 
+  /**
+   * Phase 1: 구조 생성
+   * @param ctx - 빌드 컨텍스트
+   * @returns 구조가 생성된 BuildContext
+   */
   processStructure(ctx: BuildContext): BuildContext {
     let result = ctx;
     result = this.processVariants(result);
@@ -126,14 +149,29 @@ export class GenericHeuristic implements IComponentHeuristic {
     return result;
   }
 
+  /**
+   * Variant 병합 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns variant가 병합된 BuildContext
+   */
   processVariants(ctx: BuildContext): BuildContext {
     return VariantProcessor.merge(ctx);
   }
 
+  /**
+   * Instance 내부 노드 정리
+   * @param ctx - 빌드 컨텍스트
+   * @returns 정리된 BuildContext
+   */
   processInstanceCleanup(ctx: BuildContext): BuildContext {
     return CleanupProcessor.removeInstanceInternalNodes(ctx);
   }
 
+  /**
+   * Props 추출 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns props가 추출된 BuildContext
+   */
   processPropsExtract(ctx: BuildContext): BuildContext {
     return PropsProcessor.extract(ctx);
   }
@@ -142,6 +180,11 @@ export class GenericHeuristic implements IComponentHeuristic {
   // Phase 2: 분석
   // ===========================================================================
 
+  /**
+   * Phase 2: 분석
+   * @param ctx - 빌드 컨텍스트
+   * @returns 분석이 완료된 BuildContext
+   */
   processAnalysis(ctx: BuildContext): BuildContext {
     let result = ctx;
     result = NodeProcessor.detectSemanticRoles(result);
@@ -154,6 +197,11 @@ export class GenericHeuristic implements IComponentHeuristic {
   // Phase 3: 노드 변환
   // ===========================================================================
 
+  /**
+   * Phase 3: 노드 변환
+   * @param ctx - 빌드 컨텍스트
+   * @returns 변환이 완료된 BuildContext
+   */
   processTransform(ctx: BuildContext): BuildContext {
     let result = ctx;
     result = this.processNodeTypes(result);
@@ -167,36 +215,76 @@ export class GenericHeuristic implements IComponentHeuristic {
     return result;
   }
 
+  /**
+   * Node type 매핑 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns 노드 타입이 매핑된 BuildContext
+   */
   processNodeTypes(ctx: BuildContext): BuildContext {
     return NodeProcessor.mapTypes(ctx);
   }
 
+  /**
+   * Style 분류 (base/dynamic/pseudo) 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns 스타일이 빌드된 BuildContext
+   */
   processStyles(ctx: BuildContext): BuildContext {
     // 현재 StyleProcessor는 stateUtils의 stateToPseudo를 직접 사용
     // 향후 커스텀 stateMapping이 필요하면 StyleProcessor를 확장
     return StyleProcessor.build(ctx);
   }
 
+  /**
+   * Position 스타일 적용
+   * @param ctx - 빌드 컨텍스트
+   * @returns 위치 스타일이 적용된 BuildContext
+   */
   processPositions(ctx: BuildContext): BuildContext {
     return StyleProcessor.applyPositions(ctx);
   }
 
+  /**
+   * Rotation 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns 회전 스타일이 적용된 BuildContext
+   */
   processRotation(ctx: BuildContext): BuildContext {
     return StyleProcessor.handleRotation(ctx);
   }
 
+  /**
+   * External refs 생성
+   * @param ctx - 빌드 컨텍스트
+   * @returns 외부 참조가 생성된 BuildContext
+   */
   processExternalRefs(ctx: BuildContext): BuildContext {
     return InstanceProcessor.buildExternalRefs(ctx);
   }
 
+  /**
+   * Visibility 조건 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns visibility가 처리된 BuildContext
+   */
   processVisibility(ctx: BuildContext): BuildContext {
     return VisibilityProcessor.resolve(ctx);
   }
 
+  /**
+   * Props 바인딩 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns props가 바인딩된 BuildContext
+   */
   processProps(ctx: BuildContext): BuildContext {
     return PropsProcessor.bindProps(ctx);
   }
 
+  /**
+   * Slot 감지 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns 슬롯이 감지된 BuildContext
+   */
   processSlots(ctx: BuildContext): BuildContext {
     let result = ctx;
     result = SlotProcessor.detectTextSlots(result);
@@ -210,6 +298,11 @@ export class GenericHeuristic implements IComponentHeuristic {
   // Phase 4: 최종 조립
   // ===========================================================================
 
+  /**
+   * Phase 4: 최종 조립
+   * @param ctx - 빌드 컨텍스트
+   * @returns 조립이 완료된 BuildContext
+   */
   processBuild(ctx: BuildContext): BuildContext {
     let result = ctx;
     result = this.buildDesignTree(result);
@@ -217,10 +310,20 @@ export class GenericHeuristic implements IComponentHeuristic {
     return result;
   }
 
+  /**
+   * DesignNode 트리 생성
+   * @param ctx - 빌드 컨텍스트
+   * @returns DesignTree가 생성된 BuildContext
+   */
   buildDesignTree(ctx: BuildContext): BuildContext {
     return NodeConverter.assemble(ctx);
   }
 
+  /**
+   * 정리 처리 (hidden 노드 제거 등)
+   * @param ctx - 빌드 컨텍스트
+   * @returns 정리된 BuildContext
+   */
   processCleanup(ctx: BuildContext): BuildContext {
     // 현재는 별도 cleanup 없음
     return ctx;

@@ -139,6 +139,11 @@ class TailwindStyleStrategy implements IStyleStrategy {
   /** 컴포넌트 이름 */
   private componentName: string | undefined;
 
+  /**
+   * TailwindStyleStrategy 생성자
+   * @param factory - TypeScript AST 노드 생성을 위한 NodeFactory
+   * @param options - Tailwind 전략 옵션
+   */
   constructor(factory: ts.NodeFactory, options?: TailwindStrategyOptions) {
     this.factory = factory;
     this.options = {
@@ -149,6 +154,7 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * Tailwind import 문 생성
+   * @returns Tailwind 관련 import 선언 배열
    */
   generateImports(): ts.ImportDeclaration[] {
     if (this.options.inlineCn) {
@@ -176,6 +182,10 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * 스타일 선언부 생성
+   * @param tree - DesignTree 구조
+   * @param componentName - 컴포넌트 이름
+   * @param props - Props 정의 배열
+   * @returns TypeScript 스타일 선언문 배열
    */
   generateDeclarations(
     tree: DesignTree,
@@ -249,6 +259,9 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * className={} 속성 생성
+   * @param node - 스타일을 적용할 DesignNode
+   * @param props - Props 정의 배열
+   * @returns JSX className 속성 또는 스타일이 없으면 null
    */
   createStyleAttribute(
     node: DesignNode,
@@ -275,6 +288,9 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * 동적 스타일 정보 조회
+   * @param node - 조회할 DesignNode
+   * @param props - Props 정의 배열 (선택사항)
+   * @returns 동적 스타일 정보 또는 없으면 null
    */
   getDynamicStyleInfo(node: DesignNode, props?: PropDefinition[]): DynamicStyleInfo | null {
     const dynamicStyles = node.styles?.dynamic;
@@ -308,6 +324,9 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * CSS 변수 이름 조회 (Tailwind는 사용하지 않음)
+   * @param _node - 조회할 DesignNode (미사용)
+   * @param _componentName - 컴포넌트 이름 (미사용)
+   * @returns 빈 문자열
    */
   getCssVariableName(_node: DesignNode, _componentName: string): string {
     return "";
@@ -315,6 +334,7 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * 스타일 미리 변환
+   * @param root - 루트 DesignNode
    */
   private preprocessStyles(root: DesignNode): void {
     this.traverseTree(root, (node) => {
@@ -349,6 +369,8 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * CSS 객체를 Tailwind 클래스로 변환
+   * @param style - CSS 스타일 객체
+   * @returns Tailwind 클래스 문자열
    */
   private cssObjectToTailwind(style: Record<string, string | number>): string {
     const classes: string[] = [];
@@ -365,6 +387,9 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * 단일 CSS 속성을 Tailwind 클래스로 변환
+   * @param property - CSS 속성 이름
+   * @param value - CSS 속성 값
+   * @returns Tailwind 클래스
    */
   private cssPropertyToTailwind(property: string, value: string): string {
     const valueStr = value.trim();
@@ -413,6 +438,8 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * kebab-case를 camelCase로 변환
+   * @param str - 변환할 kebab-case 문자열
+   * @returns camelCase로 변환된 문자열
    */
   private kebabToCamel(str: string): string {
     return str.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
@@ -420,6 +447,10 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * className 표현식 빌드
+   * @param node - 스타일을 적용할 DesignNode
+   * @param baseClasses - 기본 Tailwind 클래스
+   * @param dynamicInfo - 동적 스타일 정보
+   * @returns className 표현식
    */
   private buildClassNameExpression(
     node: DesignNode,
@@ -465,6 +496,7 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * 인라인 cn 함수 생성
+   * @returns cn 함수 변수 선언문
    */
   private createInlineCnFunction(): ts.VariableStatement {
     const parameter = this.factory.createParameterDeclaration(
@@ -526,6 +558,8 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * ConditionNode에서 prop 이름과 값 추출
+   * @param condition - 조건 노드
+   * @returns 추출된 조건 또는 null
    */
   private extractCondition(condition: ConditionNode): ExtractedCondition | null {
     if (!condition) {
@@ -547,6 +581,8 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * BinaryExpression에서 prop 추출
+   * @param binaryExpr - 이진 표현식 노드
+   * @returns 추출된 조건 또는 null
    */
   private extractFromBinaryExpression(binaryExpr: any): ExtractedCondition | null {
     // props.X === "value" 형태 처리
@@ -573,6 +609,8 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * LogicalExpression에서 첫 번째 BinaryExpression 추출 (재귀)
+   * @param logicalExpr - 논리 표현식 노드
+   * @returns 추출된 조건 또는 null
    */
   private extractFromLogicalExpression(logicalExpr: any): ExtractedCondition | null {
     // 왼쪽부터 탐색
@@ -600,6 +638,9 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * 노드의 기본 이름 가져오기
+   * @param node - 조회할 DesignNode
+   * @param componentName - 컴포넌트 이름
+   * @returns 노드의 기본 이름
    */
   private getNodeBaseName(node: DesignNode, componentName: string): string {
     if (node.semanticRole === "root") {
@@ -616,6 +657,8 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * 고유한 변수명 생성
+   * @param baseName - 기본 변수 이름
+   * @returns 고유한 변수 이름
    */
   private generateUniqueVarName(baseName: string): string {
     const count = this.usedNames.get(baseName) || 0;
@@ -625,6 +668,8 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * 트리 순회
+   * @param node - 순회 시작 DesignNode
+   * @param callback - 각 노드에 대해 호출할 콜백 함수
    */
   private traverseTree(
     node: DesignNode,
@@ -638,6 +683,8 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * Arbitrary value 이스케이프
+   * @param value - 이스케이프할 CSS 값
+   * @returns 이스케이프된 값
    */
   private escapeArbitraryValue(value: string): string {
     return value
@@ -651,6 +698,8 @@ class TailwindStyleStrategy implements IStyleStrategy {
 
   /**
    * camelCase를 kebab-case로 변환
+   * @param str - 변환할 camelCase 문자열
+   * @returns kebab-case로 변환된 문자열
    */
   private camelToKebab(str: string): string {
     return str.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();

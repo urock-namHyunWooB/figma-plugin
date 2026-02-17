@@ -83,7 +83,9 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
    * - LINE height: 0 노드: display: none 처리
    * - flatten된 FRAME의 HORIZONTAL layoutMode 상속
    *
+   * @param ctx - BuildContext
    * @returns nodeStyles Map이 설정된 BuildContext
+   * @throws internalTree가 없으면 에러
    */
   static build(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) {
@@ -155,7 +157,9 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
    * 1. 자식 노드에 position: absolute, left, top 적용
    * 2. absolute 자식을 가진 부모에 position: relative 적용
    *
+   * @param ctx - BuildContext
    * @returns nodeStyles가 업데이트된 BuildContext
+   * @throws internalTree와 nodeStyles가 없으면 에러
    */
   static applyPositions(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree || !ctx.nodeStyles) {
@@ -209,7 +213,9 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
    * - transform 속성 제거
    * - absoluteRenderBounds에서 width/height 재계산
    *
+   * @param ctx - BuildContext
    * @returns nodeStyles가 업데이트된 BuildContext
+   * @throws internalTree와 nodeStyles가 없으면 에러
    */
   static handleRotation(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree || !ctx.nodeStyles) {
@@ -237,7 +243,9 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * variant 이름에서 State 값 추출
-   * 예: "Size=Large, State=Hover" → "Hover"
+   *
+   * @param variantName - variant 이름 (예: "Size=Large, State=Hover")
+   * @returns State 값 (예: "Hover") 또는 null
    */
   public extractStateFromVariantName(variantName: string): string | null {
     const match = variantName.match(/State=(\w+)/i);
@@ -246,6 +254,10 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * variant 스타일들을 분류하여 StyleDefinition 생성
+   *
+   * @param variantStyles - variant별 스타일 배열
+   * @param parseCondition - variant 이름을 조건으로 파싱하는 함수
+   * @returns StyleDefinition (base, dynamic, pseudo)
    */
   public classifyStyles(
     variantStyles: VariantStyle[],
@@ -349,6 +361,9 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * State별로 variant 그룹화
+   *
+   * @param variantStyles - variant별 스타일 배열
+   * @returns State → VariantStyle[] 맵
    */
   private groupByState(variantStyles: VariantStyle[]): Map<string, VariantStyle[]> {
     const groups = new Map<string, VariantStyle[]>();
@@ -362,7 +377,12 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * 스타일 속성이 State-specific인지 판별
+   *
    * State-specific: 같은 State 내에서 모든 Size/Icon 조합이 동일한 값을 가짐
+   *
+   * @param key - CSS 속성 키
+   * @param stateGroups - State별 variant 그룹
+   * @returns State-specific이면 true
    */
   private isStateSpecific(key: string, stateGroups: Map<string, VariantStyle[]>): boolean {
     // State가 1개 이하면 State-specific 아님
@@ -389,6 +409,10 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * 두 스타일 객체의 차이 계산
+   *
+   * @param baseStyle - 기준 스타일
+   * @param targetStyle - 비교 대상 스타일
+   * @returns 차이가 있는 속성만 포함하는 스타일 객체
    */
   public diffStyles(
     baseStyle: Record<string, string>,
@@ -405,6 +429,9 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * 여러 스타일에서 공통 스타일 추출
+   *
+   * @param styles - 스타일 객체 배열
+   * @returns 모든 스타일에서 동일한 값을 가진 속성만 포함하는 객체
    */
   public extractCommonStyles(styles: Array<Record<string, string>>): Record<string, string> {
     if (styles.length === 0) return {};
@@ -424,6 +451,10 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * MergedNodes에서 VariantStyle 배열을 생성하고 분류
+   *
+   * @param input - StyleBuildInput (mergedNodes, data)
+   * @param parseCondition - variant 이름을 조건으로 파싱하는 함수
+   * @returns StyleDefinition
    */
   public buildFromMergedNodes(
     input: StyleBuildInput,
@@ -452,6 +483,11 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * Auto-layout이 아닌 부모의 자식에게 position 스타일 계산
+   *
+   * @param node - 대상 노드
+   * @param parent - 부모 노드
+   * @param data - PreparedDesignData
+   * @returns PositionResult (position, left, top) 또는 null
    */
   public calculatePosition(
     node: PositionableNode,
@@ -488,6 +524,9 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * 노드가 auto-layout인지 확인
+   *
+   * @param nodeSpec - SceneNode 스펙
+   * @returns auto-layout이면 true
    */
   public isAutoLayout(nodeSpec: SceneNode): boolean {
     if (!nodeSpec) return false;
@@ -497,6 +536,11 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * Position 스타일을 StyleDefinition에 적용
+   *
+   * @param node - InternalNode
+   * @param styles - 현재 StyleDefinition
+   * @param data - PreparedDesignData
+   * @returns 업데이트된 StyleDefinition
    */
   public applyToStyleDefinition(
     node: InternalNode,
@@ -526,6 +570,12 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * 회전된 요소의 스타일 처리
+   *
+   * 90도/270도 회전된 요소는 transform 대신 absoluteRenderBounds로 크기 계산합니다.
+   *
+   * @param nodeSpec - SceneNode 스펙
+   * @param styles - 현재 base 스타일
+   * @returns 업데이트된 base 스타일
    */
   public handleRotatedElement(nodeSpec: SceneNode, styles: Record<string, string>): Record<string, string> {
     const rotation = nodeSpec?.rotation;
@@ -569,6 +619,9 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
    *
    * 결과는 StyleDefinition.propStyles에 저장되어 EmotionStyleStrategy가
    * 분석 없이 바로 코드 생성에 사용할 수 있습니다.
+   *
+   * @param ctx - BuildContext
+   * @returns nodeStyles가 업데이트된 BuildContext
    */
   static separateByProp(ctx: BuildContext): BuildContext {
     if (!ctx.nodeStyles || !ctx.propsMap) return ctx;
@@ -614,6 +667,12 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * dynamic 스타일을 prop별로 분석하여 PropStyleGroup 생성
+   *
+   * @param dynamic - dynamic 스타일 배열
+   * @param base - base 스타일
+   * @param props - PropDefinition 배열
+   * @param propDefaults - prop 기본값 맵
+   * @returns prop별 PropStyleGroup 맵
    */
   private static analyzePropStyles(
     dynamic: StyleDefinition["dynamic"],
@@ -750,7 +809,14 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * Boolean prop 스타일 분석
-   * True/False가 다른 variant prop에 의존하는지 확인
+   *
+   * True/False가 다른 variant prop에 의존하는지 확인합니다.
+   *
+   * @param boolPropName - boolean prop 이름
+   * @param dynamic - dynamic 스타일 배열
+   * @param props - PropDefinition 배열
+   * @param propDefaults - prop 기본값 맵
+   * @returns PropStyleGroup 또는 null
    */
   private static analyzeBooleanPropStyles(
     boolPropName: string,
@@ -887,6 +953,12 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * Variant prop 스타일 추출
+   *
+   * @param propName - prop 이름
+   * @param variants - variant별 스타일 엔트리 맵
+   * @param propDefaults - prop 기본값 맵
+   * @param base - base 스타일
+   * @returns variant별 스타일 맵
    */
   private static extractVariantPropStyles(
     propName: string,
@@ -959,6 +1031,13 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * 해당 prop이 실제로 변경하는 스타일 속성만 추출
+   *
+   * @param targetPropName - 대상 prop 이름
+   * @param targetPropValue - 대상 prop 값
+   * @param allVariants - 모든 variant 엔트리
+   * @param propDefaults - prop 기본값 맵
+   * @param _base - base 스타일 (미사용)
+   * @returns prop-specific 스타일 또는 null
    */
   private static findPropSpecificStyleFromVariants(
     targetPropName: string,
@@ -1033,6 +1112,9 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * 조건에서 모든 prop-value 쌍 추출
+   *
+   * @param condition - ConditionNode
+   * @returns prop-value 쌍 배열
    */
   private static extractAllConditionsFromNode(
     condition: ConditionNode
@@ -1068,6 +1150,9 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * CSS 변수에서 fallback 값 추출
+   *
+   * @param value - CSS 값 (예: "var(--color, #FF0000)")
+   * @returns fallback 값 (예: "#FF0000") 또는 원본 값
    */
   private static extractCssVarFallbackValue(value: string | number): string {
     if (typeof value !== "string") return String(value);
@@ -1088,6 +1173,9 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
    * 이 메서드는 버튼과 같이 여러 variant prop이 복합 조건으로 스타일을 결정하는
    * 컴포넌트에서 각 prop별로 스타일을 분리하여 EmotionStyleStrategy가
    * 올바른 Record 객체를 생성할 수 있도록 합니다.
+   *
+   * @param ctx - BuildContext
+   * @returns nodeStyles가 업데이트된 BuildContext
    */
   static simplifyToSinglePropConditions(ctx: BuildContext): BuildContext {
     if (!ctx.nodeStyles || !ctx.propsMap) return ctx;
@@ -1123,6 +1211,11 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
    *
    * EmotionStyleStrategy.groupDynamicStylesByProp()이 각 prop별로 스타일을 그룹화할 때
    * 공통 스타일만 추출하므로, 여기서는 단일 prop 조건으로 분해만 수행.
+   *
+   * @param dynamic - dynamic 스타일 배열
+   * @param props - prop 정의 배열
+   * @param base - base 스타일
+   * @returns 분해된 dynamic 스타일 배열
    */
   private static extractPropBasedStyles(
     dynamic: StyleDefinition["dynamic"],
@@ -1185,6 +1278,11 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
    *
    * prop 이름 매칭 시 customXxx → xxx 매핑도 처리
    * (PropsProcessor에서 HTML 충돌 속성에 custom prefix 추가)
+   *
+   * @param condition - ConditionNode
+   * @param propName - prop 이름
+   * @param propValue - prop 값
+   * @returns 조건에 해당 prop=value가 포함되어 있으면 true
    */
   private static conditionMatchesProp(
     condition: ConditionNode,
@@ -1223,6 +1321,9 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * 여러 스타일에서 공통 속성만 추출
+   *
+   * @param styles - 스타일 객체 배열
+   * @returns 모든 스타일에서 동일한 값을 가진 속성만 포함하는 객체
    */
   private static extractCommonFromStyles(
     styles: Array<Record<string, string | number>>
@@ -1244,6 +1345,10 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * base 스타일과 비교하여 차이만 추출
+   *
+   * @param style - 비교 대상 스타일
+   * @param base - base 스타일
+   * @returns base와 다른 속성만 포함하는 스타일 객체
    */
   private static diffFromBase(
     style: Record<string, string | number>,
@@ -1260,6 +1365,10 @@ export class StyleProcessor implements IStyleClassifier, IPositionStyler {
 
   /**
    * 단일 prop 조건 생성
+   *
+   * @param propName - prop 이름
+   * @param propValue - prop 값
+   * @returns ConditionNode
    */
   private static createSinglePropCondition(propName: string, propValue: string): ConditionNode {
     return {

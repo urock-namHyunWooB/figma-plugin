@@ -47,6 +47,8 @@ const STATE_TO_PSEUDO: Record<string, PseudoClass | null> = {
 
 /**
  * State 값이 CSS pseudo-class로 변환 가능한지 확인
+ * @param state - State 값
+ * @returns CSS 변환 가능 여부
  */
 export function isCssConvertibleState(state: string): boolean {
   return state.toLowerCase() in STATE_TO_PSEUDO;
@@ -54,7 +56,8 @@ export function isCssConvertibleState(state: string): boolean {
 
 /**
  * State 값을 CSS pseudo-class로 변환
- * @returns PseudoClass | null (default state) | undefined (변환 불가)
+ * @param state - State 값 (예: "Hover", "Active", "Disabled")
+ * @returns PseudoClass (예: ":hover"), null (default state), 또는 undefined (변환 불가)
  */
 export function stateToPseudo(state: string): PseudoClass | null | undefined {
   const normalized = state.toLowerCase();

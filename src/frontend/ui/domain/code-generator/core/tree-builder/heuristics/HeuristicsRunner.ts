@@ -56,6 +56,9 @@ export class HeuristicsRunner {
    * 2. MATCH_THRESHOLD 이상인 것 중 최고 점수 선택
    * 3. 동점 시 먼저 순회된 휴리스틱 유지 (경고 출력)
    * 4. 임계점 미달 시 GenericHeuristic 반환
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns 가장 적합한 휴리스틱 (fallback: GenericHeuristic)
    */
   static getHeuristic(ctx: BuildContext): IComponentHeuristic {
     let bestHeuristic: IComponentHeuristic | null = null;
@@ -88,7 +91,7 @@ export class HeuristicsRunner {
    * 적절한 휴리스틱을 찾아 전체 파이프라인 실행:
    * processStructure → processAnalysis → processTransform → processBuild
    *
-   * @param ctx BuildContext
+   * @param ctx - 빌드 컨텍스트
    * @returns 처리된 BuildContext (root, props, slots 등 포함)
    */
   static run(ctx: BuildContext): BuildContext {
@@ -101,10 +104,14 @@ export class HeuristicsRunner {
   }
 
   /**
-   * @deprecated Phase 3-1: Props 처리 (구 인터페이스 호환용)
+   * Props 처리 (구 인터페이스 호환용)
    *
    * 새 구조에서는 process() 내에서 processTransform()이 호출되어
    * processProps()가 실행됨. 이 메서드는 호환성을 위해 유지.
+   *
+   * @deprecated 새 구조에서는 process()가 모든 것을 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns 변경 없이 그대로 반환된 BuildContext
    */
   static processProps(ctx: BuildContext): BuildContext {
     // 새 구조에서는 process()가 모든 것을 처리하므로 그냥 반환
@@ -112,10 +119,14 @@ export class HeuristicsRunner {
   }
 
   /**
-   * @deprecated Phase 3-2: Slot 처리 (구 인터페이스 호환용)
+   * Slot 처리 (구 인터페이스 호환용)
    *
    * 새 구조에서는 process() 내에서 processTransform()이 호출되어
    * processSlots()가 실행됨. 이 메서드는 호환성을 위해 유지.
+   *
+   * @deprecated 새 구조에서는 process()가 모든 것을 처리
+   * @param ctx - 빌드 컨텍스트
+   * @returns 변경 없이 그대로 반환된 BuildContext
    */
   static processSlots(ctx: BuildContext): BuildContext {
     // 새 구조에서는 process()가 모든 것을 처리하므로 그냥 반환

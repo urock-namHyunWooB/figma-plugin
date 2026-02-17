@@ -8,6 +8,8 @@
  * 문자열을 camelCase로 변환
  * 숫자로 시작하는 결과는 _ 접두사를 추가하여 유효한 식별자로 변환
  *
+ * @param str - 변환할 문자열
+ * @returns camelCase로 변환된 문자열
  * @example
  * toCamelCase("Show Icon") // "showIcon"
  * toCamelCase("button-primary") // "buttonPrimary"
@@ -45,6 +47,8 @@ export function toCamelCase(str: string): string {
 /**
  * 문자열을 PascalCase로 변환 (컴포넌트 이름용)
  *
+ * @param str - 변환할 문자열
+ * @returns PascalCase로 변환된 문자열
  * @example
  * toPascalCase("button primary") // "ButtonPrimary"
  * toPascalCase("Header/Sub") // "Headersub"
@@ -64,6 +68,8 @@ export function toPascalCase(str: string): string {
 /**
  * 문자열을 kebab-case로 변환
  *
+ * @param str - 변환할 문자열
+ * @returns kebab-case로 변환된 문자열
  * @example
  * toKebabCase("ShowIcon") // "show-icon"
  * toKebabCase("buttonPrimary") // "button-primary"
@@ -81,6 +87,8 @@ export function toKebabCase(str: string): string {
  * 유효한 JavaScript 식별자로 변환
  * 숫자로 시작하는 문자열은 앞에 _ 접두사를 추가
  *
+ * @param str - 변환할 문자열
+ * @returns 유효한 JavaScript 식별자
  * @example
  * toValidIdentifier("063112") // "_063112"
  * toValidIdentifier("show063112") // "show063112"

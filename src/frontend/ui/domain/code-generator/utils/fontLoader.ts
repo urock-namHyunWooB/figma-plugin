@@ -37,10 +37,16 @@ const loadedFonts = new Set<string>();
 
 /**
  * Figma 노드 데이터에서 사용된 모든 폰트 패밀리 추출
+ * @param nodeData - Figma 노드 데이터
+ * @returns 추출된 폰트 패밀리 이름 배열
  */
 export function extractFontsFromNodeData(nodeData: FigmaNodeData): string[] {
   const fonts = new Set<string>();
 
+  /**
+   * 노드를 재귀적으로 순회하며 폰트 추출
+   * @param node - 순회할 노드
+   */
   function traverse(node: any) {
     // TEXT 노드의 style.fontFamily
     if (node.style?.fontFamily) {
@@ -81,6 +87,8 @@ export function extractFontsFromNodeData(nodeData: FigmaNodeData): string[] {
 
 /**
  * SF Pro 계열 폰트인지 확인
+ * @param fontFamily - 확인할 폰트 패밀리 이름
+ * @returns SF Pro 계열이면 true
  */
 function isSFProFont(fontFamily: string): boolean {
   const sfProPatterns = [
@@ -99,6 +107,8 @@ function isSFProFont(fontFamily: string): boolean {
 
 /**
  * Google Fonts URL 생성
+ * @param fontFamilies - 폰트 패밀리 이름 배열
+ * @returns Google Fonts CSS URL 또는 null
  */
 function buildGoogleFontsUrl(fontFamilies: string[]): string | null {
   const googleFontParams = fontFamilies
@@ -114,6 +124,7 @@ function buildGoogleFontsUrl(fontFamilies: string[]): string | null {
 
 /**
  * Pretendard 폰트 로드 (한국어 폰트)
+ * @returns 로드 완료 Promise
  */
 async function loadPretendard(): Promise<void> {
   if (loadedFonts.has("Pretendard")) return;
@@ -161,6 +172,8 @@ function injectSFProFallback(): void {
 
 /**
  * Google Fonts 로드
+ * @param fonts - 로드할 폰트 패밀리 이름 배열
+ * @returns 로드 완료 Promise
  */
 async function loadGoogleFonts(fonts: string[]): Promise<void> {
   const unloadedFonts = fonts.filter(
@@ -190,8 +203,8 @@ async function loadGoogleFonts(fonts: string[]): Promise<void> {
 
 /**
  * 폰트 목록을 받아 필요한 웹폰트 로드
- * @param fonts 폰트 패밀리 이름 배열
- * @returns 로드된 폰트 정보
+ * @param fonts - 폰트 패밀리 이름 배열
+ * @returns 로드된 폰트 정보 (loaded: 성공, fallback: 폴백 사용, notFound: 찾을 수 없음)
  */
 export async function loadFonts(fonts: string[]): Promise<{
   loaded: string[];
@@ -247,6 +260,8 @@ export async function loadFonts(fonts: string[]): Promise<{
 
 /**
  * Figma 노드 데이터에서 폰트 추출 후 로드 (편의 함수)
+ * @param nodeData - Figma 노드 데이터
+ * @returns 폰트 정보 (fonts: 추출된 폰트, loaded: 성공, fallback: 폴백 사용, notFound: 찾을 수 없음)
  */
 export async function loadFontsFromNodeData(nodeData: FigmaNodeData): Promise<{
   fonts: string[];
@@ -265,6 +280,7 @@ export async function loadFontsFromNodeData(nodeData: FigmaNodeData): Promise<{
 
 /**
  * 로드된 폰트 목록 조회
+ * @returns 현재까지 로드된 폰트 패밀리 이름 배열
  */
 export function getLoadedFonts(): string[] {
   return Array.from(loadedFonts);

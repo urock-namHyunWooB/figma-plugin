@@ -57,6 +57,11 @@ export class ButtonSetHeuristic implements IComponentHeuristic {
     normal: null,
   };
 
+  /**
+   * State 문자열을 CSS pseudo-class로 변환
+   * @param state - State 문자열 (예: "hover", "selected")
+   * @returns 대응하는 pseudo-class 또는 null/undefined
+   */
   stateToPseudo(state: string): PseudoClass | null | undefined {
     const normalized = state.toLowerCase();
     if (normalized in this.stateMapping) {
@@ -81,6 +86,9 @@ export class ButtonSetHeuristic implements IComponentHeuristic {
    * - children이 모두 INSTANCE: +3
    *
    * Options variant가 없으면 매칭되지 않음 (ArraySlot으로 처리됨)
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns 매칭 점수 (0 이상)
    */
   score(ctx: BuildContext): number {
     let score = 0;
@@ -133,6 +141,11 @@ export class ButtonSetHeuristic implements IComponentHeuristic {
     return score;
   }
 
+  /**
+   * 이 휴리스틱이 해당 컴포넌트를 처리할 수 있는지 판별
+   * @param ctx - 빌드 컨텍스트
+   * @returns 처리 가능 여부
+   */
   canProcess(ctx: BuildContext): boolean {
     return this.score(ctx) >= ButtonSetHeuristic.MATCH_THRESHOLD;
   }
@@ -141,6 +154,11 @@ export class ButtonSetHeuristic implements IComponentHeuristic {
   // 메인 파이프라인 (Composition - 직접 호출)
   // ===========================================================================
 
+  /**
+   * 전체 파이프라인 실행
+   * @param ctx - 빌드 컨텍스트
+   * @returns 처리된 BuildContext
+   */
   process(ctx: BuildContext): BuildContext {
     let result = ctx;
 
@@ -181,6 +199,9 @@ export class ButtonSetHeuristic implements IComponentHeuristic {
    * 이름 기반으로 variant 병합
    *
    * IoU 대신 노드 이름(Option 1, Option 2 등)으로 매칭
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns variant가 병합된 BuildContext
    */
   private mergeVariantsByName(ctx: BuildContext): BuildContext {
     const data = ctx.data;
@@ -230,6 +251,8 @@ export class ButtonSetHeuristic implements IComponentHeuristic {
 
   /**
    * 이름 기반으로 두 트리 병합
+   * @param base - 기준 트리
+   * @param target - 병합할 트리
    */
   private mergeTreeByName(base: InternalNode, target: InternalNode): void {
     // 루트 노드 병합
@@ -258,6 +281,7 @@ export class ButtonSetHeuristic implements IComponentHeuristic {
 
   /**
    * 같은 이름의 중복 노드 제거
+   * @param node - 처리할 InternalNode
    */
   private deduplicateByName(node: InternalNode): void {
     const seenNames = new Map<string, InternalNode>();
@@ -290,6 +314,8 @@ export class ButtonSetHeuristic implements IComponentHeuristic {
 
   /**
    * Options variant 기반 hiddenConditions 적용
+   * @param ctx - 빌드 컨텍스트
+   * @returns hiddenConditions가 적용된 BuildContext
    */
   private applyOptionsHiddenConditions(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree) return ctx;
@@ -329,6 +355,8 @@ export class ButtonSetHeuristic implements IComponentHeuristic {
 
   /**
    * Options variant prop 찾기
+   * @param ctx - 빌드 컨텍스트
+   * @returns Options variant 정보 또는 null
    */
   private findOptionsVariantProp(ctx: BuildContext): {
     name: string;
@@ -352,6 +380,9 @@ export class ButtonSetHeuristic implements IComponentHeuristic {
 
   /**
    * Options 조건 ConditionNode 생성
+   * @param optionsProp - Options variant 정보
+   * @param minOptions - 최소 옵션 수
+   * @returns ConditionNode 또는 null
    */
   private buildOptionsConditionNode(
     optionsProp: { name: string; options: string[] },
@@ -401,6 +432,8 @@ export class ButtonSetHeuristic implements IComponentHeuristic {
 
   /**
    * 전체 variant 개수 반환
+   * @param ctx - 빌드 컨텍스트
+   * @returns variant 개수
    */
   private getTotalVariantCount(ctx: BuildContext): number {
     const doc = ctx.data.document;
@@ -420,6 +453,9 @@ export class ButtonSetHeuristic implements IComponentHeuristic {
    * Option 1 → option1Text
    * Option 2 → option2Text
    * Option 3 → option3Text
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns Option 텍스트 props가 추가된 BuildContext
    */
   private addOptionTextProps(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree || !ctx.nodeExternalRefs) {

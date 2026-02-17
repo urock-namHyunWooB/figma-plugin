@@ -32,9 +32,17 @@ import ts from "typescript";
 import type { DesignTree, PropDefinition } from "@code-generator/types/architecture";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
 
+/**
+ * DesignTree에서 CSS 변수와 스타일 함수를 생성하는 제너레이터
+ */
 class StylesGenerator {
+  /** TypeScript AST 노드 팩토리 */
   private factory: ts.NodeFactory;
 
+  /**
+   * StylesGenerator 생성자
+   * @param factory - TypeScript AST 노드 팩토리
+   */
   constructor(factory: ts.NodeFactory) {
     this.factory = factory;
   }

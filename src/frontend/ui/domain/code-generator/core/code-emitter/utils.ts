@@ -4,7 +4,8 @@
 
 /**
  * 문자열을 PascalCase로 변환
- *
+ * @param str - 변환할 문자열
+ * @returns PascalCase 문자열
  * @example
  * toPascalCase("select-button") // "SelectButton"
  * toPascalCase("select button") // "SelectButton"
@@ -39,7 +40,8 @@ export function toPascalCase(str: string): string {
 
 /**
  * 문자열을 camelCase로 변환
- *
+ * @param str - 변환할 문자열
+ * @returns camelCase 문자열
  * @example
  * toCamelCase("select-button") // "selectButton"
  * toCamelCase("06")            // "component06" (숫자로 시작하면 접두사 추가)

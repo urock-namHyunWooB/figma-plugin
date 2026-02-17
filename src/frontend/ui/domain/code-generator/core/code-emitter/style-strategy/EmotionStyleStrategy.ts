@@ -41,6 +41,8 @@ interface ExtractedCondition {
 /**
  * kebab-case를 camelCase로 변환
  * 예: "stroke-width" → "strokeWidth", "font-family" → "fontFamily"
+ * @param str - 변환할 kebab-case 문자열
+ * @returns camelCase로 변환된 문자열
  */
 function kebabToCamel(str: string): string {
   return str.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
@@ -58,12 +60,17 @@ class EmotionStyleStrategy implements IStyleStrategy {
   /** 컴포넌트 이름 (루트 노드용) */
   private componentName: string | undefined;
 
+  /**
+   * EmotionStyleStrategy 생성자
+   * @param factory - TypeScript AST 노드 생성을 위한 NodeFactory
+   */
   constructor(factory: ts.NodeFactory) {
     this.factory = factory;
   }
 
   /**
    * Emotion import 문 생성
+   * @returns Emotion CSS import 선언 배열
    */
   generateImports(): ts.ImportDeclaration[] {
     return [
@@ -87,6 +94,10 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * CSS 변수 및 스타일 객체 선언 생성
+   * @param tree - DesignTree 구조
+   * @param componentName - 컴포넌트 이름
+   * @param props - Props 정의 배열
+   * @returns TypeScript 스타일 선언문 배열
    */
   generateDeclarations(
     tree: DesignTree,
@@ -111,6 +122,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * css={} 속성 생성
+   * @param node - 스타일을 적용할 DesignNode
+   * @param props - Props 정의 배열
+   * @returns JSX css 속성 또는 스타일이 없으면 null
    */
   createStyleAttribute(
     node: DesignNode,
@@ -163,6 +177,11 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * Slot props용 CSS 배열 표현식 생성
+   * @param cssVarName - CSS 변수 이름
+   * @param slotProps - slot 타입 prop 이름 배열
+   * @param variantProps - variant 타입 prop 이름 배열
+   * @param groupedDynamicStyles - prop별로 그룹화된 동적 스타일 맵
+   * @returns CSS 배열 표현식
    */
   private createSlotCssArrayExpression(
     cssVarName: string,
@@ -249,6 +268,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * 동적 스타일 정보 조회
+   * @param node - 조회할 DesignNode
+   * @returns 동적 스타일 정보 또는 없으면 null
    */
   getDynamicStyleInfo(node: DesignNode): DynamicStyleInfo | null {
     const dynamicStyles = node.styles?.dynamic;
@@ -277,6 +298,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * CSS 변수 이름 조회
+   * @param node - 조회할 DesignNode
+   * @param componentName - 컴포넌트 이름
+   * @returns 생성된 CSS 변수 이름
    */
   getCssVariableName(node: DesignNode, componentName: string): string {
     if (this.cssVarNameCache.has(node.id)) {
@@ -295,6 +319,10 @@ class EmotionStyleStrategy implements IStyleStrategy {
    *
    * propStyles가 있으면 분석 없이 바로 사용 (TreeBuilder에서 분석 완료)
    * 없으면 기존 분석 로직 사용 (하위 호환)
+   * @param node - 스타일을 생성할 DesignNode
+   * @param props - Props 정의 배열
+   * @param componentName - 컴포넌트 이름
+   * @returns TypeScript 스타일 statement 배열
    */
   private createNodeStyleStatements(
     node: DesignNode,
@@ -443,6 +471,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * Template literal CSS 변수 생성
+   * @param varName - 생성할 변수 이름
+   * @param style - CSS 스타일 객체
+   * @returns TypeScript 변수 선언문
    */
   private createTemplateLiteralCss(
     varName: string,
@@ -483,6 +514,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * dynamicProps 중 slot 타입인 것들만 필터링
+   * @param dynamicProps - 동적 prop 이름 배열
+   * @param props - Props 정의 배열
+   * @returns slot 타입 prop 이름 배열
    */
   private getSlotDynamicProps(
     dynamicProps: string[],
@@ -502,6 +536,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
    * 같은 prop/value에 여러 스타일이 있으면:
    *   1. 먼저 공통 속성 추출 시도
    *   2. 공통 속성이 없으면, 다른 prop들이 기본값인 variant의 스타일 사용
+   * @param dynamicStyles - 동적 스타일 배열
+   * @param props - Props 정의 배열 (기본값 참조용)
+   * @returns prop별로 그룹화된 동적 스타일 맵
    */
   private groupDynamicStylesByProp(
     dynamicStyles: StyleDefinition["dynamic"],
@@ -612,6 +649,11 @@ class EmotionStyleStrategy implements IStyleStrategy {
    * 1. 다른 prop들을 기본값으로 고정
    * 2. 대상 prop의 각 값에 대한 스타일 수집 (모든 prop 값 포함)
    * 3. prop 값에 따라 변하는 속성만 추출
+   * @param targetPropName - 대상 prop 이름
+   * @param targetPropValue - 대상 prop 값
+   * @param allVariants - 모든 variant 스타일 정보 배열
+   * @param propDefaults - prop 기본값 맵
+   * @returns 해당 prop에 의해 변하는 스타일 또는 null
    */
   private findPropSpecificStyle(
     targetPropName: string,
@@ -705,8 +747,11 @@ class EmotionStyleStrategy implements IStyleStrategy {
   /**
    * Boolean prop의 스타일이 다른 variant prop에 따라 달라지는지 확인하고,
    * 달라지면 variant prop을 키로 하는 Map 반환
-   *
-   * @returns Map<variantPropValue, style> 또는 null (의존성 없으면)
+   * @param targetPropName - 대상 boolean prop 이름
+   * @param targetPropValue - 대상 prop 값 (True/False)
+   * @param allVariants - 모든 variant 스타일 정보 배열
+   * @param propDefaults - prop 기본값 맵
+   * @returns 의존 prop 정보와 스타일 맵 또는 의존성 없으면 null
    */
   private findBooleanStyleByVariant(
     targetPropName: string,
@@ -782,6 +827,10 @@ class EmotionStyleStrategy implements IStyleStrategy {
   /**
    * Boolean prop의 스타일을 다른 variant prop별로 추출
    * 예: Disabled=True일 때 Color별로 다른 스타일이면 Color를 키로 하는 Map 반환
+   * @param boolPropName - boolean prop 이름
+   * @param dynamicStyles - 동적 스타일 배열
+   * @param props - Props 정의 배열
+   * @returns 의존 prop 정보, True/False 스타일 맵 또는 의존성 없으면 null
    */
   private extractBooleanStylesByVariant(
     boolPropName: string,
@@ -1000,6 +1049,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
    * CSS 변수에서 fallback 값 추출
    * "var(--Color-text-00, #FFF)" → "#FFF"
    * "18px" → "18px" (그대로)
+   * @param value - CSS 값 (문자열 또는 숫자)
+   * @returns 추출된 fallback 값
    */
   private extractCssVarFallback(value: string | number): string {
     if (typeof value !== "string") return String(value);
@@ -1016,6 +1067,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
    * 여러 스타일에서 공통 속성만 추출
    * Size에 따라 달라지는 속성(fontSize 등)은 제외됨
    * CSS 변수와 raw 값이 섞여 있어도 fallback 값이 같으면 동일하게 처리
+   * @param styles - 스타일 객체 배열
+   * @returns 모든 스타일에 공통인 속성만 포함한 객체
    */
   private extractCommonStyles(
     styles: Array<Record<string, string | number>>
@@ -1050,6 +1103,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * 조건에서 모든 prop-value 쌍 추출 (복합 조건 지원)
+   * @param condition - 조건 노드
+   * @returns 추출된 조건 배열
    */
   private extractAllConditions(condition: ConditionNode): ExtractedCondition[] {
     if (!condition) return [];
@@ -1070,6 +1125,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
   /**
    * Record 객체 statement 생성
    * const sizeStyles = { Large: css({...}), Medium: css({...}) };
+   * @param varName - 생성할 변수 이름
+   * @param variants - variant 값과 스타일 맵
+   * @returns TypeScript 변수 선언문
    */
   private createRecordStatement(
     varName: string,
@@ -1115,6 +1173,14 @@ class EmotionStyleStrategy implements IStyleStrategy {
   /**
    * CSS 함수 또는 변수 statement 생성
    * 항상 template literal 형식 사용: css`...`
+   * @param node - 스타일을 생성할 DesignNode
+   * @param cssVarName - CSS 변수 이름
+   * @param dynamicProps - 동적 prop 이름 배열
+   * @param groupedDynamicStyles - prop별로 그룹화된 동적 스타일 맵
+   * @param slotProps - slot 타입 prop 이름 배열
+   * @param props - Props 정의 배열
+   * @param booleanStyleProps - boolean 스타일 prop 이름 Set
+   * @returns TypeScript 변수 선언문
    */
   private createCssStatement(
     node: DesignNode,
@@ -1378,6 +1444,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * CSS tagged template expression 생성 (변수가 아닌 표현식 자체)
+   * @param baseStyles - 기본 CSS 스타일 객체
+   * @param pseudoStyles - pseudo 선택자별 스타일 객체
+   * @returns CSS tagged template 표현식
    */
   private createCssTaggedTemplateExpression(
     baseStyles: Record<string, string | number>,
@@ -1412,6 +1481,10 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * Base CSS를 template literal로 생성
+   * @param cssVarName - CSS 변수 이름
+   * @param baseStyles - 기본 CSS 스타일 객체
+   * @param pseudoStyles - pseudo 선택자별 스타일 객체
+   * @returns TypeScript 변수 선언문
    */
   private createBaseCssAsTemplateLiteral(
     cssVarName: string,
@@ -1461,6 +1534,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * css() 호출 생성
+   * @param style - CSS 스타일 객체
+   * @returns css() 함수 호출 표현식
    */
   private createCssCall(
     style: Record<string, string | number>
@@ -1493,6 +1568,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
    * ConditionNode에서 prop 이름과 값 추출
    * 단순 조건: props.size === "Large" → { propName: "size", propValue: "Large" }
    * 복합 조건: props.size === "Large" && props.leftIcon === "false" → 첫 번째 prop 추출
+   * @param condition - 조건 노드
+   * @returns 추출된 조건 또는 null
    */
   private extractCondition(
     condition: ConditionNode
@@ -1516,6 +1593,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * BinaryExpression에서 prop 추출
+   * @param binaryExpr - 이진 표현식 노드
+   * @returns 추출된 조건 또는 null
    */
   private extractFromBinaryExpression(
     binaryExpr: any
@@ -1547,6 +1626,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
   /**
    * LogicalExpression에서 첫 번째 BinaryExpression 추출 (재귀)
    * 구조: (left && right) && right → left부터 탐색
+   * @param logicalExpr - 논리 표현식 노드
+   * @returns 추출된 조건 또는 null
    */
   private extractFromLogicalExpression(
     logicalExpr: any
@@ -1576,6 +1657,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * 노드에 스타일이 있는지 확인
+   * @param node - 확인할 DesignNode
+   * @returns 스타일 존재 여부
    */
   private hasStyles(node: DesignNode): boolean {
     const styles = node.styles;
@@ -1586,6 +1669,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * StyleDefinition에 스타일이 있는지 확인
+   * @param styles - 확인할 StyleDefinition
+   * @returns 스타일 존재 여부
    */
   private hasStylesInDefinition(styles: StyleDefinition): boolean {
     const hasBase = styles.base && Object.keys(styles.base).length > 0;
@@ -1599,6 +1684,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
    * 노드에서 동적 prop 이름들 수집
    * 복합 조건(A && B)에서 모든 prop을 추출
    * 단, pseudo 스타일로 처리되는 prop(state)은 제외
+   * @param node - 조회할 DesignNode
+   * @param props - Props 정의 배열
+   * @returns 동적 prop 이름 배열
    */
   private collectDynamicProps(
     node: DesignNode,
@@ -1646,6 +1734,9 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * 노드의 기본 이름 가져오기
+   * @param node - 조회할 DesignNode
+   * @param componentName - 컴포넌트 이름
+   * @returns 노드의 기본 이름
    */
   private getNodeBaseName(node: DesignNode, componentName: string): string {
     // semanticRole이 'root'이면 componentName 사용
@@ -1670,6 +1761,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
    *
    * groupedDynamicStyles 구조:
    *   Map<"size", Map<"Large" | "Medium", Record<string, string | number>>>
+   * @param propStyles - TreeBuilder에서 분석된 propStyles 객체
+   * @returns prop별로 그룹화된 동적 스타일 맵
    */
   private convertPropStylesToGrouped(
     propStyles: Record<string, PropStyleGroup>
@@ -1704,6 +1797,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * 고유한 변수명 생성
+   * @param baseName - 기본 변수 이름
+   * @returns 고유한 변수 이름
    */
   private generateUniqueVarName(baseName: string): string {
     const count = this.usedNames.get(baseName) || 0;
@@ -1713,6 +1808,8 @@ class EmotionStyleStrategy implements IStyleStrategy {
 
   /**
    * 트리 순회
+   * @param node - 순회 시작 DesignNode
+   * @param callback - 각 노드에 대해 호출할 콜백 함수
    */
   private traverseTree(
     node: DesignNode,

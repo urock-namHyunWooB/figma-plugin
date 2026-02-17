@@ -37,7 +37,9 @@ import {
 // Types
 // ============================================================================
 
-/** INSTANCE children에서 사용되는 노드 속성 */
+/**
+ * INSTANCE children에서 사용되는 노드 속성
+ */
 interface InstanceChildNode {
   id: string;
   name: string;
@@ -82,6 +84,7 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
    * 주의: 루트 노드가 INSTANCE인 경우는 외부 참조로 처리하지 않음
    *       (그 자체가 렌더링 대상)
    *
+   * @param ctx - BuildContext
    * @returns nodeExternalRefs Map이 설정된 BuildContext
    */
   static buildExternalRefs(ctx: BuildContext): BuildContext {
@@ -131,6 +134,11 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
   /**
    * INSTANCE ID에서 원본 노드 ID 추출
    *
+   * INSTANCE 자식 노드의 compound ID에서 마지막 세그먼트(원본 ID)를 추출합니다.
+   *
+   * @param instanceId - INSTANCE 자식 노드 ID (예: "I704:56;704:29;692:1613")
+   * @returns 원본 노드 ID (예: "692:1613")
+   *
    * @example
    * getOriginalId("I704:56;704:29;692:1613") // "692:1613"
    * getOriginalId("123:456") // "123:456"
@@ -141,6 +149,9 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
 
   /**
    * ID가 INSTANCE 자식 노드인지 확인
+   *
+   * @param id - 노드 ID
+   * @returns INSTANCE 자식 노드이면 true
    */
   public isInstanceChildId(id: string): boolean {
     return isInstanceChildIdUtil(id);
@@ -148,6 +159,9 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
 
   /**
    * INSTANCE children에서 override 정보 추출
+   *
+   * INSTANCE의 children과 원본 컴포넌트의 children을 비교하여
+   * 오버라이드된 속성들을 추출합니다.
    *
    * @param instanceChildren - INSTANCE의 children 노드들
    * @param originalChildren - 원본 컴포넌트의 children 노드들
@@ -268,6 +282,9 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
   /**
    * INSTANCE override를 원본 노드에 적용
    *
+   * INSTANCE의 오버라이드된 속성들을 원본 children에 병합하여
+   * 최종 렌더링에 사용될 노드 목록을 생성합니다.
+   *
    * @param originalChildren - 원본 children
    * @param instanceChildren - INSTANCE children
    * @returns 병합된 children (원본 ID 유지)
@@ -356,7 +373,13 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
    * INSTANCE 노드에서 variant props 추출
    *
    * INSTANCE가 참조하는 컴포넌트의 variant props를 추출합니다.
-   * 예: "Size=Large, State=Default" → { size: "large", state: "default" }
+   *
+   * @param instanceNode - INSTANCE SceneNode
+   * @param _data - PreparedDesignData (사용되지 않음)
+   * @returns variant props 객체 (예: { size: "large", state: "default" })
+   *
+   * @example
+   * // "Size=Large, State=Default" → { size: "large", state: "default" }
    */
   public extractVariantProps(
     instanceNode: SceneNode,
@@ -385,7 +408,9 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
    * Figma의 overrides 배열을 활용하여 명시적으로 오버라이드된 필드만 추출합니다.
    * 이 방식은 원본 컴포넌트의 children 데이터가 없어도 동작합니다.
    *
-   * 예: { rectangle1Bg: "#D6D6D6", aaText: "90" }
+   * @param instanceNode - INSTANCE SceneNode
+   * @param originalChildren - 원본 컴포넌트의 children (이름 조회용)
+   * @returns override props 객체 (예: { rectangle1Bg: "#D6D6D6", aaText: "90" })
    */
   public extractOverrideProps(
     instanceNode: SceneNode,
@@ -528,6 +553,11 @@ export class InstanceProcessor implements IInstanceOverrideHandler, IExternalRef
   /**
    * 외부 컴포넌트 참조 정보 생성
    *
+   * INSTANCE 노드가 참조하는 외부 컴포넌트의 정보를 추출합니다.
+   * dependencies에 등록된 컴포넌트만 외부 참조로 처리됩니다.
+   *
+   * @param input - ExternalRefInput (nodeId, nodeType, nodeName, nodeSpec)
+   * @param data - PreparedDesignData
    * @returns ExternalRefResult 또는 undefined (외부 참조가 아닌 경우)
    */
   public buildExternalRef(

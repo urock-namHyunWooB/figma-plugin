@@ -19,9 +19,17 @@ interface ExternalComponentInfo {
   componentSetId: string;
 }
 
+/**
+ * DesignTree에서 import 문을 생성하는 제너레이터
+ */
 class ImportsGenerator {
+  /** TypeScript AST 노드 팩토리 */
   private factory: ts.NodeFactory;
 
+  /**
+   * ImportsGenerator 생성자
+   * @param factory - TypeScript AST 노드 팩토리
+   */
   constructor(factory: ts.NodeFactory) {
     this.factory = factory;
   }
@@ -50,8 +58,8 @@ class ImportsGenerator {
   }
 
   /**
-   * React import 생성
-   * import React from "react";
+   * React import 선언문 생성
+   * @returns import React from "react"; 형태의 ImportDeclaration
    */
   private createReactImport(): ts.ImportDeclaration {
     return this.factory.createImportDeclaration(
@@ -66,10 +74,10 @@ class ImportsGenerator {
   }
 
   /**
-   * 외부 컴포넌트 import 생성
-   * import { ComponentName } from "./ComponentName";
-   *
-   * NOTE: 현재는 모든 의존 컴포넌트가 같은 파일에 생성되므로 사용하지 않음
+   * 외부 컴포넌트 import 선언문 생성
+   * @param componentName - 컴포넌트 이름
+   * @returns import { ComponentName } from "./ComponentName"; 형태의 ImportDeclaration
+   * @remarks 현재는 모든 의존 컴포넌트가 같은 파일에 생성되므로 사용하지 않음
    */
   private createExternalComponentImport(
     componentName: string
@@ -93,7 +101,8 @@ class ImportsGenerator {
 
   /**
    * DesignTree에서 외부 컴포넌트 목록 수집
-   * externalRef가 있는 노드들을 찾아서 componentName 중복 제거
+   * @param root - DesignTree 루트 노드
+   * @returns externalRef가 있는 노드들의 컴포넌트 정보 (중복 제거됨)
    */
   private collectExternalComponents(
     root: DesignNode

@@ -10,11 +10,18 @@ import type PreparedDesignData from "@code-generator/core/data-preparer/Prepared
  * - 중첩 dependencies 정보 주입
  */
 class VariantEnrichManager {
+  /**
+   * VariantEnrichManager 생성자
+   * @param data - PreparedDesignData 인스턴스
+   */
   constructor(private data: PreparedDesignData) {}
 
   /**
    * 의존 컴포넌트 데이터에 vectorSvg 주입
    * 메인 문서의 인스턴스에서 merged SVG를 추출하여 루트 노드에 설정
+   * @param variant - FigmaNodeData variant
+   * @param instancesByComponentId - componentId별 INSTANCE 노드 ID 매핑
+   * @returns vectorSvg가 주입된 FigmaNodeData
    */
   public enrichWithVectorSvg(
     variant: FigmaNodeData,
@@ -54,6 +61,8 @@ class VariantEnrichManager {
   /**
    * 모든 variant의 SVG를 수집하여 variant name을 키로 하는 map 생성
    * COMPONENT_SET의 variant들이 서로 다른 SVG(INSTANCE_SWAP 등)를 가질 때 사용
+   * @param variants - FigmaNodeData variant 배열
+   * @param instancesByComponentId - componentId별 INSTANCE 노드 ID 매핑
    * @returns variant name (예: "Size=Normal")을 키로 하는 SVG map
    */
   public collectAllVariantSvgs(
@@ -90,10 +99,12 @@ class VariantEnrichManager {
    * 사용하는 곳(INSTANCE)의 wrapper가 크기와 padding을 제공하고, 컴포넌트는 그 안을 채움
    *
    * 제거하는 스타일:
-   * - 크기: width, height → 100%로 대체
+   * - 크기: width, height -> 100%로 대체
    * - 패딩: padding (모든 방향)
    * - 시각적 스타일: background, border-radius, border, opacity
    *   (wrapper(INSTANCE)가 시각적 스타일을 담당하므로 dependency에서는 제거)
+   * @param variant - FigmaNodeData variant
+   * @returns 루트 스타일이 유연해진 FigmaNodeData
    */
   public makeRootFlexible(variant: FigmaNodeData): FigmaNodeData {
     if (!variant.styleTree?.cssStyle) {
@@ -147,6 +158,9 @@ class VariantEnrichManager {
   /**
    * 의존 컴포넌트에 중첩 dependencies 정보 주입
    * 루트의 dependencies를 전달하되, _skipDependencyCompilation 플래그로 재귀 방지
+   * @param variant - FigmaNodeData variant
+   * @param rootDependencies - 루트의 dependencies 정보
+   * @returns dependencies 정보가 주입된 FigmaNodeData
    */
   public enrichWithDependencies(
     variant: FigmaNodeData,
@@ -194,6 +208,8 @@ class VariantEnrichManager {
   /**
    * 자식 styleTree 중 position: absolute가 있는지 재귀적으로 확인
    * 있으면 부모에 position: relative가 필요함
+   * @param children - 확인할 styleTree children 배열
+   * @returns position: absolute인 자식이 있으면 true
    */
   private _hasAbsolutePositionedChild(children: any[]): boolean {
     for (const child of children) {

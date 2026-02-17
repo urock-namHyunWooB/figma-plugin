@@ -63,6 +63,11 @@ export class ButtonHeuristic implements IComponentHeuristic {
     normal: null,
   };
 
+  /**
+   * State 문자열을 CSS pseudo-class로 변환
+   * @param state - State 문자열 (예: "hover", "pressed")
+   * @returns 대응하는 pseudo-class 또는 null/undefined
+   */
   stateToPseudo(state: string): PseudoClass | null | undefined {
     const normalized = state.toLowerCase();
     if (normalized in this.stateMapping) {
@@ -77,6 +82,8 @@ export class ButtonHeuristic implements IComponentHeuristic {
 
   /**
    * Button 컴포넌트 매칭 점수 계산
+   * @param ctx - 빌드 컨텍스트
+   * @returns 매칭 점수 (0 이상)
    */
   score(ctx: BuildContext): number {
     let score = 0;
@@ -121,6 +128,11 @@ export class ButtonHeuristic implements IComponentHeuristic {
     return score;
   }
 
+  /**
+   * 이 휴리스틱이 해당 컴포넌트를 처리할 수 있는지 판별
+   * @param ctx - 빌드 컨텍스트
+   * @returns 처리 가능 여부
+   */
   canProcess(ctx: BuildContext): boolean {
     return this.score(ctx) >= ButtonHeuristic.MATCH_THRESHOLD;
   }
@@ -129,6 +141,11 @@ export class ButtonHeuristic implements IComponentHeuristic {
   // 메인 파이프라인 (Composition - 직접 호출)
   // ===========================================================================
 
+  /**
+   * 전체 파이프라인 실행
+   * @param ctx - 빌드 컨텍스트
+   * @returns 처리된 BuildContext
+   */
   process(ctx: BuildContext): BuildContext {
     let result = ctx;
 
@@ -169,6 +186,9 @@ export class ButtonHeuristic implements IComponentHeuristic {
    *
    * 1. 기본 스타일 빌드
    * 2. 아이콘의 fill 색상을 루트 노드의 CSS color로 추가
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns 스타일이 처리된 BuildContext
    */
   private processButtonStyles(ctx: BuildContext): BuildContext {
     // 1. 기본 스타일 처리
@@ -185,6 +205,9 @@ export class ButtonHeuristic implements IComponentHeuristic {
    * 버튼 슬롯 처리
    *
    * 버튼의 경우 모든 variant에서 동일한 텍스트여도 `text` prop으로 노출해야 함.
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns 슬롯이 처리된 BuildContext
    */
   private processButtonSlots(ctx: BuildContext): BuildContext {
     // 1. 기본 slot 처리
@@ -234,6 +257,9 @@ export class ButtonHeuristic implements IComponentHeuristic {
    *
    * visible=false인 노드는 showXxx prop으로 제어됨.
    * VisibilityProcessor.resolve에서 조건부 렌더링 설정.
+   *
+   * @param ctx - 빌드 컨텍스트
+   * @returns visibility가 처리된 BuildContext
    */
   private processButtonVisibility(ctx: BuildContext): BuildContext {
     return VisibilityProcessor.resolve(ctx);
@@ -245,6 +271,8 @@ export class ButtonHeuristic implements IComponentHeuristic {
 
   /**
    * 아이콘(INSTANCE/VECTOR)의 fill 색상을 루트 노드의 CSS color로 추가
+   * @param ctx - 빌드 컨텍스트
+   * @returns 아이콘 색상 스타일이 추가된 BuildContext
    */
   private addIconColorStyles(ctx: BuildContext): BuildContext {
     if (!ctx.internalTree || !ctx.nodeStyles) return ctx;
@@ -343,6 +371,11 @@ export class ButtonHeuristic implements IComponentHeuristic {
   // Helper Methods
   // ===========================================================================
 
+  /**
+   * State variant의 옵션 목록 반환
+   * @param ctx - 빌드 컨텍스트
+   * @returns State variant의 옵션 문자열 배열
+   */
   private getStateVariantOptions(ctx: BuildContext): string[] {
     const doc = ctx.data.document as {
       componentPropertyDefinitions?: Record<
@@ -363,6 +396,11 @@ export class ButtonHeuristic implements IComponentHeuristic {
     return [];
   }
 
+  /**
+   * 시각적 특성 기반 점수 계산
+   * @param doc - Figma 문서 노드
+   * @returns 시각적 특성 기반 점수 (0~10)
+   */
   private calculateVisualScore(doc: any): number {
     const firstVariant = this.getFirstVariant(doc);
     if (!firstVariant) return 0;
@@ -378,6 +416,11 @@ export class ButtonHeuristic implements IComponentHeuristic {
     return visualScore;
   }
 
+  /**
+   * 첫 번째 variant 노드 반환
+   * @param doc - Figma 문서 노드
+   * @returns 첫 번째 variant 노드
+   */
   private getFirstVariant(doc: any): any {
     if (doc.type === "COMPONENT_SET" && doc.children?.length > 0) {
       return doc.children[0];
@@ -386,11 +429,21 @@ export class ButtonHeuristic implements IComponentHeuristic {
     return doc;
   }
 
+  /**
+   * 버튼에 적합한 높이인지 확인 (24~64px)
+   * @param doc - Figma 문서 노드
+   * @returns 적합한 높이 여부
+   */
   private hasProperHeight(doc: any): boolean {
     const height = doc.absoluteBoundingBox?.height;
     return height >= 24 && height <= 64;
   }
 
+  /**
+   * 버튼에 적합한 가로세로 비율인지 확인 (1~6)
+   * @param doc - Figma 문서 노드
+   * @returns 적합한 비율 여부
+   */
   private hasProperAspectRatio(doc: any): boolean {
     const box = doc.absoluteBoundingBox;
     if (!box?.width || !box?.height) return false;
@@ -398,6 +451,11 @@ export class ButtonHeuristic implements IComponentHeuristic {
     return ratio >= 1 && ratio <= 6;
   }
 
+  /**
+   * 배경색 또는 테두리가 있는지 확인
+   * @param doc - Figma 문서 노드
+   * @returns 배경색/테두리 존재 여부
+   */
   private hasFillOrBorder(doc: any): boolean {
     const fills = doc.fills;
     if (fills?.some((f: any) => f.visible !== false && f.type === "SOLID")) {
@@ -408,6 +466,11 @@ export class ButtonHeuristic implements IComponentHeuristic {
     return false;
   }
 
+  /**
+   * 짧은 텍스트(1~4단어) 또는 아이콘이 있는지 확인
+   * @param variant - variant 노드
+   * @returns 짧은 텍스트/아이콘 존재 여부
+   */
   private hasShortTextOrIcon(variant: any): boolean {
     const children = variant.children;
     if (!children) return false;
@@ -434,6 +497,11 @@ export class ButtonHeuristic implements IComponentHeuristic {
     return hasShortText || hasIcon;
   }
 
+  /**
+   * 콘텐츠가 중앙 정렬되어 있는지 확인
+   * @param doc - Figma 문서 노드
+   * @returns 중앙 정렬 여부
+   */
   private isCenterAligned(doc: any): boolean {
     if (doc.layoutMode === "HORIZONTAL" || doc.layoutMode === "VERTICAL") {
       return doc.primaryAxisAlignItems === "CENTER" || doc.counterAxisAlignItems === "CENTER";
@@ -441,6 +509,11 @@ export class ButtonHeuristic implements IComponentHeuristic {
     return false;
   }
 
+  /**
+   * 버튼의 주요 TEXT 노드 찾기
+   * @param root - 루트 InternalNode
+   * @returns 주요 TEXT 노드 또는 null
+   */
   private findPrimaryTextNode(root: InternalNode): InternalNode | null {
     let textNode: InternalNode | null = null;
 
@@ -456,6 +529,12 @@ export class ButtonHeuristic implements IComponentHeuristic {
     return textNode;
   }
 
+  /**
+   * TEXT 노드의 텍스트 내용 반환
+   * @param textNode - TEXT InternalNode
+   * @param data - PreparedDesignData
+   * @returns 텍스트 내용 또는 null
+   */
   private getTextContent(textNode: InternalNode, data: any): string | null {
     if (textNode.mergedNode.length === 0) return null;
     const nodeSpec = data.getNodeById(textNode.mergedNode[0].id);
@@ -465,6 +544,11 @@ export class ButtonHeuristic implements IComponentHeuristic {
     return null;
   }
 
+  /**
+   * 아이콘 노드(INSTANCE/VECTOR) 찾기
+   * @param root - 루트 InternalNode
+   * @returns 아이콘 노드 또는 null
+   */
   private findIconNode(root: InternalNode): InternalNode | null {
     let iconNode: InternalNode | null = null;
 
@@ -478,6 +562,12 @@ export class ButtonHeuristic implements IComponentHeuristic {
     return iconNode;
   }
 
+  /**
+   * 아이콘 노드에서 variant별 fill 색상 추출
+   * @param iconNode - 아이콘 InternalNode
+   * @param ctx - 빌드 컨텍스트
+   * @returns variant 이름 → 색상 코드 맵
+   */
   private extractVariantFillColors(
     iconNode: InternalNode,
     ctx: BuildContext
@@ -502,6 +592,12 @@ export class ButtonHeuristic implements IComponentHeuristic {
     return variantColors;
   }
 
+  /**
+   * 노드에서 fills 배열 추출
+   * @param node - Figma 노드 스펙
+   * @param _ctx - 빌드 컨텍스트 (미사용)
+   * @returns fills 배열
+   */
   private getFillsFromNode(node: any, _ctx: BuildContext): any[] {
     if (node.fills?.length > 0) return node.fills;
     if (node.type === "INSTANCE" && node.children) {
@@ -512,6 +608,11 @@ export class ButtonHeuristic implements IComponentHeuristic {
     return [];
   }
 
+  /**
+   * fills 배열에서 색상 코드 추출
+   * @param fills - Figma fills 배열
+   * @returns HEX 색상 코드 또는 null
+   */
   private extractColorFromFills(fills: any[]): string | null {
     if (!fills?.length) return null;
     const fill = fills[0];
@@ -523,6 +624,11 @@ export class ButtonHeuristic implements IComponentHeuristic {
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
   }
 
+  /**
+   * 조건문에서 State 값 추출
+   * @param condition - ConditionNode
+   * @returns State 값 또는 null
+   */
   private extractStateFromCondition(condition: any): string | null {
     if (!condition) return null;
     if (condition.type === "BinaryExpression") {
@@ -539,6 +645,11 @@ export class ButtonHeuristic implements IComponentHeuristic {
     return null;
   }
 
+  /**
+   * State 값에 대한 ConditionNode 생성
+   * @param state - State 값
+   * @returns BinaryExpression 조건 노드
+   */
   private createStateCondition(state: string): any {
     return {
       type: "BinaryExpression",

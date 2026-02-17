@@ -1,6 +1,8 @@
 /**
  * 컴포넌트 이름 정규화 (PascalCase, 특수문자 제거)
  * 한글/비ASCII 문자가 포함된 경우 fallback 이름 생성
+ * @param name - 정규화할 컴포넌트 이름
+ * @returns PascalCase로 정규화된 컴포넌트 이름
  */
 export function normalizeComponentName(name: string): string {
   // 먼저 영문/숫자만 추출 시도
@@ -28,6 +30,8 @@ export function normalizeComponentName(name: string): string {
 
 /**
  * 간단한 해시 함수 (이름에서 고유한 숫자 생성)
+ * @param str - 해시할 문자열
+ * @returns 6자리 base36 해시 문자열
  */
 export function simpleHash(str: string): string {
   let hash = 0;
@@ -39,6 +43,12 @@ export function simpleHash(str: string): string {
   return Math.abs(hash).toString(36).substring(0, 6);
 }
 
+/**
+ * 문자열을 camelCase로 변환
+ * Figma prop 이름에서 JavaScript 식별자로 변환할 때 사용
+ * @param key - 변환할 문자열 (예: "Label#89:6", "Font-Size")
+ * @returns camelCase로 변환된 문자열 (예: "label", "fontSize")
+ */
 export function toCamelCase(key: string) {
   // 1) # 이후 제거 (예: "Label#89:6" → "Label")
   const hashIndex = key.indexOf("#");
@@ -54,7 +64,7 @@ export function toCamelCase(key: string) {
     .replace(/[^a-zA-Z0-9]+/g, " "); // 나머지 특수문자 전부 공백으로
 
   const words = normalized.split(" ").filter(Boolean);
-  
+
   // 유효한 단어가 없는 경우 (이모지, 특수문자만 있는 경우)
   // 원본 key에서 숫자 ID를 추출하여 fallback 이름 생성
   if (words.length === 0) {
@@ -79,9 +89,8 @@ export function toCamelCase(key: string) {
 
 /**
  * 특수문자/이모지만 있는 prop 이름에서 fallback 이름 생성
- * 예: "✏️ %#1408:0" → "prop1408_0"
- * 예: "#123:456" → "prop123_456"
- * 예: "🎨" → "" (숫자 없으면 빈 문자열)
+ * @param key - 원본 prop 이름 (예: " %#1408:0", "#123:456", "")
+ * @returns fallback prop 이름 (예: "prop1408_0", "prop123_456", "")
  */
 function extractFallbackPropName(key: string): string {
   // 숫자:숫자 또는 숫자 패턴 찾기

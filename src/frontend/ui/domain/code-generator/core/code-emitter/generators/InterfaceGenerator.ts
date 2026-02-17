@@ -24,9 +24,17 @@ import type {
 } from "@code-generator/types/architecture";
 import { capitalize } from "@code-generator/utils/stringUtils";
 
+/**
+ * DesignTree에서 Props 인터페이스와 타입 별칭을 생성하는 제너레이터
+ */
 class InterfaceGenerator {
+  /** TypeScript AST 노드 팩토리 */
   private factory: ts.NodeFactory;
 
+  /**
+   * InterfaceGenerator 생성자
+   * @param factory - TypeScript AST 노드 팩토리
+   */
   constructor(factory: ts.NodeFactory) {
     this.factory = factory;
   }
@@ -52,7 +60,9 @@ class InterfaceGenerator {
 
   /**
    * Props의 variant 타입 별칭 생성
-   * 예: export type Size = "Large" | "Medium" | "Small";
+   * @param props - PropDefinition 배열
+   * @returns TypeAliasDeclaration 배열
+   * @example export type Size = "Large" | "Medium" | "Small";
    */
   createPropTypeAliases(props: PropDefinition[]): ts.TypeAliasDeclaration[] {
     const typeAliases: ts.TypeAliasDeclaration[] = [];
@@ -86,7 +96,10 @@ class InterfaceGenerator {
   }
 
   /**
-   * Props 인터페이스 생성
+   * Props 인터페이스 선언문 생성
+   * @param tree - DesignTree
+   * @param componentName - 컴포넌트 이름
+   * @returns InterfaceDeclaration AST
    */
   createPropsInterface(
     tree: DesignTree,
@@ -108,7 +121,9 @@ class InterfaceGenerator {
   }
 
   /**
-   * Props 멤버 생성
+   * Props 인터페이스의 멤버(속성) 목록 생성
+   * @param tree - DesignTree (props, slots, arraySlots 정보 포함)
+   * @returns TypeElement 배열 (PropertySignature 등)
    */
   private createPropsMembers(tree: DesignTree): ts.TypeElement[] {
     const members: ts.TypeElement[] = [];
@@ -213,6 +228,8 @@ class InterfaceGenerator {
 
   /**
    * 배열 슬롯과 연관된 prop 이름들 추출
+   * @param arraySlots - 배열 슬롯 정보 목록
+   * @returns 배열 슬롯 이름들의 Set (소문자)
    */
   private getArraySlotRelatedProps(arraySlots: ArraySlotInfo[]): Set<string> {
     const relatedProps = new Set<string>();
@@ -224,7 +241,10 @@ class InterfaceGenerator {
 
   /**
    * 배열 슬롯의 타입 노드 생성
-   * Array<{ size?: Size; selected?: boolean; ... }>
+   * @param slot - 배열 슬롯 정보
+   * @param props - PropDefinition 배열
+   * @returns Array<{ ... }> 형태의 TypeNode
+   * @example Array<{ size?: Size; selected?: boolean; ... }>
    */
   private createArraySlotTypeNode(
     slot: ArraySlotInfo,
@@ -241,7 +261,9 @@ class InterfaceGenerator {
   }
 
   /**
-   * Prop 정의를 TypeScript TypeNode로 변환
+   * PropDefinition을 TypeScript TypeNode로 변환
+   * @param prop - PropDefinition
+   * @returns TypeScript TypeNode (string, boolean, React.ReactNode 등)
    */
   private createPropTypeNode(prop: PropDefinition): ts.TypeNode {
     // Override prop 처리: characters 오버라이드는 string | React.ReactNode
@@ -298,7 +320,8 @@ class InterfaceGenerator {
 
   /**
    * Heritage clauses 생성 (extends)
-   * semanticRole에 따라 적절한 HTML 속성 타입 상속
+   * @param semanticRole - 노드의 시맨틱 역할
+   * @returns HeritageClause 배열 또는 undefined
    */
   private createHeritageClauses(
     semanticRole?: SemanticRole
@@ -316,7 +339,9 @@ class InterfaceGenerator {
   }
 
   /**
-   * rootElement 값에 따라 적절한 extends 타입을 생성
+   * semanticRole에 따라 적절한 extends 타입 생성
+   * @param semanticRole - 노드의 시맨틱 역할
+   * @returns React HTML 속성 타입 (ButtonHTMLAttributes, HTMLAttributes 등) 또는 null
    */
   private createExtendsType(
     semanticRole?: SemanticRole

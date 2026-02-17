@@ -32,6 +32,12 @@ import {
 import { HeuristicsRunner } from "./heuristics";
 
 class TreeBuilder implements ITreeBuilder {
+  /**
+   * PreparedDesignData를 DesignTree로 변환
+   * @param data - DataPreparer가 준비한 디자인 데이터
+   * @param policy - 트리 빌드 정책 (선택적)
+   * @returns 빌드된 DesignTree 구조
+   */
   public build(
     data: PreparedDesignData,
     policy?: TreeBuilderPolicy
@@ -64,6 +70,8 @@ class TreeBuilder implements ITreeBuilder {
    * 4. Position 적용
    * 5. External refs 빌드
    * 6. DesignTree 생성
+   * @param ctx - 빌드 컨텍스트
+   * @returns 처리 완료된 빌드 컨텍스트
    */
   private buildNonComponentSet(ctx: BuildContext): BuildContext {
     let result = ctx;
@@ -94,6 +102,12 @@ class TreeBuilder implements ITreeBuilder {
     return result;
   }
 
+  /**
+   * 초기 BuildContext 생성
+   * @param data - PreparedDesignData
+   * @param policy - 트리 빌드 정책
+   * @returns 초기화된 BuildContext
+   */
   private createBuildContext(
     data: PreparedDesignData,
     policy?: TreeBuilderPolicy
