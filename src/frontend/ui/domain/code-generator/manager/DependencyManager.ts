@@ -1,8 +1,8 @@
-import SpecDataManager from "./SpecDataManager";
 import InstanceOverrideManager from "./InstanceOverrideManager";
 import VariantEnrichManager from "./VariantEnrichManager";
 
 import type { FigmaNodeData } from "@code-generator/types/baseType";
+import type PreparedDesignData from "@code-generator/core/data-preparer/PreparedDesignData";
 
 /**
  * 컴파일된 의존성 결과
@@ -46,7 +46,7 @@ type CompilerFactory = (spec: FigmaNodeData) => CompilerInterface;
  */
 class DependencyManager {
   constructor(
-    private specDataManager: SpecDataManager,
+    private data: PreparedDesignData,
     private instanceOverrideManager: InstanceOverrideManager,
     private variantEnrichManager: VariantEnrichManager
   ) {}
@@ -66,7 +66,7 @@ class DependencyManager {
   ): Promise<MultiComponentResult> {
     // 1. dependencies를 ComponentSet 기준으로 그룹핑
     const groupedDeps =
-      this.specDataManager.getDependenciesGroupedByComponentSet();
+      this.data.getDependenciesGroupedByComponentSet();
 
     // 2. 메인 문서에서 componentId별 인스턴스 매핑 생성
     const instancesByComponentId =
@@ -76,7 +76,7 @@ class DependencyManager {
     const compiledDeps: Record<string, CompiledDependency> = {};
 
     // 재귀 방지: _skipDependencyCompilation 플래그가 있으면 dependencies 컴파일 건너뛰기
-    const skipCompilation = (this.specDataManager.getSpec() as any)
+    const skipCompilation = (this.data.getSpec() as any)
       ._skipDependencyCompilation;
     if (skipCompilation) {
       return {
@@ -89,7 +89,7 @@ class DependencyManager {
     }
 
     // 루트의 dependencies 정보 (중첩 의존성 해결용)
-    const rootDependencies = this.specDataManager.getDependencies() || {};
+    const rootDependencies = this.data.getDependencies() || {};
 
     for (const [componentSetId, group] of Object.entries(groupedDeps)) {
       // 메인 document에서 실제로 사용되는 variant를 찾기
@@ -260,7 +260,7 @@ class DependencyManager {
 
       // 메인 문서의 vectorSvgs를 dependency에 전달
       // (자식 VECTOR 노드들이 SVG로 렌더링되도록)
-      const rootVectorSvgs = this.specDataManager.getSpec().vectorSvgs;
+      const rootVectorSvgs = this.data.getSpec().vectorSvgs;
       if (rootVectorSvgs && Object.keys(rootVectorSvgs).length > 0) {
         enrichedVariant = {
           ...enrichedVariant,
@@ -524,7 +524,7 @@ class DependencyManager {
     depComponentSetId: string,
     rootComponentId: string
   ): boolean {
-    const dependencies = this.specDataManager.getDependencies();
+    const dependencies = this.data.getDependencies();
     const rootDep = dependencies?.[rootComponentId];
 
     if (!rootDep) return false;

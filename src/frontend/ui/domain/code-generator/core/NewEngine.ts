@@ -3,29 +3,20 @@
  *
  * 새 파이프라인을 사용하는 Engine 구현
  *
- * 파이프라인: FigmaNodeData → DataPreparer → TreeBuilder → ReactEmitter → 코드
+ * 파이프라인: PreparedDesignData → TreeBuilder → ReactEmitter → 코드
  *
  * 기존 Engine과 동일한 인터페이스를 제공하여 FigmaCodeGenerator에서 쉽게 전환 가능
  */
 
-import type { FigmaNodeData } from "@code-generator/types/baseType";
 import type {
   DesignTree,
   CodeEmitterPolicy,
   StyleStrategy,
 } from "@code-generator/types/architecture";
 
-import DataPreparer from "@code-generator/core/data-preparer/DataPreparer";
+import type PreparedDesignData from "@code-generator/core/data-preparer/PreparedDesignData";
 import TreeBuilder from "@code-generator/core/tree-builder/TreeBuilder";
 import ReactEmitter from "@code-generator/core/code-emitter/ReactEmitter";
-
-/**
- * NewEngine 의존성
- */
-export interface NewEngineDependencies {
-  /** Figma 원본 데이터 */
-  spec: FigmaNodeData;
-}
 
 /**
  * NewEngine 옵션
@@ -47,22 +38,15 @@ class NewEngine {
   private policy: CodeEmitterPolicy;
   private emitter: ReactEmitter;
 
-  constructor(deps: NewEngineDependencies, options?: NewEngineOptions) {
-    const { spec } = deps;
-
-    // 1. DataPreparer: FigmaNodeData → PreparedDesignData
-    const dataPreparer = new DataPreparer();
-    const preparedData = dataPreparer.prepare(spec);
-
-    // 2. TreeBuilder: PreparedDesignData → DesignTree
+  constructor(preparedData: PreparedDesignData, options?: NewEngineOptions) {
+    // 1. TreeBuilder: PreparedDesignData → DesignTree
     const treeBuilder = new TreeBuilder();
     this.designTree = treeBuilder.build(preparedData);
 
-    // 3. CodeEmitterPolicy 구성
+    // 2. CodeEmitterPolicy 구성
     this.policy = this.createPolicy(options);
 
-    // 4. ReactEmitter 인스턴스 생성
-    //TODO 여기서는 ReactEmitter 라던지 그런걸 주입받아야 하지 않나?
+    // 3. ReactEmitter 인스턴스 생성
     this.emitter = new ReactEmitter();
   }
 

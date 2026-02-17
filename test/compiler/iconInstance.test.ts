@@ -3,15 +3,16 @@ import "@testing-library/jest-dom/vitest";
 import frame03MockData from "../fixtures/any/frame-03.json";
 
 import FigmaCodeGenerator from "@code-generator";
-import SpecDataManager from "@code-generator/manager/SpecDataManager";
+import DataPreparer from "@code-generator/core/data-preparer/DataPreparer";
 
 describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
   describe("frame-03.json", () => {
-    const specDataManager = new SpecDataManager(frame03MockData as any);
+    const dataPreparer = new DataPreparer();
+    const preparedData = dataPreparer.prepare(frame03MockData as any);
 
-    test("SpecDataManager.getVectorSvgsByInstanceId가 INSTANCE 내부 Vector들을 반환해야 한다", () => {
+    test("PreparedDesignData.getVectorSvgsByInstanceId가 INSTANCE 내부 Vector들을 반환해야 한다", () => {
       // INSTANCE ID: 3285:3250
-      const vectors = specDataManager.getVectorSvgsByInstanceId("3285:3250");
+      const vectors = preparedData.getVectorSvgsByInstanceId("3285:3250");
 
       // vectorSvgs에 I3285:3250;... 형태의 키가 2개 있어야 함
       expect(vectors.length).toBe(2);
@@ -19,8 +20,8 @@ describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
       expect(vectors[0].svg).toContain("<path");
     });
 
-    test("SpecDataManager.mergeInstanceVectorSvgs가 합성된 SVG를 반환해야 한다", () => {
-      const mergedSvg = specDataManager.mergeInstanceVectorSvgs("3285:3250");
+    test("PreparedDesignData.mergeInstanceVectorSvgs가 합성된 SVG를 반환해야 한다", () => {
+      const mergedSvg = preparedData.mergeInstanceVectorSvgs("3285:3250");
 
       expect(mergedSvg).toBeDefined();
       expect(mergedSvg).toContain("<svg");

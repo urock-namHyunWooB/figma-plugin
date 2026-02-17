@@ -1,6 +1,5 @@
-import SpecDataManager from "./SpecDataManager";
-
 import type { FigmaNodeData } from "@code-generator/types/baseType";
+import type PreparedDesignData from "@code-generator/core/data-preparer/PreparedDesignData";
 
 /**
  * INSTANCE 노드의 오버라이드를 원본 COMPONENT/variant에 병합하는 매니저
@@ -10,14 +9,14 @@ import type { FigmaNodeData } from "@code-generator/types/baseType";
  * 이 매니저는 INSTANCE의 오버라이드를 원본 데이터에 병합하는 역할을 담당합니다.
  */
 class InstanceOverrideManager {
-  constructor(private specDataManager: SpecDataManager) {}
+  constructor(private data: PreparedDesignData) {}
 
   /**
    * 메인 문서에서 componentId별 INSTANCE 노드 ID 목록 찾기
    */
   public findInstancesByComponentId(): Map<string, string[]> {
     const result = new Map<string, string[]>();
-    const document = this.specDataManager.getDocument();
+    const document = this.data.getDocument();
 
     const traverse = (node: any) => {
       if (!node) return;
@@ -59,12 +58,12 @@ class InstanceOverrideManager {
     };
 
     // 1. 메인 document에서 먼저 검색
-    const document = this.specDataManager.getDocument();
+    const document = this.data.getDocument();
     const foundInMain = traverse(document);
     if (foundInMain) return foundInMain;
 
     // 2. 메인에서 못 찾으면 dependency documents에서 검색
-    const dependencies = this.specDataManager.getDependencies();
+    const dependencies = this.data.getDependencies();
     if (dependencies) {
       for (const depData of Object.values(dependencies)) {
         const depDocument = (depData as any)?.info?.document;
@@ -385,7 +384,7 @@ class InstanceOverrideManager {
    * 메인 styleTree에서 특정 INSTANCE ID의 styleTree 부분 찾기
    */
   public findStyleTreeForInstance(instanceId: string): any | null {
-    const styleTree = this.specDataManager.getRenderTree();
+    const styleTree = this.data.getRenderTree();
 
     const traverse = (node: any): any | null => {
       if (!node) return null;
@@ -536,11 +535,11 @@ class InstanceOverrideManager {
     };
 
     // 1. 메인 document에서 검색
-    const document = this.specDataManager.getDocument();
+    const document = this.data.getDocument();
     traverse(document);
 
     // 2. dependency documents에서도 검색
-    const dependencies = this.specDataManager.getDependencies();
+    const dependencies = this.data.getDependencies();
     if (dependencies) {
       for (const depData of Object.values(dependencies)) {
         const depDocument = (depData as any)?.info?.document;

@@ -8,7 +8,7 @@
  */
 
 import type { DesignTree } from "@code-generator/types/architecture";
-import SpecDataManager from "@code-generator/manager/SpecDataManager";
+import type PreparedDesignData from "@code-generator/core/data-preparer/PreparedDesignData";
 
 /**
  * Slot 정보 인터페이스
@@ -45,7 +45,7 @@ export interface PropDefinition {
  * DesignTree → UI PropDefinition[] 변환
  */
 export class UIPropsAdapter {
-  constructor(private specDataManager: SpecDataManager) {}
+  constructor(private data: PreparedDesignData) {}
 
   /**
    * DesignTree.props를 UI 컨트롤러용 형식으로 변환
@@ -111,8 +111,8 @@ export class UIPropsAdapter {
   ): Map<string, SlotInfo> {
     const slotInfoMap = new Map<string, SlotInfo>();
     const groupedDeps =
-      this.specDataManager.getDependenciesGroupedByComponentSet();
-    const dependencies = this.specDataManager.getDependencies();
+      this.data.getDependenciesGroupedByComponentSet();
+    const dependencies = this.data.getDependencies();
 
     const traverse = (node: any) => {
       if (!node) return;
@@ -133,7 +133,7 @@ export class UIPropsAdapter {
 
         // 2. style.base에 없으면 원본 스펙의 absoluteBoundingBox에서 가져오기
         if (width === undefined || height === undefined) {
-          const spec = this.specDataManager.getSpecById(node.id) as any;
+          const spec = this.data.getSpecById(node.id) as any;
           const bbox = spec?.absoluteBoundingBox;
           if (bbox) {
             if (width === undefined) width = bbox.width;

@@ -13,7 +13,8 @@ import urockChipsMockData from "../fixtures/chip/urock-chips.json";
 import airtableSelectButton from "../fixtures/select-button/airtable-select-button.json";
 
 import FigmaCodeGenerator from "@code-generator";
-import SpecDataManager from "@code-generator/manager/SpecDataManager";
+import DataPreparer from "@code-generator/core/data-preparer/DataPreparer";
+import type PreparedDesignData from "@code-generator/core/data-preparer/PreparedDesignData";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
 import { fireEvent, render, screen } from "@testing-library/react";
 import * as React from "react";
@@ -681,16 +682,17 @@ describe("compiler 테스트", () => {
      */
 
     let code: string;
-    let specDataManager: SpecDataManager;
+    let preparedData: PreparedDesignData;
 
     beforeAll(async () => {
-      specDataManager = new SpecDataManager(airtableButtonWithDeps as any);
+      const dataPreparer = new DataPreparer();
+      preparedData = dataPreparer.prepare(airtableButtonWithDeps as any);
       const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
       code = await compiler.getGeneratedCode();
     });
 
     test("dependencies에 Icon 컴포넌트가 있어야 한다", () => {
-      const dependencies = specDataManager.getDependencies();
+      const dependencies = preparedData.getDependencies();
       expect(dependencies).toBeDefined();
       expect(Object.keys(dependencies!).length).toBeGreaterThan(0);
     });

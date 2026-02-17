@@ -1,6 +1,5 @@
-import SpecDataManager from "./SpecDataManager";
-
 import type { FigmaNodeData } from "@code-generator/types/baseType";
+import type PreparedDesignData from "@code-generator/core/data-preparer/PreparedDesignData";
 
 /**
  * Variant 데이터를 풍부화(enrich)하는 매니저
@@ -11,7 +10,7 @@ import type { FigmaNodeData } from "@code-generator/types/baseType";
  * - 중첩 dependencies 정보 주입
  */
 class VariantEnrichManager {
-  constructor(private specDataManager: SpecDataManager) {}
+  constructor(private data: PreparedDesignData) {}
 
   /**
    * 의존 컴포넌트 데이터에 vectorSvg 주입
@@ -34,8 +33,8 @@ class VariantEnrichManager {
     // mergeInstanceVectorSvgs가 실패하면 (absoluteBoundingBox 없음) fallback 사용
     const firstInstanceId = instanceIds[0];
     const mergedSvg =
-      this.specDataManager.mergeInstanceVectorSvgs(firstInstanceId) ||
-      this.specDataManager.getFirstVectorSvgByInstanceId(firstInstanceId);
+      this.data.mergeInstanceVectorSvgs(firstInstanceId) ||
+      this.data.getFirstVectorSvgByInstanceId(firstInstanceId);
 
     if (!mergedSvg) {
       return variant;
@@ -75,8 +74,8 @@ class VariantEnrichManager {
       // mergeInstanceVectorSvgs가 실패하면 (absoluteBoundingBox 없음) fallback 사용
       const firstInstanceId = instanceIds[0];
       const mergedSvg =
-        this.specDataManager.mergeInstanceVectorSvgs(firstInstanceId) ||
-        this.specDataManager.getFirstVectorSvgByInstanceId(firstInstanceId);
+        this.data.mergeInstanceVectorSvgs(firstInstanceId) ||
+        this.data.getFirstVectorSvgByInstanceId(firstInstanceId);
 
       if (mergedSvg) {
         svgByVariantName[variantName] = mergedSvg;

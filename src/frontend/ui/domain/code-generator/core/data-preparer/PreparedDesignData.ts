@@ -177,6 +177,48 @@ class PreparedDesignData implements IPreparedDesignData {
     return this.document.type;
   }
 
+  // === SpecDataManager 호환 메서드 ===
+
+  /**
+   * 루트 document 반환 (SpecDataManager 호환)
+   */
+  public getDocument(): SceneNode {
+    return this.document;
+  }
+
+  /**
+   * 전체 spec 반환 (SpecDataManager 호환)
+   */
+  public getSpec(): FigmaNodeData {
+    return this.spec;
+  }
+
+  /**
+   * styleTree 반환 (SpecDataManager 호환)
+   */
+  public getRenderTree(): StyleTree {
+    return this.styleTree;
+  }
+
+  /**
+   * dependencies 반환 (SpecDataManager 호환)
+   * @returns Record 형태로 반환 (Map → Object 변환)
+   */
+  public getDependencies(): Record<string, FigmaNodeData> {
+    const result: Record<string, FigmaNodeData> = {};
+    for (const [key, value] of this.dependencies) {
+      result[key] = value;
+    }
+    return result;
+  }
+
+  /**
+   * 노드 ID로 SceneNode 조회 (SpecDataManager.getSpecById 호환)
+   */
+  public getSpecById(id: string): SceneNode | undefined {
+    return this.nodeMap.get(id);
+  }
+
   /**
    * styleTree의 <path-to-image> placeholder를 실제 이미지 URL로 교체
    */

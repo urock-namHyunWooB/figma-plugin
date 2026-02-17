@@ -1,11 +1,12 @@
 import NewEngine from "./core/NewEngine";
-import SpecDataManager from "./manager/SpecDataManager";
+import DataPreparer from "./core/data-preparer/DataPreparer";
 import InstanceOverrideManager from "./manager/InstanceOverrideManager";
 import VariantEnrichManager from "./manager/VariantEnrichManager";
 import DependencyManager from "./manager/DependencyManager";
 import { UIPropsAdapter } from "./adapters/UIPropsAdapter";
 import { normalizeComponentName } from "./utils/normalizeString";
 
+import type PreparedDesignData from "./core/data-preparer/PreparedDesignData";
 import type {
   MultiComponentResult,
   CompiledDependency,
@@ -36,7 +37,7 @@ export interface FigmaCodeGeneratorOptions {
  */
 export class FigmaCodeGenerator {
   private readonly spec: FigmaNodeData;
-  private readonly specDataManager: SpecDataManager;
+  private readonly preparedData: PreparedDesignData;
   private readonly engine: NewEngine;
   private readonly options: FigmaCodeGeneratorOptions;
   private readonly dependencyManager: DependencyManager;
@@ -46,27 +47,26 @@ export class FigmaCodeGenerator {
     this.spec = spec;
     this.options = options || {};
 
-    const specDataManager = (this.specDataManager = new SpecDataManager(spec));
-    const instanceOverrideManager = new InstanceOverrideManager(
-      specDataManager
-    );
-    const variantEnrichManager = new VariantEnrichManager(specDataManager);
+    // PreparedDesignData 1회 생성 (중앙 데이터 소스)
+    const dataPreparer = new DataPreparer();
+    this.preparedData = dataPreparer.prepare(spec);
+
+    // Manager들에 PreparedDesignData 전달
+    const instanceOverrideManager = new InstanceOverrideManager(this.preparedData);
+    const variantEnrichManager = new VariantEnrichManager(this.preparedData);
     this.dependencyManager = new DependencyManager(
-      specDataManager,
+      this.preparedData,
       instanceOverrideManager,
       variantEnrichManager
     );
-    this.propsAdapter = new UIPropsAdapter(specDataManager);
+    this.propsAdapter = new UIPropsAdapter(this.preparedData);
 
-    // NewEngine 사용 (DataPreparer → TreeBuilder → ReactEmitter)
-    this.engine = new NewEngine(
-      { spec },
-      {
-        styleStrategy: this.options.styleStrategy?.type || "emotion",
-        tailwindOptions: this.options.styleStrategy?.tailwind,
-        debug: this.options.debug,
-      }
-    );
+    // NewEngine도 같은 preparedData 사용
+    this.engine = new NewEngine(this.preparedData, {
+      styleStrategy: this.options.styleStrategy?.type || "emotion",
+      tailwindOptions: this.options.styleStrategy?.tailwind,
+      debug: this.options.debug,
+    });
   }
 
   /**
@@ -90,7 +90,7 @@ export class FigmaCodeGenerator {
 
     // dependencies가 있는지 확인
     const groupedDeps =
-      this.specDataManager.getDependenciesGroupedByComponentSet();
+      this.preparedData.getDependenciesGroupedByComponentSet();
     const hasDependencies = Object.keys(groupedDeps).length > 0;
 
     if (!hasDependencies) {
@@ -109,7 +109,7 @@ export class FigmaCodeGenerator {
     componentName: string
   ): Promise<string> {
     const result = await this.getGeneratedCodeWithDependencies(componentName);
-    const rootDocument = this.specDataManager.getDocument();
+    const rootDocument = this.preparedData.getDocument();
     return this.dependencyManager.bundleWithDependencies(result, rootDocument);
   }
 
@@ -125,7 +125,7 @@ export class FigmaCodeGenerator {
    * 컴포넌트 이름 반환
    */
   public getComponentName(): string {
-    const document = this.specDataManager.getDocument();
+    const document = this.preparedData.getDocument();
     return normalizeComponentName(document.name);
   }
 
