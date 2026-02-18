@@ -61,7 +61,8 @@ class DataManager {
     // HashMap 구축
     this.nodeMap = this.buildNodeMap(this.document);
     this.styleMap = this.buildStyleMap(this.styleTree);
-    this.dependencies = this.buildRecordToMap(this.spec.dependencies);
+    this.dependencies = new Map();
+    this.collectDependenciesRecursive(this.spec);
     this.imageUrls = this.buildRecordToMap(this.spec.imageUrls);
     this.vectorSvgs = this.buildRecordToMap(this.spec.vectorSvgs);
   }
@@ -90,6 +91,22 @@ class DataManager {
     }
 
     return styleTree;
+  }
+
+  /**
+   * 메인 컴포넌트 ID 반환
+   * @returns spec의 루트 document ID
+   */
+  public getMainComponentId(): string {
+    return this.document.id;
+  }
+
+  /**
+   * 모든 의존성 반환 (재귀적으로 수집된)
+   * @returns componentId → FigmaNodeData 매핑
+   */
+  public getAllDependencies(): Map<string, FigmaNodeData> {
+    return this.dependencies;
   }
 
   /**
@@ -278,6 +295,24 @@ class DataManager {
     };
     traverse(styleTree);
     return map;
+  }
+
+  /**
+   * 모든 의존성을 재귀적으로 수집
+   * componentId 기준 중복 제거
+   * @param spec - FigmaNodeData
+   */
+  private collectDependenciesRecursive(spec: FigmaNodeData): void {
+    if (!spec.dependencies) return;
+
+    for (const [componentId, depSpec] of Object.entries(spec.dependencies)) {
+      // 중복 체크 (componentId 기준)
+      if (!this.dependencies.has(componentId)) {
+        this.dependencies.set(componentId, depSpec);
+        // 깊이 있는 의존성도 수집
+        this.collectDependenciesRecursive(depSpec);
+      }
+    }
   }
 
   /**
