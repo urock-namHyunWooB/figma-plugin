@@ -68,29 +68,32 @@ class DataManager {
   }
 
   /**
-   * 노드 ID로 SceneNode 조회 (O(1))
-   * @param id - 조회할 노드 ID
-   * @returns 해당 ID의 SceneNode, 없으면 undefined
+   * ID로 통합 조회 (O(1))
+   * @param id - 조회할 ID
+   * @returns node, style, spec 중 해당하는 것들 반환
    */
-  public getNodeById(id: string): SceneNode | undefined {
-    return this.nodeMap.get(id);
-  }
+  public getById(id: string): {
+    node?: SceneNode;
+    style?: StyleTree;
+    spec?: FigmaNodeData;
+  } {
+    const node = this.nodeMap.get(id);
+    let style = this.styleMap.get(id);
 
-  /**
-   * 노드 ID로 StyleTree 조회 (O(1))
-   * @param id - 조회할 노드 ID
-   * @returns 해당 ID의 StyleTree (이미지 URL 치환 적용됨), 없으면 undefined
-   */
-  public getStyleById(id: string): StyleTree | undefined {
-    const styleTree = this.styleMap.get(id);
-    if (!styleTree) return styleTree;
-
-    // 이미지 URL 교체가 필요한 경우
-    if (styleTree.cssStyle && this.imageUrls.size > 0) {
-      return this.replaceImagePlaceholders(id, styleTree);
+    // 이미지 URL 교체
+    if (style?.cssStyle && this.imageUrls.size > 0) {
+      style = this.replaceImagePlaceholders(id, style);
     }
 
-    return styleTree;
+    // spec: 메인이면 this.spec, 의존이면 dependencies에서
+    let spec: FigmaNodeData | undefined;
+    if (id === this.document.id) {
+      spec = this.spec;
+    } else {
+      spec = this.dependencies.get(id);
+    }
+
+    return { node, style, spec };
   }
 
   /**
@@ -107,15 +110,6 @@ class DataManager {
    */
   public getAllDependencies(): Map<string, FigmaNodeData> {
     return this.dependencies;
-  }
-
-  /**
-   * 의존성 ID로 FigmaNodeData 조회 (O(1))
-   * @param componentId - 조회할 컴포넌트 ID
-   * @returns 해당 ID의 FigmaNodeData, 없으면 undefined
-   */
-  public getDependencyById(componentId: string): FigmaNodeData | undefined {
-    return this.dependencies.get(componentId);
   }
 
   /**

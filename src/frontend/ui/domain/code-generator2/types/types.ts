@@ -187,11 +187,25 @@ export interface Bindings {
 interface UINodeBase {
   id: string;
   name: string;
-  styles: StyleObject;
+  styles?: StyleObject;
   visibleCondition?: ConditionNode;
   bindings?: Bindings;
   /** 휴리스틱이 판별한 세부 역할 */
   semanticType?: string;
+}
+
+/**
+ * 내부 트리 노드
+ * 파이프라인 중간 표현 — UINode로 변환되기 전 단계
+ */
+export interface InternalNode extends UINodeBase {
+  /** Figma 노드 타입 (FRAME, TEXT, INSTANCE 등) */
+  type: string;
+  children: InternalNode[];
+  /** 병합된 variant 정보 (스타일 분류용) */
+  mergedNodes?: VariantOrigin[];
+  /** 외부 컴포넌트 참조 ID (INSTANCE만) */
+  refId?: string;
 }
 
 export interface ContainerNode extends UINodeBase {
@@ -236,6 +250,8 @@ export interface SlotNode extends UINodeBase {
 
 export interface ComponentNode extends UINodeBase {
   type: "component";
+  /** 외부 컴포넌트 참조 ID */
+  refId: string;
   children: UINode[];
 }
 
