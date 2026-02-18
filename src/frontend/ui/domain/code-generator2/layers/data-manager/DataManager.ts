@@ -1,30 +1,54 @@
-import { FigmaNodeData } from "../../types/types";
-import type { StyleTree } from "@code-generator";
+import { FigmaNodeData, StyleTree } from "../../types/types";
+
+/** absoluteBoundingBox 구조 (Figma Plugin API) */
+interface BoundingBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** absoluteBoundingBox를 가질 수 있는 노드 */
+interface NodeWithBoundingBox {
+  absoluteBoundingBox?: BoundingBox;
+}
+
+/** componentPropertyDefinitions/componentProperties를 가질 수 있는 노드 */
+interface NodeWithComponentProps {
+  componentPropertyDefinitions?: Record<string, unknown>;
+  componentProperties?: Record<string, unknown>;
+}
+
+/** Figma component/componentSet info */
+interface ComponentInfo {
+  componentSetId?: string;
+  name?: string;
+}
 
 class DataManager {
   /** 원본 FigmaNodeData (깊은 복사본) */
-  public readonly spec: FigmaNodeData;
+  private readonly spec: FigmaNodeData;
 
   /** 루트 document 노드 */
-  public readonly document: SceneNode;
+  private readonly document: SceneNode;
 
   /** 스타일 트리 */
-  public readonly styleTree: StyleTree;
+  private readonly styleTree: StyleTree;
 
   /** 노드 ID → SceneNode 매핑 (O(1) 조회) */
-  public readonly nodeMap: Map<string, SceneNode>;
+  private readonly nodeMap: Map<string, SceneNode>;
 
   /** 스타일 ID → StyleTree 매핑 (O(1) 조회) */
-  public readonly styleMap: Map<string, StyleTree>;
+  private readonly styleMap: Map<string, StyleTree>;
 
   /** 의존성 맵 */
-  public readonly dependencies: Map<string, FigmaNodeData>;
+  private readonly dependencies: Map<string, FigmaNodeData>;
 
   /** 이미지 URL 맵 */
-  public readonly imageUrls: Map<string, string>;
+  private readonly imageUrls: Map<string, string>;
 
   /** Vector SVG 맵 */
-  public readonly vectorSvgs: Map<string, string>;
+  private readonly vectorSvgs: Map<string, string>;
 
   constructor(spec: FigmaNodeData) {
     // 깊은 복사
@@ -35,11 +59,11 @@ class DataManager {
     this.styleTree = this.spec.styleTree;
 
     // HashMap 구축
-    this.nodeMap = this._buildNodeMap(this.document);
-    this.styleMap = this._buildStyleMap(this.styleTree);
-    this.dependencies = this._buildRecordToMap(this.spec.dependencies);
-    this.imageUrls = this._buildRecordToMap(this.spec.imageUrls);
-    this.vectorSvgs = this._buildRecordToMap(this.spec.vectorSvgs);
+    this.nodeMap = this.buildNodeMap(this.document);
+    this.styleMap = this.buildStyleMap(this.styleTree);
+    this.dependencies = this.buildRecordToMap(this.spec.dependencies);
+    this.imageUrls = this.buildRecordToMap(this.spec.imageUrls);
+    this.vectorSvgs = this.buildRecordToMap(this.spec.vectorSvgs);
   }
 
   /**
@@ -62,7 +86,7 @@ class DataManager {
 
     // 이미지 URL 교체가 필요한 경우
     if (styleTree.cssStyle && this.imageUrls.size > 0) {
-      return this._replaceImagePlaceholders(id, styleTree);
+      return this.replaceImagePlaceholders(id, styleTree);
     }
 
     return styleTree;
@@ -127,21 +151,21 @@ class DataManager {
   }
 
   /**
-   * 노드 ID로 SVG 문자열 반환 (suffix 매칭)
+   * INSTANCE 복합 경로의 마지막 세그먼트로 Vector SVG 매칭
    * vectorSvgs 키가 INSTANCE 경로 기반일 때 (예: I153:1214;55:1323;55:1327)
    * 마지막 세그먼트 (55:1327)로 매칭
-   * @param nodeId - 조회할 노드 ID
+   * @param nodeId - 조회할 노드 ID (원본 컴포넌트의 노드 ID)
    * @returns 매칭된 SVG 문자열, 없으면 undefined
    */
-  public getVectorSvgBySuffix(nodeId: string): string | undefined {
+  public getVectorSvgByLastSegment(nodeId: string): string | undefined {
     // 정확한 매칭 먼저 시도
     const exact = this.vectorSvgs.get(nodeId);
     if (exact) return exact;
 
-    // suffix 매칭 (;nodeId로 끝나거나 nodeId로 끝나는 키 찾기)
+    // suffix 매칭 (;nodeId로 끝나는 키 찾기)
     const suffix = `;${nodeId}`;
     for (const [key, svg] of this.vectorSvgs) {
-      if (key.endsWith(suffix) || key === nodeId) {
+      if (key.endsWith(suffix)) {
         return svg;
       }
     }
@@ -154,9 +178,8 @@ class DataManager {
    * @returns componentPropertyDefinitions 객체, 없으면 null
    */
   public getComponentPropertyDefinitions(): Record<string, unknown> | null {
-    return "componentPropertyDefinitions" in this.document
-      ? (this.document as any).componentPropertyDefinitions
-      : null;
+    const node = this.document as unknown as NodeWithComponentProps;
+    return node.componentPropertyDefinitions ?? null;
   }
 
   /**
@@ -164,9 +187,8 @@ class DataManager {
    * @returns componentProperties 객체, 없으면 null
    */
   public getComponentProperties(): Record<string, unknown> | null {
-    return "componentProperties" in this.document
-      ? (this.document as any).componentProperties
-      : null;
+    const node = this.document as unknown as NodeWithComponentProps;
+    return node.componentProperties ?? null;
   }
 
   /**
@@ -177,60 +199,13 @@ class DataManager {
     return this.document.type;
   }
 
-  // === SpecDataManager 호환 메서드 ===
-
-  /**
-   * 루트 document 반환 (SpecDataManager 호환)
-   * @returns 루트 document SceneNode
-   */
-  public getDocument(): SceneNode {
-    return this.document;
-  }
-
-  /**
-   * 전체 spec 반환 (SpecDataManager 호환)
-   * @returns 원본 FigmaNodeData (깊은 복사본)
-   */
-  public getSpec(): FigmaNodeData {
-    return this.spec;
-  }
-
-  /**
-   * styleTree 반환 (SpecDataManager 호환)
-   * @returns 스타일 트리
-   */
-  public getRenderTree(): StyleTree {
-    return this.styleTree;
-  }
-
-  /**
-   * dependencies 반환 (SpecDataManager 호환)
-   * @returns Record 형태로 반환 (Map → Object 변환)
-   */
-  public getDependencies(): Record<string, FigmaNodeData> {
-    const result: Record<string, FigmaNodeData> = {};
-    for (const [key, value] of this.dependencies) {
-      result[key] = value;
-    }
-    return result;
-  }
-
-  /**
-   * 노드 ID로 SceneNode 조회 (SpecDataManager.getSpecById 호환)
-   * @param id - 조회할 노드 ID
-   * @returns 해당 ID의 SceneNode, 없으면 undefined
-   */
-  public getSpecById(id: string): SceneNode | undefined {
-    return this.nodeMap.get(id);
-  }
-
   /**
    * styleTree의 <path-to-image> placeholder를 실제 이미지 URL로 교체
    * @param nodeId - 노드 ID
    * @param styleTree - 원본 StyleTree
    * @returns 이미지 URL이 치환된 StyleTree
    */
-  private _replaceImagePlaceholders(
+  private replaceImagePlaceholders(
     nodeId: string,
     styleTree: StyleTree
   ): StyleTree {
@@ -272,7 +247,7 @@ class DataManager {
    * @param document - 루트 SceneNode
    * @returns 노드 ID → SceneNode 매핑
    */
-  private _buildNodeMap(document: SceneNode): Map<string, SceneNode> {
+  private buildNodeMap(document: SceneNode): Map<string, SceneNode> {
     const map = new Map<string, SceneNode>();
     const traverse = (node: SceneNode) => {
       map.set(node.id, node);
@@ -291,7 +266,7 @@ class DataManager {
    * @param styleTree - 루트 StyleTree
    * @returns 노드 ID → StyleTree 매핑
    */
-  private _buildStyleMap(styleTree: StyleTree): Map<string, StyleTree> {
+  private buildStyleMap(styleTree: StyleTree): Map<string, StyleTree> {
     const map = new Map<string, StyleTree>();
     const traverse = (tree: StyleTree) => {
       map.set(tree.id, tree);
@@ -310,7 +285,7 @@ class DataManager {
    * @param record - Record 객체 (optional)
    * @returns Map 객체
    */
-  private _buildRecordToMap<T>(record?: Record<string, T>): Map<string, T> {
+  private buildRecordToMap<T>(record?: Record<string, T>): Map<string, T> {
     const map = new Map<string, T>();
     if (!record) return map;
     for (const [key, value] of Object.entries(record)) {
@@ -341,17 +316,17 @@ class DataManager {
    */
   public getVectorSvgsByInstanceId(
     instanceId: string
-  ): { nodeId: string; svg: string; boundingBox?: any }[] {
-    const result: { nodeId: string; svg: string; boundingBox?: any }[] = [];
+  ): { nodeId: string; svg: string; boundingBox?: BoundingBox }[] {
+    const result: { nodeId: string; svg: string; boundingBox?: BoundingBox }[] = [];
     const prefix = `I${instanceId};`;
 
     for (const [nodeId, svg] of this.vectorSvgs) {
       if (nodeId.startsWith(prefix)) {
-        const nodeSpec = this.nodeMap.get(nodeId);
+        const nodeSpec = this.nodeMap.get(nodeId) as unknown as NodeWithBoundingBox | undefined;
         result.push({
           nodeId,
           svg,
-          boundingBox: (nodeSpec as any)?.absoluteBoundingBox,
+          boundingBox: nodeSpec?.absoluteBoundingBox,
         });
       }
     }
@@ -368,8 +343,8 @@ class DataManager {
     const vectors = this.getVectorSvgsByInstanceId(instanceId);
     if (vectors.length === 0) return undefined;
 
-    const instanceSpec = this.nodeMap.get(instanceId);
-    const instanceBox = (instanceSpec as any)?.absoluteBoundingBox;
+    const instanceSpec = this.nodeMap.get(instanceId) as unknown as NodeWithBoundingBox | undefined;
+    const instanceBox = instanceSpec?.absoluteBoundingBox;
     if (!instanceBox) return undefined;
 
     const {
@@ -422,13 +397,13 @@ class DataManager {
     > = {};
 
     for (const [componentId, data] of this.dependencies) {
-      const componentInfo = data.info.components?.[componentId] as any;
+      const componentInfo = data.info.components?.[componentId] as ComponentInfo | undefined;
       const componentSetId = componentInfo?.componentSetId;
 
       if (componentSetId) {
         const componentSetInfo = data.info.componentSets?.[
           componentSetId
-        ] as any;
+        ] as ComponentInfo | undefined;
         const componentSetName = componentSetInfo?.name || "Unknown";
 
         if (!groups[componentSetId]) {
