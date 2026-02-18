@@ -1,7 +1,7 @@
-import { FigmaNodeData } from "@code-generator";
+import { FigmaNodeData } from "../../types/types";
 
-class TreeBuilder {
+class TreeManager {
   constructor(spec: FigmaNodeData) {}
 }
 
-export default TreeBuilder;
+export default TreeManager;
