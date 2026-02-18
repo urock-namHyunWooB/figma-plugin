@@ -96,3 +96,163 @@ export interface StyledVariantNode extends VariantOrigin {
   cssStyle: Record<string, string>;
   children: StyleTree[];
 }
+
+/** 컴포넌트 고유 식별자 */
+export type ComponentId = string;
+
+// ============================================================================
+// Prop Types
+// ============================================================================
+
+export type PropType = "variant" | "boolean" | "slot" | "string";
+
+interface PropBase {
+  name: string;
+  type: PropType;
+  defaultValue?: string | boolean | number;
+  required: boolean;
+  /** Figma componentPropertyDefinitions 키 — DataPreparer 질의용 */
+  sourceKey: string;
+}
+
+export interface VariantPropDefinition extends PropBase {
+  type: "variant";
+  options: string[];
+}
+
+export interface BooleanPropDefinition extends PropBase {
+  type: "boolean";
+}
+
+export interface SlotPropDefinition extends PropBase {
+  type: "slot";
+}
+
+export interface StringPropDefinition extends PropBase {
+  type: "string";
+}
+
+export type PropDefinition =
+  | VariantPropDefinition
+  | BooleanPropDefinition
+  | SlotPropDefinition
+  | StringPropDefinition;
+
+// ============================================================================
+// UITree / UINode Types
+// ============================================================================
+
+export type ComponentType =
+  | "input"
+  | "button"
+  | "modal"
+  | "card"
+  | "list"
+  | "checkbox"
+  | "radio"
+  | "toggle"
+  | "dropdown"
+  | "link"
+  | "icon"
+  | "custom"
+  | "unknown";
+
+export type UINodeType =
+  | "container"
+  | "text"
+  | "image"
+  | "vector"
+  | "button"
+  | "input"
+  | "link"
+  | "slot"
+  | "component";
+
+export interface TextSegment {
+  text: string;
+  style?: Record<string, string>;
+}
+
+/** 바인딩 소스: prop 참조 또는 외부 정적 참조 */
+export type BindingSource = { prop: string } | { ref: string };
+
+/** 노드 바인딩 정보 */
+export interface Bindings {
+  /** 노드 속성 바인딩 — 일반 속성 + 이벤트 (속성명 → 소스) */
+  attrs?: Record<string, BindingSource>;
+  /** 노드 콘텐츠 바인딩 — TextNode, SlotNode */
+  content?: BindingSource;
+}
+
+interface UINodeBase {
+  id: string;
+  name: string;
+  styles: StyleObject;
+  visibleCondition?: ConditionNode;
+  bindings?: Bindings;
+  /** 휴리스틱이 판별한 세부 역할 */
+  semanticType?: string;
+}
+
+export interface ContainerNode extends UINodeBase {
+  type: "container";
+  children: UINode[];
+  loop?: { dataProp: string; keyField?: string };
+}
+
+export interface TextNode extends UINodeBase {
+  type: "text";
+  textSegments?: TextSegment[];
+}
+
+export interface ImageNode extends UINodeBase {
+  type: "image";
+}
+
+export interface VectorNode extends UINodeBase {
+  type: "vector";
+  vectorSvg?: string;
+  variantSvgs?: Record<string, string>;
+}
+
+export interface ButtonNode extends UINodeBase {
+  type: "button";
+  children: UINode[];
+}
+
+export interface InputNode extends UINodeBase {
+  type: "input";
+  children: UINode[];
+}
+
+export interface LinkNode extends UINodeBase {
+  type: "link";
+  children: UINode[];
+}
+
+export interface SlotNode extends UINodeBase {
+  type: "slot";
+}
+
+export interface ComponentNode extends UINodeBase {
+  type: "component";
+  children: UINode[];
+}
+
+export type UINode =
+  | ContainerNode
+  | TextNode
+  | ImageNode
+  | VectorNode
+  | ButtonNode
+  | InputNode
+  | LinkNode
+  | SlotNode
+  | ComponentNode;
+
+/** TreeBuilder 출력, CodeEmitter 입력 */
+export interface UITree {
+  root: UINode;
+  componentType?: ComponentType;
+  props: PropDefinition[];
+}
