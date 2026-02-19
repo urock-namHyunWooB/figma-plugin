@@ -201,12 +201,70 @@ interface UINodeBase {
 export interface InternalNode extends UINodeBase {
   /** Figma 노드 타입 (FRAME, TEXT, INSTANCE 등) */
   type: string;
+  /** 부모 노드 (루트는 null) */
+  parent?: InternalNode | null;
   children: InternalNode[];
   /** 병합된 variant 정보 (스타일 분류용) */
   mergedNodes?: VariantOrigin[];
   /** 외부 컴포넌트 참조 ID (INSTANCE만) */
   refId?: string;
+  /** absoluteBoundingBox (위치 기반 매칭용) */
+  bounds?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 }
+
+/**
+ * 내부 트리 (InternalNode 트리 전체)
+ * 루트 노드가 곧 트리 전체를 나타냄
+ */
+export type InternalTree = InternalNode;
+
+// ============================================================================
+// Variant Graph Types (for variant merging optimization)
+// ============================================================================
+
+/** Variant prop 맵 (예: { State: "Default", hasIcon: "true" }) */
+export type VariantProps = Record<string, string>;
+
+/** Variant 그래프 노드 */
+export interface VariantGraphNode {
+  variantName: string;
+  props: VariantProps;
+  tree: InternalTree;
+}
+
+/** Variant 그래프 엣지 */
+export interface VariantGraphEdge {
+  from: number; // variant index
+  to: number;
+  propDiff: number; // prop 차이 개수 (1 or 2)
+}
+
+/** Variant 그래프 */
+export interface VariantGraph {
+  nodes: VariantGraphNode[];
+  edges: VariantGraphEdge[];
+}
+
+/** Prop 차이 정보 (병합 시 매칭 전략 결정용) */
+export interface PropDiffInfo {
+  /** 차이나는 prop 개수 */
+  diffCount: number;
+  /** 차이나는 prop 이름 (1개 차이일 때) */
+  diffPropName?: string;
+  /** 차이나는 prop의 이전 값 */
+  diffPropValueA?: string;
+  /** 차이나는 prop의 새로운 값 */
+  diffPropValueB?: string;
+}
+
+// ============================================================================
+// UINode Types
+// ============================================================================
 
 export interface ContainerNode extends UINodeBase {
   type: "container";

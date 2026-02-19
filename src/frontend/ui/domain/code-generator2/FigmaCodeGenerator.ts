@@ -45,13 +45,21 @@ export class FigmaCodeGenerator {
      * treeBuilder 안에 json을 tree 형태로 렌더링 하는 렌더링 엔진이 있음.
      * 휴리스틱 엔진도 있음
      */
-    const treeManager = (this.treeManager = new TreeManager(spec));
+    const treeManager = (this.treeManager = new TreeManager(dataManager));
 
     /**
      * 코드 에미터 - 트리를 최종 code로 변환하는 레이어
      *
      *
      */
+  }
+
+  /**
+   * UITree 생성 (테스트용)
+   * @returns 메인 컴포넌트와 의존성의 UITree
+   */
+  public buildUITree() {
+    return this.treeManager.build();
   }
 }
 
