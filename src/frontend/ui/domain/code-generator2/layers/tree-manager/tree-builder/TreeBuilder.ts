@@ -9,6 +9,7 @@ import DataManager from "../../data-manager/DataManager";
 import { VariantMerger } from "./processors/VariantMerger";
 import { PropsExtractor } from "./processors/PropsExtractor";
 import { StyleProcessor } from "./processors/StyleProcessor";
+import { VisibilityProcessor } from "./processors/VisibilityProcessor";
 
 /**
  * TreeBuilder
@@ -27,12 +28,14 @@ class TreeBuilder {
   private readonly variantMerger: VariantMerger;
   private readonly propsExtractor: PropsExtractor;
   private readonly styleProcessor: StyleProcessor;
+  private readonly visibilityProcessor: VisibilityProcessor;
 
   constructor(dataManager: DataManager) {
     this.dataManager = dataManager;
     this.variantMerger = new VariantMerger(dataManager);
     this.propsExtractor = new PropsExtractor(dataManager);
     this.styleProcessor = new StyleProcessor(dataManager);
+    this.visibilityProcessor = new VisibilityProcessor();
   }
 
   // ===========================================================================
@@ -101,8 +104,7 @@ class TreeBuilder {
   // ===========================================================================
 
   private applyVisibility(tree: InternalTree): InternalTree {
-    // TODO: 구현
-    return tree;
+    return this.visibilityProcessor.applyVisibility(tree);
   }
 
   // ===========================================================================
