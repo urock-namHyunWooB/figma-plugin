@@ -30,29 +30,9 @@
       "variantName": "Size=default, Variant=default, Icon=true"
     },
     {
-      "id": "711:14092",
-      "name": "Size=small, Variant=default, Icon=false",
-      "variantName": "Size=small, Variant=default, Icon=false"
-    },
-    {
-      "id": "717:480",
-      "name": "Size=large, Variant=default, Icon=false",
-      "variantName": "Size=large, Variant=default, Icon=false"
-    },
-    {
       "id": "711:13905",
       "name": "Size=default, Variant=primary, Icon=true",
       "variantName": "Size=default, Variant=primary, Icon=true"
-    },
-    {
-      "id": "711:14091",
-      "name": "Size=small, Variant=primary, Icon=false",
-      "variantName": "Size=small, Variant=primary, Icon=false"
-    },
-    {
-      "id": "717:475",
-      "name": "Size=large, Variant=primary, Icon=false",
-      "variantName": "Size=large, Variant=primary, Icon=false"
     },
     {
       "id": "711:13904",
@@ -60,19 +40,24 @@
       "variantName": "Size=default, Variant=danger, Icon=true"
     },
     {
-      "id": "711:14089",
-      "name": "Size=small, Variant=danger, Icon=false",
-      "variantName": "Size=small, Variant=danger, Icon=false"
-    },
-    {
-      "id": "717:473",
-      "name": "Size=large, Variant=danger, Icon=false",
-      "variantName": "Size=large, Variant=danger, Icon=false"
-    },
-    {
       "id": "711:13906",
       "name": "Size=default, Variant=secondary, Icon=true",
       "variantName": "Size=default, Variant=secondary, Icon=true"
+    },
+    {
+      "id": "711:14092",
+      "name": "Size=small, Variant=default, Icon=false",
+      "variantName": "Size=small, Variant=default, Icon=false"
+    },
+    {
+      "id": "711:14091",
+      "name": "Size=small, Variant=primary, Icon=false",
+      "variantName": "Size=small, Variant=primary, Icon=false"
+    },
+    {
+      "id": "711:14089",
+      "name": "Size=small, Variant=danger, Icon=false",
+      "variantName": "Size=small, Variant=danger, Icon=false"
     },
     {
       "id": "711:14095",
@@ -80,19 +65,9 @@
       "variantName": "Size=small, Variant=secondary, Icon=false"
     },
     {
-      "id": "717:477",
-      "name": "Size=large, Variant=secondary, Icon=false",
-      "variantName": "Size=large, Variant=secondary, Icon=false"
-    },
-    {
       "id": "716:523",
       "name": "Size=small, Variant=default, Icon=true",
       "variantName": "Size=small, Variant=default, Icon=true"
-    },
-    {
-      "id": "717:479",
-      "name": "Size=large, Variant=default, Icon=true",
-      "variantName": "Size=large, Variant=default, Icon=true"
     },
     {
       "id": "716:531",
@@ -100,24 +75,49 @@
       "variantName": "Size=small, Variant=primary, Icon=true"
     },
     {
-      "id": "717:474",
-      "name": "Size=large, Variant=primary, Icon=true",
-      "variantName": "Size=large, Variant=primary, Icon=true"
-    },
-    {
       "id": "716:535",
       "name": "Size=small, Variant=danger, Icon=true",
       "variantName": "Size=small, Variant=danger, Icon=true"
     },
     {
-      "id": "717:478",
-      "name": "Size=large, Variant=danger, Icon=true",
-      "variantName": "Size=large, Variant=danger, Icon=true"
-    },
-    {
       "id": "716:527",
       "name": "Size=small, Variant=secondary, Icon=true",
       "variantName": "Size=small, Variant=secondary, Icon=true"
+    },
+    {
+      "id": "717:480",
+      "name": "Size=large, Variant=default, Icon=false",
+      "variantName": "Size=large, Variant=default, Icon=false"
+    },
+    {
+      "id": "717:475",
+      "name": "Size=large, Variant=primary, Icon=false",
+      "variantName": "Size=large, Variant=primary, Icon=false"
+    },
+    {
+      "id": "717:473",
+      "name": "Size=large, Variant=danger, Icon=false",
+      "variantName": "Size=large, Variant=danger, Icon=false"
+    },
+    {
+      "id": "717:477",
+      "name": "Size=large, Variant=secondary, Icon=false",
+      "variantName": "Size=large, Variant=secondary, Icon=false"
+    },
+    {
+      "id": "717:479",
+      "name": "Size=large, Variant=default, Icon=true",
+      "variantName": "Size=large, Variant=default, Icon=true"
+    },
+    {
+      "id": "717:474",
+      "name": "Size=large, Variant=primary, Icon=true",
+      "variantName": "Size=large, Variant=primary, Icon=true"
+    },
+    {
+      "id": "717:478",
+      "name": "Size=large, Variant=danger, Icon=true",
+      "variantName": "Size=large, Variant=danger, Icon=true"
     },
     {
       "id": "717:476",
@@ -159,19 +159,9 @@
           "variantName": "Size=small, Variant=default, Icon=true"
         },
         {
-          "id": "711:14148",
-          "name": "Icon",
-          "variantName": "Size=large, Variant=default, Icon=true"
-        },
-        {
           "id": "716:533",
           "name": "Icon",
           "variantName": "Size=small, Variant=primary, Icon=true"
-        },
-        {
-          "id": "711:14164",
-          "name": "Icon",
-          "variantName": "Size=large, Variant=primary, Icon=true"
         },
         {
           "id": "716:537",
@@ -179,14 +169,24 @@
           "variantName": "Size=small, Variant=danger, Icon=true"
         },
         {
-          "id": "711:14137",
-          "name": "Icon",
-          "variantName": "Size=large, Variant=danger, Icon=true"
-        },
-        {
           "id": "716:529",
           "name": "Icon",
           "variantName": "Size=small, Variant=secondary, Icon=true"
+        },
+        {
+          "id": "711:14148",
+          "name": "Icon",
+          "variantName": "Size=large, Variant=default, Icon=true"
+        },
+        {
+          "id": "711:14164",
+          "name": "Icon",
+          "variantName": "Size=large, Variant=primary, Icon=true"
+        },
+        {
+          "id": "711:14137",
+          "name": "Icon",
+          "variantName": "Size=large, Variant=danger, Icon=true"
         },
         {
           "id": "711:14155",
@@ -233,29 +233,9 @@
           "variantName": "Size=default, Variant=default, Icon=true"
         },
         {
-          "id": "711:13944",
-          "name": "Label",
-          "variantName": "Size=small, Variant=default, Icon=false"
-        },
-        {
-          "id": "711:14145",
-          "name": "Label",
-          "variantName": "Size=large, Variant=default, Icon=false"
-        },
-        {
           "id": "711:13889",
           "name": "Label",
           "variantName": "Size=default, Variant=primary, Icon=true"
-        },
-        {
-          "id": "711:13962",
-          "name": "Label",
-          "variantName": "Size=small, Variant=primary, Icon=false"
-        },
-        {
-          "id": "711:14161",
-          "name": "Label",
-          "variantName": "Size=large, Variant=primary, Icon=false"
         },
         {
           "id": "711:13895",
@@ -263,19 +243,24 @@
           "variantName": "Size=default, Variant=danger, Icon=true"
         },
         {
-          "id": "711:13971",
-          "name": "Label",
-          "variantName": "Size=small, Variant=danger, Icon=false"
-        },
-        {
-          "id": "711:14170",
-          "name": "Label",
-          "variantName": "Size=large, Variant=danger, Icon=false"
-        },
-        {
           "id": "711:13878",
           "name": "Secondary",
           "variantName": "Size=default, Variant=secondary, Icon=true"
+        },
+        {
+          "id": "711:13944",
+          "name": "Label",
+          "variantName": "Size=small, Variant=default, Icon=false"
+        },
+        {
+          "id": "711:13962",
+          "name": "Label",
+          "variantName": "Size=small, Variant=primary, Icon=false"
+        },
+        {
+          "id": "711:13971",
+          "name": "Label",
+          "variantName": "Size=small, Variant=danger, Icon=false"
         },
         {
           "id": "711:13953",
@@ -283,19 +268,9 @@
           "variantName": "Size=small, Variant=secondary, Icon=false"
         },
         {
-          "id": "711:14143",
-          "name": "Secondary",
-          "variantName": "Size=large, Variant=secondary, Icon=false"
-        },
-        {
           "id": "716:526",
           "name": "Label",
           "variantName": "Size=small, Variant=default, Icon=true"
-        },
-        {
-          "id": "711:14149",
-          "name": "Label",
-          "variantName": "Size=large, Variant=default, Icon=true"
         },
         {
           "id": "716:534",
@@ -303,24 +278,49 @@
           "variantName": "Size=small, Variant=primary, Icon=true"
         },
         {
-          "id": "711:14165",
-          "name": "Label",
-          "variantName": "Size=large, Variant=primary, Icon=true"
-        },
-        {
           "id": "716:538",
           "name": "Label",
           "variantName": "Size=small, Variant=danger, Icon=true"
         },
         {
-          "id": "711:14138",
-          "name": "Label",
-          "variantName": "Size=large, Variant=danger, Icon=true"
-        },
-        {
           "id": "716:530",
           "name": "Secondary",
           "variantName": "Size=small, Variant=secondary, Icon=true"
+        },
+        {
+          "id": "711:14145",
+          "name": "Label",
+          "variantName": "Size=large, Variant=default, Icon=false"
+        },
+        {
+          "id": "711:14161",
+          "name": "Label",
+          "variantName": "Size=large, Variant=primary, Icon=false"
+        },
+        {
+          "id": "711:14170",
+          "name": "Label",
+          "variantName": "Size=large, Variant=danger, Icon=false"
+        },
+        {
+          "id": "711:14143",
+          "name": "Secondary",
+          "variantName": "Size=large, Variant=secondary, Icon=false"
+        },
+        {
+          "id": "711:14149",
+          "name": "Label",
+          "variantName": "Size=large, Variant=default, Icon=true"
+        },
+        {
+          "id": "711:14165",
+          "name": "Label",
+          "variantName": "Size=large, Variant=primary, Icon=true"
+        },
+        {
+          "id": "711:14138",
+          "name": "Label",
+          "variantName": "Size=large, Variant=danger, Icon=true"
         },
         {
           "id": "711:14156",
