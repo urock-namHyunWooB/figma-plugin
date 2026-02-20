@@ -1,6 +1,6 @@
 import { useLayoutEffect, useState } from "react";
 import { MESSAGE_TYPES } from "../../backend/types/messages";
-import { FigmaNodeData } from "./domain/code-generator";
+import type { FigmaNodeData } from "./domain/code-generator2";
 
 export default function useMessageHandler() {
   const [selectionNodeData, setSelectionNodeData] =

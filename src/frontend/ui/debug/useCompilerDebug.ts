@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useReducer, useRef } from "react";
 
-import FigmaCodeGenerator from "@frontend/ui/domain/code-generator";
-import type { FigmaCodeGeneratorOptions } from "@code-generator/FigmaCodeGenerator";
+import FigmaCodeGenerator from "@frontend/ui/domain/code-generator2";
+import type { GeneratorOptions, FigmaNodeData } from "@frontend/ui/domain/code-generator2";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
-import { toCamelCase } from "@code-generator/utils/normalizeString";
-import type { FigmaNodeData } from "@code-generator/types/baseType";
 
 export type StyleStrategyType = "emotion" | "tailwind";
 
@@ -73,6 +71,18 @@ function reducer(state: State, action: Action): State {
   }
 }
 
+function toCamelCase(str: string): string {
+  return str
+    .split(/[\s_#-]+/)
+    .filter(Boolean)
+    .map((word, i) =>
+      i === 0
+        ? word.toLowerCase()
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    )
+    .join("");
+}
+
 function getDefaultPropsFromSpec(spec: FigmaNodeData): Record<string, any> {
   const defs =
     "componentPropertyDefinitions" in spec.info.document
@@ -106,13 +116,13 @@ export function useCompilerDebug(
     [spec]
   );
 
-  // styleStrategy 옵션을 FigmaCodeGeneratorOptions로 변환
-  const compilerOptions: FigmaCodeGeneratorOptions | undefined = useMemo(() => {
+  // styleStrategy 옵션을 GeneratorOptions로 변환
+  const compilerOptions: GeneratorOptions | undefined = useMemo(() => {
     if (!options?.styleStrategy || options.styleStrategy === "emotion") {
       return undefined; // 기본값 (Emotion)
     }
     return {
-      styleStrategy: { type: options.styleStrategy },
+      styleStrategy: options.styleStrategy,
     };
   }, [options?.styleStrategy]);
 

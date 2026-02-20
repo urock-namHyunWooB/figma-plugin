@@ -32,16 +32,35 @@
  * └─────────────────────────────────────────────────────────────────┘
  */
 
-import type { FigmaNodeData, UITree } from "./types/types";
+import type { FigmaNodeData, UITree, PropDefinition } from "./types/types";
 import DataManager from "./layers/data-manager/DataManager";
 import TreeManager from "./layers/tree-manager/TreeManager";
 import type { ICodeEmitter, EmittedCode } from "./layers/code-emitter/ICodeEmitter";
 import { ReactEmitter, type StyleStrategyType } from "./layers/code-emitter/react/ReactEmitter";
 
-/** 코드 생성 옵션 */
+/** v1 호환 SlotInfo */
+export interface SlotInfo {
+  componentSetId?: string;
+  componentName?: string;
+  hasDependency: boolean;
+  mockupSvg?: string;
+  width?: number;
+  height?: number;
+}
+
+/** v1 호환 UI용 PropDefinition */
+export interface LegacyPropDefinition {
+  name: string;
+  type: "VARIANT" | "TEXT" | "BOOLEAN" | "SLOT";
+  defaultValue: any;
+  variantOptions?: string[];
+  slotInfo?: SlotInfo;
+}
+
+/** 코드 생성 옵션 (v1 호환) */
 export interface GeneratorOptions {
   /** 스타일 전략: emotion (기본) 또는 tailwind */
-  styleStrategy?: StyleStrategyType;
+  styleStrategy?: StyleStrategyType | { type: StyleStrategyType };
   /** 디버그 모드: data-figma-id 속성 추가 */
   debug?: boolean;
 }
@@ -58,6 +77,7 @@ export class FigmaCodeGenerator {
   private readonly dataManager: DataManager;
   private readonly treeManager: TreeManager;
   private readonly codeEmitter: ICodeEmitter;
+  private cachedUITree: { main: UITree; dependencies: Map<string, UITree> } | null = null;
 
   constructor(spec: FigmaNodeData, options: GeneratorOptions = {}) {
     // Layer 1: 데이터 접근
@@ -67,8 +87,13 @@ export class FigmaCodeGenerator {
     this.treeManager = new TreeManager(this.dataManager);
 
     // Layer 3: 코드 생성 (현재 React만 지원, 추후 Vue/Svelte 확장 가능)
+    // v1 호환: styleStrategy가 객체일 수 있음
+    const styleStrategy = typeof options.styleStrategy === "object"
+      ? options.styleStrategy.type
+      : options.styleStrategy ?? "emotion";
+
     this.codeEmitter = new ReactEmitter({
-      styleStrategy: options.styleStrategy ?? "emotion",
+      styleStrategy,
       debug: options.debug ?? false,
     });
   }
@@ -106,6 +131,82 @@ export class FigmaCodeGenerator {
    */
   async emitCode(uiTree: UITree): Promise<EmittedCode> {
     return this.codeEmitter.emit(uiTree);
+  }
+
+  /**
+   * v1 호환: 코드 생성 (compile의 별칭)
+   */
+  async getGeneratedCode(_componentName?: string): Promise<string | null> {
+    return this.compile(_componentName);
+  }
+
+  /**
+   * v1 호환: 코드 생성
+   */
+  async compile(_componentName?: string): Promise<string | null> {
+    try {
+      const result = await this.generate();
+
+      // dependencies가 있으면 함께 번들링
+      if (result.dependencies.size > 0) {
+        const depCodes = Array.from(result.dependencies.values())
+          .map(dep => dep.code)
+          .join("\n\n");
+        return `${depCodes}\n\n${result.main.code}`;
+      }
+
+      return result.main.code;
+    } catch (e) {
+      console.error("Compile error:", e);
+      return null;
+    }
+  }
+
+  /**
+   * v1 호환: Props 정의 반환 (UI 컨트롤러용)
+   */
+  getPropsDefinition(): LegacyPropDefinition[] {
+    const uiTree = this.getCachedUITree().main;
+    return uiTree.props.map(prop => this.toLegacyPropDefinition(prop));
+  }
+
+  /**
+   * v1 호환: 컴포넌트 이름 반환
+   */
+  getComponentName(): string {
+    const mainId = this.dataManager.getMainComponentId();
+    const { node } = this.dataManager.getById(mainId);
+    return this.normalizeComponentName(node?.name ?? "Component");
+  }
+
+  private getCachedUITree(): { main: UITree; dependencies: Map<string, UITree> } {
+    if (!this.cachedUITree) {
+      this.cachedUITree = this.treeManager.build();
+    }
+    return this.cachedUITree;
+  }
+
+  private toLegacyPropDefinition(prop: PropDefinition): LegacyPropDefinition {
+    const typeMap: Record<string, "VARIANT" | "TEXT" | "BOOLEAN" | "SLOT"> = {
+      variant: "VARIANT",
+      string: "TEXT",
+      boolean: "BOOLEAN",
+      slot: "SLOT",
+    };
+
+    return {
+      name: prop.name,
+      type: typeMap[prop.type] ?? "TEXT",
+      defaultValue: prop.defaultValue,
+      variantOptions: prop.type === "variant" ? (prop as any).options : undefined,
+    };
+  }
+
+  private normalizeComponentName(name: string): string {
+    return name
+      .split(/[\s_-]+/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join("");
   }
 }
 

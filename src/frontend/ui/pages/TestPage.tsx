@@ -2,14 +2,19 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { createRoot, Root } from "react-dom/client";
 import { css } from "@emotion/react";
 import { useNavigate } from "react-router-dom";
-import FigmaCodeGenerator, { PropDefinition } from "@code-generator";
-import { FigmaNodeData } from "../domain/code-generator";
+import FigmaCodeGenerator, { type PropDefinition, type FigmaNodeData } from "../domain/code-generator2";
 import { renderReactComponent } from "../domain/renderer/component-render";
+// v1 유틸리티 함수들 (타입 호환을 위해 any 사용)
 import { loadFontsFromNodeData } from "../domain/code-generator/utils/fontLoader";
 import {
   compareNodeStyles,
   StyleDiff,
 } from "../domain/code-generator/utils/styleComparison";
+
+// v1 유틸리티용 타입 호환 헬퍼
+const loadFonts = (data: FigmaNodeData) => loadFontsFromNodeData(data as any);
+const compareStyles = (data: FigmaNodeData, container: HTMLElement) =>
+  compareNodeStyles(data as any, container);
 import { PropController } from "../components/PropController";
 // twind - main.tsx에서 export한 전역 인스턴스 사용
 import { twindTw } from "../main";
@@ -239,7 +244,7 @@ export default function TestPage() {
 
       const container = renderRef.current;
       try {
-        await loadFontsFromNodeData(fixture.data);
+        await loadFonts(fixture.data);
         const compiler = new FigmaCodeGenerator(fixture.data, {
           debug: true,
           styleStrategy: { type: strategy },
@@ -393,7 +398,7 @@ export default function TestPage() {
       setProgress({ current: i + 1, total: fixtureList.length });
 
       try {
-        await loadFontsFromNodeData(fixture.data);
+        await loadFonts(fixture.data);
         const compiler = new FigmaCodeGenerator(fixture.data, {
           debug: true,
           styleStrategy: { type: strategy },
@@ -422,7 +427,7 @@ export default function TestPage() {
           requestAnimationFrame(() => setTimeout(r, 150))
         );
 
-        const comparison = compareNodeStyles(fixture.data, container);
+        const comparison = compareStyles(fixture.data, container);
 
         // 신뢰도 기반 상태 판정
         const foundRate =
