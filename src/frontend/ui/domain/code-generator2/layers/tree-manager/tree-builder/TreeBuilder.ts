@@ -8,6 +8,7 @@ import {
 import DataManager from "../../data-manager/DataManager";
 import { VariantMerger } from "./processors/VariantMerger";
 import { PropsExtractor } from "./processors/PropsExtractor";
+import { StyleProcessor } from "./processors/StyleProcessor";
 
 /**
  * TreeBuilder
@@ -25,11 +26,13 @@ class TreeBuilder {
   private readonly dataManager: DataManager;
   private readonly variantMerger: VariantMerger;
   private readonly propsExtractor: PropsExtractor;
+  private readonly styleProcessor: StyleProcessor;
 
   constructor(dataManager: DataManager) {
     this.dataManager = dataManager;
     this.variantMerger = new VariantMerger(dataManager);
     this.propsExtractor = new PropsExtractor(dataManager);
+    this.styleProcessor = new StyleProcessor(dataManager);
   }
 
   // ===========================================================================
@@ -90,8 +93,7 @@ class TreeBuilder {
   // ===========================================================================
 
   private applyStyles(tree: InternalTree): InternalTree {
-    // TODO: 구현
-    return tree;
+    return this.styleProcessor.applyStyles(tree);
   }
 
   // ===========================================================================
@@ -123,6 +125,10 @@ class TreeBuilder {
       name: tree.name,
       type: this.mapToUINodeType(tree.type),
       children: tree.children.map((child) => this.convertToUINodeRecursive(child)),
+      ...(tree.styles ? { styles: tree.styles } : {}),
+      ...(tree.visibleCondition ? { visibleCondition: tree.visibleCondition } : {}),
+      ...(tree.bindings ? { bindings: tree.bindings } : {}),
+      ...(tree.semanticType ? { semanticType: tree.semanticType } : {}),
     } as UINode;
   }
 
@@ -133,6 +139,10 @@ class TreeBuilder {
       name: node.name,
       type: this.mapToUINodeType(node.type),
       children: node.children.map((child) => this.convertToUINodeRecursive(child)),
+      ...(node.styles ? { styles: node.styles } : {}),
+      ...(node.visibleCondition ? { visibleCondition: node.visibleCondition } : {}),
+      ...(node.bindings ? { bindings: node.bindings } : {}),
+      ...(node.semanticType ? { semanticType: node.semanticType } : {}),
     } as UINode;
   }
 
