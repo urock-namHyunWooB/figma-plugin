@@ -3,7 +3,7 @@ import "@testing-library/jest-dom/vitest";
 import { render } from "@testing-library/react";
 import * as React from "react";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
-import FigmaCodeGenerator from "@code-generator";
+import FigmaCodeGenerator from "@code-generator2";
 
 // ===== Fixtures Lazy 로드 =====
 const fixtureLoaders = import.meta.glob("../fixtures/**/*.json") as Record<

@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from "vitest";
-import { FigmaCodeGenerator } from "@code-generator/FigmaCodeGenerator";
+import { FigmaCodeGenerator } from "@code-generator2";
 import urockList from "../fixtures/any-component-set/urock-list.json";
 
 describe("부분 텍스트 스타일링 (characterStyleOverrides)", () => {

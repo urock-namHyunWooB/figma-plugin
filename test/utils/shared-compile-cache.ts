@@ -1,4 +1,4 @@
-import FigmaCodeGenerator from "@code-generator";
+import FigmaCodeGenerator from "@code-generator2";
 
 interface CachedCompileResult {
   emotion: string | null;

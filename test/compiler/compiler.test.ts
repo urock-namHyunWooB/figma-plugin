@@ -12,7 +12,7 @@ import airtableButtonWithDeps from "../fixtures/any-component-set/airtable-butto
 import urockChipsMockData from "../fixtures/chip/urock-chips.json";
 import airtableSelectButton from "../fixtures/select-button/airtable-select-button.json";
 
-import FigmaCodeGenerator from "@code-generator";
+import FigmaCodeGenerator from "@code-generator2";
 import DataPreparer from "@code-generator/core/data-preparer/DataPreparer";
 import type PreparedDesignData from "@code-generator/core/data-preparer/PreparedDesignData";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import ghostMockData from "../fixtures/any/Ghost.json";
 
-import FigmaCodeGenerator from "@code-generator";
+import FigmaCodeGenerator from "@code-generator2";
 
 /**
  * Ghost 컴포넌트 SVG 중복 렌더링 회귀 테스트

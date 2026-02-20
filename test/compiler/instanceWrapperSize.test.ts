@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from "vitest";
-import FigmaCodeGenerator from "@code-generator";
+import FigmaCodeGenerator from "@code-generator2";
 import * as fs from "fs";
 import * as path from "path";
 

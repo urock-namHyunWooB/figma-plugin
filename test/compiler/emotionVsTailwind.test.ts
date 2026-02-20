@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeAll } from "vitest";
-import { FigmaCodeGenerator } from "@code-generator/FigmaCodeGenerator";
+import { FigmaCodeGenerator } from "@code-generator2";
 import anySpec from "../fixtures/any/any-01.json";
 
 // ===== 컴파일 결과 캐시 =====

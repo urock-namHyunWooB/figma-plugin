@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll } from "vitest";
-import FigmaCodeGenerator from "@code-generator";
-import type { FigmaCodeGeneratorOptions } from "@code-generator/FigmaCodeGenerator";
+import FigmaCodeGenerator from "@code-generator2";
+import type { FigmaCodeGeneratorOptions } from "@code-generator2";
 import { getCachedCompile, warmupCache } from "../utils/shared-compile-cache";
 
 // Fixtures - 샘플 테스트용 fixtures

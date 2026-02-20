@@ -10,7 +10,7 @@
 import { describe, it, expect } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import { FigmaCodeGenerator } from "@code-generator/FigmaCodeGenerator";
+import { FigmaCodeGenerator } from "@code-generator2";
 import { FigmaNodeData } from "@code-generator/types/compiler";
 import { extractFigmaLayout } from "@code-generator/utils/layoutComparison";
 

@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
-import FigmaCodeGenerator from "@code-generator/FigmaCodeGenerator";
-import type { FigmaNodeData } from "@code-generator/types/baseType";
+import FigmaCodeGenerator from "@code-generator2";
+import type { FigmaNodeData } from "@code-generator2";
 
 // InputBoxotp fixture
 import inputBoxotpFixture from "../fixtures/any/InputBoxotp.json";

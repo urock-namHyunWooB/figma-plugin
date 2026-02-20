@@ -8,7 +8,7 @@ import { describe, test, expect, beforeAll } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { render } from "@testing-library/react";
 import * as React from "react";
-import FigmaCodeGenerator from "@code-generator";
+import FigmaCodeGenerator from "@code-generator2";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
 
 import taptapButtonMockData from "../../fixtures/button/taptapButton.json";

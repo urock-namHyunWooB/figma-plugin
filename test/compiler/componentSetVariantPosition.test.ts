@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import { FigmaCodeGenerator } from "@code-generator/FigmaCodeGenerator";
+import { FigmaCodeGenerator } from "@code-generator2";
 
 /**
  * COMPONENT_SET 내 variant별 노드 위치 처리 테스트

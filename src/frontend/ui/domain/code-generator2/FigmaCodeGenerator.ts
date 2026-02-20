@@ -57,6 +57,20 @@ export interface LegacyPropDefinition {
   slotInfo?: SlotInfo;
 }
 
+/** v1 호환 컴파일된 의존성 */
+export interface CompiledDependency {
+  id: string;
+  name: string;
+  code: string;
+}
+
+/** v1 호환 멀티 컴포넌트 결과 */
+export interface MultiComponentResult {
+  mainCode: string;
+  mainName: string;
+  dependencies: CompiledDependency[];
+}
+
 /** 코드 생성 옵션 (v1 호환) */
 export interface GeneratorOptions {
   /** 스타일 전략: emotion (기본) 또는 tailwind */
@@ -177,6 +191,28 @@ export class FigmaCodeGenerator {
     const mainId = this.dataManager.getMainComponentId();
     const { node } = this.dataManager.getById(mainId);
     return this.normalizeComponentName(node?.name ?? "Component");
+  }
+
+  /**
+   * v1 호환: 멀티 컴포넌트 컴파일 결과 반환
+   */
+  async getGeneratedCodeWithDependencies(_componentName?: string): Promise<MultiComponentResult> {
+    const result = await this.generate();
+
+    const dependencies: CompiledDependency[] = [];
+    for (const [id, emitted] of result.dependencies) {
+      dependencies.push({
+        id,
+        name: emitted.componentName,
+        code: emitted.code,
+      });
+    }
+
+    return {
+      mainCode: result.main.code,
+      mainName: result.main.componentName,
+      dependencies,
+    };
   }
 
   private getCachedUITree(): { main: UITree; dependencies: Map<string, UITree> } {

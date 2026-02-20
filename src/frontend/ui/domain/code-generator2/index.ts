@@ -5,7 +5,12 @@ export type * from "./types/emitter";
 // FigmaCodeGenerator
 import FigmaCodeGenerator from "./FigmaCodeGenerator";
 export { FigmaCodeGenerator };
-export type { GeneratorOptions, LegacyPropDefinition } from "./FigmaCodeGenerator";
+export type {
+  GeneratorOptions,
+  LegacyPropDefinition,
+  CompiledDependency,
+  MultiComponentResult,
+} from "./FigmaCodeGenerator";
 
 // v1 호환: PropDefinition은 LegacyPropDefinition의 별칭
 export type { LegacyPropDefinition as PropDefinition } from "./FigmaCodeGenerator";

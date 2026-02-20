@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "fs";
 import path from "path";
-import FigmaCodeGenerator from "../../src/frontend/ui/domain/code-generator/index";
+import FigmaCodeGenerator from "@code-generator2";
 
 describe("SLOT prop 조건부 스타일 처리", () => {
   const headerrootFixturePath = path.join(__dirname, "../fixtures/any/Headerroot.json");

@@ -92,45 +92,6 @@ class TreeBuilder {
     return this.variantMerger.merge(spec.info.document);
   }
 
-  // ===========================================================================
-  // Step 2: Props 추출/바인딩
-  // ===========================================================================
-
-  private extractProps(
-    _spec: FigmaNodeData,
-    _tree: InternalTree
-  ): PropDefinition[] {
-    return this.propsExtractor.extract();
-  }
-
-  // ===========================================================================
-  // Step 3: 스타일 처리
-  // ===========================================================================
-
-  private applyStyles(tree: InternalTree): InternalTree {
-    return this.styleProcessor.applyStyles(tree);
-  }
-
-  // ===========================================================================
-  // Step 4: 가시성 조건
-  // ===========================================================================
-
-  private applyVisibility(tree: InternalTree): InternalTree {
-    return this.visibilityProcessor.applyVisibility(tree);
-  }
-
-  // ===========================================================================
-  // Step 5: 외부 참조
-  // ===========================================================================
-
-  private resolveExternalRefs(tree: InternalTree): InternalTree {
-    return this.externalRefsProcessor.resolveExternalRefs(tree);
-  }
-
-  // ===========================================================================
-  // 최종 변환: InternalTree → UINode
-  // ===========================================================================
-
   private convertToUINode(
     tree: InternalTree,
     rootNodeType?: "button" | "input" | "link"

@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
-import FigmaCodeGenerator from "@code-generator";
+import FigmaCodeGenerator from "@code-generator2";
 import any07 from "../fixtures/any/any-07.json";
-import type { FigmaNodeData } from "@code-generator/types/index";
+import type { FigmaNodeData } from "@code-generator2";
 
 describe("debug 모드", () => {
   describe("data-figma-id 속성", () => {

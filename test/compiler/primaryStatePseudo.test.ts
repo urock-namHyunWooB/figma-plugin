@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import FigmaCodeGenerator from "@code-generator";
+import FigmaCodeGenerator from "@code-generator2";
 import PrimaryFixture from "../fixtures/any/Primary.json";
 
 describe("Primary Button State Pseudo-class 테스트", () => {

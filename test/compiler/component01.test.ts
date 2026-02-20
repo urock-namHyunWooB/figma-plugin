@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
-import FigmaCodeGenerator from "@code-generator";
+import FigmaCodeGenerator from "@code-generator2";
 import component01 from "../fixtures/any/component-01.json";
-import type { FigmaNodeData } from "@code-generator/types/index";
+import type { FigmaNodeData } from "@code-generator2";
 
 describe("INSTANCE 루트 컴포넌트 테스트", () => {
   const data = component01 as unknown as FigmaNodeData;

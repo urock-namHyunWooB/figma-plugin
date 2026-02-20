@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import frame03MockData from "../fixtures/any/frame-03.json";
 
-import FigmaCodeGenerator from "@code-generator";
+import FigmaCodeGenerator from "@code-generator2";
 import DataPreparer from "@code-generator/core/data-preparer/DataPreparer";
 
 describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
