@@ -71,6 +71,17 @@ export class PropsExtractor {
       case "VARIANT": {
         // Boolean variant 체크 (True/False 또는 true/false만 있는 경우)
         if (this.isBooleanVariant(figmaDef)) {
+          // Icon/slot 패턴은 slot 타입으로 변환 (React.ReactNode)
+          if (this.isSlotPattern(name)) {
+            return {
+              type: "slot",
+              name,
+              sourceKey,
+              required: false,
+              defaultValue: null,
+            };
+          }
+
           const defaultVal =
             typeof figmaDef.defaultValue === "string"
               ? figmaDef.defaultValue.toLowerCase() === "true"
@@ -154,6 +165,22 @@ export class PropsExtractor {
     const cleanKey = sourceKey.split("#")[0].trim();
     const lowerKey = cleanKey.toLowerCase();
     return lowerKey === "state" || lowerKey === "states";
+  }
+
+  /**
+   * Slot 패턴인지 확인 (icon, image 등 React.ReactNode를 받을 수 있는 패턴)
+   */
+  private isSlotPattern(propName: string): boolean {
+    const lowerName = propName.toLowerCase();
+    // icon, image, avatar 등은 slot으로 변환
+    return (
+      lowerName.includes("icon") ||
+      lowerName.includes("image") ||
+      lowerName.includes("avatar") ||
+      lowerName.includes("thumbnail") ||
+      lowerName.includes("prefix") ||
+      lowerName.includes("suffix")
+    );
   }
 
   /**

@@ -21,6 +21,11 @@ export class JsxGenerator {
     styleStrategy: IStyleStrategy,
     options: JsxGeneratorOptions = {}
   ): string {
+    // Slot props 설정 (조건부 렌더링에서 사용)
+    this.slotProps = new Set(
+      uiTree.props.filter((p) => p.type === "slot").map((p) => p.name)
+    );
+
     // Props destructuring
     const propsDestructuring = this.generatePropsDestructuring(uiTree);
 
@@ -75,6 +80,9 @@ export default ${componentName};`;
     return JSON.stringify(value);
   }
 
+  // 현재 UITree의 slot props를 추적 (generate에서 설정)
+  private static slotProps: Set<string> = new Set();
+
   /**
    * UINode를 JSX로 변환
    */
@@ -89,12 +97,40 @@ export default ${componentName};`;
 
     // 조건부 렌더링
     if (node.visibleCondition) {
+      // Slot prop으로 제어되는 component 노드인지 확인
+      const slotProp = this.getSlotPropFromCondition(node.visibleCondition);
+      if (slotProp && node.type === "component") {
+        // Slot prop 값을 직접 렌더링
+        return `${indentStr}{${slotProp}}`;
+      }
+
       const condition = this.conditionToCode(node.visibleCondition);
       const innerJsx = this.generateNodeInner(node, styleStrategy, options, indent, isRoot);
       return `${indentStr}{${condition} && (\n${innerJsx}\n${indentStr})}`;
     }
 
     return this.generateNodeInner(node, styleStrategy, options, indent, isRoot);
+  }
+
+  /**
+   * 조건에서 slot prop 이름 추출 (truthy 조건이 slot prop이면)
+   */
+  private static getSlotPropFromCondition(condition: ConditionNode): string | null {
+    // 단순 truthy 조건
+    if (condition.type === "truthy" && this.slotProps.has(condition.prop)) {
+      return condition.prop;
+    }
+
+    // and 조건에서 truthy slot prop 찾기
+    if (condition.type === "and" && condition.conditions.length > 0) {
+      for (const cond of condition.conditions) {
+        if (cond.type === "truthy" && this.slotProps.has(cond.prop)) {
+          return cond.prop;
+        }
+      }
+    }
+
+    return null;
   }
 
   /**
