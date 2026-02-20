@@ -10,6 +10,7 @@ import { VariantMerger } from "./processors/VariantMerger";
 import { PropsExtractor } from "./processors/PropsExtractor";
 import { StyleProcessor } from "./processors/StyleProcessor";
 import { VisibilityProcessor } from "./processors/VisibilityProcessor";
+import { ExternalRefsProcessor } from "./processors/ExternalRefsProcessor";
 
 /**
  * TreeBuilder
@@ -29,6 +30,7 @@ class TreeBuilder {
   private readonly propsExtractor: PropsExtractor;
   private readonly styleProcessor: StyleProcessor;
   private readonly visibilityProcessor: VisibilityProcessor;
+  private readonly externalRefsProcessor: ExternalRefsProcessor;
 
   constructor(dataManager: DataManager) {
     this.dataManager = dataManager;
@@ -36,6 +38,7 @@ class TreeBuilder {
     this.propsExtractor = new PropsExtractor(dataManager);
     this.styleProcessor = new StyleProcessor(dataManager);
     this.visibilityProcessor = new VisibilityProcessor();
+    this.externalRefsProcessor = new ExternalRefsProcessor(dataManager);
   }
 
   // ===========================================================================
@@ -53,16 +56,17 @@ class TreeBuilder {
     let tree = this.variantMerger.merge(document);
 
     // Step 2: Props 추출/바인딩
-    const props = this.extractProps(spec, tree);
+    const props = this.propsExtractor.extract();
 
     // Step 3: 스타일 처리
-    tree = this.applyStyles(tree);
+    tree = this.styleProcessor.applyStyles(tree);
 
     // Step 4: 가시성 조건
-    tree = this.applyVisibility(tree);
+
+    tree = this.visibilityProcessor.applyVisibility(tree);
 
     // Step 5: 외부 참조
-    tree = this.resolveExternalRefs(tree);
+    tree = this.externalRefsProcessor.resolveExternalRefs(tree);
 
     // 최종 변환: InternalTree → UINode
     const root = this.convertToUINode(tree);
@@ -112,8 +116,7 @@ class TreeBuilder {
   // ===========================================================================
 
   private resolveExternalRefs(tree: InternalTree): InternalTree {
-    // TODO: 구현
-    return tree;
+    return this.externalRefsProcessor.resolveExternalRefs(tree);
   }
 
   // ===========================================================================
@@ -122,29 +125,43 @@ class TreeBuilder {
 
   private convertToUINode(tree: InternalTree): UINode {
     // TODO: 구현 - 각 UINode 타입별로 proper conversion 필요
+    const nodeType = this.mapToUINodeType(tree.type);
+
     return {
       id: tree.id,
       name: tree.name,
-      type: this.mapToUINodeType(tree.type),
-      children: tree.children.map((child) => this.convertToUINodeRecursive(child)),
+      type: nodeType,
+      children: tree.children.map((child) =>
+        this.convertToUINodeRecursive(child)
+      ),
       ...(tree.styles ? { styles: tree.styles } : {}),
-      ...(tree.visibleCondition ? { visibleCondition: tree.visibleCondition } : {}),
+      ...(tree.visibleCondition
+        ? { visibleCondition: tree.visibleCondition }
+        : {}),
       ...(tree.bindings ? { bindings: tree.bindings } : {}),
       ...(tree.semanticType ? { semanticType: tree.semanticType } : {}),
+      ...(nodeType === "component" && tree.refId ? { refId: tree.refId } : {}),
     } as UINode;
   }
 
   private convertToUINodeRecursive(node: InternalTree): UINode {
     // TODO: 구현 - 각 UINode 타입별로 proper conversion 필요
+    const nodeType = this.mapToUINodeType(node.type);
+
     return {
       id: node.id,
       name: node.name,
-      type: this.mapToUINodeType(node.type),
-      children: node.children.map((child) => this.convertToUINodeRecursive(child)),
+      type: nodeType,
+      children: node.children.map((child) =>
+        this.convertToUINodeRecursive(child)
+      ),
       ...(node.styles ? { styles: node.styles } : {}),
-      ...(node.visibleCondition ? { visibleCondition: node.visibleCondition } : {}),
+      ...(node.visibleCondition
+        ? { visibleCondition: node.visibleCondition }
+        : {}),
       ...(node.bindings ? { bindings: node.bindings } : {}),
       ...(node.semanticType ? { semanticType: node.semanticType } : {}),
+      ...(nodeType === "component" && node.refId ? { refId: node.refId } : {}),
     } as UINode;
   }
 
