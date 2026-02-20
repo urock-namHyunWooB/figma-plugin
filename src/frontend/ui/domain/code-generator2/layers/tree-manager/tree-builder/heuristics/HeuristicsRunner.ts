@@ -20,6 +20,8 @@ import type {
 
 import { GenericHeuristic } from "./GenericHeuristic";
 import { ButtonHeuristic } from "./ButtonHeuristic";
+import { InputHeuristic } from "./InputHeuristic";
+import { LinkHeuristic } from "./LinkHeuristic";
 
 export class HeuristicsRunner {
   /** 매칭 임계점 */
@@ -30,8 +32,9 @@ export class HeuristicsRunner {
 
   /** 등록된 휴리스틱 목록 */
   private readonly heuristics: IHeuristic[] = [
+    new InputHeuristic(),  // Input을 먼저 (Caret 패턴이 더 특수)
+    new LinkHeuristic(),
     new ButtonHeuristic(),
-    // TODO: InputHeuristic, LinkHeuristic, CheckboxHeuristic 등 추가
   ];
 
   // ===========================================================================

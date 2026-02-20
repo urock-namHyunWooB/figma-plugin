@@ -158,25 +158,119 @@ export class ButtonHeuristic implements IHeuristic {
   }
 
   /**
-   * 자식 노드에 semanticType 설정
+   * 자식 노드에 semanticType 설정 (재귀)
    */
   private applyChildSemanticTypes(node: InternalNode, ctx: HeuristicContext): void {
     for (const child of node.children || []) {
-      // TEXT → label
-      if (child.type === "TEXT") {
-        child.semanticType = "label";
-      }
-
-      // INSTANCE/VECTOR (작은 크기) → icon
-      if (child.type === "INSTANCE" || child.type === "VECTOR") {
-        const bounds = child.bounds;
-        if (bounds && bounds.width <= 32 && bounds.height <= 32) {
-          child.semanticType = "icon";
-        }
-      }
-
+      this.applySemanticType(child, ctx);
       // 재귀
       this.applyChildSemanticTypes(child, ctx);
     }
+  }
+
+  /**
+   * 단일 노드에 semanticType 설정
+   */
+  private applySemanticType(node: InternalNode, ctx: HeuristicContext): void {
+    // 이미 설정되어 있으면 스킵
+    if (node.semanticType) return;
+
+    // 1. TEXT → label
+    if (node.type === "TEXT") {
+      node.semanticType = "label";
+      return;
+    }
+
+    // 2. INSTANCE/VECTOR → icon 판별
+    if (node.type === "INSTANCE" || node.type === "VECTOR") {
+      if (this.isIcon(node, ctx)) {
+        node.semanticType = "icon";
+        return;
+      }
+    }
+
+    // 3. spacer 판별 (작은 vector/rectangle)
+    if (this.isSpacer(node, ctx)) {
+      node.semanticType = "spacer";
+      return;
+    }
+
+    // 4. icon wrapper 판별 (FRAME/GROUP with single icon child)
+    if (this.isIconWrapper(node, ctx)) {
+      node.semanticType = "icon-wrapper";
+      return;
+    }
+  }
+
+  /**
+   * 아이콘 판별
+   */
+  private isIcon(node: InternalNode, ctx: HeuristicContext): boolean {
+    // 이름 패턴
+    const name = node.name.toLowerCase();
+    if (/icon|icn|arrow|chevron|plus|minus|check|close|x/.test(name)) {
+      return true;
+    }
+
+    // bounds로 판별 (작은 크기)
+    const bounds = node.bounds;
+    if (bounds && bounds.width <= 32 && bounds.height <= 32) {
+      return true;
+    }
+
+    // bounds가 없으면 DataManager에서 조회
+    const { node: spec } = ctx.dataManager.getById(node.id);
+    const specBounds = (spec as any)?.absoluteBoundingBox;
+    if (specBounds && specBounds.width <= 32 && specBounds.height <= 32) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * spacer 판별
+   */
+  private isSpacer(node: InternalNode, ctx: HeuristicContext): boolean {
+    // VECTOR, RECTANGLE, LINE만 spacer가 될 수 있음
+    if (!["VECTOR", "RECTANGLE", "LINE"].includes(node.type)) {
+      return false;
+    }
+
+    // 이름 패턴
+    const name = node.name.toLowerCase();
+    if (/spacer|min.?width|gap|divider/.test(name)) {
+      return true;
+    }
+
+    // 매우 작은 크기 (한 축이 1-4px)
+    const bounds = node.bounds;
+    if (bounds) {
+      if (bounds.width <= 4 || bounds.height <= 4) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * icon wrapper 판별 (FRAME/GROUP with icon children only)
+   */
+  private isIconWrapper(node: InternalNode, ctx: HeuristicContext): boolean {
+    if (node.type !== "FRAME" && node.type !== "GROUP") {
+      return false;
+    }
+
+    const children = node.children || [];
+    if (children.length === 0) return false;
+
+    // 모든 자식이 icon 또는 icon이 될 수 있는 노드인지 확인
+    return children.every((child) => {
+      if (child.type === "INSTANCE" || child.type === "VECTOR") {
+        return this.isIcon(child, ctx);
+      }
+      return false;
+    });
   }
 }
