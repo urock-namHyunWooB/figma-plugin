@@ -39,4 +39,4 @@ __screenshots__
 **/__screenshots__/**/*
 
 # 컴파일된 테스트 결과물
-**/compiled/
+**/compiled/test/tree-builder/*.json

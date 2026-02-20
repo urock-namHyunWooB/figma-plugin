@@ -7,6 +7,7 @@ import {
 } from "../../../types/types";
 import DataManager from "../../data-manager/DataManager";
 import { VariantMerger } from "./processors/VariantMerger";
+import { PropsExtractor } from "./processors/PropsExtractor";
 
 /**
  * TreeBuilder
@@ -23,10 +24,12 @@ import { VariantMerger } from "./processors/VariantMerger";
 class TreeBuilder {
   private readonly dataManager: DataManager;
   private readonly variantMerger: VariantMerger;
+  private readonly propsExtractor: PropsExtractor;
 
   constructor(dataManager: DataManager) {
     this.dataManager = dataManager;
     this.variantMerger = new VariantMerger(dataManager);
+    this.propsExtractor = new PropsExtractor(dataManager);
   }
 
   // ===========================================================================
@@ -79,8 +82,7 @@ class TreeBuilder {
     _spec: FigmaNodeData,
     _tree: InternalTree
   ): PropDefinition[] {
-    // TODO: 구현
-    return [];
+    return this.propsExtractor.extract();
   }
 
   // ===========================================================================
