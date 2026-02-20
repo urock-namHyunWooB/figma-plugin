@@ -249,7 +249,37 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
 
   private createVariableName(nodeId: string, nodeName: string): string {
     const safeId = nodeId.replace(/[^a-zA-Z0-9]/g, "_");
-    return `${this.toCamelCase(nodeName)}_${safeId}`;
+    let baseName = this.toSafeVariableName(nodeName);
+
+    // 숫자로 시작하면 앞에 _ 추가
+    if (/^[0-9]/.test(baseName)) {
+      baseName = "_" + baseName;
+    }
+
+    return `${baseName}_${safeId}`;
+  }
+
+  /**
+   * 노드 이름을 안전한 변수명으로 변환 (camelCase, 특수문자 제거)
+   */
+  private toSafeVariableName(str: string): string {
+    // 영문/숫자만 추출하여 camelCase 변환
+    const words = str
+      .replace(/[^a-zA-Z0-9\s]/g, " ") // 특수문자를 공백으로
+      .split(/\s+/)
+      .filter(Boolean);
+
+    if (words.length === 0) {
+      return "unnamed";
+    }
+
+    return words
+      .map((word, i) =>
+        i === 0
+          ? word.toLowerCase()
+          : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      )
+      .join("");
   }
 
   private objectToStyleString(obj: Record<string, string | number>): string {
@@ -264,17 +294,6 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
 
   private camelToKebab(str: string): string {
     return str.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
-  }
-
-  private toCamelCase(str: string): string {
-    return str
-      .split(/[\s_-]+/)
-      .map((word, i) =>
-        i === 0
-          ? word.toLowerCase()
-          : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      )
-      .join("");
   }
 
   private indent(str: string, spaces: number): string {

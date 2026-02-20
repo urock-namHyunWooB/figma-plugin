@@ -99,11 +99,16 @@ class TreeBuilder {
     // 루트 노드: 휴리스틱이 지정한 타입 사용 (있으면)
     const nodeType = rootNodeType || this.mapToUINodeType(tree.type);
 
+    // 보이지 않는 레이아웃 노드 필터링
+    const visibleChildren = tree.children.filter(
+      (child) => !this.isInvisibleLayoutNode(child)
+    );
+
     return {
       id: tree.id,
       name: tree.name,
       type: nodeType,
-      children: tree.children.map((child) =>
+      children: visibleChildren.map((child) =>
         this.convertToUINodeRecursive(child)
       ),
       ...(tree.styles ? { styles: tree.styles } : {}),
@@ -117,14 +122,18 @@ class TreeBuilder {
   }
 
   private convertToUINodeRecursive(node: InternalTree): UINode {
-    // TODO: 구현 - 각 UINode 타입별로 proper conversion 필요
     const nodeType = this.mapToUINodeType(node.type);
+
+    // 보이지 않는 레이아웃 노드 필터링
+    const visibleChildren = node.children.filter(
+      (child) => !this.isInvisibleLayoutNode(child)
+    );
 
     return {
       id: node.id,
       name: node.name,
       type: nodeType,
-      children: node.children.map((child) =>
+      children: visibleChildren.map((child) =>
         this.convertToUINodeRecursive(child)
       ),
       ...(node.styles ? { styles: node.styles } : {}),
@@ -135,6 +144,18 @@ class TreeBuilder {
       ...(node.semanticType ? { semanticType: node.semanticType } : {}),
       ...(nodeType === "component" && node.refId ? { refId: node.refId } : {}),
     } as UINode;
+  }
+
+  /**
+   * 보이지 않는 레이아웃 제약 노드인지 확인
+   * - LINE 타입 + height 0 → 레이아웃 제약 요소 (Min Width 등)
+   */
+  private isInvisibleLayoutNode(node: InternalTree): boolean {
+    // LINE 타입이고 height가 0이면 보이지 않는 레이아웃 노드
+    if (node.type === "LINE" && node.bounds?.height === 0) {
+      return true;
+    }
+    return false;
   }
 
   /**

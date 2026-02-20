@@ -24,8 +24,8 @@ export class JsxGenerator {
     // Props destructuring
     const propsDestructuring = this.generatePropsDestructuring(uiTree);
 
-    // JSX body
-    const jsxBody = this.generateNode(uiTree.root, styleStrategy, options, 2);
+    // JSX body (루트 노드는 isRoot=true로 restProps 전파)
+    const jsxBody = this.generateNode(uiTree.root, styleStrategy, options, 2, true);
 
     return `const ${componentName}: React.FC<${componentName}Props> = (${propsDestructuring}) => {
   return (
@@ -37,15 +37,42 @@ export default ${componentName};`;
   }
 
   /**
-   * Props destructuring 생성
+   * Props destructuring 생성 (기본값 포함 + restProps)
    */
   private static generatePropsDestructuring(uiTree: UITree): string {
     if (uiTree.props.length === 0) {
-      return "{}";
+      return "{ ...restProps }";
     }
 
-    const propNames = uiTree.props.map((p) => p.name);
-    return `{ ${propNames.join(", ")} }`;
+    const propEntries = uiTree.props.map((p) => {
+      // 기본값이 있으면 destructuring에 포함
+      if (p.defaultValue !== undefined) {
+        const defaultVal = this.formatDefaultValue(p.defaultValue);
+        return `${p.name} = ${defaultVal}`;
+      }
+      return p.name;
+    });
+
+    // 항상 restProps 추가
+    propEntries.push("...restProps");
+
+    return `{ ${propEntries.join(", ")} }`;
+  }
+
+  /**
+   * 기본값 포맷팅
+   */
+  private static formatDefaultValue(value: unknown): string {
+    if (typeof value === "string") {
+      return `"${value}"`;
+    }
+    if (typeof value === "boolean" || typeof value === "number") {
+      return String(value);
+    }
+    if (value === null) {
+      return "null";
+    }
+    return JSON.stringify(value);
   }
 
   /**
@@ -55,18 +82,19 @@ export default ${componentName};`;
     node: UINode,
     styleStrategy: IStyleStrategy,
     options: JsxGeneratorOptions,
-    indent: number
+    indent: number,
+    isRoot: boolean = false
   ): string {
     const indentStr = " ".repeat(indent);
 
     // 조건부 렌더링
     if (node.visibleCondition) {
       const condition = this.conditionToCode(node.visibleCondition);
-      const innerJsx = this.generateNodeInner(node, styleStrategy, options, indent);
+      const innerJsx = this.generateNodeInner(node, styleStrategy, options, indent, isRoot);
       return `${indentStr}{${condition} && (\n${innerJsx}\n${indentStr})}`;
     }
 
-    return this.generateNodeInner(node, styleStrategy, options, indent);
+    return this.generateNodeInner(node, styleStrategy, options, indent, isRoot);
   }
 
   /**
@@ -76,7 +104,8 @@ export default ${componentName};`;
     node: UINode,
     styleStrategy: IStyleStrategy,
     options: JsxGeneratorOptions,
-    indent: number
+    indent: number,
+    isRoot: boolean = false
   ): string {
     const indentStr = " ".repeat(indent);
 
@@ -95,7 +124,7 @@ export default ${componentName};`;
       case "link":
       case "container":
       default:
-        return this.generateContainerNode(node, styleStrategy, options, indent);
+        return this.generateContainerNode(node, styleStrategy, options, indent, isRoot);
     }
   }
 
@@ -164,22 +193,28 @@ export default ${componentName};`;
     node: UINode,
     styleStrategy: IStyleStrategy,
     options: JsxGeneratorOptions,
-    indent: number
+    indent: number,
+    isRoot: boolean = false
   ): string {
     const indentStr = " ".repeat(indent);
 
     // 태그 결정
     const tag = this.getHtmlTag(node);
-    const attrs = this.generateAttributes(node, styleStrategy, options);
+    let attrs = this.generateAttributes(node, styleStrategy, options);
+
+    // 루트 요소에 restProps 전파
+    if (isRoot) {
+      attrs += " {...restProps}";
+    }
 
     // 자식이 없으면 self-closing
     if (!("children" in node) || !node.children || node.children.length === 0) {
       return `${indentStr}<${tag}${attrs} />`;
     }
 
-    // 자식 렌더링
+    // 자식 렌더링 (isRoot는 전파하지 않음)
     const childrenJsx = node.children
-      .map((child) => this.generateNode(child, styleStrategy, options, indent + 2))
+      .map((child) => this.generateNode(child, styleStrategy, options, indent + 2, false))
       .join("\n");
 
     return `${indentStr}<${tag}${attrs}>
@@ -286,26 +321,64 @@ ${indentStr}</${tag}>`;
    */
   private static toStyleVariableName(nodeId: string, nodeName: string): string {
     const safeId = nodeId.replace(/[^a-zA-Z0-9]/g, "_");
-    const base = nodeName
-      .split(/[\s_-]+/)
-      .map((word, i) =>
-        i === 0
-          ? word.toLowerCase()
-          : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-      )
-      .join("");
+
+    // 영문/숫자만 추출하여 camelCase 변환
+    const words = nodeName
+      .replace(/[^a-zA-Z0-9\s]/g, " ") // 특수문자를 공백으로
+      .split(/\s+/)
+      .filter(Boolean);
+
+    let base = words.length > 0
+      ? words
+          .map((word, i) =>
+            i === 0
+              ? word.toLowerCase()
+              : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          )
+          .join("")
+      : "unnamed";
+
+    // 숫자로 시작하면 앞에 _ 추가
+    if (/^[0-9]/.test(base)) {
+      base = "_" + base;
+    }
 
     return `${base}_${safeId}`;
   }
 
   /**
-   * 컴포넌트 이름 변환 (PascalCase)
+   * 컴포넌트 이름 변환 (PascalCase, 특수문자 제거)
    */
   private static toComponentName(name: string): string {
-    return name
-      .split(/[\s_-]+/)
+    // 영문/숫자만 추출
+    let normalized = name
+      .replace(/[^a-zA-Z0-9\s]/g, "") // 특수문자 및 한글 제거
+      .split(/\s+/)
+      .filter(Boolean)
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join("");
+
+    // 영문/숫자가 없으면 fallback
+    if (!normalized || normalized.length === 0) {
+      normalized = `Component${this.simpleHash(name)}`;
+    }
+
+    // 숫자로 시작하면 앞에 _ 추가
+    if (/^[0-9]/.test(normalized)) {
+      normalized = "_" + normalized;
+    }
+
+    return normalized;
+  }
+
+  private static simpleHash(str: string): string {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash).toString(36).substring(0, 6);
   }
 
   /**
