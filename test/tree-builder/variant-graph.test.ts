@@ -31,7 +31,8 @@ describe("TreeBuilder - Variant Graph", () => {
     console.log("Children count:", rootNode.children?.length);
 
     // UITree가 생성되었고, children이 있어야 함
-    expect(rootNode.type).toBe("container");
+    // 휴리스틱이 버튼으로 판별하여 type이 "button"으로 변경됨
+    expect(rootNode.type).toBe("button");
     expect(rootNode.children).toBeDefined();
 
     // airtable-button은 Label을 가지고 있어야 함

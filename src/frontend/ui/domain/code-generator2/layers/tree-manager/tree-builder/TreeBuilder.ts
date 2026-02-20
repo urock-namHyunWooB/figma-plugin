@@ -4,6 +4,7 @@ import {
   FigmaNodeData,
   InternalTree,
   PropDefinition,
+  ComponentType,
 } from "../../../types/types";
 import DataManager from "../../data-manager/DataManager";
 import { VariantMerger } from "./processors/VariantMerger";
@@ -11,18 +12,20 @@ import { PropsExtractor } from "./processors/PropsExtractor";
 import { StyleProcessor } from "./processors/StyleProcessor";
 import { VisibilityProcessor } from "./processors/VisibilityProcessor";
 import { ExternalRefsProcessor } from "./processors/ExternalRefsProcessor";
+import { HeuristicsProcessor } from "./processors/HeuristicsProcessor";
 
 /**
  * TreeBuilder
  *
  * FigmaNodeData → UITree 변환 파이프라인 오케스트레이터
  *
- * 5단계 파이프라인:
+ * 6단계 파이프라인:
  * 1. 변형 병합 (VariantMerger)
  * 2. Props 추출/바인딩
  * 3. 스타일 처리
  * 4. 가시성 조건
  * 5. 외부 참조
+ * 6. 휴리스틱 (HeuristicsProcessor)
  */
 class TreeBuilder {
   private readonly dataManager: DataManager;
@@ -31,6 +34,7 @@ class TreeBuilder {
   private readonly styleProcessor: StyleProcessor;
   private readonly visibilityProcessor: VisibilityProcessor;
   private readonly externalRefsProcessor: ExternalRefsProcessor;
+  private readonly heuristicsProcessor: HeuristicsProcessor;
 
   constructor(dataManager: DataManager) {
     this.dataManager = dataManager;
@@ -39,6 +43,7 @@ class TreeBuilder {
     this.styleProcessor = new StyleProcessor(dataManager);
     this.visibilityProcessor = new VisibilityProcessor();
     this.externalRefsProcessor = new ExternalRefsProcessor(dataManager);
+    this.heuristicsProcessor = new HeuristicsProcessor(dataManager);
   }
 
   // ===========================================================================
@@ -62,18 +67,21 @@ class TreeBuilder {
     tree = this.styleProcessor.applyStyles(tree);
 
     // Step 4: 가시성 조건
-
     tree = this.visibilityProcessor.applyVisibility(tree);
 
     // Step 5: 외부 참조
     tree = this.externalRefsProcessor.resolveExternalRefs(tree);
 
+    // Step 6: 휴리스틱 (컴포넌트 타입 판별, semanticType 설정)
+    const heuristicsResult = this.heuristicsProcessor.apply(tree);
+
     // 최종 변환: InternalTree → UINode
-    const root = this.convertToUINode(tree);
+    const root = this.convertToUINode(tree, heuristicsResult.rootNodeType);
 
     return {
       root,
       props,
+      componentType: heuristicsResult.componentType,
     };
   }
 
@@ -123,9 +131,12 @@ class TreeBuilder {
   // 최종 변환: InternalTree → UINode
   // ===========================================================================
 
-  private convertToUINode(tree: InternalTree): UINode {
-    // TODO: 구현 - 각 UINode 타입별로 proper conversion 필요
-    const nodeType = this.mapToUINodeType(tree.type);
+  private convertToUINode(
+    tree: InternalTree,
+    rootNodeType?: "button" | "input" | "link"
+  ): UINode {
+    // 루트 노드: 휴리스틱이 지정한 타입 사용 (있으면)
+    const nodeType = rootNodeType || this.mapToUINodeType(tree.type);
 
     return {
       id: tree.id,
