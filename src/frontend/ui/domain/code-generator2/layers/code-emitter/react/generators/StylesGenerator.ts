@@ -4,7 +4,7 @@
  * UITree의 모든 노드에서 스타일 코드 생성
  */
 
-import type { UITree, UINode, StyleObject } from "../../../types/types";
+import type { UITree, UINode, StyleObject } from "../../../../types/types";
 import type { IStyleStrategy, StyleResult } from "../style-strategy/IStyleStrategy";
 
 export class StylesGenerator {
@@ -21,11 +21,24 @@ export class StylesGenerator {
     // 모든 노드에서 스타일 수집
     this.collectStyles(uiTree.root, styleStrategy, styleResults);
 
-    if (styleResults.length === 0) {
+    // 빈 스타일 필터링
+    const nonEmptyResults = styleResults.filter((r) => !r.isEmpty && r.code);
+
+    if (nonEmptyResults.length === 0) {
       return "// No styles";
     }
 
-    return styleResults.map((r) => r.code).join("\n\n");
+    const parts: string[] = [];
+
+    // Tailwind 전략인 경우 cn 함수 추가
+    if (styleStrategy.name === "tailwind" && "getCnFunction" in styleStrategy) {
+      parts.push((styleStrategy as any).getCnFunction());
+      parts.push("");
+    }
+
+    parts.push(...nonEmptyResults.map((r) => r.code));
+
+    return parts.join("\n\n");
   }
 
   /**

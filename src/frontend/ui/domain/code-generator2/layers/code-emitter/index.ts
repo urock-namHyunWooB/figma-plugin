@@ -1,3 +1,7 @@
-export * from "./CodeEmitter";
-export * from "./style-strategy";
-export * from "./generators";
+// Interface
+export * from "./ICodeEmitter";
+
+// React Implementation
+export * from "./react/ReactEmitter";
+export * from "./react/style-strategy";
+export * from "./react/generators";

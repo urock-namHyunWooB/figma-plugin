@@ -4,7 +4,7 @@
  * UITree.props에서 TypeScript Props 인터페이스 생성
  */
 
-import type { UITree, PropDefinition } from "../../../types/types";
+import type { UITree, PropDefinition } from "../../../../types/types";
 
 export class PropsGenerator {
   /**

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import DataManager from "@frontend/ui/domain/code-generator2/layers/data-manager/DataManager";
 import TreeBuilder from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/TreeBuilder";
-import { CodeEmitter } from "@frontend/ui/domain/code-generator2/layers/code-emitter/CodeEmitter";
+import { CodeEmitter } from "@frontend/ui/domain/code-generator2/layers/code-emitter/ReactEmitter";
 
 import taptapButton from "../fixtures/button/taptapButton.json";
 import airtableButton from "../fixtures/any-component-set/airtable-button.json";

@@ -5,7 +5,7 @@
  * Emotion, Tailwind 등 다양한 스타일 방식을 추상화
  */
 
-import type { StyleObject, PseudoClass } from "../../../types/types";
+import type { StyleObject, PseudoClass } from "../../../../types/types";
 
 /** 스타일 생성 결과 */
 export interface StyleResult {
@@ -13,6 +13,8 @@ export interface StyleResult {
   variableName: string;
   /** 스타일 코드 */
   code: string;
+  /** 빈 스타일 여부 */
+  isEmpty?: boolean;
 }
 
 /** JSX 스타일 속성 */

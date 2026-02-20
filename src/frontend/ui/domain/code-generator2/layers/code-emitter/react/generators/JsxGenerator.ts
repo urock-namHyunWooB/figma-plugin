@@ -4,7 +4,7 @@
  * UITree에서 React 컴포넌트 JSX 생성
  */
 
-import type { UITree, UINode, ConditionNode } from "../../../types/types";
+import type { UITree, UINode, ConditionNode, StyleObject } from "../../../../types/types";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
 
 interface JsxGeneratorOptions {
@@ -213,12 +213,27 @@ ${indentStr}</${tag}>`;
   ): string {
     const attrs: string[] = [];
 
-    // 스타일 속성
-    if (node.styles) {
-      const styleVarName = this.toStyleVariableName(node.name);
-      const hasConditional = node.styles.dynamic && node.styles.dynamic.length > 0;
-      const styleAttr = styleStrategy.getJsxStyleAttribute(styleVarName, hasConditional);
-      attrs.push(`${styleAttr.attributeName}=${styleAttr.valueCode}`);
+    // 스타일 속성 (빈 스타일은 제외)
+    if (node.styles && this.hasNonEmptyStyles(node.styles)) {
+      const styleVarName = this.toStyleVariableName(node.id, node.name);
+      const dynamicProps = this.extractDynamicProps(node.styles);
+
+      if (dynamicProps.length > 0) {
+        // 동적 스타일 포함
+        const dynamicStyleRefs = dynamicProps.map(
+          (prop) => `${styleVarName}_${prop}Styles[${prop}]`
+        );
+
+        if (styleStrategy.name === "emotion") {
+          attrs.push(`css={[${styleVarName}, ${dynamicStyleRefs.join(", ")}]}`);
+        } else {
+          // Tailwind
+          attrs.push(`className={cn(${styleVarName}, ${dynamicStyleRefs.join(", ")})}`);
+        }
+      } else {
+        const styleAttr = styleStrategy.getJsxStyleAttribute(styleVarName, false);
+        attrs.push(`${styleAttr.attributeName}=${styleAttr.valueCode}`);
+      }
     }
 
     // 디버그 속성
@@ -267,9 +282,10 @@ ${indentStr}</${tag}>`;
   }
 
   /**
-   * 스타일 변수명 생성
+   * 스타일 변수명 생성 (EmotionStrategy와 동일한 포맷)
    */
-  private static toStyleVariableName(nodeName: string): string {
+  private static toStyleVariableName(nodeId: string, nodeName: string): string {
+    const safeId = nodeId.replace(/[^a-zA-Z0-9]/g, "_");
     const base = nodeName
       .split(/[\s_-]+/)
       .map((word, i) =>
@@ -279,7 +295,7 @@ ${indentStr}</${tag}>`;
       )
       .join("");
 
-    return `${base}Styles`;
+    return `${base}_${safeId}`;
   }
 
   /**
@@ -290,5 +306,75 @@ ${indentStr}</${tag}>`;
       .split(/[\s_-]+/)
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join("");
+  }
+
+  /**
+   * StyleObject가 실제 스타일을 가지고 있는지 확인
+   * (빈 스타일이면 css 속성을 생성하지 않음)
+   */
+  private static hasNonEmptyStyles(styles: StyleObject): boolean {
+    // base 스타일이 있으면 true
+    if (Object.keys(styles.base).length > 0) {
+      return true;
+    }
+
+    // dynamic 스타일이 있으면 true
+    if (styles.dynamic && styles.dynamic.length > 0) {
+      return true;
+    }
+
+    // pseudo 스타일에서 base와 다른 속성이 있으면 true
+    if (styles.pseudo) {
+      for (const pseudoStyles of Object.values(styles.pseudo)) {
+        for (const [key, value] of Object.entries(pseudoStyles)) {
+          if (styles.base[key] !== value) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * dynamic 스타일에서 variant prop 이름들 추출
+   */
+  private static extractDynamicProps(styles: StyleObject): string[] {
+    if (!styles.dynamic || styles.dynamic.length === 0) {
+      return [];
+    }
+
+    const propNames = new Set<string>();
+
+    for (const { condition } of styles.dynamic) {
+      const propName = this.extractVariantPropName(condition);
+      if (propName) {
+        propNames.add(propName);
+      }
+    }
+
+    return Array.from(propNames);
+  }
+
+  /**
+   * ConditionNode에서 첫 번째 variant prop 이름 추출
+   */
+  private static extractVariantPropName(condition: ConditionNode): string | null {
+    // eq 타입인 경우
+    if (condition.type === "eq" && typeof condition.value === "string") {
+      return condition.prop;
+    }
+
+    // and 타입인 경우 첫 번째 eq 조건 찾기
+    if (condition.type === "and") {
+      for (const cond of condition.conditions) {
+        if (cond.type === "eq" && typeof cond.value === "string") {
+          return cond.prop;
+        }
+      }
+    }
+
+    return null;
   }
 }

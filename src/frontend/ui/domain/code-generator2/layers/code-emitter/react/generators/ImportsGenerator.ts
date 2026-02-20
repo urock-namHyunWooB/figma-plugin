@@ -4,7 +4,7 @@
  * UITree에서 필요한 import 문 생성
  */
 
-import type { UITree, UINode } from "../../../types/types";
+import type { UITree, UINode } from "../../../../types/types";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
 
 export class ImportsGenerator {
