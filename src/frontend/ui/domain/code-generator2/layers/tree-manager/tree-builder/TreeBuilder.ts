@@ -115,21 +115,23 @@ class TreeBuilder {
   // ===========================================================================
 
   private convertToUINode(tree: InternalTree): UINode {
+    // TODO: 구현 - 각 UINode 타입별로 proper conversion 필요
     return {
       id: tree.id,
       name: tree.name,
       type: this.mapToUINodeType(tree.type),
       children: tree.children.map((child) => this.convertToUINodeRecursive(child)),
-    };
+    } as UINode;
   }
 
   private convertToUINodeRecursive(node: InternalTree): UINode {
+    // TODO: 구현 - 각 UINode 타입별로 proper conversion 필요
     return {
       id: node.id,
       name: node.name,
       type: this.mapToUINodeType(node.type),
       children: node.children.map((child) => this.convertToUINodeRecursive(child)),
-    };
+    } as UINode;
   }
 
   /**
