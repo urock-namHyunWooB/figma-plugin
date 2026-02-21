@@ -9,7 +9,7 @@ describe("StyleProcessor", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     // Root 스타일 확인
     expect(uiTree.root.styles).toBeDefined();
@@ -40,7 +40,7 @@ describe("StyleProcessor", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     if (!uiTree.root.styles) {
       throw new Error("No styles found");
@@ -57,7 +57,7 @@ describe("StyleProcessor", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     if (!uiTree.root.styles) {
       throw new Error("No styles found");
@@ -78,7 +78,7 @@ describe("StyleProcessor", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     if (!uiTree.root.styles) {
       throw new Error("No styles found");
@@ -95,7 +95,7 @@ describe("StyleProcessor", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     // 모든 자식 노드도 스타일이 적용되어야 함
     if (uiTree.root.type === "container") {

@@ -10,7 +10,7 @@ describe("TailwindStrategy", () => {
   it("should generate Tailwind classes from taptapButton", async () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     const emitter = new CodeEmitter({ styleStrategy: "tailwind" });
     const result = await emitter.emit(uiTree);
@@ -29,7 +29,7 @@ describe("TailwindStrategy", () => {
   it("should generate Tailwind classes from airtableButton", async () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     const emitter = new CodeEmitter({ styleStrategy: "tailwind" });
     const result = await emitter.emit(uiTree);
@@ -44,7 +44,7 @@ describe("TailwindStrategy", () => {
   it("should use standard Tailwind classes when possible", async () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     const emitter = new CodeEmitter({ styleStrategy: "tailwind" });
     const result = await emitter.emit(uiTree);

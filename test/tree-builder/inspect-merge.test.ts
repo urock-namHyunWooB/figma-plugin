@@ -10,7 +10,7 @@ describe("InternalTree Merge Inspection", () => {
     const treeBuilder = new TreeBuilder(dataManager);
 
     const internalTree = treeBuilder.buildInternalTreeDebug(
-      airtableButton as any
+      (airtableButton as any).info.document
     );
 
     // 병합 결과를 JSON 파일로 저장

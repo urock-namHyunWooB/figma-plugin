@@ -12,7 +12,7 @@ describe("Heuristics", () => {
     it("should detect taptapButton as button", () => {
       const dataManager = new DataManager(taptapButton as any);
       const treeBuilder = new TreeBuilder(dataManager);
-      const uiTree = treeBuilder.build(taptapButton as any);
+      const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
       expect(uiTree.componentType).toBe("button");
       expect(uiTree.root.type).toBe("button");
@@ -22,7 +22,7 @@ describe("Heuristics", () => {
     it("should detect airtableButton as button", () => {
       const dataManager = new DataManager(airtableButton as any);
       const treeBuilder = new TreeBuilder(dataManager);
-      const uiTree = treeBuilder.build(airtableButton as any);
+      const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
       expect(uiTree.componentType).toBe("button");
       expect(uiTree.root.type).toBe("button");
@@ -31,7 +31,7 @@ describe("Heuristics", () => {
     it("should detect urockButton as button", () => {
       const dataManager = new DataManager(urockButton as any);
       const treeBuilder = new TreeBuilder(dataManager);
-      const uiTree = treeBuilder.build(urockButton as any);
+      const uiTree = treeBuilder.build((urockButton as any).info.document);
 
       expect(uiTree.componentType).toBe("button");
       expect(uiTree.root.type).toBe("button");
@@ -40,7 +40,7 @@ describe("Heuristics", () => {
     it("should set semanticType on child nodes", () => {
       const dataManager = new DataManager(taptapButton as any);
       const treeBuilder = new TreeBuilder(dataManager);
-      const uiTree = treeBuilder.build(taptapButton as any);
+      const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
       // TEXT 노드는 label
       const textNode = uiTree.root.children.find((c) => c.type === "text");
@@ -66,7 +66,7 @@ describe("Heuristics", () => {
 
       // VariantMerger로 InternalTree 생성
       const treeBuilder = new TreeBuilder(dataManager);
-      const internalTree = treeBuilder.buildInternalTreeDebug(taptapButton as any);
+      const internalTree = treeBuilder.buildInternalTreeDebug((taptapButton as any).info.document);
 
       const scores = heuristicsProcessor.debugScores(internalTree);
 

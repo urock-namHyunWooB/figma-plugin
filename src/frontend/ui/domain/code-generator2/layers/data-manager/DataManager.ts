@@ -113,6 +113,58 @@ class DataManager {
   }
 
   /**
+   * componentId로 첫 번째 INSTANCE 노드 찾기
+   * @param componentId - 컴포넌트 ID
+   * @returns 해당 componentId를 참조하는 첫 번째 INSTANCE 노드, 없으면 undefined
+   */
+  public findInstanceByComponentId(componentId: string): SceneNode | undefined {
+    for (const [_, node] of this.nodeMap) {
+      if ("componentId" in node && node.componentId === componentId) {
+        return node;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * 컴포넌트 빌드용 노드 반환 (의존성 처리 포함)
+   * - 메인 컴포넌트: document 반환
+   * - 의존성 컴포넌트: 내용 있으면 document, 없으면 INSTANCE 노드 반환
+   * @param componentId - 컴포넌트 ID
+   * @returns 빌드에 사용할 SceneNode
+   */
+  public getNodeForBuild(componentId: string): SceneNode {
+    const { spec } = this.getById(componentId);
+    if (!spec) throw new Error(`Component not found: ${componentId}`);
+
+    // 메인 컴포넌트는 document 반환
+    if (componentId === this.getMainComponentId()) {
+      return spec.info.document;
+    }
+
+    // 의존성: 내용 확인
+    const document = spec.info.document;
+    const hasChildren = "children" in document &&
+                       Array.isArray(document.children) &&
+                       document.children.length > 0;
+
+    // 내용 있으면 document 반환
+    if (hasChildren) {
+      return document;
+    }
+
+    // 내용 없으면 INSTANCE 노드 반환
+    const instanceNode = this.findInstanceByComponentId(componentId);
+    if (instanceNode) {
+      return instanceNode;
+    }
+
+    // INSTANCE도 없으면 빈 document 반환 (경고)
+    console.warn(`Dependency ${componentId} has no content and no instance found`);
+    return document;
+  }
+
+  /**
    * 이미지 참조(imageRef)로 URL 조회 (O(1))
    * @param imageRef - 이미지 참조 키
    * @returns 해당 참조의 이미지 URL, 없으면 undefined

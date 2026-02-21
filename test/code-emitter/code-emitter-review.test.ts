@@ -12,7 +12,7 @@ describe("CodeEmitter Review", () => {
   it("taptapButton 코드 생성 검토", async () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     const emitter = new CodeEmitter();
     const result = await emitter.emit(uiTree);
@@ -28,7 +28,7 @@ describe("CodeEmitter Review", () => {
   it("airtableButton 코드 생성 검토", async () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     const emitter = new CodeEmitter();
     const result = await emitter.emit(uiTree);
@@ -41,7 +41,7 @@ describe("CodeEmitter Review", () => {
   it("urockButton 코드 생성 검토", async () => {
     const dataManager = new DataManager(urockButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(urockButton as any);
+    const uiTree = treeBuilder.build((urockButton as any).info.document);
 
     const emitter = new CodeEmitter();
     const result = await emitter.emit(uiTree);

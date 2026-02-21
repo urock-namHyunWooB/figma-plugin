@@ -9,7 +9,7 @@ describe("ExternalRefsProcessor", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     // Icon 노드 찾기 (INSTANCE 타입)
     if (uiTree.root.type === "container") {
@@ -31,7 +31,7 @@ describe("ExternalRefsProcessor", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     const extractRefs = (node: any, depth = 0): any => {
       return {
@@ -59,7 +59,7 @@ describe("ExternalRefsProcessor", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     // Label은 TEXT 타입이므로 refId가 없어야 함
     if (uiTree.root.type === "container") {
@@ -79,7 +79,7 @@ describe("ExternalRefsProcessor", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     const collectComponentNodes = (
       node: any,
@@ -120,7 +120,7 @@ describe("ExternalRefsProcessor", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     if (uiTree.root.type === "container") {
       const iconNode = uiTree.root.children.find((c) => c.name === "Icon");

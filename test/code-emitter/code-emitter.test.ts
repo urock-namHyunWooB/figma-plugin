@@ -11,7 +11,7 @@ describe("CodeEmitter", () => {
     // 1. UITree 생성
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     // 2. 코드 생성
     const emitter = new CodeEmitter();
@@ -32,7 +32,7 @@ describe("CodeEmitter", () => {
   it("should generate code from airtableButton", async () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     const emitter = new CodeEmitter();
     const result = await emitter.emit(uiTree);
@@ -47,7 +47,7 @@ describe("CodeEmitter", () => {
   it("should include props in interface", async () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     const emitter = new CodeEmitter();
     const result = await emitter.emit(uiTree);
@@ -61,7 +61,7 @@ describe("CodeEmitter", () => {
   it("should generate styles", async () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     const emitter = new CodeEmitter();
     const result = await emitter.emit(uiTree);

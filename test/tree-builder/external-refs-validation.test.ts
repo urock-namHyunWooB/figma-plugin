@@ -10,7 +10,7 @@ describe("External Refs Deep Validation", () => {
   it("should find all component nodes in taptapButton", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     const collectAllNodes = (
       node: any,
@@ -53,7 +53,7 @@ describe("External Refs Deep Validation", () => {
   it("should find all component nodes in urockButton", () => {
     const dataManager = new DataManager(urockButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(urockButton as any);
+    const uiTree = treeBuilder.build((urockButton as any).info.document);
 
     const collectComponentNodes = (
       node: any,
@@ -91,7 +91,7 @@ describe("External Refs Deep Validation", () => {
   it("should verify all component nodes have refId", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     const checkNode = (node: any, path: string = ""): void => {
       const currentPath = path ? `${path}/${node.name}` : node.name;
@@ -115,7 +115,7 @@ describe("External Refs Deep Validation", () => {
   it("should check if refIds exist in dependencies", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     const dependencies = dataManager.getAllDependencies();
     console.log(`Total dependencies: ${dependencies.size}`);
@@ -156,7 +156,7 @@ describe("External Refs Deep Validation", () => {
   it("should handle nested component nodes", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     const findDeepestComponent = (
       node: any,
@@ -189,7 +189,7 @@ describe("External Refs Deep Validation", () => {
   it("should verify refId consistency across variants", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     // Icon 노드는 12개 variant에서 병합됨
     // 모든 variant에서 같은 refId를 가져야 함

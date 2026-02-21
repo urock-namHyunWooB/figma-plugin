@@ -10,7 +10,7 @@ describe("Visibility Deep Validation", () => {
   it("should create detailed visibility tree for taptapButton", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     const extractVisibility = (node: any, depth = 0): any => {
       return {
@@ -53,7 +53,7 @@ describe("Visibility Deep Validation", () => {
   it("should validate Icon node visibility in taptapButton", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     if (uiTree.root.type === "container") {
       const frame = uiTree.root.children.find(
@@ -85,7 +85,7 @@ describe("Visibility Deep Validation", () => {
   it("should create detailed visibility tree for airtableButton", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     const extractVisibility = (node: any, depth = 0): any => {
       return {
@@ -113,7 +113,7 @@ describe("Visibility Deep Validation", () => {
   it("should create detailed visibility tree for urockButton", () => {
     const dataManager = new DataManager(urockButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(urockButton as any);
+    const uiTree = treeBuilder.build((urockButton as any).info.document);
 
     const extractVisibility = (node: any, depth = 0): any => {
       return {
@@ -141,7 +141,7 @@ describe("Visibility Deep Validation", () => {
   it("should handle nested visibility conditions correctly", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     // 모든 노드를 순회하면서 visibleCondition 수집
     const collectConditions = (
@@ -182,7 +182,7 @@ describe("Visibility Deep Validation", () => {
   it("should verify mergedNodes count matches visibility logic", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     const rootMergedCount = (uiTree.root as any).mergedNodes?.length || 0;
     console.log("Root merged nodes:", rootMergedCount);

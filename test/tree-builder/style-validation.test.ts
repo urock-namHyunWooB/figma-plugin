@@ -10,7 +10,7 @@ describe("Style Validation - Various Fixtures", () => {
   it("should extract styles from taptapButton", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     const result = {
       fixture: "taptapButton",
@@ -37,7 +37,7 @@ describe("Style Validation - Various Fixtures", () => {
   it("should extract styles from airtableButton", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     const result = {
       fixture: "airtableButton",
@@ -62,7 +62,7 @@ describe("Style Validation - Various Fixtures", () => {
   it("should extract styles from urockButton", () => {
     const dataManager = new DataManager(urockButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(urockButton as any);
+    const uiTree = treeBuilder.build((urockButton as any).info.document);
 
     const result = {
       fixture: "urockButton",
@@ -87,7 +87,7 @@ describe("Style Validation - Various Fixtures", () => {
   it("should handle State prop correctly", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     // State prop이 있으면 pseudo-class 스타일이 있어야 함
     if (uiTree.root.styles?.pseudo) {
@@ -103,7 +103,7 @@ describe("Style Validation - Various Fixtures", () => {
   it("should create correct condition nodes", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     if (uiTree.root.styles?.dynamic && uiTree.root.styles.dynamic.length > 0) {
       const firstDynamic = uiTree.root.styles.dynamic[0];
@@ -134,7 +134,7 @@ describe("Style Validation - Various Fixtures", () => {
   it("should not have State/states in dynamic conditions", () => {
     const dataManager = new DataManager(urockButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build(urockButton as any);
+    const uiTree = treeBuilder.build((urockButton as any).info.document);
 
     // dynamic 조건에 state/states가 없어야 함 (pseudo로 처리됨)
     if (uiTree.root.styles?.dynamic) {

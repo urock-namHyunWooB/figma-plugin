@@ -52,13 +52,11 @@ class TreeBuilder {
 
   /**
    * 파이프라인 진입점
-   * FigmaNodeData → UITree 변환
+   * SceneNode → UITree 변환
    */
-  public build(spec: FigmaNodeData): UITree {
-    const document = spec.info.document;
-
+  public build(node: SceneNode): UITree {
     // Step 1: 변형 병합
-    let tree = this.variantMerger.merge(document);
+    let tree = this.variantMerger.merge(node);
 
     // Step 2: Props 추출/바인딩
     const props = this.propsExtractor.extract();
@@ -88,8 +86,8 @@ class TreeBuilder {
   /**
    * 디버그용: InternalTree 반환 (Step 1 결과)
    */
-  public buildInternalTreeDebug(spec: FigmaNodeData): InternalTree {
-    return this.variantMerger.merge(spec.info.document);
+  public buildInternalTreeDebug(node: SceneNode): InternalTree {
+    return this.variantMerger.merge(node);
   }
 
   private convertToUINode(

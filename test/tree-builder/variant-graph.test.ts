@@ -61,7 +61,7 @@ describe("TreeBuilder - Variant Graph", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const internalTree = treeBuilder.buildInternalTreeDebug(airtableButton as any);
+    const internalTree = treeBuilder.buildInternalTreeDebug((airtableButton as any).info.document);
 
     // InternalTree 구조 확인
     console.log("\n=== InternalTree Inspection ===");

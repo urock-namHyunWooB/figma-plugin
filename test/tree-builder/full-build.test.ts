@@ -10,7 +10,7 @@ describe("TreeBuilder Full Build", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     // UITree 구조 확인
     expect(uiTree.root).toBeDefined();
@@ -44,7 +44,7 @@ describe("TreeBuilder Full Build", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     // 결과를 파일로 저장
     const result = {
@@ -77,7 +77,7 @@ describe("TreeBuilder Full Build", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     // props가 배열이어야 함 (빈 배열일 수도 있음)
     expect(Array.isArray(uiTree.props)).toBe(true);

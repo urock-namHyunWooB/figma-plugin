@@ -10,7 +10,7 @@ describe("VisibilityProcessor", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     // 결과 저장
     const result = {
@@ -38,7 +38,7 @@ describe("VisibilityProcessor", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     // 루트는 모든 variant에 존재하므로 visibleCondition이 없어야 함
     expect(uiTree.root.visibleCondition).toBeUndefined();
@@ -55,7 +55,7 @@ describe("VisibilityProcessor", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     // Icon은 Icon=true인 variant에만 존재하므로 visibleCondition이 있어야 함
     if (uiTree.root.type === "container") {
@@ -79,7 +79,7 @@ describe("VisibilityProcessor", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     const result = {
       rootName: uiTree.root.name,
@@ -105,7 +105,7 @@ describe("VisibilityProcessor", () => {
     const dataManager = new DataManager(taptapButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(taptapButton as any);
+    const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     // 모든 노드의 visibleCondition을 확인
     const checkNoStateProp = (node: any): void => {
@@ -127,7 +127,7 @@ describe("VisibilityProcessor", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
-    const uiTree = treeBuilder.build(airtableButton as any);
+    const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     if (uiTree.root.type === "container") {
       const iconNode = uiTree.root.children.find((c) => c.name === "Icon");

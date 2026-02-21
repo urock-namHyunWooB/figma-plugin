@@ -35,10 +35,8 @@ class TreeManager {
    * 개별 컴포넌트의 UITree 빌드 (TreeBuilder에 위임)
    */
   private buildComponentTree(componentId: string): UITree {
-    const { spec } = this.dataManager.getById(componentId);
-    if (!spec) throw new Error(`Component not found: ${componentId}`);
-
-    return this.treeBuilder.build(spec);
+    const node = this.dataManager.getNodeForBuild(componentId);
+    return this.treeBuilder.build(node);
   }
 }
 
