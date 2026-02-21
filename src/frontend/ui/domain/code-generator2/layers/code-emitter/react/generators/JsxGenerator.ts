@@ -204,6 +204,15 @@ export default ${componentName};`;
     indent: number
   ): string {
     const indentStr = " ".repeat(indent);
+
+    // INSTANCE slot 확인 (bindings.content가 있으면 slot)
+    const slotBinding = node.bindings?.content;
+    if (slotBinding && "prop" in slotBinding) {
+      // Slot으로 렌더링
+      return `${indentStr}{${slotBinding.prop}}`;
+    }
+
+    // 일반 컴포넌트 렌더링
     const componentName = this.toComponentName(node.name);
     const attrs = this.generateAttributes(node, styleStrategy, options);
 
