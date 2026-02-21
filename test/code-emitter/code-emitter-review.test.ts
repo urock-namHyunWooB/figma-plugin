@@ -22,7 +22,7 @@ describe("CodeEmitter Review", () => {
 
     // 기본 검증
     expect(result.componentName).toBe("Primary");
-    expect(result.code).toContain("React.FC<PrimaryProps>");
+    expect(result.code).toContain("function Primary(");
   });
 
   it("airtableButton 코드 생성 검토", async () => {
