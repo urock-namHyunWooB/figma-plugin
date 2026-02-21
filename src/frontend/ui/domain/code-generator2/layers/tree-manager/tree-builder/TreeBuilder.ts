@@ -64,8 +64,8 @@ class TreeBuilder {
     // Step 3: 스타일 처리
     tree = this.styleProcessor.applyStyles(tree);
 
-    // Step 4: 가시성 조건
-    tree = this.visibilityProcessor.applyVisibility(tree);
+    // Step 4: 가시성 조건 (props 전달하여 rename 매핑 사용)
+    tree = this.visibilityProcessor.applyVisibility(tree, props);
 
     // Step 5: 외부 참조 (INSTANCE refId + 의존 컴포넌트 Vector SVG)
     tree = this.externalRefsProcessor.resolveExternalRefs(tree);

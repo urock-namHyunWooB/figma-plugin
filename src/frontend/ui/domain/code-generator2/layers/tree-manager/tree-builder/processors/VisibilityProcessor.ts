@@ -2,6 +2,7 @@ import {
   InternalNode,
   ConditionNode,
   VariantOrigin,
+  PropDefinition,
 } from "../../../../types/types";
 
 /**
@@ -17,11 +18,19 @@ import {
  * → visibleCondition: { type: "truthy", prop: "icon" }
  */
 export class VisibilityProcessor {
+  // sourceKey → PropDefinition 매핑 (exact match)
+  private propMap: Map<string, PropDefinition> = new Map();
+
   /**
    * InternalNode에 가시성 조건 적용 (재귀)
    */
-  public applyVisibility(root: InternalNode): InternalNode {
+  public applyVisibility(root: InternalNode, props: PropDefinition[]): InternalNode {
     const totalVariants = root.mergedNodes?.length || 0;
+
+    // sourceKey → PropDefinition 매핑 (exact match, normalize 불필요)
+    this.propMap = new Map(
+      props.map((p) => [p.sourceKey, p])
+    );
 
     return this.applyVisibilityRecursive(root, totalVariants);
   }
@@ -159,8 +168,11 @@ export class VisibilityProcessor {
    * prop 조건 노드 생성
    */
   private createCondition(key: string, value: string): ConditionNode {
-    // camelCase로 변환
-    const propName = this.normalizePropName(key);
+    // variant key를 exact match로 PropDefinition 찾기
+    const propDef = this.propMap.get(key);
+
+    // PropDefinition이 있으면 name 사용, 없으면 normalize된 key 사용 (fallback)
+    const propName = propDef ? propDef.name : this.normalizePropName(key);
 
     // Boolean 값 처리
     if (value.toLowerCase() === "true") {

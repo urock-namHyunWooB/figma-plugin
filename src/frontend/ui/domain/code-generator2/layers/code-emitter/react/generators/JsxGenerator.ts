@@ -26,6 +26,11 @@ export class JsxGenerator {
       uiTree.props.filter((p) => p.type === "slot").map((p) => p.name)
     );
 
+    // Prop rename 매핑 설정 (sourceKey → name)
+    this.propRenameMap = new Map(
+      uiTree.props.map((p) => [p.sourceKey, p.name])
+    );
+
     // Props destructuring
     const propsDestructuring = this.generatePropsDestructuring(uiTree);
 
@@ -82,6 +87,9 @@ export default ${componentName};`;
 
   // 현재 UITree의 slot props를 추적 (generate에서 설정)
   private static slotProps: Set<string> = new Set();
+
+  // sourceKey → name 매핑 (Figma prop 이름 → React prop 이름)
+  private static propRenameMap: Map<string, string> = new Map();
 
   /**
    * UINode를 JSX로 변환
@@ -350,18 +358,25 @@ ${indentStr}</${tag}>`;
   }
 
   /**
+   * Prop 이름 변환 (sourceKey → name)
+   */
+  private static resolvePropName(prop: string): string {
+    return this.propRenameMap.get(prop) || prop;
+  }
+
+  /**
    * ConditionNode를 코드로 변환
    */
   private static conditionToCode(condition: ConditionNode): string {
     switch (condition.type) {
       case "eq":
-        return `${condition.prop} === ${JSON.stringify(condition.value)}`;
+        return `${this.resolvePropName(condition.prop)} === ${JSON.stringify(condition.value)}`;
 
       case "neq":
-        return `${condition.prop} !== ${JSON.stringify(condition.value)}`;
+        return `${this.resolvePropName(condition.prop)} !== ${JSON.stringify(condition.value)}`;
 
       case "truthy":
-        return condition.prop;
+        return this.resolvePropName(condition.prop);
 
       case "and":
         return `(${condition.conditions.map((c) => this.conditionToCode(c)).join(" && ")})`;

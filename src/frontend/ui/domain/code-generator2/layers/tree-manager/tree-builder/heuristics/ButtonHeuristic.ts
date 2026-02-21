@@ -20,9 +20,8 @@ import type {
   HeuristicContext,
   HeuristicResult,
 } from "./IHeuristic";
-import {
-  extractTextSlotInfo,
-} from "../processors/utils/textSlotUtils";
+import { extractTextSlotInfo } from "../processors/utils/textSlotUtils";
+import DataManager from "@code-generator2/layers/data-manager/DataManager";
 
 export class ButtonHeuristic implements IHeuristic {
   readonly name = "ButtonHeuristic";
@@ -71,7 +70,9 @@ export class ButtonHeuristic implements IHeuristic {
    * State prop 점수
    */
   private scoreByStateProp(
-    propDefs: Record<string, { type?: string; variantOptions?: string[] }> | undefined
+    propDefs:
+      | Record<string, { type?: string; variantOptions?: string[] }>
+      | undefined
   ): number {
     if (!propDefs) return 0;
 
@@ -92,7 +93,9 @@ export class ButtonHeuristic implements IHeuristic {
 
     // selected + hover + disabled 조합 → Toggle Button
     const hasSelected = normalizedOptions.some((s) => s.includes("selected"));
-    const hasHover = normalizedOptions.some((s) => s === "hover" || s === "hovered");
+    const hasHover = normalizedOptions.some(
+      (s) => s === "hover" || s === "hovered"
+    );
     const hasDisabled = normalizedOptions.some((s) => s.includes("disabled"));
 
     if (hasSelected && hasHover && hasDisabled) {
@@ -166,7 +169,10 @@ export class ButtonHeuristic implements IHeuristic {
   /**
    * 자식 노드에 semanticType 설정 (재귀)
    */
-  private applyChildSemanticTypes(node: InternalNode, ctx: HeuristicContext): void {
+  private applyChildSemanticTypes(
+    node: InternalNode,
+    ctx: HeuristicContext
+  ): void {
     for (const child of node.children || []) {
       this.applySemanticType(child, ctx);
       // 재귀
@@ -295,7 +301,9 @@ export class ButtonHeuristic implements IHeuristic {
     this.collectAllTextNodes(ctx.tree, textNodes);
 
     // 모든 TEXT 노드의 내용이 동일하고 전체 variant를 커버하면 slot 불필요
-    if (this.shouldSkipTextSlots(textNodes, totalVariantCount, ctx.dataManager)) {
+    if (
+      this.shouldSkipTextSlots(textNodes, totalVariantCount, ctx.dataManager)
+    ) {
       return;
     }
 
@@ -309,7 +317,10 @@ export class ButtonHeuristic implements IHeuristic {
   /**
    * 모든 TEXT 노드 수집 (재귀)
    */
-  private collectAllTextNodes(node: InternalNode, result: InternalNode[]): void {
+  private collectAllTextNodes(
+    node: InternalNode,
+    result: InternalNode[]
+  ): void {
     if (node.type === "TEXT") {
       result.push(node);
     }
@@ -363,8 +374,7 @@ export class ButtonHeuristic implements IHeuristic {
 
     // 조건 2: 모든 TEXT 이름이 동일한가?
     const allSameName =
-      allNames.length > 0 &&
-      allNames.every((name) => name === allNames[0]);
+      allNames.length > 0 && allNames.every((name) => name === allNames[0]);
 
     // 조건 3: 모든 TEXT 내용이 동일한가?
     const allSameContent =
@@ -412,7 +422,11 @@ export class ButtonHeuristic implements IHeuristic {
   ): void {
     // TEXT 노드인 경우 slot 판별
     if (node.type === "TEXT") {
-      const slotInfo = extractTextSlotInfo(node, totalVariantCount, ctx.dataManager);
+      const slotInfo = extractTextSlotInfo(
+        node,
+        totalVariantCount,
+        ctx.dataManager
+      );
 
       if (slotInfo) {
         // Slot prop 추가
