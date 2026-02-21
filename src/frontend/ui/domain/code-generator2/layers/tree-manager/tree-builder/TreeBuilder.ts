@@ -12,7 +12,7 @@ import { PropsExtractor } from "./processors/PropsExtractor";
 import { StyleProcessor } from "./processors/StyleProcessor";
 import { VisibilityProcessor } from "./processors/VisibilityProcessor";
 import { ExternalRefsProcessor } from "./processors/ExternalRefsProcessor";
-import { HeuristicsProcessor } from "./processors/HeuristicsProcessor";
+import { HeuristicsRunner } from "./heuristics/HeuristicsRunner";
 
 /**
  * TreeBuilder
@@ -25,7 +25,7 @@ import { HeuristicsProcessor } from "./processors/HeuristicsProcessor";
  * 3. 스타일 처리
  * 4. 가시성 조건
  * 5. 외부 참조
- * 6. 휴리스틱 (HeuristicsProcessor)
+ * 6. 휴리스틱 (HeuristicsRunner)
  */
 class TreeBuilder {
   private readonly dataManager: DataManager;
@@ -34,7 +34,7 @@ class TreeBuilder {
   private readonly styleProcessor: StyleProcessor;
   private readonly visibilityProcessor: VisibilityProcessor;
   private readonly externalRefsProcessor: ExternalRefsProcessor;
-  private readonly heuristicsProcessor: HeuristicsProcessor;
+  private readonly heuristicsRunner: HeuristicsRunner;
 
   constructor(dataManager: DataManager) {
     this.dataManager = dataManager;
@@ -43,7 +43,7 @@ class TreeBuilder {
     this.styleProcessor = new StyleProcessor(dataManager);
     this.visibilityProcessor = new VisibilityProcessor();
     this.externalRefsProcessor = new ExternalRefsProcessor(dataManager);
-    this.heuristicsProcessor = new HeuristicsProcessor(dataManager);
+    this.heuristicsRunner = new HeuristicsRunner();
   }
 
   // ===========================================================================
@@ -71,7 +71,7 @@ class TreeBuilder {
     tree = this.externalRefsProcessor.resolveExternalRefs(tree);
 
     // Step 6: 휴리스틱 (컴포넌트 타입 판별, semanticType 설정)
-    const heuristicsResult = this.heuristicsProcessor.apply(tree);
+    const heuristicsResult = this.heuristicsRunner.run(tree, this.dataManager);
 
     // 최종 변환: InternalTree → UINode
     const root = this.convertToUINode(tree, heuristicsResult.rootNodeType);
