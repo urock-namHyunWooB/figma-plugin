@@ -51,7 +51,7 @@ class TreeManager {
   }
 
   /**
-   * 컴포넌트 간 관계 연결 (INSTANCE override props 등)
+   * 컴포넌트 간 관계 연결 (INSTANCE override props)
    */
   private linkComponents(
     main: UITree,
@@ -63,6 +63,7 @@ class TreeManager {
       ...dependencies,
     ]);
 
+    // INSTANCE override props 연결
     this.propsLinker.process(allTrees, mainId);
   }
 

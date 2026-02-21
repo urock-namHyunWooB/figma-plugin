@@ -50,6 +50,9 @@ class DataManager {
   /** Vector SVG 맵 */
   private readonly vectorSvgs: Map<string, string>;
 
+  /** 의존 컴포넌트별 병합된 Vector SVG (정규화) */
+  private readonly dependencyMergedSvgs: Map<string, string>;
+
   constructor(spec: FigmaNodeData) {
     // 깊은 복사
     this.spec = JSON.parse(JSON.stringify(spec));
@@ -65,6 +68,10 @@ class DataManager {
     this.collectDependenciesRecursive(this.spec);
     this.imageUrls = this.buildRecordToMap(this.spec.imageUrls);
     this.vectorSvgs = this.buildRecordToMap(this.spec.vectorSvgs);
+
+    // 데이터 정규화: INSTANCE Vector SVG를 의존 컴포넌트용으로 병합
+    this.dependencyMergedSvgs = new Map();
+    this.normalizeDependencyVectorSvgs();
   }
 
   /**
@@ -483,6 +490,52 @@ class DataManager {
     }
 
     return groups;
+  }
+
+  /**
+   * 의존 컴포넌트용 병합된 Vector SVG 반환 (정규화된 데이터)
+   * @param componentId - 의존 컴포넌트 ID
+   * @returns 병합된 SVG 문자열, 없으면 undefined
+   */
+  public getMergedVectorSvgForComponent(componentId: string): string | undefined {
+    return this.dependencyMergedSvgs.get(componentId);
+  }
+
+  /**
+   * INSTANCE Vector SVG를 의존 컴포넌트용으로 정규화
+   * 메인 트리의 INSTANCE 노드를 스캔하여 각 의존 컴포넌트에 대한 병합된 SVG 생성
+   */
+  private normalizeDependencyVectorSvgs(): void {
+    // 메인 트리 INSTANCE 노드 스캔
+    this.scanInstanceNodes(this.document);
+  }
+
+  /**
+   * 노드 트리를 순회하며 INSTANCE 노드 찾기
+   */
+  private scanInstanceNodes(node: SceneNode): void {
+    // INSTANCE 노드 감지
+    if (node.type === "INSTANCE") {
+      const instanceNode = node as any;
+      const componentId = instanceNode.componentId;
+
+      if (componentId && this.dependencies.has(componentId)) {
+        // 이미 병합된 SVG가 있으면 스킵 (첫 번째 INSTANCE만 사용)
+        if (!this.dependencyMergedSvgs.has(componentId)) {
+          const mergedSvg = this.mergeInstanceVectorSvgs(node.id);
+          if (mergedSvg) {
+            this.dependencyMergedSvgs.set(componentId, mergedSvg);
+          }
+        }
+      }
+    }
+
+    // 자식 노드 재귀
+    if ("children" in node && node.children) {
+      for (const child of node.children) {
+        this.scanInstanceNodes(child as SceneNode);
+      }
+    }
   }
 }
 

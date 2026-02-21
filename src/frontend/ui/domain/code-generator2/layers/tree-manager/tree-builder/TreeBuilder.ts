@@ -67,7 +67,7 @@ class TreeBuilder {
     // Step 4: 가시성 조건
     tree = this.visibilityProcessor.applyVisibility(tree);
 
-    // Step 5: 외부 참조
+    // Step 5: 외부 참조 (INSTANCE refId + 의존 컴포넌트 Vector SVG)
     tree = this.externalRefsProcessor.resolveExternalRefs(tree);
 
     // Step 6: 휴리스틱 (컴포넌트 타입 판별, semanticType 설정, props 추가)
@@ -110,9 +110,15 @@ class TreeBuilder {
     // VECTOR 노드인 경우 SVG 데이터 가져오기
     let vectorSvg: string | undefined;
     if (nodeType === "vector") {
-      vectorSvg = this.dataManager.getVectorSvgByNodeId(tree.id);
+      // metadata에 SVG가 있으면 우선 사용 (파이프라인에서 전달된 경우)
+      vectorSvg = tree.metadata?.vectorSvg;
+
+      // metadata에 없으면 DataManager에서 조회
       if (!vectorSvg) {
-        vectorSvg = this.dataManager.getVectorSvgByLastSegment(tree.id);
+        vectorSvg = this.dataManager.getVectorSvgByNodeId(tree.id);
+        if (!vectorSvg) {
+          vectorSvg = this.dataManager.getVectorSvgByLastSegment(tree.id);
+        }
       }
     }
 
@@ -155,11 +161,16 @@ class TreeBuilder {
     // VECTOR 노드인 경우 SVG 데이터 가져오기
     let vectorSvg: string | undefined;
     if (nodeType === "vector") {
-      // 먼저 직접 ID로 조회
-      vectorSvg = this.dataManager.getVectorSvgByNodeId(node.id);
-      // 없으면 INSTANCE 경로의 마지막 세그먼트로 매칭 시도
+      // metadata에 SVG가 있으면 우선 사용 (파이프라인에서 전달된 경우)
+      vectorSvg = node.metadata?.vectorSvg;
+
+      // metadata에 없으면 DataManager에서 조회
       if (!vectorSvg) {
-        vectorSvg = this.dataManager.getVectorSvgByLastSegment(node.id);
+        vectorSvg = this.dataManager.getVectorSvgByNodeId(node.id);
+        // 없으면 INSTANCE 경로의 마지막 세그먼트로 매칭 시도
+        if (!vectorSvg) {
+          vectorSvg = this.dataManager.getVectorSvgByLastSegment(node.id);
+        }
       }
     }
 
