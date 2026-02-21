@@ -16,15 +16,22 @@ describe("INSTANCE 루트 컴포넌트 테스트", () => {
 
   test("INSTANCE 루트일 때 중복 선언이 없어야 한다", async () => {
     const compiler = new FigmaCodeGenerator(data);
-    const code = await compiler.getGeneratedCode("HomeIndicator");
-    
-    // HomeIndicatorProps가 한 번만 선언되어야 함
-    const propsMatches = code?.match(/interface HomeIndicatorProps/g);
+    const result = await compiler.getGeneratedCodeWithDependencies("HomeIndicator");
+
+    // 메인 컴포넌트 코드 확인 (v2 형식)
+    expect(result.mainCode).toBeDefined();
+    expect(result.mainName).toBeTruthy();
+
+    // 메인 컴포넌트에 HomeindicatorProps가 있어야 함 (v2는 camelCase)
+    const propsMatches = result.mainCode.match(/interface HomeindicatorProps/g);
     expect(propsMatches).toHaveLength(1);
-    
-    // export default function이 한 번만 있어야 함
-    const exportMatches = code?.match(/export default function/g);
+
+    // 메인 컴포넌트에 export default가 한 번만 있어야 함
+    const exportMatches = result.mainCode.match(/export default/g);
     expect(exportMatches).toHaveLength(1);
+
+    // dependencies는 별도로 확인 (각각 독립적인 export default를 가짐)
+    expect(result.dependencies).toBeDefined();
   });
 
   test("INSTANCE의 override 스타일이 반영되어야 한다", async () => {
@@ -39,9 +46,15 @@ describe("INSTANCE 루트 컴포넌트 테스트", () => {
   test("INSTANCE의 children이 렌더링되어야 한다", async () => {
     const compiler = new FigmaCodeGenerator(data);
     const code = await compiler.getGeneratedCode("HomeIndicator");
-    
-    // 자식 요소 (Home Indicator RECTANGLE)가 있어야 함
-    expect(code).toContain("HomeIndicatorCss_2");
+
+    expect(code).toBeDefined();
+
+    // 자식 요소 (Home Indicator RECTANGLE)가 렌더링되어야 함
+    // v2는 node ID 기반 CSS 네이밍 사용
+    expect(code).toMatch(/homeIndicator_/);
+
+    // span 자식 요소가 있어야 함
+    expect(code).toContain("<span");
   });
 });
 

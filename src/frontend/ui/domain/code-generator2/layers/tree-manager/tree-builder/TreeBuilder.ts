@@ -97,7 +97,12 @@ class TreeBuilder {
     rootNodeType?: "button" | "input" | "link"
   ): UINode {
     // 루트 노드: 휴리스틱이 지정한 타입 사용 (있으면)
-    const nodeType = rootNodeType || this.mapToUINodeType(tree.type);
+    let nodeType = rootNodeType || this.mapToUINodeType(tree.type);
+
+    // 루트 INSTANCE는 container로 처리 (자기 참조 방지, 무한 재귀 방지)
+    if (nodeType === "component" && !rootNodeType) {
+      nodeType = "container";
+    }
 
     // 보이지 않는 레이아웃 노드 필터링
     const visibleChildren = tree.children.filter(
