@@ -1,5 +1,5 @@
 /**
- * InstanceOverrideProcessor
+ * ComponentPropsLinker
  *
  * INSTANCE 노드의 override 값을 의존 컴포넌트의 props로 변환
  *
@@ -21,7 +21,7 @@ interface OverrideInfo {
   nodeName: string; // 노드 이름
 }
 
-export class InstanceOverrideProcessor {
+export class ComponentPropsLinker {
   constructor(private dataManager: DataManager) {}
 
   /**
@@ -66,7 +66,7 @@ export class InstanceOverrideProcessor {
   }
 
   /**
-   * INSTANCE 노드에서 override 수집
+   * INSTANCE 노드에서 override 수집 및 저장
    */
   private collectOverrides(
     node: UINode,
@@ -84,7 +84,26 @@ export class InstanceOverrideProcessor {
         );
 
         if (overrides.size > 0) {
-          overridesByComponent.set(componentId, overrides);
+          // 의존 컴포넌트 props 정의용 (중복 제거 위해 Map 사용)
+          if (!overridesByComponent.has(componentId)) {
+            overridesByComponent.set(componentId, new Map());
+          }
+          const componentOverrides = overridesByComponent.get(componentId)!;
+          for (const [propName, info] of overrides) {
+            componentOverrides.set(propName, info);
+          }
+
+          // 메인 트리의 이 INSTANCE 노드에 실제 override 값 저장
+          const overrideProps: Record<string, string> = {};
+          for (const [propName, info] of overrides) {
+            const value = this.extractOverrideValue(instanceNodeData.node as any, info);
+            if (value !== null) {
+              overrideProps[propName] = value;
+            }
+          }
+          if (Object.keys(overrideProps).length > 0) {
+            node.overrideProps = overrideProps;
+          }
         }
       }
     }
@@ -311,5 +330,46 @@ export class InstanceOverrideProcessor {
           : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       )
       .join("");
+  }
+
+  /**
+   * INSTANCE 노드에서 실제 override 값 추출
+   */
+  private extractOverrideValue(instanceNode: any, info: OverrideInfo): string | null {
+    // INSTANCE children에서 해당 노드 찾기
+    const targetNode = this.findNodeById(instanceNode.children || [], info.nodeId);
+    if (!targetNode) return null;
+
+    // propName에서 타입 추론
+    if (info.propName.endsWith("Bg")) {
+      // fills override
+      if (targetNode.fills && targetNode.fills.length > 0) {
+        return this.extractColorFromFills(targetNode.fills);
+      }
+    } else if (info.propName.endsWith("Text")) {
+      // characters override
+      if (targetNode.characters !== undefined) {
+        return targetNode.characters;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * children에서 ID로 노드 찾기 (재귀)
+   */
+  private findNodeById(children: any[], nodeId: string): any | null {
+    for (const child of children) {
+      const originalId = this.getOriginalId(child.id);
+      if (originalId === nodeId) {
+        return child;
+      }
+      if (child.children) {
+        const found = this.findNodeById(child.children, nodeId);
+        if (found) return found;
+      }
+    }
+    return null;
   }
 }

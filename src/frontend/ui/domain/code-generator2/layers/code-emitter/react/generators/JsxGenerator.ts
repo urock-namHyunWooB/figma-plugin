@@ -214,7 +214,14 @@ export default ${componentName};`;
 
     // 일반 컴포넌트 렌더링
     const componentName = this.toComponentName(node.name);
-    const attrs = this.generateAttributes(node, styleStrategy, options);
+    let attrs = this.generateAttributes(node, styleStrategy, options);
+
+    // INSTANCE override props 추가
+    if (node.type === "component" && "overrideProps" in node && node.overrideProps) {
+      for (const [propName, value] of Object.entries(node.overrideProps)) {
+        attrs += ` ${propName}="${value}"`;
+      }
+    }
 
     return `${indentStr}<${componentName}${attrs} />`;
   }

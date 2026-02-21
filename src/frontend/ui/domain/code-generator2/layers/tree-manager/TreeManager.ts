@@ -1,17 +1,17 @@
 import { UITree } from "../../types/types";
 import DataManager from "../data-manager/DataManager";
 import TreeBuilder from "./tree-builder/TreeBuilder";
-import { InstanceOverrideProcessor } from "./post-processors/InstanceOverrideProcessor";
+import { ComponentPropsLinker } from "./post-processors/ComponentPropsLinker";
 
 class TreeManager {
   private readonly dataManager: DataManager;
   private readonly treeBuilder: TreeBuilder;
-  private readonly overrideProcessor: InstanceOverrideProcessor;
+  private readonly propsLinker: ComponentPropsLinker;
 
   constructor(dataManager: DataManager) {
     this.dataManager = dataManager;
     this.treeBuilder = new TreeBuilder(dataManager);
-    this.overrideProcessor = new InstanceOverrideProcessor(dataManager);
+    this.propsLinker = new ComponentPropsLinker(dataManager);
   }
 
   /**
@@ -21,30 +21,49 @@ class TreeManager {
     main: UITree;
     dependencies: Map<string, UITree>;
   } {
+    // 1. 개별 컴포넌트 트리 빌드
+    const { main, dependencies } = this.buildAllTrees();
+
+    // 2. 컴포넌트 간 관계 연결 (props, bindings)
+    this.linkComponents(main, dependencies);
+
+    return { main, dependencies };
+  }
+
+  /**
+   * 모든 컴포넌트의 UITree 개별 빌드
+   */
+  private buildAllTrees(): {
+    main: UITree;
+    dependencies: Map<string, UITree>;
+  } {
     const mainId = this.dataManager.getMainComponentId();
+    const main = this.buildComponentTree(mainId);
 
-    // Step 1: 모든 컴포넌트 개별 빌드
-    const mainUITree = this.buildComponentTree(mainId);
-
-    const depMap = new Map<string, UITree>();
+    const dependencies = new Map<string, UITree>();
     const allDeps = this.dataManager.getAllDependencies();
 
     for (const [depId] of allDeps) {
-      depMap.set(depId, this.buildComponentTree(depId));
+      dependencies.set(depId, this.buildComponentTree(depId));
     }
 
-    // Step 2: INSTANCE override props 처리
-    // 모든 UITree를 하나의 Map으로 합치기
-    const allTrees = new Map<string, UITree>();
-    allTrees.set(mainId, mainUITree);
-    for (const [depId, depTree] of depMap) {
-      allTrees.set(depId, depTree);
-    }
+    return { main, dependencies };
+  }
 
-    // Override processor 실행
-    this.overrideProcessor.process(allTrees, mainId);
+  /**
+   * 컴포넌트 간 관계 연결 (INSTANCE override props 등)
+   */
+  private linkComponents(
+    main: UITree,
+    dependencies: Map<string, UITree>
+  ): void {
+    const mainId = this.dataManager.getMainComponentId();
+    const allTrees = new Map<string, UITree>([
+      [mainId, main],
+      ...dependencies,
+    ]);
 
-    return { main: mainUITree, dependencies: depMap };
+    this.propsLinker.process(allTrees, mainId);
   }
 
   /**

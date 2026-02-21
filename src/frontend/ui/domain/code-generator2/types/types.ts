@@ -311,6 +311,8 @@ export interface ComponentNode extends UINodeBase {
   /** 외부 컴포넌트 참조 ID */
   refId: string;
   children: UINode[];
+  /** INSTANCE override props (메인 컴포넌트에서 의존 컴포넌트로 전달할 값) */
+  overrideProps?: Record<string, string>;
 }
 
 export type UINode =
