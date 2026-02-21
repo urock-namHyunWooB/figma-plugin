@@ -58,7 +58,7 @@ describe("Layout Regression Tests", () => {
         const compiler = new FigmaCodeGenerator(nodeData, { debug: true });
         compiledCode = await compiler.compile();
         expect(compiledCode).not.toBeNull();
-        expect(compiledCode).toContain("React.FC"); // v2는 arrow function 사용
+        expect(compiledCode).toContain("function"); // v2는 arrow function 사용
       });
 
       it("should generate valid JSX structure", () => {

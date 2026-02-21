@@ -20,7 +20,7 @@ describe("새 파이프라인 테스트", () => {
 
       expect(code).toBeTruthy();
       expect(code).toContain("import");
-      expect(code).toContain("React.FC"); // v2는 arrow function 사용
+      expect(code).toContain("function"); // v2는 function 선언 사용
       // Emotion CSS-in-JS 스타일 포함 확인
       expect(code).toContain("css");
     });

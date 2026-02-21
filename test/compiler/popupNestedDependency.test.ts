@@ -98,7 +98,7 @@ describe("Popup 중첩 의존성 렌더링", () => {
     ];
 
     for (const comp of expectedComponents) {
-      // v2는 arrow function 사용 (const Comp: React.FC)
+      // v2는 arrow function 사용 (const Comp: function declaration)
       expect(result).toContain(`${comp}:`);
     }
   });

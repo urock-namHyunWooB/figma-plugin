@@ -80,7 +80,7 @@ describe("의존 컴포넌트 children 처리", () => {
     ];
 
     for (const comp of expectedComponents) {
-      // v2는 arrow function 사용 (const Comp: React.FC)
+      // v2는 arrow function 사용 (const Comp: function declaration)
       expect(result).toContain(`${comp}:`);
     }
   });
