@@ -109,6 +109,15 @@ class TreeBuilder {
       (child) => !this.isInvisibleLayoutNode(child)
     );
 
+    // VECTOR 노드인 경우 SVG 데이터 가져오기
+    let vectorSvg: string | undefined;
+    if (nodeType === "vector") {
+      vectorSvg = this.dataManager.getVectorSvgByNodeId(tree.id);
+      if (!vectorSvg) {
+        vectorSvg = this.dataManager.getVectorSvgByLastSegment(tree.id);
+      }
+    }
+
     return {
       id: tree.id,
       name: tree.name,
@@ -123,6 +132,7 @@ class TreeBuilder {
       ...(tree.bindings ? { bindings: tree.bindings } : {}),
       ...(tree.semanticType ? { semanticType: tree.semanticType } : {}),
       ...(nodeType === "component" && tree.refId ? { refId: tree.refId } : {}),
+      ...(nodeType === "vector" && vectorSvg ? { vectorSvg } : {}),
     } as UINode;
   }
 
@@ -133,6 +143,17 @@ class TreeBuilder {
     const visibleChildren = node.children.filter(
       (child) => !this.isInvisibleLayoutNode(child)
     );
+
+    // VECTOR 노드인 경우 SVG 데이터 가져오기
+    let vectorSvg: string | undefined;
+    if (nodeType === "vector") {
+      // 먼저 직접 ID로 조회
+      vectorSvg = this.dataManager.getVectorSvgByNodeId(node.id);
+      // 없으면 INSTANCE 경로의 마지막 세그먼트로 매칭 시도
+      if (!vectorSvg) {
+        vectorSvg = this.dataManager.getVectorSvgByLastSegment(node.id);
+      }
+    }
 
     return {
       id: node.id,
@@ -148,6 +169,7 @@ class TreeBuilder {
       ...(node.bindings ? { bindings: node.bindings } : {}),
       ...(node.semanticType ? { semanticType: node.semanticType } : {}),
       ...(nodeType === "component" && node.refId ? { refId: node.refId } : {}),
+      ...(nodeType === "vector" && vectorSvg ? { vectorSvg } : {}),
     } as UINode;
   }
 

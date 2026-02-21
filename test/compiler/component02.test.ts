@@ -18,9 +18,10 @@ describe("component-02 렌더링 테스트", () => {
     const compiler = new FigmaCodeGenerator(data);
     const code = await compiler.getGeneratedCode("StatusBar");
 
-    // StatusBartime, StatusBarbattery 등 하위 컴포넌트가 포함되어야 함
-    expect(code).toContain("StatusBartime");
-    expect(code).toContain("StatusBarbattery");
+    // v2는 camelCase로 정규화: Statusbartime, Statusbarbattery
+    // 컴포넌트 import 또는 JSX 사용이 있어야 함
+    expect(code).toMatch(/Statusbartime|statusbarTime/);
+    expect(code).toMatch(/Statusbarbattery|statusbarBattery/);
   });
 
   test("SVG 요소가 포함되어야 한다", async () => {
