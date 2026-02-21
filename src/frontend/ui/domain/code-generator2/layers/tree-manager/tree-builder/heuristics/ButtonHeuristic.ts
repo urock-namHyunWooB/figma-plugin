@@ -237,7 +237,7 @@ export class ButtonHeuristic implements IHeuristic {
   /**
    * spacer 판별
    */
-  private isSpacer(node: InternalNode, ctx: HeuristicContext): boolean {
+  private isSpacer(node: InternalNode, _ctx: HeuristicContext): boolean {
     // VECTOR, RECTANGLE, LINE만 spacer가 될 수 있음
     if (!["VECTOR", "RECTANGLE", "LINE"].includes(node.type)) {
       return false;
@@ -290,8 +290,116 @@ export class ButtonHeuristic implements IHeuristic {
   private detectAndAddTextSlots(ctx: HeuristicContext): void {
     const totalVariantCount = ctx.dataManager.totalVariantCount;
 
+    // 모든 TEXT 노드 수집
+    const textNodes: InternalNode[] = [];
+    this.collectAllTextNodes(ctx.tree, textNodes);
+
+    // 모든 TEXT 노드의 내용이 동일하고 전체 variant를 커버하면 slot 불필요
+    if (this.shouldSkipTextSlots(textNodes, totalVariantCount, ctx.dataManager)) {
+      return;
+    }
+
     // 트리 순회하며 TEXT 노드 찾기
     this.traverseAndDetectTextSlots(ctx.tree, ctx, totalVariantCount);
+
+    // 중복 props 제거 (같은 이름의 slot props)
+    this.deduplicateTextSlotProps(ctx);
+  }
+
+  /**
+   * 모든 TEXT 노드 수집 (재귀)
+   */
+  private collectAllTextNodes(node: InternalNode, result: InternalNode[]): void {
+    if (node.type === "TEXT") {
+      result.push(node);
+    }
+
+    for (const child of node.children || []) {
+      this.collectAllTextNodes(child, result);
+    }
+  }
+
+  /**
+   * TEXT slot을 추가하지 않아야 하는지 판단
+   *
+   * 조건:
+   * - 모든 TEXT 노드의 이름(name)이 동일하고
+   * - 모든 TEXT 노드의 내용(characters)이 동일하고
+   * - 모든 TEXT 노드가 합쳐서 전체 variant를 커버하면
+   * → TEXT는 모든 variant에서 동일한 역할과 내용을 가지므로 slot 불필요
+   *
+   * 예:
+   * - Button의 "Text" 노드가 layout 차이로 다른 위치에 있는 경우 → skip
+   * - Card의 "Title"과 "Description"이 우연히 같은 내용인 경우 → skip 안함 (이름 다름)
+   */
+  private shouldSkipTextSlots(
+    textNodes: InternalNode[],
+    totalVariantCount: number,
+    dataManager: DataManager
+  ): boolean {
+    if (textNodes.length === 0) return true;
+
+    // 모든 TEXT 노드의 mergedNodes 개수 합산
+    let totalMergedCount = 0;
+    const allCharacters: string[] = [];
+    const allNames: string[] = [];
+
+    for (const node of textNodes) {
+      const mergedCount = node.mergedNodes?.length || 0;
+      totalMergedCount += mergedCount;
+
+      // 각 TEXT 노드의 이름과 내용 수집
+      allNames.push(node.name);
+
+      if (node.mergedNodes && node.mergedNodes.length > 0) {
+        const { node: spec } = dataManager.getById(node.mergedNodes[0].id);
+        const characters = (spec as any)?.characters || "";
+        allCharacters.push(characters);
+      }
+    }
+
+    // 조건 1: 전체 variant를 커버하는가?
+    const coversAllVariants = totalMergedCount >= totalVariantCount;
+
+    // 조건 2: 모든 TEXT 이름이 동일한가?
+    const allSameName =
+      allNames.length > 0 &&
+      allNames.every((name) => name === allNames[0]);
+
+    // 조건 3: 모든 TEXT 내용이 동일한가?
+    const allSameContent =
+      allCharacters.length > 0 &&
+      allCharacters.every((c) => c === allCharacters[0]);
+
+    return coversAllVariants && allSameName && allSameContent;
+  }
+
+  /**
+   * 중복된 TEXT slot props 제거
+   *
+   * 같은 이름의 TEXT slot이 여러 개 있을 경우 (예: 아이콘 유무에 따라 다른 위치의 Text 노드),
+   * 첫 번째 것만 유지하고 나머지는 제거
+   */
+  private deduplicateTextSlotProps(ctx: HeuristicContext): void {
+    const seenTextSlots = new Set<string>();
+    const filteredProps: typeof ctx.props = [];
+
+    for (const prop of ctx.props) {
+      // TEXT slot (sourceKey가 빈 문자열인 slot)만 중복 체크
+      if (prop.type === "slot" && prop.sourceKey === "") {
+        if (seenTextSlots.has(prop.name)) {
+          // 중복된 TEXT slot은 스킵
+          continue;
+        }
+        seenTextSlots.add(prop.name);
+      }
+
+      filteredProps.push(prop);
+    }
+
+    // ctx.props 배열 교체
+    ctx.props.length = 0;
+    ctx.props.push(...filteredProps);
   }
 
   /**

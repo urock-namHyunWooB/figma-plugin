@@ -3,7 +3,7 @@ import DataManager from "@frontend/ui/domain/code-generator2/layers/data-manager
 import TreeBuilder from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/TreeBuilder";
 import taptapButton from "../fixtures/button/taptapButton.json";
 import airtableButton from "../fixtures/any-component-set/airtable-button.json";
-import { writeFileSync } from "fs";
+import { writeFileSync } from "fs"; // Used by airtableButton test
 
 describe("TreeBuilder Full Build", () => {
   it("should build complete UITree with props (taptapButton)", () => {
@@ -18,6 +18,7 @@ describe("TreeBuilder Full Build", () => {
     expect(Array.isArray(uiTree.props)).toBe(true);
 
     // Props 확인 (State 제외, Size + Left Icon + Right Icon = 3개)
+    // TEXT slot은 추가되지 않음 (모든 variant에서 동일한 "Text" 내용이므로)
     expect(uiTree.props.length).toBe(3);
 
     const propNames = uiTree.props.map((p) => p.name);
@@ -25,6 +26,7 @@ describe("TreeBuilder Full Build", () => {
     expect(propNames).toContain("leftIcon");
     expect(propNames).toContain("rightIcon");
     expect(propNames).not.toContain("state");
+    expect(propNames).not.toContain("text"); // TEXT slot 불포함 확인
 
     // Size prop 상세 확인
     const sizeProp = uiTree.props.find((p) => p.name === "size");
