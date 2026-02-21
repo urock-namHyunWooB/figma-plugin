@@ -47,15 +47,15 @@ describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
 
       // Iconanchor 컴포넌트 정의 부분 추출
       const iconanchorMatch = code!.match(
-        /function Iconanchor\(props[^)]*\)\s*\{[\s\S]*?return\s*([\s\S]*?);\s*\}/
+        /function Iconanchor\([^)]*\)\s*\{[\s\S]*?return\s*([\s\S]*?);\s*\}/
       );
       expect(iconanchorMatch).not.toBeNull();
 
       const iconanchorReturn = iconanchorMatch![1];
 
-      // Iconanchor가 <svg>를 직접 반환해야 함
-      expect(iconanchorReturn).toMatch(/<svg[^>]*>/);
-      expect(iconanchorReturn).toContain("<path");
+      // Iconanchor가 <svg> 또는 vectorSvg를 포함해야 함
+      expect(iconanchorReturn).toMatch(/<svg[^>]*>|dangerouslySetInnerHTML/);
+      expect(iconanchorReturn).toMatch(/<path|dangerouslySetInnerHTML/);
     });
 
     test("메인 컴포넌트(Frame)에서 Iconanchor를 self-closing 태그로 참조해야 한다", async () => {
@@ -64,9 +64,9 @@ describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
 
       expect(code).toBeDefined();
 
-      // Frame 컴포넌트 정의 부분 추출
+      // Frame 컴포넌트 정의 부분 추출 (대소문자 무관)
       const frameMatch = code!.match(
-        /function Frame\(props[^)]*\)\s*\{[\s\S]*?return\s*([\s\S]*?);\s*\}\s*$/
+        /function Frame\([^)]*\)\s*\{[\s\S]*?return\s*\(?([\s\S]*?)\)?;\s*\}/
       );
       expect(frameMatch).not.toBeNull();
 

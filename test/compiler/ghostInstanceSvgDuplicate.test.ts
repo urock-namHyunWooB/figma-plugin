@@ -21,9 +21,9 @@ describe("Ghost INSTANCE SVG 중복 렌더링 회귀 테스트", () => {
 
     expect(code).toBeDefined();
 
-    // Ghost 컴포넌트의 return 부분 추출 (v2는 React.FC 패턴)
+    // Ghost 컴포넌트의 return 부분 추출
     const ghostMatch = code!.match(
-      /const Ghost: React\.FC[^=]*=\s*\([^)]*\)\s*=>\s*\{[\s\S]*?return\s*\(?([\s\S]*?)\)?;\s*\}/
+      /function Ghost\([^)]*\)\s*\{[\s\S]*?return\s*\(([\s\S]*?)\);\s*\}/
     );
     expect(ghostMatch).not.toBeNull();
 

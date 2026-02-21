@@ -32,11 +32,11 @@ export class JsxGenerator {
     // JSX body (루트 노드는 isRoot=true로 restProps 전파)
     const jsxBody = this.generateNode(uiTree.root, styleStrategy, options, 2, true);
 
-    return `const ${componentName}: React.FC<${componentName}Props> = (${propsDestructuring}) => {
+    return `function ${componentName}(${propsDestructuring}) {
   return (
 ${jsxBody}
   );
-};
+}
 
 export default ${componentName};`;
   }
