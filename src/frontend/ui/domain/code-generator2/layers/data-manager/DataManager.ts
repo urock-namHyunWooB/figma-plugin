@@ -315,8 +315,26 @@ class DataManager {
       // 중복 체크 (componentId 기준)
       if (!this.dependencies.has(componentId)) {
         this.dependencies.set(componentId, depSpec);
+
+        // dependency의 styleTree도 styleMap에 추가
+        if (depSpec.styleTree) {
+          this.addToStyleMap(depSpec.styleTree);
+        }
+
         // 깊이 있는 의존성도 수집
         this.collectDependenciesRecursive(depSpec);
+      }
+    }
+  }
+
+  /**
+   * styleTree를 styleMap에 재귀적으로 추가
+   */
+  private addToStyleMap(tree: StyleTree): void {
+    this.styleMap.set(tree.id, tree);
+    if (tree.children) {
+      for (const child of tree.children) {
+        this.addToStyleMap(child);
       }
     }
   }
