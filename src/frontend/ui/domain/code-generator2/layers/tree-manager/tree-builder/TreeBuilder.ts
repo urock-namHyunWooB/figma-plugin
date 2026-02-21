@@ -70,8 +70,8 @@ class TreeBuilder {
     // Step 5: 외부 참조
     tree = this.externalRefsProcessor.resolveExternalRefs(tree);
 
-    // Step 6: 휴리스틱 (컴포넌트 타입 판별, semanticType 설정)
-    const heuristicsResult = this.heuristicsRunner.run(tree, this.dataManager);
+    // Step 6: 휴리스틱 (컴포넌트 타입 판별, semanticType 설정, props 추가)
+    const heuristicsResult = this.heuristicsRunner.run(tree, this.dataManager, props);
 
     // 최종 변환: InternalTree → UINode
     const root = this.convertToUINode(tree, heuristicsResult.rootNodeType);

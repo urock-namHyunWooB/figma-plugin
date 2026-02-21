@@ -20,6 +20,9 @@ import type {
   HeuristicContext,
   HeuristicResult,
 } from "./IHeuristic";
+import {
+  extractTextSlotInfo,
+} from "../processors/utils/textSlotUtils";
 
 export class ButtonHeuristic implements IHeuristic {
   readonly name = "ButtonHeuristic";
@@ -148,8 +151,11 @@ export class ButtonHeuristic implements IHeuristic {
     // 루트에 semanticType 설정
     ctx.tree.semanticType = "button";
 
-    // 자식 노드 semanticType 설정
+    // 자식 노드 semanticType 설정 + TEXT slot 감지
     this.applyChildSemanticTypes(ctx.tree, ctx);
+
+    // TEXT slot 감지 및 props 추가
+    this.detectAndAddTextSlots(ctx);
 
     return {
       componentType: this.componentType,
@@ -272,5 +278,55 @@ export class ButtonHeuristic implements IHeuristic {
       }
       return false;
     });
+  }
+
+  // ===========================================================================
+  // TEXT Slot 감지
+  // ===========================================================================
+
+  /**
+   * TEXT 노드를 순회하며 slot으로 변환해야 하는 것 감지 및 props 추가
+   */
+  private detectAndAddTextSlots(ctx: HeuristicContext): void {
+    const totalVariantCount = ctx.dataManager.totalVariantCount;
+
+    // 트리 순회하며 TEXT 노드 찾기
+    this.traverseAndDetectTextSlots(ctx.tree, ctx, totalVariantCount);
+  }
+
+  /**
+   * 재귀적으로 TEXT 노드 탐색 및 slot 변환
+   */
+  private traverseAndDetectTextSlots(
+    node: InternalNode,
+    ctx: HeuristicContext,
+    totalVariantCount: number
+  ): void {
+    // TEXT 노드인 경우 slot 판별
+    if (node.type === "TEXT") {
+      const slotInfo = extractTextSlotInfo(node, totalVariantCount, ctx.dataManager);
+
+      if (slotInfo) {
+        // Slot prop 추가
+        ctx.props.push({
+          type: "slot",
+          name: slotInfo.propName,
+          defaultValue: slotInfo.defaultValue,
+          required: false,
+          sourceKey: "", // TEXT slot은 Figma prop이 아님
+        });
+
+        // 노드에 binding 추가
+        if (!node.bindings) {
+          node.bindings = {};
+        }
+        node.bindings.content = { prop: slotInfo.propName };
+      }
+    }
+
+    // 자식 노드 재귀 탐색
+    for (const child of node.children || []) {
+      this.traverseAndDetectTextSlots(child, ctx, totalVariantCount);
+    }
   }
 }

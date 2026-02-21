@@ -14,7 +14,11 @@
  * - 20+: 복합 매칭 (이름 + 구조)
  */
 
-import type { ComponentType, InternalTree } from "../../../../types/types";
+import type {
+  ComponentType,
+  InternalTree,
+  PropDefinition,
+} from "../../../../types/types";
 import type DataManager from "../../../data-manager/DataManager";
 
 /**
@@ -30,6 +34,8 @@ export interface HeuristicContext {
   componentName: string;
   /** componentPropertyDefinitions */
   propDefs: Record<string, ComponentPropertyDef> | undefined;
+  /** Props 배열 (휴리스틱이 직접 수정 가능) */
+  props: PropDefinition[];
 }
 
 /**

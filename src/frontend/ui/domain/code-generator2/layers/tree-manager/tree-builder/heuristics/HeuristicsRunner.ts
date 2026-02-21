@@ -9,7 +9,7 @@
  * 3. 임계점 미달 시 GenericHeuristic (fallback) 사용
  */
 
-import type { InternalTree } from "../../../../types/types";
+import type { InternalTree, PropDefinition } from "../../../../types/types";
 import type DataManager from "../../../data-manager/DataManager";
 import type {
   IHeuristic,
@@ -46,10 +46,15 @@ export class HeuristicsRunner {
    *
    * @param tree 내부 트리 (variant 병합 완료)
    * @param dataManager 데이터 매니저
+   * @param props Props 배열 (휴리스틱이 수정 가능)
    * @returns 휴리스틱 적용 결과
    */
-  run(tree: InternalTree, dataManager: DataManager): HeuristicResult {
-    const ctx = this.createContext(tree, dataManager);
+  run(
+    tree: InternalTree,
+    dataManager: DataManager,
+    props: PropDefinition[]
+  ): HeuristicResult {
+    const ctx = this.createContext(tree, dataManager, props);
 
     // 1. 최적 휴리스틱 선택
     const heuristic = this.selectHeuristic(ctx);
@@ -63,12 +68,16 @@ export class HeuristicsRunner {
   /**
    * 디버그용: 모든 휴리스틱 점수 반환
    */
-  debugScores(tree: InternalTree, dataManager: DataManager): Array<{
+  debugScores(
+    tree: InternalTree,
+    dataManager: DataManager,
+    props: PropDefinition[]
+  ): Array<{
     name: string;
     score: number;
     selected: boolean;
   }> {
-    const ctx = this.createContext(tree, dataManager);
+    const ctx = this.createContext(tree, dataManager, props);
     const selectedHeuristic = this.selectHeuristic(ctx);
 
     const scores = this.heuristics.map((h) => ({
@@ -96,7 +105,8 @@ export class HeuristicsRunner {
    */
   private createContext(
     tree: InternalTree,
-    dataManager: DataManager
+    dataManager: DataManager,
+    props: PropDefinition[]
   ): HeuristicContext {
     // 루트 document 조회
     const mainId = dataManager.getMainComponentId();
@@ -112,6 +122,7 @@ export class HeuristicsRunner {
       dataManager,
       componentName,
       propDefs,
+      props,
     };
   }
 
