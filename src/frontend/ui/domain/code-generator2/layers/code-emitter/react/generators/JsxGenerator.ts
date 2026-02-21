@@ -178,9 +178,18 @@ export default ${componentName};`;
 
     // bindings에서 텍스트 바인딩 확인
     const textBinding = node.bindings?.content;
-    const textContent = textBinding && "prop" in textBinding
-      ? `{${textBinding.prop}}`
-      : `{/* ${node.name} */}`;
+
+    let textContent: string;
+    if (textBinding && "prop" in textBinding) {
+      // prop 바인딩이 있으면 prop 사용
+      textContent = `{${textBinding.prop}}`;
+    } else if (node.type === "text" && node.textSegments && node.textSegments.length > 0) {
+      // textSegments가 있으면 실제 텍스트 렌더링
+      textContent = node.textSegments.map(seg => seg.text).join("");
+    } else {
+      // 둘 다 없으면 주석
+      textContent = `{/* ${node.name} */}`;
+    }
 
     return `${indentStr}<span${attrs}>${textContent}</span>`;
   }

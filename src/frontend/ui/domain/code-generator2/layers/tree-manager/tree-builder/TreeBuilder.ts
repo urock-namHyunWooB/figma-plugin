@@ -116,6 +116,15 @@ class TreeBuilder {
       }
     }
 
+    // TEXT 노드인 경우 텍스트 내용 추출
+    let textSegments: Array<{ text: string }> | undefined;
+    if (nodeType === "text") {
+      const node = this.dataManager.getById(tree.id).node;
+      if (node && "characters" in node && typeof node.characters === "string") {
+        textSegments = [{ text: node.characters }];
+      }
+    }
+
     return {
       id: tree.id,
       name: tree.name,
@@ -131,6 +140,7 @@ class TreeBuilder {
       ...(tree.semanticType ? { semanticType: tree.semanticType } : {}),
       ...(nodeType === "component" && tree.refId ? { refId: tree.refId } : {}),
       ...(nodeType === "vector" && vectorSvg ? { vectorSvg } : {}),
+      ...(nodeType === "text" && textSegments ? { textSegments } : {}),
     } as UINode;
   }
 
@@ -153,6 +163,15 @@ class TreeBuilder {
       }
     }
 
+    // TEXT 노드인 경우 텍스트 내용 추출
+    let textSegments: Array<{ text: string }> | undefined;
+    if (nodeType === "text") {
+      const sceneNode = this.dataManager.getById(node.id).node;
+      if (sceneNode && "characters" in sceneNode && typeof sceneNode.characters === "string") {
+        textSegments = [{ text: sceneNode.characters }];
+      }
+    }
+
     return {
       id: node.id,
       name: node.name,
@@ -168,6 +187,7 @@ class TreeBuilder {
       ...(node.semanticType ? { semanticType: node.semanticType } : {}),
       ...(nodeType === "component" && node.refId ? { refId: node.refId } : {}),
       ...(nodeType === "vector" && vectorSvg ? { vectorSvg } : {}),
+      ...(nodeType === "text" && textSegments ? { textSegments } : {}),
     } as UINode;
   }
 
