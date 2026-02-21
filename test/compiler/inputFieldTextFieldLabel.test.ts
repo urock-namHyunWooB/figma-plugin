@@ -37,7 +37,7 @@ describe("InputFieldtextField Label/HelperText 감지", () => {
   it("컴파일이 성공해야 한다", async () => {
     const code = await getCompiledCode();
     expect(code).toBeTruthy();
-    expect(code).toContain("function InputFieldtextField");
+    expect(code).toContain("InputFieldtextField:"); // v2는 arrow function
   });
 
   describe("Props Interface", () => {

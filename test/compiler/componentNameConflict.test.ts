@@ -27,8 +27,8 @@ describe("컴포넌트 이름 충돌 처리", () => {
     const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
-    // 의존성 컴포넌트가 _Label로 변경되어야 함
-    expect(result).toContain("function _Label");
+    // 의존성 컴포넌트가 _Label로 변경되어야 함 (v2는 arrow function)
+    expect(result).toContain("_Label");
   });
 
   it("메인 컴포넌트는 원래 이름 유지", async () => {

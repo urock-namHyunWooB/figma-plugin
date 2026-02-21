@@ -28,15 +28,15 @@ describe("의존 컴포넌트 children 처리", () => {
     const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
-    // Colorgnbhomen 컴포넌트에 실제 children이 렌더링되어야 함
-    expect(result).toContain("function Colorgnbhomen");
+    // Colorgnbhomen 컴포넌트에 실제 children이 렌더링되어야 함 (v2는 arrow function)
+    expect(result).toContain("Colorgnbhomen:");
 
     // RatioVertical, ColorBlank 등 자식 요소가 있어야 함
     expect(result).toMatch(/RatioVerticalCss|ColorBlankCss/);
 
     // children prop만 렌더링되면 안됨 (실제 콘텐츠가 있어야 함)
     const colorgnbhomenMatch = result?.match(
-      /function Colorgnbhomen[\s\S]*?return[\s\S]*?<\/div>[\s\S]*?;[\s\S]*?\}/
+      /const Colorgnbhomen[\s\S]*?return[\s\S]*?<\/div>[\s\S]*?;[\s\S]*?\}/
     );
     if (colorgnbhomenMatch) {
       // SVG 또는 다른 실제 요소가 포함되어야 함
@@ -80,7 +80,8 @@ describe("의존 컴포넌트 children 처리", () => {
     ];
 
     for (const comp of expectedComponents) {
-      expect(result).toContain(`function ${comp}`);
+      // v2는 arrow function 사용 (const Comp: React.FC)
+      expect(result).toContain(`${comp}:`);
     }
   });
 });

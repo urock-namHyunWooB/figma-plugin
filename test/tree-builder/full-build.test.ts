@@ -33,11 +33,11 @@ describe("TreeBuilder Full Build", () => {
       expect(sizeProp.options).toEqual(["Large", "Medium", "Small"]);
     }
 
-    // Boolean props 확인
+    // Slot props 확인 (icon 패턴은 React.ReactNode slot으로 변환)
     const leftIconProp = uiTree.props.find((p) => p.name === "leftIcon");
     const rightIconProp = uiTree.props.find((p) => p.name === "rightIcon");
-    expect(leftIconProp?.type).toBe("boolean");
-    expect(rightIconProp?.type).toBe("boolean");
+    expect(leftIconProp?.type).toBe("slot");
+    expect(rightIconProp?.type).toBe("slot");
   });
 
   it("should build complete UITree with props (airtableButton)", () => {

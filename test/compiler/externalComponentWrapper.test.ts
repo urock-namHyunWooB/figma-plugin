@@ -139,7 +139,7 @@ describe("External Component Size Integration", () => {
     const code = await compiler.compile();
     
     expect(code).toBeDefined();
-    expect(code).toContain("export default function");
+    expect(code).toContain("export default"); // v2는 export default ComponentName 형식
     expect(code).toContain("return");
   });
 

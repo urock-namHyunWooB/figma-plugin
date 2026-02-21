@@ -187,13 +187,14 @@ export class PropsExtractor {
    * Prop 이름 정규화
    * "Left Icon#89:6" → "leftIcon"
    * "icon left#373:58" → "iconLeft"
+   * "type" → "customType" (native prop 충돌 방지)
    */
   private normalizePropName(sourceKey: string): string {
     // 1. # 이후 노드 ID 제거
     const cleanKey = sourceKey.split("#")[0].trim();
 
     // 2. 첫 단어는 소문자, 나머지는 각 단어 첫 글자 대문자 (camelCase)
-    return cleanKey
+    let propName = cleanKey
       .split(/\s+/)
       .map((word, index) => {
         if (index === 0) {
@@ -202,5 +203,33 @@ export class PropsExtractor {
         return word.charAt(0).toUpperCase() + word.slice(1);
       })
       .join("");
+
+    // 3. Native HTML prop과 충돌하는 이름은 custom 접두사 추가
+    if (this.isNativePropConflict(propName)) {
+      propName = "custom" + propName.charAt(0).toUpperCase() + propName.slice(1);
+    }
+
+    return propName;
+  }
+
+  /**
+   * Native HTML prop과 충돌하는 이름인지 확인
+   */
+  private isNativePropConflict(propName: string): boolean {
+    // button/input 등의 native HTML attributes
+    const nativeProps = new Set([
+      "type",       // button type
+      "name",       // form element name
+      "value",      // input value
+      "checked",    // checkbox checked
+      "disabled",   // disabled state (보통 State prop으로 처리되어 제외됨)
+      "required",   // required attribute
+      "placeholder",// input placeholder
+      "href",       // anchor href
+      "src",        // image src
+      "alt",        // image alt
+    ]);
+
+    return nativeProps.has(propName);
   }
 }

@@ -25,8 +25,8 @@ describe("Popup 중첩 의존성 렌더링", () => {
     const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
-    // Popupbottom 컴포넌트가 생성되어야 함
-    expect(result).toContain("function Popupbottom");
+    // Popupbottom 컴포넌트가 생성되어야 함 (v2는 arrow function)
+    expect(result).toContain("Popupbottom:");
   });
 
   it("Popup: Popupbottom에 Large 버튼이 렌더링됨 (children만 있으면 안됨)", async () => {
@@ -36,7 +36,7 @@ describe("Popup 중첩 의존성 렌더링", () => {
 
     // Popupbottom 함수 추출
     const popupbottomMatch = result?.match(
-      /function Popupbottom[\s\S]*?return[\s\S]*?(?=\nfunction\s|\nexport\s|$)/
+      /const Popupbottom[\s\S]*?return[\s\S]*?(?=\nconst\s[A-Z]|\nexport\s|$)/
     );
 
     expect(popupbottomMatch).not.toBeNull();
@@ -60,8 +60,8 @@ describe("Popup 중첩 의존성 렌더링", () => {
     const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
-    // Large 컴포넌트가 생성되어야 함
-    expect(result).toContain("function Large");
+    // Large 컴포넌트가 생성되어야 함 (v2는 arrow function)
+    expect(result).toContain("Large:");
   });
 
   it("Popup: 버튼 텍스트가 렌더링됨", async () => {
@@ -81,7 +81,7 @@ describe("Popup 중첩 의존성 렌더링", () => {
     // Left Button + Right Button이 ArraySlot으로 잘못 감지되지 않아야 함
     // (Left Button은 visible: false이므로 ArraySlot 조건에서 제외되어야 함)
     // Item이라는 이름의 컴포넌트가 생성되면 안됨 (ArraySlot 잘못 감지 시 생성됨)
-    expect(result).not.toMatch(/function Item\(/);
+    expect(result).not.toMatch(/const Item:/);
     expect(result).not.toMatch(/\.map\(\s*\(\s*item\s*\)/);
   });
 
@@ -98,7 +98,8 @@ describe("Popup 중첩 의존성 렌더링", () => {
     ];
 
     for (const comp of expectedComponents) {
-      expect(result).toContain(`function ${comp}`);
+      // v2는 arrow function 사용 (const Comp: React.FC)
+      expect(result).toContain(`${comp}:`);
     }
   });
 
@@ -109,7 +110,7 @@ describe("Popup 중첩 의존성 렌더링", () => {
 
     // Popupbottom 함수 추출
     const popupbottomMatch = result?.match(
-      /function Popupbottom[\s\S]*?return[\s\S]*?(?=\nfunction\s|\nexport\s|$)/
+      /const Popupbottom[\s\S]*?return[\s\S]*?(?=\nconst\s[A-Z]|\nexport\s|$)/
     );
 
     expect(popupbottomMatch).not.toBeNull();

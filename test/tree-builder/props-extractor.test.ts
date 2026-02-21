@@ -23,21 +23,15 @@ describe("PropsExtractor", () => {
       expect(sizeProp.defaultValue).toBe("Large");
     }
 
-    // Left Icon prop 확인 (Boolean variant)
+    // Left Icon prop 확인 (Boolean variant with icon pattern → slot)
     const leftIconProp = props.find((p) => p.name === "leftIcon");
     expect(leftIconProp).toBeDefined();
-    expect(leftIconProp?.type).toBe("boolean");
-    if (leftIconProp?.type === "boolean") {
-      expect(leftIconProp.defaultValue).toBe(false);
-    }
+    expect(leftIconProp?.type).toBe("slot"); // icon 패턴은 React.ReactNode slot으로 변환
 
-    // Right Icon prop 확인 (Boolean variant)
+    // Right Icon prop 확인 (Boolean variant with icon pattern → slot)
     const rightIconProp = props.find((p) => p.name === "rightIcon");
     expect(rightIconProp).toBeDefined();
-    expect(rightIconProp?.type).toBe("boolean");
-    if (rightIconProp?.type === "boolean") {
-      expect(rightIconProp.defaultValue).toBe(false);
-    }
+    expect(rightIconProp?.type).toBe("slot"); // icon 패턴은 React.ReactNode slot으로 변환
   });
 
   it("should normalize prop names to camelCase", () => {

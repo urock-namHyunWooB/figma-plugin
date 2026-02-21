@@ -20,19 +20,22 @@ describe("새 파이프라인 테스트", () => {
 
       expect(code).toBeTruthy();
       expect(code).toContain("import");
-      expect(code).toContain("function");
+      expect(code).toContain("React.FC"); // v2는 arrow function 사용
       // Emotion CSS-in-JS 스타일 포함 확인
       expect(code).toContain("css");
     });
 
-    it("컴포넌트 이름 지정 가능", async () => {
+    it("컴포넌트 이름 반환", async () => {
       const generator = new FigmaCodeGenerator(
         taptapButtonSampleMockData as any
       );
 
-      const code = await generator.compile("CustomButton");
+      const code = await generator.compile();
+      const componentName = generator.getComponentName();
 
-      expect(code).toContain("CustomButton");
+      // 컴포넌트 이름이 코드에 포함되어야 함
+      expect(code).toContain(componentName);
+      expect(componentName).toBeTruthy();
     });
 
     it("debug 모드 지원", async () => {

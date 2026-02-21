@@ -317,7 +317,7 @@ export class StyleProcessor {
    * Prop 이름 정규화 (PropsExtractor와 동일한 로직)
    */
   private normalizePropName(key: string): string {
-    return key
+    let propName = key
       .split(/\s+/)
       .map((word, index) => {
         if (index === 0) {
@@ -326,6 +326,33 @@ export class StyleProcessor {
         return word.charAt(0).toUpperCase() + word.slice(1);
       })
       .join("");
+
+    // Native HTML prop과 충돌하는 이름은 custom 접두사 추가
+    if (this.isNativePropConflict(propName)) {
+      propName = "custom" + propName.charAt(0).toUpperCase() + propName.slice(1);
+    }
+
+    return propName;
+  }
+
+  /**
+   * Native HTML prop과 충돌하는 이름인지 확인
+   */
+  private isNativePropConflict(propName: string): boolean {
+    const nativeProps = new Set([
+      "type",       // button type
+      "name",       // form element name
+      "value",      // input value
+      "checked",    // checkbox checked
+      "disabled",   // disabled state
+      "required",   // required attribute
+      "placeholder",// input placeholder
+      "href",       // anchor href
+      "src",        // image src
+      "alt",        // image alt
+    ]);
+
+    return nativeProps.has(propName);
   }
 
   /**

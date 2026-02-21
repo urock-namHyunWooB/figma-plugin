@@ -103,7 +103,7 @@ describe("INSTANCE wrapper 구조 검증", () => {
     const code = await compiler.compile();
 
     expect(code).toBeDefined();
-    expect(code).toContain("export default function");
+    expect(code).toContain("export default"); // v2는 export default ComponentName 형식
     expect(code).toContain("return");
 
     // CSS import가 있어야 함 (Emotion)
