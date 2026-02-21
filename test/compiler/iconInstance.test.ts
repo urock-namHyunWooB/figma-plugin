@@ -83,12 +83,12 @@ describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
       const compiler = new FigmaCodeGenerator(frame03MockData as any);
       const result = await compiler.getGeneratedCodeWithDependencies();
 
-      // dependencies에 Iconanchor가 있어야 함
-      const depKeys = Object.keys(result.dependencies);
-      expect(depKeys.length).toBeGreaterThan(0);
+      // dependencies에 Iconanchor가 있어야 함 (v2는 배열)
+      const deps = result.dependencies || [];
+      expect(deps.length).toBeGreaterThan(0);
 
       // 의존 컴포넌트 코드에 svg가 포함되어야 함
-      const firstDep = Object.values(result.dependencies)[0];
+      const firstDep = deps[0];
       expect(firstDep.code).toContain("<svg");
       expect(firstDep.code).toContain("<path");
     });

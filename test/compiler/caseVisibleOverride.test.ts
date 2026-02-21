@@ -35,8 +35,8 @@ describe("Case.json visible override 이슈", () => {
     const compiler = new FigmaCodeGenerator(fixtureData);
     const result = await compiler.getGeneratedCodeWithDependencies();
 
-    // 메인 코드 확인
-    const mainCode = result.mainComponent.code;
+    // 메인 코드 확인 (v2 형식)
+    const mainCode = result.mainCode;
 
     // fixture에서 Interaction 노드의 visible override가 없으므로
     // showInteraction prop이 전달되지 않아야 함

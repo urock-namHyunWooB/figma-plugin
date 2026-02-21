@@ -44,12 +44,12 @@ describe("Ghost INSTANCE SVG 중복 렌더링 회귀 테스트", () => {
     const compiler = new FigmaCodeGenerator(ghostMockData as any);
     const result = await compiler.getGeneratedCodeWithDependencies();
 
-    // dependencies에 Plus 컴포넌트가 있어야 함 (키는 componentSetId)
-    const depKeys = Object.keys(result.dependencies);
-    expect(depKeys.length).toBeGreaterThan(0);
+    // dependencies에 Plus 컴포넌트가 있어야 함 (v2는 배열)
+    const deps = result.dependencies || [];
+    expect(deps.length).toBeGreaterThan(0);
 
     // Plus 컴포넌트 코드에 svg가 포함되어야 함
-    const plusDep = Object.values(result.dependencies)[0];
+    const plusDep = deps[0];
     expect(plusDep.code).toContain("<svg");
     expect(plusDep.code).toContain("<path");
   });

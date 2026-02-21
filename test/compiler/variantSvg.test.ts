@@ -13,11 +13,11 @@ describe("Variant SVG Mapping", () => {
     );
     const result = await compiler.getGeneratedCodeWithDependencies();
 
-    // 메인 코드 + 의존성 코드 합쳐서 확인
-    const mainCode = result.mainComponent.code;
+    // 메인 코드 + 의존성 코드 합쳐서 확인 (v2 형식)
+    const mainCode = result.mainCode;
     const allCode = [
       mainCode,
-      ...Object.values(result.dependencies || {}).map((d) => d.code),
+      ...(result.dependencies || []).map((d) => d.code),
     ].join("\n");
 
     // 컴파일된 코드를 파일로 저장 (디버깅용)
@@ -32,9 +32,9 @@ describe("Variant SVG Mapping", () => {
     // NormalResponsive 컴포넌트가 생성되어야 함
     expect(mainCode).toContain("NormalResponsive");
 
-    // NormalResponsive 의존성이 있어야 함
+    // NormalResponsive 의존성이 있어야 함 (v2는 배열)
     expect(result.dependencies).toBeDefined();
-    expect(Object.keys(result.dependencies || {}).length).toBeGreaterThan(0);
+    expect((result.dependencies || []).length).toBeGreaterThan(0);
 
     // 의존성 코드에 SVG가 있어야 함
     expect(allCode).toContain("<svg");
