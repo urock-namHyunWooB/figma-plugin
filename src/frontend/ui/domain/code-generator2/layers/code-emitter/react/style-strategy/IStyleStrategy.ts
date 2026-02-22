@@ -39,9 +39,15 @@ export interface IStyleStrategy {
    * @param nodeId 노드 ID
    * @param nodeName 노드 이름
    * @param style StyleObject
+   * @param parentPath 부모 노드 경로 (optional)
    * @returns 스타일 코드
    */
-  generateStyle(nodeId: string, nodeName: string, style: StyleObject): StyleResult;
+  generateStyle(
+    nodeId: string,
+    nodeName: string,
+    style: StyleObject,
+    parentPath?: string[]
+  ): StyleResult;
 
   /**
    * JSX 요소의 스타일 속성 생성

@@ -61,28 +61,79 @@ export class ReactEmitter implements ICodeEmitter {
     this.styleStrategy = this.createStyleStrategy();
   }
 
+  /**
+   * UITree → React 컴포넌트 코드 변환 (고수준 파이프라인)
+   *
+   * 1. 컴포넌트명 생성
+   * 2. 각 섹션 독립적으로 생성 (imports, props, styles, jsx)
+   *    - StylesGenerator가 변수명 고유성 보장
+   * 3. 섹션 조합 및 포맷팅
+   */
   async emit(uiTree: UITree): Promise<EmittedCode> {
+    // Step 1: 컴포넌트명 생성
     const componentName = this.toComponentName(uiTree.root.name);
 
-    // Step 1: 각 섹션 생성
-    const imports = ImportsGenerator.generate(uiTree, this.styleStrategy);
-    const propsInterface = PropsGenerator.generate(uiTree, componentName);
-    const styles = StylesGenerator.generate(uiTree, componentName, this.styleStrategy);
-    const jsx = JsxGenerator.generate(uiTree, componentName, this.styleStrategy, {
-      debug: this.options.debug,
-    });
+    // Step 2: 각 섹션 생성 (독립적으로 병렬 가능)
+    const sections = this.generateAllSections(uiTree, componentName);
 
-    // Step 2: 코드 조합
-    const rawCode = [imports, "", propsInterface, "", styles, "", jsx].join("\n");
-
-    // Step 3: 포맷팅
-    const code = await this.formatCode(rawCode);
+    // Step 3: 조합 및 포맷팅
+    const code = await this.assembleAndFormat(sections);
 
     return {
       code,
       componentName,
       fileExtension: ".tsx",
     };
+  }
+
+  /**
+   * 모든 섹션 생성 (imports, props, styles, jsx)
+   */
+  private generateAllSections(
+    uiTree: UITree,
+    componentName: string
+  ): {
+    imports: string;
+    propsInterface: string;
+    styles: string;
+    jsx: string;
+  } {
+    const imports = ImportsGenerator.generate(uiTree, this.styleStrategy);
+    const propsInterface = PropsGenerator.generate(uiTree, componentName);
+    const stylesResult = StylesGenerator.generate(uiTree, componentName, this.styleStrategy);
+    const jsx = JsxGenerator.generate(uiTree, componentName, this.styleStrategy, {
+      debug: this.options.debug,
+      nodeStyleMap: stylesResult.nodeStyleMap,
+    });
+
+    return {
+      imports,
+      propsInterface,
+      styles: stylesResult.code,
+      jsx,
+    };
+  }
+
+  /**
+   * 섹션 조합 및 Prettier 포맷팅
+   */
+  private async assembleAndFormat(sections: {
+    imports: string;
+    propsInterface: string;
+    styles: string;
+    jsx: string;
+  }): Promise<string> {
+    const rawCode = [
+      sections.imports,
+      "",
+      sections.propsInterface,
+      "",
+      sections.styles,
+      "",
+      sections.jsx,
+    ].join("\n");
+
+    return await this.formatCode(rawCode);
   }
 
   private createStyleStrategy(): IStyleStrategy {

@@ -441,8 +441,8 @@ describe("compiler 테스트", () => {
         });
 
         test("CSS 변수명이 컴포넌트 이름 기반이어야 한다", () => {
-          // SelectButtonCss 형태여야 함
-          expect(generatedCode).toMatch(/const\s+SelectButtonCss\s*=/);
+          // selectButtonCss 형태여야 함 (경로 기반, 충돌 시 _2, _3 등 추가)
+          expect(generatedCode).toMatch(/const\s+selectButtonCss\s*=/);
           // SizedefaultSelectedfalseCss 같은 variant 이름이 아니어야 함
           expect(generatedCode).not.toMatch(/SizedefaultSelectedfalseCss/i);
         });

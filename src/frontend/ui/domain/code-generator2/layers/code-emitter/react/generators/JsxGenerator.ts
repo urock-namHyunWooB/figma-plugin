@@ -9,6 +9,8 @@ import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
 
 interface JsxGeneratorOptions {
   debug?: boolean;
+  /** nodeId → styleVariableName 매핑 (StylesGenerator에서 생성) */
+  nodeStyleMap?: Map<string, string>;
 }
 
 export class JsxGenerator {
@@ -30,6 +32,9 @@ export class JsxGenerator {
     this.propRenameMap = new Map(
       uiTree.props.map((p) => [p.sourceKey, p.name])
     );
+
+    // NodeStyleMap 설정
+    this.nodeStyleMap = options.nodeStyleMap || new Map();
 
     // Props destructuring
     const propsDestructuring = this.generatePropsDestructuring(uiTree);
@@ -90,6 +95,9 @@ export default ${componentName};`;
 
   // sourceKey → name 매핑 (Figma prop 이름 → React prop 이름)
   private static propRenameMap: Map<string, string> = new Map();
+
+  // nodeId → styleVariableName 매핑 (StylesGenerator에서 전달)
+  private static nodeStyleMap: Map<string, string> = new Map();
 
   /**
    * UINode를 JSX로 변환
@@ -393,9 +401,16 @@ ${indentStr}</${tag}>`;
   }
 
   /**
-   * 스타일 변수명 생성 (EmotionStrategy와 동일한 포맷)
+   * 스타일 변수명 조회 (StylesGenerator에서 생성된 이름 사용)
    */
   private static toStyleVariableName(nodeId: string, nodeName: string): string {
+    // StylesGenerator에서 생성된 이름이 있으면 사용
+    const mappedName = this.nodeStyleMap.get(nodeId);
+    if (mappedName) {
+      return mappedName;
+    }
+
+    // Fallback: ID 기반 네이밍 (하위 호환성)
     const safeId = nodeId.replace(/[^a-zA-Z0-9]/g, "_");
 
     // 영문/숫자만 추출하여 camelCase 변환

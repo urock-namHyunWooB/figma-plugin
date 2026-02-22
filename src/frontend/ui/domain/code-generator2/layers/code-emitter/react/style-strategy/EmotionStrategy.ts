@@ -38,8 +38,13 @@ export class EmotionStrategy implements IStyleStrategy {
   /**
    * StyleObject → Emotion css 코드
    */
-  generateStyle(nodeId: string, nodeName: string, style: StyleObject): StyleResult {
-    const variableName = this.createVariableName(nodeId, nodeName);
+  generateStyle(
+    nodeId: string,
+    nodeName: string,
+    style: StyleObject,
+    parentPath?: string[]
+  ): StyleResult {
+    const variableName = this.createVariableName(nodeId, nodeName, parentPath);
 
     // Step 1: base 스타일 생성
     const baseCode = this.generateBaseCode(variableName, style.base);
@@ -247,16 +252,48 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
     return `"&${pseudoClass}": {\n${this.indent(styleStr, 2)}\n}`;
   }
 
-  private createVariableName(nodeId: string, nodeName: string): string {
-    const safeId = nodeId.replace(/[^a-zA-Z0-9]/g, "_");
-    let baseName = this.toSafeVariableName(nodeName);
+  /**
+   * CSS 변수명 생성 (기본 이름만 생성, 고유성은 StylesGenerator가 보장)
+   */
+  private createVariableName(
+    nodeId: string,
+    nodeName: string,
+    parentPath?: string[]
+  ): string {
+    return parentPath && parentPath.length > 0
+      ? this.createPathBasedName(parentPath)
+      : this.createIdBasedName(nodeId, nodeName);
+  }
+
+  /**
+   * 경로 기반 변수명 생성 (가독성 우선)
+   * 예: ["SelectButton", "Label"] → "selectButtonLabelCss"
+   */
+  private createPathBasedName(parentPath: string[]): string {
+    const pathNames = parentPath.map((name) => this.toSafeVariableName(name));
+    let combinedName = this.combinePathToCamelCase(pathNames);
 
     // 숫자로 시작하면 앞에 _ 추가
-    if (/^[0-9]/.test(baseName)) {
-      baseName = "_" + baseName;
+    if (/^[0-9]/.test(combinedName)) {
+      combinedName = "_" + combinedName;
     }
 
-    return `${baseName}_${safeId}`;
+    return `${combinedName}Css`;
+  }
+
+  /**
+   * ID 기반 변수명 생성 (Fallback, 안전성 우선)
+   * 예: nodeId="133:603", nodeName="Label" → "label_133_603"
+   */
+  private createIdBasedName(nodeId: string, nodeName: string): string {
+    const safeId = nodeId.replace(/[^a-zA-Z0-9]/g, "_");
+    let nameBase = this.toSafeVariableName(nodeName);
+
+    if (/^[0-9]/.test(nameBase)) {
+      nameBase = "_" + nameBase;
+    }
+
+    return `${nameBase}_${safeId}`;
   }
 
   /**
@@ -278,6 +315,22 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
         i === 0
           ? word.toLowerCase()
           : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      )
+      .join("");
+  }
+
+  /**
+   * 경로 배열을 camelCase로 결합
+   * ["SelectButton", "Container", "Label"] → "selectButtonContainerLabel"
+   */
+  private combinePathToCamelCase(pathNames: string[]): string {
+    if (pathNames.length === 0) return "unnamed";
+
+    return pathNames
+      .map((name, i) =>
+        i === 0
+          ? name.charAt(0).toLowerCase() + name.slice(1)
+          : name.charAt(0).toUpperCase() + name.slice(1)
       )
       .join("");
   }

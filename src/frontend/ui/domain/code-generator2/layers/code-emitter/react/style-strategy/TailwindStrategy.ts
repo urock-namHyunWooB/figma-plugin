@@ -127,9 +127,14 @@ export class TailwindStrategy implements IStyleStrategy {
   /**
    * StyleObject를 Tailwind 클래스로 변환
    */
-  generateStyle(nodeId: string, nodeName: string, style: StyleObject): StyleResult {
-    const safeId = nodeId.replace(/[^a-zA-Z0-9]/g, "_");
-    const variableName = `${this.toCamelCase(nodeName)}_${safeId}`;
+  generateStyle(
+    nodeId: string,
+    nodeName: string,
+    style: StyleObject,
+    parentPath?: string[]
+  ): StyleResult {
+    // Step 1: 변수명 생성 (경로 기반 or ID 기반)
+    const variableName = this.createVariableName(nodeId, nodeName, parentPath);
 
     // base 스타일 → Tailwind 클래스
     const baseClasses = this.cssObjectToTailwind(style.base);
@@ -421,4 +426,44 @@ export class TailwindStrategy implements IStyleStrategy {
       )
       .join("");
   }
+
+  /**
+   * Tailwind 클래스 변수명 생성 (기본 이름만 생성, 고유성은 StylesGenerator가 보장)
+   */
+  private createVariableName(
+    nodeId: string,
+    nodeName: string,
+    parentPath?: string[]
+  ): string {
+    return parentPath && parentPath.length > 0
+      ? this.createPathBasedName(parentPath)
+      : this.createIdBasedName(nodeId, nodeName);
+  }
+
+  /**
+   * 경로 기반 변수명 생성 (가독성 우선)
+   * 예: ["SelectButton", "Label"] → "selectButtonLabelClasses"
+   */
+  private createPathBasedName(parentPath: string[]): string {
+    const pathNames = parentPath.map((name) => this.toCamelCase(name));
+    const combinedName = pathNames
+      .map((name, i) =>
+        i === 0
+          ? name.charAt(0).toLowerCase() + name.slice(1)
+          : name.charAt(0).toUpperCase() + name.slice(1)
+      )
+      .join("");
+
+    return `${combinedName}Classes`;
+  }
+
+  /**
+   * ID 기반 변수명 생성 (Fallback, 안전성 우선)
+   * 예: nodeId="133:603", nodeName="Label" → "label_133_603"
+   */
+  private createIdBasedName(nodeId: string, nodeName: string): string {
+    const safeId = nodeId.replace(/[^a-zA-Z0-9]/g, "_");
+    return `${this.toCamelCase(nodeName)}_${safeId}`;
+  }
+
 }
