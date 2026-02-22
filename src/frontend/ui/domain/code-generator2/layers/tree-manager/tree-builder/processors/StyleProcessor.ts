@@ -20,6 +20,23 @@ import DataManager from "../../../data-manager/DataManager";
 export class StyleProcessor {
   private readonly dataManager: DataManager;
 
+  /** VECTOR 계열 타입 */
+  private static readonly VECTOR_TYPES = new Set([
+    "VECTOR", "LINE", "ELLIPSE", "STAR", "POLYGON", "BOOLEAN_OPERATION",
+  ]);
+
+  /** SVG 전용 속성 (CSS에서 제거해야 함) */
+  private static readonly SVG_ONLY_PROPERTIES = new Set([
+    "strokeWidth", "stroke-width",
+    "strokeLinecap", "stroke-linecap",
+    "strokeLinejoin", "stroke-linejoin",
+    "strokeMiterlimit", "stroke-miterlimit",
+    "strokeDasharray", "stroke-dasharray",
+    "strokeDashoffset", "stroke-dashoffset",
+    "fillRule", "fill-rule",
+    "clipRule", "clip-rule",
+  ]);
+
   /** State prop 값 → CSS pseudo-class 매핑 */
   private readonly STATE_TO_PSEUDO: Record<string, PseudoClass> = {
     Hover: ":hover",
@@ -65,7 +82,21 @@ export class StyleProcessor {
    */
   private applyVariantStyles(node: InternalNode): InternalNode {
     // 스타일 객체 생성
-    const styles = this.createStyleObject(node);
+    let styles = this.createStyleObject(node);
+
+    // VECTOR 타입 처리: SVG 전용 속성 제거, overflow: visible 추가
+    if (styles && StyleProcessor.VECTOR_TYPES.has(node.type)) {
+      const filteredBase: Record<string, string | number> = { overflow: "visible" };
+      for (const [key, value] of Object.entries(styles.base || {})) {
+        if (!StyleProcessor.SVG_ONLY_PROPERTIES.has(key)) {
+          filteredBase[key] = value;
+        }
+      }
+      styles = {
+        ...styles,
+        base: filteredBase,
+      };
+    }
 
     // children 재귀 처리
     const styledChildren = node.children.map((child) =>
