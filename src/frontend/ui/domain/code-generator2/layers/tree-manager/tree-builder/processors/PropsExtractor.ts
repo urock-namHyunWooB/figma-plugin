@@ -190,8 +190,11 @@ export class PropsExtractor {
    * "type" → "customType" (native prop 충돌 방지)
    */
   private normalizePropName(sourceKey: string): string {
+    // 0. 제어 문자 제거 (0x00-0x1F, 0x7F) - Figma export 데이터에 포함될 수 있음
+    const sanitized = sourceKey.replace(/[\x00-\x1F\x7F]/g, "");
+
     // 1. # 이후 노드 ID 제거
-    const cleanKey = sourceKey.split("#")[0].trim();
+    const cleanKey = sanitized.split("#")[0].trim();
 
     // 2. 첫 단어는 소문자, 나머지는 각 단어 첫 글자 대문자 (camelCase)
     let propName = cleanKey
