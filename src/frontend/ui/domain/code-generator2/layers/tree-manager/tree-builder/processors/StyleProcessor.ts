@@ -45,20 +45,152 @@ export class StyleProcessor {
 
   /**
    * InternalNode에 스타일 적용 (재귀)
+   *
+   * 2단계 처리:
+   * 1. variant 기반 스타일 적용
+   * 2. position 스타일 적용 (absolute positioning)
    */
   public applyStyles(node: InternalNode): InternalNode {
+    // 1단계: variant 기반 스타일 적용
+    let result = this.applyVariantStyles(node);
+
+    // 2단계: position 스타일 적용
+    result = this.applyPositionStyles(result);
+
+    return result;
+  }
+
+  /**
+   * variant 기반 스타일 적용 (재귀)
+   */
+  private applyVariantStyles(node: InternalNode): InternalNode {
     // 스타일 객체 생성
     const styles = this.createStyleObject(node);
 
     // children 재귀 처리
     const styledChildren = node.children.map((child) =>
-      this.applyStyles(child)
+      this.applyVariantStyles(child)
     );
 
     return {
       ...node,
       styles,
       children: styledChildren,
+    };
+  }
+
+  /**
+   * position 스타일 적용
+   *
+   * auto-layout이 아닌 부모의 자식에게 position: absolute 적용
+   * 해당 부모에게 position: relative 적용
+   */
+  private applyPositionStyles(node: InternalNode): InternalNode {
+    // 1단계: 자식에게 position: absolute, left, top 적용
+    const updatedChildren = node.children.map((child) => {
+      // 재귀적으로 먼저 자식의 자식들 처리
+      const processedChild = this.applyPositionStyles(child);
+
+      // 부모가 auto-layout이 아니면 position 적용
+      if (this.shouldApplyAbsolutePosition(node, processedChild)) {
+        const positionStyles = this.calculatePositionStyles(node, processedChild);
+        if (positionStyles) {
+          return {
+            ...processedChild,
+            styles: {
+              ...processedChild.styles,
+              base: {
+                ...(processedChild.styles?.base || {}),
+                ...positionStyles,
+              },
+              dynamic: processedChild.styles?.dynamic || [],
+            },
+          };
+        }
+      }
+
+      return processedChild;
+    });
+
+    // 2단계: absolute 자식이 있으면 부모에 position: relative 적용
+    const hasAbsoluteChild = updatedChildren.some(
+      (child) => child.styles?.base?.position === "absolute"
+    );
+
+    if (hasAbsoluteChild && !node.styles?.base?.position) {
+      return {
+        ...node,
+        styles: {
+          ...node.styles,
+          base: {
+            ...(node.styles?.base || {}),
+            position: "relative",
+          },
+          dynamic: node.styles?.dynamic || [],
+        },
+        children: updatedChildren,
+      };
+    }
+
+    return {
+      ...node,
+      children: updatedChildren,
+    };
+  }
+
+  /**
+   * absolute positioning을 적용해야 하는지 확인
+   */
+  private shouldApplyAbsolutePosition(
+    parent: InternalNode,
+    _child: InternalNode
+  ): boolean {
+    // 부모가 FRAME 또는 GROUP이어야 함
+    if (parent.type !== "FRAME" && parent.type !== "GROUP") {
+      return false;
+    }
+
+    // 부모가 auto-layout이면 적용하지 않음
+    if (this.isAutoLayout(parent)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * 부모가 auto-layout인지 확인
+   */
+  private isAutoLayout(node: InternalNode): boolean {
+    // DataManager에서 노드 정보 가져오기
+    const { node: sceneNode } = this.dataManager.getById(node.id);
+    if (!sceneNode) return false;
+
+    const layoutMode = (sceneNode as any).layoutMode;
+    return layoutMode && layoutMode !== "NONE";
+  }
+
+  /**
+   * position 스타일 계산 (left, top)
+   */
+  private calculatePositionStyles(
+    parent: InternalNode,
+    child: InternalNode
+  ): Record<string, string | number> | null {
+    const parentBounds = parent.bounds;
+    const childBounds = child.bounds;
+
+    if (!parentBounds || !childBounds) {
+      return null;
+    }
+
+    const left = Math.round(childBounds.x - parentBounds.x);
+    const top = Math.round(childBounds.y - parentBounds.y);
+
+    return {
+      position: "absolute",
+      left: `${left}px`,
+      top: `${top}px`,
     };
   }
 

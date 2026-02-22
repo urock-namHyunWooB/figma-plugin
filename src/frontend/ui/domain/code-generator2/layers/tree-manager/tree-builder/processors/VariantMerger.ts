@@ -324,15 +324,13 @@ export class VariantMerger {
     const componentPropertyReferences = (node as any)
       .componentPropertyReferences as Record<string, string> | undefined;
 
-    return {
+    // 루트 노드 생성 (children은 나중에 설정)
+    const rootNode: InternalTree = {
       id: node.id,
       type: node.type,
       name: node.name,
-      children: children
-        ? children.map((child) =>
-            this.convertToInternalNode(child, variantName)
-          )
-        : [],
+      parent: null,
+      children: [],
       mergedNodes: [
         {
           id: node.id,
@@ -343,6 +341,15 @@ export class VariantMerger {
       bounds,
       ...(componentPropertyReferences ? { componentPropertyReferences } : {}),
     };
+
+    // children 생성 시 rootNode를 parent로 전달
+    if (children) {
+      rootNode.children = children.map((child) =>
+        this.convertToInternalNode(child, variantName, rootNode)
+      );
+    }
+
+    return rootNode;
   }
 
   /**
