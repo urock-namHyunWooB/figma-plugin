@@ -25,7 +25,7 @@ describe("CodeEmitter", () => {
     expect(result.code).toContain("import React");
     expect(result.code).toContain("import { css }");
     expect(result.code).toContain("interface PrimaryProps");
-    expect(result.code).toContain("const Primary: React.FC<PrimaryProps>");
+    expect(result.code).toContain("function Primary(");
     expect(result.code).toContain("export default Primary");
   });
 

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import DataManager from "@frontend/ui/domain/code-generator2/layers/data-manager/DataManager";
 import TreeBuilder from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/TreeBuilder";
-import { HeuristicsProcessor } from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/processors/HeuristicsProcessor";
+import { HeuristicsRunner } from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/heuristics/HeuristicsRunner";
 
 import taptapButton from "../fixtures/button/taptapButton.json";
 import airtableButton from "../fixtures/any-component-set/airtable-button.json";
@@ -59,16 +59,16 @@ describe("Heuristics", () => {
     });
   });
 
-  describe("HeuristicsProcessor.debugScores", () => {
+  describe("HeuristicsRunner.debugScores", () => {
     it("should return scores for all heuristics", () => {
       const dataManager = new DataManager(taptapButton as any);
-      const heuristicsProcessor = new HeuristicsProcessor(dataManager);
+      const heuristicsRunner = new HeuristicsRunner();
 
       // VariantMerger로 InternalTree 생성
       const treeBuilder = new TreeBuilder(dataManager);
       const internalTree = treeBuilder.buildInternalTreeDebug((taptapButton as any).info.document);
 
-      const scores = heuristicsProcessor.debugScores(internalTree);
+      const scores = heuristicsRunner.debugScores(internalTree, dataManager);
 
       console.log("Heuristic scores for taptapButton:");
       scores.forEach(({ name, score, selected }) => {
