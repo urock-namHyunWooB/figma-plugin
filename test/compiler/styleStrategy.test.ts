@@ -183,6 +183,8 @@ describe("Tailwind 런타임 실행 검증 테스트", () => {
         /export\s+default\s+function\s+(\w+)/g,
         "function $1"
       );
+      // export default ComponentName; 형태 제거
+      cleanedCode = cleanedCode.replace(/export\s+default\s+\w+;?\s*/g, "");
       cleanedCode = cleanedCode.replace(
         /export\s+interface\s+(\w+)/g,
         "interface $1"
