@@ -114,6 +114,14 @@ export default ${componentName};`;
   ): string {
     const indentStr = " ".repeat(indent);
 
+    // Slot binding이 있으면 직접 slot prop 렌더링
+    // slot prop의 경우 visibleCondition을 무시하고 prop 자체의 truthy만 체크
+    // (둘 다 전달되면 둘 다 렌더링되어야 함)
+    const slotBinding = node.bindings?.content;
+    if (slotBinding && "prop" in slotBinding) {
+      return `${indentStr}{${slotBinding.prop}}`;
+    }
+
     // 조건부 렌더링
     if (node.visibleCondition) {
       // Slot prop으로 제어되는 component 노드인지 확인
