@@ -162,10 +162,20 @@ export class FigmaCodeGenerator {
     try {
       const result = await this.generate();
 
-      // dependencies가 있으면 함께 번들링
+      // dependencies가 있으면 함께 번들링 (변수명 충돌 방지)
       if (result.dependencies.size > 0) {
-        const depCodes = Array.from(result.dependencies.values())
-          .map(dep => dep.code)
+        // 중복 제거: 같은 componentName을 가진 dependency는 한 번만 포함
+        const seenComponents = new Set<string>();
+        const uniqueDeps = Array.from(result.dependencies.values()).filter(dep => {
+          if (seenComponents.has(dep.componentName)) {
+            return false;
+          }
+          seenComponents.add(dep.componentName);
+          return true;
+        });
+
+        const depCodes = uniqueDeps
+          .map(dep => this.renameCssVariables(dep.code, dep.componentName))
           .join("\n\n");
         return `${depCodes}\n\n${result.main.code}`;
       }
@@ -175,6 +185,35 @@ export class FigmaCodeGenerator {
       console.error("Compile error:", e);
       return null;
     }
+  }
+
+  /**
+   * CSS 변수명에 prefix 추가하여 충돌 방지
+   * 예: btnCss → Button_btnCss
+   */
+  private renameCssVariables(code: string, componentName: string): string {
+    const prefix = componentName.replace(/\s+/g, "");
+
+    // CSS 변수 패턴: xxxCss, xxxStyles 등
+    const styleVarPattern = /\b(\w+(?:Css|Styles))\b/g;
+    const foundVars = new Set<string>();
+
+    // Step 1: 코드에서 스타일 변수명 수집
+    let match;
+    while ((match = styleVarPattern.exec(code)) !== null) {
+      foundVars.add(match[1]);
+    }
+
+    // Step 2: 각 변수명을 prefix된 이름으로 교체
+    let renamedCode = code;
+    for (const varName of foundVars) {
+      const newName = `${prefix}_${varName}`;
+      // 단어 경계를 사용하여 정확한 매칭
+      const regex = new RegExp(`\\b${varName}\\b`, "g");
+      renamedCode = renamedCode.replace(regex, newName);
+    }
+
+    return renamedCode;
   }
 
   /**
