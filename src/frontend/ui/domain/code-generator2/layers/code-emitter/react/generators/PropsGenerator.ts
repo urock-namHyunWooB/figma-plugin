@@ -18,7 +18,7 @@ export class PropsGenerator {
     }
 
     // Array Slot 이름 집합 생성 (빠른 조회용)
-    const arraySlotNames = new Set(uiTree.arraySlots.map((slot) => slot.slotName));
+    const arraySlotNames = new Set((uiTree.arraySlots || []).map((slot) => slot.slotName));
 
     const propLines = props.map((prop) => this.generatePropLine(prop, arraySlotNames, uiTree));
 

@@ -362,5 +362,5 @@ export interface UITree {
   root: UINode;
   componentType?: ComponentType;
   props: PropDefinition[];
-  arraySlots: ArraySlotInfo[];
+  arraySlots?: ArraySlotInfo[];
 }

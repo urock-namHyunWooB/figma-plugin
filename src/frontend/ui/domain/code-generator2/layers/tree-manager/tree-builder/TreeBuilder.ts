@@ -76,8 +76,8 @@ class TreeBuilder {
     // Step 3: 스타일 처리
     tree = this.styleProcessor.applyStyles(tree);
 
-    // Step 3.5: Array Slot 감지 (반복 INSTANCE 패턴)
-    let arraySlots = this.arraySlotProcessor.detectArraySlots(tree);
+    // Step 3.5: Array Slot 감지 (반복 INSTANCE 패턴, 기존 slot props 제외)
+    let arraySlots = this.arraySlotProcessor.detectArraySlots(tree, props);
 
     // Array Slot 중복 제거 (동일한 slotName)
     const uniqueArraySlots = Array.from(
@@ -92,9 +92,9 @@ class TreeBuilder {
         props.push({
           name: slot.slotName,
           type: "slot",  // Array slot은 slot 타입으로 처리
-          required: true,
+          required: false,
           sourceKey: slot.slotName,
-          defaultValue: undefined,
+          defaultValue: [],
         });
         existingPropNames.add(slot.slotName);
       }

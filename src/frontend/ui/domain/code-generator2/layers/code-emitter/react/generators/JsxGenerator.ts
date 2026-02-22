@@ -39,7 +39,7 @@ export class JsxGenerator {
 
     // Array Slots 설정 (parentId → ArraySlotInfo 매핑)
     this.arraySlots = new Map(
-      uiTree.arraySlots.map((slot) => [slot.parentId, slot])
+      (uiTree.arraySlots || []).map((slot) => [slot.parentId, slot])
     );
 
     // Props destructuring (별도 줄에서 수행)

@@ -16,7 +16,7 @@ describe("InputBoxstandard Array.includes 패턴 테스트", () => {
 
     // State prop이 interface에 포함되어야 함
     // ["Insert", "Error"].includes(state) 패턴이 사용되는 경우
-    expect(code).toMatch(/state[\?]?:\s*/);
+    expect(code).toMatch(/state\??:\s*/);
 
     // state prop을 사용하는 조건부 렌더링이 있어야 함
     // state 변수가 존재해야 함

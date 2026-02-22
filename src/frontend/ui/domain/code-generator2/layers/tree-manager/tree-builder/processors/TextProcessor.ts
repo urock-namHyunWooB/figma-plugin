@@ -6,7 +6,6 @@
  * - 문자별 스타일 추출
  */
 
-import type { TextSegment } from "../../../../types/types";
 import type DataManager from "../../../data-manager/DataManager";
 
 export class TextProcessor {

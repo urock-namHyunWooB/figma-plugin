@@ -57,7 +57,7 @@ describe("Prop 이름 정규화 테스트", () => {
 
       // 모든 JSX 속성은 name="value" 또는 name={expr} 형식이어야 함
       // 빈 이름( ="value")이 없어야 함
-      const invalidAttrPattern = /\s=["'{\[]/;
+      const invalidAttrPattern = /\s=["'{[]/;
       expect(code).not.toMatch(invalidAttrPattern);
     });
   });

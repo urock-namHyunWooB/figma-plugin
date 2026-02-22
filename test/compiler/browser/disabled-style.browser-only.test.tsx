@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { describe, test, expect } from "vitest";
 import { render } from "vitest-browser-react";
 import React from "react";
@@ -13,28 +14,28 @@ describe("Disabled 스타일 브라우저 테스트", () => {
     Light: { color: "rgb(0, 0, 0)" }, // black
   };
 
-  const ACss = (
-    $color: "Primary" | "Light",
-    $customDisabled: boolean
-  ) => css`
-    font-size: 16px;
-    ${AColorStyles[$color]}
-    ${$customDisabled ? { color: "#B2B2B2" } : {}}
-  `;
+  function ACss($color: "Primary" | "Light", $customDisabled: boolean) {
+    return css`
+      font-size: 16px;
+      ${AColorStyles[$color]}
+      ${$customDisabled ? { color: "#B2B2B2" } : {}}
+    `;
+  }
 
-  const TestComponent = ({
+  function TestComponent({
     color,
     customDisabled,
   }: {
     color: "Primary" | "Light";
     customDisabled: boolean;
-  }) => {
+  }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (
       <span data-testid="text" css={ACss(color, customDisabled)}>
         Button Text
       </span>
     );
-  };
+  }
 
   test("disabled=false일 때 Primary 색상(white) 적용", async () => {
     const { getByTestId } = render(
