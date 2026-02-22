@@ -182,6 +182,8 @@ export interface Bindings {
   attrs?: Record<string, BindingSource>;
   /** 노드 콘텐츠 바인딩 — TextNode, SlotNode */
   content?: BindingSource;
+  /** 인라인 스타일 바인딩 — CSS 속성명 → 소스 (예: background → props.iconBg) */
+  style?: Record<string, BindingSource>;
 }
 
 interface UINodeBase {

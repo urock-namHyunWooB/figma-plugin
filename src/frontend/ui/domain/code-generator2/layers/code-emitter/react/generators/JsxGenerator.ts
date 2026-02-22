@@ -223,6 +223,8 @@ export default ${componentName};`;
 
   /**
    * Component (외부 컴포넌트) 노드 생성
+   * - styles가 있으면 wrapper div로 감싸서 크기/위치 스타일 적용
+   * - 외부 컴포넌트는 props만 전달
    */
   private static generateComponentNode(
     node: UINode,
@@ -241,16 +243,43 @@ export default ${componentName};`;
 
     // 일반 컴포넌트 렌더링
     const componentName = toComponentName(node.name);
-    let attrs = this.generateAttributes(node, styleStrategy, options);
 
-    // INSTANCE override props 추가
+    // INSTANCE override props 생성
+    let componentAttrs = "";
     if (node.type === "component" && "overrideProps" in node && node.overrideProps) {
       for (const [propName, value] of Object.entries(node.overrideProps)) {
-        attrs += ` ${propName}="${value}"`;
+        componentAttrs += ` ${propName}="${value}"`;
       }
     }
 
-    return `${indentStr}<${componentName}${attrs} />`;
+    // styles가 있으면 wrapper div로 감싸기
+    if (node.styles && this.hasNonEmptyStyles(node.styles)) {
+      // nodeStyleMap에서 실제 생성된 변수명 가져오기
+      const wrapperStyleVarName = this.nodeStyleMap.get(node.id) || `_${componentName}_wrapperCss`;
+      const dynamicProps = this.extractDynamicProps(node.styles);
+
+      let wrapperAttrs: string;
+      if (dynamicProps.length > 0) {
+        const dynamicStyleRefs = dynamicProps.map(
+          (prop) => `${wrapperStyleVarName}_${prop}Styles[${prop}]`
+        );
+        if (styleStrategy.name === "emotion") {
+          wrapperAttrs = `css={[${wrapperStyleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
+        } else {
+          wrapperAttrs = `className={cn(${wrapperStyleVarName}, ${dynamicStyleRefs.join(", ")})}`;
+        }
+      } else {
+        const styleAttr = styleStrategy.getJsxStyleAttribute(wrapperStyleVarName, false);
+        wrapperAttrs = `${styleAttr.attributeName}=${styleAttr.valueCode}`;
+      }
+
+      return `${indentStr}<div ${wrapperAttrs}>
+${indentStr}  <${componentName}${componentAttrs} />
+${indentStr}</div>`;
+    }
+
+    // styles가 없으면 직접 렌더링
+    return `${indentStr}<${componentName}${componentAttrs} />`;
   }
 
   /**
@@ -370,6 +399,21 @@ ${indentStr}</${tag}>`;
         if ("prop" in source) {
           attrs.push(`${attrName}={${source.prop}}`);
         }
+      }
+    }
+
+    // bindings에서 style 처리
+    if (node.bindings?.style) {
+      const styleEntries: string[] = [];
+      for (const [cssKey, source] of Object.entries(node.bindings.style)) {
+        if ("prop" in source) {
+          styleEntries.push(`${cssKey}: ${source.prop}`);
+        } else if ("ref" in source) {
+          styleEntries.push(`${cssKey}: "${source.ref}"`);
+        }
+      }
+      if (styleEntries.length > 0) {
+        attrs.push(`style={{ ${styleEntries.join(", ")} }}`);
       }
     }
 

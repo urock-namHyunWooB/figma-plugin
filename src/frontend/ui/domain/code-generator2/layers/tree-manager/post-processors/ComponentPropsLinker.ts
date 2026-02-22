@@ -276,12 +276,12 @@ export class ComponentPropsLinker {
         if (override.propName.endsWith("Text")) {
           node.bindings.content = { prop: override.propName };
         }
-        // fills override는 attrs.style에 바인딩 (추후 구현)
+        // fills override → style 바인딩
         if (override.propName.endsWith("Bg")) {
-          if (!node.bindings.attrs) {
-            node.bindings.attrs = {};
+          if (!node.bindings.style) {
+            node.bindings.style = {};
           }
-          // TODO: style={{ background: props.xxxBg }} 형태로 바인딩
+          node.bindings.style.background = { prop: override.propName };
         }
       }
     }
