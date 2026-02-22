@@ -174,11 +174,13 @@ export class GenericHeuristic implements IHeuristic {
           });
         }
 
-        // 노드에 binding 추가
+        // 노드에 binding 추가 (기존 binding이 없을 때만)
         if (!node.bindings) {
           node.bindings = {};
         }
-        node.bindings.content = { prop: slotName };
+        if (!node.bindings.content) {
+          node.bindings.content = { prop: slotName };
+        }
 
         // 이 노드가 slot이 되었으므로 자식은 탐색하지 않음
         shouldSkipChildren = true;

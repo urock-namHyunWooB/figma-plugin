@@ -42,8 +42,8 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
       // ReactNode 타입의 slot prop 개수 확인
       const slotMatches = propsInterface.match(/React\.ReactNode/g);
 
-      // 4개의 slot: normalResponsive, text, rightIcon, children
-      expect(slotMatches?.length).toBe(4);
+      // v2 파이프라인: 3개의 slot (normalResponsive, text, rightIcon)
+      expect(slotMatches?.length).toBe(3);
     }
   });
 
@@ -82,8 +82,9 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
     const result = await compiler.compile();
 
     // 컴포넌트 함수에서 세 개의 slot이 모두 렌더링되어야 함
+    // v2 파이프라인은 분리형 export: function X() {} export default X;
     const functionMatch = result?.match(
-      /export default function Headersub[\s\S]*?return[\s\S]*?\n\}/
+      /function Headersub[\s\S]*?return[\s\S]*?\n\}/
     );
 
     expect(functionMatch).not.toBeNull();
@@ -141,9 +142,10 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
     if (headersubPropsMatch) {
       const propsInterface = headersubPropsMatch[0];
 
-      // ReactNode slot이 4개: normalResponsive, text, rightIcon, children
+      // ReactNode slot이 3개: normalResponsive, text, rightIcon
+      // (children은 React에서 암묵적으로 처리되므로 명시적 slot 불필요)
       const slotCount = (propsInterface.match(/React\.ReactNode/g) || []).length;
-      expect(slotCount).toBe(4);
+      expect(slotCount).toBe(3);
 
       // 불필요한 slot prop이 없어야 함
       // (예: normalResponsive2, normalResponsive3, text2 등)
@@ -164,7 +166,7 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
     // TypeScript 함수 정의가 있어야 함
     expect(result).toMatch(/function Headersub/);
 
-    // export default function 형태가 있어야 함
-    expect(result).toMatch(/export default function Headersub/);
+    // v2 파이프라인: 분리형 export (function X() {} export default X;)
+    expect(result).toMatch(/export default Headersub/);
   });
 });
