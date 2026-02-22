@@ -9,13 +9,12 @@ import {
 import DataManager from "../../data-manager/DataManager";
 import { VariantMerger } from "./processors/VariantMerger";
 import { PropsExtractor } from "./processors/PropsExtractor";
+import { SlotProcessor } from "./processors/SlotProcessor";
 import { StyleProcessor } from "./processors/StyleProcessor";
 import { VisibilityProcessor } from "./processors/VisibilityProcessor";
 import { ExternalRefsProcessor } from "./processors/ExternalRefsProcessor";
 import { HeuristicsRunner } from "./heuristics/HeuristicsRunner";
-import { InstanceSlotProcessor } from "./processors/InstanceSlotProcessor";
 import { TextProcessor } from "./processors/TextProcessor";
-import { ArraySlotProcessor } from "./processors/ArraySlotProcessor";
 
 /**
  * TreeBuilder
@@ -34,8 +33,7 @@ class TreeBuilder {
   private readonly dataManager: DataManager;
   private readonly variantMerger: VariantMerger;
   private readonly propsExtractor: PropsExtractor;
-  private readonly instanceSlotProcessor: InstanceSlotProcessor;
-  private readonly arraySlotProcessor: ArraySlotProcessor;
+  private readonly slotProcessor: SlotProcessor;
   private readonly styleProcessor: StyleProcessor;
   private readonly visibilityProcessor: VisibilityProcessor;
   private readonly externalRefsProcessor: ExternalRefsProcessor;
@@ -46,8 +44,7 @@ class TreeBuilder {
     this.dataManager = dataManager;
     this.variantMerger = new VariantMerger(dataManager);
     this.propsExtractor = new PropsExtractor(dataManager);
-    this.instanceSlotProcessor = new InstanceSlotProcessor();
-    this.arraySlotProcessor = new ArraySlotProcessor(dataManager);
+    this.slotProcessor = new SlotProcessor(dataManager);
     this.styleProcessor = new StyleProcessor(dataManager);
     this.visibilityProcessor = new VisibilityProcessor();
     this.externalRefsProcessor = new ExternalRefsProcessor(dataManager);
@@ -70,14 +67,13 @@ class TreeBuilder {
     // Step 2: Props 추출/바인딩
     let props = this.propsExtractor.extract();
 
-    // Step 2.5: INSTANCE slot 변환 (visibility 제어 INSTANCE → slot)
-    props = this.instanceSlotProcessor.convertVisibilityInstanceToSlot(tree, props);
+    // Step 2.5: Slot 처리 (통합: 개별 slot + 배열 slot)
+    const slotResult = this.slotProcessor.process(tree, props);
+    props = slotResult.props;
+    let arraySlots = slotResult.arraySlots;
 
     // Step 3: 스타일 처리
     tree = this.styleProcessor.applyStyles(tree);
-
-    // Step 3.5: Array Slot 감지 (반복 INSTANCE 패턴, 기존 slot props 제외)
-    let arraySlots = this.arraySlotProcessor.detectArraySlots(tree, props);
 
     // Array Slot 중복 제거 (동일한 slotName)
     const uniqueArraySlots = Array.from(

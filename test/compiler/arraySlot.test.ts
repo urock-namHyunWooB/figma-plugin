@@ -85,8 +85,8 @@ describe("ArraySlot 감지", () => {
       const code = await compiler.compile();
 
       expect(code).not.toBeNull();
-      // interface에 items: Array<...> 패턴이 있어야 함
-      expect(code).toMatch(/items\s*:\s*Array</);
+      // interface에 items?: Array<...> 패턴이 있어야 함 (optional prop)
+      expect(code).toMatch(/items\s*\??\s*:\s*Array</);
     });
   });
 });

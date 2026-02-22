@@ -210,6 +210,14 @@ class DataManager {
   }
 
   /**
+   * 루트 document 노드 반환
+   * @returns 루트 document SceneNode
+   */
+  public getDocument(): SceneNode {
+    return this.document;
+  }
+
+  /**
    * 루트 노드 타입 반환
    * @returns 루트 document 노드의 타입 문자열
    */

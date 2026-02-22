@@ -34,12 +34,31 @@ export class PropsExtractor {
 
   /**
    * componentPropertyDefinitions에서 PropDefinition[] 추출
+   *
+   * v1 방식:
+   * 1. componentPropertyDefinitions 사용 (COMPONENT_SET)
+   * 2. 없으면 componentProperties 변환 (COMPONENT variant)
+   * 3. componentPropertyReferences에서 참조된 props 추출
    */
   public extract(): PropDefinition[] {
-    const propDefs = this.dataManager.getComponentPropertyDefinitions();
-    if (!propDefs) return [];
+    let propDefs = this.dataManager.getComponentPropertyDefinitions();
+
+    // componentPropertyDefinitions가 없으면 componentProperties 변환
+    if (!propDefs) {
+      const componentProps = this.dataManager.getComponentProperties();
+      if (componentProps) {
+        propDefs = this.convertComponentPropertiesToDefinitions(componentProps);
+      }
+    }
+
+    if (!propDefs) {
+      // 둘 다 없으면 componentPropertyReferences에서만 추출
+      return this.extractFromReferencesOnly();
+    }
 
     const result: PropDefinition[] = [];
+    const existingSourceKeys = new Set<string>();
+    const existingNames = new Set<string>();
 
     for (const [sourceKey, def] of Object.entries(propDefs)) {
       const figmaDef = def as FigmaPropertyDef;
@@ -51,11 +70,146 @@ export class PropsExtractor {
 
       const propDef = this.convertToPropDefinition(sourceKey, figmaDef);
       if (propDef) {
-        result.push(propDef);
+        // sourceKey 또는 name 중복 체크
+        if (!existingSourceKeys.has(sourceKey) && !existingNames.has(propDef.name)) {
+          result.push(propDef);
+          existingSourceKeys.add(sourceKey);
+          existingNames.add(propDef.name);
+        }
       }
     }
 
+    // componentPropertyReferences에서 참조된 props 추가 (중복 제외)
+    const referencedProps = this.extractPropsFromPropertyReferences(existingSourceKeys, existingNames);
+    result.push(...referencedProps);
+
     return result;
+  }
+
+  /**
+   * componentProperties를 componentPropertyDefinitions 형식으로 변환
+   *
+   * COMPONENT variant는 componentPropertyDefinitions가 없고 componentProperties만 있음
+   */
+  private convertComponentPropertiesToDefinitions(
+    componentProperties: Record<string, any>
+  ): Record<string, FigmaPropertyDef> {
+    const propDefs: Record<string, FigmaPropertyDef> = {};
+
+    for (const [key, value] of Object.entries(componentProperties)) {
+      // VARIANT 타입은 INSTANCE에서 사용되지 않으므로 제외
+      if (value.type === "VARIANT") {
+        continue;
+      }
+
+      propDefs[key] = {
+        type: value.type,
+        defaultValue: value.value,
+      };
+    }
+
+    return propDefs;
+  }
+
+  /**
+   * componentPropertyReferences에서 참조된 props 추출
+   *
+   * visibility 제어, text 바인딩 등에서 참조되는 props를 자동으로 추출
+   */
+  private extractPropsFromPropertyReferences(
+    existingSourceKeys: Set<string>,
+    existingNames: Set<string>
+  ): PropDefinition[] {
+    const result: PropDefinition[] = [];
+    const processedRefs = new Set<string>();
+    const document = this.dataManager.getDocument();
+
+    const traverse = (node: any) => {
+      if (!node) return;
+
+      const refs = node.componentPropertyReferences;
+      if (refs) {
+        // visible 참조 → BOOLEAN prop
+        if (refs.visible && !processedRefs.has(refs.visible)) {
+          if (!existingSourceKeys.has(refs.visible)) {
+            const name = this.normalizePropName(refs.visible);
+
+            // name 중복 체크 추가
+            if (!existingNames.has(name)) {
+              processedRefs.add(refs.visible);
+              existingNames.add(name);
+
+              result.push({
+                type: "boolean",
+                name,
+                sourceKey: refs.visible,
+                required: false,
+                defaultValue: false,
+              });
+            }
+          }
+        }
+
+        // characters 참조 → TEXT prop
+        if (refs.characters && !processedRefs.has(refs.characters)) {
+          if (!existingSourceKeys.has(refs.characters)) {
+            const name = this.normalizePropName(refs.characters);
+
+            // name 중복 체크 추가
+            if (!existingNames.has(name)) {
+              processedRefs.add(refs.characters);
+              existingNames.add(name);
+
+              result.push({
+                type: "string",
+                name,
+                sourceKey: refs.characters,
+                required: false,
+                defaultValue: node.characters || node.name || "",
+              });
+            }
+          }
+        }
+
+        // mainComponent 참조 → INSTANCE_SWAP (slot)
+        if (refs.mainComponent && !processedRefs.has(refs.mainComponent)) {
+          if (!existingSourceKeys.has(refs.mainComponent)) {
+            const name = this.normalizePropName(refs.mainComponent);
+
+            // name 중복 체크 추가
+            if (!existingNames.has(name)) {
+              processedRefs.add(refs.mainComponent);
+              existingNames.add(name);
+
+              result.push({
+                type: "slot",
+                name,
+                sourceKey: refs.mainComponent,
+                required: false,
+                defaultValue: null,
+              });
+            }
+          }
+        }
+      }
+
+      // 자식 노드 재귀 순회
+      if (node.children) {
+        for (const child of node.children) {
+          traverse(child);
+        }
+      }
+    };
+
+    traverse(document);
+    return result;
+  }
+
+  /**
+   * componentPropertyReferences에서만 props 추출 (definitions가 없는 경우)
+   */
+  private extractFromReferencesOnly(): PropDefinition[] {
+    return this.extractPropsFromPropertyReferences(new Set(), new Set());
   }
 
   /**
