@@ -212,13 +212,38 @@ export default ${componentName};`;
       textContent = `{${textBinding.prop}}`;
     } else if (node.type === "text" && node.textSegments && node.textSegments.length > 0) {
       // textSegments가 있으면 실제 텍스트 렌더링
-      textContent = node.textSegments.map(seg => seg.text).join("");
+      // 스타일이 있는 segment는 개별 span으로 렌더링
+      textContent = this.renderTextSegments(node.textSegments);
     } else {
       // 둘 다 없으면 주석
       textContent = `{/* ${node.name} */}`;
     }
 
     return `${indentStr}<span${attrs}>${textContent}</span>`;
+  }
+
+  /**
+   * textSegments를 렌더링
+   * - 스타일이 있는 segment는 개별 <span style={{...}}>로 렌더링
+   * - 스타일이 없는 segment는 텍스트만
+   */
+  private static renderTextSegments(
+    segments: Array<{ text: string; style?: Record<string, string> }>
+  ): string {
+    return segments
+      .map((seg) => {
+        if (seg.style && Object.keys(seg.style).length > 0) {
+          // 스타일이 있으면 인라인 style prop으로 렌더링
+          const styleEntries = Object.entries(seg.style)
+            .map(([key, value]) => `${key}: "${value}"`)
+            .join(", ");
+          return `<span style={{ ${styleEntries} }}>${seg.text}</span>`;
+        } else {
+          // 스타일이 없으면 텍스트만
+          return seg.text;
+        }
+      })
+      .join("");
   }
 
   /**

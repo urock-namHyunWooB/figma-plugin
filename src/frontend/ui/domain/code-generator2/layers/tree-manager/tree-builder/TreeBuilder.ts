@@ -14,6 +14,7 @@ import { VisibilityProcessor } from "./processors/VisibilityProcessor";
 import { ExternalRefsProcessor } from "./processors/ExternalRefsProcessor";
 import { HeuristicsRunner } from "./heuristics/HeuristicsRunner";
 import { InstanceSlotProcessor } from "./processors/InstanceSlotProcessor";
+import { TextProcessor } from "./processors/TextProcessor";
 
 /**
  * TreeBuilder
@@ -37,6 +38,7 @@ class TreeBuilder {
   private readonly visibilityProcessor: VisibilityProcessor;
   private readonly externalRefsProcessor: ExternalRefsProcessor;
   private readonly heuristicsRunner: HeuristicsRunner;
+  private readonly textProcessor: TextProcessor;
 
   constructor(dataManager: DataManager) {
     this.dataManager = dataManager;
@@ -47,6 +49,7 @@ class TreeBuilder {
     this.visibilityProcessor = new VisibilityProcessor();
     this.externalRefsProcessor = new ExternalRefsProcessor(dataManager);
     this.heuristicsRunner = new HeuristicsRunner();
+    this.textProcessor = new TextProcessor(dataManager);
   }
 
   // ===========================================================================
@@ -129,12 +132,9 @@ class TreeBuilder {
     }
 
     // TEXT 노드인 경우 텍스트 내용 추출
-    let textSegments: Array<{ text: string }> | undefined;
+    let textSegments: Array<{ text: string; style?: Record<string, string> }> | undefined;
     if (nodeType === "text") {
-      const node = this.dataManager.getById(tree.id).node;
-      if (node && "characters" in node && typeof node.characters === "string") {
-        textSegments = [{ text: node.characters }];
-      }
+      textSegments = this.textProcessor.processTextNode(tree.id);
     }
 
     return {
@@ -186,12 +186,9 @@ class TreeBuilder {
     }
 
     // TEXT 노드인 경우 텍스트 내용 추출
-    let textSegments: Array<{ text: string }> | undefined;
+    let textSegments: Array<{ text: string; style?: Record<string, string> }> | undefined;
     if (nodeType === "text") {
-      const sceneNode = this.dataManager.getById(node.id).node;
-      if (sceneNode && "characters" in sceneNode && typeof sceneNode.characters === "string") {
-        textSegments = [{ text: sceneNode.characters }];
-      }
+      textSegments = this.textProcessor.processTextNode(node.id);
     }
 
     return {
