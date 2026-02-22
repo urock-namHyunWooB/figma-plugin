@@ -186,11 +186,17 @@ export class StylesGenerator {
 
     // 노드에 스타일이 있으면 생성
     if (node.styles) {
+      // component 타입일 때 wrapper 변수명 사용
+      const isComponent = node.type === "component";
+      const nodeName = isComponent
+        ? this.createWrapperName(node.name)
+        : node.name;
+
       const result = styleStrategy.generateStyle(
         node.id,
-        node.name,
+        nodeName,
         node.styles,
-        currentPath
+        isComponent ? [] : currentPath // component는 경로 기반 대신 이름 기반 사용
       );
       results.push(result);
 
@@ -206,5 +212,20 @@ export class StylesGenerator {
         this.collectStyles(child, styleStrategy, results, nodeStyleMap, currentPath);
       }
     }
+  }
+
+  /**
+   * Component wrapper 변수명 생성
+   * 예: "_Normal Responsive" → "_NormalResponsive_wrapper"
+   */
+  private static createWrapperName(nodeName: string): string {
+    // 특수문자/공백 제거하고 PascalCase로 변환
+    const cleanName = nodeName
+      .replace(/^_/, "") // 앞의 언더스코어 제거
+      .split(/[\s_-]+/)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join("");
+
+    return `_${cleanName}_wrapper`;
   }
 }
