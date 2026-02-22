@@ -692,7 +692,20 @@ export class InputHeuristic implements IComponentHeuristic {
       }
     }
 
-    // 2. 부모 노드의 visible 바인딩 확인 (TEXT가 FRAME 안에 감싸진 경우)
+    // 2. nodePropBindings에서 해당 노드의 바인딩 확인
+    const existingBindings = ctx.nodePropBindings?.get(nodeId);
+    if (existingBindings) {
+      // visible 바인딩이 있으면 해당 prop 제거
+      if (existingBindings.visible && propsMap.has(existingBindings.visible)) {
+        propsMap.delete(existingBindings.visible);
+      }
+      // characters 바인딩이 있으면 해당 prop 제거 (다른 이름으로 대체될 것이므로)
+      if (existingBindings.characters && propsMap.has(existingBindings.characters)) {
+        propsMap.delete(existingBindings.characters);
+      }
+    }
+
+    // 3. 부모 노드의 visible 바인딩 확인 (TEXT가 FRAME 안에 감싸진 경우)
     if (node?.parent) {
       const parentSpec = ctx.data.getNodeById(node.parent.id) as any;
       const parentVisibleRef = parentSpec?.componentPropertyReferences?.visible;

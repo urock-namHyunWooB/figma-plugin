@@ -367,6 +367,7 @@ describe("InputHeuristic", () => {
         type: "string",
         defaultValue: "Username",
         required: false,
+        nodeId: "label-text",
       });
 
       // nodePropBindings 확인
@@ -416,6 +417,7 @@ describe("InputHeuristic", () => {
         type: "string",
         defaultValue: "Enter a valid email address",
         required: false,
+        nodeId: "helper-text",
       });
 
       // nodePropBindings 확인
@@ -505,6 +507,7 @@ describe("InputHeuristic", () => {
         type: "string",
         defaultValue: "Username",
         required: false,
+        nodeId: "label-text",
       });
 
       // nodePropBindings 교체 확인
