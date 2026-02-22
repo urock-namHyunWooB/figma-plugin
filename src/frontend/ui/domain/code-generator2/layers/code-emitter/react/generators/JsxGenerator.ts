@@ -37,13 +37,15 @@ export class JsxGenerator {
     // NodeStyleMap 설정
     this.nodeStyleMap = options.nodeStyleMap || new Map();
 
-    // Props destructuring
+    // Props destructuring (별도 줄에서 수행)
     const propsDestructuring = this.generatePropsDestructuring(uiTree);
 
     // JSX body (루트 노드는 isRoot=true로 restProps 전파)
     const jsxBody = this.generateNode(uiTree.root, styleStrategy, options, 2, true);
 
-    return `function ${componentName}(${propsDestructuring}) {
+    return `function ${componentName}(props) {
+  const ${propsDestructuring} = props;
+
   return (
 ${jsxBody}
   );
