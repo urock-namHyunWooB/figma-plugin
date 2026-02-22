@@ -44,6 +44,7 @@ export class ExternalRefsProcessor {
 
   /**
    * INSTANCE 노드의 componentId 추출
+   * dependencies에 있는 INSTANCE만 외부 참조로 처리
    */
   private extractRefId(node: InternalNode): string | undefined {
     // INSTANCE 타입이 아니면 무시
@@ -66,6 +67,11 @@ export class ExternalRefsProcessor {
 
     // componentId 추출
     const componentId = (sceneNode as any).componentId as string | undefined;
+
+    // dependencies에 없으면 외부 참조로 처리하지 않음 (v1 호환)
+    if (!componentId || !this.dataManager.getAllDependencies().has(componentId)) {
+      return undefined;
+    }
 
     return componentId;
   }

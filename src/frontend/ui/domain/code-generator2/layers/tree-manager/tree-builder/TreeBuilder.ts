@@ -157,7 +157,12 @@ class TreeBuilder {
   }
 
   private convertToUINodeRecursive(node: InternalTree): UINode {
-    const nodeType = this.mapToUINodeType(node.type);
+    let nodeType = this.mapToUINodeType(node.type);
+
+    // refId가 없는 INSTANCE는 container로 처리 (dependencies에 없는 경우)
+    if (nodeType === "component" && !node.refId) {
+      nodeType = "container";
+    }
 
     // 보이지 않는 레이아웃 노드 필터링
     const visibleChildren = node.children.filter(
