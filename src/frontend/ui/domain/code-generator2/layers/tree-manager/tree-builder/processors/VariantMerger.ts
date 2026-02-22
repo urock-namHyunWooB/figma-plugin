@@ -321,6 +321,8 @@ export class VariantMerger {
     const bounds = (node as any).absoluteBoundingBox as
       | { x: number; y: number; width: number; height: number }
       | undefined;
+    const componentPropertyReferences = (node as any)
+      .componentPropertyReferences as Record<string, string> | undefined;
 
     return {
       id: node.id,
@@ -339,6 +341,7 @@ export class VariantMerger {
         },
       ],
       bounds,
+      ...(componentPropertyReferences ? { componentPropertyReferences } : {}),
     };
   }
 
@@ -354,6 +357,8 @@ export class VariantMerger {
     const bounds = (node as any).absoluteBoundingBox as
       | { x: number; y: number; width: number; height: number }
       | undefined;
+    const componentPropertyReferences = (node as any)
+      .componentPropertyReferences as Record<string, string> | undefined;
 
     const internalNode: InternalNode = {
       id: node.id,
@@ -369,6 +374,7 @@ export class VariantMerger {
         },
       ],
       bounds,
+      ...(componentPropertyReferences ? { componentPropertyReferences } : {}),
     };
 
     if (children) {

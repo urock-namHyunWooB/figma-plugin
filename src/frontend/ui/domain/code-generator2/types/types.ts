@@ -215,6 +215,8 @@ export interface InternalNode extends UINodeBase {
     width: number;
     height: number;
   };
+  /** componentPropertyReferences (INSTANCE visibility 제어용) */
+  componentPropertyReferences?: Record<string, string>;
   /** 파이프라인 전달용 메타데이터 (UINode 변환 시 사용) */
   metadata?: {
     /** 병합된 Vector SVG (의존 컴포넌트용) */

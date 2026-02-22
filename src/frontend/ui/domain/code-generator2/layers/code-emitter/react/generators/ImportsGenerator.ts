@@ -6,6 +6,7 @@
 
 import type { UITree, UINode } from "../../../../types/types";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
+import { toComponentName } from "../../../../utils/nameUtils";
 
 export class ImportsGenerator {
   /**
@@ -36,7 +37,7 @@ export class ImportsGenerator {
     const components = new Set<string>();
 
     if (node.type === "component") {
-      const componentName = this.toComponentName(node.name);
+      const componentName = toComponentName(node.name);
       components.add(componentName);
     }
 
@@ -50,38 +51,4 @@ export class ImportsGenerator {
     return components;
   }
 
-  /**
-   * 컴포넌트 이름 변환 (PascalCase, 특수문자 제거)
-   */
-  private static toComponentName(name: string): string {
-    // 영문/숫자만 추출
-    let normalized = name
-      .replace(/[^a-zA-Z0-9\s]/g, "")
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join("");
-
-    // 영문/숫자가 없으면 fallback
-    if (!normalized || normalized.length === 0) {
-      normalized = `Component${this.simpleHash(name)}`;
-    }
-
-    // 숫자로 시작하면 앞에 _ 추가
-    if (/^[0-9]/.test(normalized)) {
-      normalized = "_" + normalized;
-    }
-
-    return normalized;
-  }
-
-  private static simpleHash(str: string): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash).toString(36).substring(0, 6);
-  }
 }

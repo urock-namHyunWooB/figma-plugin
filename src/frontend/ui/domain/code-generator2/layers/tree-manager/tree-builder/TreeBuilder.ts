@@ -13,6 +13,7 @@ import { StyleProcessor } from "./processors/StyleProcessor";
 import { VisibilityProcessor } from "./processors/VisibilityProcessor";
 import { ExternalRefsProcessor } from "./processors/ExternalRefsProcessor";
 import { HeuristicsRunner } from "./heuristics/HeuristicsRunner";
+import { InstanceSlotProcessor } from "./processors/InstanceSlotProcessor";
 
 /**
  * TreeBuilder
@@ -31,6 +32,7 @@ class TreeBuilder {
   private readonly dataManager: DataManager;
   private readonly variantMerger: VariantMerger;
   private readonly propsExtractor: PropsExtractor;
+  private readonly instanceSlotProcessor: InstanceSlotProcessor;
   private readonly styleProcessor: StyleProcessor;
   private readonly visibilityProcessor: VisibilityProcessor;
   private readonly externalRefsProcessor: ExternalRefsProcessor;
@@ -40,6 +42,7 @@ class TreeBuilder {
     this.dataManager = dataManager;
     this.variantMerger = new VariantMerger(dataManager);
     this.propsExtractor = new PropsExtractor(dataManager);
+    this.instanceSlotProcessor = new InstanceSlotProcessor();
     this.styleProcessor = new StyleProcessor(dataManager);
     this.visibilityProcessor = new VisibilityProcessor();
     this.externalRefsProcessor = new ExternalRefsProcessor(dataManager);
@@ -59,7 +62,10 @@ class TreeBuilder {
     let tree = this.variantMerger.merge(node);
 
     // Step 2: Props 추출/바인딩
-    const props = this.propsExtractor.extract();
+    let props = this.propsExtractor.extract();
+
+    // Step 2.5: INSTANCE slot 변환 (visibility 제어 INSTANCE → slot)
+    props = this.instanceSlotProcessor.convertVisibilityInstanceToSlot(tree, props);
 
     // Step 3: 스타일 처리
     tree = this.styleProcessor.applyStyles(tree);

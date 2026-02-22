@@ -6,6 +6,7 @@
 
 import type { UITree, UINode, ConditionNode, StyleObject } from "../../../../types/types";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
+import { toComponentName } from "../../../../utils/nameUtils";
 
 interface JsxGeneratorOptions {
   debug?: boolean;
@@ -229,7 +230,7 @@ export default ${componentName};`;
     }
 
     // 일반 컴포넌트 렌더링
-    const componentName = this.toComponentName(node.name);
+    const componentName = toComponentName(node.name);
     let attrs = this.generateAttributes(node, styleStrategy, options);
 
     // INSTANCE override props 추가
@@ -437,40 +438,6 @@ ${indentStr}</${tag}>`;
     return `${base}_${safeId}`;
   }
 
-  /**
-   * 컴포넌트 이름 변환 (PascalCase, 특수문자 제거)
-   */
-  private static toComponentName(name: string): string {
-    // 영문/숫자만 추출
-    let normalized = name
-      .replace(/[^a-zA-Z0-9\s]/g, "") // 특수문자 및 한글 제거
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join("");
-
-    // 영문/숫자가 없으면 fallback
-    if (!normalized || normalized.length === 0) {
-      normalized = `Component${this.simpleHash(name)}`;
-    }
-
-    // 숫자로 시작하면 앞에 _ 추가
-    if (/^[0-9]/.test(normalized)) {
-      normalized = "_" + normalized;
-    }
-
-    return normalized;
-  }
-
-  private static simpleHash(str: string): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash).toString(36).substring(0, 6);
-  }
 
   /**
    * StyleObject가 실제 스타일을 가지고 있는지 확인

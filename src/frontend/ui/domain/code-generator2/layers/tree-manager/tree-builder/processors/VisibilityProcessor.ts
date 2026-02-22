@@ -64,6 +64,15 @@ export class VisibilityProcessor {
     node: InternalNode,
     totalVariants: number
   ): ConditionNode | undefined {
+    // 1. componentPropertyReferences.visible 우선 처리 (INSTANCE visibility)
+    if (node.componentPropertyReferences?.visible) {
+      const condition = this.extractConditionFromPropertyRef(
+        node.componentPropertyReferences.visible
+      );
+      if (condition) return condition;
+    }
+
+    // 2. variant 병합 기반 조건 생성 (기존 로직)
     if (!node.mergedNodes || node.mergedNodes.length === 0) {
       return undefined;
     }
@@ -199,5 +208,38 @@ export class VisibilityProcessor {
         return word.charAt(0).toUpperCase() + word.slice(1);
       })
       .join("");
+  }
+
+  /**
+   * componentPropertyReferences.visible에서 조건 추출
+   * 예: "icon left#373:58" → { type: "truthy", prop: "iconLeft" }
+   */
+  private extractConditionFromPropertyRef(
+    visibleRef: string
+  ): ConditionNode | undefined {
+    // "#" 앞부분이 prop sourceKey (예: "icon left")
+    const sourceKey = visibleRef.split("#")[0].trim();
+    if (!sourceKey) return undefined;
+
+    // propMap에서 PropDefinition 찾기
+    const propDef = this.propMap.get(sourceKey);
+    if (!propDef) {
+      // propMap에 없으면 normalize해서 사용 (fallback)
+      const propName = this.normalizePropName(sourceKey);
+      return { type: "truthy", prop: propName };
+    }
+
+    // Boolean prop이면 truthy 조건
+    if (propDef.type === "boolean") {
+      return { type: "truthy", prop: propDef.name };
+    }
+
+    // Slot prop이면 truthy 조건 (React.ReactNode 존재 여부)
+    if (propDef.type === "slot") {
+      return { type: "truthy", prop: propDef.name };
+    }
+
+    // 기타 타입은 지원하지 않음 (필요시 확장)
+    return undefined;
   }
 }

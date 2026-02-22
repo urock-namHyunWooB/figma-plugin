@@ -34,6 +34,7 @@ import { JsxGenerator } from "./generators/JsxGenerator";
 import { EmotionStrategy } from "./style-strategy/EmotionStrategy";
 import { TailwindStrategy } from "./style-strategy/TailwindStrategy";
 import type { IStyleStrategy } from "./style-strategy/IStyleStrategy";
+import { toComponentName } from "../../../utils/nameUtils";
 
 /** 스타일 전략 타입 */
 export type StyleStrategyType = "emotion" | "tailwind";
@@ -71,7 +72,7 @@ export class ReactEmitter implements ICodeEmitter {
    */
   async emit(uiTree: UITree): Promise<EmittedCode> {
     // Step 1: 컴포넌트명 생성
-    const componentName = this.toComponentName(uiTree.root.name);
+    const componentName = toComponentName(uiTree.root.name);
 
     // Step 2: 각 섹션 생성 (독립적으로 병렬 가능)
     const sections = this.generateAllSections(uiTree, componentName);
@@ -146,42 +147,6 @@ export class ReactEmitter implements ICodeEmitter {
     }
   }
 
-  /**
-   * 컴포넌트 이름 정규화 (PascalCase, 특수문자 제거)
-   * 한글/비ASCII 문자가 포함된 경우 fallback 이름 생성
-   */
-  private toComponentName(name: string): string {
-    // 영문/숫자만 추출
-    let normalized = name
-      .replace(/[^a-zA-Z0-9\s]/g, "") // 특수문자 및 한글 제거 (슬래시 포함)
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join("");
-
-    // 영문/숫자가 없으면 fallback 이름 생성
-    if (!normalized || normalized.length === 0) {
-      const hash = this.simpleHash(name);
-      normalized = `Component${hash}`;
-    }
-
-    // 숫자로 시작하면 앞에 _ 추가
-    if (/^[0-9]/.test(normalized)) {
-      normalized = "_" + normalized;
-    }
-
-    return normalized;
-  }
-
-  private simpleHash(str: string): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash).toString(36).substring(0, 6);
-  }
 
   private async formatCode(code: string): Promise<string> {
     try {
