@@ -4,7 +4,7 @@
  * UITree에서 React 컴포넌트 JSX 생성
  */
 
-import type { UITree, UINode, ConditionNode, StyleObject } from "../../../../types/types";
+import type { UITree, UINode, ConditionNode, StyleObject, ArraySlotInfo } from "../../../../types/types";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
 import { toComponentName } from "../../../../utils/nameUtils";
 
@@ -36,6 +36,11 @@ export class JsxGenerator {
 
     // NodeStyleMap 설정
     this.nodeStyleMap = options.nodeStyleMap || new Map();
+
+    // Array Slots 설정 (parentId → ArraySlotInfo 매핑)
+    this.arraySlots = new Map(
+      uiTree.arraySlots.map((slot) => [slot.parentId, slot])
+    );
 
     // Props destructuring (별도 줄에서 수행)
     const propsDestructuring = this.generatePropsDestructuring(uiTree);
@@ -101,6 +106,9 @@ export default ${componentName};`;
 
   // nodeId → styleVariableName 매핑 (StylesGenerator에서 전달)
   private static nodeStyleMap: Map<string, string> = new Map();
+
+  // Array Slot 정보 (parentId → ArraySlotInfo 매핑)
+  private static arraySlots: Map<string, ArraySlotInfo> = new Map();
 
   /**
    * UINode를 JSX로 변환
@@ -189,6 +197,49 @@ export default ${componentName};`;
       default:
         return this.generateContainerNode(node, styleStrategy, options, indent, isRoot);
     }
+  }
+
+  /**
+   * Array Slot .map() 렌더링 생성
+   *
+   * {items.map((item, index) => (
+   *   <NavigationItem key={index} label={item.label} />
+   * ))}
+   */
+  private static generateArraySlotMap(
+    arraySlot: ArraySlotInfo,
+    parentNode: UINode,
+    styleStrategy: IStyleStrategy,
+    options: JsxGeneratorOptions,
+    indent: number
+  ): string {
+    const indentStr = " ".repeat(indent);
+
+    // Array Slot에 포함된 첫 번째 자식 노드 찾기
+    const firstNodeId = arraySlot.nodeIds[0];
+    const arrayItemNode = parentNode.children.find((child) => child.id === firstNodeId);
+
+    if (!arrayItemNode) {
+      // Array Slot 노드를 찾을 수 없으면 일반 렌더링
+      return parentNode.children
+        .map((child) => this.generateNode(child, styleStrategy, options, indent, false))
+        .join("\n");
+    }
+
+    // 외부 컴포넌트 이름 (refId에서 추출 또는 itemComponentName 사용)
+    const componentName = arraySlot.itemComponentName || toComponentName(arrayItemNode.name);
+
+    // item props 매핑 (itemProps에서 prop 이름 목록 추출)
+    const itemPropsMapping = arraySlot.itemProps || [];
+
+    // props 전달 문자열 생성
+    const propsStr = itemPropsMapping.length > 0
+      ? " " + itemPropsMapping.map((p) => `${p.name}={item.${p.name}}`).join(" ")
+      : "";
+
+    return `${indentStr}{${arraySlot.slotName}.map((item, index) => (
+${indentStr}  <${componentName} key={index}${propsStr} />
+${indentStr}))}`;
   }
 
   /**
@@ -354,10 +405,19 @@ ${indentStr}</div>`;
       return `${indentStr}<${tag}${attrs} />`;
     }
 
-    // 자식 렌더링 (isRoot는 전파하지 않음)
-    const childrenJsx = node.children
-      .map((child) => this.generateNode(child, styleStrategy, options, indent + 2, false))
-      .join("\n");
+    // Array Slot 확인
+    const arraySlot = this.arraySlots.get(node.id);
+    let childrenJsx: string;
+
+    if (arraySlot) {
+      // Array Slot이 있으면 .map() 렌더링
+      childrenJsx = this.generateArraySlotMap(arraySlot, node, styleStrategy, options, indent + 2);
+    } else {
+      // 일반 children 렌더링 (isRoot는 전파하지 않음)
+      childrenJsx = node.children
+        .map((child) => this.generateNode(child, styleStrategy, options, indent + 2, false))
+        .join("\n");
+    }
 
     return `${indentStr}<${tag}${attrs}>
 ${childrenJsx}

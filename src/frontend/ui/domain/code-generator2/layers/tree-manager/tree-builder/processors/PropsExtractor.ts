@@ -191,6 +191,7 @@ export class PropsExtractor {
    */
   private normalizePropName(sourceKey: string): string {
     // 0. 제어 문자 제거 (0x00-0x1F, 0x7F) - Figma export 데이터에 포함될 수 있음
+    // eslint-disable-next-line no-control-regex
     const sanitized = sourceKey.replace(/[\x00-\x1F\x7F]/g, "");
 
     // 1. # 이후 노드 ID 제거

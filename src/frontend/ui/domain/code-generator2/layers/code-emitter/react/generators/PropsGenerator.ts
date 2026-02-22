@@ -14,12 +14,15 @@ export class PropsGenerator {
     const props = uiTree.props;
 
     if (props.length === 0) {
-      return `interface ${componentName}Props {}`;
+      return `export interface ${componentName}Props {}`;
     }
 
-    const propLines = props.map((prop) => this.generatePropLine(prop));
+    // Array Slot 이름 집합 생성 (빠른 조회용)
+    const arraySlotNames = new Set(uiTree.arraySlots.map((slot) => slot.slotName));
 
-    return `interface ${componentName}Props {
+    const propLines = props.map((prop) => this.generatePropLine(prop, arraySlotNames, uiTree));
+
+    return `export interface ${componentName}Props {
 ${propLines.join("\n")}
 }`;
   }
@@ -27,9 +30,13 @@ ${propLines.join("\n")}
   /**
    * 개별 prop 라인 생성
    */
-  private static generatePropLine(prop: PropDefinition): string {
+  private static generatePropLine(
+    prop: PropDefinition,
+    arraySlotNames: Set<string>,
+    uiTree: UITree
+  ): string {
     const optional = prop.required ? "" : "?";
-    const type = this.getTypeString(prop);
+    const type = this.getTypeString(prop, arraySlotNames, uiTree);
     const comment = this.getDefaultValueComment(prop);
 
     return `  ${prop.name}${optional}: ${type};${comment}`;
@@ -38,12 +45,32 @@ ${propLines.join("\n")}
   /**
    * TypeScript 타입 문자열 생성
    */
-  private static getTypeString(prop: PropDefinition): string {
+  private static getTypeString(
+    prop: PropDefinition,
+    arraySlotNames: Set<string>,
+    uiTree: UITree
+  ): string {
+    // Array Slot인 경우 Array 타입 생성
+    if (prop.type === "slot" && arraySlotNames.has(prop.name)) {
+      const arraySlot = uiTree.arraySlots.find((slot) => slot.slotName === prop.name);
+      if (arraySlot && arraySlot.itemProps && arraySlot.itemProps.length > 0) {
+        // itemProps가 있으면 구체적인 타입 생성
+        const itemPropsStr = arraySlot.itemProps
+          .map((p) => `${p.name}: ${p.type === "string" ? "string" : "any"}`)
+          .join("; ");
+        return `Array<{ ${itemPropsStr} }>`;
+      } else {
+        // itemProps가 없으면 React.ReactNode 배열
+        return "Array<React.ReactNode>";
+      }
+    }
+
     switch (prop.type) {
-      case "variant":
+      case "variant": {
         // union type 생성
         const options = prop.options.map((opt) => `"${opt}"`).join(" | ");
         return options || "string";
+      }
 
       case "boolean":
         return "boolean";

@@ -139,6 +139,28 @@ export type PropDefinition =
   | StringPropDefinition;
 
 // ============================================================================
+// Array Slot Types
+// ============================================================================
+
+/**
+ * Array Slot 정보
+ *
+ * 동일한 컴포넌트가 반복되는 패턴 감지 → .map() 렌더링
+ */
+export interface ArraySlotInfo {
+  /** 부모 노드 ID */
+  parentId: string;
+  /** 반복되는 노드들의 ID 목록 */
+  nodeIds: string[];
+  /** 슬롯 prop 이름 (예: "items") */
+  slotName: string;
+  /** 참조하는 외부 컴포넌트 이름 (예: "NavigationItem") */
+  itemComponentName?: string;
+  /** 아이템 컴포넌트의 Props (예: [{ name: "label", type: "string" }]) */
+  itemProps?: Array<{ name: string; type: string; defaultValue?: string }>;
+}
+
+// ============================================================================
 // UITree / UINode Types
 // ============================================================================
 
@@ -340,4 +362,5 @@ export interface UITree {
   root: UINode;
   componentType?: ComponentType;
   props: PropDefinition[];
+  arraySlots: ArraySlotInfo[];
 }

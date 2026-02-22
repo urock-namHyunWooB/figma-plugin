@@ -92,7 +92,7 @@ export function shouldBeInstanceSlot(
  */
 export function generateInstanceSlotPropName(nodeName: string): string {
   // "_" prefix 제거
-  let cleaned = nodeName.replace(/^_+/, "");
+  const cleaned = nodeName.replace(/^_+/, "");
 
   // camelCase 변환
   const camelCase = cleaned

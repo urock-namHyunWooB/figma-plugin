@@ -1,6 +1,16 @@
 import type { InternalNode, PropDefinition } from "../../../../types/types";
 
 /**
+ * SlotBindingInfo
+ *
+ * prop과 INSTANCE 노드 ID의 매핑 정보
+ */
+interface SlotBindingInfo {
+  sourceKey: string;
+  nodeIds: Set<string>; // 이 prop과 연결된 INSTANCE 노드 ID들
+}
+
+/**
  * InstanceSlotProcessor
  *
  * visibility prop으로 제어되는 INSTANCE를 slot으로 변환
@@ -29,19 +39,23 @@ export class InstanceSlotProcessor {
     const propMap = new Map(props.map((p) => [p.sourceKey, p]));
 
     // visibility 제어 INSTANCE의 prop 이름과 노드 ID 수집
-    const slotInfo = new Map<string, string>(); // propName → nodeId
+    // propName → SlotBindingInfo (sourceKey + 연결된 INSTANCE ID들)
+    const slotInfo = new Map<string, SlotBindingInfo>();
+
+    // nodeId → propName 역매핑 (INSTANCE에서 정확한 prop을 찾기 위해)
+    const nodeToSlotProp = new Map<string, string>();
 
     // 1. componentPropertyReferences.visible 방식 (BOOLEAN 타입)
-    this.collectVisibilityProps(root, propMap, slotInfo);
+    this.collectVisibilityProps(root, propMap, slotInfo, nodeToSlotProp);
 
     // 2. VARIANT True/False 패턴 방식 (visibility-pattern)
-    this.collectVariantVisibilitySlots(root, props, slotInfo);
+    this.collectVariantVisibilitySlots(root, props, slotInfo, nodeToSlotProp);
 
     // INSTANCE 노드에 bindings 설정 (slot prop 바인딩)
-    this.applySlotBindings(root, propMap, slotInfo);
+    this.applySlotBindings(root, propMap, slotInfo, nodeToSlotProp);
 
     // 3. VARIANT True/False 패턴으로 감지된 INSTANCE에도 bindings 적용
-    this.applyVariantSlotBindings(root, props, slotInfo);
+    this.applyVariantSlotBindings(root, props, slotInfo, nodeToSlotProp);
 
     // boolean prop → slot으로 업그레이드
     return props.map((prop) => {
@@ -64,7 +78,8 @@ export class InstanceSlotProcessor {
   private collectVisibilityProps(
     node: InternalNode,
     propMap: Map<string, PropDefinition>,
-    slotInfo: Map<string, string> // propName → sourceKey
+    slotInfo: Map<string, SlotBindingInfo>,
+    nodeToSlotProp: Map<string, string>
   ): void {
     // INSTANCE 노드이고 componentPropertyReferences.visible이 있으면
     if (
@@ -81,14 +96,24 @@ export class InstanceSlotProcessor {
 
       if (propDef && propDef.type === "boolean") {
         // boolean 타입이면 slot으로 변환 대상
-        slotInfo.set(propDef.name, sourceKey);
+        const existing = slotInfo.get(propDef.name);
+        if (existing) {
+          existing.nodeIds.add(node.id);
+        } else {
+          slotInfo.set(propDef.name, {
+            sourceKey,
+            nodeIds: new Set([node.id]),
+          });
+        }
+        // 역매핑 추가
+        nodeToSlotProp.set(node.id, propDef.name);
       }
     }
 
     // 자식 노드 재귀 처리
     if (node.children) {
       for (const child of node.children) {
-        this.collectVisibilityProps(child, propMap, slotInfo);
+        this.collectVisibilityProps(child, propMap, slotInfo, nodeToSlotProp);
       }
     }
   }
@@ -105,7 +130,8 @@ export class InstanceSlotProcessor {
   private collectVariantVisibilitySlots(
     root: InternalNode,
     props: PropDefinition[],
-    slotInfo: Map<string, string>
+    slotInfo: Map<string, SlotBindingInfo>,
+    nodeToSlotProp: Map<string, string>
   ): void {
     // slot 타입 props 중 visibility-pattern 후보 수집
     // (icon, image 등의 패턴 + VARIANT True/False에서 온 것)
@@ -119,7 +145,7 @@ export class InstanceSlotProcessor {
     if (slotPatternProps.length === 0) return;
 
     // 각 slot prop에 대해 INSTANCE 탐색
-    this.traverseAndCollectVariantSlots(root, slotPatternProps, slotInfo);
+    this.traverseAndCollectVariantSlots(root, slotPatternProps, slotInfo, nodeToSlotProp);
   }
 
   /**
@@ -128,12 +154,14 @@ export class InstanceSlotProcessor {
   private traverseAndCollectVariantSlots(
     node: InternalNode,
     slotPatternProps: PropDefinition[],
-    slotInfo: Map<string, string>
+    slotInfo: Map<string, SlotBindingInfo>,
+    nodeToSlotProp: Map<string, string>
   ): void {
     // INSTANCE 노드이고 mergedNodes가 있으면
     if (node.type === "INSTANCE" && node.mergedNodes?.length) {
       for (const prop of slotPatternProps) {
-        if (slotInfo.has(prop.name)) continue;
+        // 이미 이 노드가 다른 prop에 연결되어 있으면 스킵
+        if (nodeToSlotProp.has(node.id)) continue;
 
         // sourceKey에서 prop 이름 추출 ("Left Icon#123:456" → "Left Icon")
         const propKey = prop.sourceKey.split("#")[0].trim();
@@ -151,7 +179,19 @@ export class InstanceSlotProcessor {
 
         // True variant에만 존재하면 이 prop과 연결
         if (hasTrue && !hasFalse) {
-          slotInfo.set(prop.name, prop.sourceKey);
+          const existing = slotInfo.get(prop.name);
+          if (existing) {
+            existing.nodeIds.add(node.id);
+          } else {
+            slotInfo.set(prop.name, {
+              sourceKey: prop.sourceKey,
+              nodeIds: new Set([node.id]),
+            });
+          }
+          // 역매핑 추가 - 이 노드는 이 prop과 연결됨
+          nodeToSlotProp.set(node.id, prop.name);
+          // 이 노드는 하나의 prop과만 연결되어야 하므로 break
+          break;
         }
       }
     }
@@ -159,7 +199,7 @@ export class InstanceSlotProcessor {
     // 자식 노드 재귀 처리
     if (node.children) {
       for (const child of node.children) {
-        this.traverseAndCollectVariantSlots(child, slotPatternProps, slotInfo);
+        this.traverseAndCollectVariantSlots(child, slotPatternProps, slotInfo, nodeToSlotProp);
       }
     }
   }
@@ -171,7 +211,8 @@ export class InstanceSlotProcessor {
   private applySlotBindings(
     node: InternalNode,
     propMap: Map<string, PropDefinition>,
-    slotInfo: Map<string, string> // propName → sourceKey
+    slotInfo: Map<string, SlotBindingInfo>,
+    nodeToSlotProp: Map<string, string>
   ): void {
     // INSTANCE 노드이고 visibility prop이 있으면
     if (
@@ -193,53 +234,41 @@ export class InstanceSlotProcessor {
     // 자식 노드 재귀 처리
     if (node.children) {
       for (const child of node.children) {
-        this.applySlotBindings(child, propMap, slotInfo);
+        this.applySlotBindings(child, propMap, slotInfo, nodeToSlotProp);
       }
     }
   }
 
   /**
    * VARIANT visibility-pattern INSTANCE에 bindings 적용
+   *
+   * nodeToSlotProp 역매핑을 사용하여 정확한 prop을 찾습니다.
    */
   private applyVariantSlotBindings(
     node: InternalNode,
     props: PropDefinition[],
-    slotInfo: Map<string, string>
+    slotInfo: Map<string, SlotBindingInfo>,
+    nodeToSlotProp: Map<string, string>
   ): void {
-    // INSTANCE 노드이고 아직 bindings가 없고 mergedNodes가 있으면
+    // INSTANCE 노드이고 아직 bindings가 없으면
     if (
       node.type === "INSTANCE" &&
-      !node.bindings?.content &&
-      node.mergedNodes?.length
+      !node.bindings?.content
     ) {
-      // 이 INSTANCE와 연결된 slot prop 찾기
-      for (const [propName, sourceKey] of slotInfo.entries()) {
-        const propKey = sourceKey.split("#")[0].trim();
-        const truePatterns = [`${propKey}=True`, `${propKey}=true`];
-        const falsePatterns = [`${propKey}=False`, `${propKey}=false`];
-
-        const hasTrue = node.mergedNodes.some((m) =>
-          truePatterns.some((p) => m.variantName?.includes(p))
-        );
-        const hasFalse = node.mergedNodes.some((m) =>
-          falsePatterns.some((p) => m.variantName?.includes(p))
-        );
-
-        // True variant에만 존재하면 bindings 적용
-        if (hasTrue && !hasFalse) {
-          node.bindings = {
-            ...node.bindings,
-            content: { prop: propName },
-          };
-          break; // 하나의 prop만 연결
-        }
+      // 역매핑에서 이 노드와 연결된 prop 찾기
+      const propName = nodeToSlotProp.get(node.id);
+      if (propName) {
+        node.bindings = {
+          ...node.bindings,
+          content: { prop: propName },
+        };
       }
     }
 
     // 자식 노드 재귀 처리
     if (node.children) {
       for (const child of node.children) {
-        this.applyVariantSlotBindings(child, props, slotInfo);
+        this.applyVariantSlotBindings(child, props, slotInfo, nodeToSlotProp);
       }
     }
   }

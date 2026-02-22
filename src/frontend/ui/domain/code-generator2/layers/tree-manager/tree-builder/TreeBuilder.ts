@@ -15,6 +15,7 @@ import { ExternalRefsProcessor } from "./processors/ExternalRefsProcessor";
 import { HeuristicsRunner } from "./heuristics/HeuristicsRunner";
 import { InstanceSlotProcessor } from "./processors/InstanceSlotProcessor";
 import { TextProcessor } from "./processors/TextProcessor";
+import { ArraySlotProcessor } from "./processors/ArraySlotProcessor";
 
 /**
  * TreeBuilder
@@ -34,6 +35,7 @@ class TreeBuilder {
   private readonly variantMerger: VariantMerger;
   private readonly propsExtractor: PropsExtractor;
   private readonly instanceSlotProcessor: InstanceSlotProcessor;
+  private readonly arraySlotProcessor: ArraySlotProcessor;
   private readonly styleProcessor: StyleProcessor;
   private readonly visibilityProcessor: VisibilityProcessor;
   private readonly externalRefsProcessor: ExternalRefsProcessor;
@@ -45,6 +47,7 @@ class TreeBuilder {
     this.variantMerger = new VariantMerger(dataManager);
     this.propsExtractor = new PropsExtractor(dataManager);
     this.instanceSlotProcessor = new InstanceSlotProcessor();
+    this.arraySlotProcessor = new ArraySlotProcessor(dataManager);
     this.styleProcessor = new StyleProcessor(dataManager);
     this.visibilityProcessor = new VisibilityProcessor();
     this.externalRefsProcessor = new ExternalRefsProcessor(dataManager);
@@ -73,6 +76,30 @@ class TreeBuilder {
     // Step 3: 스타일 처리
     tree = this.styleProcessor.applyStyles(tree);
 
+    // Step 3.5: Array Slot 감지 (반복 INSTANCE 패턴)
+    let arraySlots = this.arraySlotProcessor.detectArraySlots(tree);
+
+    // Array Slot 중복 제거 (동일한 slotName)
+    const uniqueArraySlots = Array.from(
+      new Map(arraySlots.map((slot) => [slot.slotName, slot])).values()
+    );
+    arraySlots = uniqueArraySlots;
+
+    // Array Slot에 대한 props 추가 (중복 확인)
+    const existingPropNames = new Set(props.map((p) => p.name));
+    for (const slot of arraySlots) {
+      if (!existingPropNames.has(slot.slotName)) {
+        props.push({
+          name: slot.slotName,
+          type: "slot",  // Array slot은 slot 타입으로 처리
+          required: true,
+          sourceKey: slot.slotName,
+          defaultValue: undefined,
+        });
+        existingPropNames.add(slot.slotName);
+      }
+    }
+
     // Step 4: 가시성 조건 (props 전달하여 rename 매핑 사용)
     tree = this.visibilityProcessor.applyVisibility(tree, props);
 
@@ -89,6 +116,7 @@ class TreeBuilder {
       root,
       props,
       componentType: heuristicsResult.componentType,
+      arraySlots,
     };
   }
 
