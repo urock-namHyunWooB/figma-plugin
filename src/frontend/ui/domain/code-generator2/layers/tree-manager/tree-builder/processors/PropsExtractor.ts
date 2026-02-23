@@ -75,11 +75,6 @@ export class PropsExtractor {
     for (const [sourceKey, def] of Object.entries(propDefs)) {
       const figmaDef = def as FigmaPropertyDef;
 
-      // State 관련 prop은 제외 (CSS pseudo-class 변환 대상)
-      if (this.isStateProp(sourceKey)) {
-        continue;
-      }
-
       const propDef = this.convertToPropDefinition(sourceKey, figmaDef);
       if (propDef) {
         // sourceKey 또는 name 중복 체크
@@ -154,11 +149,6 @@ export class PropsExtractor {
       const [propName, propValue] = pair.split("=").map((s) => s.trim());
 
       if (propName && propValue) {
-        // State prop은 제외 (CSS pseudo-class로 처리됨)
-        if (this.isStateProp(propName)) {
-          continue;
-        }
-
         // 현재 variant의 값만 알 수 있으므로 variantOptions는 현재 값만 포함
         propDefs[propName] = {
           type: "VARIANT",
