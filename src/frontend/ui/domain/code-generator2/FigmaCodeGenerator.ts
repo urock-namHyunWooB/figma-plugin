@@ -174,10 +174,8 @@ export class FigmaCodeGenerator {
           return true;
         });
 
-        const depCodes = uniqueDeps
-          .map(dep => this.renameCssVariables(dep.code, dep.componentName))
-          .join("\n\n");
-        return `${depCodes}\n\n${result.main.code}`;
+        // 번들링: import 정리 + 코드 결합
+        return this.bundleCode(result.main, uniqueDeps);
       }
 
       return result.main.code;
@@ -185,6 +183,53 @@ export class FigmaCodeGenerator {
       console.error("Compile error:", e);
       return null;
     }
+  }
+
+  /**
+   * 메인 코드와 dependencies를 번들링 (import 정리)
+   */
+  private bundleCode(main: EmittedCode, deps: EmittedCode[]): string {
+    const allCodes = [...deps, main];
+
+    // Step 1: 모든 코드에서 import 추출
+    const reactImports = new Set<string>();
+
+    for (const emitted of allCodes) {
+      const importMatches = emitted.code.matchAll(/^import .+ from ['""](.+)['""]/gm);
+      for (const match of importMatches) {
+        const importLine = match[0];
+        const importPath = match[1];
+
+        // React/스타일 라이브러리 import는 유지
+        if (importPath === "react" || importPath === "@emotion/react" || importPath.includes("tailwind")) {
+          reactImports.add(importLine);
+        }
+      }
+    }
+
+    // Step 2: dependency 코드에서 모든 import 제거 + CSS 변수명 변경
+    const depCodesClean = deps.map(dep => {
+      let code = this.renameCssVariables(dep.code, dep.componentName);
+      // 모든 import 제거
+      code = code.replace(/^import .+;?\n/gm, "");
+      return code.trim();
+    });
+
+    // Step 3: main 코드에서 모든 import 제거
+    let mainCodeClean = main.code;
+    mainCodeClean = mainCodeClean.replace(/^import .+;?\n/gm, "");
+    mainCodeClean = mainCodeClean.trim();
+
+    // Step 4: 결합 (React imports + dependencies + main)
+    const bundled = [
+      Array.from(reactImports).join("\n"),
+      "",
+      depCodesClean.join("\n\n"),
+      "",
+      mainCodeClean,
+    ].join("\n");
+
+    return bundled;
   }
 
   /**
