@@ -400,8 +400,11 @@ ${indentStr}</div>`;
       attrs += " {...restProps}";
     }
 
-    // 자식이 없으면 self-closing
-    if (!("children" in node) || !node.children || node.children.length === 0) {
+    // Void elements는 항상 self-closing (자식 가질 수 없음)
+    const isVoidElement = this.isVoidElement(tag);
+
+    // 자식이 없거나 void element이면 self-closing
+    if (isVoidElement || !("children" in node) || !node.children || node.children.length === 0) {
       return `${indentStr}<${tag}${attrs} />`;
     }
 
@@ -422,6 +425,17 @@ ${indentStr}</div>`;
     return `${indentStr}<${tag}${attrs}>
 ${childrenJsx}
 ${indentStr}</${tag}>`;
+  }
+
+  /**
+   * HTML void elements (자식을 가질 수 없는 태그들)
+   */
+  private static isVoidElement(tag: string): boolean {
+    const voidElements = new Set([
+      "area", "base", "br", "col", "embed", "hr", "img", "input",
+      "link", "meta", "param", "source", "track", "wbr"
+    ]);
+    return voidElements.has(tag);
   }
 
   /**
