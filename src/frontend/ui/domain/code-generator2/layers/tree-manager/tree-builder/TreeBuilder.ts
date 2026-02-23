@@ -65,7 +65,7 @@ class TreeBuilder {
     let tree = this.variantMerger.merge(node);
 
     // Step 2: Props 추출/바인딩
-    let props = this.propsExtractor.extract();
+    let props = this.propsExtractor.extract(node);
 
     // Step 2.5: Slot 처리 (통합: 개별 slot + 배열 slot)
     const slotResult = this.slotProcessor.process(tree, props);

@@ -38,22 +38,34 @@ export class PropsExtractor {
    * v1 방식:
    * 1. componentPropertyDefinitions 사용 (COMPONENT_SET)
    * 2. 없으면 componentProperties 변환 (COMPONENT variant)
-   * 3. componentPropertyReferences에서 참조된 props 추출
+   * 3. 없으면 variant 이름에서 추론 (COMPONENT variant)
+   * 4. componentPropertyReferences에서 참조된 props 추출
+   *
+   * @param node - 빌드 중인 노드 (dependency 빌드 시 필요)
    */
-  public extract(): PropDefinition[] {
-    let propDefs = this.dataManager.getComponentPropertyDefinitions();
+  public extract(node?: SceneNode): PropDefinition[] {
+    // node가 전달되면 그걸 사용, 아니면 dataManager의 document 사용
+    const targetNode = node || this.dataManager.getDocument();
+
+    // targetNode에서 직접 componentPropertyDefinitions 읽기
+    let propDefs = (targetNode as any).componentPropertyDefinitions || null;
 
     // componentPropertyDefinitions가 없으면 componentProperties 변환
     if (!propDefs) {
-      const componentProps = this.dataManager.getComponentProperties();
+      const componentProps = (targetNode as any).componentProperties || null;
       if (componentProps) {
         propDefs = this.convertComponentPropertiesToDefinitions(componentProps);
       }
     }
 
+    // 둘 다 없으면 variant 이름에서 추론 (COMPONENT variant의 경우)
     if (!propDefs) {
-      // 둘 다 없으면 componentPropertyReferences에서만 추출
-      return this.extractFromReferencesOnly();
+      propDefs = this.inferComponentPropertyDefinitionsFromVariantName(targetNode);
+    }
+
+    if (!propDefs) {
+      // 그래도 없으면 componentPropertyReferences에서만 추출
+      return this.extractFromReferencesOnly(targetNode);
     }
 
     const result: PropDefinition[] = [];
@@ -80,7 +92,7 @@ export class PropsExtractor {
     }
 
     // componentPropertyReferences에서 참조된 props 추가 (중복 제외)
-    const referencedProps = this.extractPropsFromPropertyReferences(existingSourceKeys, existingNames);
+    const referencedProps = this.extractPropsFromPropertyReferences(existingSourceKeys, existingNames, targetNode);
     result.push(...referencedProps);
 
     return result;
@@ -112,17 +124,70 @@ export class PropsExtractor {
   }
 
   /**
+   * variant 이름에서 componentPropertyDefinitions 추론
+   *
+   * COMPONENT variant는 componentPropertyDefinitions가 null인 경우가 많음
+   * 이 경우 document.name ("State=Normal, Guide Text=False")을 파싱해서 props 추론
+   *
+   * v1의 DependencyManager._inferComponentPropertyDefinitions() 참고
+   */
+  private inferComponentPropertyDefinitionsFromVariantName(node: SceneNode): Record<string, FigmaPropertyDef> | null {
+    const document = node;
+
+    // COMPONENT 타입이 아니면 추론 불가
+    if (document.type !== "COMPONENT") {
+      return null;
+    }
+
+    const variantName = document.name;
+
+    if (!variantName || !variantName.includes("=")) {
+      return null;
+    }
+
+    const propDefs: Record<string, FigmaPropertyDef> = {};
+
+    // "State=Normal, Guide Text=False" 형식 파싱
+    const propPairs = variantName.split(",").map((s) => s.trim());
+
+    for (const pair of propPairs) {
+      const [propName, propValue] = pair.split("=").map((s) => s.trim());
+
+      if (propName && propValue) {
+        // State prop은 제외 (CSS pseudo-class로 처리됨)
+        if (this.isStateProp(propName)) {
+          continue;
+        }
+
+        // 현재 variant의 값만 알 수 있으므로 variantOptions는 현재 값만 포함
+        propDefs[propName] = {
+          type: "VARIANT",
+          defaultValue: propValue,
+          variantOptions: [propValue], // 단일 variant이므로 현재 값만
+        };
+      }
+    }
+
+    if (Object.keys(propDefs).length > 0) {
+      return propDefs;
+    }
+
+    return null;
+  }
+
+  /**
    * componentPropertyReferences에서 참조된 props 추출
    *
    * visibility 제어, text 바인딩 등에서 참조되는 props를 자동으로 추출
    */
   private extractPropsFromPropertyReferences(
     existingSourceKeys: Set<string>,
-    existingNames: Set<string>
+    existingNames: Set<string>,
+    node: SceneNode
   ): PropDefinition[] {
     const result: PropDefinition[] = [];
     const processedRefs = new Set<string>();
-    const document = this.dataManager.getDocument();
+    const document = node;
 
     const traverse = (node: any) => {
       if (!node) return;
@@ -208,8 +273,8 @@ export class PropsExtractor {
   /**
    * componentPropertyReferences에서만 props 추출 (definitions가 없는 경우)
    */
-  private extractFromReferencesOnly(): PropDefinition[] {
-    return this.extractPropsFromPropertyReferences(new Set(), new Set());
+  private extractFromReferencesOnly(node: SceneNode): PropDefinition[] {
+    return this.extractPropsFromPropertyReferences(new Set(), new Set(), node);
   }
 
   /**

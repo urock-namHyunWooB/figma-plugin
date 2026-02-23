@@ -128,15 +128,64 @@ class TreeManager {
     componentSetName: string,
     variants: any[]
   ): UITree {
+    // v1 방식: variant 이름에서 componentPropertyDefinitions 추론
+    const inferredProps = this.inferComponentPropertyDefinitions(variants);
+
     // Synthetic COMPONENT_SET 노드 생성
     const syntheticComponentSet = {
       id: componentSetId,
       name: componentSetName,
       type: "COMPONENT_SET" as const,
       children: variants.map((v) => v.info.document),
+      componentPropertyDefinitions: inferredProps, // 추론된 props 설정
     };
 
     return this.treeBuilder.build(syntheticComponentSet);
+  }
+
+  /**
+   * variant 이름에서 componentPropertyDefinitions 추론
+   * 예: "State=Normal, Guide Text=False" → { State: {...}, "Guide Text": {...} }
+   *
+   * v1의 DependencyManager._inferComponentPropertyDefinitions() 방식
+   */
+  private inferComponentPropertyDefinitions(
+    variants: any[]
+  ): Record<string, any> {
+    // 각 prop별로 모든 옵션 수집
+    const propOptionsMap: Record<string, Set<string>> = {};
+
+    for (const variant of variants) {
+      const variantName = variant.info.document.name;
+      // "State=Normal, Guide Text=False" 형식 파싱
+      const propPairs = variantName.split(",").map((s: string) => s.trim());
+
+      for (const pair of propPairs) {
+        const [propName, propValue] = pair.split("=").map((s: string) => s.trim());
+        if (propName && propValue) {
+          if (!propOptionsMap[propName]) {
+            propOptionsMap[propName] = new Set();
+          }
+          propOptionsMap[propName].add(propValue);
+        }
+      }
+    }
+
+    // componentPropertyDefinitions 구성
+    const definitions: Record<string, any> = {};
+    for (const [propName, options] of Object.entries(propOptionsMap)) {
+      const variantOptions = Array.from(options);
+      // 첫 번째 variant의 값을 defaultValue로 사용
+      const defaultValue = variantOptions[0];
+
+      definitions[propName] = {
+        type: "VARIANT",
+        variantOptions,
+        defaultValue,
+      };
+    }
+
+    return definitions;
   }
 }
 
