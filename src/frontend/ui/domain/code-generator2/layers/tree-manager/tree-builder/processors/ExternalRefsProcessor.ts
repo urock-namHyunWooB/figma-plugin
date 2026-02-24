@@ -35,8 +35,19 @@ export class ExternalRefsProcessor {
       }
     }
 
+    // v1 호환: INSTANCE 노드의 이름을 dependency의 ComponentSet 이름으로 변경
+    // INSTANCE 이름 "Plus"가 아닌, dependency 이름 "Theme=Line" → "Themeline" 사용
+    let name = node.name;
+    if (refId) {
+      const depName = this.resolveDependencyName(refId);
+      if (depName) {
+        name = depName;
+      }
+    }
+
     return {
       ...node,
+      name,
       ...(refId ? { refId } : {}),
       children,
     };
@@ -74,6 +85,37 @@ export class ExternalRefsProcessor {
     }
 
     return componentId;
+  }
+
+  /**
+   * v1 호환: dependency의 ComponentSet 이름 결정
+   *
+   * 우선순위 (v1 InstanceProcessor.buildExternalRef 참고):
+   * 1. componentSets[componentSetId].name (ComponentSet 이름)
+   * 2. document.name (dependency 문서 이름)
+   * 3. null (원래 INSTANCE 이름 유지)
+   */
+  private resolveDependencyName(componentId: string): string | null {
+    const depSpec = this.dataManager.getAllDependencies().get(componentId);
+    if (!depSpec) return null;
+
+    // ComponentSet 이름 우선
+    const componentInfo = depSpec.info.components?.[componentId] as
+      | { componentSetId?: string }
+      | undefined;
+    const componentSetId = componentInfo?.componentSetId;
+
+    if (componentSetId) {
+      const componentSetInfo = depSpec.info.componentSets?.[componentSetId] as
+        | { name?: string }
+        | undefined;
+      if (componentSetInfo?.name) {
+        return componentSetInfo.name;
+      }
+    }
+
+    // ComponentSet 이름이 없으면 document.name
+    return depSpec.info.document?.name || null;
   }
 
   /**

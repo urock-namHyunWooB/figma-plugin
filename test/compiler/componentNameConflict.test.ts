@@ -67,9 +67,9 @@ describe("컴포넌트 이름 충돌 처리", () => {
     const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
-    // _Label 함수 추출
+    // _Label 컴포넌트 추출 (arrow function)
     const depMatch = result?.match(
-      /function _Label[\s\S]*?return[\s\S]*?(?=\nfunction\s|\nexport\s|\/\/\s*===)/
+      /const _Label[\s\S]*?=>\s*\{[\s\S]*?return[\s\S]*?(?=\nconst\s[A-Z]|\nexport\s|\/\/\s*===)/
     );
 
     expect(depMatch).not.toBeNull();

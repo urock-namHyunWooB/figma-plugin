@@ -15,10 +15,12 @@
  * - "123button" → "_123button"
  */
 export function toComponentName(name: string): string {
-  // 영문/숫자/밑줄/하이픈만 보존
+  // v1 호환: 특수문자(하이픈, 밑줄, 슬래시 등) 제거, 공백으로만 분리
+  // "icon-anchor" → "iconanchor" → "Iconanchor"
+  // "Header/Sub" → "HeaderSub" → "Headersub"
   let normalized = name
-    .replace(/[^a-zA-Z0-9\s_-]/g, "") // 한글 및 기타 특수문자 제거
-    .split(/[\s_-]+/) // 공백, 밑줄, 하이픈으로 분리
+    .replace(/[^a-zA-Z0-9\s]/g, "") // 영문/숫자/공백만 보존
+    .split(/\s+/) // 공백으로 분리
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join("");

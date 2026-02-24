@@ -56,7 +56,7 @@ ${jsxBody}
   );
 }
 
-export default ${componentName};`;
+export default ${componentName}`;
   }
 
   /**
@@ -67,7 +67,14 @@ export default ${componentName};`;
       return "{ ...restProps }";
     }
 
+    // Array Slot 이름 집합 (기본값 [] 설정용)
+    const arraySlotNames = new Set((uiTree.arraySlots || []).map((slot) => slot.slotName));
+
     const propEntries = uiTree.props.map((p) => {
+      // Array Slot prop은 기본값 [] 설정 (undefined.map() 방지)
+      if (p.type === "slot" && arraySlotNames.has(p.name)) {
+        return `${p.name} = []`;
+      }
       // 기본값이 있으면 destructuring에 포함
       if (p.defaultValue !== undefined) {
         const defaultVal = this.formatDefaultValue(p.defaultValue);
@@ -283,15 +290,20 @@ ${indentStr}))}`;
   ): string {
     return segments
       .map((seg) => {
+        // 줄바꿈을 <br /> 태그로 변환
+        const textWithBreaks = seg.text.includes("\n")
+          ? seg.text.split("\n").join("<br />")
+          : seg.text;
+
         if (seg.style && Object.keys(seg.style).length > 0) {
           // 스타일이 있으면 인라인 style prop으로 렌더링
           const styleEntries = Object.entries(seg.style)
             .map(([key, value]) => `${key}: "${value}"`)
             .join(", ");
-          return `<span style={{ ${styleEntries} }}>${seg.text}</span>`;
+          return `<span style={{ ${styleEntries} }}>${textWithBreaks}</span>`;
         } else {
           // 스타일이 없으면 텍스트만
-          return seg.text;
+          return textWithBreaks;
         }
       })
       .join("");
@@ -446,7 +458,9 @@ ${indentStr}</${tag}>`;
       case "button":
         return "button";
       case "input":
-        return "input";
+        // Input 컴포넌트는 wrapper div로 렌더링 (children 포함: label, helper-text 등)
+        // 실제 <input> 태그는 내부 자식 노드에서 생성
+        return "div";
       case "link":
         return "a";
       default:
@@ -523,7 +537,23 @@ ${indentStr}</${tag}>`;
    * Prop 이름 변환 (sourceKey → name)
    */
   private static resolvePropName(prop: string): string {
-    return this.propRenameMap.get(prop) || prop;
+    const mapped = this.propRenameMap.get(prop);
+    if (mapped) return mapped;
+
+    // Fallback: 특수문자를 제거하여 유효한 JS 식별자로 변환
+    const sanitized = prop
+      .replace(/[^a-zA-Z0-9\s]/g, " ")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word, i) =>
+        i === 0
+          ? word.charAt(0).toLowerCase() + word.slice(1)
+          : word.charAt(0).toUpperCase() + word.slice(1)
+      )
+      .join("");
+
+    return sanitized || prop;
   }
 
   /**

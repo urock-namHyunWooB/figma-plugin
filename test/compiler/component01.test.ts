@@ -50,8 +50,8 @@ describe("INSTANCE 루트 컴포넌트 테스트", () => {
     expect(code).toBeDefined();
 
     // 자식 요소 (Home Indicator RECTANGLE)가 렌더링되어야 함
-    // v2는 node ID 기반 CSS 네이밍 사용
-    expect(code).toMatch(/homeIndicator_/);
+    // v2는 컴포넌트이름+노드이름 기반 CSS 네이밍 사용
+    expect(code).toMatch(/homeindicator.*Css/);
 
     // span 자식 요소가 있어야 함
     expect(code).toContain("<span");

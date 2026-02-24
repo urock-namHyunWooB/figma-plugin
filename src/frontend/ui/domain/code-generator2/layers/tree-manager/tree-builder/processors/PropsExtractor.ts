@@ -60,7 +60,8 @@ export class PropsExtractor {
 
     // 둘 다 없으면 variant 이름에서 추론 (COMPONENT variant의 경우)
     if (!propDefs) {
-      propDefs = this.inferComponentPropertyDefinitionsFromVariantName(targetNode);
+      propDefs =
+        this.inferComponentPropertyDefinitionsFromVariantName(targetNode);
     }
 
     if (!propDefs) {
@@ -75,10 +76,16 @@ export class PropsExtractor {
     for (const [sourceKey, def] of Object.entries(propDefs)) {
       const figmaDef = def as FigmaPropertyDef;
 
+      // State prop 제외 로직은 ButtonHeuristic.removeStateProp()에서 처리
+      // PropsExtractor는 모든 prop을 그대로 통과시킴
+
       const propDef = this.convertToPropDefinition(sourceKey, figmaDef);
       if (propDef) {
         // sourceKey 또는 name 중복 체크
-        if (!existingSourceKeys.has(sourceKey) && !existingNames.has(propDef.name)) {
+        if (
+          !existingSourceKeys.has(sourceKey) &&
+          !existingNames.has(propDef.name)
+        ) {
           result.push(propDef);
           existingSourceKeys.add(sourceKey);
           existingNames.add(propDef.name);
@@ -87,7 +94,11 @@ export class PropsExtractor {
     }
 
     // componentPropertyReferences에서 참조된 props 추가 (중복 제외)
-    const referencedProps = this.extractPropsFromPropertyReferences(existingSourceKeys, existingNames, targetNode);
+    const referencedProps = this.extractPropsFromPropertyReferences(
+      existingSourceKeys,
+      existingNames,
+      targetNode
+    );
     result.push(...referencedProps);
 
     return result;
@@ -126,7 +137,9 @@ export class PropsExtractor {
    *
    * v1의 DependencyManager._inferComponentPropertyDefinitions() 참고
    */
-  private inferComponentPropertyDefinitionsFromVariantName(node: SceneNode): Record<string, FigmaPropertyDef> | null {
+  private inferComponentPropertyDefinitionsFromVariantName(
+    node: SceneNode
+  ): Record<string, FigmaPropertyDef> | null {
     const document = node;
 
     // COMPONENT 타입이 아니면 추론 불가
@@ -366,17 +379,6 @@ export class PropsExtractor {
   }
 
   /**
-   * State 관련 prop인지 확인
-   * "State", "states", "state" 등을 모두 감지
-   */
-  private isStateProp(sourceKey: string): boolean {
-    // # 이후 노드 ID 제거
-    const cleanKey = sourceKey.split("#")[0].trim();
-    const lowerKey = cleanKey.toLowerCase();
-    return lowerKey === "state" || lowerKey === "states";
-  }
-
-  /**
    * Slot 패턴인지 확인 (icon, image 등 React.ReactNode를 받을 수 있는 패턴)
    */
   private isSlotPattern(propName: string): boolean {
@@ -406,9 +408,14 @@ export class PropsExtractor {
     // 1. # 이후 노드 ID 제거
     const cleanKey = sanitized.split("#")[0].trim();
 
-    // 2. 첫 단어는 소문자, 나머지는 각 단어 첫 글자 대문자 (camelCase)
-    let propName = cleanKey
+    // 2. 비 ASCII/특수문자를 공백으로 변환 (emoji, box-drawing chars ┗, dots, slashes 등)
+    //    유효한 JS 식별자 문자(a-zA-Z0-9)와 공백만 남김
+    const asciiClean = cleanKey.replace(/[^a-zA-Z0-9\s]/g, " ").trim();
+
+    // 3. 첫 단어는 소문자, 나머지는 각 단어 첫 글자 대문자 (camelCase)
+    let propName = asciiClean
       .split(/\s+/)
+      .filter(Boolean)
       .map((word, index) => {
         if (index === 0) {
           return word.charAt(0).toLowerCase() + word.slice(1);
@@ -417,9 +424,20 @@ export class PropsExtractor {
       })
       .join("");
 
+    // 빈 문자열이면 fallback
+    if (!propName) {
+      propName = "prop";
+    }
+
+    // 숫자로 시작하면 _ 접두사 추가 (유효한 JS 식별자)
+    if (/^[0-9]/.test(propName)) {
+      propName = "_" + propName;
+    }
+
     // 3. Native HTML prop과 충돌하는 이름은 custom 접두사 추가
     if (this.isNativePropConflict(propName)) {
-      propName = "custom" + propName.charAt(0).toUpperCase() + propName.slice(1);
+      propName =
+        "custom" + propName.charAt(0).toUpperCase() + propName.slice(1);
     }
 
     return propName;
@@ -431,16 +449,16 @@ export class PropsExtractor {
   private isNativePropConflict(propName: string): boolean {
     // button/input 등의 native HTML attributes
     const nativeProps = new Set([
-      "type",       // button type
-      "name",       // form element name
-      "value",      // input value
-      "checked",    // checkbox checked
-      "disabled",   // disabled state (보통 State prop으로 처리되어 제외됨)
-      "required",   // required attribute
-      "placeholder",// input placeholder
-      "href",       // anchor href
-      "src",        // image src
-      "alt",        // image alt
+      "type", // button type
+      "name", // form element name
+      "value", // input value
+      "checked", // checkbox checked
+      "disabled", // disabled state (보통 State prop으로 처리되어 제외됨)
+      "required", // required attribute
+      "placeholder", // input placeholder
+      "href", // anchor href
+      "src", // image src
+      "alt", // image alt
     ]);
 
     return nativeProps.has(propName);

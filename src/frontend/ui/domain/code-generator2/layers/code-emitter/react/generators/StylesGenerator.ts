@@ -81,8 +81,11 @@ export class StylesGenerator {
 
     // Tailwind cn 함수 추가 (필요 시)
     if (styleStrategy.name === "tailwind" && "getCnFunction" in styleStrategy) {
-      parts.push((styleStrategy as any).getCnFunction());
-      parts.push("");
+      const cnFn = (styleStrategy as any).getCnFunction();
+      if (cnFn) {
+        parts.push(cnFn);
+        parts.push("");
+      }
     }
 
     // 스타일 선언

@@ -160,10 +160,66 @@ export class ButtonHeuristic implements IHeuristic {
     // TEXT slot 감지 및 props 추가
     this.detectAndAddTextSlots(ctx);
 
+    // State prop 제거 (버튼은 CSS pseudo-class로 처리)
+    this.removeStateProp(ctx);
+
     return {
       componentType: this.componentType,
       rootNodeType: "button",
     };
+  }
+
+  /**
+   * CSS pseudo-class로 변환 가능한 State 값 목록
+   */
+  private static readonly CSS_CONVERTIBLE_STATES = new Set([
+    "default",
+    "normal",
+    "enabled",
+    "rest",
+    "idle",
+    "hover",
+    "hovered",
+    "hovering",
+    "active",
+    "pressed",
+    "pressing",
+    "clicked",
+    "focus",
+    "focused",
+    "focus-visible",
+    "disabled",
+    "inactive",
+    "selected",
+    "checked",
+    "visited",
+  ]);
+
+  /**
+   * State prop 제거 (CSS pseudo-class 변환 대상)
+   * 버튼 컴포넌트의 State (Default/Hover/Pressed/Disabled)는
+   * :hover, :active, :disabled 등으로 변환되므로 prop에서 제외
+   *
+   * 단, Error/Insert 등 CSS 변환 불가한 옵션이 포함된 경우 State prop 유지
+   */
+  private removeStateProp(ctx: HeuristicContext): void {
+    const stateIndex = ctx.props.findIndex(
+      (p) => p.sourceKey.toLowerCase() === "state"
+    );
+    if (stateIndex === -1) return;
+
+    const stateProp = ctx.props[stateIndex];
+
+    // variant 타입이고 options가 있으면 CSS 변환 가능 여부 확인
+    if (stateProp.type === "variant" && stateProp.options && stateProp.options.length > 0) {
+      const allConvertible = stateProp.options.every(
+        (opt) => ButtonHeuristic.CSS_CONVERTIBLE_STATES.has(opt.toLowerCase())
+      );
+      // CSS 변환 불가 옵션이 있으면 State prop 유지
+      if (!allConvertible) return;
+    }
+
+    ctx.props.splice(stateIndex, 1);
   }
 
   /**

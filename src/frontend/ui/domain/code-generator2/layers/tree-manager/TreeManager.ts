@@ -1,4 +1,4 @@
-import { UITree } from "../../types/types";
+import { UITree, UINode } from "../../types/types";
 import DataManager from "../data-manager/DataManager";
 import TreeBuilder from "./tree-builder/TreeBuilder";
 import { ComponentPropsLinker } from "./post-processors/ComponentPropsLinker";
@@ -65,6 +65,17 @@ class TreeManager {
 
     for (const [componentSetId, group] of Object.entries(groupedDeps)) {
       const tree = this.buildDependencyTree(componentSetId, group);
+
+      // v1 호환: I... 노드 정리
+      // 원본 children이 있는 dependency에서 I... 노드 삭제
+      //TODO 린트에러?
+      const hasOriginalChildren = group.variants.some(
+        (v) => (v.info.document.children || []).length > 0
+      );
+      if (hasOriginalChildren) {
+        this.removeInstanceInternalNodes(tree.root);
+      }
+
       const representativeId = group.variants[0].info.document.id;
       dependencies.set(representativeId, tree);
     }
@@ -82,7 +93,13 @@ class TreeManager {
     // 단일 variant → 개별 컴포넌트
     if (group.variants.length === 1) {
       const componentId = group.variants[0].info.document.id;
-      return this.buildComponentTree(componentId);
+      const tree = this.buildComponentTree(componentId);
+      // v1 호환: componentSetName이 있으면 루트 노드 이름을 ComponentSet 이름으로 변경
+      // "Theme=Line" → "Plus" (ComponentSet 이름 사용)
+      if (group.componentSetName && group.componentSetName !== tree.root.name) {
+        tree.root = { ...tree.root, name: group.componentSetName };
+      }
+      return tree;
     }
 
     // 다중 variants → COMPONENT_SET으로 병합
@@ -101,10 +118,7 @@ class TreeManager {
     dependencies: Map<string, UITree>
   ): void {
     const mainId = this.dataManager.getMainComponentId();
-    const allTrees = new Map<string, UITree>([
-      [mainId, main],
-      ...dependencies,
-    ]);
+    const allTrees = new Map<string, UITree>([[mainId, main], ...dependencies]);
 
     // INSTANCE override props 연결
     this.propsLinker.process(allTrees, mainId);
@@ -161,7 +175,9 @@ class TreeManager {
       const propPairs = variantName.split(",").map((s: string) => s.trim());
 
       for (const pair of propPairs) {
-        const [propName, propValue] = pair.split("=").map((s: string) => s.trim());
+        const [propName, propValue] = pair
+          .split("=")
+          .map((s: string) => s.trim());
         if (propName && propValue) {
           if (!propOptionsMap[propName]) {
             propOptionsMap[propName] = new Set();
@@ -186,6 +202,25 @@ class TreeManager {
     }
 
     return definitions;
+  }
+
+  /**
+   * v1 호환: I... 노드 삭제
+   *
+   * INSTANCE의 compound ID (예: I704:56;704:29;692:1613)를 가진 노드는
+   * 원본 children이 있는 dependency에서 중복이므로 삭제
+   */
+  private removeInstanceInternalNodes(node: UINode): void {
+    if (!node.children) return;
+    node.children = node.children.filter((child) => {
+      // I로 시작하고 ; 를 포함하는 compound ID는 INSTANCE 내부 노드
+      if (child.id.startsWith("I") && child.id.includes(";")) {
+        return false; // 삭제
+      }
+      // 재귀적으로 하위 노드도 정리
+      this.removeInstanceInternalNodes(child);
+      return true;
+    });
   }
 }
 

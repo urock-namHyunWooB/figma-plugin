@@ -430,19 +430,19 @@ describe("compiler 테스트", () => {
         });
 
         test("dependency 컴포넌트가 같은 파일에 생성되어야 한다", () => {
-          // SelectButton 함수가 코드에 포함되어야 함
-          expect(generatedCode).toMatch(/function\s+SelectButton\s*\(/);
+          // SelectButton이 코드에 포함되어야 함 (arrow function)
+          expect(generatedCode).toMatch(/const\s+SelectButton:/);
         });
 
         test("dependency 컴포넌트 이름이 올바르게 생성되어야 한다 (variant 이름이 아님)", () => {
           // SizedefaultSelectedfalse 같은 variant 이름이 아니어야 함
-          expect(generatedCode).not.toMatch(/function\s+Sizedefault/i);
-          expect(generatedCode).not.toMatch(/function\s+Selected/i);
+          expect(generatedCode).not.toMatch(/const\s+Sizedefault/i);
+          expect(generatedCode).not.toMatch(/const\s+Selected/i);
         });
 
         test("CSS 변수명이 컴포넌트 이름 기반이어야 한다", () => {
-          // selectButtonCss 형태여야 함 (경로 기반, 충돌 시 _2, _3 등 추가)
-          expect(generatedCode).toMatch(/const\s+selectButtonCss\s*=/);
+          // selectButtonCss 형태여야 함 (번들 시 prefix 포함: SelectButton_selectButtonCss)
+          expect(generatedCode).toMatch(/selectButtonCss\s*=/);
           // SizedefaultSelectedfalseCss 같은 variant 이름이 아니어야 함
           expect(generatedCode).not.toMatch(/SizedefaultSelectedfalseCss/i);
         });
@@ -450,8 +450,8 @@ describe("compiler 테스트", () => {
         test("INSTANCE 노드도 레이아웃 스타일이 있으면 wrapper CSS가 생성되어야 한다", () => {
           // Option1, Option2 등 INSTANCE 노드도 부모 레이아웃에서의 배치 스타일이 필요
           // (flex-shrink, margin 등) - wrapper 노드로 스타일 분리
-          expect(generatedCode).toMatch(/const\s+Option1_wrapperCss\s*=/);
-          expect(generatedCode).toMatch(/const\s+Option2_wrapperCss\s*=/);
+          // v2는 nodeId 기반 wrapper 네이밍: selectbuttonWrapper_{nodeId}
+          expect(generatedCode).toMatch(/selectbuttonWrapper_/);
         });
 
         test("TEXT 노드의 텍스트 내용이 비어있지 않아야 한다", () => {

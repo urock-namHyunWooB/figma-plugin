@@ -89,7 +89,6 @@ const CSS_TO_PREFIX: Record<string, string> = {
   borderRadius: "rounded",
   fontSize: "text",
   lineHeight: "leading",
-  fontWeight: "font",
   opacity: "opacity",
   zIndex: "z",
 };
@@ -107,13 +106,31 @@ const PSEUDO_TO_PREFIX: Record<PseudoClass, string> = {
   ":visited": "visited:",
 };
 
+export interface TailwindStrategyOptions {
+  /** cn 함수를 인라인으로 생성할지 (기본: true) */
+  inlineCn?: boolean;
+  /** cn import 경로 (inlineCn: false일 때 사용) */
+  cnImportPath?: string;
+}
+
 export class TailwindStrategy implements IStyleStrategy {
   readonly name = "tailwind";
+  private readonly options: TailwindStrategyOptions;
+
+  constructor(options: TailwindStrategyOptions = {}) {
+    this.options = {
+      inlineCn: options.inlineCn ?? true,
+      cnImportPath: options.cnImportPath ?? "@/lib/cn",
+    };
+  }
 
   /**
    * import 문 생성
    */
   getImports(): string[] {
+    if (!this.options.inlineCn) {
+      return [`import { cn } from "${this.options.cnImportPath}"`];
+    }
     return [];
   }
 
@@ -121,6 +138,9 @@ export class TailwindStrategy implements IStyleStrategy {
    * cn 함수 생성 (스타일 선언부에 포함)
    */
   getCnFunction(): string {
+    if (!this.options.inlineCn) {
+      return "";
+    }
     return `const cn = (...classes: (string | undefined | null | false)[]) => classes.filter(Boolean).join(" ");`;
   }
 
@@ -418,7 +438,10 @@ export class TailwindStrategy implements IStyleStrategy {
    */
   private toCamelCase(str: string): string {
     return str
-      .split(/[\s_-]+/)
+      .replace(/[^a-zA-Z0-9]/g, " ")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
       .map((word, i) =>
         i === 0
           ? word.toLowerCase()
@@ -445,7 +468,8 @@ export class TailwindStrategy implements IStyleStrategy {
    * 예: ["SelectButton", "Label"] → "selectButtonLabelClasses"
    */
   private createPathBasedName(parentPath: string[]): string {
-    const pathNames = parentPath.map((name) => this.toCamelCase(name));
+    const pathNames = parentPath.map((name) => this.toCamelCase(name)).filter(Boolean);
+    if (pathNames.length === 0) return "unnamedClasses";
     const combinedName = pathNames
       .map((name, i) =>
         i === 0
@@ -454,7 +478,9 @@ export class TailwindStrategy implements IStyleStrategy {
       )
       .join("");
 
-    return `${combinedName}Classes`;
+    // Ensure it doesn't start with a digit
+    const safeName = /^[0-9]/.test(combinedName) ? `_${combinedName}` : combinedName;
+    return `${safeName}Classes`;
   }
 
   /**
@@ -463,7 +489,10 @@ export class TailwindStrategy implements IStyleStrategy {
    */
   private createIdBasedName(nodeId: string, nodeName: string): string {
     const safeId = nodeId.replace(/[^a-zA-Z0-9]/g, "_");
-    return `${this.toCamelCase(nodeName)}_${safeId}`;
+    const safeName = this.toCamelCase(nodeName) || "unnamed";
+    const result = `${safeName}_${safeId}`;
+    // Ensure it doesn't start with a digit
+    return /^[0-9]/.test(result) ? `_${result}` : result;
   }
 
 }

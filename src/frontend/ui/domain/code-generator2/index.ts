@@ -7,6 +7,7 @@ import FigmaCodeGenerator from "./FigmaCodeGenerator";
 export { FigmaCodeGenerator };
 export type {
   GeneratorOptions,
+  GeneratorOptions as FigmaCodeGeneratorOptions,
   LegacyPropDefinition,
   CompiledDependency,
   MultiComponentResult,

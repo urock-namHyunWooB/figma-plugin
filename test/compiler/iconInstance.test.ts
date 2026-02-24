@@ -45,9 +45,9 @@ describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
 
       expect(code).toBeDefined();
 
-      // Iconanchor 컴포넌트 정의 부분 추출
+      // Iconanchor 컴포넌트 정의 부분 추출 (arrow function)
       const iconanchorMatch = code!.match(
-        /function Iconanchor\([^)]*\)\s*\{[\s\S]*?return\s*([\s\S]*?);\s*\}/
+        /const Iconanchor[\s\S]*?=>\s*\{[\s\S]*?return\s*([\s\S]*?);\s*\};/
       );
       expect(iconanchorMatch).not.toBeNull();
 
@@ -99,8 +99,8 @@ describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
 
       expect(code).toBeDefined();
 
-      // Iconanchor 함수 정의가 정확히 1개만 있어야 함
-      const iconanchorDefMatches = code!.match(/function Iconanchor\(/g);
+      // Iconanchor 정의가 정확히 1개만 있어야 함 (arrow function)
+      const iconanchorDefMatches = code!.match(/const Iconanchor:/g);
       expect(iconanchorDefMatches).not.toBeNull();
       expect(iconanchorDefMatches!.length).toBe(1);
 

@@ -147,8 +147,9 @@ export class VisibilityProcessor {
     const common: Array<{ key: string; value: string }> = [];
 
     for (const prop of firstProps) {
-      // State/states prop은 제외 (pseudo-class로 처리됨)
-      if (this.isStateProp(prop.key)) {
+      // State/states prop: CSS 변환 가능한 값만 제외 (pseudo-class로 처리됨)
+      // Error, Press, Insert 등 CSS 변환 불가능한 State는 런타임 조건으로 유지
+      if (this.isStateProp(prop.key) && this.isCssConvertibleStateValue(prop.value)) {
         continue;
       }
 
@@ -171,6 +172,25 @@ export class VisibilityProcessor {
   private isStateProp(key: string): boolean {
     const lowerKey = key.toLowerCase();
     return lowerKey === "state" || lowerKey === "states";
+  }
+
+  /**
+   * CSS pseudo-class로 변환 가능한 State 값인지 확인
+   * Hover, Pressed, Disabled 등은 CSS로 변환 가능
+   * Error, Press, Insert 등은 변환 불가 → 런타임 조건으로 유지
+   */
+  private static readonly CSS_CONVERTIBLE_STATES = new Set([
+    "default", "normal", "enabled", "rest", "idle",
+    "hover", "hovered", "hovering",
+    "active", "pressed", "pressing", "clicked",
+    "focus", "focused", "focus-visible",
+    "disabled", "inactive",
+    "selected", "checked",
+    "visited",
+  ]);
+
+  private isCssConvertibleStateValue(value: string): boolean {
+    return VisibilityProcessor.CSS_CONVERTIBLE_STATES.has(value.toLowerCase());
   }
 
   /**

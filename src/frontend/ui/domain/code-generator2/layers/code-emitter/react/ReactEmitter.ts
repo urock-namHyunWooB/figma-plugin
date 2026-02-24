@@ -45,18 +45,21 @@ export interface ReactEmitterOptions {
   styleStrategy?: StyleStrategyType;
   /** 디버그 모드 (data-figma-id 추가) */
   debug?: boolean;
+  /** Tailwind 전략 옵션 */
+  tailwind?: { inlineCn?: boolean; cnImportPath?: string };
 }
 
 export class ReactEmitter implements ICodeEmitter {
   readonly framework = "react";
 
-  private readonly options: Required<ReactEmitterOptions>;
+  private readonly options: ReactEmitterOptions & { styleStrategy: StyleStrategyType; debug: boolean };
   private readonly styleStrategy: IStyleStrategy;
 
   constructor(options: ReactEmitterOptions = {}) {
     this.options = {
       styleStrategy: options.styleStrategy ?? "emotion",
       debug: options.debug ?? false,
+      tailwind: options.tailwind,
     };
 
     this.styleStrategy = this.createStyleStrategy();
@@ -140,7 +143,7 @@ export class ReactEmitter implements ICodeEmitter {
   private createStyleStrategy(): IStyleStrategy {
     switch (this.options.styleStrategy) {
       case "tailwind":
-        return new TailwindStrategy();
+        return new TailwindStrategy(this.options.tailwind);
       case "emotion":
       default:
         return new EmotionStrategy();

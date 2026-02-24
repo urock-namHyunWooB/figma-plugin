@@ -11,8 +11,8 @@ describe("PropsExtractor", () => {
     const props = extractor.extract();
 
     // taptapButton은 4개의 props를 가짐: Size, State, Left Icon, Right Icon
-    // State는 제외되어야 함 (CSS pseudo-class 변환 대상)
-    expect(props.length).toBe(3);
+    // State 제외는 ButtonHeuristic에서 처리 (PropsExtractor는 모든 prop 통과)
+    expect(props.length).toBe(4);
 
     // Size prop 확인
     const sizeProp = props.find((p) => p.name === "size");
@@ -51,15 +51,17 @@ describe("PropsExtractor", () => {
     expect(rightIconProp?.sourceKey).toBe("Right Icon");
   });
 
-  it("should exclude State prop", () => {
+  it("should include State prop (removal is handled by ButtonHeuristic)", () => {
     const dataManager = new DataManager(taptapButtonData as any);
     const extractor = new PropsExtractor(dataManager);
 
     const props = extractor.extract();
 
-    // State prop이 제외되어야 함
+    // PropsExtractor는 State prop을 그대로 통과시킴
+    // State 제거는 ButtonHeuristic.removeStateProp()에서 처리
     const stateProp = props.find((p) => p.sourceKey === "State");
-    expect(stateProp).toBeUndefined();
+    expect(stateProp).toBeDefined();
+    expect(stateProp?.type).toBe("variant");
   });
 
   it("should mark all props as not required", () => {
