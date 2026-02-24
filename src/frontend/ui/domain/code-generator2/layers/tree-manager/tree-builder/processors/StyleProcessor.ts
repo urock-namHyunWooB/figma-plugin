@@ -84,6 +84,19 @@ export class StyleProcessor {
     // 스타일 객체 생성
     let styles = this.createStyleObject(node);
 
+    // HORIZONTAL layoutMode 처리: flex-direction: row 명시적 추가
+    // (CSS 기본값이므로 styleTree에 포함되지 않는 경우가 있음)
+    if (styles && styles.base && styles.base["display"] === "flex") {
+      const { node: sceneNode } = this.dataManager.getById(node.id);
+      const layoutMode = (sceneNode as any)?.layoutMode;
+      if (layoutMode === "HORIZONTAL" && !styles.base["flex-direction"]) {
+        styles = {
+          ...styles,
+          base: { ...styles.base, "flex-direction": "row" },
+        };
+      }
+    }
+
     // VECTOR 타입 처리: SVG 전용 속성 제거, overflow: visible 추가
     if (styles && StyleProcessor.VECTOR_TYPES.has(node.type)) {
       const filteredBase: Record<string, string | number> = { overflow: "visible" };

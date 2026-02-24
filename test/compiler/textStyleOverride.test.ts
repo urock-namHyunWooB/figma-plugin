@@ -52,8 +52,8 @@ describe("부분 텍스트 스타일링 (characterStyleOverrides)", () => {
       // "1회 이용권"도 characterStyleOverrides가 있음
       // characterStyleOverrides: [0, 3, 3, 3, 3, 3]
       // "1" = 기본 스타일, "회 이용권" = 스타일 3
-      // 텍스트가 분리되어 생성됨
-      expect(generatedCode).toContain(">1</span>");
+      // 텍스트가 분리되어 생성됨 (Prettier 포맷팅 이후 공백 무시)
+      expect(generatedCode).toMatch(/>\s*1\s*<\/span>/);
       expect(generatedCode).toContain("회 이용권");
     });
   });

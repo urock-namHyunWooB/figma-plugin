@@ -166,7 +166,7 @@ describe("NodeMatcher child pattern prefix 매칭", () => {
     // TypeScript 함수 정의가 있어야 함
     expect(result).toMatch(/function Headersub/);
 
-    // v2 파이프라인: 분리형 export (function X() {} export default X;)
-    expect(result).toMatch(/export default Headersub/);
+    // export default Headersub 또는 export default function Headersub
+    expect(result).toMatch(/export default (function )?Headersub/);
   });
 });

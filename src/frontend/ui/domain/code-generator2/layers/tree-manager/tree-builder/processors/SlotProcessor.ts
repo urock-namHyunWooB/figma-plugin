@@ -264,7 +264,8 @@ export class SlotProcessor {
     props: PropDefinition[]
   ): ArraySlotInfo[] {
     const arraySlots: ArraySlotInfo[] = [];
-    const existingSlotNames = new Set(props.filter((p) => p.type === "slot").map((p) => p.name));
+    // slot 타입뿐 아니라 variant/boolean 등 모든 기존 prop 이름도 충돌 방지
+    const existingSlotNames = new Set(props.map((p) => p.name));
 
     this.traverseAndDetectArraySlots(tree, slotNodeIds, existingSlotNames, arraySlots);
 

@@ -382,13 +382,37 @@ ${indentStr}</div>`;
     const indentStr = " ".repeat(indent);
     const attrs = this.generateAttributes(node, styleStrategy, options);
 
-    // SVG가 있으면 사용
+    // SVG가 있으면 JSX 포맷으로 변환하여 사용
     if (node.type === "vector" && "vectorSvg" in node && node.vectorSvg) {
-      return `${indentStr}<span${attrs} dangerouslySetInnerHTML={{ __html: \`${node.vectorSvg}\` }} />`;
+      const jsxSvg = this.convertSvgToJsx(node.vectorSvg);
+      return `${indentStr}<span${attrs}>${jsxSvg}</span>`;
     }
 
     // placeholder
     return `${indentStr}<span${attrs}>{/* vector: ${node.name} */}</span>`;
+  }
+
+  /**
+   * SVG HTML 문자열을 JSX 호환 포맷으로 변환
+   * - kebab-case 속성을 camelCase로 변환 (fill-rule → fillRule)
+   * - class → className
+   */
+  private static convertSvgToJsx(svg: string): string {
+    return svg
+      .replace(/\bfill-rule=/g, "fillRule=")
+      .replace(/\bclip-rule=/g, "clipRule=")
+      .replace(/\bstroke-width=/g, "strokeWidth=")
+      .replace(/\bstroke-linecap=/g, "strokeLinecap=")
+      .replace(/\bstroke-linejoin=/g, "strokeLinejoin=")
+      .replace(/\bstroke-dasharray=/g, "strokeDasharray=")
+      .replace(/\bstroke-dashoffset=/g, "strokeDashoffset=")
+      .replace(/\bstroke-miterlimit=/g, "strokeMiterlimit=")
+      .replace(/\bstroke-opacity=/g, "strokeOpacity=")
+      .replace(/\bfill-opacity=/g, "fillOpacity=")
+      .replace(/\bstop-color=/g, "stopColor=")
+      .replace(/\bstop-opacity=/g, "stopOpacity=")
+      .replace(/\bxlink:href=/g, "xlinkHref=")
+      .replace(/\bclass=/g, "className=");
   }
 
   /**

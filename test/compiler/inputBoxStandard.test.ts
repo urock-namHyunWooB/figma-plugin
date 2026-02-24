@@ -69,8 +69,8 @@ describe("InputBoxstandard Array.includes 패턴 테스트", () => {
 
     expect(code).toBeTruthy();
 
-    // 기본적인 구조 체크
-    expect(code).toContain("export type");
+    // 기본적인 구조 체크 (export type 또는 export interface 모두 유효한 TypeScript)
+    expect(code).toMatch(/export (type|interface)/);
     expect(code).toMatch(/export (default )?function/);
 
     // state prop이 사용될 때 항상 정의되어 있어야 함

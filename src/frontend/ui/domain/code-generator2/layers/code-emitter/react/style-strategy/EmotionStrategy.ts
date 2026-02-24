@@ -156,17 +156,16 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
     const groups = new Map<string, Map<string, Record<string, string | number>>>();
 
     for (const { condition, style } of dynamic) {
-      const propInfo = this.extractVariantProp(condition);
-      if (!propInfo) continue;
+      const propInfos = this.extractAllVariantProps(condition);
 
-      const { propName, propValue } = propInfo;
+      for (const { propName, propValue } of propInfos) {
+        if (!groups.has(propName)) {
+          groups.set(propName, new Map());
+        }
 
-      if (!groups.has(propName)) {
-        groups.set(propName, new Map());
-      }
-
-      if (!groups.get(propName)!.has(propValue)) {
-        groups.get(propName)!.set(propValue, style);
+        if (!groups.get(propName)!.has(propValue)) {
+          groups.get(propName)!.set(propValue, style);
+        }
       }
     }
 
@@ -181,29 +180,43 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
     for (const [value, style] of valueMap) {
       const styleStr = this.objectToStyleString(style);
       if (styleStr) {
-        entries.push(`  ${value}: css\`\n${this.indent(styleStr, 4)}\n  \`,`);
+        const keyStr = this.needsQuoting(value) ? `"${value}"` : value;
+        entries.push(`  ${keyStr}: css\`\n${this.indent(styleStr, 4)}\n  \`,`);
       }
     }
 
     return entries;
   }
 
-  private extractVariantProp(
+  private needsQuoting(key: string): boolean {
+    return /[^a-zA-Z0-9_$]/.test(key) || /^\d/.test(key);
+  }
+
+  private extractAllVariantProps(
     condition: ConditionNode
-  ): { propName: string; propValue: string } | null {
+  ): Array<{ propName: string; propValue: string }> {
     if (condition.type === "eq" && typeof condition.value === "string") {
-      return { propName: condition.prop, propValue: condition.value };
+      return [{ propName: condition.prop, propValue: condition.value }];
     }
 
     if (condition.type === "and") {
+      const results: Array<{ propName: string; propValue: string }> = [];
       for (const cond of condition.conditions) {
         if (cond.type === "eq" && typeof cond.value === "string") {
-          return { propName: cond.prop, propValue: cond.value };
+          results.push({ propName: cond.prop, propValue: cond.value });
         }
       }
+      return results;
     }
 
-    return null;
+    return [];
+  }
+
+  private extractVariantProp(
+    condition: ConditionNode
+  ): { propName: string; propValue: string } | null {
+    const results = this.extractAllVariantProps(condition);
+    return results.length > 0 ? results[0] : null;
   }
 
   private getDiffStyles(

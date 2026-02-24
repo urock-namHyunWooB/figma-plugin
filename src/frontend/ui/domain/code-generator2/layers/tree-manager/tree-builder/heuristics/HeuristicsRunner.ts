@@ -47,14 +47,19 @@ export class HeuristicsRunner {
    * @param tree 내부 트리 (variant 병합 완료)
    * @param dataManager 데이터 매니저
    * @param props Props 배열 (휴리스틱이 수정 가능)
+   * @param componentContext 현재 컴포넌트 고유 컨텍스트 (이름, propDefs)
    * @returns 휴리스틱 적용 결과
    */
   run(
     tree: InternalTree,
     dataManager: DataManager,
-    props: PropDefinition[]
+    props: PropDefinition[],
+    componentContext?: {
+      componentName?: string;
+      propDefs?: Record<string, ComponentPropertyDef>;
+    }
   ): HeuristicResult {
-    const ctx = this.createContext(tree, dataManager, props);
+    const ctx = this.createContext(tree, dataManager, props, componentContext);
 
     // 1. 최적 휴리스틱 선택
     const heuristic = this.selectHeuristic(ctx);
@@ -71,13 +76,17 @@ export class HeuristicsRunner {
   debugScores(
     tree: InternalTree,
     dataManager: DataManager,
-    props: PropDefinition[]
+    props: PropDefinition[],
+    componentContext?: {
+      componentName?: string;
+      propDefs?: Record<string, ComponentPropertyDef>;
+    }
   ): Array<{
     name: string;
     score: number;
     selected: boolean;
   }> {
-    const ctx = this.createContext(tree, dataManager, props);
+    const ctx = this.createContext(tree, dataManager, props, componentContext);
     const selectedHeuristic = this.selectHeuristic(ctx);
 
     const scores = this.heuristics.map((h) => ({
@@ -102,20 +111,39 @@ export class HeuristicsRunner {
 
   /**
    * HeuristicContext 생성
+   *
+   * componentContext가 제공되면 그 값 우선 사용.
+   * 없으면 메인 컴포넌트 데이터로 fallback (기존 동작).
+   *
+   * NOTE: VariantMerger가 COMPONENT_SET의 id를 merged tree에 보존하지 않으므로
+   * tree.id로 직접 조회하면 첫 번째 variant의 id(variant 이름, propDefs 없음)가
+   * 반환됨. 따라서 TreeBuilder.build()에서 원본 node의 정보를 componentContext로
+   * 명시적으로 전달해야 함.
    */
   private createContext(
     tree: InternalTree,
     dataManager: DataManager,
-    props: PropDefinition[]
+    props: PropDefinition[],
+    componentContext?: {
+      componentName?: string;
+      propDefs?: Record<string, ComponentPropertyDef>;
+    }
   ): HeuristicContext {
-    // 루트 document 조회
-    const mainId = dataManager.getMainComponentId();
-    const { node: rootNode } = dataManager.getById(mainId);
+    let componentName: string;
+    let propDefs: Record<string, ComponentPropertyDef> | undefined;
 
-    const componentName = (rootNode as any)?.name || tree.name;
-    const propDefs = (rootNode as any)?.componentPropertyDefinitions as
-      | Record<string, ComponentPropertyDef>
-      | undefined;
+    if (componentContext?.componentName !== undefined) {
+      componentName = componentContext.componentName;
+      propDefs = componentContext.propDefs;
+    } else {
+      // fallback: 메인 컴포넌트 데이터 사용
+      const mainId = dataManager.getMainComponentId();
+      const { node: rootNode } = dataManager.getById(mainId);
+      componentName = (rootNode as any)?.name || tree.name;
+      propDefs = (rootNode as any)?.componentPropertyDefinitions as
+        | Record<string, ComponentPropertyDef>
+        | undefined;
+    }
 
     return {
       tree,

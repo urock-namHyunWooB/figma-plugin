@@ -82,7 +82,9 @@ class TreeBuilder {
     arraySlots = uniqueArraySlots;
 
     // Array Slot에 대한 props 추가 (중복 확인)
+    // 이름이 기존 prop(variant 포함)과 충돌하는 array slot은 제거
     const existingPropNames = new Set(props.map((p) => p.name));
+    const validArraySlots: typeof arraySlots = [];
     for (const slot of arraySlots) {
       if (!existingPropNames.has(slot.slotName)) {
         props.push({
@@ -93,8 +95,10 @@ class TreeBuilder {
           defaultValue: [],
         });
         existingPropNames.add(slot.slotName);
+        validArraySlots.push(slot);
       }
     }
+    arraySlots = validArraySlots;
 
     // Step 4: 가시성 조건 (props 전달하여 rename 매핑 사용)
     tree = this.visibilityProcessor.applyVisibility(tree, props);
@@ -103,7 +107,16 @@ class TreeBuilder {
     tree = this.externalRefsProcessor.resolveExternalRefs(tree);
 
     // Step 6: 휴리스틱 (컴포넌트 타입 판별, semanticType 설정, props 추가)
-    const heuristicsResult = this.heuristicsRunner.run(tree, this.dataManager, props);
+    // 현재 컴포넌트의 고유 이름과 propDefs를 전달 (의존 컴포넌트가 메인 컴포넌트의 점수를 상속하지 않도록)
+    // NOTE: VariantMerger가 COMPONENT_SET ID를 merged tree.id에 보존하지 않으므로,
+    //       원본 node에서 직접 읽어서 전달해야 함
+    const componentContext = {
+      componentName: node.name,
+      propDefs: (node as any)?.componentPropertyDefinitions as
+        | Record<string, import("./heuristics/IHeuristic").ComponentPropertyDef>
+        | undefined,
+    };
+    const heuristicsResult = this.heuristicsRunner.run(tree, this.dataManager, props, componentContext);
 
     // 최종 변환: InternalTree → UINode
     const root = this.convertToUINode(tree, heuristicsResult.rootNodeType);

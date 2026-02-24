@@ -261,6 +261,10 @@ export class PropsExtractor {
         }
       }
 
+      // INSTANCE 노드의 children은 해당 컴포넌트 내부 구현이므로 순회하지 않음
+      // (INSTANCE 자신의 refs는 처리하되, 그 자식들의 refs는 INSTANCE 자체 컴포넌트에서 처리)
+      if (node.type === "INSTANCE") return;
+
       // 자식 노드 재귀 순회
       if (node.children) {
         for (const child of node.children) {
