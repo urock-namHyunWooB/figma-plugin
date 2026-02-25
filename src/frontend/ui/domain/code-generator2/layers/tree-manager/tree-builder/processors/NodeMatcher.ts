@@ -116,21 +116,31 @@ export class NodeMatcher {
   }
 
   /**
-   * TEXT 노드 특별 매칭: 같은 이름 + 같은 부모 타입
+   * TEXT 노드 특별 매칭: 같은 부모 타입 + 유일한 TEXT 자식이면 이름 무관 매칭
+   * 부모 아래 TEXT가 여러 개면 이름으로 구분
    */
   private isSameTextNode(nodeA: InternalNode, nodeB: InternalNode): boolean {
     if (nodeA.type !== "TEXT" || nodeB.type !== "TEXT") {
       return false;
     }
 
-    if (nodeA.name !== nodeB.name) {
+    const parentA = nodeA.parent;
+    const parentB = nodeB.parent;
+
+    if (!parentA || !parentB || parentA.type !== parentB.type) {
       return false;
     }
 
-    const parentAType = nodeA.parent?.type;
-    const parentBType = nodeB.parent?.type;
+    // 각 부모 아래 TEXT 자식 수 확인
+    const textCountA = parentA.children.filter(c => c.type === "TEXT").length;
+    const textCountB = parentB.children.filter(c => c.type === "TEXT").length;
 
-    // 부모 타입이 같으면 같은 역할의 텍스트로 간주
-    return !!(parentAType && parentBType && parentAType === parentBType);
+    // 부모 아래 TEXT가 1개씩이면 이름 무관 매칭 (variant에 따라 이름이 바뀔 수 있음)
+    if (textCountA === 1 && textCountB === 1) {
+      return true;
+    }
+
+    // TEXT가 여러 개면 이름으로 구분
+    return nodeA.name === nodeB.name;
   }
 }

@@ -418,10 +418,21 @@ export class ButtonHeuristic implements IHeuristic {
       // 각 TEXT 노드의 이름과 내용 수집
       allNames.push(node.name);
 
+      // 각 TEXT 노드 내의 mergedNodes characters가 모두 같은지 확인
       if (node.mergedNodes && node.mergedNodes.length > 0) {
-        const { node: spec } = dataManager.getById(node.mergedNodes[0].id);
-        const characters = (spec as any)?.characters || "";
-        allCharacters.push(characters);
+        let firstChars: string | undefined;
+        let nodeAllSame = true;
+        for (const merged of node.mergedNodes) {
+          const { node: spec } = dataManager.getById(merged.id);
+          const characters = (spec as any)?.characters || "";
+          if (firstChars === undefined) {
+            firstChars = characters;
+          } else if (characters !== firstChars) {
+            nodeAllSame = false;
+            break;
+          }
+        }
+        allCharacters.push(nodeAllSame ? "same" : "different");
       }
     }
 
@@ -432,10 +443,10 @@ export class ButtonHeuristic implements IHeuristic {
     const allSameName =
       allNames.length > 0 && allNames.every((name) => name === allNames[0]);
 
-    // 조건 3: 모든 TEXT 내용이 동일한가?
+    // 조건 3: 각 TEXT 노드의 mergedNodes 내에서 내용이 동일한가?
     const allSameContent =
       allCharacters.length > 0 &&
-      allCharacters.every((c) => c === allCharacters[0]);
+      allCharacters.every((c) => c === "same");
 
     return coversAllVariants && allSameName && allSameContent;
   }
@@ -485,9 +496,9 @@ export class ButtonHeuristic implements IHeuristic {
       );
 
       if (slotInfo) {
-        // Slot prop 추가
+        // TEXT slot prop 추가 (텍스트만 들어가므로 string 타입)
         ctx.props.push({
-          type: "slot",
+          type: "string",
           name: slotInfo.propName,
           defaultValue: slotInfo.defaultValue,
           required: false,
