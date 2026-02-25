@@ -109,9 +109,12 @@ export class EmotionStrategy implements IStyleStrategy {
 
     for (const [propName, valueMap] of groups) {
       const entries = this.buildVariantEntries(valueMap);
+      const varName = `${baseVarName}_${propName}Styles`;
       if (entries.length > 0) {
-        const varName = `${baseVarName}_${propName}Styles`;
         codeParts.push(`const ${varName} = {\n${entries.join("\n")}\n};`);
+      } else {
+        // 빈 맵이라도 생성 (JSX에서 참조 시 ReferenceError 방지)
+        codeParts.push(`const ${varName} = {};`);
       }
     }
 
@@ -135,11 +138,14 @@ export class EmotionStrategy implements IStyleStrategy {
     const codeParts: string[] = [];
 
     // base + pseudo → css``
+    // dynamic styles만 있는 경우에도 base 변수 정의 (slot wrapper div에서 참조 가능)
     if (baseResult.hasContent || pseudoResult.hasContent) {
       codeParts.push(`const ${variableName} = css\`
 ${this.indent(baseResult.code, 2)}
 ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
 \`;`);
+    } else if (dynamicResult.hasContent) {
+      codeParts.push(`const ${variableName} = css\`\`;`);
     }
 
     // dynamic → { variant: css`` }

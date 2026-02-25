@@ -129,12 +129,10 @@ export default ${componentName}`;
   ): string {
     const indentStr = " ".repeat(indent);
 
-    // Slot binding이 있으면 직접 slot prop 렌더링
-    // slot prop의 경우 visibleCondition을 무시하고 prop 자체의 truthy만 체크
-    // (둘 다 전달되면 둘 다 렌더링되어야 함)
+    // Slot binding이 있으면 slot prop 렌더링 (styles가 있으면 wrapper div 적용)
     const slotBinding = node.bindings?.content;
     if (slotBinding && "prop" in slotBinding) {
-      return `${indentStr}{${slotBinding.prop}}`;
+      return this.generateSlotWrapper(node, slotBinding.prop, styleStrategy, indent);
     }
 
     // 조건부 렌더링
@@ -325,8 +323,7 @@ ${indentStr}))}`;
     // INSTANCE slot 확인 (bindings.content가 있으면 slot)
     const slotBinding = node.bindings?.content;
     if (slotBinding && "prop" in slotBinding) {
-      // Slot으로 렌더링
-      return `${indentStr}{${slotBinding.prop}}`;
+      return this.generateSlotWrapper(node, slotBinding.prop, styleStrategy, indent);
     }
 
     // 일반 컴포넌트 렌더링
@@ -686,9 +683,8 @@ ${indentStr}</${tag}>`;
     const propNames = new Set<string>();
 
     for (const { condition } of styles.dynamic) {
-      const propName = this.extractVariantPropName(condition);
-      if (propName) {
-        propNames.add(propName);
+      for (const name of this.extractAllVariantPropNames(condition)) {
+        propNames.add(name);
       }
     }
 
@@ -696,23 +692,57 @@ ${indentStr}</${tag}>`;
   }
 
   /**
-   * ConditionNode에서 첫 번째 variant prop 이름 추출
+   * ConditionNode에서 모든 variant prop 이름 추출
+   * and 조건의 경우 각 eq 조건의 prop을 모두 반환
    */
-  private static extractVariantPropName(condition: ConditionNode): string | null {
-    // eq 타입인 경우
+  private static extractAllVariantPropNames(condition: ConditionNode): string[] {
     if (condition.type === "eq" && typeof condition.value === "string") {
-      return condition.prop;
+      return [condition.prop];
     }
 
-    // and 타입인 경우 첫 번째 eq 조건 찾기
     if (condition.type === "and") {
-      for (const cond of condition.conditions) {
-        if (cond.type === "eq" && typeof cond.value === "string") {
-          return cond.prop;
-        }
-      }
+      return condition.conditions
+        .filter((c) => c.type === "eq" && typeof c.value === "string")
+        .map((c) => (c as { type: "eq"; prop: string }).prop);
     }
 
-    return null;
+    return [];
+  }
+
+  /**
+   * slot binding이 있는 노드를 CSS wrapper div로 감싸 렌더링
+   * styles가 없거나 style 변수가 없으면 {prop}만 반환
+   */
+  private static generateSlotWrapper(
+    node: UINode,
+    slotProp: string,
+    styleStrategy: IStyleStrategy,
+    indent: number
+  ): string {
+    const indentStr = " ".repeat(indent);
+    const styleVarName = this.nodeStyleMap.get(node.id);
+
+    if (!styleVarName || !node.styles || !this.hasNonEmptyStyles(node.styles)) {
+      return `${indentStr}{${slotProp}}`;
+    }
+
+    const dynamicProps = this.extractDynamicProps(node.styles);
+    let wrapperAttrs: string;
+
+    if (dynamicProps.length > 0) {
+      const dynamicStyleRefs = dynamicProps.map(
+        (prop) => `${styleVarName}_${prop}Styles[${prop}]`
+      );
+      if (styleStrategy.name === "emotion") {
+        wrapperAttrs = `css={[${styleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
+      } else {
+        wrapperAttrs = `className={cn(${styleVarName}, ${dynamicStyleRefs.join(", ")})}`;
+      }
+    } else {
+      const styleAttr = styleStrategy.getJsxStyleAttribute(styleVarName, false);
+      wrapperAttrs = `${styleAttr.attributeName}=${styleAttr.valueCode}`;
+    }
+
+    return `${indentStr}<div ${wrapperAttrs}>{${slotProp}}</div>`;
   }
 }

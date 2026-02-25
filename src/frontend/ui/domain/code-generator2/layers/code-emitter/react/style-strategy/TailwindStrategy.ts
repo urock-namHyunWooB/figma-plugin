@@ -191,9 +191,12 @@ export class TailwindStrategy implements IStyleStrategy {
     const codeParts: string[] = [];
 
     // base + pseudo 스타일
+    // dynamic styles만 있는 경우에도 base 변수 정의 (slot wrapper div에서 참조 가능)
     if (hasBaseStyles || hasPseudoStyles) {
       const allClasses = [...baseClasses, ...pseudoClassesList];
       codeParts.push(`const ${variableName} = "${allClasses.join(" ")}";`);
+    } else if (hasDynamicStyles) {
+      codeParts.push(`const ${variableName} = "";`);
     }
 
     // dynamic 스타일 객체
@@ -212,22 +215,20 @@ export class TailwindStrategy implements IStyleStrategy {
       return "";
     }
 
-    // variant prop별로 그룹화 (첫 번째 eq 조건 기준)
+    // variant prop별로 그룹화 (모든 eq 조건 기준)
     const variantGroups = new Map<string, Map<string, Record<string, string | number>>>();
 
     for (const { condition, style: dynStyle } of style.dynamic) {
-      const propInfo = this.extractVariantProp(condition);
-      if (!propInfo) continue;
+      const propInfos = this.extractAllVariantProps(condition);
 
-      const { propName, propValue } = propInfo;
+      for (const { propName, propValue } of propInfos) {
+        if (!variantGroups.has(propName)) {
+          variantGroups.set(propName, new Map());
+        }
 
-      if (!variantGroups.has(propName)) {
-        variantGroups.set(propName, new Map());
-      }
-
-      const existing = variantGroups.get(propName)!.get(propValue);
-      if (!existing) {
-        variantGroups.get(propName)!.set(propValue, dynStyle);
+        if (!variantGroups.get(propName)!.has(propValue)) {
+          variantGroups.get(propName)!.set(propValue, dynStyle);
+        }
       }
     }
 
@@ -244,13 +245,17 @@ export class TailwindStrategy implements IStyleStrategy {
       for (const [value, dynStyle] of valueMap) {
         const classes = this.cssObjectToTailwind(dynStyle);
         if (classes.length > 0) {
-          entries.push(`  ${value}: "${classes.join(" ")}",`);
+          const key = this.needsQuoting(value) ? `"${value}"` : value;
+          entries.push(`  ${key}: "${classes.join(" ")}",`);
         }
       }
 
+      const varName = `${baseVarName}_${propName}Styles`;
       if (entries.length > 0) {
-        const varName = `${baseVarName}_${propName}Styles`;
         codeParts.push(`const ${varName} = {\n${entries.join("\n")}\n};`);
+      } else {
+        // 빈 맵이라도 생성 (JSX에서 참조 시 ReferenceError 방지)
+        codeParts.push(`const ${varName} = {};`);
       }
     }
 
@@ -258,26 +263,34 @@ export class TailwindStrategy implements IStyleStrategy {
   }
 
   /**
-   * ConditionNode에서 variant prop 정보 추출
+   * ConditionNode에서 모든 variant prop 정보 추출
+   * and 조건의 경우 각 eq 조건을 모두 반환
    */
-  private extractVariantProp(
+  private extractAllVariantProps(
     condition: import("../../../../types/types").ConditionNode
-  ): { propName: string; propValue: string } | null {
-    // eq 타입인 경우
+  ): Array<{ propName: string; propValue: string }> {
     if (condition.type === "eq" && typeof condition.value === "string") {
-      return { propName: condition.prop, propValue: condition.value };
+      return [{ propName: condition.prop, propValue: condition.value }];
     }
 
-    // and 타입인 경우 첫 번째 eq 조건 찾기
     if (condition.type === "and") {
-      for (const cond of condition.conditions) {
-        if (cond.type === "eq" && typeof cond.value === "string") {
-          return { propName: cond.prop, propValue: cond.value };
-        }
-      }
+      return condition.conditions
+        .filter((c) => c.type === "eq" && typeof c.value === "string")
+        .map((c) => ({
+          propName: (c as { type: "eq"; prop: string }).prop,
+          propValue: (c as { type: "eq"; value: string }).value,
+        }));
     }
 
-    return null;
+    return [];
+  }
+
+  /**
+   * JavaScript 객체 키로 사용 시 따옴표가 필요한지 확인
+   * (하이픈, 공백 등 특수문자 포함 시 필요)
+   */
+  private needsQuoting(key: string): boolean {
+    return !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key);
   }
 
   /**

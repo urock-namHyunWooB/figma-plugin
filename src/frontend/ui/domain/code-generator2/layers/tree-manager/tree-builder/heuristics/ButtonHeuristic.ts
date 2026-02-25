@@ -163,6 +163,11 @@ export class ButtonHeuristic implements IHeuristic {
     // State prop 제거 (버튼은 CSS pseudo-class로 처리)
     this.removeStateProp(ctx);
 
+    // Slot-bound INSTANCE 정리:
+    // 1. 동일 slot prop에 바인딩된 중복 INSTANCE 노드 제거 (variant 간 위치 차이로 생긴 중복)
+    // 2. Slot으로 렌더링될 INSTANCE의 children 비우기 (불필요한 CSS 변수 생성 방지)
+    this.cleanupSlotInstances(ctx.tree);
+
     return {
       componentType: this.componentType,
       rootNodeType: "button",
@@ -346,6 +351,56 @@ export class ButtonHeuristic implements IHeuristic {
   // TEXT Slot 감지
   // ===========================================================================
 
+  // ===========================================================================
+  // Slot INSTANCE 정리
+  // ===========================================================================
+
+  /**
+   * Slot-bound INSTANCE 노드 정리 (재귀)
+   *
+   * 1. 동일 slot prop에 바인딩된 중복 INSTANCE 제거
+   *    - variant 간 위치 차이로 같은 slot이 여러 자식 노드로 생긴 경우
+   * 2. Slot으로 렌더링될 INSTANCE의 children 비우기
+   *    - {iconLeft}로 렌더링되는 노드의 내부 구조는 불필요
+   *    - 이후 StylesGenerator가 해당 children의 CSS를 생성하지 않음
+   */
+  private cleanupSlotInstances(node: InternalNode): void {
+    if (!node.children || node.children.length === 0) return;
+
+    // 1. 같은 slot prop을 가진 중복 INSTANCE 제거
+    const seenSlotProps = new Set<string>();
+    node.children = node.children.filter((child) => {
+      const slotProp = (child.bindings as any)?.content?.prop;
+      if (typeof slotProp === "string") {
+        if (seenSlotProps.has(slotProp)) {
+          return false;
+        }
+        seenSlotProps.add(slotProp);
+      }
+      return true;
+    });
+
+    // 2. Slot 노드 처리
+    //    - TEXT slot: {text}로만 렌더링 → wrapper div 불필요 → styles 제거
+    //    - INSTANCE slot: wrapper div가 CSS를 사용 → styles 유지, children만 제거
+    for (const child of node.children) {
+      const slotProp = (child.bindings as any)?.content?.prop;
+      if (typeof slotProp === "string") {
+        if (child.type === "TEXT") {
+          child.styles = undefined;
+        }
+        child.children = [];
+      } else {
+        // 재귀 처리
+        this.cleanupSlotInstances(child);
+      }
+    }
+  }
+
+  // ===========================================================================
+  // TEXT Slot 감지
+  // ===========================================================================
+
   /**
    * TEXT 노드를 순회하며 slot으로 변환해야 하는 것 감지 및 props 추가
    */
@@ -496,20 +551,34 @@ export class ButtonHeuristic implements IHeuristic {
       );
 
       if (slotInfo) {
-        // TEXT slot prop 추가 (텍스트만 들어가므로 string 타입)
-        ctx.props.push({
-          type: "string",
-          name: slotInfo.propName,
-          defaultValue: slotInfo.defaultValue,
-          required: false,
-          sourceKey: "", // TEXT slot은 Figma prop이 아님
-        });
+        // componentPropertyDefinitions에서 이미 생성된 string prop이 있는지 확인
+        // (sourceKey가 있으면 Figma TEXT-type prop에서 온 것)
+        const existingTextProp = ctx.props.find(
+          (p) => p.type === "string" && p.sourceKey !== ""
+        );
 
-        // 노드에 binding 추가
-        if (!node.bindings) {
-          node.bindings = {};
+        if (existingTextProp) {
+          // 기존 prop을 재사용하여 binding만 추가 (중복 prop 생성 방지)
+          if (!node.bindings) {
+            node.bindings = {};
+          }
+          node.bindings.content = { prop: existingTextProp.name };
+        } else {
+          // TEXT slot prop 추가 (텍스트만 들어가므로 string 타입)
+          ctx.props.push({
+            type: "string",
+            name: slotInfo.propName,
+            defaultValue: slotInfo.defaultValue,
+            required: false,
+            sourceKey: "", // TEXT slot은 Figma prop이 아님
+          });
+
+          // 노드에 binding 추가
+          if (!node.bindings) {
+            node.bindings = {};
+          }
+          node.bindings.content = { prop: slotInfo.propName };
         }
-        node.bindings.content = { prop: slotInfo.propName };
       }
     }
 
