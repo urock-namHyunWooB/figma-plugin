@@ -49,9 +49,12 @@ describe("의존 컴포넌트 children 처리", () => {
     const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
-    // MonoResponsive 컴포넌트에서 ColorCss가 생성되면 안됨
-    // (I...로 시작하는 Color 노드가 삭제되어야 함)
-    expect(result).not.toContain("ColorCss");
+    // MonoResponsive dependency의 Color (255:17770)는 정당한 노드이므로 CSS 생성됨
+    expect(result).toContain("MonoResponsive_monoResponsiveColorCss");
+
+    // 하지만 Main 컴포넌트에서 I... 노드로 인한 ColorCss는 생성되면 안됨
+    // (예: buttonSolidPrimaryContentsContentsGlobalMonoResponsiveColorCss)
+    expect(result).not.toContain("buttonSolidPrimaryContentsContentsGlobalMonoResponsiveColorCss");
   });
 
   it("Gnb: 아이콘 요소가 SVG로 렌더링됨", async () => {

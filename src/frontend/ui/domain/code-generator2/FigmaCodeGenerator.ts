@@ -544,6 +544,36 @@ export class FigmaCodeGenerator {
     if (base.height && typeof base.height === "string" && base.height.endsWith("px")) {
       base.height = "100%";
     }
+
+    // v1 호환: 시각적 스타일 제거 (wrapper가 담당)
+    // background → transparent, padding/border-radius/border/opacity 제거
+    if (base.background) {
+      base.background = "transparent";
+    }
+    delete base["border-radius"];
+    delete base.border;
+    delete base.opacity;
+    delete base.padding;
+    delete base["padding-top"];
+    delete base["padding-right"];
+    delete base["padding-bottom"];
+    delete base["padding-left"];
+
+    // variant별 스타일에서도 시각적 스타일 제거
+    if (root.styles.variants) {
+      for (const [, variantStyles] of Object.entries(root.styles.variants)) {
+        for (const [, styleObj] of Object.entries(variantStyles as Record<string, any>)) {
+          if (styleObj && typeof styleObj === "object") {
+            if (styleObj.background) {
+              styleObj.background = "transparent";
+            }
+            delete styleObj["border-radius"];
+            delete styleObj.border;
+            delete styleObj.opacity;
+          }
+        }
+      }
+    }
   }
 
   private toLegacyPropDefinition(prop: PropDefinition): LegacyPropDefinition {

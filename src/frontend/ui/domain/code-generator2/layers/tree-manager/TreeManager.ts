@@ -64,20 +64,27 @@ class TreeManager {
     const groupedDeps = this.dataManager.getDependenciesGroupedByComponentSet();
 
     for (const [componentSetId, group] of Object.entries(groupedDeps)) {
-      const tree = this.buildDependencyTree(componentSetId, group);
-
-      // v1 호환: I... 노드 정리
+      // v1 호환: I... 노드 사전 정리 (트리 빌드 전에 소스 데이터에서 제거)
       // 원본 children이 있는 dependency에서 I... 노드 삭제
-      //TODO 린트에러?
-      const hasOriginalChildren = group.variants.some(
-        (v) => (v.info.document.children || []).length > 0
-      );
+      const hasOriginalChildren = group.variants.some((v) => {
+        const children = v.info.document.children || [];
+        return children.some(
+          (c: any) => c.id && !c.id.startsWith("I")
+        );
+      });
       if (hasOriginalChildren) {
-        this.removeInstanceInternalNodes(tree.root);
+        for (const variant of group.variants) {
+          this.removeInstanceInternalNodesFromSource(variant.info.document);
+        }
       }
 
-      const representativeId = group.variants[0].info.document.id;
-      dependencies.set(representativeId, tree);
+      const tree = this.buildDependencyTree(componentSetId, group);
+
+      // 모든 variant ID로 같은 tree 저장 (ComponentPropsLinker가 어떤 variant를 참조해도 찾을 수 있도록)
+      for (const variant of group.variants) {
+        const variantId = variant.info.document.id;
+        dependencies.set(variantId, tree);
+      }
     }
 
     return dependencies;
@@ -205,23 +212,24 @@ class TreeManager {
   }
 
   /**
-   * v1 호환: I... 노드 삭제
+   * v1 호환: I... 노드 삭제 (소스 데이터 레벨)
    *
-   * INSTANCE의 compound ID (예: I704:56;704:29;692:1613)를 가진 노드는
-   * 원본 children이 있는 dependency에서 중복이므로 삭제
+   * 트리 빌드 전에 소스 데이터에서 I... compound ID 노드를 재귀적으로 제거
+   * 이렇게 하면 CSS 변수 생성에서도 제외됨
    */
-  private removeInstanceInternalNodes(node: UINode): void {
+  private removeInstanceInternalNodesFromSource(node: any): void {
     if (!node.children) return;
-    node.children = node.children.filter((child) => {
+    node.children = node.children.filter((child: any) => {
       // I로 시작하고 ; 를 포함하는 compound ID는 INSTANCE 내부 노드
-      if (child.id.startsWith("I") && child.id.includes(";")) {
+      if (child.id && child.id.startsWith("I") && child.id.includes(";")) {
         return false; // 삭제
       }
       // 재귀적으로 하위 노드도 정리
-      this.removeInstanceInternalNodes(child);
+      this.removeInstanceInternalNodesFromSource(child);
       return true;
     });
   }
+
 }
 
 export default TreeManager;

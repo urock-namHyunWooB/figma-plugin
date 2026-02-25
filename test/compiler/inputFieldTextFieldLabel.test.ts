@@ -37,7 +37,7 @@ describe("InputFieldtextField Label/HelperText 감지", () => {
   it("컴파일이 성공해야 한다", async () => {
     const code = await getCompiledCode();
     expect(code).toBeTruthy();
-    expect(code).toContain("InputFieldtextField:"); // v2는 arrow function
+    expect(code).toMatch(/export default function InputFieldtextField/);
   });
 
   describe("Props Interface", () => {
@@ -101,7 +101,10 @@ describe("InputFieldtextField Label/HelperText 감지", () => {
   describe("JSX 바인딩", () => {
     it("label이 {label}로 렌더링되어야 한다", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/>\s*\{label\}\s*</);
+      // return 문 내에서 {label} 렌더링 확인 (다른 자식과 함께 있을 수 있음)
+      expect(code).toMatch(/\{label\}/);
+      // label이 slot(React.ReactNode)이 아닌 string prop인지 재확인
+      expect(code).not.toMatch(/label\?:\s*React\.ReactNode/);
     });
 
     it("helperText가 {helperText}로 렌더링되어야 한다", async () => {

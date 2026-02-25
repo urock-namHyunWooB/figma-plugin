@@ -148,11 +148,13 @@ export function extractDefaultTextValue(
  * 규칙:
  * - 노드 이름을 camelCase로 변환
  * - 이미 "text"로 끝나면 그대로, 아니면 "Text" 추가
+ * - 숫자로 시작하면 _ 접두사 추가 (유효한 JavaScript 식별자로 변환)
  *
  * 예:
  * - "Title" → "titleText"
  * - "Button Text" → "buttonText"
  * - "text" → "text"
+ * - "1" → "_1Text"
  *
  * @param nodeName - 노드 이름
  * @returns prop 이름
@@ -170,13 +172,21 @@ export function generateTextSlotPropName(nodeName: string): string {
     })
     .join("");
 
-  // 이미 "text"로 끝나면 그대로 반환
+  // 이미 "text"로 끝나면 그대로 반환 (숫자 시작 체크 후)
+  let result: string;
   if (camelCase.toLowerCase().endsWith("text")) {
-    return camelCase;
+    result = camelCase;
+  } else {
+    // 아니면 "Text" 추가
+    result = camelCase + "Text";
   }
 
-  // 아니면 "Text" 추가
-  return camelCase + "Text";
+  // JavaScript 식별자는 숫자로 시작할 수 없으므로 _ 접두사 추가
+  if (/^[0-9]/.test(result)) {
+    return "_" + result;
+  }
+
+  return result;
 }
 
 /**

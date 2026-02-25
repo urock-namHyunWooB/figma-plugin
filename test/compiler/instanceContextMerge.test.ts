@@ -16,19 +16,26 @@ describe("INSTANCE 컨텍스트 병합 - visible 처리", () => {
   test("dependencies 컴파일 시 INSTANCE 내부 노드(I...)가 삭제되어야 함", async () => {
     const compiler = new FigmaCodeGenerator(error02Fixture as any);
     const code = await compiler.compile();
-    
-    // ColorCss가 생성되면 안됨 (I로 시작하는 노드가 삭제되어야 함)
-    expect(code).not.toContain("ColorCss");
+
+    // MonoResponsive dependency의 Color (255:17770)는 정당한 노드이므로 CSS 생성됨
+    expect(code).toContain("MonoResponsive_monoResponsiveColorCss");
+
+    // 하지만 Main 컴포넌트에서 I... 노드로 인한 ColorCss는 생성되면 안됨
+    expect(code).not.toContain("buttonSolidPrimaryContentsContentsGlobalMonoResponsiveColorCss");
   });
 
-  test("MonoResponsive 컴포넌트 내부에 ColorCss가 없어야 함", async () => {
+  test("MonoResponsive 컴포넌트는 정당한 Color 노드를 가짐", async () => {
     const compiler = new FigmaCodeGenerator(error02Fixture as any);
     const code = await compiler.compile();
-    
-    // MonoResponsive 컴포넌트 내부만 확인
-    const monoMatch = code!.match(/function MonoResponsive[\s\S]*?^}/m);
+
+    // MonoResponsive dependency의 Color (255:17770)는 정당한 노드
+    // 따라서 MonoResponsive_monoResponsiveColorCss가 생성되어야 함
+    expect(code).toContain("MonoResponsive_monoResponsiveColorCss");
+
+    // MonoResponsive 함수 내에서 ColorCss를 참조해야 함
+    const monoMatch = code!.match(/const MonoResponsive:[\s\S]*?^\};/m);
     if (monoMatch) {
-      expect(monoMatch[0]).not.toContain("ColorCss");
+      expect(monoMatch[0]).toContain("MonoResponsive_monoResponsiveColorCss");
     }
   });
 });

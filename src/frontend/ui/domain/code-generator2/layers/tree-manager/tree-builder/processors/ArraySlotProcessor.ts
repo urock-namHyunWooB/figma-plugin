@@ -15,6 +15,7 @@
 
 import type { InternalTree, ArraySlotInfo } from "../../../types/types";
 import type DataManager from "../../data-manager/DataManager";
+import { hasDistinctOverrides } from "./utils/overrideUtils";
 
 export class ArraySlotProcessor {
   constructor(private readonly dataManager: DataManager) {}
@@ -109,6 +110,12 @@ export class ArraySlotProcessor {
 
         // variant 배타성 확인: 서로 배타적인 variant 조합에서만 나타나면 Array Slot이 아님
         if (this.areVariantExclusive(group)) {
+          continue;
+        }
+
+        // 인스턴스들이 서로 다른 override 값을 가지면 Array Slot으로 처리하지 않음
+        // (각 인스턴스가 개별 props로 렌더링되어야 함)
+        if (hasDistinctOverrides(group, this.dataManager)) {
           continue;
         }
 

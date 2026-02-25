@@ -201,6 +201,28 @@ class TreeBuilder {
       nodeType = "container";
     }
 
+    // component(INSTANCE with refId): 참조하는 dependency에 원본 children이 있으면
+    // INSTANCE의 I... children은 불필요하므로 children을 비움
+    // 원본 children이 없으면 (empty dependency) I... children이 실제 콘텐츠이므로 유지
+    if (nodeType === "component" && node.refId) {
+      const depHasOriginalChildren = this.dependencyHasOriginalChildren(node.refId);
+      if (depHasOriginalChildren) {
+        return {
+          id: node.id,
+          name: node.name,
+          type: nodeType,
+          children: [],
+          refId: node.refId,
+          ...(node.styles ? { styles: node.styles } : {}),
+          ...(node.visibleCondition
+            ? { visibleCondition: node.visibleCondition }
+            : {}),
+          ...(node.bindings ? { bindings: node.bindings } : {}),
+          ...(node.semanticType ? { semanticType: node.semanticType } : {}),
+        } as UINode;
+      }
+    }
+
     // 보이지 않는 레이아웃 노드 필터링
     const visibleChildren = node.children.filter(
       (child) => !this.isInvisibleLayoutNode(child)
@@ -245,6 +267,18 @@ class TreeBuilder {
       ...(nodeType === "vector" && vectorSvg ? { vectorSvg } : {}),
       ...(nodeType === "text" && textSegments ? { textSegments } : {}),
     } as UINode;
+  }
+
+  /**
+   * dependency 컴포넌트가 원본(non-I) children을 가지는지 확인
+   */
+  private dependencyHasOriginalChildren(refId: string): boolean {
+    const depData = this.dataManager.getById(refId);
+    if (!depData.spec) return false;
+    const depChildren = depData.spec.info?.document?.children || [];
+    return depChildren.some(
+      (c: any) => c.id && !c.id.startsWith("I")
+    );
   }
 
   /**

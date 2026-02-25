@@ -78,7 +78,8 @@ describe("인스턴스 오버라이드 Props", () => {
     const result = (await compiler.compile()) as unknown as string;
 
     // ColorGuide가 여러 번 호출되어야 함 (11개 인스턴스)
-    const colorGuideMatches = result.match(/<ColorGuide[\s\S]*?\/>/g);
+    // Note: Use [^>]* instead of [\s\S]*? to avoid matching type annotations like <ColorGuideProps>
+    const colorGuideMatches = result.match(/<ColorGuide [^>]*\/>/g);
     expect(colorGuideMatches).toBeTruthy();
     expect(colorGuideMatches!.length).toBe(11);
 

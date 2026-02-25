@@ -16,7 +16,7 @@ import type DataManager from "../../data-manager/DataManager";
 
 interface OverrideInfo {
   propName: string;
-  propType: "string";
+  propType: "string" | "boolean" | "number";
   nodeId: string; // 원본 노드 ID (바인딩용)
   nodeName: string; // 노드 이름
 }
@@ -50,10 +50,37 @@ export class ComponentPropsLinker {
       // 중복 제거: 이미 같은 이름의 prop이 있으면 skip
       for (const override of overrides.values()) {
         if (!depTree.props.some(p => p.name === override.propName)) {
+          // 원본 노드에서 기본값 추출
+          let defaultValue: any = "";
+          const originalNodeData = this.dataManager.getById(override.nodeId);
+          if (override.propType === "boolean") {
+            // visible override: 원본 visible 값을 기본값으로
+            // Figma API: visible 생략 시 true로 간주
+            const visible = (originalNodeData.node as any)?.visible;
+            defaultValue = visible !== undefined ? visible : true;
+          } else if (override.propType === "number") {
+            const opacity = (originalNodeData.node as any)?.opacity;
+            defaultValue = opacity !== undefined ? String(opacity) : "1";
+          } else if (override.propName.endsWith("Text")) {
+            const chars = (originalNodeData.node as any)?.characters;
+            if (chars !== undefined) {
+              defaultValue = chars;
+            }
+          } else if (override.propName.endsWith("Bg")) {
+            const fills = (originalNodeData.node as any)?.fills;
+            if (fills) {
+              const color = this.extractColorFromFills(fills);
+              if (color) defaultValue = color;
+            }
+          } else if (override.propName.endsWith("Opacity")) {
+            const opacity = (originalNodeData.node as any)?.opacity;
+            defaultValue = opacity !== undefined ? String(opacity) : "1";
+          }
+
           depTree.props.push({
             type: override.propType,
             name: override.propName,
-            defaultValue: "",
+            defaultValue,
             required: false,
             sourceKey: "", // Override props는 Figma prop이 아님
           });
@@ -226,6 +253,45 @@ export class ComponentPropsLinker {
             nodeName: originalStyle.name,
           });
         }
+
+        // visible override 감지 (v1 호환)
+        // Figma API: visible이 true이면 property를 아예 생략함
+        {
+          const originalNode = this.dataManager.getById(originalId).node;
+          const originalVisible = (originalNode as any)?.visible;
+          // child.visible이 undefined면 true로 간주 (Figma convention)
+          const childVisible = child.visible !== undefined ? child.visible : true;
+          // 원본 visible이 undefined이면 true로 간주 (Figma convention)
+          const origVisible = originalVisible !== undefined ? originalVisible : true;
+          if (origVisible !== childVisible) {
+            const capName = baseName.charAt(0).toUpperCase() + baseName.slice(1);
+            const propName = `show${capName}`;
+            overrides.set(propName, {
+              propName,
+              propType: "boolean",
+              nodeId: originalId,
+              nodeName: originalStyle.name,
+            });
+          }
+        }
+
+        // opacity override 감지 (v1 호환)
+        {
+          const originalNode = this.dataManager.getById(originalId).node;
+          const originalOpacity = (originalNode as any)?.opacity;
+          // Figma: opacity 생략 시 1.0
+          const childOpacity = child.opacity !== undefined ? child.opacity : 1;
+          const origOpacity = originalOpacity !== undefined ? originalOpacity : 1;
+          if (childOpacity !== origOpacity) {
+            const propName = `${baseName}Opacity`;
+            overrides.set(propName, {
+              propName,
+              propType: "string",
+              nodeId: originalId,
+              nodeName: originalStyle.name,
+            });
+          }
+        }
       }
 
       // 재귀
@@ -271,7 +337,6 @@ export class ComponentPropsLinker {
           node.bindings = {};
         }
 
-        // fills override → style 바인딩 (추후 구현)
         // characters override → content 바인딩
         if (override.propName.endsWith("Text")) {
           node.bindings.content = { prop: override.propName };
@@ -282,6 +347,20 @@ export class ComponentPropsLinker {
             node.bindings.style = {};
           }
           node.bindings.style.background = { prop: override.propName };
+        }
+        // visible override → visibleCondition 바인딩
+        if (override.propName.startsWith("show")) {
+          node.visibleCondition = {
+            type: "truthy",
+            prop: override.propName,
+          } as any;
+        }
+        // opacity override → style 바인딩
+        if (override.propName.endsWith("Opacity")) {
+          if (!node.bindings.style) {
+            node.bindings.style = {};
+          }
+          node.bindings.style.opacity = { prop: override.propName };
         }
       }
     }
@@ -318,9 +397,10 @@ export class ComponentPropsLinker {
 
   /**
    * 문자열을 camelCase로 변환
+   * 숫자로 시작하면 _ 접두사 추가 (유효한 JavaScript 식별자로 변환)
    */
   private toCamelCase(str: string): string {
-    return str
+    const result = str
       .replace(/[^a-zA-Z0-9]+/g, " ")
       .trim()
       .split(/\s+/)
@@ -330,6 +410,13 @@ export class ComponentPropsLinker {
           : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
       )
       .join("");
+
+    // JavaScript 식별자는 숫자로 시작할 수 없으므로 _ 접두사 추가
+    if (/^[0-9]/.test(result)) {
+      return "_" + result;
+    }
+
+    return result;
   }
 
   /**
@@ -350,6 +437,15 @@ export class ComponentPropsLinker {
       // characters override
       if (targetNode.characters !== undefined) {
         return targetNode.characters;
+      }
+    } else if (info.propName.startsWith("show")) {
+      // visible override (Figma: visible 생략 시 true)
+      const visible = targetNode.visible !== undefined ? targetNode.visible : true;
+      return String(visible);
+    } else if (info.propName.endsWith("Opacity")) {
+      // opacity override
+      if (targetNode.opacity !== undefined) {
+        return String(targetNode.opacity);
       }
     }
 

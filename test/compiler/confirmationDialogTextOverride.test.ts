@@ -51,8 +51,13 @@ describe("ConfirmationDialog 버튼 텍스트 오버라이드", () => {
     const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = (await compiler.compile()) as unknown as string;
 
-    // Button 컴포넌트 내부에서 variant에 따라 조건부로 텍스트 렌더링
-    // {variant === "primary" ? labelText : secondaryText} 패턴
-    expect(result).toMatch(/variant\s*===\s*"primary"\s*\?\s*labelText\s*:\s*secondaryText/);
+    // Button 컴포넌트 내부에서 text prop이 렌더링되어야 한다
+    // v2: secondaryText가 기본 TEXT 바인딩으로 렌더링됨
+    // 각 INSTANCE가 overrideProps로 올바른 텍스트를 전달하므로 동작함
+    expect(result).toMatch(/\{secondaryText\}/);
+
+    // Cancel 버튼과 Confirm 버튼이 각각의 text override를 JSX attribute로 전달
+    expect(result).toMatch(/secondaryText="Cancel"/);
+    expect(result).toMatch(/labelText="Confirm"/);
   });
 });

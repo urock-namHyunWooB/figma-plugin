@@ -336,8 +336,26 @@ class DataManager {
           this.addToStyleMap(depSpec.styleTree);
         }
 
+        // dependency의 document 노드들도 nodeMap에 추가
+        // INSTANCE 노드 내부의 componentId 조회에 필요
+        if (depSpec.info?.document) {
+          this.addToNodeMap(depSpec.info.document);
+        }
+
         // 깊이 있는 의존성도 수집
         this.collectDependenciesRecursive(depSpec);
+      }
+    }
+  }
+
+  /**
+   * 노드를 nodeMap에 재귀적으로 추가
+   */
+  private addToNodeMap(node: SceneNode): void {
+    this.nodeMap.set(node.id, node);
+    if ("children" in node && node.children) {
+      for (const child of node.children) {
+        this.addToNodeMap(child as SceneNode);
       }
     }
   }

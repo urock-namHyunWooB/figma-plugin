@@ -155,10 +155,144 @@ export class InputHeuristic implements IHeuristic {
     // 자식 노드 semanticType 설정
     this.applyChildSemanticTypes(ctx.tree, ctx);
 
+    // Label/HelperText 감지 및 string prop 변환
+    this.detectLabelAndHelperText(ctx);
+
     return {
       componentType: this.componentType,
       rootNodeType: "input",
     };
+  }
+
+  // ===========================================================================
+  // Label / HelperText Detection
+  // ===========================================================================
+
+  /**
+   * Label/HelperText TEXT 노드를 감지하고 boolean visibility prop을 string prop으로 변환
+   *
+   * 패턴:
+   * - "Show Label" (BOOLEAN) → label?: string (기본값: TEXT content)
+   * - "Show Guide" (BOOLEAN) → helperText?: string (기본값: TEXT content)
+   *
+   * 1. visibleCondition이 있는 노드 중 TEXT를 포함하는 노드 탐색
+   * 2. 연결된 boolean prop을 제거하고 string prop으로 대체
+   * 3. TEXT 노드에 bindings.content 설정
+   */
+  private detectLabelAndHelperText(ctx: HeuristicContext): void {
+    // 루트 직접 자식 중에서 탐색 (Label FRAME, Characters TEXT 등)
+    for (const child of ctx.tree.children || []) {
+      this.processNodeForLabelHelper(child, ctx);
+    }
+  }
+
+  /**
+   * 노드가 label 또는 helperText 변환 대상인지 확인하고 처리
+   */
+  private processNodeForLabelHelper(
+    node: InternalNode,
+    ctx: HeuristicContext
+  ): void {
+    // visibleCondition이 있는 노드만 처리 (VisibilityProcessor가 설정한 것)
+    if (!node.visibleCondition) return;
+
+    // truthy condition에서 prop 이름 추출
+    const condPropName = this.getConditionPropName(node.visibleCondition);
+    if (!condPropName) return;
+
+    // ctx.props에서 해당 boolean prop 찾기
+    const propIndex = ctx.props.findIndex(
+      (p) => p.name === condPropName && p.type === "boolean"
+    );
+    if (propIndex === -1) return;
+
+    const boolProp = ctx.props[propIndex];
+
+    // sourceKey로 label/helperText 종류 판별
+    const sourceKeyLower = boolProp.sourceKey.toLowerCase();
+
+    let stringPropName: string | undefined;
+    if (/label/.test(sourceKeyLower)) {
+      stringPropName = "label";
+    } else if (/guide|helper|error|message/.test(sourceKeyLower)) {
+      stringPropName = "helperText";
+    }
+
+    if (!stringPropName) return;
+
+    // TEXT 노드와 텍스트 내용 찾기
+    const textInfo = this.findTextContent(node, ctx);
+    if (!textInfo) return;
+
+    // 1. boolean prop 제거
+    ctx.props.splice(propIndex, 1);
+
+    // 2. string prop 추가
+    ctx.props.push({
+      type: "string",
+      name: stringPropName,
+      sourceKey: boolProp.sourceKey,
+      required: false,
+      defaultValue: textInfo.text,
+    });
+
+    // 3. TEXT 노드에 bindings.content 설정
+    if (!textInfo.textNode.bindings) {
+      textInfo.textNode.bindings = {};
+    }
+    textInfo.textNode.bindings.content = { prop: stringPropName };
+
+    // 4. visibleCondition 제거 (string prop이 있으면 항상 표시)
+    node.visibleCondition = undefined;
+  }
+
+  /**
+   * ConditionNode에서 prop 이름 추출
+   */
+  private getConditionPropName(condition: any): string | null {
+    if (!condition) return null;
+
+    // { type: "truthy", prop: "showLabel" }
+    if (condition.type === "truthy" && condition.prop) {
+      return condition.prop;
+    }
+
+    // { type: "not", condition: { type: "truthy", prop: "..." } }
+    if (condition.type === "not" && condition.condition) {
+      return this.getConditionPropName(condition.condition);
+    }
+
+    return null;
+  }
+
+  /**
+   * 노드에서 TEXT 콘텐츠 찾기 (자신이 TEXT이거나 자식 TEXT 탐색)
+   */
+  private findTextContent(
+    node: InternalNode,
+    ctx: HeuristicContext
+  ): { textNode: InternalNode; text: string } | null {
+    // 자신이 TEXT인 경우
+    if (node.type === "TEXT") {
+      const { node: spec } = ctx.dataManager.getById(node.id);
+      const characters = ((spec as any)?.characters || "").trim();
+      if (characters) {
+        return { textNode: node, text: characters };
+      }
+    }
+
+    // 자식에서 TEXT 찾기 (1단계만)
+    for (const child of node.children || []) {
+      if (child.type === "TEXT") {
+        const { node: spec } = ctx.dataManager.getById(child.id);
+        const characters = ((spec as any)?.characters || "").trim();
+        if (characters) {
+          return { textNode: child, text: characters };
+        }
+      }
+    }
+
+    return null;
   }
 
   /**
