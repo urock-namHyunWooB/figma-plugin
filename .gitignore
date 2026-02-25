@@ -42,3 +42,4 @@ __screenshots__
 test/**/*.json
 test/**/generated-*.tsx
 test/**/compiled/
+test/output/
