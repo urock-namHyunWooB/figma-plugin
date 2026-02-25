@@ -85,8 +85,8 @@ describe("urock-button", () => {
     // btnCss_customTypeStyles가 정의되어야 함
     expect(result).toMatch(/btnCss_customTypeStyles/);
 
-    // JSX에서 customTypeStyles가 사용되어야 함
-    expect(result).toMatch(/btnCss_customTypeStyles\[customType\]/);
+    // JSX에서 customTypeStyles가 사용되어야 함 (optional chaining)
+    expect(result).toMatch(/btnCss_customTypeStyles\?\.\[customType\]/);
   });
 
   it("btnCss_customTypeStyles에 customType variant 키들이 있어야 한다", async () => {
@@ -121,5 +121,41 @@ describe("urock-button", () => {
     // 각 정의된 변수가 JSX에서 참조되는지 확인
     const unusedVars = definedVars.filter((v) => !jsx.includes(v));
     expect(unusedVars).toEqual([]);
+  });
+
+  it("iconLeft는 조건부 렌더링되어야 한다", async () => {
+    const result = await compileFixture();
+
+    // {iconLeft && ( ... )} 패턴이 있어야 함
+    expect(result).toMatch(/\{iconLeft\s*&&\s*\(/);
+
+    // iconLeft wrapper div가 조건부로 렌더링되어야 함
+    const iconLeftPattern = /\{iconLeft\s*&&\s*\(\s*<div[\s\S]*?\{iconLeft\}[\s\S]*?<\/div>\s*\)\}/;
+    expect(result).toMatch(iconLeftPattern);
+  });
+
+  it("iconRight는 조건부 렌더링되어야 한다", async () => {
+    const result = await compileFixture();
+
+    // {iconRight && ( ... )} 패턴이 있어야 함
+    expect(result).toMatch(/\{iconRight\s*&&\s*\(/);
+
+    // iconRight wrapper div가 조건부로 렌더링되어야 함
+    const iconRightPattern = /\{iconRight\s*&&\s*\(\s*<div[\s\S]*?\{iconRight\}[\s\S]*?<\/div>\s*\)\}/;
+    expect(result).toMatch(iconRightPattern);
+  });
+
+  it("slot이 비어있을 때 wrapper div가 렌더링되지 않아야 한다", async () => {
+    const result = await compileFixture();
+
+    // JSX 부분 추출
+    const jsxMatch = result.match(/return\s*\(([\s\S]*)\);/);
+    expect(jsxMatch).toBeTruthy();
+    const jsx = jsxMatch![1];
+
+    // 조건부 렌더링 패턴 확인 (iconLeft, iconRight 모두)
+    const conditionalSlots = jsx.match(/\{(iconLeft|iconRight)\s*&&\s*\(/g);
+    expect(conditionalSlots).toBeTruthy();
+    expect(conditionalSlots!.length).toBe(2); // iconLeft, iconRight 2개
   });
 });

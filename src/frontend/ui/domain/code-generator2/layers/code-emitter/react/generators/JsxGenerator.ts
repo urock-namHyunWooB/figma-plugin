@@ -48,7 +48,7 @@ export class JsxGenerator {
     // JSX body (루트 노드는 isRoot=true로 restProps 전파)
     const jsxBody = this.generateNode(uiTree.root, styleStrategy, options, 2, true);
 
-    return `function ${componentName}(props) {
+    return `function ${componentName}(props: ${componentName}Props) {
   const ${propsDestructuring} = props;
 
   return (
@@ -346,7 +346,7 @@ ${indentStr}))}`;
       let wrapperAttrs: string;
       if (dynamicProps.length > 0) {
         const dynamicStyleRefs = dynamicProps.map(
-          (prop) => `${wrapperStyleVarName}_${prop}Styles[${prop}]`
+          (prop) => `${wrapperStyleVarName}_${prop}Styles?.[${prop}]`
         );
         if (styleStrategy.name === "emotion") {
           wrapperAttrs = `css={[${wrapperStyleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
@@ -507,7 +507,7 @@ ${indentStr}</${tag}>`;
       if (dynamicProps.length > 0) {
         // 동적 스타일 포함
         const dynamicStyleRefs = dynamicProps.map(
-          (prop) => `${styleVarName}_${prop}Styles[${prop}]`
+          (prop) => `${styleVarName}_${prop}Styles?.[${prop}]`
         );
 
         if (styleStrategy.name === "emotion") {
@@ -731,7 +731,7 @@ ${indentStr}</${tag}>`;
 
     if (dynamicProps.length > 0) {
       const dynamicStyleRefs = dynamicProps.map(
-        (prop) => `${styleVarName}_${prop}Styles[${prop}]`
+        (prop) => `${styleVarName}_${prop}Styles?.[${prop}]`
       );
       if (styleStrategy.name === "emotion") {
         wrapperAttrs = `css={[${styleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
@@ -743,6 +743,6 @@ ${indentStr}</${tag}>`;
       wrapperAttrs = `${styleAttr.attributeName}=${styleAttr.valueCode}`;
     }
 
-    return `${indentStr}<div ${wrapperAttrs}>{${slotProp}}</div>`;
+    return `${indentStr}{${slotProp} && <div ${wrapperAttrs}>{${slotProp}}</div>}`;
   }
 }
