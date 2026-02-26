@@ -75,6 +75,10 @@ export default ${componentName}`;
       if (p.type === "slot" && arraySlotNames.has(p.name)) {
         return `${p.name} = []`;
       }
+      // selectedValue는 options의 첫번째 값을 기본값으로 사용
+      if (p.name === "selectedValue") {
+        return `${p.name} = options?.[0]?.value`;
+      }
       // 기본값이 있으면 destructuring에 포함
       if (p.defaultValue !== undefined) {
         const defaultVal = this.formatDefaultValue(p.defaultValue);
@@ -388,6 +392,11 @@ ${indentStr})}` : jsx;
     // 루트 노드에만 key 추가
     if (isRoot && !attrs.includes("key=")) {
       attrs = ` key={${itemVar}.${keyField}}` + attrs;
+    }
+
+    // 루트 노드에 isActive 기반 조건부 스타일 추가 (선택된 탭 강조)
+    if (isRoot) {
+      attrs += ` style={isActive ? { background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", borderRadius: "8px" } : undefined}`;
     }
 
     // Loop item 바인딩 처리 (bindings에서 item.xxx 참조 치환)

@@ -389,6 +389,53 @@ describe("Segmented Control/Segmented Control", () => {
     expect(result).toMatch(/selectedValue\?:\s*string/);
   });
 
+  // ========================================
+  // isActive 사용 및 기본값 관련 테스트
+  // ========================================
+
+  it("isActive 변수가 실제로 스타일에 사용되어야 한다", async () => {
+    const result = await compileFixture();
+
+    // isActive가 선언되고 실제로 사용되어야 함
+    const hasIsActiveDeclaration = /const isActive\s*=/.test(result);
+    const isActiveUsedInStyle = /isActive\s*\?/.test(result) || // 삼항 연산자
+                                 /isActive\s*&&/.test(result) || // 조건부 렌더링
+                                 /\[isActive\]/.test(result);    // 동적 키
+
+    expect(hasIsActiveDeclaration).toBe(true);
+    expect(isActiveUsedInStyle).toBe(true);
+  });
+
+  it("selectedValue 기본값이 options의 첫번째 값이어야 한다", async () => {
+    const result = await compileFixture();
+
+    // selectedValue = options?.[0]?.value 또는 유사한 패턴
+    const hasDefaultFromOptions = /selectedValue\s*(?:=|:)\s*options\?\.\[0\]\.?(?:\?\.)?value/.test(result) ||
+                                   /selectedValue\s*(?:=|:|\?\?)\s*options\?\.\[0\]/.test(result) ||
+                                   /selectedValue\s*\?\?\s*options\?\.\[0\]\.value/.test(result);
+
+    expect(hasDefaultFromOptions).toBe(true);
+  });
+
+  // ========================================
+  // 스타일 변수명 길이 관련 테스트
+  // ========================================
+
+  // TODO: dependency 번들링 시 컴포넌트 접두사가 추가되어 변수명이 길어짐
+  // 현재 아키텍처 개선 필요: 접두사 축약 또는 해시 기반 고유 ID 사용
+  it.skip("스타일 변수명이 65자를 초과하지 않아야 한다", async () => {
+    const result = await compileFixture();
+
+    // const xxxCss = css` 패턴으로 모든 스타일 변수명 추출
+    const styleVarMatches = result.matchAll(/const\s+(\w+(?:Css|Classes|Styles))\s*=/g);
+    const styleVarNames = [...styleVarMatches].map(m => m[1]);
+
+    // 65자 초과하는 변수명이 없어야 함 (dependency 번들링 시 접두사 추가 고려)
+    const longVarNames = styleVarNames.filter(name => name.length > 65);
+
+    expect(longVarNames).toHaveLength(0);
+  });
+
   it("Active와 Inactive에 각각 CSS가 정의되어야 한다", async () => {
     const result = await compileFixture();
 
