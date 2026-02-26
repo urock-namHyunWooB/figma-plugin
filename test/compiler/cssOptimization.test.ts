@@ -9,7 +9,7 @@ describe("CSS 최적화 - 중복 제거", () => {
   beforeAll(async () => {
     const data = taptapAnchorData as unknown as FigmaNodeData;
     const compiler = new FigmaCodeGenerator(data);
-    generatedCode = (await compiler.getGeneratedCode("Anchor")) ?? "";
+    generatedCode = (await compiler.compile("Anchor")) ?? "";
   });
 
   test("컴파일이 성공해야 한다", () => {

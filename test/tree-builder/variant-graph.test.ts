@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { FigmaCodeGenerator } from "@frontend/ui/domain/code-generator2/FigmaCodeGenerator";
+import FigmaCodeGenerator from "@frontend/ui/domain/code-generator2/FigmaCodeGenerator";
 import DataManager from "@frontend/ui/domain/code-generator2/layers/data-manager/DataManager";
 import TreeBuilder from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/TreeBuilder";
 import airtableButton from "../fixtures/any-component-set/airtable-button.json";

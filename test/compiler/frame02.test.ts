@@ -7,7 +7,7 @@ describe("frame-02 렌더링 테스트", () => {
   test("컴파일이 성공해야 한다", async () => {
     const data = frame02 as unknown as FigmaNodeData;
     const compiler = new FigmaCodeGenerator(data);
-    const code = await compiler.getGeneratedCode("SectionHeader");
+    const code = await compiler.compile("SectionHeader");
 
     console.log("=== Generated Code ===");
     console.log(code);

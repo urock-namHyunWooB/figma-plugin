@@ -39,7 +39,6 @@ import type { ICodeEmitter, EmittedCode } from "./layers/code-emitter/ICodeEmitt
 import { ReactEmitter, type StyleStrategyType } from "./layers/code-emitter/react/ReactEmitter";
 import { toComponentName } from "./utils/nameUtils";
 
-/** v1 호환 SlotInfo */
 export interface SlotInfo {
   componentSetId?: string;
   componentName?: string;
@@ -49,7 +48,7 @@ export interface SlotInfo {
   height?: number;
 }
 
-/** v1 호환 UI용 PropDefinition */
+/**UI용 PropDefinition */
 export interface LegacyPropDefinition {
   name: string;
   type: "VARIANT" | "TEXT" | "BOOLEAN" | "SLOT";
@@ -58,14 +57,14 @@ export interface LegacyPropDefinition {
   slotInfo?: SlotInfo;
 }
 
-/** v1 호환 컴파일된 의존성 */
+/**컴파일된 의존성 */
 export interface CompiledDependency {
   id: string;
   name: string;
   code: string;
 }
 
-/** v1 호환 멀티 컴포넌트 결과 */
+/**멀티 컴포넌트 결과 */
 export interface MultiComponentResult {
   mainCode: string;
   mainName: string;
@@ -96,11 +95,10 @@ export interface GeneratedResult {
   dependencies: Map<string, EmittedCode>;
 }
 
-export class FigmaCodeGenerator {
+class FigmaCodeGenerator {
   private readonly dataManager: DataManager;
   private readonly treeManager: TreeManager;
   private readonly codeEmitter: ICodeEmitter;
-  private cachedUITree: { main: UITree; dependencies: Map<string, UITree> } | null = null;
 
   constructor(spec: FigmaNodeData, options: GeneratorOptions = {}) {
     // Layer 1: 데이터 접근
@@ -134,7 +132,7 @@ export class FigmaCodeGenerator {
 
     const depCodes = new Map<string, EmittedCode>();
     for (const [depId, depTree] of depTrees) {
-      // v1 호환: dependency 루트의 고정 크기를 100%로 변환 (8px 붕괴 방지)
+      // dependency 루트의 고정 크기를 100%로 변환 (8px 붕괴 방지)
       this.makeRootFlexible(depTree);
       depCodes.set(depId, await this.codeEmitter.emit(depTree));
     }
@@ -160,16 +158,9 @@ export class FigmaCodeGenerator {
   }
 
   /**
-   * v1 호환: 코드 생성 (compile의 별칭)
+   * 코드 생성
    */
-  async getGeneratedCode(_componentName?: string): Promise<string | null> {
-    return this.compile(_componentName);
-  }
-
-  /**
-   * v1 호환: 코드 생성
-   */
-  async compile(_componentName?: string): Promise<string | null> {
+  async compile(): Promise<string | null> {
     try {
       const result = await this.generate();
 
@@ -189,7 +180,7 @@ export class FigmaCodeGenerator {
         return this.bundleCode(result.main, uniqueDeps);
       }
 
-      // v1 호환: 분리형 export → 합체형 export default function
+      // 분리형 export → 합체형 export default function
       return this.mergeExportDefault(result.main.code, result.main.componentName);
     } catch (e) {
       console.error("Compile error:", e);
@@ -291,7 +282,7 @@ export class FigmaCodeGenerator {
       mainCodeClean = mainCodeClean.trim();
     }
 
-    // Step 3.6: v1 호환 - export default를 function 선언에 합치기
+    // Step 3.6: export default를 function 선언에 합치기
     // "function X(props) { ... }\n\nexport default X;" → "export default function X(props) { ... }"
     mainCodeClean = this.mergeExportDefault(mainCodeClean, mainName);
 
@@ -349,15 +340,15 @@ export class FigmaCodeGenerator {
   }
 
   /**
-   * v1 호환: Props 정의 반환 (UI 컨트롤러용)
+   * Props 정의 반환 (UI 컨트롤러용)
    */
   getPropsDefinition(): LegacyPropDefinition[] {
-    const uiTree = this.getCachedUITree().main;
+    const uiTree = this.buildUITree().main;
     return uiTree.props.map(prop => this.toLegacyPropDefinition(prop));
   }
 
   /**
-   * v1 호환: 컴포넌트 이름 반환
+   * 컴포넌트 이름 반환
    */
   getComponentName(): string {
     const mainId = this.dataManager.getMainComponentId();
@@ -366,9 +357,9 @@ export class FigmaCodeGenerator {
   }
 
   /**
-   * v1 호환: 멀티 컴포넌트 컴파일 결과 반환
+   * 멀티 컴포넌트 컴파일 결과 반환
    */
-  async getGeneratedCodeWithDependencies(_componentName?: string): Promise<MultiComponentResult> {
+  async getGeneratedCodeWithDependencies(): Promise<MultiComponentResult> {
     const result = await this.generate();
 
     const dependencies: CompiledDependency[] = [];
@@ -385,13 +376,6 @@ export class FigmaCodeGenerator {
       mainName: result.main.componentName,
       dependencies,
     };
-  }
-
-  private getCachedUITree(): { main: UITree; dependencies: Map<string, UITree> } {
-    if (!this.cachedUITree) {
-      this.cachedUITree = this.treeManager.build();
-    }
-    return this.cachedUITree;
   }
 
   /**
@@ -512,7 +496,7 @@ export class FigmaCodeGenerator {
   }
 
   /**
-   * v1 호환: 분리형 export → 합체형 export default function
+   * 분리형 export → 합체형 export default function
    * "function X(props) { ... }\n\nexport default X;" → "export default function X(props) { ... }"
    */
   private mergeExportDefault(code: string, componentName: string): string {
@@ -529,7 +513,7 @@ export class FigmaCodeGenerator {
   }
 
   /**
-   * v1 호환: dependency 루트의 고정 크기를 100%로 변환
+   * dependency 루트의 고정 크기를 100%로 변환
    * INSTANCE가 parent의 크기를 채우도록 함 (8px 붕괴 방지)
    */
   private makeRootFlexible(tree: UITree): void {
@@ -545,7 +529,7 @@ export class FigmaCodeGenerator {
       base.height = "100%";
     }
 
-    // v1 호환: 시각적 스타일 제거 (wrapper가 담당)
+    // 시각적 스타일 제거 (wrapper가 담당)
     // background → transparent, padding/border-radius/border/opacity 제거
     if (base.background) {
       base.background = "transparent";

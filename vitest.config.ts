@@ -31,6 +31,7 @@ export default defineConfig({
     // 브라우저 전용 테스트 제외 (npm run test:browser로 실행)
     exclude: [
       "test/**/*.browser-only.test.ts",
+      "test/**/*.browser-only.test.tsx",
       "test/**/browser-only.test.ts",
       "node_modules",
     ],

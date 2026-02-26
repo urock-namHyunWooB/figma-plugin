@@ -29,7 +29,7 @@ describe("compiler 테스트", () => {
 
       beforeAll(async () => {
         const compiler = new FigmaCodeGenerator(taptapButtonMockData as any);
-        const code = await compiler.getGeneratedCode();
+        const code = await compiler.compile();
 
         Component = await renderReactComponent(code!);
       });
@@ -184,7 +184,7 @@ describe("compiler 테스트", () => {
         const compiler = new FigmaCodeGenerator(
           urockButtonSampleMockData as any
         );
-        const code = await compiler.getGeneratedCode();
+        const code = await compiler.compile();
 
         Component = await renderReactComponent(code!);
       });
@@ -227,7 +227,7 @@ describe("compiler 테스트", () => {
         const compiler = new FigmaCodeGenerator(
           urockButtonSampleMockData as any
         );
-        const code = await compiler.getGeneratedCode();
+        const code = await compiler.compile();
 
         // type이 customType으로 변경되었는지 확인
         expect(code).toContain("customType");
@@ -240,7 +240,7 @@ describe("compiler 테스트", () => {
         const compiler = new FigmaCodeGenerator(
           urockButtonSampleMockData as any
         );
-        const code = await compiler.getGeneratedCode();
+        const code = await compiler.compile();
 
         // 모든 customType 값이 스타일 Record에 포함되어야 함
         const allCustomTypes = [
@@ -301,7 +301,7 @@ describe("compiler 테스트", () => {
 
       beforeAll(async () => {
         const compiler = new FigmaCodeGenerator(tadaButtonMockData as any);
-        const code = await compiler.getGeneratedCode();
+        const code = await compiler.compile();
 
         Component = await renderReactComponent(code!);
       });
@@ -332,7 +332,7 @@ describe("compiler 테스트", () => {
       test("prop에서 nativeProp과 겹치는 prop이 있으면 custom prop으로 이름이 변경된다.", async () => {
         // disabled가 customDisabled로 변해야 함
         const compiler = new FigmaCodeGenerator(tadaButtonMockData as any);
-        const code = await compiler.getGeneratedCode();
+        const code = await compiler.compile();
 
         // disabled가 customDisabled로 변경되었는지 확인
         expect(code).toContain("customDisabled");
@@ -342,7 +342,7 @@ describe("compiler 테스트", () => {
 
       test("props에서 customDisabled는 boolean이다", async () => {
         const compiler = new FigmaCodeGenerator(tadaButtonMockData as any);
-        const code = await compiler.getGeneratedCode();
+        const code = await compiler.compile();
 
         // customDisabled가 boolean 타입으로 정의되어 있는지 확인
         // interface에서 customDisabled?: boolean 형태여야 함
@@ -371,7 +371,7 @@ describe("compiler 테스트", () => {
 
       beforeAll(async () => {
         const compiler = new FigmaCodeGenerator(urockChipsMockData as any);
-        const code = await compiler.getGeneratedCode();
+        const code = await compiler.compile();
 
         Component = await renderReactComponent(code!);
       });
@@ -400,7 +400,7 @@ describe("compiler 테스트", () => {
 
       beforeAll(async () => {
         const compiler = new FigmaCodeGenerator(airtableSelectButton as any);
-        const code = await compiler.getGeneratedCode();
+        const code = await compiler.compile();
 
         Component = await renderReactComponent(code!);
       });
@@ -426,7 +426,7 @@ describe("compiler 테스트", () => {
 
         beforeAll(async () => {
           const compiler = new FigmaCodeGenerator(airtableSelectButton as any);
-          generatedCode = (await compiler.getGeneratedCode()) || "";
+          generatedCode = (await compiler.compile()) || "";
         });
 
         test("dependency 컴포넌트가 같은 파일에 생성되어야 한다", () => {
@@ -634,7 +634,7 @@ describe("compiler 테스트", () => {
 
       beforeAll(async () => {
         compiler = new FigmaCodeGenerator(tadaButtonComponentMockData as any);
-        code = await compiler.getGeneratedCode("Badge");
+        code = await compiler.compile("Badge");
       });
 
       test("코드가 생성되어야 한다", () => {
@@ -688,7 +688,7 @@ describe("compiler 테스트", () => {
       const dataPreparer = new DataPreparer();
       preparedData = dataPreparer.prepare(airtableButtonWithDeps as any);
       const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
-      code = await compiler.getGeneratedCode();
+      code = await compiler.compile();
     });
 
     test("dependencies에 Icon 컴포넌트가 있어야 한다", () => {

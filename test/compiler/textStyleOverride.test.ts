@@ -7,7 +7,7 @@ describe("부분 텍스트 스타일링 (characterStyleOverrides)", () => {
 
   beforeAll(async () => {
     const compiler = new FigmaCodeGenerator(urockList as any);
-    generatedCode = (await compiler.getGeneratedCode()) || "";
+    generatedCode = (await compiler.compile()) || "";
   });
 
   test("컴파일이 성공해야 한다", () => {

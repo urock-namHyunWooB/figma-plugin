@@ -184,6 +184,13 @@ export class StylesGenerator {
     nodeStyleMap: Map<string, string>,
     parentPath: string[]
   ): void {
+    // slot binding이 있으면 노드 자체와 children 스타일 수집 모두 skip
+    // (JsxGenerator가 slot binding 시 {propName}으로 대체하므로 스타일 불필요)
+    const slotBinding = node.bindings?.content;
+    if (slotBinding && "prop" in slotBinding) {
+      return;
+    }
+
     // 현재 노드를 포함한 전체 경로
     const currentPath = [...parentPath, node.name];
 

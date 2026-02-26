@@ -9,7 +9,7 @@ describe("Position 스타일 테스트", () => {
     test("부모 GROUP에 position: relative가 추가되어야 한다", async () => {
       const data = group02 as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
-      const code = await compiler.getGeneratedCode("Group21737");
+      const code = await compiler.compile("Group21737");
 
       expect(code).not.toBeNull();
       // 루트에 position: relative가 있어야 함
@@ -19,7 +19,7 @@ describe("Position 스타일 테스트", () => {
     test("자식 노드에 position: absolute가 추가되어야 한다", async () => {
       const data = group02 as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
-      const code = await compiler.getGeneratedCode("Group21737");
+      const code = await compiler.compile("Group21737");
 
       expect(code).not.toBeNull();
       // 자식에 position: absolute가 있어야 함
@@ -29,7 +29,7 @@ describe("Position 스타일 테스트", () => {
     test("자식 노드에 left, top이 추가되어야 한다", async () => {
       const data = group02 as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
-      const code = await compiler.getGeneratedCode("Group21737");
+      const code = await compiler.compile("Group21737");
 
       expect(code).not.toBeNull();
       // left, top 값이 있어야 함
@@ -40,7 +40,7 @@ describe("Position 스타일 테스트", () => {
     test("TEXT 노드의 위치가 올바르게 계산되어야 한다", async () => {
       const data = group02 as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
-      const code = await compiler.getGeneratedCode("Group21737");
+      const code = await compiler.compile("Group21737");
 
       expect(code).not.toBeNull();
 
@@ -58,7 +58,7 @@ describe("Position 스타일 테스트", () => {
     test("Rectangle 노드가 (0,0) 위치에 있어야 한다", async () => {
       const data = group02 as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
-      const code = await compiler.getGeneratedCode("Group21737");
+      const code = await compiler.compile("Group21737");
 
       expect(code).not.toBeNull();
 
@@ -119,7 +119,7 @@ describe("Position 스타일 테스트", () => {
       };
 
       const compiler = new FigmaCodeGenerator(autoLayoutData);
-      const code = await compiler.getGeneratedCode("AutoLayoutFrame");
+      const code = await compiler.compile("AutoLayoutFrame");
 
       expect(code).not.toBeNull();
       // position: absolute가 없어야 함 (flexbox 레이아웃이므로)
@@ -131,7 +131,7 @@ describe("Position 스타일 테스트", () => {
     test("중첩된 GROUP도 올바르게 처리되어야 한다", async () => {
       const data = group02 as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
-      const code = await compiler.getGeneratedCode("Group21737");
+      const code = await compiler.compile("Group21737");
 
       expect(code).not.toBeNull();
 
@@ -148,7 +148,7 @@ describe("Position 스타일 테스트", () => {
       // 이 경우 부모에 height가 명시적으로 설정되어야 함
       const data = any07 as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
-      const code = await compiler.getGeneratedCode("Yellow");
+      const code = await compiler.compile("Yellow");
 
       expect(code).not.toBeNull();
 
@@ -160,7 +160,7 @@ describe("Position 스타일 테스트", () => {
     test("자식이 absolute일 때 부모에 relative와 height가 모두 있어야 한다", async () => {
       const data = any07 as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
-      const code = await compiler.getGeneratedCode("Yellow");
+      const code = await compiler.compile("Yellow");
 
       expect(code).not.toBeNull();
 
@@ -218,7 +218,7 @@ describe("Position 스타일 테스트", () => {
       };
 
       const compiler = new FigmaCodeGenerator(autoLayoutData);
-      const code = await compiler.getGeneratedCode("AutoLayoutFrame");
+      const code = await compiler.compile("AutoLayoutFrame");
 
       expect(code).not.toBeNull();
       // 오토레이아웃이라서 position: absolute가 없음

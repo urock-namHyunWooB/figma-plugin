@@ -17,7 +17,7 @@ describe("group-02 TEXT 노드 렌더링 테스트", () => {
     })));
     
     const compiler = new FigmaCodeGenerator(data);
-    const code = await compiler.getGeneratedCode("Group21737");
+    const code = await compiler.compile("Group21737");
     
     console.log("=== Generated Code ===");
     console.log(code);

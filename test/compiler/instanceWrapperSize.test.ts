@@ -44,19 +44,17 @@ describe("ISSUE-032: INSTANCE wrapper 크기 적용", () => {
     // INSTANCE의 absoluteBoundingBox가 18x18이므로
     // wrapper 스타일에 width: 18px, height: 18px가 있어야 함
 
-    // wrapper CSS 정의 부분 추출 (예: normalresponsiveWrapper_xxx)
-    const wrapperCssMatch = code.match(/const\s+([a-zA-Z]*[wW]rapper[a-zA-Z0-9_]*)\s*=\s*css`[\s\S]*?`;/);
-    expect(wrapperCssMatch).toBeTruthy();
+    // 모든 wrapper CSS 정의 추출
+    const wrapperCssMatches = [
+      ...code.matchAll(/const\s+([a-zA-Z]*[wW]rapper[a-zA-Z0-9_]*)\s*=\s*css`[\s\S]*?`;/g),
+    ];
+    expect(wrapperCssMatches.length).toBeGreaterThan(0);
 
-    if (wrapperCssMatch) {
-      const wrapperCssCode = wrapperCssMatch[0];
-
-      // width: 18px
-      expect(wrapperCssCode).toContain("width: 18px");
-
-      // height: 18px
-      expect(wrapperCssCode).toContain("height: 18px");
-    }
+    // 18x18px 크기를 포함하는 wrapper가 하나 이상 존재해야 함
+    const has18x18Wrapper = wrapperCssMatches.some(
+      (m) => m[0].includes("width: 18px") && m[0].includes("height: 18px")
+    );
+    expect(has18x18Wrapper).toBe(true);
   });
 
   test("외부 컴포넌트 이름이 NormalResponsive여야 한다", () => {

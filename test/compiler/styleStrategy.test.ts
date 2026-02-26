@@ -361,9 +361,11 @@ describe("TailwindStrategy CSS-to-Tailwind 변환 테스트", () => {
         expect(code).not.toMatch(/\bwidth-\[/);
         expect(code).not.toMatch(/\bheight-\[/);
 
-        // w-[...px], h-[...px] 형태 확인
-        if (code.includes("px]")) {
-          expect(code).toMatch(/[wh]-\[\d+(\.\d+)?px\]/);
+        // w-[...px], h-[...px]가 있으면 올바른 형태인지 확인
+        // (w-[123px] ✓, w-[abcpx] ✗)
+        const whMatches = code.match(/[wh]-\[[^\]]*px\]/g) || [];
+        for (const m of whMatches) {
+          expect(m).toMatch(/[wh]-\[\d+(\.\d+)?px\]/);
         }
       }
     );

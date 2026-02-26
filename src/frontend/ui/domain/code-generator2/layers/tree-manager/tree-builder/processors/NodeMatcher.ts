@@ -10,7 +10,8 @@ import DataManager from "../../../data-manager/DataManager";
  * 1. 타입 체크
  * 2. ID 체크
  * 3. 정규화된 위치 비교 (±0.1)
- * 4. TEXT 노드: 이름 + 부모 타입
+ * 4. TEXT 노드: 부모 타입 + TEXT 수
+ * 5. INSTANCE 노드: componentPropertyReferences.visible
  */
 export class NodeMatcher {
   private readonly dataManager: DataManager;
@@ -52,6 +53,11 @@ export class NodeMatcher {
 
     // 5. TEXT 노드 특별 매칭
     if (this.isSameTextNode(nodeA, nodeB)) {
+      return true;
+    }
+
+    // 6. INSTANCE 노드 특별 매칭
+    if (this.isSameInstanceNode(nodeA, nodeB)) {
       return true;
     }
 
@@ -116,31 +122,45 @@ export class NodeMatcher {
   }
 
   /**
-   * TEXT 노드 특별 매칭: 같은 부모 타입 + 유일한 TEXT 자식이면 이름 무관 매칭
-   * 부모 아래 TEXT가 여러 개면 이름으로 구분
+   * TEXT 노드 특별 매칭: 같은 이름 + 같은 부모 타입
    */
   private isSameTextNode(nodeA: InternalNode, nodeB: InternalNode): boolean {
     if (nodeA.type !== "TEXT" || nodeB.type !== "TEXT") {
       return false;
     }
 
-    const parentA = nodeA.parent;
-    const parentB = nodeB.parent;
-
-    if (!parentA || !parentB || parentA.type !== parentB.type) {
+    if (nodeA.name !== nodeB.name) {
       return false;
     }
 
-    // 각 부모 아래 TEXT 자식 수 확인
-    const textCountA = parentA.children.filter(c => c.type === "TEXT").length;
-    const textCountB = parentB.children.filter(c => c.type === "TEXT").length;
+    const parentAType = nodeA.parent?.type;
+    const parentBType = nodeB.parent?.type;
 
-    // 부모 아래 TEXT가 1개씩이면 이름 무관 매칭 (variant에 따라 이름이 바뀔 수 있음)
-    if (textCountA === 1 && textCountB === 1) {
-      return true;
+    // 부모 타입이 같으면 같은 역할의 텍스트로 간주
+    return !!(parentAType && parentBType && parentAType === parentBType);
+  }
+
+  /**
+   * INSTANCE 노드 특별 매칭:
+   * componentPropertyReferences.visible이 같으면 같은 노드로 판단
+   * (visible ref가 없는 INSTANCE는 위치 매칭에 의존)
+   */
+  private isSameInstanceNode(
+    nodeA: InternalNode,
+    nodeB: InternalNode
+  ): boolean {
+    if (nodeA.type !== "INSTANCE" || nodeB.type !== "INSTANCE") {
+      return false;
     }
 
-    // TEXT가 여러 개면 이름으로 구분
-    return nodeA.name === nodeB.name;
+    const visRefA = nodeA.componentPropertyReferences?.visible;
+    const visRefB = nodeB.componentPropertyReferences?.visible;
+
+    // 둘 다 visible ref가 있으면 ref로 비교
+    if (visRefA && visRefB) {
+      return visRefA === visRefB;
+    }
+
+    return false;
   }
 }

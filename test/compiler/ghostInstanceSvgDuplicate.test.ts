@@ -17,7 +17,7 @@ import FigmaCodeGenerator from "@code-generator2";
 describe("Ghost INSTANCE SVG 중복 렌더링 회귀 테스트", () => {
   test("외부 컴포넌트(Plus)만 렌더링되고 내부 VECTOR는 중복되지 않아야 한다", async () => {
     const compiler = new FigmaCodeGenerator(ghostMockData as any);
-    const code = await compiler.getGeneratedCode();
+    const code = await compiler.compile();
 
     expect(code).toBeDefined();
 
@@ -56,7 +56,7 @@ describe("Ghost INSTANCE SVG 중복 렌더링 회귀 테스트", () => {
 
   test("wrapper 내부에 externalComponent와 svg가 동시에 존재하면 안 된다", async () => {
     const compiler = new FigmaCodeGenerator(ghostMockData as any);
-    const code = await compiler.getGeneratedCode();
+    const code = await compiler.compile();
 
     expect(code).toBeDefined();
 

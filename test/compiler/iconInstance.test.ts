@@ -32,7 +32,7 @@ describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
 
     test("FigmaCodeGenerator 결과의 생성된 코드에 svg 요소가 포함되어야 한다", async () => {
       const compiler = new FigmaCodeGenerator(frame03MockData as any);
-      const code = await compiler.getGeneratedCode();
+      const code = await compiler.compile();
 
       // 생성된 코드에 svg가 포함되어야 함
       expect(code).toBeDefined();
@@ -41,7 +41,7 @@ describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
 
     test("의존 컴포넌트(Iconanchor)가 SVG를 내부에 포함해야 한다", async () => {
       const compiler = new FigmaCodeGenerator(frame03MockData as any);
-      const code = await compiler.getGeneratedCode();
+      const code = await compiler.compile();
 
       expect(code).toBeDefined();
 
@@ -60,7 +60,7 @@ describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
 
     test("메인 컴포넌트(Frame)에서 Iconanchor를 self-closing 태그로 참조해야 한다", async () => {
       const compiler = new FigmaCodeGenerator(frame03MockData as any);
-      const code = await compiler.getGeneratedCode();
+      const code = await compiler.compile();
 
       expect(code).toBeDefined();
 
@@ -95,7 +95,7 @@ describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
 
     test("여러 인스턴스가 있어도 의존 컴포넌트는 하나만 생성되어야 한다", async () => {
       const compiler = new FigmaCodeGenerator(frame03MockData as any);
-      const code = await compiler.getGeneratedCode();
+      const code = await compiler.compile();
 
       expect(code).toBeDefined();
 

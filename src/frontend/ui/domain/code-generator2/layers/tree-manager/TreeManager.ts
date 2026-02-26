@@ -68,9 +68,7 @@ class TreeManager {
       // 원본 children이 있는 dependency에서 I... 노드 삭제
       const hasOriginalChildren = group.variants.some((v) => {
         const children = v.info.document.children || [];
-        return children.some(
-          (c: any) => c.id && !c.id.startsWith("I")
-        );
+        return children.some((c: any) => c.id && !c.id.startsWith("I"));
       });
       if (hasOriginalChildren) {
         for (const variant of group.variants) {
@@ -229,7 +227,6 @@ class TreeManager {
       return true;
     });
   }
-
 }
 
 export default TreeManager;

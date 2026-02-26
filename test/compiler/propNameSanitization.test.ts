@@ -42,7 +42,7 @@ describe("Prop 이름 정규화 테스트", () => {
     test("특수문자 prop 이름이 있어도 구문 오류 없이 컴파일된다", async () => {
       const data = component02 as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
-      const code = await compiler.getGeneratedCode("StatusBar");
+      const code = await compiler.compile("StatusBar");
 
       expect(code).not.toBeNull();
       expect(code).toBeDefined();
@@ -53,7 +53,7 @@ describe("Prop 이름 정규화 테스트", () => {
     test("유효한 JSX 속성 형식이어야 한다", async () => {
       const data = component02 as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
-      const code = await compiler.getGeneratedCode("StatusBar");
+      const code = await compiler.compile("StatusBar");
 
       // 모든 JSX 속성은 name="value" 또는 name={expr} 형식이어야 함
       // 빈 이름( ="value")이 없어야 함

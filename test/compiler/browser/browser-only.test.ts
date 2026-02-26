@@ -21,7 +21,7 @@ describe("브라우저 전용 스타일 테스트", () => {
 
     beforeAll(async () => {
       const compiler = new FigmaCodeGenerator(taptapButtonMockData as any);
-      const code = await compiler.getGeneratedCode();
+      const code = await compiler.compile();
       Component = await renderReactComponent(code!);
     });
 
@@ -52,7 +52,7 @@ describe("브라우저 전용 스타일 테스트", () => {
 
     beforeAll(async () => {
       const compiler = new FigmaCodeGenerator(urockButtonSampleMockData as any);
-      const code = await compiler.getGeneratedCode();
+      const code = await compiler.compile();
       Component = await renderReactComponent(code!);
     });
 
@@ -81,7 +81,7 @@ describe("브라우저 전용 스타일 테스트", () => {
 
     beforeAll(async () => {
       const compiler = new FigmaCodeGenerator(urockChipsMockData as any);
-      const code = await compiler.getGeneratedCode();
+      const code = await compiler.compile();
       Component = await renderReactComponent(code!);
     });
 
