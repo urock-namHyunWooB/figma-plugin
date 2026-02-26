@@ -104,7 +104,7 @@ export type ComponentId = string;
 // Prop Types
 // ============================================================================
 
-export type PropType = "variant" | "boolean" | "slot" | "string";
+export type PropType = "variant" | "boolean" | "slot" | "string" | "function";
 
 interface PropBase {
   name: string;
@@ -132,11 +132,17 @@ export interface StringPropDefinition extends PropBase {
   type: "string";
 }
 
+export interface FunctionPropDefinition extends PropBase {
+  type: "function";
+  functionSignature?: string; // e.g., "(value: string) => void"
+}
+
 export type PropDefinition =
   | VariantPropDefinition
   | BooleanPropDefinition
   | SlotPropDefinition
-  | StringPropDefinition;
+  | StringPropDefinition
+  | FunctionPropDefinition;
 
 // ============================================================================
 // Array Slot Types

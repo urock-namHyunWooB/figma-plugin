@@ -551,6 +551,11 @@ ${indentStr}</${tag}>`;
       }
     }
 
+    // Switch/Toggle: onClick 핸들러 추가
+    if (node.semanticType === "switch") {
+      attrs.push(`onClick={() => onChange?.(!active)}`);
+    }
+
     return attrs.length > 0 ? " " + attrs.join(" ") : "";
   }
 

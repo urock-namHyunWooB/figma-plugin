@@ -81,6 +81,11 @@ ${propLines.join("\n")}
       case "slot":
         return "React.ReactNode";
 
+      case "function": {
+        // 함수 타입 - functionSignature가 있으면 사용, 없으면 기본 함수 타입
+        return prop.functionSignature || "(...args: any[]) => void";
+      }
+
       default:
         return "unknown";
     }
