@@ -15,6 +15,8 @@ export interface StyleResult {
   code: string;
   /** 빈 스타일 여부 */
   isEmpty?: boolean;
+  /** 노드 ID (충돌 해결 시 nodeStyleMap 업데이트용) */
+  nodeId?: string;
 }
 
 /** JSX 스타일 속성 */

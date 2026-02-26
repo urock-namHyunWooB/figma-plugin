@@ -263,6 +263,7 @@ class TreeBuilder {
         : {}),
       ...(node.bindings ? { bindings: node.bindings } : {}),
       ...(node.semanticType ? { semanticType: node.semanticType } : {}),
+      ...(node.loop ? { loop: node.loop } : {}),
       ...(nodeType === "component" && node.refId ? { refId: node.refId } : {}),
       ...(nodeType === "vector" && vectorSvg ? { vectorSvg } : {}),
       ...(nodeType === "text" && textSegments ? { textSegments } : {}),

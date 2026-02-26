@@ -4,7 +4,7 @@
  * UITree에서 React 컴포넌트 JSX 생성
  */
 
-import type { UITree, UINode, ConditionNode, StyleObject, ArraySlotInfo } from "../../../../types/types";
+import type { UITree, UINode, ContainerNode, ConditionNode, StyleObject, ArraySlotInfo } from "../../../../types/types";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
 import { toComponentName } from "../../../../utils/nameUtils";
 
@@ -137,11 +137,17 @@ export default ${componentName}`;
 
     // 조건부 렌더링
     if (node.visibleCondition) {
-      // Slot prop으로 제어되는 component 노드인지 확인
+      // Slot prop으로 제어되는 노드인지 확인
       const slotProp = this.getSlotPropFromCondition(node.visibleCondition);
-      if (slotProp && node.type === "component") {
-        // Slot prop 값을 직접 렌더링
-        return `${indentStr}{${slotProp}}`;
+      if (slotProp) {
+        // component 또는 container with content binding → slot wrapper 패턴 사용
+        if (node.type === "component") {
+          // Slot prop 값을 직접 렌더링
+          return `${indentStr}{${slotProp}}`;
+        }
+        // Container with visibleCondition for slot → slot wrapper 패턴
+        // 조건부로 wrapper div와 slot content 렌더링
+        return this.generateSlotWrapper(node, slotProp, styleStrategy, indent);
       }
 
       const condition = this.conditionToCode(node.visibleCondition);
@@ -248,74 +254,160 @@ ${indentStr}))}`;
   }
 
   /**
-   * SegmentedControl options.map() 렌더링 생성
+   * Loop 컨텐츠 렌더링 (제네릭 .map() 생성)
    *
-   * {options?.map((option, index) => (
-   *   <div key={index} onClick={() => onChange?.(option.label)}>
-   *     {option.icon && option.icon}
-   *     {option.label}
-   *   </div>
-   * ))}
+   * ContainerNode.loop 설정을 기반으로 .map() 코드 생성
+   * 첫 번째 자식을 템플릿으로 사용
    */
-  private static generateSegmentedControlMap(
-    node: UINode,
+  private static generateLoopContent(
+    node: ContainerNode,
     styleStrategy: IStyleStrategy,
     options: JsxGeneratorOptions,
     indent: number
   ): string {
     const indentStr = " ".repeat(indent);
+    const loop = node.loop!;
+    const dataProp = loop.dataProp;
+    const keyField = loop.keyField || "id";
+    const itemVar = "option"; // loop item 변수명 (SegmentedControl 등 option 기반 컴포넌트 호환)
 
-    // 첫 번째 자식 노드 찾기 (탭 아이템 템플릿으로 사용)
-    const itemNode = node.children.find((child) => child.children.length > 0);
-
-    if (!itemNode) {
-      // 자식이 없으면 기본 렌더링
-      return `${indentStr}{options?.map((option, index) => (
-${indentStr}  <div key={index} onClick={() => onChange?.(option.label)}>
-${indentStr}    {option.icon && option.icon}
-${indentStr}    {option.label}
-${indentStr}  </div>
-${indentStr}))}`;
+    // 첫 번째 자식을 템플릿으로 사용
+    const templateNode = node.children[0];
+    if (!templateNode) {
+      return `${indentStr}{/* No template node for loop */}`;
     }
 
-    // 탭 아이템의 스타일 가져오기
-    const itemTag = this.getHtmlTag(itemNode);
-    const itemAttrs = this.generateAttributes(itemNode, styleStrategy, options);
+    // 템플릿 렌더링 (루프 컨텍스트에서)
+    const templateJsx = this.generateNodeInLoop(templateNode, styleStrategy, options, indent + 4, itemVar, keyField);
 
-    // 탭 내부 구조 렌더링 (icon, label)
-    const iconNode = itemNode.children.find((child) =>
-      child.name.toLowerCase().includes("icon") || child.type === "vector"
-    );
-    const labelNode = itemNode.children.find((child) =>
-      child.type === "text" || child.name.toLowerCase().includes("label")
-    );
+    // isActive 변수 포함 (선택 상태 추적용)
+    return `${indentStr}{${dataProp}?.map((${itemVar}) => {
+${indentStr}  const isActive = ${itemVar}.value === selectedValue;
+${indentStr}  return (
+${templateJsx}
+${indentStr}  );
+${indentStr}})}`;
+  }
 
-    let itemContent = "";
+  /**
+   * Loop 컨텍스트에서 노드 렌더링
+   *
+   * bindings에서 item.xxx 참조를 loop item 변수로 치환
+   */
+  private static generateNodeInLoop(
+    node: UINode,
+    styleStrategy: IStyleStrategy,
+    options: JsxGeneratorOptions,
+    indent: number,
+    itemVar: string,
+    keyField: string,
+    isRoot: boolean = true
+  ): string {
+    const indentStr = " ".repeat(indent);
+    const tag = this.getHtmlTag(node);
 
-    // icon 렌더링 (항상 조건부 렌더링 추가)
-    if (iconNode) {
-      const iconTag = this.getHtmlTag(iconNode);
-      const iconAttrs = this.generateAttributes(iconNode, styleStrategy, options);
-      itemContent += `\n${indentStr}    {option.icon && <${iconTag}${iconAttrs}>{option.icon}</${iconTag}>}`;
-    } else {
-      // icon 노드가 없어도 options 타입에 icon이 있으므로 렌더링
-      itemContent += `\n${indentStr}    {option.icon && option.icon}`;
+    // 조건부 렌더링 (item.xxx 형태의 visibleCondition 처리)
+    const visibleCondition = this.getLoopVisibleCondition(node, itemVar);
+
+    // 속성 생성 (loop 컨텍스트)
+    let attrs = this.generateAttributesInLoop(node, styleStrategy, options, itemVar, keyField, isRoot);
+
+    // Content 바인딩 확인 (item.xxx 참조)
+    const contentBinding = this.getLoopContentBinding(node, itemVar);
+
+    // 자식 없고 content 바인딩도 없으면 self-closing
+    if (!("children" in node) || !node.children || node.children.length === 0) {
+      if (contentBinding) {
+        // content 바인딩이 있으면 내용 렌더링
+        const jsx = `${indentStr}<${tag}${attrs}>{${contentBinding}}</${tag}>`;
+        return visibleCondition ? `${indentStr}{${visibleCondition} && ${jsx.trim()}}` : jsx;
+      }
+      const jsx = `${indentStr}<${tag}${attrs} />`;
+      return visibleCondition ? `${indentStr}{${visibleCondition} && ${jsx.trim()}}` : jsx;
     }
 
-    // label 렌더링
-    if (labelNode) {
-      const labelTag = this.getHtmlTag(labelNode);
-      const labelAttrs = this.generateAttributes(labelNode, styleStrategy, options);
-      itemContent += `\n${indentStr}    <${labelTag}${labelAttrs}>{option.label}</${labelTag}>`;
-    } else {
-      // label 노드가 없으면 직접 렌더링
-      itemContent += `\n${indentStr}    {option.label}`;
+    // 자식 렌더링
+    const childrenJsx = node.children
+      .map((child) => this.generateNodeInLoop(child, styleStrategy, options, indent + 2, itemVar, keyField, false))
+      .join("\n");
+
+    const jsx = `${indentStr}<${tag}${attrs}>
+${childrenJsx}
+${indentStr}</${tag}>`;
+
+    return visibleCondition ? `${indentStr}{${visibleCondition} && (
+${jsx}
+${indentStr})}` : jsx;
+  }
+
+  /**
+   * Loop 아이템 조건부 렌더링 조건 추출
+   */
+  private static getLoopVisibleCondition(node: UINode, itemVar: string): string | null {
+    if (!node.visibleCondition) return null;
+
+    const condition = node.visibleCondition;
+    if (condition.type === "truthy" && condition.prop.startsWith("item.")) {
+      const field = condition.prop.slice(5); // "item.xxx" -> "xxx"
+      return `${itemVar}.${field}`;
     }
 
-    return `${indentStr}{options?.map((option, index) => (
-${indentStr}  <${itemTag} key={index}${itemAttrs} onClick={() => onChange?.(option.label)}>${itemContent}
-${indentStr}  </${itemTag}>
-${indentStr}))}`;
+    return null;
+  }
+
+  /**
+   * Loop 아이템 content 바인딩 추출
+   */
+  private static getLoopContentBinding(node: UINode, itemVar: string): string | null {
+    if (!node.bindings?.content) return null;
+
+    const source = node.bindings.content;
+    if ("ref" in source && source.ref.startsWith("item.")) {
+      const field = source.ref.slice(5); // "item.xxx" -> "xxx"
+      return `${itemVar}.${field}`;
+    }
+
+    return null;
+  }
+
+  /**
+   * Loop 컨텍스트에서 속성 생성
+   *
+   * key 속성 추가 및 loop item 바인딩 처리
+   */
+  private static generateAttributesInLoop(
+    node: UINode,
+    styleStrategy: IStyleStrategy,
+    options: JsxGeneratorOptions,
+    itemVar: string,
+    keyField: string,
+    isRoot: boolean
+  ): string {
+    let attrs = this.generateAttributes(node, styleStrategy, options);
+
+    // 루트 노드에만 key 추가
+    if (isRoot && !attrs.includes("key=")) {
+      attrs = ` key={${itemVar}.${keyField}}` + attrs;
+    }
+
+    // Loop item 바인딩 처리 (bindings에서 item.xxx 참조 치환)
+    if (node.bindings?.attrs) {
+      for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
+        if ("ref" in source && source.ref.startsWith("item.")) {
+          const field = source.ref.slice(5); // "item.xxx" -> "xxx"
+          // onClick 특수 처리: onChange?.(option.value) 형태로 생성
+          if (attrName === "onClick" && field === "onClick") {
+            attrs += ` onClick={() => onChange?.(${itemVar}.value)}`;
+          } else if (attrName.startsWith("on")) {
+            attrs += ` ${attrName}={() => ${field}?.(${itemVar})}`;
+          } else {
+            attrs += ` ${attrName}={${itemVar}.${field}}`;
+          }
+        }
+      }
+    }
+
+    return attrs;
   }
 
   /**
@@ -512,9 +604,9 @@ ${indentStr}</div>`;
       return `${indentStr}<${tag}${attrs} />`;
     }
 
-    // SegmentedControl: options.map() 렌더링
-    if (node.semanticType === "segmented-control") {
-      const childrenJsx = this.generateSegmentedControlMap(node, styleStrategy, options, indent + 2);
+    // Loop 처리: ContainerNode에 loop이 있으면 .map() 렌더링
+    if (node.type === "container" && node.loop) {
+      const childrenJsx = this.generateLoopContent(node, styleStrategy, options, indent + 2);
       return `${indentStr}<${tag}${attrs}>
 ${childrenJsx}
 ${indentStr}</${tag}>`;
@@ -795,7 +887,7 @@ ${indentStr}</${tag}>`;
 
   /**
    * slot binding이 있는 노드를 CSS wrapper div로 감싸 렌더링
-   * styles가 없거나 style 변수가 없으면 {prop}만 반환
+   * styles가 없어도 조건부 렌더링은 유지 (slot이 있을 때만 wrapper 표시)
    */
   private static generateSlotWrapper(
     node: UINode,
@@ -806,8 +898,10 @@ ${indentStr}</${tag}>`;
     const indentStr = " ".repeat(indent);
     const styleVarName = this.nodeStyleMap.get(node.id);
 
+    // 스타일이 없으면 조건부로 slot만 렌더링
+    // 80자 초과하도록 하여 Prettier가 줄바꿈과 괄호를 유지하도록 함
     if (!styleVarName || !node.styles || !this.hasNonEmptyStyles(node.styles)) {
-      return `${indentStr}{${slotProp}}`;
+      return `${indentStr}{${slotProp} && (\n${indentStr}  <div css={{ display: "contents", alignItems: "center", justifyContent: "center" }}>\n${indentStr}    {${slotProp}}\n${indentStr}  </div>\n${indentStr})}`;
     }
 
     const dynamicProps = this.extractDynamicProps(node.styles);
@@ -827,6 +921,6 @@ ${indentStr}</${tag}>`;
       wrapperAttrs = `${styleAttr.attributeName}=${styleAttr.valueCode}`;
     }
 
-    return `${indentStr}{${slotProp} && <div ${wrapperAttrs}>{${slotProp}}</div>}`;
+    return `${indentStr}{${slotProp} && (\n${indentStr}  <div ${wrapperAttrs}>{${slotProp}}</div>\n${indentStr})}`;
   }
 }

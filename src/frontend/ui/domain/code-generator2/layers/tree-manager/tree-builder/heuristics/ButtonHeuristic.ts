@@ -551,10 +551,10 @@ export class ButtonHeuristic implements IHeuristic {
       );
 
       if (slotInfo) {
-        // componentPropertyDefinitions에서 이미 생성된 string prop이 있는지 확인
-        // (sourceKey가 있으면 Figma TEXT-type prop에서 온 것)
+        // 1. componentPropertyDefinitions에서 이미 생성된 Figma TEXT prop 확인
+        // 2. 또는 이미 생성된 TEXT slot (같은 위치의 다른 variant TEXT)
         const existingTextProp = ctx.props.find(
-          (p) => p.type === "string" && p.sourceKey !== ""
+          (p) => p.type === "string" && (p.sourceKey !== "" || p.sourceKey === "")
         );
 
         if (existingTextProp) {

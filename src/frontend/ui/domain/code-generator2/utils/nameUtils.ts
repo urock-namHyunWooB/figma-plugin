@@ -5,6 +5,34 @@
  */
 
 /**
+ * JavaScript 예약어 목록
+ */
+const JS_RESERVED_WORDS = new Set([
+  "break", "case", "catch", "continue", "debugger", "default", "delete",
+  "do", "else", "finally", "for", "function", "if", "in", "instanceof",
+  "new", "return", "switch", "this", "throw", "try", "typeof", "var",
+  "void", "while", "with", "class", "const", "enum", "export", "extends",
+  "import", "super", "implements", "interface", "let", "package", "private",
+  "protected", "public", "static", "yield", "await", "async"
+]);
+
+/**
+ * prop 이름이 예약어인 경우 안전한 이름으로 변환
+ * 예: "default" → "isDefault"
+ */
+export function toSafePropName(name: string): string {
+  if (JS_RESERVED_WORDS.has(name.toLowerCase())) {
+    // boolean처럼 보이는 예약어는 is 접두사 추가
+    if (name.toLowerCase() === "default") {
+      return "isDefault";
+    }
+    // 그 외는 _ 접두사 추가
+    return "_" + name;
+  }
+  return name;
+}
+
+/**
  * 컴포넌트 이름 정규화 (PascalCase, 특수문자 제거)
  * 밑줄(_), 하이픈(-), 공백을 단어 구분자로 처리
  *

@@ -101,12 +101,6 @@ export class StylesGenerator {
     styleResults: StyleResult[],
     nodeStyleMap: Map<string, string>
   ): void {
-    // nodeId → original variableName 역매핑 생성
-    const reverseMap = new Map<string, string>();
-    for (const [nodeId, varName] of nodeStyleMap.entries()) {
-      reverseMap.set(varName, nodeId);
-    }
-
     for (const result of styleResults) {
       if (result.isEmpty) continue;
 
@@ -119,9 +113,9 @@ export class StylesGenerator {
         result.variableName = uniqueName;
 
         // 2. nodeStyleMap 업데이트 (JsxGenerator 참조용)
-        const nodeId = reverseMap.get(originalName);
-        if (nodeId) {
-          nodeStyleMap.set(nodeId, uniqueName);
+        // result.nodeId를 직접 사용하여 올바른 노드의 매핑 업데이트
+        if (result.nodeId) {
+          nodeStyleMap.set(result.nodeId, uniqueName);
         }
 
         // 3. 코드 내부의 변수명 치환 (base 변수 + variant 객체명)
@@ -208,6 +202,8 @@ export class StylesGenerator {
         node.styles,
         isComponent ? [] : currentPath // component는 경로 기반 대신 이름 기반 사용
       );
+      // nodeId를 StyleResult에 저장 (충돌 해결 시 사용)
+      result.nodeId = node.id;
       results.push(result);
 
       // nodeId → variableName 매핑 저장

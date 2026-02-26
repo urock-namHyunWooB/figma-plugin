@@ -444,7 +444,27 @@ export class PropsExtractor {
         "custom" + propName.charAt(0).toUpperCase() + propName.slice(1);
     }
 
+    // 4. JavaScript 예약어 충돌 방지
+    if (this.isJsReservedWord(propName)) {
+      propName = "is" + propName.charAt(0).toUpperCase() + propName.slice(1);
+    }
+
     return propName;
+  }
+
+  /**
+   * JavaScript 예약어인지 확인
+   */
+  private isJsReservedWord(propName: string): boolean {
+    const reservedWords = new Set([
+      "break", "case", "catch", "continue", "debugger", "default", "delete",
+      "do", "else", "finally", "for", "function", "if", "in", "instanceof",
+      "new", "return", "switch", "this", "throw", "try", "typeof", "var",
+      "void", "while", "with", "class", "const", "enum", "export", "extends",
+      "import", "super", "implements", "interface", "let", "package", "private",
+      "protected", "public", "static", "yield", "await", "async"
+    ]);
+    return reservedWords.has(propName.toLowerCase());
   }
 
   /**

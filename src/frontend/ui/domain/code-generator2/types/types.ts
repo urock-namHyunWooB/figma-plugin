@@ -252,6 +252,8 @@ export interface InternalNode extends UINodeBase {
     /** 병합된 Vector SVG (의존 컴포넌트용) */
     vectorSvg?: string;
   };
+  /** 루프 설정 (Heuristic이 설정, UINode로 전달) */
+  loop?: { dataProp: string; keyField?: string };
 }
 
 /**
