@@ -23,6 +23,7 @@ import { ButtonHeuristic } from "./ButtonHeuristic";
 import { InputHeuristic } from "./InputHeuristic";
 import { LinkHeuristic } from "./LinkHeuristic";
 import { SwitchHeuristic } from "./SwitchHeuristic";
+import { SegmentedControlHeuristic } from "./SegmentedControlHeuristic";
 
 export class HeuristicsRunner {
   /** 매칭 임계점 */
@@ -35,6 +36,7 @@ export class HeuristicsRunner {
   private readonly heuristics: IHeuristic[] = [
     new InputHeuristic(),  // Input을 먼저 (Caret 패턴이 더 특수)
     new SwitchHeuristic(), // Switch를 Button보다 먼저 (더 특수한 패턴)
+    new SegmentedControlHeuristic(), // SegmentedControl (Tab props 패턴)
     new LinkHeuristic(),
     new ButtonHeuristic(),
   ];

@@ -248,6 +248,77 @@ ${indentStr}))}`;
   }
 
   /**
+   * SegmentedControl options.map() 렌더링 생성
+   *
+   * {options?.map((option, index) => (
+   *   <div key={index} onClick={() => onChange?.(option.label)}>
+   *     {option.icon && option.icon}
+   *     {option.label}
+   *   </div>
+   * ))}
+   */
+  private static generateSegmentedControlMap(
+    node: UINode,
+    styleStrategy: IStyleStrategy,
+    options: JsxGeneratorOptions,
+    indent: number
+  ): string {
+    const indentStr = " ".repeat(indent);
+
+    // 첫 번째 자식 노드 찾기 (탭 아이템 템플릿으로 사용)
+    const itemNode = node.children.find((child) => child.children.length > 0);
+
+    if (!itemNode) {
+      // 자식이 없으면 기본 렌더링
+      return `${indentStr}{options?.map((option, index) => (
+${indentStr}  <div key={index} onClick={() => onChange?.(option.label)}>
+${indentStr}    {option.icon && option.icon}
+${indentStr}    {option.label}
+${indentStr}  </div>
+${indentStr}))}`;
+    }
+
+    // 탭 아이템의 스타일 가져오기
+    const itemTag = this.getHtmlTag(itemNode);
+    const itemAttrs = this.generateAttributes(itemNode, styleStrategy, options);
+
+    // 탭 내부 구조 렌더링 (icon, label)
+    const iconNode = itemNode.children.find((child) =>
+      child.name.toLowerCase().includes("icon") || child.type === "vector"
+    );
+    const labelNode = itemNode.children.find((child) =>
+      child.type === "text" || child.name.toLowerCase().includes("label")
+    );
+
+    let itemContent = "";
+
+    // icon 렌더링 (항상 조건부 렌더링 추가)
+    if (iconNode) {
+      const iconTag = this.getHtmlTag(iconNode);
+      const iconAttrs = this.generateAttributes(iconNode, styleStrategy, options);
+      itemContent += `\n${indentStr}    {option.icon && <${iconTag}${iconAttrs}>{option.icon}</${iconTag}>}`;
+    } else {
+      // icon 노드가 없어도 options 타입에 icon이 있으므로 렌더링
+      itemContent += `\n${indentStr}    {option.icon && option.icon}`;
+    }
+
+    // label 렌더링
+    if (labelNode) {
+      const labelTag = this.getHtmlTag(labelNode);
+      const labelAttrs = this.generateAttributes(labelNode, styleStrategy, options);
+      itemContent += `\n${indentStr}    <${labelTag}${labelAttrs}>{option.label}</${labelTag}>`;
+    } else {
+      // label 노드가 없으면 직접 렌더링
+      itemContent += `\n${indentStr}    {option.label}`;
+    }
+
+    return `${indentStr}{options?.map((option, index) => (
+${indentStr}  <${itemTag} key={index}${itemAttrs} onClick={() => onChange?.(option.label)}>${itemContent}
+${indentStr}  </${itemTag}>
+${indentStr}))}`;
+  }
+
+  /**
    * Text 노드 생성
    */
   private static generateTextNode(
@@ -439,6 +510,14 @@ ${indentStr}</div>`;
     // 자식이 없거나 void element이면 self-closing
     if (isVoidElement || !("children" in node) || !node.children || node.children.length === 0) {
       return `${indentStr}<${tag}${attrs} />`;
+    }
+
+    // SegmentedControl: options.map() 렌더링
+    if (node.semanticType === "segmented-control") {
+      const childrenJsx = this.generateSegmentedControlMap(node, styleStrategy, options, indent + 2);
+      return `${indentStr}<${tag}${attrs}>
+${childrenJsx}
+${indentStr}</${tag}>`;
     }
 
     // Array Slot 확인
