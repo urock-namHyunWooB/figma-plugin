@@ -104,13 +104,15 @@ export class SegmentedControlHeuristic implements IHeuristic {
    * Tab boolean props를 options 배열 prop으로 변환
    */
   private transformTabPropsToOptions(ctx: HeuristicContext): void {
-    // ctx.props에서 tab slot props 찾기 (인덱스 수집)
+    // ctx.props에서 tab/icon slot props 찾기 (인덱스 수집)
     const tabPropIndices: number[] = [];
     ctx.props.forEach((prop, index) => {
       const nameLower = prop.name.toLowerCase();
       if (
         (prop.type === "slot" || prop.type === "boolean") &&
-        (nameLower.startsWith("tab") || nameLower.startsWith("item"))
+        (nameLower.startsWith("tab") ||
+         nameLower.startsWith("item") ||
+         nameLower === "icon")  // SegmentedControl의 icon variant도 제거
       ) {
         tabPropIndices.push(index);
       }

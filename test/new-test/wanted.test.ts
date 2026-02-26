@@ -104,6 +104,38 @@ describe("Segmented Control/Segmented Control", () => {
     // 다른 불필요한 props가 없어야 함 (tab2, tab3 등)
     expect(result).not.toMatch(/tab2\?:/);
     expect(result).not.toMatch(/tab3\?:/);
+
+    // 컴포넌트 레벨 icon prop이 없어야 함 (options의 각 아이템에 icon이 있음)
+    // SegmentedControlsegmentedControlProps interface만 체크
+    const propsInterfaceMatch = result.match(
+      /export interface SegmentedControlsegmentedControlProps \{[\s\S]*?\n\}/
+    );
+    expect(propsInterfaceMatch).toBeTruthy();
+
+    if (propsInterfaceMatch) {
+      const propsInterface = propsInterfaceMatch[0];
+      const lines = propsInterface.split('\n');
+      let inOptionsType = false;
+      let hasStandaloneIconProp = false;
+
+      for (const line of lines) {
+        // options 타입 정의 시작
+        if (line.includes('options?:') && line.includes('Array<{')) {
+          inOptionsType = true;
+        }
+        // options 타입 정의 끝
+        if (inOptionsType && line.includes('}>')) {
+          inOptionsType = false;
+        }
+        // options 외부에서 icon?: React.ReactNode 발견
+        if (!inOptionsType && /^\s*icon\?:\s*React\.ReactNode/.test(line)) {
+          hasStandaloneIconProp = true;
+          break;
+        }
+      }
+
+      expect(hasStandaloneIconProp).toBe(false);
+    }
   });
 
   it("options는 배열 타입이어야 한다", async () => {
