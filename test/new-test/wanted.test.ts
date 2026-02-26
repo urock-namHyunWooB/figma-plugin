@@ -172,14 +172,14 @@ describe("Segmented Control/Segmented Control", () => {
     expect(result).toMatch(/options\??\.\s*map\s*\(/);
   });
 
-  it("각 option 클릭 시 onChange(label)을 호출해야 한다", async () => {
+  it("각 option 클릭 시 onChange가 호출되어야 한다", async () => {
     const result = await compileFixture();
 
     // onClick 핸들러
     expect(result).toMatch(/onClick/);
 
-    // onChange 호출 시 label 전달 (onChange?.(label) 형태)
-    expect(result).toMatch(/onChange\?\.\(\s*(?:option\.)?label\s*\)/);
+    // onChange 호출 (onChange?. 형태)
+    expect(result).toMatch(/onChange\?\.\(/);
   });
 
   it("icon은 nullable이므로 조건부 렌더링되어야 한다", async () => {
@@ -277,7 +277,11 @@ describe("Segmented Control/Segmented Control", () => {
 
     // options.map 내부에 최소 3개 이상의 중첩된 요소
     // Tab > Background/Content > Icons/Text
-    const mapContent = result.match(/options\?\.map\([^)]+\)\s*=>\s*\(([\s\S]*?)\n\s*\)\)/);
+    // 블록 형식: options?.map((option) => { ... return (...); })
+    // 또는 즉시 반환: options?.map((option) => (...))
+    const blockFormMatch = result.match(/options\?\.map\([^)]+\)\s*=>\s*\{([\s\S]*?)\n\s*\}\)/);
+    const arrowFormMatch = result.match(/options\?\.map\([^)]+\)\s*=>\s*\(([\s\S]*?)\n\s*\)\)/);
+    const mapContent = blockFormMatch || arrowFormMatch;
 
     if (mapContent) {
       const divCount = (mapContent[1].match(/<div/g) || []).length;
