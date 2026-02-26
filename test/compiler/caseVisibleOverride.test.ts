@@ -79,7 +79,8 @@ describe("Case.json visible override 이슈", () => {
     const deps = result.dependencies || {};
     let diCode = "";
     for (const [key, dep] of Object.entries(deps)) {
-      if (dep.code.includes("Decorateinteractive") && dep.code.includes("decorateInteractiveCss")) {
+      // 변수명 단축 전략으로 인해 interactiveCss가 됨
+      if (dep.code.includes("Decorateinteractive") && dep.code.includes("interactiveCss")) {
         diCode = dep.code;
       }
     }

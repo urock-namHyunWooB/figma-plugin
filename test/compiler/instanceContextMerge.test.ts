@@ -18,10 +18,11 @@ describe("INSTANCE 컨텍스트 병합 - visible 처리", () => {
     const code = await compiler.compile();
 
     // MonoResponsive dependency의 Color (255:17770)는 정당한 노드이므로 CSS 생성됨
-    expect(code).toContain("MonoResponsive_monoResponsiveColorCss");
+    // 변수명 단축 전략: 마지막 3개 노드의 마지막 단어 사용
+    expect(code).toContain("MonoResponsive_responsiveColorCss");
 
     // 하지만 Main 컴포넌트에서 I... 노드로 인한 ColorCss는 생성되면 안됨
-    expect(code).not.toContain("buttonSolidPrimaryContentsContentsGlobalMonoResponsiveColorCss");
+    expect(code).not.toContain("globalMonoResponsiveColorCss");
   });
 
   test("MonoResponsive 컴포넌트는 정당한 Color 노드를 가짐", async () => {
@@ -29,13 +30,13 @@ describe("INSTANCE 컨텍스트 병합 - visible 처리", () => {
     const code = await compiler.compile();
 
     // MonoResponsive dependency의 Color (255:17770)는 정당한 노드
-    // 따라서 MonoResponsive_monoResponsiveColorCss가 생성되어야 함
-    expect(code).toContain("MonoResponsive_monoResponsiveColorCss");
+    // 변수명 단축 전략: 마지막 3개 노드의 마지막 단어 사용
+    expect(code).toContain("MonoResponsive_responsiveColorCss");
 
     // MonoResponsive 함수 내에서 ColorCss를 참조해야 함
     const monoMatch = code!.match(/const MonoResponsive:[\s\S]*?^\};/m);
     if (monoMatch) {
-      expect(monoMatch[0]).toContain("MonoResponsive_monoResponsiveColorCss");
+      expect(monoMatch[0]).toContain("MonoResponsive_responsiveColorCss");
     }
   });
 });

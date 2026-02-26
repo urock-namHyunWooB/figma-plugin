@@ -32,7 +32,8 @@ describe("의존 컴포넌트 children 처리", () => {
     expect(result).toContain("Colorgnbhomen:");
 
     // RatioVertical, ColorBlank 등 자식 요소가 있어야 함
-    expect(result).toMatch(/RatioVerticalCss|ColorBlankCss/);
+    // 변수명 단축 전략: 마지막 3개 노드의 마지막 단어 사용
+    expect(result).toMatch(/verticalCss|blankCss/i);
 
     // children prop만 렌더링되면 안됨 (실제 콘텐츠가 있어야 함)
     const colorgnbhomenMatch = result?.match(
@@ -50,11 +51,11 @@ describe("의존 컴포넌트 children 처리", () => {
     const result = await compiler.compile();
 
     // MonoResponsive dependency의 Color (255:17770)는 정당한 노드이므로 CSS 생성됨
-    expect(result).toContain("MonoResponsive_monoResponsiveColorCss");
+    // 변수명 단축 전략: 마지막 3개 노드의 마지막 단어 사용
+    expect(result).toContain("MonoResponsive_responsiveColorCss");
 
     // 하지만 Main 컴포넌트에서 I... 노드로 인한 ColorCss는 생성되면 안됨
-    // (예: buttonSolidPrimaryContentsContentsGlobalMonoResponsiveColorCss)
-    expect(result).not.toContain("buttonSolidPrimaryContentsContentsGlobalMonoResponsiveColorCss");
+    expect(result).not.toContain("globalMonoResponsiveColorCss");
   });
 
   it("Gnb: 아이콘 요소가 SVG로 렌더링됨", async () => {
@@ -62,8 +63,9 @@ describe("의존 컴포넌트 children 처리", () => {
     const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
-    // Rectangle CSS가 생성되어야 함 (아이콘 요소)
-    expect(result).toMatch(/Rectangle\d+Css/);
+    // 아이콘 요소의 CSS가 생성되어야 함
+    // 변수명 단축 전략으로 인해 BlankCss 같은 짧은 이름이 됨
+    expect(result).toMatch(/blankCss|BlankCss/i);
 
     // vectorSvgs가 전달되어 SVG로 렌더링됨
     expect(result).toContain("<svg");

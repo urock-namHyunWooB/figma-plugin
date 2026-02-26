@@ -285,12 +285,18 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
   }
 
   /**
-   * 경로 기반 변수명 생성 (가독성 우선)
-   * 예: ["SelectButton", "Label"] → "selectButtonLabelCss"
+   * 경로 기반 변수명 생성 (가독성 우선, 길이 최적화)
+   * - 마지막 3개 노드명만 사용
+   * - 각 노드에서 마지막 단어만 추출하여 변수명 단축
+   * 예: ["Root/Container", "SelectButton", "Label/Text"] → "containerButtonTextCss"
+   * 충돌 시 StylesGenerator.ensureUniqueNames()가 _2 접미사 추가
    */
   private createPathBasedName(parentPath: string[]): string {
-    const pathNames = parentPath.map((name) => this.toSafeVariableName(name));
-    let combinedName = this.combinePathToCamelCase(pathNames);
+    // 마지막 3개 노드명만 사용
+    const lastThreeNodes = parentPath.slice(-3);
+    // 각 노드에서 마지막 단어만 추출
+    const lastWords = lastThreeNodes.map((name) => this.extractLastWord(name));
+    let combinedName = this.combinePathToCamelCase(lastWords);
 
     // 숫자로 시작하면 앞에 _ 추가
     if (/^[0-9]/.test(combinedName)) {
@@ -298,6 +304,24 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
     }
 
     return `${combinedName}Css`;
+  }
+
+  /**
+   * 노드 이름에서 마지막 단어만 추출
+   * 예: "Segmented Control/Resource/Knob" → "knob"
+   */
+  private extractLastWord(nodeName: string): string {
+    // 특수문자를 공백으로 변환 후 단어 분리
+    const words = nodeName
+      .replace(/[^a-zA-Z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter(Boolean);
+
+    if (words.length === 0) return "unnamed";
+
+    // 마지막 단어를 소문자로
+    const lastWord = words[words.length - 1];
+    return lastWord.toLowerCase();
   }
 
   /**

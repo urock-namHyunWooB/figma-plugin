@@ -421,9 +421,9 @@ describe("Segmented Control/Segmented Control", () => {
   // 스타일 변수명 길이 관련 테스트
   // ========================================
 
-  // TODO: dependency 번들링 시 컴포넌트 접두사가 추가되어 변수명이 길어짐
-  // 현재 아키텍처 개선 필요: 접두사 축약 또는 해시 기반 고유 ID 사용
-  it.skip("스타일 변수명이 65자를 초과하지 않아야 한다", async () => {
+  // 변수명 단축 전략 적용됨: 마지막 3개 노드의 마지막 단어 사용
+  // 최대 길이 86자 → 58자로 개선됨
+  it("스타일 변수명이 65자를 초과하지 않아야 한다", async () => {
     const result = await compileFixture();
 
     // const xxxCss = css` 패턴으로 모든 스타일 변수명 추출
