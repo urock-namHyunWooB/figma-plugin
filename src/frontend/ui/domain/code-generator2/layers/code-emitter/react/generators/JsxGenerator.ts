@@ -195,6 +195,11 @@ export default ${componentName}`;
   ): string {
     const indentStr = " ".repeat(indent);
 
+    // semanticType 우선 처리
+    if (node.semanticType === "search-input") {
+      return this.generateSearchInputNode(node, styleStrategy, options, indent);
+    }
+
     switch (node.type) {
       case "text":
         return this.generateTextNode(node, styleStrategy, options, indent);
@@ -420,6 +425,27 @@ ${indentStr})}` : jsx;
   }
 
   /**
+   * SearchField input 노드 생성
+   * semanticType: "search-input" → <span> 대신 <input placeholder={prop}>으로 렌더링
+   */
+  private static generateSearchInputNode(
+    node: UINode,
+    styleStrategy: IStyleStrategy,
+    options: JsxGeneratorOptions,
+    indent: number
+  ): string {
+    const indentStr = " ".repeat(indent);
+    const attrs = this.generateAttributes(node, styleStrategy, options);
+
+    const placeholderProp =
+      node.bindings?.content && "prop" in node.bindings.content
+        ? node.bindings.content.prop
+        : "text";
+
+    return `${indentStr}<input${attrs} placeholder={${placeholderProp}} onChange={(e) => onChange?.(e.target.value)} />`;
+  }
+
+  /**
    * Text 노드 생성
    */
   private static generateTextNode(
@@ -507,6 +533,11 @@ ${indentStr})}` : jsx;
       for (const [propName, value] of Object.entries(node.overrideProps)) {
         componentAttrs += ` ${propName}="${value}"`;
       }
+    }
+
+    // searchfield-clear: x 버튼 onClick 추가
+    if (node.semanticType === "searchfield-clear") {
+      componentAttrs += ` onClick={() => onChange?.("")}`;
     }
 
     // styles가 있으면 wrapper div로 감싸기
