@@ -1,10 +1,8 @@
 import {
   UITree,
   UINode,
-  FigmaNodeData,
   InternalTree,
   PropDefinition,
-  ComponentType,
 } from "../../../types/types";
 import DataManager from "../../data-manager/DataManager";
 import { VariantMerger } from "./processors/VariantMerger";

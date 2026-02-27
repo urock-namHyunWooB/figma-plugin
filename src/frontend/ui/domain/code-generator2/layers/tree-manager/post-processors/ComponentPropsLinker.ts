@@ -9,7 +9,7 @@
  * 3. 해당 의존 컴포넌트의 props에 추가
  */
 
-import type { UITree, UINode, PropDefinition } from "../../../types/types";
+import type { UITree, UINode } from "../../../types/types";
 import type DataManager from "../../data-manager/DataManager";
 
 

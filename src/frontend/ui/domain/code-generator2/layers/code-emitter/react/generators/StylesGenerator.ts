@@ -4,7 +4,7 @@
  * UITree의 모든 노드에서 스타일 코드 생성
  */
 
-import type { UITree, UINode, StyleObject } from "../../../../types/types";
+import type { UITree, UINode } from "../../../../types/types";
 import type { IStyleStrategy, StyleResult } from "../style-strategy/IStyleStrategy";
 
 export interface StylesGeneratorResult {
