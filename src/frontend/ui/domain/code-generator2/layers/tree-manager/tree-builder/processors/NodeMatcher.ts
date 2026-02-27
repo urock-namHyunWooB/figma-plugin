@@ -41,6 +41,16 @@ export class NodeMatcher {
       return true;
     }
 
+    // 2.5. INSTANCE 노드는 componentId가 다르면 위치에 관계없이 다른 노드
+    // (같은 위치에 있어도 다른 컴포넌트를 참조하면 병합하지 않음)
+    if (nodeA.type === "INSTANCE" && nodeB.type === "INSTANCE") {
+      const compIdA = (nodeA as any).componentId;
+      const compIdB = (nodeB as any).componentId;
+      if (compIdA && compIdB && compIdA !== compIdB) {
+        return false;
+      }
+    }
+
     // 3. 부모가 없으면 (루트) → 루트끼리는 같음
     if (!nodeA.parent && !nodeB.parent) {
       return true;
@@ -142,7 +152,8 @@ export class NodeMatcher {
 
   /**
    * INSTANCE 노드 특별 매칭:
-   * componentPropertyReferences.visible이 같으면 같은 노드로 판단
+   * 1. componentId가 다르면 무조건 다른 노드 (다른 컴포넌트)
+   * 2. componentPropertyReferences.visible이 같으면 같은 노드로 판단
    * (visible ref가 없는 INSTANCE는 위치 매칭에 의존)
    */
   private isSameInstanceNode(
@@ -150,6 +161,13 @@ export class NodeMatcher {
     nodeB: InternalNode
   ): boolean {
     if (nodeA.type !== "INSTANCE" || nodeB.type !== "INSTANCE") {
+      return false;
+    }
+
+    // componentId가 다르면 다른 컴포넌트 → 병합 안 함
+    const compIdA = (nodeA as any).componentId;
+    const compIdB = (nodeB as any).componentId;
+    if (compIdA && compIdB && compIdA !== compIdB) {
       return false;
     }
 

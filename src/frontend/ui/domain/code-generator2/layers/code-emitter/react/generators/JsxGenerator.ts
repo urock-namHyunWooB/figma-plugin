@@ -767,6 +767,12 @@ ${indentStr}</${tag}>`;
       attrs.push(`onClick={() => onChange?.(!active)}`);
     }
 
+    // Checkbox: onClick + disabled 처리
+    if (node.semanticType === "checkbox") {
+      attrs.push(`onClick={() => onChange?.(!checked)}`);
+      attrs.push(`disabled={disable}`);
+    }
+
     return attrs.length > 0 ? " " + attrs.join(" ") : "";
   }
 

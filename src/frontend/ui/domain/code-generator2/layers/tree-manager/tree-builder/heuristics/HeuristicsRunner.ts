@@ -25,6 +25,7 @@ import { LinkHeuristic } from "./LinkHeuristic";
 import { SwitchHeuristic } from "./SwitchHeuristic";
 import { SegmentedControlHeuristic } from "./SegmentedControlHeuristic";
 import { SearchFieldHeuristic } from "./SearchFieldHeuristic";
+import { CheckboxHeuristic } from "./CheckboxHeuristic";
 
 export class HeuristicsRunner {
   /** 매칭 임계점 */
@@ -36,6 +37,7 @@ export class HeuristicsRunner {
   /** 등록된 휴리스틱 목록 */
   private readonly heuristics: IHeuristic[] = [
     new SearchFieldHeuristic(), // SearchField를 먼저 (score 20, SwitchHeuristic의 10보다 높음)
+    new CheckboxHeuristic(),    // Checkbox (score 20, checkbox 이름 패턴)
     new InputHeuristic(),  // Input을 먼저 (Caret 패턴이 더 특수)
     new SwitchHeuristic(), // Switch를 Button보다 먼저 (더 특수한 패턴)
     new SegmentedControlHeuristic(), // SegmentedControl (Tab props 패턴)

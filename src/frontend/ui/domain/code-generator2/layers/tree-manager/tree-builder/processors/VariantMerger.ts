@@ -382,6 +382,10 @@ export class VariantMerger {
       ],
       bounds,
       ...(componentPropertyReferences ? { componentPropertyReferences } : {}),
+      // INSTANCE 노드의 componentId 보존 (NodeMatcher에서 다른 컴포넌트 병합 방지에 사용)
+      ...((node.type === "INSTANCE" && (node as any).componentId)
+        ? { componentId: (node as any).componentId }
+        : {}),
     };
 
     if (children) {
