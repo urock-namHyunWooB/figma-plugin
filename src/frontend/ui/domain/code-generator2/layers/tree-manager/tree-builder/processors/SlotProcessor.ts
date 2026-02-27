@@ -348,7 +348,7 @@ export class SlotProcessor {
     }
 
     // 2개 이상 그룹 찾기
-    for (const [key, group] of byComponentIdAndCount.entries()) {
+    for (const [, group] of byComponentIdAndCount.entries()) {
       if (group.length >= 2) {
         const slotName = this.generateSlotName(group[0].name);
 

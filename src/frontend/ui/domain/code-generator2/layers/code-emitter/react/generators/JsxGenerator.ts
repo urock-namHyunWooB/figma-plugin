@@ -193,8 +193,6 @@ export default ${componentName}`;
     indent: number,
     isRoot: boolean = false
   ): string {
-    const indentStr = " ".repeat(indent);
-
     // semanticType 우선 처리
     if (node.semanticType === "search-input") {
       return this.generateSearchInputNode(node, styleStrategy, options, indent);
@@ -319,7 +317,7 @@ ${indentStr}})}`;
     const visibleCondition = this.getLoopVisibleCondition(node, itemVar);
 
     // 속성 생성 (loop 컨텍스트)
-    let attrs = this.generateAttributesInLoop(node, styleStrategy, options, itemVar, keyField, isRoot);
+    const attrs = this.generateAttributesInLoop(node, styleStrategy, options, itemVar, keyField, isRoot);
 
     // Content 바인딩 확인 (item.xxx 참조)
     const contentBinding = this.getLoopContentBinding(node, itemVar);

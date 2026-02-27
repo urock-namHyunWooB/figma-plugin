@@ -1,4 +1,4 @@
-import { UITree, UINode } from "../../types/types";
+import { UITree } from "../../types/types";
 import DataManager from "../data-manager/DataManager";
 import TreeBuilder from "./tree-builder/TreeBuilder";
 import { ComponentPropsLinker } from "./post-processors/ComponentPropsLinker";

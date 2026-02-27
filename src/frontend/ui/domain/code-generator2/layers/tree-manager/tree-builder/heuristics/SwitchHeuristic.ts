@@ -13,7 +13,7 @@
  * - onClick 핸들러 추가
  */
 
-import type { ComponentType, InternalNode } from "../../../../types/types";
+import type { ComponentType } from "../../../../types/types";
 import type {
   IHeuristic,
   HeuristicContext,
