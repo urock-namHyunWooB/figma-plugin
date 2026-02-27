@@ -89,7 +89,7 @@ class TreeBuilder {
       if (!existingPropNames.has(slot.slotName)) {
         props.push({
           name: slot.slotName,
-          type: "slot",  // Array slot은 slot 타입으로 처리
+          type: "slot", // Array slot은 slot 타입으로 처리
           required: false,
           sourceKey: slot.slotName,
           defaultValue: [],
@@ -106,6 +106,8 @@ class TreeBuilder {
     // Step 5: 외부 참조 (INSTANCE refId + 의존 컴포넌트 Vector SVG)
     tree = this.externalRefsProcessor.resolveExternalRefs(tree);
 
+    this.applyTextPropertyBindings(tree, props);
+
     // Step 6: 휴리스틱 (컴포넌트 타입 판별, semanticType 설정, props 추가)
     // 현재 컴포넌트의 고유 이름과 propDefs를 전달 (의존 컴포넌트가 메인 컴포넌트의 점수를 상속하지 않도록)
     // NOTE: VariantMerger가 COMPONENT_SET ID를 merged tree.id에 보존하지 않으므로,
@@ -116,7 +118,12 @@ class TreeBuilder {
         | Record<string, import("./heuristics/IHeuristic").ComponentPropertyDef>
         | undefined,
     };
-    const heuristicsResult = this.heuristicsRunner.run(tree, this.dataManager, props, componentContext);
+    const heuristicsResult = this.heuristicsRunner.run(
+      tree,
+      this.dataManager,
+      props,
+      componentContext
+    );
 
     // 최종 변환: InternalTree → UINode
     const root = this.convertToUINode(tree, heuristicsResult.rootNodeType);
@@ -134,6 +141,43 @@ class TreeBuilder {
    */
   public buildInternalTreeDebug(node: SceneNode): InternalTree {
     return this.variantMerger.merge(node);
+  }
+
+  /**
+   * Step 6.5: componentPropertyReferences.characters → bindings.content 처리
+   *
+   * Figma에서 TEXT 노드에 `componentPropertyReferences.characters`가 있으면
+   * 해당 prop을 명시적으로 JSX 바인딩({propName})으로 연결한다.
+   * 어느 heuristic이 선택되든 항상 적용되도록 heuristic 실행 후에 처리한다.
+   */
+  private applyTextPropertyBindings(
+    tree: InternalTree,
+    props: PropDefinition[]
+  ): void {
+    this.traverseForTextPropertyBindings(tree, props);
+  }
+
+  private traverseForTextPropertyBindings(
+    node: InternalTree,
+    props: PropDefinition[]
+  ): void {
+    if (node.type === "TEXT") {
+      const charRef = node.componentPropertyReferences?.["characters"];
+      if (charRef) {
+        const matchedProp = props.find((p) => p.sourceKey === charRef);
+        if (matchedProp) {
+          if (!node.bindings) {
+            node.bindings = {};
+          }
+          // componentPropertyReferences.characters 바인딩이 우선 (명시적 Figma 선언)
+          node.bindings.content = { prop: matchedProp.name };
+        }
+      }
+    }
+
+    for (const child of node.children) {
+      this.traverseForTextPropertyBindings(child, props);
+    }
   }
 
   private convertToUINode(
@@ -169,7 +213,9 @@ class TreeBuilder {
     }
 
     // TEXT 노드인 경우 텍스트 내용 추출
-    let textSegments: Array<{ text: string; style?: Record<string, string> }> | undefined;
+    let textSegments:
+      | Array<{ text: string; style?: Record<string, string> }>
+      | undefined;
     if (nodeType === "text") {
       textSegments = this.textProcessor.processTextNode(tree.id);
     }
@@ -205,7 +251,9 @@ class TreeBuilder {
     // INSTANCE의 I... children은 불필요하므로 children을 비움
     // 원본 children이 없으면 (empty dependency) I... children이 실제 콘텐츠이므로 유지
     if (nodeType === "component" && node.refId) {
-      const depHasOriginalChildren = this.dependencyHasOriginalChildren(node.refId);
+      const depHasOriginalChildren = this.dependencyHasOriginalChildren(
+        node.refId
+      );
       if (depHasOriginalChildren) {
         return {
           id: node.id,
@@ -245,7 +293,9 @@ class TreeBuilder {
     }
 
     // TEXT 노드인 경우 텍스트 내용 추출
-    let textSegments: Array<{ text: string; style?: Record<string, string> }> | undefined;
+    let textSegments:
+      | Array<{ text: string; style?: Record<string, string> }>
+      | undefined;
     if (nodeType === "text") {
       textSegments = this.textProcessor.processTextNode(node.id);
     }
@@ -277,9 +327,7 @@ class TreeBuilder {
     const depData = this.dataManager.getById(refId);
     if (!depData.spec) return false;
     const depChildren = depData.spec.info?.document?.children || [];
-    return depChildren.some(
-      (c: any) => c.id && !c.id.startsWith("I")
-    );
+    return depChildren.some((c: any) => c.id && !c.id.startsWith("I"));
   }
 
   /**

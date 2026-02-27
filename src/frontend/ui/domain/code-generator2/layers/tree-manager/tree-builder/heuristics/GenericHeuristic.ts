@@ -112,6 +112,25 @@ export class GenericHeuristic implements IHeuristic {
   ): void {
     // TEXT 노드인 경우 slot 판별
     if (node.type === "TEXT") {
+      // 1. componentPropertyReferences.characters가 있으면 string prop으로 바인딩 (우선순위 높음)
+      //    Figma에서 명시적으로 "이 텍스트는 외부에서 변경 가능하다"고 선언한 경우
+      const charRef = node.componentPropertyReferences?.["characters"];
+      if (charRef) {
+        const matchedProp = ctx.props.find(p => p.sourceKey === charRef);
+        if (matchedProp) {
+          if (!node.bindings) {
+            node.bindings = {};
+          }
+          node.bindings.content = { prop: matchedProp.name };
+          // 바인딩 완료, 자식 탐색 후 return
+          for (const child of node.children || []) {
+            this.traverseAndDetectTextSlots(child, ctx, totalVariantCount);
+          }
+          return;
+        }
+      }
+
+      // 2. 기존 slot 감지 로직 (variant 간 텍스트가 다른 경우)
       const slotInfo = extractTextSlotInfo(node, totalVariantCount, ctx.dataManager);
 
       if (slotInfo) {
