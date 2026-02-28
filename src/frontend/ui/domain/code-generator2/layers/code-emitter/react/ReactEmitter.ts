@@ -26,7 +26,12 @@
  */
 
 import type { UITree, UINode, ConditionNode } from "../../../types/types";
-import type { ICodeEmitter, EmittedCode } from "../ICodeEmitter";
+import type {
+  ICodeEmitter,
+  EmittedCode,
+  GeneratedResult,
+} from "../ICodeEmitter";
+import { ReactBundler } from "./ReactBundler";
 import { ImportsGenerator } from "./generators/ImportsGenerator";
 import { PropsGenerator } from "./generators/PropsGenerator";
 import { StylesGenerator } from "./generators/StylesGenerator";
@@ -54,6 +59,7 @@ export class ReactEmitter implements ICodeEmitter {
 
   private readonly options: ReactEmitterOptions & { styleStrategy: StyleStrategyType; debug: boolean };
   private readonly styleStrategy: IStyleStrategy;
+  private readonly bundler: ReactBundler;
 
   constructor(options: ReactEmitterOptions = {}) {
     this.options = {
@@ -63,6 +69,7 @@ export class ReactEmitter implements ICodeEmitter {
     };
 
     this.styleStrategy = this.createStyleStrategy();
+    this.bundler = new ReactBundler();
   }
 
   /**
@@ -91,6 +98,96 @@ export class ReactEmitter implements ICodeEmitter {
       componentName,
       fileExtension: ".tsx",
     };
+  }
+
+  /**
+   * 메인 + 의존 트리 → 개별 코드 변환 (멀티 파일 출력용)
+   * dep 트리에는 makeRootFlexible 적용 (고정 크기 → 100%)
+   */
+  async emitAll(
+    main: UITree,
+    deps: Map<string, UITree>
+  ): Promise<GeneratedResult> {
+    const mainCode = await this.emit(main);
+
+    const depCodes = new Map<string, EmittedCode>();
+    const emittedCache = new Map<UITree, EmittedCode>();
+
+    for (const [depId, depTree] of deps) {
+      if (!emittedCache.has(depTree)) {
+        this.makeRootFlexible(depTree);
+        emittedCache.set(depTree, await this.emit(depTree));
+      }
+      depCodes.set(depId, emittedCache.get(depTree)!);
+    }
+
+    return { main: mainCode, dependencies: depCodes };
+  }
+
+  /**
+   * 메인 + 의존 트리 → 단일 파일 번들 출력
+   */
+  async emitBundled(
+    main: UITree,
+    deps: Map<string, UITree>
+  ): Promise<string> {
+    const result = await this.emitAll(main, deps);
+    const depArray = Array.from(result.dependencies.values());
+    return this.bundler.bundle(result.main, depArray);
+  }
+
+  /**
+   * dependency 루트의 고정 크기를 100%로 변환
+   * INSTANCE가 parent의 크기를 채우도록 함 (8px 붕괴 방지)
+   */
+  private makeRootFlexible(tree: UITree): void {
+    const root = tree.root;
+    if (!root.styles) return;
+
+    const base = root.styles.base;
+    if (
+      base.width &&
+      typeof base.width === "string" &&
+      base.width.endsWith("px")
+    ) {
+      base.width = "100%";
+    }
+    if (
+      base.height &&
+      typeof base.height === "string" &&
+      base.height.endsWith("px")
+    ) {
+      base.height = "100%";
+    }
+
+    if (base.background) {
+      base.background = "transparent";
+    }
+    delete base["border-radius"];
+    delete base.border;
+    delete base.opacity;
+    delete base.padding;
+    delete base["padding-top"];
+    delete base["padding-right"];
+    delete base["padding-bottom"];
+    delete base["padding-left"];
+
+    if (root.styles.variants) {
+      for (const [, variantStyles] of Object.entries(root.styles.variants)) {
+        for (const [, styleObj] of Object.entries(
+          variantStyles as Record<string, any>
+        )) {
+          if (styleObj && typeof styleObj === "object") {
+            if (styleObj.background) {
+              styleObj.background = "transparent";
+            }
+            delete styleObj["border-radius"];
+            delete styleObj.border;
+            delete styleObj.opacity;
+          }
+        }
+      }
+    }
   }
 
   /**
