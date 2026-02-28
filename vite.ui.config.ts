@@ -4,6 +4,62 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 import path from "path";
 import tsconfigPaths from "vite-tsconfig-paths";
 
+// 컴파일된 코드를 failing/compiled 폴더에 저장하는 Vite 플러그인
+function saveCompiledPlugin(): Plugin {
+  return {
+    name: "save-compiled",
+    configureServer(server) {
+      server.middlewares.use("/api/save-compiled", (req, res) => {
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+        res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+        if (req.method === "OPTIONS") {
+          res.statusCode = 204;
+          res.end();
+          return;
+        }
+
+        if (req.method !== "POST") {
+          res.statusCode = 405;
+          res.end("Method Not Allowed");
+          return;
+        }
+
+        let body = "";
+        req.on("data", (chunk) => { body += chunk.toString(); });
+        req.on("end", () => {
+          try {
+            const { fileName, code } = JSON.parse(body);
+            if (!fileName || !code) {
+              res.statusCode = 400;
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ error: "fileName and code required" }));
+              return;
+            }
+
+            const compiledDir = path.resolve(__dirname, "test/fixtures/failing/compiled");
+            if (!fs.existsSync(compiledDir)) {
+              fs.mkdirSync(compiledDir, { recursive: true });
+            }
+
+            const filePath = path.join(compiledDir, `${fileName}.tsx`);
+            fs.writeFileSync(filePath, code, "utf-8");
+
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ success: true, path: filePath }));
+          } catch (e) {
+            res.statusCode = 500;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ error: (e as Error).message }));
+          }
+        });
+      });
+    },
+  };
+}
+
 // API 엔드포인트를 추가하는 Vite 플러그인
 function saveFailingFixturePlugin(): Plugin {
   return {
@@ -78,7 +134,7 @@ function saveFailingFixturePlugin(): Plugin {
 }
 
 export default defineConfig(({ mode }) => ({
-  plugins: [viteSingleFile(), tsconfigPaths(), saveFailingFixturePlugin()],
+  plugins: [viteSingleFile(), tsconfigPaths(), saveFailingFixturePlugin(), saveCompiledPlugin()],
   root: path.resolve(__dirname, "src/frontend/ui"),
 
   // mode에 따라 DEV_BUILD 플래그 설정

@@ -227,6 +227,7 @@ export default function TestPage() {
   const [isTesting, setIsTesting] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
   const [strategy, setStrategy] = useState<StyleStrategy>("emotion");
+  const [compiledCode, setCompiledCode] = useState<string | null>(null);
 
   // Props Control 관련 상태 (플러그인 App.tsx와 동일)
   const [propDefinitions, setPropDefinitions] = useState<PropDefinition[]>([]);
@@ -257,10 +258,12 @@ export default function TestPage() {
           setPropValues({});
           setSlotMockupEnabled({});
           setCurrentComponent(null);
+          setCompiledCode(null);
           return;
         }
 
-        // 생성된 코드 출력
+        // 생성된 코드 저장 및 출력
+        setCompiledCode(code);
         console.log(
           `📝 Generated Code for ${fixture.name} [${strategy}]:\n`,
           code
@@ -534,6 +537,31 @@ export default function TestPage() {
         </div>
 
         <button
+          onClick={async () => {
+            if (!compiledCode || !selected) return;
+            try {
+              const res = await fetch("/api/save-compiled", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ fileName: selected, code: compiledCode }),
+              });
+              const json = await res.json();
+              if (json.success) {
+                console.log(`✅ Saved: ${json.path}`);
+              } else {
+                console.error("Save failed:", json.error);
+              }
+            } catch (e) {
+              console.error("Save error:", e);
+            }
+          }}
+          disabled={!compiledCode}
+          css={downloadBtn}
+        >
+          ⬇ Download .tsx
+        </button>
+
+        <button
           onClick={testAll}
           disabled={isTesting || fixtureList.length === 0}
           css={testAllBtn}
@@ -716,6 +744,23 @@ const titleStyle = css`
   font-size: 16px;
   font-weight: 600;
   flex: 1;
+`;
+
+const downloadBtn = css`
+  padding: 8px 16px;
+  background: #1f6feb;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  &:hover:not(:disabled) {
+    background: #388bfd;
+  }
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 `;
 
 const testAllBtn = css`

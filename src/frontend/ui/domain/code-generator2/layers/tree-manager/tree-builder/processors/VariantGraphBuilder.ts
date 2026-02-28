@@ -85,12 +85,30 @@ export class VariantGraphBuilder {
 
   /**
    * Variant의 props 추출
+   * variantProperties가 있으면 사용, 없으면 variant.name에서 추론
+   * 예: "Platform=Normal, Size=Medium, Active=False" → { Platform: "Normal", Size: "Medium", Active: "False" }
    */
   private extractVariantProps(variant: SceneNode): Record<string, string> {
     const variantProperties = (variant as any).variantProperties as
       | Record<string, string>
       | undefined;
-    return variantProperties || {};
+
+    if (variantProperties) {
+      return variantProperties;
+    }
+
+    // variantProperties가 없으면 variant.name에서 추론
+    const props: Record<string, string> = {};
+    const propPairs = variant.name.split(",").map((s: string) => s.trim());
+
+    for (const pair of propPairs) {
+      const [key, value] = pair.split("=").map((s: string) => s.trim());
+      if (key && value) {
+        props[key] = value;
+      }
+    }
+
+    return props;
   }
 
   // ===========================================================================

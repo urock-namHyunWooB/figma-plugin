@@ -63,6 +63,8 @@ class TreeBuilder {
     // Step 1: 변형 병합
     let tree = this.variantMerger.merge(node);
 
+    debugger;
+
     // Step 2: Props 추출/바인딩
     let props = this.propsExtractor.extract(node);
 

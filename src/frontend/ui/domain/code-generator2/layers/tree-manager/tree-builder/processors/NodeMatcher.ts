@@ -41,13 +41,20 @@ export class NodeMatcher {
       return true;
     }
 
-    // 2.5. INSTANCE 노드는 componentId가 다르면 위치에 관계없이 다른 노드
-    // (같은 위치에 있어도 다른 컴포넌트를 참조하면 병합하지 않음)
+    // 2.5. INSTANCE 노드는 componentId가 다르면 같은 componentSetId에 속하는지 확인
+    // (같은 componentSetId이면 variant 차이이므로 병합 가능)
     if (nodeA.type === "INSTANCE" && nodeB.type === "INSTANCE") {
       const compIdA = (nodeA as any).componentId;
       const compIdB = (nodeB as any).componentId;
       if (compIdA && compIdB && compIdA !== compIdB) {
-        return false;
+        // componentId가 다르면: 같은 componentSetId에 속하는지 확인
+        const setIdA = this.getComponentSetId(compIdA);
+        const setIdB = this.getComponentSetId(compIdB);
+        if (!(setIdA && setIdB && setIdA === setIdB)) {
+          // 다른 componentSetId이면 다른 노드
+          return false;
+        }
+        // 같은 componentSetId이면 계속 진행 (위치나 visible ref로 비교)
       }
     }
 
@@ -172,7 +179,9 @@ export class NodeMatcher {
 
   /**
    * INSTANCE 노드 특별 매칭:
-   * 1. componentId가 다르면 무조건 다른 노드 (다른 컴포넌트)
+   * 1. componentId가 다르면:
+   *    - 같은 componentSetId에 속하면 → 같은 노드 (variant 병합)
+   *    - 다른 componentSetId이면 → 다른 노드
    * 2. componentPropertyReferences.visible이 같으면 같은 노드로 판단
    * (visible ref가 없는 INSTANCE는 위치 매칭에 의존)
    */
@@ -184,10 +193,20 @@ export class NodeMatcher {
       return false;
     }
 
-    // componentId가 다르면 다른 컴포넌트 → 병합 안 함
+    // componentId 비교
     const compIdA = (nodeA as any).componentId;
     const compIdB = (nodeB as any).componentId;
     if (compIdA && compIdB && compIdA !== compIdB) {
+      // componentId가 다르면: 같은 componentSetId에 속하는지 확인
+      const setIdA = this.getComponentSetId(compIdA);
+      const setIdB = this.getComponentSetId(compIdB);
+
+      // 같은 componentSetId이면 같은 노드로 판단 (variant 차이)
+      if (setIdA && setIdB && setIdA === setIdB) {
+        return true;
+      }
+
+      // 다른 componentSetId이면 다른 노드
       return false;
     }
 
@@ -200,5 +219,17 @@ export class NodeMatcher {
     }
 
     return false;
+  }
+
+  /**
+   * componentId가 속한 componentSetId 조회
+   */
+  private getComponentSetId(componentId: string): string | undefined {
+    const depData = this.dataManager.getAllDependencies().get(componentId);
+    if (!depData) return undefined;
+
+    // componentId가 속한 componentSetId 찾기
+    const componentInfo = (depData.info as any).components?.[componentId];
+    return componentInfo?.componentSetId;
   }
 }
