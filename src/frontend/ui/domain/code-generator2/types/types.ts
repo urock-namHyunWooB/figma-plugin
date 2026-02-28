@@ -132,6 +132,14 @@ export interface BooleanPropDefinition extends PropBase {
 
 export interface SlotPropDefinition extends PropBase {
   type: "slot";
+  /** 참조하는 외부 컴포넌트 이름 (PascalCase) */
+  componentName?: string;
+  /** 컴파일 가능한 dependency 컴포넌트인지 */
+  hasDependency?: boolean;
+  /** 참조하는 컴포넌트 ID (mockupSvg 조회용) */
+  componentId?: string;
+  /** 대표 INSTANCE 노드 ID (bounding box 조회용) */
+  nodeId?: string;
 }
 
 export interface StringPropDefinition extends PropBase {

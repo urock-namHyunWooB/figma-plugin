@@ -171,70 +171,7 @@ class FigmaCodeGenerator {
    */
   getPropsDefinition(): LegacyPropDefinition[] {
     const uiTree = this.buildUITree().main;
-    const slotInfoMap = this.extractSlotInfoFromUITree(uiTree.root);
-    return uiTree.props.map((prop) =>
-      this.toLegacyPropDefinition(prop, slotInfoMap)
-    );
-  }
-
-  /**
-   * UITree를 순회하여 slot prop name → SlotInfo 매핑 추출
-   * slot은 bindings.content = { prop: slotName } 을 가진 노드로 식별됨
-   */
-  private extractSlotInfoFromUITree(
-    root: import("./types/types").UINode
-  ): Map<string, SlotInfo> {
-    const slotInfoMap = new Map<string, SlotInfo>();
-    const groupedDeps = this.dataManager.getDependenciesGroupedByComponentSet();
-
-    const traverse = (node: import("./types/types").UINode) => {
-      const slotBinding = node.bindings?.content;
-      if (slotBinding && "prop" in slotBinding) {
-        const propName = slotBinding.prop;
-        const rawNode = this.dataManager.getById(node.id).node as any;
-        const bbox = rawNode?.absoluteBoundingBox;
-
-        const componentId: string | undefined = rawNode?.componentId;
-        const mockupSvg = componentId
-          ? this.dataManager.getMergedVectorSvgForComponent(componentId)
-          : undefined;
-
-        let componentName: string | undefined = node.name;
-        let hasDependency = false;
-        if (componentId) {
-          const depInfo = this.dataManager
-            .getAllDependencies()
-            .get(componentId);
-          if (depInfo) {
-            hasDependency = true;
-            const compInfo = (depInfo.info as any).components?.[componentId];
-            const setId: string | undefined = compInfo?.componentSetId;
-            if (setId && groupedDeps[setId]) {
-              componentName = toComponentName(
-                groupedDeps[setId].componentSetName
-              );
-            }
-          }
-        }
-
-        slotInfoMap.set(propName, {
-          componentName,
-          hasDependency,
-          mockupSvg,
-          width: bbox?.width,
-          height: bbox?.height,
-        });
-      }
-
-      if ("children" in node && node.children) {
-        for (const child of node.children as import("./types/types").UINode[]) {
-          traverse(child);
-        }
-      }
-    };
-
-    traverse(root);
-    return slotInfoMap;
+    return uiTree.props.map((prop) => this.toLegacyPropDefinition(prop));
   }
 
   /**
@@ -269,10 +206,7 @@ class FigmaCodeGenerator {
   }
 
 
-  private toLegacyPropDefinition(
-    prop: PropDefinition,
-    slotInfoMap?: Map<string, SlotInfo>
-  ): LegacyPropDefinition {
+  private toLegacyPropDefinition(prop: PropDefinition): LegacyPropDefinition {
     const typeMap: Record<string, "VARIANT" | "TEXT" | "BOOLEAN" | "SLOT"> = {
       variant: "VARIANT",
       string: "TEXT",
@@ -288,8 +222,25 @@ class FigmaCodeGenerator {
         prop.type === "variant" ? (prop as any).options : undefined,
     };
 
-    if (prop.type === "slot" && slotInfoMap?.has(prop.name)) {
-      result.slotInfo = slotInfoMap.get(prop.name);
+    if (prop.type === "slot") {
+      const slotProp = prop as import("./types/types").SlotPropDefinition;
+      const componentId = slotProp.componentId;
+      const mockupSvg = componentId
+        ? this.dataManager.getMergedVectorSvgForComponent(componentId)
+        : undefined;
+      const nodeId = slotProp.nodeId;
+      const rawNode = nodeId
+        ? (this.dataManager.getById(nodeId).node as any)
+        : undefined;
+      const bbox = rawNode?.absoluteBoundingBox;
+
+      result.slotInfo = {
+        componentName: slotProp.componentName,
+        hasDependency: slotProp.hasDependency ?? false,
+        mockupSvg,
+        width: bbox?.width,
+        height: bbox?.height,
+      };
     }
 
     return result;

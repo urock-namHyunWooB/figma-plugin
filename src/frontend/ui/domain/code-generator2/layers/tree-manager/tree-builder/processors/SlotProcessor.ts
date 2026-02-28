@@ -9,9 +9,10 @@
  * 3. 배열 slot 감지 (개별 slot 제외)
  */
 
-import type { InternalTree, ArraySlotInfo, PropDefinition } from "../../../types/types";
+import type { InternalTree, ArraySlotInfo, PropDefinition, SlotPropDefinition } from "../../../types/types";
 import type DataManager from "../../data-manager/DataManager";
 import { hasDistinctOverrides } from "./utils/overrideUtils";
+import { toComponentName } from "../../../../utils/nameUtils";
 
 export class SlotProcessor {
   constructor(private readonly dataManager: DataManager) {}
@@ -64,14 +65,20 @@ export class SlotProcessor {
     this.applySlotBindings(tree, propMap, slotInfo, nodeToSlotProp);
     this.applyVariantSlotBindings(tree, props, slotInfo, nodeToSlotProp);
 
-    // 4. boolean prop → slot으로 업그레이드
+    // 4. boolean prop → slot으로 업그레이드 (컴포넌트 관계 정보 포함)
     return props.map((prop) => {
       if (slotInfo.has(prop.name)) {
+        const info = slotInfo.get(prop.name)!;
+        const representativeNodeId = info.nodeIds.values().next().value!;
+        const componentInfo = this.resolveSlotComponentInfo(representativeNodeId);
+
         return {
           ...prop,
           type: "slot",
           defaultValue: null,
-        };
+          ...componentInfo,
+          nodeId: representativeNodeId,
+        } as SlotPropDefinition;
       }
       return prop;
     });
@@ -377,6 +384,33 @@ export class SlotProcessor {
   // ==========================================================================
   // Helper Methods
   // ==========================================================================
+
+  /**
+   * INSTANCE 노드 ID에서 slot 컴포넌트 관계 정보 추출
+   */
+  private resolveSlotComponentInfo(
+    nodeId: string
+  ): { componentName?: string; hasDependency?: boolean; componentId?: string } {
+    const { node: figmaNode } = this.dataManager.getById(nodeId);
+    const componentId: string | undefined = (figmaNode as any)?.componentId;
+    if (!componentId) return {};
+
+    const depInfo = this.dataManager.getAllDependencies().get(componentId);
+    if (!depInfo) return { componentId };
+
+    const groupedDeps = this.dataManager.getDependenciesGroupedByComponentSet();
+    const compInfo = (depInfo.info as any).components?.[componentId];
+    const setId: string | undefined = compInfo?.componentSetId;
+
+    let componentName: string | undefined;
+    if (setId && groupedDeps[setId]) {
+      componentName = toComponentName(groupedDeps[setId].componentSetName);
+    } else {
+      componentName = toComponentName(figmaNode?.name ?? "");
+    }
+
+    return { componentName, hasDependency: true, componentId };
+  }
 
   private getComponentId(node: InternalTree): string | undefined {
     if (node.type !== "INSTANCE") {
