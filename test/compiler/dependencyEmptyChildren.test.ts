@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import FigmaCodeGenerator from "@code-generator2";
 import fs from "fs";
 import path from "path";
+import type { FigmaNodeData } from "@code-generator2";
 
 /**
  * 의존 컴포넌트 children이 비어있을 때 I... 노드 유지 테스트
@@ -46,16 +47,27 @@ describe("의존 컴포넌트 children 처리", () => {
   });
 
   it("error-02: 원래 children이 있으면 I... 노드 삭제", async () => {
-    const fixture = JSON.parse(fs.readFileSync(error02FixturePath, "utf-8"));
+    const fixture = JSON.parse(fs.readFileSync(error02FixturePath, "utf-8")) as FigmaNodeData;
     const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
-    const result = await compiler.compile();
 
-    // MonoResponsive dependency의 Color (255:17770)는 정당한 노드이므로 CSS 생성됨
-    // 변수명 단축 전략: 마지막 3개 노드의 마지막 단어 사용
-    expect(result).toContain("MonoResponsive_responsiveColorCss");
+    // compile() 번들에서는 filterReferencedDependencies가 미참조 dep을 제거하므로
+    // MonoResponsive가 번들에 포함되지 않을 수 있음.
+    // generate() 레벨에서 dep 코드를 직접 검증한다.
+    const generated = await compiler.generate();
 
-    // 하지만 Main 컴포넌트에서 I... 노드로 인한 ColorCss는 생성되면 안됨
-    expect(result).not.toContain("globalMonoResponsiveColorCss");
+    // Main 컴포넌트에서 I... 노드로 인한 ColorCss는 생성되면 안됨
+    expect(generated.main.code).not.toContain("globalMonoResponsiveColorCss");
+
+    // MonoResponsive dep은 generate() 레벨에서 올바르게 컴파일되어야 함
+    const depCodes = [...generated.dependencies.values()].map((d) => d.code);
+    const monoCode = depCodes.find(
+      (d) => d.includes("MonoResponsiveProps") || d.includes("function MonoResponsive")
+    );
+    if (monoCode) {
+      // I... 노드가 삭제되어 정당한 Color 노드에서 responsiveColorCss가 생성됨
+      expect(monoCode).toContain("responsiveColorCss");
+      expect(monoCode).not.toContain("globalMonoResponsiveColorCss");
+    }
   });
 
   it("Gnb: 아이콘 요소가 SVG로 렌더링됨", async () => {

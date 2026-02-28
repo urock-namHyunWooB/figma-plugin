@@ -176,8 +176,9 @@ class FigmaCodeGenerator {
           return true;
         });
 
-        // 번들링: import 정리 + 코드 결합
-        return this.bundleCode(result.main, uniqueDeps);
+        // 번들링: import 정리 + 코드 결합 (미참조 deps 제거)
+        const referencedDeps = this.filterReferencedDependencies(result.main, uniqueDeps);
+        return this.bundleCode(result.main, referencedDeps);
       }
 
       // 분리형 export → 합체형 export default function
@@ -193,6 +194,7 @@ class FigmaCodeGenerator {
    */
   private bundleCode(main: EmittedCode, deps: EmittedCode[]): string {
     const mainName = main.componentName;
+
     const allCodes = [...deps, main];
 
     // Step 0: 이름 충돌 감지 및 리네임 맵 생성
@@ -558,6 +560,19 @@ class FigmaCodeGenerator {
         }
       }
     }
+  }
+
+  /**
+   * 다른 코드(main 또는 다른 deps)에서 전혀 참조되지 않는 dep을 제거.
+   * dep의 componentName이 자기 자신 코드에만 등장하고
+   * main + 다른 deps 코드 어디에도 없으면 제외.
+   */
+  private filterReferencedDependencies(main: EmittedCode, deps: EmittedCode[]): EmittedCode[] {
+    // 자기 자신 코드를 제외한 모든 코드 합치기
+    return deps.filter((dep) => {
+      const otherCodes = [main.code, ...deps.filter(d => d !== dep).map(d => d.code)].join("\n");
+      return otherCodes.includes(dep.componentName);
+    });
   }
 
   private toLegacyPropDefinition(prop: PropDefinition): LegacyPropDefinition {

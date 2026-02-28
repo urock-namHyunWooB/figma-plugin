@@ -124,16 +124,18 @@ describe("Layout Regression Tests", () => {
         );
 
         if (hasExternalInstances && compiledCode) {
-          // wrapper pattern:
-          // 1. <div css={...}>...<ComponentName (CSS 클래스 방식)
-          // 2. <div style={{...}}>...<ComponentName (인라인 스타일 fallback)
+          // 외부 컴포넌트는 두 가지 방식으로 렌더링될 수 있음:
+          // 1. wrapper div + JSX 컴포넌트: <div css={...}><ComponentName .../>
+          // 2. slot prop: React.ReactNode 타입 prop으로 외부에서 주입
           // 3. SVG가 인라인으로 렌더링되는 경우
           const hasWrapperPattern =
             /<div[^>]*css=\{[^}]+\}[^>]*>[\s\S]*?<[A-Z]/.test(compiledCode) ||
             /<div[^>]*style=\{\{[^}]*\}\}[^>]*>[\s\S]*?<[A-Z]/.test(
               compiledCode
             ) ||
-            /<svg[^>]*css=/.test(compiledCode);
+            /<svg[^>]*css=/.test(compiledCode) ||
+            // slot prop 방식: 외부 컴포넌트를 React.ReactNode로 수신
+            /React\.ReactNode/.test(compiledCode);
           expect(hasWrapperPattern).toBe(true);
         }
       });

@@ -15,28 +15,30 @@ describe("INSTANCE 컨텍스트 병합 - visible 처리", () => {
   
   test("dependencies 컴파일 시 INSTANCE 내부 노드(I...)가 삭제되어야 함", async () => {
     const compiler = new FigmaCodeGenerator(error02Fixture as any);
-    const code = await compiler.compile();
+    const result = await compiler.generate();
 
-    // MonoResponsive dependency의 Color (255:17770)는 정당한 노드이므로 CSS 생성됨
-    // 변수명 단축 전략: 마지막 3개 노드의 마지막 단어 사용
-    expect(code).toContain("MonoResponsive_responsiveColorCss");
-
-    // 하지만 Main 컴포넌트에서 I... 노드로 인한 ColorCss는 생성되면 안됨
-    expect(code).not.toContain("globalMonoResponsiveColorCss");
+    // Main 컴포넌트에서 I... 노드로 인한 ColorCss는 생성되면 안됨
+    expect(result.main.code).not.toContain("globalMonoResponsiveColorCss");
   });
 
   test("MonoResponsive 컴포넌트는 정당한 Color 노드를 가짐", async () => {
     const compiler = new FigmaCodeGenerator(error02Fixture as any);
-    const code = await compiler.compile();
+    const result = await compiler.generate();
 
-    // MonoResponsive dependency의 Color (255:17770)는 정당한 노드
-    // 변수명 단축 전략: 마지막 3개 노드의 마지막 단어 사용
-    expect(code).toContain("MonoResponsive_responsiveColorCss");
+    // MonoResponsive dependency의 Color (255:17770)는 정당한 노드이므로 CSS 생성됨
+    // (번들에는 포함되지 않더라도 컴파일 자체는 올바르게 수행되어야 함)
+    const depCodes = [...result.dependencies.values()].map(d => d.code);
+    const monoCode = depCodes.find(d => {
+      // componentName이 MonoResponsive인 dep 코드 찾기
+      return d.includes("MonoResponsiveProps") || d.includes("function MonoResponsive");
+    });
+    expect(monoCode).toBeTruthy();
 
-    // MonoResponsive 함수 내에서 ColorCss를 참조해야 함
-    const monoMatch = code!.match(/const MonoResponsive:[\s\S]*?^\};/m);
-    if (monoMatch) {
-      expect(monoMatch[0]).toContain("MonoResponsive_responsiveColorCss");
+    // I... 노드에서 유래한 ColorCss는 없어야 함 (I... 노드는 올바르게 삭제됨)
+    if (monoCode) {
+      // responsiveColorCss는 있어야 함 (정당한 Color 노드에서 생성)
+      expect(monoCode).toContain("responsiveColorCss");
+      expect(monoCode).not.toContain("globalMonoResponsiveColorCss");
     }
   });
 });
