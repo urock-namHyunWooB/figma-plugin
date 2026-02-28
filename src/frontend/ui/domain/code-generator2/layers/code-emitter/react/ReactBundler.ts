@@ -99,7 +99,7 @@ export class ReactBundler {
       code = code.replace(/^import .+;?\n/gm, "");
       code = this.removeCnDeclaration(code);
       code = this.convertToArrowFunction(code, dep.componentName);
-      code = code.replace(/^export default \w+;\s*$/gm, "");
+      code = code.replace(/^export default \w+;?\s*$/gm, "");
       code = code.replace(/^export (interface \w+Props)/gm, "$1");
 
       if (renamedName !== dep.componentName) {
@@ -212,7 +212,7 @@ export class ReactBundler {
         exportDefaultFuncRegex,
         `const ${componentName}: React.FC<${componentName}Props> = (${match[1]}) => {`
       );
-      code = code.replace(/^export default \w+;\s*$/gm, "");
+      code = code.replace(/^export default \w+;?\s*$/gm, "");
       code = this.replaceLastClosingBrace(code, componentName);
       return code;
     }

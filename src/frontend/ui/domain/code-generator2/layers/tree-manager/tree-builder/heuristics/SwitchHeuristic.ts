@@ -123,8 +123,8 @@ export class SwitchHeuristic implements IHeuristic {
     // Active 상태 기반 CSS 생성
     this.addActiveDynamicStyles(ctx.tree);
 
-    // Disable 상태 기반 CSS 생성
-    this.addDisableDynamicStyles(ctx.tree);
+    // Disable 상태 기반 CSS 생성 (disable prop이 있는 경우만)
+    this.addDisableDynamicStyles(ctx.tree, ctx.props);
 
     return {
       componentType: this.componentType,
@@ -230,33 +230,28 @@ export class SwitchHeuristic implements IHeuristic {
 
   /**
    * Disable 상태 기반 동적 CSS 추가
+   *
+   * 루트 노드에만 적용 (opacity는 CSS 상속되므로 자식에 중복 불필요)
+   * disable prop이 실제로 존재하는 컴포넌트에서만 동작
    */
-  private addDisableDynamicStyles(node: any): void {
-    if (!node) return;
+  private addDisableDynamicStyles(node: any, props: any[]): void {
+    if (!node?.styles) return;
 
-    const traverse = (n: any) => {
-      // disable=true일 때: opacity 낮추기, cursor 변경
-      if (n.styles) {
-        if (!n.styles.dynamic) {
-          n.styles.dynamic = [];
-        }
+    const hasDisableProp = props.some(
+      (p: any) => p.name.toLowerCase() === "disable"
+    );
+    if (!hasDisableProp) return;
 
-        n.styles.dynamic.push({
-          condition: { type: "eq", prop: "disable", value: "true" },
-          style: {
-            opacity: "0.5",
-            cursor: "not-allowed",
-          },
-        });
-      }
+    if (!node.styles.dynamic) {
+      node.styles.dynamic = [];
+    }
 
-      if (n.children && Array.isArray(n.children)) {
-        for (const child of n.children) {
-          traverse(child);
-        }
-      }
-    };
-
-    traverse(node);
+    node.styles.dynamic.push({
+      condition: { type: "eq", prop: "disable", value: "true" },
+      style: {
+        opacity: "0.5",
+        cursor: "not-allowed",
+      },
+    });
   }
 }
