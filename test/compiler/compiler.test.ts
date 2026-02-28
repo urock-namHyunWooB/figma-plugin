@@ -13,8 +13,6 @@ import urockChipsMockData from "../fixtures/chip/urock-chips.json";
 import airtableSelectButton from "../fixtures/select-button/airtable-select-button.json";
 
 import FigmaCodeGenerator from "@code-generator2";
-import DataPreparer from "@code-generator/core/data-preparer/DataPreparer";
-import type PreparedDesignData from "@code-generator/core/data-preparer/PreparedDesignData";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
 import { fireEvent, render, screen } from "@testing-library/react";
 import * as React from "react";
@@ -683,19 +681,10 @@ describe("compiler 테스트", () => {
      */
 
     let code: string;
-    let preparedData: PreparedDesignData;
 
     beforeAll(async () => {
-      const dataPreparer = new DataPreparer();
-      preparedData = dataPreparer.prepare(airtableButtonWithDeps as any);
       const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
       code = await compiler.compile();
-    });
-
-    test("dependencies에 Icon 컴포넌트가 있어야 한다", () => {
-      const dependencies = preparedData.getDependencies();
-      expect(dependencies).toBeDefined();
-      expect(Object.keys(dependencies!).length).toBeGreaterThan(0);
     });
 
     test("생성된 코드에 icon prop이 있어야 한다", () => {

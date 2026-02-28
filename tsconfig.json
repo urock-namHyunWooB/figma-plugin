@@ -15,8 +15,6 @@
       "@backend/*": ["./src/backend/*"],
       "@frontend/ui": ["./src/frontend/ui"],
       "@frontend/ui/*": ["./src/frontend/ui/*"],
-      "@code-generator": ["./src/frontend/ui/domain/code-generator"],
-      "@code-generator/*": ["./src/frontend/ui/domain/code-generator/*"],
       "@code-generator2": ["./src/frontend/ui/domain/code-generator2"],
       "@code-generator2/*": ["./src/frontend/ui/domain/code-generator2/*"]
     },

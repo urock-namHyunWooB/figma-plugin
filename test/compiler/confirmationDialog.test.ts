@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import FigmaCodeGenerator from '../../src/frontend/ui/domain/code-generator/index.ts';
+import FigmaCodeGenerator from '@code-generator2';
 import { readFileSync } from 'fs';
 
 describe('ConfirmationDialog 버튼 텍스트 오버라이드', () => {

@@ -32,7 +32,7 @@
  * └─────────────────────────────────────────────────────────────────┘
  */
 
-import type { FigmaNodeData, UITree, PropDefinition } from "./types/types";
+import type { FigmaNodeData, UITree, PropDefinition as InternalPropDefinition } from "./types/types";
 import DataManager from "./layers/data-manager/DataManager";
 import TreeManager from "./layers/tree-manager/TreeManager";
 import type {
@@ -55,8 +55,8 @@ export interface SlotInfo {
   height?: number;
 }
 
-/**UI용 PropDefinition */
-export interface LegacyPropDefinition {
+/** UI용 PropDefinition */
+export interface PropDefinition {
   name: string;
   type: "VARIANT" | "TEXT" | "BOOLEAN" | "SLOT";
   defaultValue: any;
@@ -169,9 +169,9 @@ class FigmaCodeGenerator {
   /**
    * Props 정의 반환 (UI 컨트롤러용)
    */
-  getPropsDefinition(): LegacyPropDefinition[] {
+  getPropsDefinition(): PropDefinition[] {
     const uiTree = this.buildUITree().main;
-    return uiTree.props.map((prop) => this.toLegacyPropDefinition(prop));
+    return uiTree.props.map((prop) => this.toPropDefinition(prop));
   }
 
   /**
@@ -206,7 +206,7 @@ class FigmaCodeGenerator {
   }
 
 
-  private toLegacyPropDefinition(prop: PropDefinition): LegacyPropDefinition {
+  private toPropDefinition(prop: InternalPropDefinition): PropDefinition {
     const typeMap: Record<string, "VARIANT" | "TEXT" | "BOOLEAN" | "SLOT"> = {
       variant: "VARIANT",
       string: "TEXT",
@@ -214,7 +214,7 @@ class FigmaCodeGenerator {
       slot: "SLOT",
     };
 
-    const result: LegacyPropDefinition = {
+    const result: PropDefinition = {
       name: prop.name,
       type: typeMap[prop.type] ?? "TEXT",
       defaultValue: prop.defaultValue,

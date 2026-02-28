@@ -61,11 +61,6 @@ export default defineConfig({
       "@backend/*": path.resolve(__dirname, "./src/backend/*"),
       "@frontend/ui": path.resolve(__dirname, "./src/frontend/ui"),
       "@frontend/ui/*": path.resolve(__dirname, "./src/frontend/ui/*"),
-      "@code-generator": path.resolve(__dirname, "./src/frontend/ui/domain/code-generator"),
-      "@code-generator/*": path.resolve(
-        __dirname,
-        "./src/frontend/ui/domain/code-generator/*"
-      ),
       "@code-generator2": path.resolve(__dirname, "./src/frontend/ui/domain/code-generator2"),
       "@code-generator2/*": path.resolve(
         __dirname,

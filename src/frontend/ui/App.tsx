@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { css } from "@emotion/react";
 import { useNavigate } from "react-router-dom";
 import useMessageHandler from "./useMessageHandler";
-import FigmaCodeGenerator, { PropDefinition } from "@code-generator";
+import FigmaCodeGenerator, { type PropDefinition } from "@code-generator2";
 import { useComponentRenderer } from "./hooks/useComponentRenderer";
 import { PropController } from "./components/PropController";
 import { CodeViewer } from "./components/CodeViewer";
@@ -370,7 +370,7 @@ function App() {
       setPropValues(initialValues);
 
       // 코드 생성
-      codeGenerator.getGeneratedCode(name).then((code) => {
+      codeGenerator.compile().then((code) => {
         setGeneratedCode(code);
       });
     } catch (e) {

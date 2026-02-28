@@ -8,12 +8,9 @@ export { FigmaCodeGenerator };
 export type {
   GeneratorOptions,
   GeneratorOptions as FigmaCodeGeneratorOptions,
-  LegacyPropDefinition,
+  PropDefinition,
   CompiledDependency,
   MultiComponentResult,
 } from "./FigmaCodeGenerator";
-
-// v1 호환: PropDefinition은 LegacyPropDefinition의 별칭
-export type { LegacyPropDefinition as PropDefinition } from "./FigmaCodeGenerator";
 
 export default FigmaCodeGenerator;

@@ -151,7 +151,7 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@backend": path.resolve(__dirname, "src/backend"),
       "@frontend/ui": path.resolve(__dirname, "src/frontend/ui"),
-      "@code-generator": path.resolve(__dirname, "src/frontend/ui/domain/code-generator"),
+      "@code-generator2": path.resolve(__dirname, "src/frontend/ui/domain/code-generator2"),
       "@fixtures": path.resolve(__dirname, "test/fixtures"),
     },
   },

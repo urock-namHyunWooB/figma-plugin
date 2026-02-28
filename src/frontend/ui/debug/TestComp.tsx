@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 
-import type { FigmaNodeData } from "@code-generator/types/baseType";
+import type { FigmaNodeData } from "@code-generator2";
 import { useCompilerDebug, StyleStrategyType } from "./useCompilerDebug";
 import ErrorBoundary from "@frontend/ui/components/ErrorBoundary";
 import CodeViewer from "@frontend/ui/components/CodeViewer";

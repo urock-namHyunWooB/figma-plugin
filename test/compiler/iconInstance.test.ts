@@ -3,33 +3,9 @@ import "@testing-library/jest-dom/vitest";
 import frame03MockData from "../fixtures/any/frame-03.json";
 
 import FigmaCodeGenerator from "@code-generator2";
-import DataPreparer from "@code-generator/core/data-preparer/DataPreparer";
 
 describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
   describe("frame-03.json", () => {
-    const dataPreparer = new DataPreparer();
-    const preparedData = dataPreparer.prepare(frame03MockData as any);
-
-    test("PreparedDesignData.getVectorSvgsByInstanceId가 INSTANCE 내부 Vector들을 반환해야 한다", () => {
-      // INSTANCE ID: 3285:3250
-      const vectors = preparedData.getVectorSvgsByInstanceId("3285:3250");
-
-      // vectorSvgs에 I3285:3250;... 형태의 키가 2개 있어야 함
-      expect(vectors.length).toBe(2);
-      expect(vectors[0].svg).toContain("<svg");
-      expect(vectors[0].svg).toContain("<path");
-    });
-
-    test("PreparedDesignData.mergeInstanceVectorSvgs가 합성된 SVG를 반환해야 한다", () => {
-      const mergedSvg = preparedData.mergeInstanceVectorSvgs("3285:3250");
-
-      expect(mergedSvg).toBeDefined();
-      expect(mergedSvg).toContain("<svg");
-      expect(mergedSvg).toContain("<path");
-      // 합성된 SVG는 viewBox를 가져야 함
-      expect(mergedSvg).toContain("viewBox");
-    });
-
     test("FigmaCodeGenerator 결과의 생성된 코드에 svg 요소가 포함되어야 한다", async () => {
       const compiler = new FigmaCodeGenerator(frame03MockData as any);
       const code = await compiler.compile();

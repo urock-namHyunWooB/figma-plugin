@@ -4,17 +4,15 @@ import { css } from "@emotion/react";
 import { useNavigate } from "react-router-dom";
 import FigmaCodeGenerator, { type PropDefinition, type FigmaNodeData } from "../domain/code-generator2";
 import { renderReactComponent } from "../domain/renderer/component-render";
-// v1 유틸리티 함수들 (타입 호환을 위해 any 사용)
-import { loadFontsFromNodeData } from "../domain/code-generator/utils/fontLoader";
+import { loadFontsFromNodeData } from "../utils/fontLoader";
 import {
   compareNodeStyles,
-  StyleDiff,
-} from "../domain/code-generator/utils/styleComparison";
+  type StyleDiff,
+} from "../utils/styleComparison";
 
-// v1 유틸리티용 타입 호환 헬퍼
-const loadFonts = (data: FigmaNodeData) => loadFontsFromNodeData(data as any);
+const loadFonts = (data: FigmaNodeData) => loadFontsFromNodeData(data);
 const compareStyles = (data: FigmaNodeData, container: HTMLElement) =>
-  compareNodeStyles(data as any, container);
+  compareNodeStyles(data, container);
 import { PropController } from "../components/PropController";
 // twind - main.tsx에서 export한 전역 인스턴스 사용
 import { twindTw } from "../main";

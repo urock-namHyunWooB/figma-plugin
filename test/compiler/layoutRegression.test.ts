@@ -10,9 +10,7 @@
 import { describe, it, expect } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
-import { FigmaCodeGenerator } from "@code-generator2";
-import { FigmaNodeData } from "@code-generator/types/compiler";
-import { extractFigmaLayout } from "@code-generator/utils/layoutComparison";
+import { FigmaCodeGenerator, type FigmaNodeData } from "@code-generator2";
 
 // fixtures/failing 폴더의 모든 JSON 파일 자동 로드
 const FAILING_FIXTURES_DIR = path.join(__dirname, "../fixtures/failing");
@@ -69,17 +67,6 @@ describe("Layout Regression Tests", () => {
 
       it("should include data-figma-id attributes", () => {
         expect(compiledCode).toContain("data-figma-id");
-      });
-
-      it("should extract Figma layouts correctly", () => {
-        const layouts = extractFigmaLayout(nodeData);
-        expect(layouts.length).toBeGreaterThan(0);
-
-        // 모든 레이아웃이 유효한 값을 가지는지 확인
-        layouts.forEach((layout) => {
-          expect(layout.width).toBeGreaterThanOrEqual(0);
-          expect(layout.height).toBeGreaterThanOrEqual(0);
-        });
       });
 
       // 특정 패턴 검증 (예: height가 8px로 잘못 설정되는 문제)
