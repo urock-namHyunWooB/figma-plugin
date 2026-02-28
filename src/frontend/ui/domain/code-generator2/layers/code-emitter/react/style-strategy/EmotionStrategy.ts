@@ -46,8 +46,8 @@ export class EmotionStrategy implements IStyleStrategy {
   ): StyleResult {
     const variableName = this.createVariableName(nodeId, nodeName, parentPath);
 
-    // Step 1: base 스타일 생성
-    const baseCode = this.generateBaseCode(variableName, style.base);
+    // Step 1: base 스타일 생성 (mediaQueries 포함)
+    const baseCode = this.generateBaseCode(variableName, style.base, style.mediaQueries);
 
     // Step 2: pseudo 스타일 생성 (:hover, :active 등)
     const pseudoCode = this.generatePseudoCode(style.base, style.pseudo);
@@ -61,12 +61,25 @@ export class EmotionStrategy implements IStyleStrategy {
 
   private generateBaseCode(
     variableName: string,
-    base: Record<string, string | number>
+    base: Record<string, string | number>,
+    mediaQueries?: Array<{ query: string; style: Record<string, string | number> }>
   ): { code: string; hasContent: boolean } {
     const styleStr = this.objectToStyleString(base);
+
+    // @media 블록 생성
+    let mediaCode = "";
+    if (mediaQueries && mediaQueries.length > 0) {
+      const mediaBlocks = mediaQueries.map(({ query, style }) => {
+        const mqStyle = this.objectToStyleString(style);
+        return `  @media ${query} {\n${this.indent(mqStyle, 4)}\n  }`;
+      });
+      mediaCode = "\n\n" + mediaBlocks.join("\n\n");
+    }
+
+    const hasMedia = (mediaQueries?.length ?? 0) > 0;
     return {
-      code: styleStr,
-      hasContent: Object.keys(base).length > 0,
+      code: styleStr + mediaCode,
+      hasContent: Object.keys(base).length > 0 || hasMedia,
     };
   }
 

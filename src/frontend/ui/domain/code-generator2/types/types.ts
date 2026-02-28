@@ -68,6 +68,7 @@ export type VisibleValue =
 /**
  * 스타일 객체
  * base: 기본 스타일, dynamic: 조건부 스타일, pseudo: CSS pseudo-class 스타일
+ * mediaQueries: @media 쿼리 스타일 (BreakpointHeuristic이 생성)
  */
 export type StyleObject = {
   base: Record<string, string | number>;
@@ -76,6 +77,11 @@ export type StyleObject = {
     style: Record<string, string | number>;
   }>;
   pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
+  mediaQueries?: Array<{
+    /** CSS @media 조건 (예: "(max-width: 767px)") */
+    query: string;
+    style: Record<string, string | number>;
+  }>;
 };
 
 /**

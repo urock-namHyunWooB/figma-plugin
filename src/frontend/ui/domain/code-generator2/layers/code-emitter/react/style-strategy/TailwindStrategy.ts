@@ -179,21 +179,34 @@ export class TailwindStrategy implements IStyleStrategy {
     }
     const hasPseudoStyles = pseudoClassesList.length > 0;
 
+    // mediaQueries 스타일 → breakpoint prefix 클래스 (예: max-md:hidden, xl:w-[1600px])
+    const mediaClasses: string[] = [];
+    if (style.mediaQueries) {
+      for (const { query, style: mqStyle } of style.mediaQueries) {
+        const prefix = this.getBreakpointPrefix(query);
+        const classes = this.cssObjectToTailwind(mqStyle);
+        for (const cls of classes) {
+          mediaClasses.push(`${prefix}:${cls}`);
+        }
+      }
+    }
+    const hasMediaStyles = mediaClasses.length > 0;
+
     // dynamic 스타일 (조건부 스타일)
     const dynamicCode = this.generateDynamicStyleCode(variableName, style);
     const hasDynamicStyles = dynamicCode.length > 0;
 
     // 빈 스타일 체크
-    if (!hasBaseStyles && !hasPseudoStyles && !hasDynamicStyles) {
+    if (!hasBaseStyles && !hasPseudoStyles && !hasMediaStyles && !hasDynamicStyles) {
       return { variableName, code: "", isEmpty: true };
     }
 
     const codeParts: string[] = [];
 
-    // base + pseudo 스타일
+    // base + pseudo + media 스타일
     // dynamic styles만 있는 경우에도 base 변수 정의 (slot wrapper div에서 참조 가능)
-    if (hasBaseStyles || hasPseudoStyles) {
-      const allClasses = [...baseClasses, ...pseudoClassesList];
+    if (hasBaseStyles || hasPseudoStyles || hasMediaStyles) {
+      const allClasses = [...baseClasses, ...pseudoClassesList, ...mediaClasses];
       codeParts.push(`const ${variableName} = "${allClasses.join(" ")}";`);
     } else if (hasDynamicStyles) {
       codeParts.push(`const ${variableName} = "";`);
@@ -205,6 +218,26 @@ export class TailwindStrategy implements IStyleStrategy {
     }
 
     return { variableName, code: codeParts.join("\n\n"), isEmpty: false };
+  }
+
+  /**
+   * @media 쿼리 문자열 → Tailwind 반응형 prefix
+   * 예: "(max-width: 767px)"  → "max-md"
+   *     "(min-width: 1280px)" → "xl"
+   *     기타                  → "[@media(...)]" arbitrary
+   */
+  private getBreakpointPrefix(query: string): string {
+    if (/max-width\s*:\s*767px/i.test(query)) return "max-md";
+    if (/max-width\s*:\s*639px/i.test(query)) return "max-sm";
+    if (/min-width\s*:\s*640px/i.test(query)) return "sm";
+    if (/min-width\s*:\s*768px/i.test(query)) return "md";
+    if (/min-width\s*:\s*1024px/i.test(query)) return "lg";
+    if (/min-width\s*:\s*1280px/i.test(query)) return "xl";
+    if (/min-width\s*:\s*1536px/i.test(query)) return "2xl";
+
+    // arbitrary media query
+    const inner = query.replace(/^\(|\)$/g, "").trim().replace(/\s+/g, "");
+    return `[@media(${inner})]`;
   }
 
   /**

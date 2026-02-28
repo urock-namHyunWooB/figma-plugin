@@ -12,6 +12,7 @@ import { StyleProcessor } from "./processors/StyleProcessor";
 import { VisibilityProcessor } from "./processors/VisibilityProcessor";
 import { ExternalRefsProcessor } from "./processors/ExternalRefsProcessor";
 import { HeuristicsRunner } from "./heuristics/HeuristicsRunner";
+import { BreakpointHeuristic } from "./heuristics/BreakpointHeuristic";
 import { TextProcessor } from "./processors/TextProcessor";
 
 /**
@@ -105,6 +106,9 @@ class TreeBuilder {
     tree = this.externalRefsProcessor.resolveExternalRefs(tree);
 
     this.applyTextPropertyBindings(tree, props);
+
+    // Step 5.5: 브레이크포인트 variant → CSS @media (컴포넌트 휴리스틱과 독립적으로 실행)
+    BreakpointHeuristic.run(tree, props);
 
     // Step 6: 휴리스틱 (컴포넌트 타입 판별, semanticType 설정, props 추가)
     // 현재 컴포넌트의 고유 이름과 propDefs를 전달 (의존 컴포넌트가 메인 컴포넌트의 점수를 상속하지 않도록)
