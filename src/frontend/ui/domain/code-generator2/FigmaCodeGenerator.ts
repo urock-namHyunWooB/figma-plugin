@@ -35,8 +35,14 @@
 import type { FigmaNodeData, UITree, PropDefinition } from "./types/types";
 import DataManager from "./layers/data-manager/DataManager";
 import TreeManager from "./layers/tree-manager/TreeManager";
-import type { ICodeEmitter, EmittedCode } from "./layers/code-emitter/ICodeEmitter";
-import { ReactEmitter, type StyleStrategyType } from "./layers/code-emitter/react/ReactEmitter";
+import type {
+  ICodeEmitter,
+  EmittedCode,
+} from "./layers/code-emitter/ICodeEmitter";
+import {
+  ReactEmitter,
+  type StyleStrategyType,
+} from "./layers/code-emitter/react/ReactEmitter";
 import { toComponentName } from "./utils/nameUtils";
 
 export interface SlotInfo {
@@ -82,7 +88,9 @@ export interface TailwindOptions {
 /** 코드 생성 옵션 (v1 호환) */
 export interface GeneratorOptions {
   /** 스타일 전략: emotion (기본) 또는 tailwind */
-  styleStrategy?: StyleStrategyType | { type: StyleStrategyType; tailwind?: TailwindOptions };
+  styleStrategy?:
+    | StyleStrategyType
+    | { type: StyleStrategyType; tailwind?: TailwindOptions };
   /** 디버그 모드: data-figma-id 속성 추가 */
   debug?: boolean;
 }
@@ -109,8 +117,15 @@ class FigmaCodeGenerator {
 
     // Layer 3: 코드 생성 (현재 React만 지원, 추후 Vue/Svelte 확장 가능)
     // v1 호환: styleStrategy가 객체일 수 있음
-    const styleStrategyObj = typeof options.styleStrategy === "object" ? options.styleStrategy : undefined;
-    const styleStrategy = styleStrategyObj?.type ?? (typeof options.styleStrategy === "string" ? options.styleStrategy : "emotion");
+    const styleStrategyObj =
+      typeof options.styleStrategy === "object"
+        ? options.styleStrategy
+        : undefined;
+    const styleStrategy =
+      styleStrategyObj?.type ??
+      (typeof options.styleStrategy === "string"
+        ? options.styleStrategy
+        : "emotion");
     const tailwindOptions = styleStrategyObj?.tailwind;
 
     this.codeEmitter = new ReactEmitter({
@@ -168,21 +183,29 @@ class FigmaCodeGenerator {
       if (result.dependencies.size > 0) {
         // 중복 제거: 같은 componentName을 가진 dependency는 한 번만 포함
         const seenComponents = new Set<string>();
-        const uniqueDeps = Array.from(result.dependencies.values()).filter(dep => {
-          if (seenComponents.has(dep.componentName)) {
-            return false;
+        const uniqueDeps = Array.from(result.dependencies.values()).filter(
+          (dep) => {
+            if (seenComponents.has(dep.componentName)) {
+              return false;
+            }
+            seenComponents.add(dep.componentName);
+            return true;
           }
-          seenComponents.add(dep.componentName);
-          return true;
-        });
+        );
 
         // 번들링: import 정리 + 코드 결합 (미참조 deps 제거)
-        const referencedDeps = this.filterReferencedDependencies(result.main, uniqueDeps);
+        const referencedDeps = this.filterReferencedDependencies(
+          result.main,
+          uniqueDeps
+        );
         return this.bundleCode(result.main, referencedDeps);
       }
 
       // 분리형 export → 합체형 export default function
-      return this.mergeExportDefault(result.main.code, result.main.componentName);
+      return this.mergeExportDefault(
+        result.main.code,
+        result.main.componentName
+      );
     } catch (e) {
       console.error("Compile error:", e);
       return null;
@@ -209,13 +232,16 @@ class FigmaCodeGenerator {
     const reactImports = new Set<string>();
 
     for (const emitted of allCodes) {
-      const importMatches = emitted.code.matchAll(/^import .+ from ['""](.+)['""]/gm);
+      const importMatches = emitted.code.matchAll(
+        /^import .+ from ['""](.+)['""]/gm
+      );
       for (const match of importMatches) {
         const importLine = match[0];
         const importPath = match[1];
 
         // React/스타일 라이브러리/유틸리티 import는 유지 (내부 컴포넌트 import만 제거)
-        const isInternalComponent = importPath.startsWith("./") || importPath.startsWith("../");
+        const isInternalComponent =
+          importPath.startsWith("./") || importPath.startsWith("../");
         if (!isInternalComponent) {
           reactImports.add(importLine);
         }
@@ -223,7 +249,7 @@ class FigmaCodeGenerator {
     }
 
     // Step 2: dependency 코드에서 모든 import 제거 + CSS 변수명 변경 + cn 중복 제거
-    const depCodesClean = deps.map(dep => {
+    const depCodesClean = deps.map((dep) => {
       const renamedName = renameMap.get(dep.componentName) || dep.componentName;
       let code = this.renameCssVariables(dep.code, dep.componentName);
       // 모든 import 제거
@@ -347,14 +373,18 @@ class FigmaCodeGenerator {
   getPropsDefinition(): LegacyPropDefinition[] {
     const uiTree = this.buildUITree().main;
     const slotInfoMap = this.extractSlotInfoFromUITree(uiTree.root);
-    return uiTree.props.map(prop => this.toLegacyPropDefinition(prop, slotInfoMap));
+    return uiTree.props.map((prop) =>
+      this.toLegacyPropDefinition(prop, slotInfoMap)
+    );
   }
 
   /**
    * UITree를 순회하여 slot prop name → SlotInfo 매핑 추출
    * slot은 bindings.content = { prop: slotName } 을 가진 노드로 식별됨
    */
-  private extractSlotInfoFromUITree(root: import("./types/types").UINode): Map<string, SlotInfo> {
+  private extractSlotInfoFromUITree(
+    root: import("./types/types").UINode
+  ): Map<string, SlotInfo> {
     const slotInfoMap = new Map<string, SlotInfo>();
     const groupedDeps = this.dataManager.getDependenciesGroupedByComponentSet();
 
@@ -373,13 +403,17 @@ class FigmaCodeGenerator {
         let componentName: string | undefined = node.name;
         let hasDependency = false;
         if (componentId) {
-          const depInfo = this.dataManager.getAllDependencies().get(componentId);
+          const depInfo = this.dataManager
+            .getAllDependencies()
+            .get(componentId);
           if (depInfo) {
             hasDependency = true;
             const compInfo = (depInfo.info as any).components?.[componentId];
             const setId: string | undefined = compInfo?.componentSetId;
             if (setId && groupedDeps[setId]) {
-              componentName = toComponentName(groupedDeps[setId].componentSetName);
+              componentName = toComponentName(
+                groupedDeps[setId].componentSetName
+              );
             }
           }
         }
@@ -440,8 +474,9 @@ class FigmaCodeGenerator {
    */
   private extractCnDeclaration(code: string): string {
     // 패턴: const cn = (...) => ... .join(...); (한 줄 또는 여러 줄)
-    const match = code.match(/^const cn = \([\s\S]*?\);\s*$/m) ||
-                  code.match(/const cn = [\s\S]*?\.join\([\s\S]*?\);/);
+    const match =
+      code.match(/^const cn = \([\s\S]*?\);\s*$/m) ||
+      code.match(/const cn = [\s\S]*?\.join\([\s\S]*?\);/);
     return match ? match[0] : "";
   }
 
@@ -545,7 +580,8 @@ class FigmaCodeGenerator {
       // } 뒤에 ; 이 없으면 추가
       const after = code.slice(lastBraceIdx + 1).trimStart();
       if (!after.startsWith(";")) {
-        code = code.slice(0, lastBraceIdx + 1) + ";" + code.slice(lastBraceIdx + 1);
+        code =
+          code.slice(0, lastBraceIdx + 1) + ";" + code.slice(lastBraceIdx + 1);
       }
     }
 
@@ -558,7 +594,9 @@ class FigmaCodeGenerator {
    */
   private mergeExportDefault(code: string, componentName: string): string {
     const funcMatch = code.match(
-      new RegExp(`(function ${componentName}\\()([\\s\\S]*?)\\n\\nexport default ${componentName};`)
+      new RegExp(
+        `(function ${componentName}\\()([\\s\\S]*?)\\n\\nexport default ${componentName};`
+      )
     );
     if (funcMatch) {
       return code.replace(
@@ -579,10 +617,18 @@ class FigmaCodeGenerator {
 
     const base = root.styles.base;
     // 고정 px 크기를 100%로 변환
-    if (base.width && typeof base.width === "string" && base.width.endsWith("px")) {
+    if (
+      base.width &&
+      typeof base.width === "string" &&
+      base.width.endsWith("px")
+    ) {
       base.width = "100%";
     }
-    if (base.height && typeof base.height === "string" && base.height.endsWith("px")) {
+    if (
+      base.height &&
+      typeof base.height === "string" &&
+      base.height.endsWith("px")
+    ) {
       base.height = "100%";
     }
 
@@ -603,7 +649,9 @@ class FigmaCodeGenerator {
     // variant별 스타일에서도 시각적 스타일 제거
     if (root.styles.variants) {
       for (const [, variantStyles] of Object.entries(root.styles.variants)) {
-        for (const [, styleObj] of Object.entries(variantStyles as Record<string, any>)) {
+        for (const [, styleObj] of Object.entries(
+          variantStyles as Record<string, any>
+        )) {
           if (styleObj && typeof styleObj === "object") {
             if (styleObj.background) {
               styleObj.background = "transparent";
@@ -622,15 +670,24 @@ class FigmaCodeGenerator {
    * dep의 componentName이 자기 자신 코드에만 등장하고
    * main + 다른 deps 코드 어디에도 없으면 제외.
    */
-  private filterReferencedDependencies(main: EmittedCode, deps: EmittedCode[]): EmittedCode[] {
+  private filterReferencedDependencies(
+    main: EmittedCode,
+    deps: EmittedCode[]
+  ): EmittedCode[] {
     // 자기 자신 코드를 제외한 모든 코드 합치기
     return deps.filter((dep) => {
-      const otherCodes = [main.code, ...deps.filter(d => d !== dep).map(d => d.code)].join("\n");
+      const otherCodes = [
+        main.code,
+        ...deps.filter((d) => d !== dep).map((d) => d.code),
+      ].join("\n");
       return otherCodes.includes(dep.componentName);
     });
   }
 
-  private toLegacyPropDefinition(prop: PropDefinition, slotInfoMap?: Map<string, SlotInfo>): LegacyPropDefinition {
+  private toLegacyPropDefinition(
+    prop: PropDefinition,
+    slotInfoMap?: Map<string, SlotInfo>
+  ): LegacyPropDefinition {
     const typeMap: Record<string, "VARIANT" | "TEXT" | "BOOLEAN" | "SLOT"> = {
       variant: "VARIANT",
       string: "TEXT",
@@ -642,7 +699,8 @@ class FigmaCodeGenerator {
       name: prop.name,
       type: typeMap[prop.type] ?? "TEXT",
       defaultValue: prop.defaultValue,
-      variantOptions: prop.type === "variant" ? (prop as any).options : undefined,
+      variantOptions:
+        prop.type === "variant" ? (prop as any).options : undefined,
     };
 
     if (prop.type === "slot" && slotInfoMap?.has(prop.name)) {
@@ -651,7 +709,6 @@ class FigmaCodeGenerator {
 
     return result;
   }
-
 }
 
 export default FigmaCodeGenerator;

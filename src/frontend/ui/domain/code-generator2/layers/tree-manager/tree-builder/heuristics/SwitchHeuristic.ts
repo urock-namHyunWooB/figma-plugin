@@ -120,9 +120,15 @@ export class SwitchHeuristic implements IHeuristic {
     // onChange prop 추가
     this.addOnChangeProp(ctx);
 
+    // Active 상태 기반 CSS 생성
+    this.addActiveDynamicStyles(ctx.tree);
+
+    // Disable 상태 기반 CSS 생성
+    this.addDisableDynamicStyles(ctx.tree);
+
     return {
       componentType: this.componentType,
-      rootNodeType: "button", // Switch는 클릭 가능한 요소이므로 button
+      rootNodeType: "button",
     };
   }
 
@@ -130,18 +136,127 @@ export class SwitchHeuristic implements IHeuristic {
    * onChange prop 추가
    */
   private addOnChangeProp(ctx: HeuristicContext): void {
-    // 이미 onChange prop이 있으면 추가하지 않음
     const hasOnChange = ctx.props.some((p) => p.name === "onChange");
     if (hasOnChange) return;
 
-    // onChange prop 추가
     ctx.props.push({
       type: "function",
       name: "onChange",
       defaultValue: undefined,
       required: false,
-      sourceKey: "", // 휴리스틱이 추가한 prop
+      sourceKey: "",
       functionSignature: "(active: boolean) => void",
     });
+  }
+
+  /**
+   * INSTANCE 자식들에 active, disable, size props 자동 전달
+   */
+  private propagatePropsToInstances(
+    node: any,
+    props: any[]
+  ): void {
+    if (!node) return;
+
+    // active, disable, size, onChange prop 이름 찾기
+    const activeProp = props.find((p) => p.name.toLowerCase().includes("active"));
+    const disableProp = props.find((p) => p.name.toLowerCase().includes("disable"));
+    const sizeProp = props.find((p) => p.name.toLowerCase().includes("size"));
+    const onChangeProp = props.find((p) => p.name === "onChange");
+
+    const traverse = (n: any) => {
+      if (n.type === "INSTANCE") {
+        // INSTANCE 자식에 props 바인딩
+        if (!n.bindings) {
+          n.bindings = {};
+        }
+        if (!n.bindings.attrs) {
+          n.bindings.attrs = {};
+        }
+
+        if (activeProp) {
+          n.bindings.attrs.active = { prop: activeProp.name };
+        }
+        if (disableProp) {
+          n.bindings.attrs.disable = { prop: disableProp.name };
+        }
+        if (sizeProp) {
+          n.bindings.attrs.size = { prop: sizeProp.name };
+        }
+        if (onChangeProp) {
+          n.bindings.attrs.onChange = { prop: onChangeProp.name };
+        }
+      }
+
+      // 자식 순회
+      if (n.children && Array.isArray(n.children)) {
+        for (const child of n.children) {
+          traverse(child);
+        }
+      }
+    };
+
+    traverse(node);
+  }
+
+  /**
+   * Active 상태 기반 동적 CSS 추가
+   *
+   * Figma에서 Active=False와 Active=True variant의 스타일 차이를 계산해서
+   * CSS dynamic condition으로 변환
+   */
+  private addActiveDynamicStyles(node: any): void {
+    if (!node || !node.mergedNodes) return;
+
+    // mergedNodes에서 Active=False와 Active=True 버전 찾기
+    const falseVariant = node.mergedNodes.find((m: any) =>
+      m.variantName && m.variantName.includes("Active=False")
+    );
+    const trueVariant = node.mergedNodes.find((m: any) =>
+      m.variantName && m.variantName.includes("Active=True")
+    );
+
+    if (!falseVariant || !trueVariant) {
+      return; // Active variant가 없으면 처리하지 않음
+    }
+
+    // TODO: mergedNodes의 스타일 차이를 계산해서
+    // dynamic CSS로 추가하는 로직 구현
+    // 현재는 StyleProcessor에서 이미 variant별 스타일을 수집하므로
+    // 그 정보를 활용해야 함
+
+    // 임시로 StyleProcessor가 처리하도록 위임
+  }
+
+  /**
+   * Disable 상태 기반 동적 CSS 추가
+   */
+  private addDisableDynamicStyles(node: any): void {
+    if (!node) return;
+
+    const traverse = (n: any) => {
+      // disable=true일 때: opacity 낮추기, cursor 변경
+      if (n.styles) {
+        if (!n.styles.dynamic) {
+          n.styles.dynamic = [];
+        }
+
+        n.styles.dynamic.push({
+          condition: { type: "eq", prop: "disable", value: "true" },
+          style: {
+            opacity: "0.5",
+            cursor: "not-allowed",
+          },
+        });
+      }
+
+      if (n.children && Array.isArray(n.children)) {
+        for (const child of n.children) {
+          traverse(child);
+        }
+      }
+    };
+
+    traverse(node);
   }
 }

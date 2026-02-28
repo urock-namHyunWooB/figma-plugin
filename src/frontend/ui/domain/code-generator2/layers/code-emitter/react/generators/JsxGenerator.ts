@@ -538,6 +538,15 @@ ${indentStr})}` : jsx;
       }
     }
 
+    // bindings.attrs 처리 (prop 바인딩: active={active}, disable={disable} 등)
+    if (node.bindings?.attrs) {
+      for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
+        if ("prop" in source) {
+          componentAttrs += ` ${attrName}={${source.prop}}`;
+        }
+      }
+    }
+
     // searchfield-clear: x 버튼 onClick 추가
     if (node.semanticType === "searchfield-clear") {
       componentAttrs += ` onClick={() => onChange?.("")}`;

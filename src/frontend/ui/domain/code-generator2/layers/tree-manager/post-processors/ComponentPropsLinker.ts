@@ -34,11 +34,14 @@ export class ComponentPropsLinker {
     const mainTree = uiTrees.get(mainComponentId);
     if (!mainTree) return;
 
+    // main 컴포넌트의 props 이름 Set (componentProperties 매핑용)
+    const mainPropNames = new Set(mainTree.props.map(p => p.name));
+
     // componentId별로 override 정보 수집
     const overridesByComponent = new Map<string, Map<string, OverrideInfo>>();
 
     // 메인 트리의 INSTANCE 노드들을 순회하며 override 수집
-    this.collectOverrides(mainTree.root, overridesByComponent);
+    this.collectOverrides(mainTree.root, overridesByComponent, mainPropNames);
 
     // 각 의존 컴포넌트에 override props 추가
     for (const [componentId, overrides] of overridesByComponent) {
@@ -97,7 +100,8 @@ export class ComponentPropsLinker {
    */
   private collectOverrides(
     node: UINode,
-    overridesByComponent: Map<string, Map<string, OverrideInfo>>
+    overridesByComponent: Map<string, Map<string, OverrideInfo>>,
+    mainPropNames: Set<string>
   ): void {
     // INSTANCE 노드 (type === "component" && refId가 있음)
     if (node.type === "component" && "refId" in node) {
@@ -105,6 +109,27 @@ export class ComponentPropsLinker {
       const instanceNodeData = this.dataManager.getById(node.id);
 
       if (instanceNodeData.node) {
+        // 1. Figma componentProperties → bindings.attrs 자동 설정
+        // INSTANCE.componentProperties: { Size: {value, type}, Active: {value, type}, ... }
+        // → main 컴포넌트의 props와 매핑해서 bindings.attrs에 설정
+        const figmaNode = instanceNodeData.node as any;
+        if (figmaNode?.componentProperties) {
+          const attrsToAdd: Record<string, { prop: string }> = {};
+          for (const propKey of Object.keys(figmaNode.componentProperties)) {
+            // "Size" → "size", "Active" → "active" (첫 글자 소문자)
+            const camelKey = propKey.charAt(0).toLowerCase() + propKey.slice(1);
+            if (mainPropNames.has(camelKey)) {
+              attrsToAdd[camelKey] = { prop: camelKey };
+            }
+          }
+          if (Object.keys(attrsToAdd).length > 0) {
+            if (!node.bindings) node.bindings = {};
+            if (!node.bindings.attrs) node.bindings.attrs = {};
+            Object.assign(node.bindings.attrs, attrsToAdd);
+          }
+        }
+
+        // 2. override(fills, characters 등) 수집
         const overrides = this.extractOverridesFromInstance(
           instanceNodeData.node as any,
           componentId
@@ -138,7 +163,7 @@ export class ComponentPropsLinker {
     // 자식 노드 재귀
     if ("children" in node && node.children) {
       for (const child of node.children) {
-        this.collectOverrides(child, overridesByComponent);
+        this.collectOverrides(child, overridesByComponent, mainPropNames);
       }
     }
   }
