@@ -32,7 +32,13 @@
  * └─────────────────────────────────────────────────────────────────┘
  */
 
-import type { FigmaNodeData, UITree, PropDefinition as InternalPropDefinition } from "./types/types";
+import type { FigmaNodeData, UITree } from "./types/types";
+import type {
+  PropDefinition,
+  CompiledDependency,
+  MultiComponentResult,
+  GeneratorOptions,
+} from "./types/public";
 import DataManager from "./layers/data-manager/DataManager";
 import TreeManager from "./layers/tree-manager/TreeManager";
 import type {
@@ -40,63 +46,19 @@ import type {
   EmittedCode,
   GeneratedResult,
 } from "./layers/code-emitter/ICodeEmitter";
-import {
-  ReactEmitter,
-  type StyleStrategyType,
-} from "./layers/code-emitter/react/ReactEmitter";
+import { ReactEmitter } from "./layers/code-emitter/react/ReactEmitter";
 import { toComponentName } from "./utils/nameUtils";
-
-export interface SlotInfo {
-  componentSetId?: string;
-  componentName?: string;
-  hasDependency: boolean;
-  mockupSvg?: string;
-  width?: number;
-  height?: number;
-}
-
-/** UI용 PropDefinition */
-export interface PropDefinition {
-  name: string;
-  type: "VARIANT" | "TEXT" | "BOOLEAN" | "SLOT";
-  defaultValue: any;
-  variantOptions?: string[];
-  slotInfo?: SlotInfo;
-}
-
-/**컴파일된 의존성 */
-export interface CompiledDependency {
-  id: string;
-  name: string;
-  code: string;
-}
-
-/**멀티 컴포넌트 결과 */
-export interface MultiComponentResult {
-  mainCode: string;
-  mainName: string;
-  dependencies: CompiledDependency[];
-}
-
-/** Tailwind 전략 옵션 */
-export interface TailwindOptions {
-  /** cn 함수를 인라인으로 생성할지 (기본: true) */
-  inlineCn?: boolean;
-  /** cn import 경로 (inlineCn: false일 때 사용, 기본: "@/lib/cn") */
-  cnImportPath?: string;
-}
-
-/** 코드 생성 옵션 (v1 호환) */
-export interface GeneratorOptions {
-  /** 스타일 전략: emotion (기본) 또는 tailwind */
-  styleStrategy?:
-    | StyleStrategyType
-    | { type: StyleStrategyType; tailwind?: TailwindOptions };
-  /** 디버그 모드: data-figma-id 속성 추가 */
-  debug?: boolean;
-}
+import { toPublicProps } from "./adapters/PropsAdapter";
 
 export type { GeneratedResult } from "./layers/code-emitter/ICodeEmitter";
+export type {
+  SlotInfo,
+  PropDefinition,
+  CompiledDependency,
+  MultiComponentResult,
+  TailwindOptions,
+  GeneratorOptions,
+} from "./types/public";
 
 class FigmaCodeGenerator {
   private readonly dataManager: DataManager;
@@ -171,7 +133,7 @@ class FigmaCodeGenerator {
    */
   getPropsDefinition(): PropDefinition[] {
     const uiTree = this.buildUITree().main;
-    return uiTree.props.map((prop) => this.toPropDefinition(prop));
+    return toPublicProps(uiTree.props, this.dataManager);
   }
 
   /**
@@ -203,47 +165,6 @@ class FigmaCodeGenerator {
       mainName: result.main.componentName,
       dependencies,
     };
-  }
-
-
-  private toPropDefinition(prop: InternalPropDefinition): PropDefinition {
-    const typeMap: Record<string, "VARIANT" | "TEXT" | "BOOLEAN" | "SLOT"> = {
-      variant: "VARIANT",
-      string: "TEXT",
-      boolean: "BOOLEAN",
-      slot: "SLOT",
-    };
-
-    const result: PropDefinition = {
-      name: prop.name,
-      type: typeMap[prop.type] ?? "TEXT",
-      defaultValue: prop.defaultValue,
-      variantOptions:
-        prop.type === "variant" ? (prop as any).options : undefined,
-    };
-
-    if (prop.type === "slot") {
-      const slotProp = prop as import("./types/types").SlotPropDefinition;
-      const componentId = slotProp.componentId;
-      const mockupSvg = componentId
-        ? this.dataManager.getMergedVectorSvgForComponent(componentId)
-        : undefined;
-      const nodeId = slotProp.nodeId;
-      const rawNode = nodeId
-        ? (this.dataManager.getById(nodeId).node as any)
-        : undefined;
-      const bbox = rawNode?.absoluteBoundingBox;
-
-      result.slotInfo = {
-        componentName: slotProp.componentName,
-        hasDependency: slotProp.hasDependency ?? false,
-        mockupSvg,
-        width: bbox?.width,
-        height: bbox?.height,
-      };
-    }
-
-    return result;
   }
 }
 
