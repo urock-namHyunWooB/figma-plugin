@@ -37,17 +37,32 @@ export class VisibilityProcessor {
 
   /**
    * 재귀적으로 가시성 조건 적용
+   *
+   * @param guaranteedConditions 조상 노드가 이미 보장하는 atomic 조건 목록
+   *   - 부모가 이미 보장한 조건을 자식이 중복 생성하지 않도록 제거
    */
   private applyVisibilityRecursive(
     node: InternalNode,
-    totalVariants: number
+    totalVariants: number,
+    guaranteedConditions: ConditionNode[] = []
   ): InternalNode {
-    // visibleCondition 생성
-    const visibleCondition = this.createVisibleCondition(node, totalVariants);
+    // visibleCondition 생성 (원래 값)
+    const rawCondition = this.createVisibleCondition(node, totalVariants);
+
+    // 조상이 이미 보장하는 조건은 중복이므로 제거
+    let visibleCondition = rawCondition;
+    if (rawCondition && guaranteedConditions.length > 0) {
+      visibleCondition = this.removeGuaranteedSubconditions(rawCondition, guaranteedConditions);
+    }
+
+    // 자식에게 전달할 보장 조건: 현재 노드의 raw 조건을 flatten해서 추가
+    const childGuaranteedConditions = rawCondition
+      ? [...guaranteedConditions, ...this.flattenAndConditions(rawCondition)]
+      : guaranteedConditions;
 
     // children 재귀 처리
     const children = node.children.map((child) =>
-      this.applyVisibilityRecursive(child, totalVariants)
+      this.applyVisibilityRecursive(child, totalVariants, childGuaranteedConditions)
     );
 
     return {
@@ -55,6 +70,68 @@ export class VisibilityProcessor {
       ...(visibleCondition ? { visibleCondition } : {}),
       children,
     };
+  }
+
+  /**
+   * AND 조건을 flat한 atomic 조건 배열로 분해
+   */
+  private flattenAndConditions(cond: ConditionNode): ConditionNode[] {
+    if (cond.type === "and") {
+      return cond.conditions.flatMap((c) => this.flattenAndConditions(c));
+    }
+    return [cond];
+  }
+
+  /**
+   * 이미 보장된 조건을 조건 트리에서 제거
+   */
+  private removeGuaranteedSubconditions(
+    condition: ConditionNode,
+    guaranteed: ConditionNode[]
+  ): ConditionNode | undefined {
+    if (condition.type === "and") {
+      const remaining = condition.conditions
+        .map((c) => this.removeGuaranteedSubconditions(c, guaranteed))
+        .filter((c): c is ConditionNode => c !== undefined);
+
+      if (remaining.length === 0) return undefined;
+      if (remaining.length === 1) return remaining[0];
+      return { type: "and", conditions: remaining };
+    }
+
+    if (guaranteed.some((g) => this.conditionEquals(g, condition))) {
+      return undefined;
+    }
+    return condition;
+  }
+
+  /**
+   * 두 ConditionNode가 구조적으로 동일한지 비교
+   */
+  private conditionEquals(a: ConditionNode, b: ConditionNode): boolean {
+    if (a.type !== b.type) return false;
+    switch (a.type) {
+      case "eq":
+        return b.type === "eq" && a.prop === b.prop && a.value === b.value;
+      case "neq":
+        return b.type === "neq" && a.prop === b.prop && a.value === b.value;
+      case "truthy":
+        return b.type === "truthy" && a.prop === b.prop;
+      case "not":
+        return b.type === "not" && this.conditionEquals(a.condition, b.condition);
+      case "and":
+        return (
+          b.type === "and" &&
+          a.conditions.length === b.conditions.length &&
+          a.conditions.every((c, i) => this.conditionEquals(c, b.conditions[i]))
+        );
+      case "or":
+        return (
+          b.type === "or" &&
+          a.conditions.length === b.conditions.length &&
+          a.conditions.every((c, i) => this.conditionEquals(c, b.conditions[i]))
+        );
+    }
   }
 
   /**
@@ -185,7 +262,7 @@ export class VisibilityProcessor {
     "active", "pressed", "pressing", "clicked",
     "focus", "focused", "focus-visible",
     "disabled", "inactive",
-    "selected", "checked",
+    "selected",
     "visited",
   ]);
 

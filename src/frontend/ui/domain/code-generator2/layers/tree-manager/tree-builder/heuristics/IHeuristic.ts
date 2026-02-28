@@ -55,6 +55,8 @@ export interface HeuristicResult {
   componentType: ComponentType;
   /** 루트 노드의 UINodeType 변경 여부 */
   rootNodeType?: "button" | "input" | "link";
+  /** props destructuring 이후 삽입할 파생 변수 선언 */
+  derivedVars?: Array<{ name: string; expression: string }>;
 }
 
 /**

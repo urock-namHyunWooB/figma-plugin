@@ -45,12 +45,17 @@ export class JsxGenerator {
     // Props destructuring (별도 줄에서 수행)
     const propsDestructuring = this.generatePropsDestructuring(uiTree);
 
+    // 파생 변수 선언 (props destructuring 이후, return 이전)
+    const derivedVarsCode = uiTree.derivedVars?.length
+      ? uiTree.derivedVars.map((dv) => `  const ${dv.name} = ${dv.expression};`).join("\n") + "\n"
+      : "";
+
     // JSX body (루트 노드는 isRoot=true로 restProps 전파)
     const jsxBody = this.generateNode(uiTree.root, styleStrategy, options, 2, true);
 
     return `function ${componentName}(props: ${componentName}Props) {
   const ${propsDestructuring} = props;
-
+${derivedVarsCode}
   return (
 ${jsxBody}
   );

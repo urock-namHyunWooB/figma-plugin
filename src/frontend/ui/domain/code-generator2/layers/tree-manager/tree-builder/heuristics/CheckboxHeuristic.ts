@@ -33,9 +33,13 @@ export class CheckboxHeuristic implements IHeuristic {
     // 루트에 semanticType 설정
     ctx.tree.semanticType = "checkbox";
 
-    // checked, onChange, disable prop 추가
+    // Figma에서 추출된 state prop 제거 (내부 파생 변수로 대체)
+    this.removeStateProp(ctx);
+
+    // checked, onChange, indeterminate, disable prop 추가
     this.addCheckedProp(ctx);
     this.addOnChangeProp(ctx);
+    this.addIndeterminateProp(ctx);
     this.addDisableProp(ctx);
 
     // check/indeterminate 아이콘 slot → state 조건부 렌더링으로 변환
@@ -44,7 +48,23 @@ export class CheckboxHeuristic implements IHeuristic {
     return {
       componentType: this.componentType,
       rootNodeType: "button",
+      // state를 내부 파생 변수로 주입
+      // stateStyles?.[state] 패턴이 자동으로 활용됨
+      derivedVars: [
+        {
+          name: "state",
+          expression: `checked ? "Checked" : indeterminate ? "Indeterminate" : "Unchecked"`,
+        },
+      ],
     };
+  }
+
+  /**
+   * Figma에서 추출된 state prop 제거 (내부 파생 변수로 대체됨)
+   */
+  private removeStateProp(ctx: HeuristicContext): void {
+    const idx = ctx.props.findIndex((p) => p.name === "state");
+    if (idx !== -1) ctx.props.splice(idx, 1);
   }
 
   private addCheckedProp(ctx: HeuristicContext): void {
@@ -67,6 +87,17 @@ export class CheckboxHeuristic implements IHeuristic {
       required: false,
       sourceKey: "",
       functionSignature: "(checked: boolean) => void",
+    });
+  }
+
+  private addIndeterminateProp(ctx: HeuristicContext): void {
+    if (ctx.props.some((p) => p.name === "indeterminate")) return;
+    ctx.props.push({
+      type: "boolean",
+      name: "indeterminate",
+      defaultValue: false,
+      required: false,
+      sourceKey: "",
     });
   }
 
@@ -178,4 +209,5 @@ export class CheckboxHeuristic implements IHeuristic {
     }
     return false;
   }
+
 }

@@ -365,10 +365,20 @@ export type UINode =
   | SlotNode
   | ComponentNode;
 
+/** 컴포넌트 함수 본문에 삽입할 파생 변수 */
+export interface DerivedVar {
+  /** 변수명 (예: "state") */
+  name: string;
+  /** 계산식 (예: "checked ? \"Checked\" : indeterminate ? \"Indeterminate\" : \"Unchecked\"") */
+  expression: string;
+}
+
 /** TreeBuilder 출력, CodeEmitter 입력 */
 export interface UITree {
   root: UINode;
   componentType?: ComponentType;
   props: PropDefinition[];
   arraySlots?: ArraySlotInfo[];
+  /** props destructuring 이후 삽입할 파생 변수 선언 */
+  derivedVars?: DerivedVar[];
 }

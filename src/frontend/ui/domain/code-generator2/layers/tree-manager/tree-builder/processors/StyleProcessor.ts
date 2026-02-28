@@ -37,6 +37,15 @@ export class StyleProcessor {
     "clipRule", "clip-rule",
   ]);
 
+  /**
+   * CSS pseudo-class 변환 없이 prop 기반으로 처리할 State 값 목록
+   * (CheckboxHeuristic 등 컴포넌트별 휴리스틱에서 변환됨)
+   */
+  private static readonly PROP_BASED_STATE_VALUES = new Set([
+    "Checked", "checked",
+    "Indeterminate", "indeterminate",
+  ]);
+
   /** State prop 값 → CSS pseudo-class 매핑 */
   private readonly STATE_TO_PSEUDO: Record<string, PseudoClass> = {
     Hover: ":hover",
@@ -50,8 +59,6 @@ export class StyleProcessor {
     Disabled: ":disabled",
     disabled: ":disabled",
     disable: ":disabled",
-    Checked: ":checked",
-    checked: ":checked",
     Visited: ":visited",
     visited: ":visited",
   };
@@ -436,8 +443,14 @@ export class StyleProcessor {
     const conditions: ConditionNode[] = [];
 
     for (const { key, value } of props) {
-      // State/states는 제외 (pseudo-class로 처리됨)
       if (key.toLowerCase() === "state" || key.toLowerCase() === "states") {
+        // pseudo-class로 변환 가능한 State 값 → 제외 (separateStateVariants에서 처리)
+        if (this.STATE_TO_PSEUDO[value] !== undefined) continue;
+        // 명시적 prop 기반 State 값 (Checked, Indeterminate) → 조건에 포함
+        if (StyleProcessor.PROP_BASED_STATE_VALUES.has(value)) {
+          conditions.push(this.createCondition(key, value));
+        }
+        // 그 외 (default, normal, unchecked 등) → 제외
         continue;
       }
 

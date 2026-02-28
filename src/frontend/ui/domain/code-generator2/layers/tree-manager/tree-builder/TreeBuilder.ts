@@ -131,6 +131,9 @@ class TreeBuilder {
       props,
       componentType: heuristicsResult.componentType,
       arraySlots,
+      ...(heuristicsResult.derivedVars?.length
+        ? { derivedVars: heuristicsResult.derivedVars }
+        : {}),
     };
   }
 

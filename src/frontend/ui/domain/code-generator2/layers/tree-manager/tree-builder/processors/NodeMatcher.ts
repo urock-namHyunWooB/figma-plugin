@@ -92,7 +92,10 @@ export class NodeMatcher {
   }
 
   /**
-   * 노드의 정규화된 위치 계산 (원본 variant 루트 기준)
+   * 노드의 정규화된 위치 계산 (원본 variant 루트의 content box 기준)
+   *
+   * root의 padding을 제거한 content box 크기로 정규화한다.
+   * padding이 다른 variant(예: Tight=True/False)에서도 동일한 정규화 값이 나온다.
    */
   private getNormalizedPosition(
     node: InternalNode
@@ -114,9 +117,26 @@ export class NodeMatcher {
       return null;
     }
 
+    // padding을 제거한 content box 기준으로 정규화
+    const paddingLeft: number = (variantRoot as any).paddingLeft ?? 0;
+    const paddingRight: number = (variantRoot as any).paddingRight ?? 0;
+    const paddingTop: number = (variantRoot as any).paddingTop ?? 0;
+    const paddingBottom: number = (variantRoot as any).paddingBottom ?? 0;
+
+    const contentX = rootBounds.x + paddingLeft;
+    const contentY = rootBounds.y + paddingTop;
+    const contentWidth = rootBounds.width - paddingLeft - paddingRight;
+    const contentHeight = rootBounds.height - paddingTop - paddingBottom;
+
+    // content 크기가 0 이하이면 root 자체로 fallback
+    const baseX = contentWidth > 0 ? contentX : rootBounds.x;
+    const baseY = contentHeight > 0 ? contentY : rootBounds.y;
+    const normWidth = contentWidth > 0 ? contentWidth : rootBounds.width;
+    const normHeight = contentHeight > 0 ? contentHeight : rootBounds.height;
+
     return {
-      x: (node.bounds.x - rootBounds.x) / rootBounds.width,
-      y: (node.bounds.y - rootBounds.y) / rootBounds.height,
+      x: (node.bounds.x - baseX) / normWidth,
+      y: (node.bounds.y - baseY) / normHeight,
     };
   }
 
