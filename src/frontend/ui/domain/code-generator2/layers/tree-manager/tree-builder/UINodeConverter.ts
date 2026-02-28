@@ -45,21 +45,19 @@ class UINodeConverter {
     }
 
     if (nodeType === "component" && node.refId) {
-      if (this.dependencyHasOriginalChildren(node.refId)) {
-        return {
-          id: node.id,
-          name: node.name,
-          type: nodeType,
-          children: [],
-          refId: node.refId,
-          ...(node.styles ? { styles: node.styles } : {}),
-          ...(node.visibleCondition
-            ? { visibleCondition: node.visibleCondition }
-            : {}),
-          ...(node.bindings ? { bindings: node.bindings } : {}),
-          ...(node.semanticType ? { semanticType: node.semanticType } : {}),
-        } as UINode;
-      }
+      return {
+        id: node.id,
+        name: node.name,
+        type: nodeType,
+        children: [],
+        refId: node.refId,
+        ...(node.styles ? { styles: node.styles } : {}),
+        ...(node.visibleCondition
+          ? { visibleCondition: node.visibleCondition }
+          : {}),
+        ...(node.bindings ? { bindings: node.bindings } : {}),
+        ...(node.semanticType ? { semanticType: node.semanticType } : {}),
+      } as UINode;
     }
 
     return this.buildUINode(node, nodeType, { isRoot: false });
@@ -111,13 +109,6 @@ class UINodeConverter {
     if (svg) return svg;
 
     return this.dataManager.getVectorSvgByLastSegment(node.id);
-  }
-
-  private dependencyHasOriginalChildren(refId: string): boolean {
-    const depData = this.dataManager.getById(refId);
-    if (!depData.spec) return false;
-    const depChildren = depData.spec.info?.document?.children || [];
-    return depChildren.some((c: any) => c.id && !c.id.startsWith("I"));
   }
 
   private isInvisibleLayoutNode(node: InternalTree): boolean {

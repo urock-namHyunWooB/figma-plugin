@@ -24,26 +24,23 @@ describe("의존 컴포넌트 children 처리", () => {
     "../fixtures/any/error-02.json"
   );
 
-  it("Gnb: 원래 children이 비어있으면 I... 노드 유지", async () => {
+  it("Gnb: dependency 컴포넌트가 참조로 렌더링됨", async () => {
     const fixture = JSON.parse(fs.readFileSync(gnbFixturePath, "utf-8"));
     const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
-    // Colorgnbhomen 컴포넌트에 실제 children이 렌더링되어야 함 (v2는 arrow function)
+    // Colorgnbhomen 컴포넌트 정의가 존재해야 함
     expect(result).toContain("Colorgnbhomen:");
 
-    // RatioVertical, ColorBlank 등 자식 요소가 있어야 함
-    // 변수명 단축 전략: 마지막 3개 노드의 마지막 단어 사용
-    expect(result).toMatch(/verticalCss|blankCss/i);
+    // 메인 컴포넌트에서 <Colorgnbhomen /> 참조로 렌더링되어야 함
+    expect(result).toContain("<Colorgnbhomen");
 
-    // children prop만 렌더링되면 안됨 (실제 콘텐츠가 있어야 함)
-    const colorgnbhomenMatch = result?.match(
-      /const Colorgnbhomen[\s\S]*?return[\s\S]*?<\/div>[\s\S]*?;[\s\S]*?\}/
-    );
-    if (colorgnbhomenMatch) {
-      // SVG 또는 다른 실제 요소가 포함되어야 함
-      expect(colorgnbhomenMatch[0]).toMatch(/<svg|<div css=/);
-    }
+    // component 노드의 children CSS가 메인에 orphaned로 생성되면 안됨
+    // (dependency 내부 구현은 dependency 자체 코드에서 처리)
+    const generated = await compiler.generate();
+    const mainCode = generated.main.code;
+    // 메인 코드에 dependency 내부 노드의 CSS가 없어야 함
+    expect(mainCode).not.toMatch(/verticalCss|blankCss/i);
   });
 
   it("error-02: 원래 children이 있으면 I... 노드 삭제", async () => {
@@ -70,14 +67,10 @@ describe("의존 컴포넌트 children 처리", () => {
     }
   });
 
-  it("Gnb: 아이콘 요소가 SVG로 렌더링됨", async () => {
+  it("Gnb: SVG 벡터가 렌더링됨", async () => {
     const fixture = JSON.parse(fs.readFileSync(gnbFixturePath, "utf-8"));
     const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
-
-    // 아이콘 요소의 CSS가 생성되어야 함
-    // 변수명 단축 전략으로 인해 BlankCss 같은 짧은 이름이 됨
-    expect(result).toMatch(/blankCss|BlankCss/i);
 
     // vectorSvgs가 전달되어 SVG로 렌더링됨
     expect(result).toContain("<svg");

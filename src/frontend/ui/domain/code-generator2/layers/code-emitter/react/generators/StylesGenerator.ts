@@ -212,6 +212,11 @@ export class StylesGenerator {
       }
     }
 
+    // component 노드의 children은 JsxGenerator가 렌더링하지 않으므로 skip
+    if (node.type === "component") {
+      return;
+    }
+
     // 자식 노드 순회 (현재 경로 전달)
     if ("children" in node && node.children) {
       for (const child of node.children) {
