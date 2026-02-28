@@ -39,11 +39,13 @@ export class PropsExtractor {
    * 1. componentPropertyDefinitions 사용 (COMPONENT_SET)
    * 2. 없으면 componentProperties 변환 (COMPONENT variant)
    * 3. 없으면 variant 이름에서 추론 (COMPONENT variant)
-   * 4. componentPropertyReferences에서 참조된 props 추출
+   * 4. 없으면 mergedNodes의 variantName에서 추론 (variant 병합된 경우)
+   * 5. componentPropertyReferences에서 참조된 props 추출
    *
    * @param node - 빌드 중인 노드 (dependency 빌드 시 필요)
+   * @param mergedNodes - VariantMerger에서 생성한 mergedNodes (variant props 추출용)
    */
-  public extract(node?: SceneNode): PropDefinition[] {
+  public extract(node?: SceneNode, mergedNodes?: any[]): PropDefinition[] {
     // node가 전달되면 그걸 사용, 아니면 dataManager의 document 사용
     const targetNode = node || this.dataManager.getDocument();
 
@@ -62,6 +64,11 @@ export class PropsExtractor {
     if (!propDefs) {
       propDefs =
         this.inferComponentPropertyDefinitionsFromVariantName(targetNode);
+    }
+
+    // 그래도 없으면 mergedNodes의 variantName에서 추론 (variant 병합된 경우)
+    if (!propDefs && mergedNodes && mergedNodes.length > 0) {
+      propDefs = this.inferComponentPropertyDefinitionsFromMergedNodes(mergedNodes);
     }
 
     if (!propDefs) {
@@ -168,6 +175,64 @@ export class PropsExtractor {
           defaultValue: propValue,
           variantOptions: [propValue], // 단일 variant이므로 현재 값만
         };
+      }
+    }
+
+    if (Object.keys(propDefs).length > 0) {
+      return propDefs;
+    }
+
+    return null;
+  }
+
+  /**
+   * mergedNodes의 variantName에서 componentPropertyDefinitions 추론
+   *
+   * VariantMerger에서 병합된 경우, mergedNodes[i].variantName에 variant 정보가 있음
+   * 예: "Platform=Normal, Size=Medium, Active=False"
+   *
+   * 모든 mergedNode의 variantName에서 가능한 모든 prop과 값을 추출하여
+   * variantOptions를 구성
+   */
+  private inferComponentPropertyDefinitionsFromMergedNodes(
+    mergedNodes: any[]
+  ): Record<string, FigmaPropertyDef> | null {
+    const propDefs: Record<string, FigmaPropertyDef> = {};
+
+    // 각 mergedNode의 variantName에서 props 추출
+    for (const merged of mergedNodes) {
+      const variantName = merged.variantName || "";
+
+      if (!variantName || !variantName.includes("=")) {
+        continue;
+      }
+
+      // "Platform=Normal, Size=Medium, Active=False" 형식 파싱
+      const propPairs = variantName.split(",").map((s: string) => s.trim());
+
+      for (const pair of propPairs) {
+        const [propName, propValue] = pair.split("=").map((s: string) => s.trim());
+
+        if (propName && propValue) {
+          if (!propDefs[propName]) {
+            propDefs[propName] = {
+              type: "VARIANT",
+              variantOptions: [],
+            };
+          }
+
+          // variantOptions에 값 추가 (중복 제외)
+          const options = propDefs[propName].variantOptions || [];
+          if (!options.includes(propValue)) {
+            options.push(propValue);
+          }
+          propDefs[propName].variantOptions = options;
+
+          // 첫 번째 값을 defaultValue로 설정
+          if (!propDefs[propName].defaultValue) {
+            propDefs[propName].defaultValue = propValue;
+          }
+        }
       }
     }
 

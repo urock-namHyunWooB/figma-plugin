@@ -25,10 +25,11 @@
 import type { InternalTree, PropDefinition, ConditionNode } from "../../../../types/types";
 
 // 브레이크포인트 prop 이름 패턴
-const BP_NAME_RE = /breakpoint|device|screen|platform/i;
+// platform은 제외 (Platform=iOS/Normal 같은 것은 breakpoint가 아님)
+const BP_NAME_RE = /breakpoint|device|screen/i;
 
-// 브레이크포인트 prop 값 패턴
-const BP_VALUE_RE = /\b(xs|sm|md|lg|xl|mobile|desktop|tablet)\b/i;
+// 브레이크포인트 prop 값 패턴 (Figma 스타일 또는 일반 약자)
+const BP_VALUE_RE = /\b(xs|sm|md|lg|xl|mobile|desktop|tablet|Mobile|Desktop)\b/i;
 
 // Figma 브레이크포인트 값 → 스타일 적용 @media 쿼리
 const STYLE_QUERY_MAP: Record<string, string | null> = {
