@@ -2,16 +2,19 @@ import { UITree } from "../../types/types";
 import DataManager from "../data-manager/DataManager";
 import TreeBuilder from "./tree-builder/TreeBuilder";
 import { ComponentPropsLinker } from "./post-processors/ComponentPropsLinker";
+import { UITreeOptimizer } from "./post-processors/UITreeOptimizer";
 
 class TreeManager {
   private readonly dataManager: DataManager;
   private readonly treeBuilder: TreeBuilder;
   private readonly propsLinker: ComponentPropsLinker;
+  private readonly optimizer: UITreeOptimizer;
 
   constructor(dataManager: DataManager) {
     this.dataManager = dataManager;
     this.treeBuilder = new TreeBuilder(dataManager);
     this.propsLinker = new ComponentPropsLinker(dataManager);
+    this.optimizer = new UITreeOptimizer();
   }
 
   /**
@@ -26,6 +29,16 @@ class TreeManager {
 
     // 2. 컴포넌트 간 관계 연결 (props, bindings)
     this.linkComponents(main, dependencies);
+
+    // 3. 트리 최적화 (dynamic styles 병합, 미사용 props 제거, dep 루트 유연화)
+    this.optimizer.optimizeMain(main);
+    const optimized = new Set<UITree>();
+    for (const tree of dependencies.values()) {
+      if (!optimized.has(tree)) {
+        this.optimizer.optimizeDependency(tree);
+        optimized.add(tree);
+      }
+    }
 
     return { main, dependencies };
   }

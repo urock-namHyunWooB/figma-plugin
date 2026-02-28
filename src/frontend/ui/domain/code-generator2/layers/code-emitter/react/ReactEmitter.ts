@@ -25,7 +25,7 @@
  * └─────────────────────────────────────────────────────────────────┘
  */
 
-import type { UITree, UINode, ConditionNode } from "../../../types/types";
+import type { UITree } from "../../../types/types";
 import type {
   ICodeEmitter,
   EmittedCode,
@@ -81,9 +81,6 @@ export class ReactEmitter implements ICodeEmitter {
    * 3. 섹션 조합 및 포맷팅
    */
   async emit(uiTree: UITree): Promise<EmittedCode> {
-    // Step 0: UITree 사전 정리 (중복 dynamic styles 병합)
-    this.mergeRedundantDynamicStyles(uiTree.root);
-
     // Step 1: 컴포넌트명 생성
     const componentName = toComponentName(uiTree.root.name);
 
@@ -102,7 +99,6 @@ export class ReactEmitter implements ICodeEmitter {
 
   /**
    * 메인 + 의존 트리 → 개별 코드 변환 (멀티 파일 출력용)
-   * dep 트리에는 makeRootFlexible 적용 (고정 크기 → 100%)
    */
   async emitAll(
     main: UITree,
@@ -115,7 +111,6 @@ export class ReactEmitter implements ICodeEmitter {
 
     for (const [depId, depTree] of deps) {
       if (!emittedCache.has(depTree)) {
-        this.makeRootFlexible(depTree);
         emittedCache.set(depTree, await this.emit(depTree));
       }
       depCodes.set(depId, emittedCache.get(depTree)!);
@@ -134,60 +129,6 @@ export class ReactEmitter implements ICodeEmitter {
     const result = await this.emitAll(main, deps);
     const depArray = Array.from(result.dependencies.values());
     return this.bundler.bundle(result.main, depArray);
-  }
-
-  /**
-   * dependency 루트의 고정 크기를 100%로 변환
-   * INSTANCE가 parent의 크기를 채우도록 함 (8px 붕괴 방지)
-   */
-  private makeRootFlexible(tree: UITree): void {
-    const root = tree.root;
-    if (!root.styles) return;
-
-    const base = root.styles.base;
-    if (
-      base.width &&
-      typeof base.width === "string" &&
-      base.width.endsWith("px")
-    ) {
-      base.width = "100%";
-    }
-    if (
-      base.height &&
-      typeof base.height === "string" &&
-      base.height.endsWith("px")
-    ) {
-      base.height = "100%";
-    }
-
-    if (base.background) {
-      base.background = "transparent";
-    }
-    delete base["border-radius"];
-    delete base.border;
-    delete base.opacity;
-    delete base.padding;
-    delete base["padding-top"];
-    delete base["padding-right"];
-    delete base["padding-bottom"];
-    delete base["padding-left"];
-
-    if (root.styles.variants) {
-      for (const [, variantStyles] of Object.entries(root.styles.variants)) {
-        for (const [, styleObj] of Object.entries(
-          variantStyles as Record<string, any>
-        )) {
-          if (styleObj && typeof styleObj === "object") {
-            if (styleObj.background) {
-              styleObj.background = "transparent";
-            }
-            delete styleObj["border-radius"];
-            delete styleObj.border;
-            delete styleObj.opacity;
-          }
-        }
-      }
-    }
   }
 
   /**
@@ -267,218 +208,6 @@ export class ReactEmitter implements ICodeEmitter {
         return new EmotionStrategy();
     }
   }
-
-  // ===========================================================================
-  // UITree 전처리: 사용되지 않는 props 제거
-  // ===========================================================================
-
-  /**
-   * variant/boolean props 중 UITree에서 실제로 참조되지 않는 것 제거.
-   * slot/string/function props는 항상 유지.
-   */
-  private pruneUnusedProps(uiTree: UITree): void {
-    const usedPropNames = new Set<string>();
-
-    // 1. 노드 트리에서 참조된 prop 이름 수집
-    this.collectReferencedPropsFromNode(uiTree.root, usedPropNames);
-
-    // 2. derivedVars 표현식에서 참조된 prop 수집
-    if (uiTree.derivedVars) {
-      for (const dv of uiTree.derivedVars) {
-        const identifiers = dv.expression.match(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g) ?? [];
-        for (const ident of identifiers) {
-          usedPropNames.add(ident);
-        }
-      }
-    }
-
-    // 3. 미참조 variant/boolean prop 제거
-    uiTree.props = uiTree.props.filter((prop) => {
-      if (prop.type === "variant" || prop.type === "boolean") {
-        return usedPropNames.has(prop.name);
-      }
-      return true; // slot, string, function은 항상 유지
-    });
-  }
-
-  private collectReferencedPropsFromNode(node: UINode, usedProps: Set<string>): void {
-    // visibleCondition: 모든 조건 타입 수집 (JSX 조건부 렌더링에서 사용됨)
-    if (node.visibleCondition) {
-      this.collectPropsFromCondition(node.visibleCondition, usedProps);
-    }
-
-    // styles.dynamic: eq 조건에서만 prop 수집 (EmotionStrategy가 eq만 처리)
-    if (node.styles?.dynamic) {
-      for (const { condition } of node.styles.dynamic) {
-        this.collectEqOnlyPropsFromCondition(condition, usedProps);
-      }
-    }
-
-    // bindings
-    if (node.bindings) {
-      const { attrs, content, style } = node.bindings;
-      if (attrs) {
-        for (const binding of Object.values(attrs)) {
-          if ("prop" in binding) usedProps.add(binding.prop);
-        }
-      }
-      if (content && "prop" in content) usedProps.add(content.prop);
-      if (style) {
-        for (const binding of Object.values(style)) {
-          if ("prop" in binding) usedProps.add(binding.prop);
-        }
-      }
-    }
-
-    // 자식 순회
-    if ("children" in node && node.children) {
-      for (const child of node.children) {
-        this.collectReferencedPropsFromNode(child, usedProps);
-      }
-    }
-  }
-
-  /**
-   * EmotionStrategy가 실제로 처리하는 eq 조건 prop만 수집 (truthy/neq 제외).
-   * styles.dynamic 분석 전용.
-   */
-  private collectEqOnlyPropsFromCondition(condition: ConditionNode, usedProps: Set<string>): void {
-    if (condition.type === "eq") {
-      usedProps.add(condition.prop);
-    } else if (condition.type === "and" || condition.type === "or") {
-      for (const c of condition.conditions) {
-        this.collectEqOnlyPropsFromCondition(c, usedProps);
-      }
-    } else if (condition.type === "not") {
-      this.collectEqOnlyPropsFromCondition(condition.condition, usedProps);
-    }
-    // truthy, neq는 EmotionStrategy가 처리 못하므로 수집 안 함
-  }
-
-  private collectPropsFromCondition(condition: ConditionNode, usedProps: Set<string>): void {
-    switch (condition.type) {
-      case "eq":
-      case "neq":
-      case "truthy":
-        usedProps.add(condition.prop);
-        break;
-      case "and":
-      case "or":
-        for (const c of condition.conditions) {
-          this.collectPropsFromCondition(c, usedProps);
-        }
-        break;
-      case "not":
-        this.collectPropsFromCondition(condition.condition, usedProps);
-        break;
-    }
-  }
-
-  // ===========================================================================
-  // UITree 전처리: 중복 dynamic styles를 base에 병합
-  // ===========================================================================
-
-  /**
-   * 모든 variant 값이 동일한 dynamic style 항목을 base에 통합하고 dynamic에서 제거.
-   * (예: size=Medium/Small이 모두 padding:2px → base에 병합, sizeStyles 생성 안 함)
-   */
-  private mergeRedundantDynamicStyles(node: UINode): void {
-    if (node.styles?.dynamic && node.styles.dynamic.length > 0) {
-      // prop별로 value→style 맵 수집
-      const propStyleMap = new Map<string, Map<string, Record<string, string | number>>>();
-
-      for (const { condition, style } of node.styles.dynamic) {
-        for (const { propName, propValue } of this.extractEqPropsFromCondition(condition)) {
-          if (!propStyleMap.has(propName)) propStyleMap.set(propName, new Map());
-          if (!propStyleMap.get(propName)!.has(propValue)) {
-            propStyleMap.get(propName)!.set(propValue, style);
-          }
-        }
-      }
-
-      // 2개 이상의 variant 값이 모두 동일한 스타일인 prop → base에 통합
-      const propsToMerge = new Set<string>();
-      for (const [propName, valueStyles] of propStyleMap) {
-        if (valueStyles.size >= 2 && this.allStyleObjectsIdentical([...valueStyles.values()])) {
-          propsToMerge.add(propName);
-        }
-      }
-
-      for (const propName of propsToMerge) {
-        const commonStyle = propStyleMap.get(propName)!.values().next().value!;
-        Object.assign(node.styles.base, commonStyle);
-
-        // dynamic entries에서 propName eq 조건을 제거하고 중복 entries 제거
-        const seen = new Set<string>();
-        const newDynamic: typeof node.styles.dynamic = [];
-        for (const entry of node.styles.dynamic) {
-          const newCondition = this.removeEqPropFromCondition(entry.condition, propName);
-          if (newCondition !== null) {
-            const key = JSON.stringify({ c: newCondition, s: entry.style });
-            if (!seen.has(key)) {
-              seen.add(key);
-              newDynamic.push({ condition: newCondition, style: entry.style });
-            }
-          }
-        }
-        node.styles.dynamic = newDynamic;
-      }
-    }
-
-    // 자식 순회
-    if ("children" in node && node.children) {
-      for (const child of node.children) {
-        this.mergeRedundantDynamicStyles(child);
-      }
-    }
-  }
-
-  /**
-   * 조건에서 특정 prop의 eq 조건을 제거.
-   * 제거 후 조건이 사라지면 null 반환.
-   */
-  private removeEqPropFromCondition(
-    condition: ConditionNode,
-    propName: string
-  ): ConditionNode | null {
-    if (condition.type === "eq" && condition.prop === propName) {
-      return null;
-    }
-    if (condition.type === "and") {
-      const newConditions = condition.conditions
-        .map((c) => this.removeEqPropFromCondition(c, propName))
-        .filter((c): c is ConditionNode => c !== null);
-      if (newConditions.length === 0) return null;
-      if (newConditions.length === 1) return newConditions[0];
-      return { type: "and", conditions: newConditions };
-    }
-    return condition; // truthy, neq, or, not 등은 그대로
-  }
-
-  private extractEqPropsFromCondition(
-    condition: ConditionNode
-  ): Array<{ propName: string; propValue: string }> {
-    if (condition.type === "eq" && typeof condition.value === "string") {
-      return [{ propName: condition.prop, propValue: condition.value }];
-    }
-    if (condition.type === "and") {
-      const results: Array<{ propName: string; propValue: string }> = [];
-      for (const c of condition.conditions) {
-        if (c.type === "eq" && typeof c.value === "string") {
-          results.push({ propName: c.prop, propValue: c.value });
-        }
-      }
-      return results;
-    }
-    return [];
-  }
-
-  private allStyleObjectsIdentical(styles: Record<string, string | number>[]): boolean {
-    if (styles.length <= 1) return false;
-    const first = JSON.stringify(styles[0]);
-    return styles.every((s) => JSON.stringify(s) === first);
-  }
-
 
   private async formatCode(code: string): Promise<string> {
     try {
