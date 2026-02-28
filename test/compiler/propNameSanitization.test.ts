@@ -2,6 +2,7 @@ import { describe, test, expect } from "vitest";
 import { toCamelCase } from "@code-generator/utils/normalizeString";
 import FigmaCodeGenerator, { FigmaNodeData } from "@code-generator2";
 import component02 from "../fixtures/any/component-02.json";
+import listFixture from "../fixtures/failing/List.json";
 
 describe("Prop 이름 정규화 테스트", () => {
   describe("toCamelCase 함수", () => {
@@ -35,6 +36,29 @@ describe("Prop 이름 정규화 테스트", () => {
     test("숫자로 시작하는 ID도 처리한다", () => {
       expect(toCamelCase("#1:2")).toBe("prop1_2");
       expect(toCamelCase("##100")).toBe("prop100");
+    });
+  });
+
+  describe("box-drawing 문자 포함 visible ref (List fixture)", () => {
+    // "┗ Required#17042:5" 같이 box-drawing 특수문자 + # ID가 포함된
+    // componentPropertyReferences.visible 값이 있을 때,
+    // HTML 충돌 prop(required)이 customRequired로 올바르게 rename되어야 한다.
+    test("required → customRequired로 rename되어야 한다", async () => {
+      const data = listFixture as unknown as FigmaNodeData;
+      const compiler = new FigmaCodeGenerator(data);
+      const code = await compiler.compile();
+
+      // "{ required &&" 패턴이 없어야 함 (rename 전 이름 사용 금지)
+      expect(code).not.toMatch(/\{\s*required\s*&&/);
+    });
+
+    test("customRequired가 visibleCondition prop으로 사용되어야 한다", async () => {
+      const data = listFixture as unknown as FigmaNodeData;
+      const compiler = new FigmaCodeGenerator(data);
+      const code = await compiler.compile();
+
+      // "{ customRequired &&" 패턴이 있어야 함
+      expect(code).toMatch(/\{\s*customRequired\s*&&/);
     });
   });
 

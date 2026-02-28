@@ -27,10 +27,28 @@ export class VisibilityProcessor {
   public applyVisibility(root: InternalNode, props: PropDefinition[]): InternalNode {
     const totalVariants = root.mergedNodes?.length || 0;
 
-    // sourceKey → PropDefinition 매핑 (exact match, normalize 불필요)
-    this.propMap = new Map(
-      props.map((p) => [p.sourceKey, p])
-    );
+    // sourceKey → PropDefinition 매핑
+    // 여러 형태의 key로 조회 가능하도록 normalized 버전도 함께 등록
+    // 예: sourceKey="┗ Required#17042:5" → 아래 3가지 키로 등록
+    //   1. "┗ Required#17042:5" (원본)
+    //   2. "┗ Required"        (# ID 제거)
+    //   3. "Required"          (ASCII 정규화 — variant 이름 기반 조회용)
+    this.propMap = new Map();
+    for (const p of props) {
+      this.propMap.set(p.sourceKey, p);
+
+      // # ID 제거
+      const withoutId = p.sourceKey.split("#")[0].trim();
+      if (withoutId && !this.propMap.has(withoutId)) {
+        this.propMap.set(withoutId, p);
+      }
+
+      // ASCII 정규화 (box-drawing 문자 등 특수문자 제거)
+      const normalized = withoutId.replace(/[^a-zA-Z0-9\s]/g, " ").trim();
+      if (normalized && !this.propMap.has(normalized)) {
+        this.propMap.set(normalized, p);
+      }
+    }
 
     return this.applyVisibilityRecursive(root, totalVariants);
   }
