@@ -4,7 +4,7 @@
  * UITree에서 React 컴포넌트 JSX 생성
  */
 
-import type { UITree, UINode, ContainerNode, ConditionNode, StyleObject, ArraySlotInfo } from "../../../../types/types";
+import type { UITree, UINode, ContainerNode, ButtonNode, InputNode, LinkNode, ComponentNode, ConditionNode, StyleObject, ArraySlotInfo } from "../../../../types/types";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
 import { toComponentName } from "../../../../utils/nameUtils";
 
@@ -231,7 +231,7 @@ export default ${componentName}`;
    */
   private static generateArraySlotMap(
     arraySlot: ArraySlotInfo,
-    parentNode: UINode,
+    parentNode: ContainerNode | ButtonNode | InputNode | LinkNode | ComponentNode,
     styleStrategy: IStyleStrategy,
     options: JsxGeneratorOptions,
     indent: number
