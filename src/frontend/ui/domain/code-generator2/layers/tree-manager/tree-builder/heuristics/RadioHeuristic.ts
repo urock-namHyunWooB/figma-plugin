@@ -12,6 +12,7 @@
  * - 루트에 onClick + disabled 처리
  * - dot 아이콘 INSTANCE의 slot → state 기반 조건부 렌더링으로 변환
  * - interactionNormal slot 제거 (내부 처리)
+ * - Disable=True 변형의 opacity:0.43 → :disabled pseudo-class
  */
 
 import type { ComponentType, InternalNode, ConditionNode } from "../../../../types/types";
@@ -38,6 +39,8 @@ export class RadioHeuristic implements IHeuristic {
     this.addCheckedProp(ctx);
     this.addOnChangeProp(ctx);
     this.addDisableProp(ctx);
+    this.addDisabledOpacity(ctx); // Disable=True 변형의 opacity:0.43 → :disabled pseudo-class
+    this.fixStateCheckedSizeConflict(ctx); // AND(state=Checked, size=*) → Checked 스타일에서 size 담당 속성 제거
 
     // dot 아이콘 slot → state 조건부 렌더링으로 변환
     // interactionNormal slot 제거
@@ -97,6 +100,72 @@ export class RadioHeuristic implements IHeuristic {
       required: false,
       sourceKey: "",
     });
+  }
+
+  /**
+   * Figma Disable=True 변형의 opacity:0.43 → 루트 노드 :disabled pseudo-class
+   *
+   * StyleProcessor가 variant 루트 COMPONENT 노드의 opacity를 styles.dynamic에
+   * 포함하지 못하므로, Heuristic 단계에서 직접 :disabled 스타일로 추가한다.
+   * (값은 Figma 데이터에서 확인된 0.43 — 디자인 시스템 표준 disabled opacity)
+   */
+  /**
+   * AND(state=Checked, size=*) 조건에서 state 그룹 스타일의 width/height 제거
+   *
+   * groupByVariantProp은 AND 조건에서 첫 번째 등장 스타일을 사용하므로,
+   * Medium+Checked의 height:20px이 Small+Checked의 height:16px를 덮어쓴다.
+   * size prop이 width/height를 담당하므로, state=Checked 스타일에서는 제거한다.
+   *
+   * 참고: groupByVariantProp에서 교집합 전략을 쓰면 airtable-button처럼
+   * size에 따라 variant 스타일이 달라지는 경우 교집합이 비어 키가 사라진다.
+   * 따라서 이 처리는 RadioHeuristic에서 도메인 지식으로 직접 해결한다.
+   */
+  private fixStateCheckedSizeConflict(ctx: HeuristicContext): void {
+    this.traverseForSizeStateConflict(ctx.tree);
+  }
+
+  private traverseForSizeStateConflict(node: InternalNode): void {
+    if (node.styles?.dynamic && node.styles.dynamic.length > 0) {
+      // AND(state=Checked, size=*) 패턴이 있는지 확인
+      const hasStateAndSize = node.styles.dynamic.some((entry) => {
+        if (entry.condition.type !== "and") return false;
+        const conds = entry.condition.conditions;
+        const hasState = conds.some((c) => c.type === "eq" && c.prop === "state");
+        const hasSize = conds.some((c) => c.type === "eq" && c.prop === "size");
+        return hasState && hasSize;
+      });
+
+      if (hasStateAndSize) {
+        // state=Checked + size 조합의 스타일에서 width/height 제거
+        for (const entry of node.styles.dynamic) {
+          if (entry.condition.type !== "and") continue;
+          const conds = entry.condition.conditions;
+          const stateEq = conds.find((c) => c.type === "eq" && c.prop === "state");
+          const sizeEq = conds.find((c) => c.type === "eq" && c.prop === "size");
+          if (stateEq && sizeEq) {
+            delete entry.style["width"];
+            delete entry.style["height"];
+          }
+        }
+      }
+    }
+
+    for (const child of node.children || []) {
+      this.traverseForSizeStateConflict(child);
+    }
+  }
+
+  private addDisabledOpacity(ctx: HeuristicContext): void {
+    if (!ctx.tree.styles) {
+      ctx.tree.styles = { base: {}, dynamic: [] };
+    }
+    if (!ctx.tree.styles.pseudo) {
+      ctx.tree.styles.pseudo = {};
+    }
+    ctx.tree.styles.pseudo[":disabled"] = {
+      ...ctx.tree.styles.pseudo[":disabled"],
+      opacity: 0.43,
+    };
   }
 
   private convertIconSlotsToStateConditions(ctx: HeuristicContext): void {

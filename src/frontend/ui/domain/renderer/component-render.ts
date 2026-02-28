@@ -83,11 +83,18 @@ export async function renderReactComponent(
     // 또는 function ComponentName ... export default ComponentName 형식 지원
     let componentName = "Component";
 
-    // export default function ComponentName 형식을 먼저 체크 (function 키워드가 있으면 function을 캡처하지 않도록)
-    const exportDefaultFunctionMatch = code.match(
-      /export\s+default\s+function\s+(\w+)\s*\(/
-    );
-    const exportDefaultMatch = code.match(/export\s+default\s+(\w+)/);
+    // 번들에는 여러 export default가 있을 수 있으므로 (deps + main)
+    // 마지막 매치를 사용 — 메인 컴포넌트는 항상 마지막에 위치
+    const exportDefaultFunctionMatches = [
+      ...code.matchAll(/export\s+default\s+function\s+(\w+)\s*\(/g),
+    ];
+    const exportDefaultFunctionMatch = exportDefaultFunctionMatches.at(-1);
+
+    const exportDefaultMatches = [
+      ...code.matchAll(/export\s+default\s+(\w+)/g),
+    ];
+    const exportDefaultMatch = exportDefaultMatches.at(-1);
+
     const exportFunctionMatch = code.match(/export\s+function\s+(\w+)\s*\(/);
     const functionMatch = code.match(/function\s+(\w+)\s*\(/);
 
