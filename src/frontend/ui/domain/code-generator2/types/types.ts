@@ -85,6 +85,18 @@ export type StyleObject = {
 };
 
 /**
+ * INSTANCE override 감지 결과
+ * TreeBuilder가 감지하고, ComponentPropsLinker가 linking에 사용
+ */
+export interface InstanceOverride {
+  propName: string;
+  propType: "string" | "boolean" | "number";
+  nodeId: string;
+  nodeName: string;
+  value: string;
+}
+
+/**
  * Variant 출처 정보
  * SuperTree 노드가 어떤 variant에서 왔는지 추적
  */
@@ -265,6 +277,8 @@ export interface InternalNode extends UINodeBase {
   metadata?: {
     /** 병합된 Vector SVG (의존 컴포넌트용) */
     vectorSvg?: string;
+    /** INSTANCE override 감지 결과 (TreeBuilder에서 설정) */
+    instanceOverrides?: InstanceOverride[];
   };
   /** 루프 설정 (Heuristic이 설정, UINode로 전달) */
   loop?: { dataProp: string; keyField?: string };
@@ -366,6 +380,8 @@ export interface ComponentNode extends UINodeBase {
   children: UINode[];
   /** INSTANCE override props (메인 컴포넌트에서 의존 컴포넌트로 전달할 값) */
   overrideProps?: Record<string, string>;
+  /** Override 메타 정보 (ComponentPropsLinker가 linking에 사용) */
+  overrideMeta?: InstanceOverride[];
 }
 
 export type UINode =

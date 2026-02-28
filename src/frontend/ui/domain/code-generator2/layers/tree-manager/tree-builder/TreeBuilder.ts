@@ -13,6 +13,7 @@ import { ExternalRefsProcessor } from "./processors/ExternalRefsProcessor";
 import { HeuristicsRunner } from "./heuristics/HeuristicsRunner";
 import { BreakpointHeuristic } from "./heuristics/BreakpointHeuristic";
 import UINodeConverter from "./UINodeConverter";
+import { detectInstanceOverrides } from "./processors/utils/overrideUtils";
 
 /**
  * TreeBuilder
@@ -104,6 +105,9 @@ class TreeBuilder {
     // Step 5: 외부 참조 (INSTANCE refId + 의존 컴포넌트 Vector SVG)
     tree = this.externalRefsProcessor.resolveExternalRefs(tree);
 
+    // Step 5.1: INSTANCE override 감지 (StyleProcessor + ExternalRefsProcessor 이후)
+    this.detectOverrides(tree);
+
     this.applyTextPropertyBindings(tree, props);
 
     // Step 5.5: 브레이크포인트 variant → CSS @media (컴포넌트 휴리스틱과 독립적으로 실행)
@@ -158,6 +162,23 @@ class TreeBuilder {
     props: PropDefinition[]
   ): void {
     this.traverseForTextPropertyBindings(tree, props);
+  }
+
+  /**
+   * INSTANCE 노드의 override 감지 (재귀)
+   * styles.dynamic을 확인하여 variant 병합이 처리한 속성은 스킵
+   */
+  private detectOverrides(tree: InternalTree): void {
+    if (tree.refId) {
+      const overrides = detectInstanceOverrides(tree, this.dataManager);
+      if (overrides.length > 0) {
+        if (!tree.metadata) tree.metadata = {};
+        tree.metadata.instanceOverrides = overrides;
+      }
+    }
+    for (const child of tree.children) {
+      this.detectOverrides(child);
+    }
   }
 
   private traverseForTextPropertyBindings(

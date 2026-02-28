@@ -45,6 +45,7 @@ class UINodeConverter {
     }
 
     if (nodeType === "component" && node.refId) {
+      const overrides = node.metadata?.instanceOverrides;
       return {
         id: node.id,
         name: node.name,
@@ -57,6 +58,14 @@ class UINodeConverter {
           : {}),
         ...(node.bindings ? { bindings: node.bindings } : {}),
         ...(node.semanticType ? { semanticType: node.semanticType } : {}),
+        ...(overrides
+          ? {
+              overrideProps: Object.fromEntries(
+                overrides.map((o) => [o.propName, o.value])
+              ),
+              overrideMeta: overrides,
+            }
+          : {}),
       } as UINode;
     }
 
