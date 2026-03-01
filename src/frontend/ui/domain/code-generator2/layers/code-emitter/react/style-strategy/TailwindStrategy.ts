@@ -7,6 +7,7 @@
 
 import type { StyleObject, PseudoClass } from "../../../../types/types";
 import type { IStyleStrategy, StyleResult, JsxStyleAttribute } from "./IStyleStrategy";
+import { DynamicStyleDecomposer } from "./DynamicStyleDecomposer";
 
 /**
  * CSS 속성+값 → Tailwind 클래스 매핑
@@ -248,22 +249,8 @@ export class TailwindStrategy implements IStyleStrategy {
       return "";
     }
 
-    // variant prop별로 그룹화 (모든 eq 조건 기준)
-    const variantGroups = new Map<string, Map<string, Record<string, string | number>>>();
-
-    for (const { condition, style: dynStyle } of style.dynamic) {
-      const propInfos = this.extractAllVariantProps(condition);
-
-      for (const { propName, propValue } of propInfos) {
-        if (!variantGroups.has(propName)) {
-          variantGroups.set(propName, new Map());
-        }
-
-        if (!variantGroups.get(propName)!.has(propValue)) {
-          variantGroups.get(propName)!.set(propValue, dynStyle);
-        }
-      }
-    }
+    // variant prop별로 그룹화 (CSS 속성별 소유권 분석)
+    const variantGroups = DynamicStyleDecomposer.decompose(style.dynamic);
 
     if (variantGroups.size === 0) {
       return "";
@@ -283,7 +270,9 @@ export class TailwindStrategy implements IStyleStrategy {
         }
       }
 
-      const varName = `${baseVarName}_${propName}Styles`;
+      // Figma prop 이름에서 제어 문자 제거 (backspace 등)
+      const safePropName = propName.replace(/[\x00-\x1f\x7f]/g, "");
+      const varName = `${baseVarName}_${safePropName}Styles`;
       if (entries.length > 0) {
         codeParts.push(`const ${varName} = {\n${entries.join("\n")}\n};`);
       } else {
@@ -302,20 +291,7 @@ export class TailwindStrategy implements IStyleStrategy {
   private extractAllVariantProps(
     condition: import("../../../../types/types").ConditionNode
   ): Array<{ propName: string; propValue: string }> {
-    if (condition.type === "eq" && typeof condition.value === "string") {
-      return [{ propName: condition.prop, propValue: condition.value }];
-    }
-
-    if (condition.type === "and") {
-      return condition.conditions
-        .filter((c) => c.type === "eq" && typeof c.value === "string")
-        .map((c) => ({
-          propName: (c as { type: "eq"; prop: string }).prop,
-          propValue: (c as { type: "eq"; value: string }).value,
-        }));
-    }
-
-    return [];
+    return DynamicStyleDecomposer.extractAllPropInfos(condition);
   }
 
   /**

@@ -89,10 +89,10 @@ describe("urock-button", () => {
     expect(result).toMatch(/btnCss_customTypeStyles\?\.\[customType\]/);
   });
 
-  it("btnCss_customTypeStyles에 customType variant 키들이 있어야 한다", async () => {
+  it("btnCss_customTypeStyles에 고유 CSS가 있는 customType variant 키들이 있어야 한다", async () => {
     const result = await compileFixture();
 
-    // customTypeStyles 객체에 각 variant 키가 있어야 함
+    // customTypeStyles 객체에 box-shadow 등 고유 CSS가 있는 variant 키가 있어야 함
     const customTypeStylesMatch = result.match(
       /btnCss_customTypeStyles\s*=\s*\{([\s\S]*?)\n\};/
     );
@@ -102,8 +102,7 @@ describe("urock-button", () => {
     expect(stylesBody).toMatch(/filled:/);
     expect(stylesBody).toMatch(/outlined_black:/);
     expect(stylesBody).toMatch(/outlined_blue:/);
-    expect(stylesBody).toMatch(/\btext:/);
-    expect(stylesBody).toMatch(/"text-black":/);
+    // text, text-black: box-shadow 없는 텍스트 버튼이므로 고유 CSS 없음 → 미포함이 정상
   });
 
   it("사용되지 않는 불필요한 style 변수가 생성되지 않아야 한다", async () => {

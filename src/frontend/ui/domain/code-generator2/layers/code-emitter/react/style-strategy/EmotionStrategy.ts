@@ -24,6 +24,7 @@
 
 import type { StyleObject, PseudoClass, ConditionNode } from "../../../../types/types";
 import type { IStyleStrategy, StyleResult, JsxStyleAttribute } from "./IStyleStrategy";
+import { DynamicStyleDecomposer } from "./DynamicStyleDecomposer";
 
 export class EmotionStrategy implements IStyleStrategy {
   readonly name = "emotion";
@@ -122,7 +123,9 @@ export class EmotionStrategy implements IStyleStrategy {
 
     for (const [propName, valueMap] of groups) {
       const entries = this.buildVariantEntries(valueMap);
-      const varName = `${baseVarName}_${propName}Styles`;
+      // Figma prop 이름에서 제어 문자 제거 (backspace 등)
+      const safePropName = propName.replace(/[\x00-\x1f\x7f]/g, "");
+      const varName = `${baseVarName}_${safePropName}Styles`;
       if (entries.length > 0) {
         codeParts.push(`const ${varName} = {\n${entries.join("\n")}\n};`);
       } else {
@@ -172,23 +175,7 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
   private groupByVariantProp(
     dynamic: Array<{ condition: ConditionNode; style: Record<string, string | number> }>
   ): Map<string, Map<string, Record<string, string | number>>> {
-    const groups = new Map<string, Map<string, Record<string, string | number>>>();
-
-    for (const { condition, style } of dynamic) {
-      const propInfos = this.extractAllVariantProps(condition);
-
-      for (const { propName, propValue } of propInfos) {
-        if (!groups.has(propName)) {
-          groups.set(propName, new Map());
-        }
-
-        if (!groups.get(propName)!.has(propValue)) {
-          groups.get(propName)!.set(propValue, style);
-        }
-      }
-    }
-
-    return groups;
+    return DynamicStyleDecomposer.decompose(dynamic);
   }
 
   private buildVariantEntries(
@@ -214,21 +201,7 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
   private extractAllVariantProps(
     condition: ConditionNode
   ): Array<{ propName: string; propValue: string }> {
-    if (condition.type === "eq" && typeof condition.value === "string") {
-      return [{ propName: condition.prop, propValue: condition.value }];
-    }
-
-    if (condition.type === "and") {
-      const results: Array<{ propName: string; propValue: string }> = [];
-      for (const cond of condition.conditions) {
-        if (cond.type === "eq" && typeof cond.value === "string") {
-          results.push({ propName: cond.prop, propValue: cond.value });
-        }
-      }
-      return results;
-    }
-
-    return [];
+    return DynamicStyleDecomposer.extractAllPropInfos(condition);
   }
 
   private extractVariantProp(

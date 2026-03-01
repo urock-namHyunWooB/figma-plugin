@@ -234,14 +234,15 @@ describe("compiler 테스트", () => {
         expect(code).toMatch(/customType\??:/);
       });
 
-      test("스타일 Record 객체에 모든 customType 값이 포함되어야 한다.", async () => {
+      test("스타일 Record 객체에 고유 CSS가 있는 customType 값이 포함되어야 한다.", async () => {
         const compiler = new FigmaCodeGenerator(
           urockButtonSampleMockData as any
         );
         const code = await compiler.compile();
 
-        // 모든 customType 값이 스타일 Record에 포함되어야 함
-        const allCustomTypes = [
+        // 고유 CSS(box-shadow 등)가 있는 customType 값만 스타일 Record에 포함
+        // text, text-black: box-shadow 없는 텍스트 버튼이므로 고유 CSS 없음 → 미포함 정상
+        const customTypesWithUniqueCss = [
           "filled",
           "filled-red",
           "icon-filled",
@@ -252,18 +253,13 @@ describe("compiler 테스트", () => {
           "outlined_black",
           "outlined_blue",
           "outlined_red",
-          "text",
-          "text-black",
         ];
 
-        // btnCustomTypeStyles에 모든 키가 있어야 함
-        // - 포함: 따옴표 필요 ("filled-red":)
-        // _ 포함 또는 일반: 따옴표 불필요 (outlined_black:)
+        // btnCustomTypeStyles에 고유 CSS가 있는 키가 있어야 함
         const missingTypes: string[] = [];
-        for (const type of allCustomTypes) {
+        for (const type of customTypesWithUniqueCss) {
           const quotedPattern = `"${type}":`;
           const unquotedPattern = `${type}:`;
-          // 둘 중 하나가 있으면 통과
           if (
             !code!.includes(quotedPattern) &&
             !code!.includes(unquotedPattern)

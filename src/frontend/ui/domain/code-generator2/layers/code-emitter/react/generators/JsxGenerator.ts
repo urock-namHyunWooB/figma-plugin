@@ -6,6 +6,7 @@
 
 import type { UITree, UINode, ContainerNode, ButtonNode, InputNode, LinkNode, ComponentNode, ConditionNode, StyleObject, ArraySlotInfo } from "../../../../types/types";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
+import { DynamicStyleDecomposer } from "../style-strategy/DynamicStyleDecomposer";
 import { toComponentName } from "../../../../utils/nameUtils";
 
 interface JsxGeneratorOptions {
@@ -41,6 +42,12 @@ export class JsxGenerator {
     this.arraySlots = new Map(
       (uiTree.arraySlots || []).map((slot) => [slot.parentId, slot])
     );
+
+    // 컴포넌트에서 참조 가능한 변수 이름 수집 (props + 파생 변수)
+    this.availableVarNames = new Set([
+      ...uiTree.props.map((p) => p.name),
+      ...(uiTree.derivedVars || []).map((dv) => dv.name),
+    ]);
 
     // Props destructuring (별도 줄에서 수행)
     const propsDestructuring = this.generatePropsDestructuring(uiTree);
@@ -125,6 +132,9 @@ export default ${componentName}`;
 
   // Array Slot 정보 (parentId → ArraySlotInfo 매핑)
   private static arraySlots: Map<string, ArraySlotInfo> = new Map();
+
+  // 컴포넌트의 실제 props 이름 + 파생 변수 이름 (JSX에서 참조 가능한 변수)
+  private static availableVarNames: Set<string> = new Set();
 
   /**
    * UINode를 JSX로 변환
@@ -728,9 +738,12 @@ ${indentStr}</${tag}>`;
       const dynamicProps = this.extractDynamicProps(node.styles);
 
       if (dynamicProps.length > 0) {
-        // 동적 스타일 포함
+        // 동적 스타일 포함 (제어 문자 제거하여 변수명 안전성 확보)
         const dynamicStyleRefs = dynamicProps.map(
-          (prop) => `${styleVarName}_${prop}Styles?.[${prop}]`
+          (prop) => {
+            const safeProp = prop.replace(/[\x00-\x1f\x7f]/g, "");
+            return `${styleVarName}_${safeProp}Styles?.[${safeProp}]`;
+          }
         );
 
         if (styleStrategy.name === "emotion") {
@@ -914,15 +927,25 @@ ${indentStr}</${tag}>`;
       return [];
     }
 
-    const propNames = new Set<string>();
+    // decomposer 결과 기반으로 실제 스타일이 있는 prop만 반환
+    // (JSX에서 빈 스타일 변수 참조 방지)
+    const groups = DynamicStyleDecomposer.decompose(styles.dynamic);
+    const propNames: string[] = [];
 
-    for (const { condition } of styles.dynamic) {
-      for (const name of this.extractAllVariantPropNames(condition)) {
-        propNames.add(name);
+    for (const [propName, valueMap] of groups) {
+      // 컴포넌트에서 참조 가능한 변수만 포함 (props 또는 파생 변수)
+      if (!this.availableVarNames.has(propName)) continue;
+
+      // 최소 하나의 value에 실제 CSS 속성이 있는 경우만 포함
+      const hasContent = [...valueMap.values()].some(
+        (s) => Object.keys(s).length > 0
+      );
+      if (hasContent) {
+        propNames.push(propName);
       }
     }
 
-    return Array.from(propNames);
+    return propNames;
   }
 
   /**
@@ -930,17 +953,7 @@ ${indentStr}</${tag}>`;
    * and 조건의 경우 각 eq 조건의 prop을 모두 반환
    */
   private static extractAllVariantPropNames(condition: ConditionNode): string[] {
-    if (condition.type === "eq" && typeof condition.value === "string") {
-      return [condition.prop];
-    }
-
-    if (condition.type === "and") {
-      return condition.conditions
-        .filter((c) => c.type === "eq" && typeof c.value === "string")
-        .map((c) => (c as { type: "eq"; prop: string }).prop);
-    }
-
-    return [];
+    return DynamicStyleDecomposer.extractAllPropNames(condition);
   }
 
   /**
@@ -967,7 +980,10 @@ ${indentStr}</${tag}>`;
 
     if (dynamicProps.length > 0) {
       const dynamicStyleRefs = dynamicProps.map(
-        (prop) => `${styleVarName}_${prop}Styles?.[${prop}]`
+        (prop) => {
+          const safeProp = prop.replace(/[\x00-\x1f\x7f]/g, "");
+          return `${styleVarName}_${safeProp}Styles?.[${safeProp}]`;
+        }
       );
       if (styleStrategy.name === "emotion") {
         wrapperAttrs = `css={[${styleVarName}, ${dynamicStyleRefs.join(", ")}]}`;

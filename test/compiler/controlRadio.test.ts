@@ -71,9 +71,12 @@ describe("Controlradio 컴파일 테스트", () => {
   });
 
   describe("스타일 패턴", () => {
-    it("stateStyles?.[state] 패턴을 사용해야 한다", async () => {
+    it("state별 시각 차이는 조건부 렌더링으로 처리되어야 한다 (CSS 아닌 JSX 분기)", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/stateStyles\?\.\[state\]/);
+      // Checked dot은 state 기반 조건부 렌더링으로 표시
+      expect(code).toMatch(/state\s*===\s*["']Checked["']/);
+      // state에 해당하는 CSS 속성이 없으므로 stateStyles 맵은 불필요
+      expect(code).not.toMatch(/stateStyles/);
     });
   });
 

@@ -73,11 +73,10 @@ describe("airtable-button", () => {
 
     // variant별 CSS 스타일 객체가 존재해야 함
     expect(result).toMatch(/variantStyles/);
-    // 각 variant 키가 스타일에 있어야 함
+    // 고유 배경색이 있는 variant만 스타일에 포함 (secondary는 base와 동일하여 미포함)
     expect(result).toMatch(/default:\s*css`/);
     expect(result).toMatch(/primary:\s*css`/);
     expect(result).toMatch(/danger:\s*css`/);
-    expect(result).toMatch(/secondary:\s*css`/);
   });
 
   it("size별 스타일이 분리되어야 한다", async () => {
