@@ -92,14 +92,14 @@ export class SegmentedControlHeuristic implements IHeuristic {
 
     loopTarget.loop = { dataProp: "options", keyField: "value" };
 
-    // 템플릿 구조 생성 (첫 번째 Tab을 기반으로)
-    this.buildTemplateStructure(loopTarget);
-
     // Tab boolean props 제거 및 options prop 추가
     this.transformTabPropsToOptions(ctx);
 
-    // onChange prop 추가
-    this.addOnChangeProp(ctx);
+    // onChange prop 추가 (buildTemplateStructure에서 참조)
+    const onChangeName = this.addOnChangeProp(ctx);
+
+    // 템플릿 구조 생성 (첫 번째 Tab을 기반으로, onChange 이름 전달)
+    this.buildTemplateStructure(loopTarget, onChangeName);
 
     // selectedValue prop 추가
     this.addSelectedValueProp(ctx);
@@ -117,7 +117,7 @@ export class SegmentedControlHeuristic implements IHeuristic {
    * - icon 바인딩: item.icon 조건부 렌더링
    * - label 바인딩: item.label 텍스트
    */
-  private buildTemplateStructure(containerNode: InternalNode): void {
+  private buildTemplateStructure(containerNode: InternalNode, onChangeName: string): void {
     if (!containerNode.children || containerNode.children.length === 0) return;
 
     // 첫 번째 Tab의 스타일 보존
@@ -168,7 +168,7 @@ export class SegmentedControlHeuristic implements IHeuristic {
       styles: tabStyles,
       bindings: {
         attrs: {
-          onClick: { ref: "item.onClick" },
+          onClick: { expr: `() => ${onChangeName}?.(item.value)` },
         },
       },
     };
@@ -217,20 +217,19 @@ export class SegmentedControlHeuristic implements IHeuristic {
   /**
    * onChange prop 추가
    */
-  private addOnChangeProp(ctx: HeuristicContext): void {
-    // 이미 onChange prop이 있으면 추가하지 않음
-    const hasOnChange = ctx.props.some((p) => p.name === "onChange");
-    if (hasOnChange) return;
-
-    // onChange prop 추가 (value를 전달)
-    ctx.props.push({
-      type: "function",
-      name: "onChange",
-      defaultValue: undefined,
-      required: false,
-      sourceKey: "",
-      functionSignature: "(value: string) => void",
-    });
+  private addOnChangeProp(ctx: HeuristicContext): string {
+    const name = "onChange";
+    if (!ctx.props.some((p) => p.name === name)) {
+      ctx.props.push({
+        type: "function",
+        name,
+        defaultValue: undefined,
+        required: false,
+        sourceKey: "",
+        functionSignature: "(value: string) => void",
+      });
+    }
+    return name;
   }
 
   /**

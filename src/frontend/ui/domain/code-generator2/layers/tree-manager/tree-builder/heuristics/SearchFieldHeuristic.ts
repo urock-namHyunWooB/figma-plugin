@@ -30,14 +30,14 @@ export class SearchFieldHeuristic implements IHeuristic {
   }
 
   apply(ctx: HeuristicContext): HeuristicResult {
-    // placeholder TEXT 노드 마킹 (→ <input>으로 렌더링)
-    this.markPlaceholderInput(ctx.tree);
+    // onChange: (value: string) => void 추가 (다른 메서드에서 이름 참조)
+    const onChangeName = this.addOnChangeProp(ctx);
 
-    // active 조건 안의 x 버튼 INSTANCE 마킹 (→ onClick 추가)
-    this.markClearButton(ctx.tree, false);
+    // placeholder TEXT 노드 마킹 (→ <input>으로 렌더링) + onChange 바인딩
+    this.markPlaceholderInput(ctx.tree, onChangeName);
 
-    // onChange: (value: string) => void 추가
-    this.addOnChangeProp(ctx);
+    // active 조건 안의 x 버튼 INSTANCE에 onClick 바인딩 추가
+    this.markClearButton(ctx.tree, false, onChangeName);
 
     return {
       componentType: this.componentType,
@@ -49,35 +49,41 @@ export class SearchFieldHeuristic implements IHeuristic {
    * componentPropertyReferences.characters가 있는 TEXT 노드를 "search-input"으로 마킹
    * → JsxGenerator에서 <span> 대신 <input placeholder={prop}>으로 렌더링
    */
-  private markPlaceholderInput(node: InternalNode): void {
+  private markPlaceholderInput(node: InternalNode, onChangeName: string): void {
     if (
       node.type === "TEXT" &&
       node.componentPropertyReferences?.["characters"]
     ) {
       node.semanticType = "search-input";
+      node.bindings = { ...node.bindings, attrs: {
+        ...node.bindings?.attrs,
+        onChange: { expr: `(e) => ${onChangeName}?.(e.target.value)` },
+      }};
       return;
     }
 
     for (const child of node.children || []) {
-      this.markPlaceholderInput(child);
+      this.markPlaceholderInput(child, onChangeName);
     }
   }
 
   /**
-   * active 조건부 블록 안의 INSTANCE를 "searchfield-clear"로 마킹
-   * → JsxGenerator에서 onClick={() => onChange?.("")} 추가
+   * active 조건부 블록 안의 INSTANCE에 onClick 바인딩 추가
    */
-  private markClearButton(node: InternalNode, insideActive: boolean): void {
+  private markClearButton(node: InternalNode, insideActive: boolean, onChangeName: string): void {
     const nowInsideActive =
       insideActive || this.isActiveCondition(node.visibleCondition);
 
     if (nowInsideActive && node.type === "INSTANCE" && !node.semanticType) {
-      node.semanticType = "searchfield-clear";
+      node.bindings = { ...node.bindings, attrs: {
+        ...node.bindings?.attrs,
+        onClick: { expr: `() => ${onChangeName}?.("")` },
+      }};
       return;
     }
 
     for (const child of node.children || []) {
-      this.markClearButton(child, nowInsideActive);
+      this.markClearButton(child, nowInsideActive, onChangeName);
     }
   }
 
@@ -93,12 +99,13 @@ export class SearchFieldHeuristic implements IHeuristic {
    * onChange prop 추가 (value: string) => void
    * 이미 있으면 기존 boolean 시그니처를 string으로 교체
    */
-  private addOnChangeProp(ctx: HeuristicContext): void {
-    const existingIndex = ctx.props.findIndex((p) => p.name === "onChange");
+  private addOnChangeProp(ctx: HeuristicContext): string {
+    const name = "onChange";
+    const existingIndex = ctx.props.findIndex((p) => p.name === name);
 
     const onChangeProp = {
       type: "function" as const,
-      name: "onChange",
+      name,
       defaultValue: undefined,
       required: false,
       sourceKey: "",
@@ -111,5 +118,6 @@ export class SearchFieldHeuristic implements IHeuristic {
     } else {
       ctx.props.push(onChangeProp);
     }
+    return name;
   }
 }

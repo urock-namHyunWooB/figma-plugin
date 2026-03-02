@@ -20,6 +20,7 @@ import type {
   HeuristicResult,
 } from "./IHeuristic";
 import { rewritePropConditions } from "./rewritePropConditions";
+import { isCheckedProp, isDisableProp } from "./propPatterns";
 
 export class CheckboxHeuristic implements IHeuristic {
   readonly name = "CheckboxHeuristic";
@@ -31,17 +32,21 @@ export class CheckboxHeuristic implements IHeuristic {
   }
 
   apply(ctx: HeuristicContext): HeuristicResult {
-    // 루트에 semanticType 설정
-    ctx.tree.semanticType = "checkbox";
-
     // Figma에서 추출된 state prop 제거
     const removedProp = this.removeStateProp(ctx);
 
     // checked, onChange, indeterminate, disable prop 추가
-    this.addCheckedProp(ctx);
-    this.addOnChangeProp(ctx);
+    const checkedName = this.addCheckedProp(ctx);
+    const onChangeName = this.addOnChangeProp(ctx);
     this.addIndeterminateProp(ctx);
-    this.addDisableProp(ctx);
+    const disableName = this.addDisableProp(ctx);
+
+    // 루트에 onClick + disabled 바인딩
+    ctx.tree.bindings = { ...ctx.tree.bindings, attrs: {
+      ...ctx.tree.bindings?.attrs,
+      onClick: { expr: `() => ${onChangeName}?.(!${checkedName})` },
+      disabled: { prop: disableName },
+    }};
 
     // check/indeterminate 아이콘 slot → boolean prop 조건부 렌더링으로 변환
     this.convertIconSlots(ctx);
@@ -72,27 +77,34 @@ export class CheckboxHeuristic implements IHeuristic {
     return removed;
   }
 
-  private addCheckedProp(ctx: HeuristicContext): void {
-    if (ctx.props.some((p) => p.name === "checked")) return;
+  private addCheckedProp(ctx: HeuristicContext): string {
+    const existing = ctx.props.find((p) => isCheckedProp(p.name));
+    if (existing) return existing.name;
+
+    const name = "checked";
     ctx.props.push({
       type: "boolean",
-      name: "checked",
+      name,
       defaultValue: false,
       required: false,
       sourceKey: "",
     });
+    return name;
   }
 
-  private addOnChangeProp(ctx: HeuristicContext): void {
-    if (ctx.props.some((p) => p.name === "onChange")) return;
-    ctx.props.push({
-      type: "function",
-      name: "onChange",
-      defaultValue: undefined,
-      required: false,
-      sourceKey: "",
-      functionSignature: "(checked: boolean) => void",
-    });
+  private addOnChangeProp(ctx: HeuristicContext): string {
+    const name = "onChange";
+    if (!ctx.props.some((p) => p.name === name)) {
+      ctx.props.push({
+        type: "function",
+        name,
+        defaultValue: undefined,
+        required: false,
+        sourceKey: "",
+        functionSignature: "(checked: boolean) => void",
+      });
+    }
+    return name;
   }
 
   private addIndeterminateProp(ctx: HeuristicContext): void {
@@ -106,15 +118,19 @@ export class CheckboxHeuristic implements IHeuristic {
     });
   }
 
-  private addDisableProp(ctx: HeuristicContext): void {
-    if (ctx.props.some((p) => p.name === "disable")) return;
+  private addDisableProp(ctx: HeuristicContext): string {
+    const existing = ctx.props.find((p) => isDisableProp(p.name));
+    if (existing) return existing.name;
+
+    const name = "disable";
     ctx.props.push({
       type: "boolean",
-      name: "disable",
+      name,
       defaultValue: false,
       required: false,
       sourceKey: "",
     });
+    return name;
   }
 
   /**

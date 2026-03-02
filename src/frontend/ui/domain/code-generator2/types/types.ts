@@ -227,8 +227,8 @@ export interface TextSegment {
   style?: Record<string, string>;
 }
 
-/** 바인딩 소스: prop 참조 또는 외부 정적 참조 */
-export type BindingSource = { prop: string } | { ref: string };
+/** 바인딩 소스: prop 참조, 외부 정적 참조, 또는 JS 표현식 */
+export type BindingSource = { prop: string } | { ref: string } | { expr: string };
 
 /** 노드 바인딩 정보 */
 export interface Bindings {

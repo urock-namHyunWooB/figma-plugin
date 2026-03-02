@@ -22,6 +22,7 @@ import type {
   HeuristicResult,
 } from "./IHeuristic";
 import { rewritePropConditions } from "./rewritePropConditions";
+import { isCheckedProp, isDisableProp } from "./propPatterns";
 
 export class RadioHeuristic implements IHeuristic {
   readonly name = "RadioHeuristic";
@@ -33,13 +34,18 @@ export class RadioHeuristic implements IHeuristic {
   }
 
   apply(ctx: HeuristicContext): HeuristicResult {
-    ctx.tree.semanticType = "checkbox"; // button semanticType으로 onClick/disabled 처리
-
     const removedProp = this.removeStateProp(ctx);
     this.removeTightProp(ctx); // tight는 Radio 외부 인터페이스에 불필요
-    this.addCheckedProp(ctx);
-    this.addOnChangeProp(ctx);
-    this.addDisableProp(ctx);
+    const checkedName = this.addCheckedProp(ctx);
+    const onChangeName = this.addOnChangeProp(ctx);
+    const disableName = this.addDisableProp(ctx);
+
+    // 루트에 onClick + disabled 바인딩
+    ctx.tree.bindings = { ...ctx.tree.bindings, attrs: {
+      ...ctx.tree.bindings?.attrs,
+      onClick: { expr: `() => ${onChangeName}?.(!${checkedName})` },
+      disabled: { prop: disableName },
+    }};
     this.addDisabledOpacity(ctx); // Disable=True 변형의 opacity:0.43 → :disabled pseudo-class
     this.fixStateCheckedSizeConflict(ctx); // AND(state=Checked, size=*) → Checked 스타일에서 size 담당 속성 제거
 
@@ -73,38 +79,49 @@ export class RadioHeuristic implements IHeuristic {
     if (idx !== -1) ctx.props.splice(idx, 1);
   }
 
-  private addCheckedProp(ctx: HeuristicContext): void {
-    if (ctx.props.some((p) => p.name === "checked")) return;
+  private addCheckedProp(ctx: HeuristicContext): string {
+    const existing = ctx.props.find((p) => isCheckedProp(p.name));
+    if (existing) return existing.name;
+
+    const name = "checked";
     ctx.props.push({
       type: "boolean",
-      name: "checked",
+      name,
       defaultValue: false,
       required: false,
       sourceKey: "",
     });
+    return name;
   }
 
-  private addOnChangeProp(ctx: HeuristicContext): void {
-    if (ctx.props.some((p) => p.name === "onChange")) return;
-    ctx.props.push({
-      type: "function",
-      name: "onChange",
-      defaultValue: undefined,
-      required: false,
-      sourceKey: "",
-      functionSignature: "(checked: boolean) => void",
-    });
+  private addOnChangeProp(ctx: HeuristicContext): string {
+    const name = "onChange";
+    if (!ctx.props.some((p) => p.name === name)) {
+      ctx.props.push({
+        type: "function",
+        name,
+        defaultValue: undefined,
+        required: false,
+        sourceKey: "",
+        functionSignature: "(checked: boolean) => void",
+      });
+    }
+    return name;
   }
 
-  private addDisableProp(ctx: HeuristicContext): void {
-    if (ctx.props.some((p) => p.name === "disable")) return;
+  private addDisableProp(ctx: HeuristicContext): string {
+    const existing = ctx.props.find((p) => isDisableProp(p.name));
+    if (existing) return existing.name;
+
+    const name = "disable";
     ctx.props.push({
       type: "boolean",
-      name: "disable",
+      name,
       defaultValue: false,
       required: false,
       sourceKey: "",
     });
+    return name;
   }
 
   /**

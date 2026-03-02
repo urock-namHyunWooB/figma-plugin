@@ -420,12 +420,13 @@ ${indentStr})}` : jsx;
     // Loop item 바인딩 처리 (bindings에서 item.xxx 참조 치환)
     if (node.bindings?.attrs) {
       for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
-        if ("ref" in source && source.ref.startsWith("item.")) {
+        if ("expr" in source) {
+          // expr 내의 item. 참조를 실제 loop 변수로 치환
+          const resolvedExpr = source.expr.replace(/\bitem\./g, `${itemVar}.`);
+          attrs += ` ${attrName}={${resolvedExpr}}`;
+        } else if ("ref" in source && source.ref.startsWith("item.")) {
           const field = source.ref.slice(5); // "item.xxx" -> "xxx"
-          // onClick 특수 처리: onChange?.(option.value) 형태로 생성
-          if (attrName === "onClick" && field === "onClick") {
-            attrs += ` onClick={() => onChange?.(${itemVar}.value)}`;
-          } else if (attrName.startsWith("on")) {
+          if (attrName.startsWith("on")) {
             attrs += ` ${attrName}={() => ${field}?.(${itemVar})}`;
           } else {
             attrs += ` ${attrName}={${itemVar}.${field}}`;
@@ -455,7 +456,13 @@ ${indentStr})}` : jsx;
         ? node.bindings.content.prop
         : "text";
 
-    return `${indentStr}<input${attrs} placeholder={${placeholderProp}} onChange={(e) => onChange?.(e.target.value)} />`;
+    // onChange 바인딩이 있으면 사용, 없으면 fallback
+    const onChangeBinding = node.bindings?.attrs?.["onChange"];
+    const onChangeAttr = onChangeBinding && "expr" in onChangeBinding
+      ? `onChange={${onChangeBinding.expr}}`
+      : `onChange={(e) => onChange?.(e.target.value)}`;
+
+    return `${indentStr}<input${attrs} placeholder={${placeholderProp}} ${onChangeAttr} />`;
   }
 
   /**
@@ -557,9 +564,15 @@ ${indentStr})}` : jsx;
       }
     }
 
-    // searchfield-clear: x 버튼 onClick 추가
-    if (node.semanticType === "searchfield-clear") {
-      componentAttrs += ` onClick={() => onChange?.("")}`;
+    // bindings.attrs에서 이벤트/속성 바인딩 처리
+    if (node.bindings?.attrs) {
+      for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
+        if ("prop" in source) {
+          componentAttrs += ` ${attrName}={${source.prop}}`;
+        } else if ("expr" in source) {
+          componentAttrs += ` ${attrName}={${source.expr}}`;
+        }
+      }
     }
 
     // styles가 있으면 wrapper div로 감싸기
@@ -773,6 +786,8 @@ ${indentStr}</${tag}>`;
       for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
         if ("prop" in source) {
           attrs.push(`${attrName}={${source.prop}}`);
+        } else if ("expr" in source) {
+          attrs.push(`${attrName}={${source.expr}}`);
         }
       }
     }
@@ -790,17 +805,6 @@ ${indentStr}</${tag}>`;
       if (styleEntries.length > 0) {
         attrs.push(`style={{ ${styleEntries.join(", ")} }}`);
       }
-    }
-
-    // Switch/Toggle: onClick 핸들러 추가
-    if (node.semanticType === "switch") {
-      attrs.push(`onClick={() => onChange?.(!active)}`);
-    }
-
-    // Checkbox: onClick + disabled 처리
-    if (node.semanticType === "checkbox") {
-      attrs.push(`onClick={() => onChange?.(!checked)}`);
-      attrs.push(`disabled={disable}`);
     }
 
     return attrs.length > 0 ? " " + attrs.join(" ") : "";

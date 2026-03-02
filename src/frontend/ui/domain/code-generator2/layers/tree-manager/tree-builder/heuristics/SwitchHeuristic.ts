@@ -19,6 +19,7 @@ import type {
   HeuristicContext,
   HeuristicResult,
 } from "./IHeuristic";
+import { isToggleProp, isDisableProp } from "./propPatterns";
 
 export class SwitchHeuristic implements IHeuristic {
   readonly name = "SwitchHeuristic";
@@ -57,7 +58,7 @@ export class SwitchHeuristic implements IHeuristic {
   }
 
   /**
-   * Active prop 점수
+   * Active prop 점수 (scoring은 "active" 전용 — 다른 패턴은 apply에서만 사용)
    */
   private scoreByActiveProp(
     propDefs:
@@ -66,15 +67,11 @@ export class SwitchHeuristic implements IHeuristic {
   ): number {
     if (!propDefs) return 0;
 
-    // Active prop 찾기 (boolean 또는 VARIANT with True/False)
     const activeProp = Object.entries(propDefs).find(([key, def]) => {
-      const keyLower = key.toLowerCase();
-      if (!keyLower.includes("active")) return false;
+      if (!key.toLowerCase().includes("active")) return false;
 
-      // BOOLEAN 타입
       if (def.type === "BOOLEAN") return true;
 
-      // VARIANT 타입이고 True/False 옵션이 있는 경우
       if (def.type === "VARIANT" && def.variantOptions) {
         const options = def.variantOptions.map((o) => o.toLowerCase());
         return options.includes("true") && options.includes("false");
@@ -114,11 +111,23 @@ export class SwitchHeuristic implements IHeuristic {
   // ===========================================================================
 
   apply(ctx: HeuristicContext): HeuristicResult {
-    // 루트에 semanticType 설정
-    ctx.tree.semanticType = "switch";
-
     // onChange prop 추가
-    this.addOnChangeProp(ctx);
+    const onChangeName = this.addOnChangeProp(ctx);
+
+    // 토글 상태 prop 이름 찾기 (active, on, toggled 등)
+    const toggleProp = ctx.props.find((p) => isToggleProp(p.name));
+    const activeName = toggleProp?.name ?? "active";
+
+    // 루트에 onClick 바인딩 (+ disable 계열 prop이 있으면 disabled도)
+    const disableProp = ctx.props.find((p) => isDisableProp(p.name));
+    const attrBindings: Record<string, { prop: string } | { expr: string }> = {
+      ...ctx.tree.bindings?.attrs,
+      onClick: { expr: `() => ${onChangeName}?.(!${activeName})` },
+    };
+    if (disableProp) {
+      attrBindings.disabled = { prop: disableProp.name };
+    }
+    ctx.tree.bindings = { ...ctx.tree.bindings, attrs: attrBindings };
 
     // Active 상태 기반 CSS 생성
     this.addActiveDynamicStyles(ctx.tree);
@@ -135,18 +144,19 @@ export class SwitchHeuristic implements IHeuristic {
   /**
    * onChange prop 추가
    */
-  private addOnChangeProp(ctx: HeuristicContext): void {
-    const hasOnChange = ctx.props.some((p) => p.name === "onChange");
-    if (hasOnChange) return;
-
-    ctx.props.push({
-      type: "function",
-      name: "onChange",
-      defaultValue: undefined,
-      required: false,
-      sourceKey: "",
-      functionSignature: "(active: boolean) => void",
-    });
+  private addOnChangeProp(ctx: HeuristicContext): string {
+    const name = "onChange";
+    if (!ctx.props.some((p) => p.name === name)) {
+      ctx.props.push({
+        type: "function",
+        name,
+        defaultValue: undefined,
+        required: false,
+        sourceKey: "",
+        functionSignature: "(active: boolean) => void",
+      });
+    }
+    return name;
   }
 
   /**
@@ -159,8 +169,8 @@ export class SwitchHeuristic implements IHeuristic {
     if (!node) return;
 
     // active, disable, size, onChange prop 이름 찾기
-    const activeProp = props.find((p) => p.name.toLowerCase().includes("active"));
-    const disableProp = props.find((p) => p.name.toLowerCase().includes("disable"));
+    const activeProp = props.find((p) => isToggleProp(p.name));
+    const disableProp = props.find((p) => isDisableProp(p.name));
     const sizeProp = props.find((p) => p.name.toLowerCase().includes("size"));
     const onChangeProp = props.find((p) => p.name === "onChange");
 
@@ -237,17 +247,17 @@ export class SwitchHeuristic implements IHeuristic {
   private addDisableDynamicStyles(node: any, props: any[]): void {
     if (!node?.styles) return;
 
-    const hasDisableProp = props.some(
-      (p: any) => p.name.toLowerCase() === "disable"
+    const disableProp = props.find(
+      (p: any) => isDisableProp(p.name)
     );
-    if (!hasDisableProp) return;
+    if (!disableProp) return;
 
     if (!node.styles.dynamic) {
       node.styles.dynamic = [];
     }
 
     node.styles.dynamic.push({
-      condition: { type: "eq", prop: "disable", value: "true" },
+      condition: { type: "eq", prop: disableProp.name, value: "true" },
       style: {
         opacity: "0.5",
         cursor: "not-allowed",
