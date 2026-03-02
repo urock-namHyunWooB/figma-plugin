@@ -436,6 +436,64 @@ describe("DynamicStyleDecomposer", () => {
       expect(result.has("active")).toBe(false);
     });
 
+    it("AND 조건에서 absent CSS 속성은 해당 prop이 제어 (Switch justify-content 케이스)", () => {
+      const dynamic = [
+        {
+          condition: {
+            type: "and",
+            conditions: [
+              { type: "eq", prop: "size", value: "M" },
+              { type: "truthy", prop: "active" },
+            ],
+          } as ConditionNode,
+          style: { justifyContent: "flex-end", background: "blue", padding: 4 },
+        },
+        {
+          condition: {
+            type: "and",
+            conditions: [
+              { type: "eq", prop: "size", value: "M" },
+              { type: "not", condition: { type: "truthy", prop: "active" } },
+            ],
+          } as ConditionNode,
+          style: { background: "gray", padding: 4 },
+          // justifyContent 없음 → 브라우저 기본값(flex-start)
+        },
+        {
+          condition: {
+            type: "and",
+            conditions: [
+              { type: "eq", prop: "size", value: "L" },
+              { type: "truthy", prop: "active" },
+            ],
+          } as ConditionNode,
+          style: { justifyContent: "flex-end", background: "blue", padding: 8 },
+        },
+        {
+          condition: {
+            type: "and",
+            conditions: [
+              { type: "eq", prop: "size", value: "L" },
+              { type: "not", condition: { type: "truthy", prop: "active" } },
+            ],
+          } as ConditionNode,
+          style: { background: "gray", padding: 8 },
+        },
+      ];
+
+      const result = DynamicStyleDecomposer.decompose(dynamic);
+
+      // justifyContent는 active가 제어 (true일 때만 존재)
+      expect(result.get("active")?.get("true")).toEqual(
+        expect.objectContaining({ justifyContent: "flex-end" })
+      );
+      expect(result.get("active")?.get("false")).not.toHaveProperty("justifyContent");
+
+      // padding은 size가 제어
+      expect(result.get("size")?.get("M")).toEqual(expect.objectContaining({ padding: 4 }));
+      expect(result.get("size")?.get("L")).toEqual(expect.objectContaining({ padding: 8 }));
+    });
+
     it("일부 CSS 속성만 동일하면 해당 속성만 제거", () => {
       const dynamic = [
         {

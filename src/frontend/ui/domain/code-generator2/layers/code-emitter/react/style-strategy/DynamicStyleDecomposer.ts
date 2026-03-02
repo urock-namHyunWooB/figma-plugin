@@ -278,48 +278,56 @@ export class DynamicStyleDecomposer {
     cssKey: string,
     matrix: MatrixEntry[]
   ): boolean {
-    // prop의 값별로 그룹화
-    const groups = new Map<string, (string | number)[]>();
+    // prop의 값별로 그룹화 (CSS 속성이 없는 엔트리도 absent로 추적)
+    const groups = new Map<
+      string,
+      { present: (string | number)[]; absentCount: number }
+    >();
 
     for (const entry of matrix) {
       const propValue = entry.propValues.get(propName);
       if (propValue === undefined) continue;
 
-      if (!(cssKey in entry.style)) continue;
-
       if (!groups.has(propValue)) {
-        groups.set(propValue, []);
+        groups.set(propValue, { present: [], absentCount: 0 });
       }
-      groups.get(propValue)!.push(entry.style[cssKey]);
+
+      if (cssKey in entry.style) {
+        groups.get(propValue)!.present.push(entry.style[cssKey]);
+      } else {
+        groups.get(propValue)!.absentCount++;
+      }
     }
 
-    // 데이터가 없으면 제어하지 않는 것으로 판단
-    if (groups.size === 0) return false;
+    if (groups.size <= 1) return false;
 
-    // 각 그룹 내에서 값이 모두 동일해야 함
-    for (const values of groups.values()) {
-      const first = String(values[0]);
-      for (let i = 1; i < values.length; i++) {
-        if (String(values[i]) !== first) {
-          return false;
+    // 각 그룹 내에서 일관적이어야 함:
+    // - present 값끼리 동일하고
+    // - present와 absent가 섞이지 않아야 함
+    for (const group of groups.values()) {
+      if (group.present.length > 0 && group.absentCount > 0) {
+        return false;
+      }
+      if (group.present.length > 1) {
+        const first = String(group.present[0]);
+        for (let i = 1; i < group.present.length; i++) {
+          if (String(group.present[i]) !== first) return false;
         }
       }
     }
 
-    // 추가 체크: 그룹 간에 값이 달라야 "제어"한다고 볼 수 있음
-    // (모든 그룹이 같은 값이면 이 prop은 해당 CSS 속성에 영향을 주지 않음)
-    const groupValues = new Set<string>();
-    for (const values of groups.values()) {
-      groupValues.add(String(values[0]));
+    // 그룹 간에 차이가 있어야 "제어"한다고 판단
+    // (값이 다르거나, 있음/없음이 다르거나)
+    const groupSignatures = new Set<string>();
+    for (const group of groups.values()) {
+      if (group.present.length > 0) {
+        groupSignatures.add(String(group.present[0]));
+      } else {
+        groupSignatures.add("__absent__");
+      }
     }
 
-    // 그룹이 1개뿐이면 (prop 값이 1가지) 제어 판단 불가 → false
-    if (groups.size <= 1) return false;
-
-    // 모든 그룹이 같은 값이면 이 prop은 제어하지 않음
-    if (groupValues.size <= 1) return false;
-
-    return true;
+    return groupSignatures.size > 1;
   }
 
   /**
