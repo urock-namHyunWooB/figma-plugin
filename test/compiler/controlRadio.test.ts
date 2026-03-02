@@ -8,8 +8,8 @@ import path from "path";
  *
  * 설계 원칙:
  * - 외부 인터페이스: checked (boolean) — React 표준
- * - state는 내부 파생 변수: checked ? "Checked" : "Unchecked"
- * - 스타일은 내부 state 변수 기반 stateStyles?.[state] 패턴으로 통합
+ * - state는 제거 → checked boolean prop으로 직접 분기
+ * - dot 아이콘은 checked && 조건부 렌더링
  */
 describe("Controlradio 컴파일 테스트", () => {
   const fixturePath = path.join(__dirname, "../fixtures/failing/Controlradio.json");
@@ -63,19 +63,21 @@ describe("Controlradio 컴파일 테스트", () => {
     });
   });
 
-  describe("파생 변수", () => {
-    it("state 파생 변수가 checked 기반으로 생성되어야 한다", async () => {
+  describe("내부 state 파생 없음", () => {
+    it("state 파생 변수가 없어야 한다 (checked로 직접 분기)", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/const state = checked \? "Checked" : "Unchecked"/);
+      expect(code).not.toMatch(/const\s+state\s*=/);
     });
   });
 
   describe("스타일 패턴", () => {
-    it("state별 시각 차이는 조건부 렌더링으로 처리되어야 한다 (CSS 아닌 JSX 분기)", async () => {
+    it("state별 시각 차이는 boolean prop 조건부 렌더링으로 처리되어야 한다", async () => {
       const code = await getCompiledCode();
-      // Checked dot은 state 기반 조건부 렌더링으로 표시
-      expect(code).toMatch(/state\s*===\s*["']Checked["']/);
-      // state에 해당하는 CSS 속성이 없으므로 stateStyles 맵은 불필요
+      // checked boolean prop으로 직접 조건부 렌더링
+      expect(code).toMatch(/\bchecked\b\s*&&/);
+      // state 파생 변수가 없어야 함
+      expect(code).not.toMatch(/const\s+state\s*=/);
+      // stateStyles 맵은 불필요
       expect(code).not.toMatch(/stateStyles/);
     });
   });
@@ -96,9 +98,9 @@ describe("Controlradio 컴파일 테스트", () => {
       expect(code).toMatch(/disabled=\{disable\}/);
     });
 
-    it("dot 아이콘이 state === Checked 조건으로 렌더링되어야 한다", async () => {
+    it("dot 아이콘이 checked 조건으로 렌더링되어야 한다", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/state === "Checked"/);
+      expect(code).toMatch(/\bchecked\b\s*&&/);
     });
   });
 

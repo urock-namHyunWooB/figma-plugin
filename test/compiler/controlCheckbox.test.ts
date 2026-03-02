@@ -97,23 +97,23 @@ describe("Controlcheckbox 컴파일 테스트", () => {
     });
   });
 
-  describe("내부 state 파생 계산", () => {
-    it("checked/indeterminate 기반으로 내부 state를 계산해야 한다", async () => {
+  describe("내부 state 파생 없음", () => {
+    it("state 파생 변수가 없어야 한다 (checked/indeterminate로 직접 분기)", async () => {
       const code = await getCompiledCode();
-      // const state = checked ? "Checked" : indeterminate ? "Indeterminate" : "Unchecked"
-      expect(code).toMatch(/const\s+state\s*=\s*checked\s*\?\s*["']Checked["']\s*:\s*indeterminate\s*\?\s*["']Indeterminate["']\s*:\s*["']Unchecked["']/);
+      // const state = ... 가 없어야 함
+      expect(code).not.toMatch(/const\s+state\s*=/);
     });
   });
 
   describe("JSX 바인딩", () => {
-    it("내부 state 변수로 체크 아이콘 조건부 렌더링이 되어야 한다", async () => {
+    it("checked prop으로 체크 아이콘 조건부 렌더링이 되어야 한다", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/state\s*===\s*["']Checked["']/);
+      expect(code).toMatch(/\bchecked\b\s*&&/);
     });
 
-    it("내부 state 변수로 indeterminate 아이콘 조건부 렌더링이 되어야 한다", async () => {
+    it("indeterminate prop으로 indeterminate 아이콘 조건부 렌더링이 되어야 한다", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/state\s*===\s*["']Indeterminate["']/);
+      expect(code).toMatch(/\bindeterminate\b\s*&&/);
     });
 
     it("disable 시 onChange가 호출되지 않아야 한다 (disabled 처리)", async () => {
@@ -133,11 +133,14 @@ describe("Controlcheckbox 컴파일 테스트", () => {
       expect(code).not.toMatch(/checkedStyles/);
     });
 
-    it("state별 시각 차이는 조건부 렌더링으로 처리되어야 한다 (CSS 아닌 JSX 분기)", async () => {
+    it("state별 시각 차이는 boolean prop 조건부 렌더링으로 처리되어야 한다 (CSS 아닌 JSX 분기)", async () => {
       const code = await getCompiledCode();
-      // Checked/Indeterminate 아이콘은 state 기반 조건부 렌더링으로 표시
-      expect(code).toMatch(/state\s*===\s*["']Checked["']/);
-      // state에 해당하는 CSS 속성이 없으므로 stateStyles 맵은 불필요
+      // checked/indeterminate boolean prop으로 직접 조건부 렌더링
+      expect(code).toMatch(/\bchecked\b\s*&&/);
+      expect(code).toMatch(/\bindeterminate\b\s*&&/);
+      // state 파생 변수가 없어야 함
+      expect(code).not.toMatch(/const\s+state\s*=/);
+      // stateStyles 맵은 불필요
       expect(code).not.toMatch(/stateStyles/);
     });
   });
