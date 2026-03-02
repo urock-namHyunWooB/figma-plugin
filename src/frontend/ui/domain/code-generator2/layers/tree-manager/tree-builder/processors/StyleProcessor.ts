@@ -37,14 +37,9 @@ export class StyleProcessor {
     "clipRule", "clip-rule",
   ]);
 
-  /**
-   * CSS pseudo-class 변환 없이 prop 기반으로 처리할 State 값 목록
-   * (CheckboxHeuristic 등 컴포넌트별 휴리스틱에서 변환됨)
-   */
-  private static readonly PROP_BASED_STATE_VALUES = new Set([
-    "Checked", "checked",
-    "Indeterminate", "indeterminate",
-  ]);
+  // 모든 비-pseudo State 값은 createConditionFromVariantName에서 조건으로 포함됨.
+  // 이전에는 PROP_BASED_STATE_VALUES 화이트리스트로 Checked/Indeterminate만 포함했지만,
+  // Unchecked 등 default 값을 제외하면 UITreeOptimizer가 잘못 병합하는 버그 발생.
 
   /** State prop 값 → CSS pseudo-class 매핑 */
   private readonly STATE_TO_PSEUDO: Record<string, PseudoClass> = {
@@ -263,13 +258,22 @@ export class StyleProcessor {
     const { baseVariants, pseudoVariants } =
       this.separateStateVariants(variantStyles);
 
+    // 비-pseudo state 값이 2개 이상일 때만 state 조건을 포함
+    // (1개면 모두 같은 state → 조건 불필요, 2개 이상이면 UITreeOptimizer 오병합 방지)
+    const nonPseudoStateValues = new Set<string>();
+    for (const v of baseVariants) {
+      const state = this.extractStateFromVariantName(v.variantName);
+      if (state) nonPseudoStateValues.add(state);
+    }
+    const includeStateInConditions = nonPseudoStateValues.size > 1;
+
     // base 스타일 계산 (모든 base variant 공통)
     const base = this.extractCommonStyles(
       baseVariants.map((v) => v.cssStyle)
     );
 
     // dynamic 스타일 계산
-    const dynamic = this.extractDynamicStyles(baseVariants, base);
+    const dynamic = this.extractDynamicStyles(baseVariants, base, includeStateInConditions);
 
     // pseudo 스타일 계산
     const pseudo = this.extractPseudoStyles(pseudoVariants);
@@ -389,7 +393,8 @@ export class StyleProcessor {
    */
   private extractDynamicStyles(
     variantStyles: Array<{ variantName: string; cssStyle: Record<string, string> }>,
-    base: Record<string, string | number>
+    base: Record<string, string | number>,
+    includeStateInConditions: boolean = false
   ): Array<{ condition: ConditionNode; style: Record<string, string | number> }> {
     const dynamic: Array<{
       condition: ConditionNode;
@@ -401,7 +406,8 @@ export class StyleProcessor {
 
       if (Object.keys(uniqueStyles).length > 0) {
         const condition = this.createConditionFromVariantName(
-          variant.variantName
+          variant.variantName,
+          includeStateInConditions
         );
         if (condition) {
           dynamic.push({ condition, style: uniqueStyles });
@@ -435,7 +441,8 @@ export class StyleProcessor {
    * "Size=Large, Left Icon=True" → { type: 'and', conditions: [...] }
    */
   private createConditionFromVariantName(
-    variantName: string
+    variantName: string,
+    includeStateInConditions: boolean = false
   ): ConditionNode | null {
     const props = this.parseVariantName(variantName);
     if (props.length === 0) return null;
@@ -446,11 +453,12 @@ export class StyleProcessor {
       if (key.toLowerCase() === "state" || key.toLowerCase() === "states") {
         // pseudo-class로 변환 가능한 State 값 → 제외 (separateStateVariants에서 처리)
         if (this.STATE_TO_PSEUDO[value] !== undefined) continue;
-        // 명시적 prop 기반 State 값 (Checked, Indeterminate) → 조건에 포함
-        if (StyleProcessor.PROP_BASED_STATE_VALUES.has(value)) {
+        // 비-pseudo state 값이 2개 이상일 때만 조건에 포함
+        // (Unchecked/Checked/Indeterminate 등 모든 state 값을 포함해야
+        //  UITreeOptimizer가 정확한 variant 수를 감지하여 잘못된 병합을 방지)
+        if (includeStateInConditions) {
           conditions.push(this.createCondition(key, value));
         }
-        // 그 외 (default, normal, unchecked 등) → 제외
         continue;
       }
 

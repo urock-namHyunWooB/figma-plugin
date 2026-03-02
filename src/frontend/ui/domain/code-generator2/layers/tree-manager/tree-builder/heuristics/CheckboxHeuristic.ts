@@ -19,7 +19,7 @@ import type {
   HeuristicContext,
   HeuristicResult,
 } from "./IHeuristic";
-import { rewritePropConditions } from "./rewritePropConditions";
+import { rewritePropConditions, rewriteStateDynamicStyles } from "./rewritePropConditions";
 import { isCheckedProp, isDisableProp } from "./propPatterns";
 
 export class CheckboxHeuristic implements IHeuristic {
@@ -53,10 +53,12 @@ export class CheckboxHeuristic implements IHeuristic {
 
     // 제거된 prop이 있으면 트리 전체의 조건 참조를 boolean prop으로 치환
     if (removedProp) {
-      rewritePropConditions(ctx.tree, removedProp, {
+      const stateValueMap = {
         Checked: "checked",
         Indeterminate: "indeterminate",
-      });
+      };
+      rewritePropConditions(ctx.tree, removedProp, stateValueMap);
+      rewriteStateDynamicStyles(ctx.tree, removedProp, stateValueMap);
     }
 
     return {

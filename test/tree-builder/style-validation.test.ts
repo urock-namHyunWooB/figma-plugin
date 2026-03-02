@@ -131,17 +131,26 @@ describe("Style Validation - Various Fixtures", () => {
     }
   });
 
-  it("should not have State/states in dynamic conditions", () => {
+  it("should not have pseudo-equivalent state values in dynamic conditions", () => {
     const dataManager = new DataManager(urockButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
     const uiTree = treeBuilder.build((urockButton as any).info.document);
 
-    // dynamic 조건에 state/states가 없어야 함 (pseudo로 처리됨)
+    // pseudo-class에 해당하는 state 값(hover, active 등)은 dynamic이 아닌 pseudo에 있어야 함
+    // 비-pseudo state 값(default, loading 등)은 dynamic에 있을 수 있음
+    const pseudoValues = new Set(["hover", "active", "pressed", "focus", "disabled", "disable", "visited"]);
+
+    const checkNoPseudoState = (cond: any): void => {
+      if (cond.type === "eq" && (cond.prop === "state" || cond.prop === "states")) {
+        expect(pseudoValues.has(String(cond.value).toLowerCase())).toBe(false);
+      }
+      if (cond.conditions) cond.conditions.forEach(checkNoPseudoState);
+      if (cond.condition) checkNoPseudoState(cond.condition);
+    };
+
     if (uiTree.root.styles?.dynamic) {
       for (const dynamic of uiTree.root.styles.dynamic) {
-        const conditionStr = JSON.stringify(dynamic.condition);
-        expect(conditionStr.toLowerCase()).not.toContain('"state"');
-        expect(conditionStr.toLowerCase()).not.toContain('"states"');
+        checkNoPseudoState(dynamic.condition);
       }
     }
   });

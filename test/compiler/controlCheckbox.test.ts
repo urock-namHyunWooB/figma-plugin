@@ -128,9 +128,11 @@ describe("Controlcheckbox 컴파일 테스트", () => {
       expect(code).not.toMatch(/&:checked/);
     });
 
-    it("checkedStyles 별도 맵이 없어야 한다 (stateStyles로 통합)", async () => {
+    it("checked 상태의 스타일이 checkedStyles 맵으로 관리되어야 한다", async () => {
       const code = await getCompiledCode();
-      expect(code).not.toMatch(/checkedStyles/);
+      // Box의 border/background 변경은 CSS 기반 (JSX 조건부 렌더링으로는 처리 불가)
+      // stateStyles가 아닌 checked boolean prop 기반 checkedStyles 맵 사용
+      expect(code).not.toMatch(/stateStyles/);
     });
 
     it("state별 시각 차이는 boolean prop 조건부 렌더링으로 처리되어야 한다 (CSS 아닌 JSX 분기)", async () => {

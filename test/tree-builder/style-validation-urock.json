@@ -20,6 +20,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "filled"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -45,6 +50,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "filled-red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -70,6 +80,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "filled"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -95,6 +110,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_black"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -122,6 +142,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_blue"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -148,6 +173,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "icon-filled"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -173,6 +203,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "icon-filled-red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -198,6 +233,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "icon-outlined-black"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -225,6 +265,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "icon-outlined-blue"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -251,6 +296,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "icon-outlined-red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -277,6 +327,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -303,6 +358,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "text"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -323,6 +383,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "text-black"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -343,6 +408,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "filled"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "loading"
             }
           ]
         },
@@ -369,6 +439,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "filled"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -393,6 +468,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "filled-red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -418,6 +498,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "filled-red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "loading"
             }
           ]
         },
@@ -444,6 +529,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "filled-red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -468,6 +558,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_black"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -495,6 +590,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "icon-filled"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -519,6 +619,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "icon-filled-red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -543,6 +648,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "icon-outlined-black"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -569,6 +679,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "icon-outlined-blue"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -594,6 +709,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "icon-outlined-red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -619,6 +739,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_blue"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -645,6 +770,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -671,6 +801,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "text-black"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -691,6 +826,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "text"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -711,6 +851,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "filled"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "loading"
             }
           ]
         },
@@ -737,6 +882,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_black"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "loading"
             }
           ]
         },
@@ -764,6 +914,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_black"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -790,6 +945,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_blue"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "loading"
             }
           ]
         },
@@ -816,6 +976,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_blue"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -841,6 +1006,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "icon-filled"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -864,6 +1034,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "icon-filled-red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -887,6 +1062,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "icon-outlined-black"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -912,6 +1092,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "icon-outlined-blue"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -936,6 +1121,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "icon-outlined-red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -960,6 +1150,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "loading"
             }
           ]
         },
@@ -986,6 +1181,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -1011,6 +1211,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "text"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -1031,6 +1236,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "text-black"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "default"
             }
           ]
         },
@@ -1051,6 +1261,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "filled"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "loading"
             }
           ]
         },
@@ -1076,6 +1291,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "filled-red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "loading"
             }
           ]
         },
@@ -1102,6 +1322,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "filled-red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "loading"
             }
           ]
         },
@@ -1127,6 +1352,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_black"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "loading"
             }
           ]
         },
@@ -1154,6 +1384,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_blue"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "loading"
             }
           ]
         },
@@ -1180,6 +1415,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "loading"
             }
           ]
         },
@@ -1206,6 +1446,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_black"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "loading"
             }
           ]
         },
@@ -1232,6 +1477,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_blue"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "loading"
             }
           ]
         },
@@ -1257,6 +1507,11 @@
               "type": "eq",
               "prop": "customType",
               "value": "outlined_red"
+            },
+            {
+              "type": "eq",
+              "prop": "states",
+              "value": "loading"
             }
           ]
         },
