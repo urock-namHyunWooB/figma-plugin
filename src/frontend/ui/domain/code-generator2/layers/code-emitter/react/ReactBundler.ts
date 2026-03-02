@@ -136,12 +136,18 @@ export class ReactBundler {
       );
     }
 
+    // Step 3.8: <button> 중첩 방지 — dep의 <button> 루트를 <div>로 변환하여 루트 button에 위임
+    const hasButtonRoot = /return\s*\(\s*<button[\s/>]/.test(mainCodeClean);
+    const finalDepCodes = hasButtonRoot
+      ? depCodesClean.map((code) => this.neutralizeButtonRoot(code))
+      : depCodesClean;
+
     // Step 4: 결합 (React imports + cn + dependencies + main)
     const parts = [Array.from(reactImports).join("\n")];
     if (cnDeclaration) {
       parts.push("", cnDeclaration);
     }
-    parts.push("", depCodesClean.join("\n\n"), "", mainCodeClean);
+    parts.push("", finalDepCodes.join("\n\n"), "", mainCodeClean);
     return parts.join("\n");
   }
 
@@ -308,6 +314,88 @@ export class ReactBundler {
       );
     }
     return code;
+  }
+
+  /**
+   * 의존 컴포넌트의 <button> 루트를 <div>로 변환하고 interactive 속성 제거
+   * HTML 규격상 <button> 내 <button> 중첩 불가 → 루트 button에 위임
+   */
+  private neutralizeButtonRoot(depCode: string): string {
+    const returnMatch = depCode.match(/return\s*\(\s*/);
+    if (!returnMatch) return depCode;
+
+    const afterReturnIdx = returnMatch.index! + returnMatch[0].length;
+    if (!depCode.slice(afterReturnIdx).startsWith("<button")) return depCode;
+
+    let result = depCode;
+
+    // 1. <button → <div
+    result =
+      result.slice(0, afterReturnIdx) +
+      "<div" +
+      result.slice(afterReturnIdx + "<button".length);
+
+    // 2. Opening tag 범위 찾기 ({} 중첩 고려)
+    const openTagEnd = this.findOpeningTagEnd(result, afterReturnIdx);
+    if (openTagEnd === -1) return result;
+
+    const isSelfClosing = result[openTagEnd - 1] === "/";
+
+    // 3. Opening tag에서 onClick, disabled 속성 제거 (루트 button으로 위임)
+    let openTag = result.slice(afterReturnIdx, openTagEnd + 1);
+    openTag = this.removeJsxAttribute(openTag, "onClick");
+    openTag = this.removeJsxAttribute(openTag, "disabled");
+    result =
+      result.slice(0, afterReturnIdx) + openTag + result.slice(openTagEnd + 1);
+
+    // 4. Self-closing이면 closing tag 불필요
+    if (isSelfClosing) return result;
+
+    // 5. 마지막 </button> → </div>
+    const lastClose = result.lastIndexOf("</button>");
+    if (lastClose !== -1) {
+      result =
+        result.slice(0, lastClose) +
+        "</div>" +
+        result.slice(lastClose + "</button>".length);
+    }
+
+    return result;
+  }
+
+  /**
+   * JSX opening tag의 닫는 > 위치를 찾기 ({} 중첩 고려)
+   */
+  private findOpeningTagEnd(code: string, start: number): number {
+    let depth = 0;
+    for (let i = start; i < code.length; i++) {
+      if (code[i] === "{") depth++;
+      else if (code[i] === "}") depth--;
+      else if (code[i] === ">" && depth === 0) return i;
+    }
+    return -1;
+  }
+
+  /**
+   * JSX opening tag 문자열에서 특정 속성 제거 ({} depth 추적)
+   */
+  private removeJsxAttribute(tag: string, attrName: string): string {
+    const search = ` ${attrName}={`;
+    const attrStart = tag.indexOf(search);
+    if (attrStart === -1) return tag;
+
+    const braceStart = attrStart + search.length - 1;
+    let depth = 0;
+    let i = braceStart;
+    for (; i < tag.length; i++) {
+      if (tag[i] === "{") depth++;
+      if (tag[i] === "}") {
+        depth--;
+        if (depth === 0) break;
+      }
+    }
+
+    return tag.slice(0, attrStart) + tag.slice(i + 1);
   }
 
   private extractCnDeclaration(code: string): string {
