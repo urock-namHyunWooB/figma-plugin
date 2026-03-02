@@ -310,9 +310,21 @@ export class FigmaPlugin {
     if (!node) return null;
     const cssStyle = await node.getCSSAsync();
 
-    // getCSSAsync()가 INSTANCE 등 일부 노드에서 opacity를 누락하므로 보충
+    // getCSSAsync()가 INSTANCE 등 일부 노드에서 특정 속성을 누락하므로 보충
     if (!cssStyle.opacity && "opacity" in node && (node as any).opacity !== 1) {
       cssStyle.opacity = String((node as any).opacity);
+    }
+    if (!cssStyle.overflow && "clipsContent" in node && (node as any).clipsContent === true) {
+      cssStyle.overflow = "hidden";
+    }
+    if (!cssStyle["mix-blend-mode"] && "blendMode" in node) {
+      const bm = (node as any).blendMode;
+      if (bm && bm !== "PASS_THROUGH" && bm !== "NORMAL") {
+        cssStyle["mix-blend-mode"] = bm.toLowerCase().replace(/_/g, "-");
+      }
+    }
+    if (!cssStyle.transform && "rotation" in node && (node as any).rotation !== 0) {
+      cssStyle.transform = `rotate(${(node as any).rotation}deg)`;
     }
 
     if (!("children" in node) || !node.children || node.children.length === 0) {
