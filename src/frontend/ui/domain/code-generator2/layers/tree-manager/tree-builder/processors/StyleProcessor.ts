@@ -297,11 +297,27 @@ export class StyleProcessor {
     }> = [];
 
     for (const merged of mergedNodes) {
-      const { style } = this.dataManager.getById(merged.id);
+      const { node, style } = this.dataManager.getById(merged.id);
       if (style && Object.keys(style.cssStyle).length > 0) {
+        const cssStyle = { ...style.cssStyle };
+
+        // getCSSAsync가 flex cross-axis "HUG" 치수를 누락하는 경우 bbox에서 보충
+        // 단, flex main axis(column→height, row→width)는 자식이 결정하므로 보충하지 않음
+        const bbox = (node as any)?.absoluteBoundingBox;
+        if (bbox && !cssStyle.flex) {
+          const isFlex = cssStyle.display?.includes("flex");
+          const isColumn = cssStyle["flex-direction"] === "column";
+          if (cssStyle.height && !cssStyle.width && !(isFlex && !isColumn)) {
+            cssStyle.width = `${Math.round(bbox.width)}px`;
+          }
+          if (cssStyle.width && !cssStyle.height && !(isFlex && isColumn)) {
+            cssStyle.height = `${Math.round(bbox.height)}px`;
+          }
+        }
+
         result.push({
           variantName: merged.variantName || merged.name,
-          cssStyle: style.cssStyle,
+          cssStyle,
         });
       }
     }
