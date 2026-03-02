@@ -1,0 +1,89 @@
+{
+  "name": "Primary",
+  "type": "button",
+  "depth": 0,
+  "children": [
+    {
+      "name": "Frame 427318163",
+      "type": "container",
+      "depth": 1,
+      "children": [
+        {
+          "name": "Plus",
+          "type": "container",
+          "depth": 2,
+          "visibleCondition": {
+            "type": "and",
+            "conditions": [
+              {
+                "type": "truthy",
+                "prop": "leftIcon"
+              },
+              {
+                "type": "not",
+                "condition": {
+                  "type": "truthy",
+                  "prop": "rightIcon"
+                }
+              }
+            ]
+          },
+          "children": []
+        },
+        {
+          "name": "Text",
+          "type": "text",
+          "depth": 2,
+          "children": []
+        },
+        {
+          "name": "Plus",
+          "type": "container",
+          "depth": 2,
+          "visibleCondition": {
+            "type": "and",
+            "conditions": [
+              {
+                "type": "not",
+                "condition": {
+                  "type": "truthy",
+                  "prop": "leftIcon"
+                }
+              },
+              {
+                "type": "truthy",
+                "prop": "rightIcon"
+              }
+            ]
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "Text",
+      "type": "text",
+      "depth": 1,
+      "visibleCondition": {
+        "type": "and",
+        "conditions": [
+          {
+            "type": "not",
+            "condition": {
+              "type": "truthy",
+              "prop": "leftIcon"
+            }
+          },
+          {
+            "type": "not",
+            "condition": {
+              "type": "truthy",
+              "prop": "rightIcon"
+            }
+          }
+        ]
+      },
+      "children": []
+    }
+  ]
+}

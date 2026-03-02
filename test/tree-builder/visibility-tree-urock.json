@@ -1,0 +1,33 @@
+{
+  "name": "btn",
+  "type": "button",
+  "depth": 0,
+  "children": [
+    {
+      "name": "icon_delete",
+      "type": "container",
+      "depth": 1,
+      "visibleCondition": {
+        "type": "truthy",
+        "prop": "iconLeft"
+      },
+      "children": []
+    },
+    {
+      "name": "button",
+      "type": "text",
+      "depth": 1,
+      "children": []
+    },
+    {
+      "name": "icon_arrow",
+      "type": "container",
+      "depth": 1,
+      "visibleCondition": {
+        "type": "truthy",
+        "prop": "iconRight"
+      },
+      "children": []
+    }
+  ]
+}

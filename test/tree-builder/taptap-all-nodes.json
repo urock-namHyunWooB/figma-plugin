@@ -1,0 +1,29 @@
+{
+  "allNodes": [
+    {
+      "path": "Primary",
+      "type": "button"
+    },
+    {
+      "path": "Primary/Frame 427318163",
+      "type": "container"
+    },
+    {
+      "path": "Primary/Frame 427318163/Plus",
+      "type": "container"
+    },
+    {
+      "path": "Primary/Frame 427318163/Text",
+      "type": "text"
+    },
+    {
+      "path": "Primary/Frame 427318163/Plus",
+      "type": "container"
+    },
+    {
+      "path": "Primary/Text",
+      "type": "text"
+    }
+  ],
+  "componentNodes": []
+}

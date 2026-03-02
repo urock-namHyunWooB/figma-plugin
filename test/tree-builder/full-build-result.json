@@ -1,0 +1,48 @@
+{
+  "rootName": "Button",
+  "rootType": "button",
+  "rootId": "308:7",
+  "propsCount": 4,
+  "props": [
+    {
+      "name": "size",
+      "type": "variant",
+      "sourceKey": "Size",
+      "required": false,
+      "defaultValue": "default",
+      "options": [
+        "default",
+        "large",
+        "small"
+      ]
+    },
+    {
+      "name": "variant",
+      "type": "variant",
+      "sourceKey": "Variant",
+      "required": false,
+      "defaultValue": "default",
+      "options": [
+        "danger",
+        "default",
+        "primary",
+        "secondary"
+      ]
+    },
+    {
+      "name": "icon",
+      "type": "slot",
+      "sourceKey": "Icon",
+      "required": false,
+      "defaultValue": null
+    },
+    {
+      "name": "labelText",
+      "type": "string",
+      "sourceKey": "",
+      "required": false,
+      "defaultValue": "Default"
+    }
+  ],
+  "childrenCount": 0
+}

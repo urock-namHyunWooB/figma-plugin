@@ -39,7 +39,6 @@ __screenshots__
 **/__screenshots__/**/*
 
 # 테스트 출력 파일
-test/**/*.json
 test/**/generated-*.tsx
 test/**/compiled/
 test/output/

@@ -1,0 +1,20 @@
+{
+  "name": "Button",
+  "type": "button",
+  "depth": 0,
+  "children": [
+    {
+      "name": "Icon",
+      "type": "component",
+      "depth": 1,
+      "refId": "91:1058",
+      "children": []
+    },
+    {
+      "name": "Label",
+      "type": "text",
+      "depth": 1,
+      "children": []
+    }
+  ]
+}

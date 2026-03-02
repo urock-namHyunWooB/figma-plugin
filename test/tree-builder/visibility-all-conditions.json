@@ -1,0 +1,62 @@
+[
+  {
+    "path": "Primary/Frame 427318163/Plus",
+    "condition": {
+      "type": "and",
+      "conditions": [
+        {
+          "type": "truthy",
+          "prop": "leftIcon"
+        },
+        {
+          "type": "not",
+          "condition": {
+            "type": "truthy",
+            "prop": "rightIcon"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "path": "Primary/Frame 427318163/Plus",
+    "condition": {
+      "type": "and",
+      "conditions": [
+        {
+          "type": "not",
+          "condition": {
+            "type": "truthy",
+            "prop": "leftIcon"
+          }
+        },
+        {
+          "type": "truthy",
+          "prop": "rightIcon"
+        }
+      ]
+    }
+  },
+  {
+    "path": "Primary/Text",
+    "condition": {
+      "type": "and",
+      "conditions": [
+        {
+          "type": "not",
+          "condition": {
+            "type": "truthy",
+            "prop": "leftIcon"
+          }
+        },
+        {
+          "type": "not",
+          "condition": {
+            "type": "truthy",
+            "prop": "rightIcon"
+          }
+        }
+      ]
+    }
+  }
+]

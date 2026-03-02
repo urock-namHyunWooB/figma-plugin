@@ -1,0 +1,23 @@
+{
+  "name": "Button",
+  "type": "button",
+  "depth": 0,
+  "children": [
+    {
+      "name": "Icon",
+      "type": "component",
+      "depth": 1,
+      "visibleCondition": {
+        "type": "truthy",
+        "prop": "icon"
+      },
+      "children": []
+    },
+    {
+      "name": "Label",
+      "type": "text",
+      "depth": 1,
+      "children": []
+    }
+  ]
+}
