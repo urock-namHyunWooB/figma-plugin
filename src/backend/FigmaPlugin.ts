@@ -310,6 +310,11 @@ export class FigmaPlugin {
     if (!node) return null;
     const cssStyle = await node.getCSSAsync();
 
+    // getCSSAsync()가 INSTANCE 등 일부 노드에서 opacity를 누락하므로 보충
+    if (!cssStyle.opacity && "opacity" in node && (node as any).opacity !== 1) {
+      cssStyle.opacity = String((node as any).opacity);
+    }
+
     if (!("children" in node) || !node.children || node.children.length === 0) {
       return {
         id: node.id,
