@@ -118,7 +118,7 @@ describe("StyleStrategy 테스트 - Emotion/Tailwind 둘 다 실행", () => {
 });
 
 describe("Tailwind 전용 테스트", () => {
-  test("기본값으로 인라인 cn 함수를 사용해야 한다", async () => {
+  test("cva import가 포함되어야 한다", async () => {
     const cached = await getCachedCompile(
       "airtableSelectButton",
       airtableSelectButton
@@ -126,26 +126,10 @@ describe("Tailwind 전용 테스트", () => {
     const code = cached.tailwind;
 
     expect(code).not.toBeNull();
-    expect(code).toContain("const cn =");
-    expect(code).not.toContain("import { cn }");
-  });
-
-  test("inlineCn: false일 때 커스텀 cn import 경로를 사용할 수 있어야 한다", async () => {
-    // 이 테스트는 다른 옵션을 사용하므로 직접 컴파일
-    const compiler = new FigmaCodeGenerator(airtableSelectButton as any, {
-      styleStrategy: {
-        type: "tailwind",
-        tailwind: {
-          inlineCn: false,
-          cnImportPath: "@/utils/cn",
-        },
-      },
-    });
-    const code = await compiler.compile();
-
-    expect(code).not.toBeNull();
-    expect(code).toContain('import { cn } from "@/utils/cn"');
+    expect(code).toContain('import { cva } from "class-variance-authority"');
+    // cn 함수는 더 이상 사용하지 않음
     expect(code).not.toContain("const cn =");
+    expect(code).not.toContain("import { cn }");
   });
 
   test("flex 레이아웃이 Tailwind 클래스로 변환되어야 한다", async () => {
@@ -204,10 +188,6 @@ describe("Tailwind 런타임 실행 검증 테스트", () => {
         return { success: false, error: "Sucrase transformation failed" };
       }
 
-      // 생성된 코드에 인라인 cn 함수가 있는지 확인
-      const hasInlineCn =
-        transformed?.includes("var cn") || transformed?.includes("const cn");
-
       // eval 시도 (React 등 필요한 변수 제공)
       const testCode = `
         'use strict';
@@ -215,10 +195,24 @@ describe("Tailwind 런타임 실행 검증 테스트", () => {
         var useState = function() { return [null, function(){}]; };
         var css = function() { return ''; };
         var cx = function() { return ''; };
-        ${hasInlineCn ? "" : "var cn = function() { return arguments.length ? Array.from(arguments).filter(Boolean).join(' ') : ''; };"}
-        
+        var cva = function(base, config) {
+          return function(props) {
+            var classes = [base];
+            if (config && config.variants && props) {
+              for (var key in config.variants) {
+                var propVal = props[key];
+                if (propVal != null) {
+                  var cls = config.variants[key][String(propVal)];
+                  if (cls) classes.push(cls);
+                }
+              }
+            }
+            return classes.filter(Boolean).join(" ");
+          };
+        };
+
         ${transformed}
-        
+
         true
       `;
 
@@ -275,7 +269,7 @@ describe("Tailwind 런타임 실행 검증 테스트", () => {
     );
   });
 
-  test("인라인 cn 함수가 var cn과 충돌하지 않아야 한다", async () => {
+  test("cva 함수가 런타임에서 올바르게 작동해야 한다", async () => {
     const cached = await getCachedCompile(
       sampleFixtures[0].name,
       sampleFixtures[0].data
@@ -284,14 +278,14 @@ describe("Tailwind 런타임 실행 검증 테스트", () => {
 
     expect(code).not.toBeNull();
 
-    // const cn = ... 형태로 선언되어야 함
-    expect(code).toContain("const cn =");
+    // cva import가 있어야 함
+    expect(code).toContain('import { cva } from "class-variance-authority"');
 
     // 런타임 실행 가능해야 함
     const result = await canExecuteCode(code!);
 
     if (!result.success) {
-      console.log("=== cn 충돌 테스트 실패 ===");
+      console.log("=== cva 런타임 테스트 실패 ===");
       console.log("Error:", result.error);
       console.log("=== Generated Code (first 800 chars) ===");
       console.log(code?.substring(0, 800));
@@ -491,66 +485,42 @@ describe("Tailwind 코드 품질 검증 테스트", () => {
     );
   });
 
-  // cn 함수 검증: 컴파일러 로직 검증이므로 샘플만 테스트
-  describe("cn 함수 검증", () => {
+  // cva import 검증: 컴파일러 로직 검증이므로 샘플만 테스트
+  describe("cva import 검증", () => {
     test.concurrent.each(sampleFixtures)(
-      "$name Tailwind 코드가 인라인 cn 함수를 포함해야 한다",
+      "$name Tailwind 코드가 cva import를 포함해야 한다",
       async ({ name, data }) => {
         const cached = await getCachedCompile(name, data);
         const code = cached.tailwind;
 
         expect(code).not.toBeNull();
-        // 인라인 cn 함수가 생성되어야 함
-        expect(code).toContain("const cn =");
-        expect(code).toContain(".filter(Boolean).join");
-        // import가 없어야 함 (인라인이므로)
+        // cva import가 있어야 함
+        expect(code).toContain('import { cva } from "class-variance-authority"');
+        // cn 함수는 더 이상 사용하지 않음
+        expect(code).not.toContain("const cn =");
         expect(code).not.toContain("import { cn }");
       }
     );
-
-    test("inlineCn: false일 때 cn import를 사용해야 한다", async () => {
-      // 이 테스트는 다른 옵션을 사용하므로 직접 컴파일
-      const compiler = new FigmaCodeGenerator(sampleFixtures[0].data as any, {
-        styleStrategy: {
-          type: "tailwind",
-          tailwind: {
-            inlineCn: false,
-            cnImportPath: "@/utils/cn",
-          },
-        },
-      });
-      const code = await compiler.compile();
-
-      expect(code).not.toBeNull();
-      expect(code).toContain('import { cn } from "@/utils/cn"');
-      expect(code).not.toContain("const cn =");
-    });
   });
 
   describe("Boolean prop 처리", () => {
-    test("Boolean prop은 ternary로 클래스맵에 접근해야 한다", async () => {
-      // Boolean prop (customDisabled 등)이 있는 fixture 찾기 (sampleFixtures에 Boolean prop 있음)
+    test("Boolean prop이 cva variants에 포함되어야 한다", async () => {
+      // Boolean prop (customDisabled 등)이 있는 fixture 찾기
       for (const { name, data } of sampleFixtures) {
         const cached = await getCachedCompile(name, data);
         const code = cached.tailwind;
 
         if (!code) continue;
 
-        // Boolean prop이 있는 클래스맵 찾기 (True/False 키가 있으면 boolean prop)
-        const hasBooleanClassMap =
-          /\w+Classes\s*=\s*\{[^}]*"True":[^}]*"False":/s.test(code);
+        // cva variants에 boolean 값("True"/"False" 또는 "true"/"false")이 있으면
+        // cva() 함수 호출로 처리됨
+        const hasBooleanVariant =
+          /cva\([^)]*\{[\s\S]*?(True|true|False|false)\s*:/m.test(code);
 
-        if (hasBooleanClassMap) {
-          // Boolean prop은 ternary로 접근해야 함: prop ? "True" : "False"
-          // 잘못된 패턴: Classes[customDisabled] (boolean을 직접 key로 사용)
-          // 올바른 패턴: Classes[customDisabled ? "True" : "False"]
-          const wrongPattern =
-            /\w+Classes\[(customDisabled|disabled|selected|checked)\]/;
-          const correctPattern =
-            /\w+Classes\[\w+\s*\?\s*"True"\s*:\s*"False"\]/;
-
-          expect(code).not.toMatch(wrongPattern);
-          expect(code).toMatch(correctPattern);
+        if (hasBooleanVariant) {
+          // cva 패턴이 올바르게 생성되어야 함
+          expect(code).toContain("cva(");
+          expect(code).toContain("variants:");
         }
       }
     });

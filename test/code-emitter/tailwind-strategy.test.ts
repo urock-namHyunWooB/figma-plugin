@@ -21,7 +21,7 @@ describe("TailwindStrategy", () => {
     // 기본 검증
     expect(result.componentName).toBe("Primary");
     expect(result.code).toContain("className=");
-    expect(result.code).toContain("const cn =");
+    expect(result.code).toContain("cva(");
     // Tailwind arbitrary value 문법 확인
     expect(result.code).toContain("[");
   });

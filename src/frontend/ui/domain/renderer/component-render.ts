@@ -190,6 +190,7 @@ export async function renderReactComponent(
     const prevCx = (window as any).cx;
     const prevStyled = (window as any).styled;
     const prevCn = (window as any).cn;
+    const prevCva = (window as any).cva;
     const prevEmotionReact = (window as any).__EMOTION_REACT__;
 
     try {
@@ -213,6 +214,24 @@ export async function renderReactComponent(
           .join(" ");
       };
       (window as any).cn = cnFunction;
+
+      // cva (class-variance-authority) 경량 구현 — 렌더러 전용
+      const cvaFunction = (base: string, config?: { variants?: Record<string, Record<string, string>> }) => {
+        return (props?: Record<string, any>) => {
+          const classes = [base];
+          if (config?.variants && props) {
+            for (const [key, values] of Object.entries(config.variants)) {
+              const propVal = props[key];
+              if (propVal != null) {
+                const cls = values[String(propVal)];
+                if (cls) classes.push(cls);
+              }
+            }
+          }
+          return classes.filter(Boolean).join(" ");
+        };
+      };
+      (window as any).cva = cvaFunction;
 
       // styled component 지원
       if (emotionStyled) {
@@ -278,6 +297,7 @@ export async function renderReactComponent(
         var css = window.css;
         var cx = window.cx;
         ${hasInlineCn ? "" : "var cn = window.cn;"}
+        var cva = window.cva;
         ${emotionStyled ? "var styled = window.styled;" : ""}
         ${emotionModule && emotionJsx ? "var jsx = window.jsx; var jsxs = window.jsxs;" : ""}
         
@@ -321,6 +341,11 @@ export async function renderReactComponent(
         (window as any).cn = prevCn;
       } else {
         delete (window as any).cn;
+      }
+      if (prevCva !== undefined) {
+        (window as any).cva = prevCva;
+      } else {
+        delete (window as any).cva;
       }
       if (prevStyled !== undefined) {
         (window as any).styled = prevStyled;

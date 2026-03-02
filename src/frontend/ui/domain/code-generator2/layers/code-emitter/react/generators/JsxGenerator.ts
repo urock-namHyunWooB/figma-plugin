@@ -570,13 +570,16 @@ ${indentStr})}` : jsx;
 
       let wrapperAttrs: string;
       if (dynamicProps.length > 0) {
-        const dynamicStyleRefs = dynamicProps.map(
-          (prop) => `${wrapperStyleVarName}_${prop}Styles?.[${prop}]`
-        );
         if (styleStrategy.name === "emotion") {
+          const dynamicStyleRefs = dynamicProps.map(
+            (prop) => `${wrapperStyleVarName}_${prop}Styles?.[${prop}]`
+          );
           wrapperAttrs = `css={[${wrapperStyleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
         } else {
-          wrapperAttrs = `className={cn(${wrapperStyleVarName}, ${dynamicStyleRefs.join(", ")})}`;
+          const propArgs = dynamicProps.map(
+            (prop) => prop.replace(/[\x00-\x1f\x7f]/g, "")
+          );
+          wrapperAttrs = `className={${wrapperStyleVarName}({ ${propArgs.join(", ")} })}`;
         }
       } else {
         const styleAttr = styleStrategy.getJsxStyleAttribute(wrapperStyleVarName, false);
@@ -738,19 +741,21 @@ ${indentStr}</${tag}>`;
       const dynamicProps = this.extractDynamicProps(node.styles);
 
       if (dynamicProps.length > 0) {
-        // 동적 스타일 포함 (제어 문자 제거하여 변수명 안전성 확보)
-        const dynamicStyleRefs = dynamicProps.map(
-          (prop) => {
-            const safeProp = prop.replace(/[\x00-\x1f\x7f]/g, "");
-            return `${styleVarName}_${safeProp}Styles?.[${safeProp}]`;
-          }
-        );
-
         if (styleStrategy.name === "emotion") {
+          // Emotion: css prop 배열
+          const dynamicStyleRefs = dynamicProps.map(
+            (prop) => {
+              const safeProp = prop.replace(/[\x00-\x1f\x7f]/g, "");
+              return `${styleVarName}_${safeProp}Styles?.[${safeProp}]`;
+            }
+          );
           attrs.push(`css={[${styleVarName}, ${dynamicStyleRefs.join(", ")}]}`);
         } else {
-          // Tailwind
-          attrs.push(`className={cn(${styleVarName}, ${dynamicStyleRefs.join(", ")})}`);
+          // Tailwind: cva 함수 호출
+          const propArgs = dynamicProps.map(
+            (prop) => prop.replace(/[\x00-\x1f\x7f]/g, "")
+          );
+          attrs.push(`className={${styleVarName}({ ${propArgs.join(", ")} })}`);
         }
       } else {
         const styleAttr = styleStrategy.getJsxStyleAttribute(styleVarName, false);
@@ -979,16 +984,19 @@ ${indentStr}</${tag}>`;
     let wrapperAttrs: string;
 
     if (dynamicProps.length > 0) {
-      const dynamicStyleRefs = dynamicProps.map(
-        (prop) => {
-          const safeProp = prop.replace(/[\x00-\x1f\x7f]/g, "");
-          return `${styleVarName}_${safeProp}Styles?.[${safeProp}]`;
-        }
-      );
       if (styleStrategy.name === "emotion") {
+        const dynamicStyleRefs = dynamicProps.map(
+          (prop) => {
+            const safeProp = prop.replace(/[\x00-\x1f\x7f]/g, "");
+            return `${styleVarName}_${safeProp}Styles?.[${safeProp}]`;
+          }
+        );
         wrapperAttrs = `css={[${styleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
       } else {
-        wrapperAttrs = `className={cn(${styleVarName}, ${dynamicStyleRefs.join(", ")})}`;
+        const propArgs = dynamicProps.map(
+          (prop) => prop.replace(/[\x00-\x1f\x7f]/g, "")
+        );
+        wrapperAttrs = `className={${styleVarName}({ ${propArgs.join(", ")} })}`;
       }
     } else {
       const styleAttr = styleStrategy.getJsxStyleAttribute(styleVarName, false);

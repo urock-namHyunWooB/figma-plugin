@@ -129,20 +129,14 @@ export class TailwindStrategy implements IStyleStrategy {
    * import 문 생성
    */
   getImports(): string[] {
-    if (!this.options.inlineCn) {
-      return [`import { cn } from "${this.options.cnImportPath}"`];
-    }
-    return [];
+    return ['import { cva } from "class-variance-authority";'];
   }
 
   /**
-   * cn 함수 생성 (스타일 선언부에 포함)
+   * cn 함수 생성 — cva 사용 시 불필요 (호환성을 위해 유지)
    */
   getCnFunction(): string {
-    if (!this.options.inlineCn) {
-      return "";
-    }
-    return `const cn = (...classes: (string | undefined | null | false)[]) => classes.filter(Boolean).join(" ");`;
+    return "";
   }
 
   /**
@@ -193,32 +187,28 @@ export class TailwindStrategy implements IStyleStrategy {
     }
     const hasMediaStyles = mediaClasses.length > 0;
 
-    // dynamic 스타일 (조건부 스타일)
-    const dynamicCode = this.generateDynamicStyleCode(variableName, style);
-    const hasDynamicStyles = dynamicCode.length > 0;
+    // dynamic 스타일 (조건부 스타일) → cva variants 블록
+    const dynamicResult = this.generateDynamicStyleCode(variableName, style);
+    const hasDynamicStyles = dynamicResult.hasContent;
 
     // 빈 스타일 체크
     if (!hasBaseStyles && !hasPseudoStyles && !hasMediaStyles && !hasDynamicStyles) {
       return { variableName, code: "", isEmpty: true };
     }
 
-    const codeParts: string[] = [];
+    const allClasses = [...baseClasses, ...pseudoClassesList, ...mediaClasses];
+    const baseStr = allClasses.join(" ");
 
-    // base + pseudo + media 스타일
-    // dynamic styles만 있는 경우에도 base 변수 정의 (slot wrapper div에서 참조 가능)
-    if (hasBaseStyles || hasPseudoStyles || hasMediaStyles) {
-      const allClasses = [...baseClasses, ...pseudoClassesList, ...mediaClasses];
-      codeParts.push(`const ${variableName} = "${allClasses.join(" ")}";`);
-    } else if (hasDynamicStyles) {
-      codeParts.push(`const ${variableName} = "";`);
-    }
-
-    // dynamic 스타일 객체
+    let code: string;
     if (hasDynamicStyles) {
-      codeParts.push(dynamicCode);
+      // cva() 함수로 base + variants 통합
+      code = `const ${variableName} = cva("${baseStr}", {\n  variants: {\n${dynamicResult.code}\n  },\n});`;
+    } else {
+      // dynamic 없으면 plain string
+      code = `const ${variableName} = "${baseStr}";`;
     }
 
-    return { variableName, code: codeParts.join("\n\n"), isEmpty: false };
+    return { variableName, code, isEmpty: false };
   }
 
   /**
@@ -242,22 +232,25 @@ export class TailwindStrategy implements IStyleStrategy {
   }
 
   /**
-   * dynamic 스타일을 variant별 클래스 객체로 변환
+   * dynamic 스타일을 cva variants 블록으로 변환
    */
-  private generateDynamicStyleCode(baseVarName: string, style: StyleObject): string {
+  private generateDynamicStyleCode(
+    _baseVarName: string,
+    style: StyleObject
+  ): { code: string; hasContent: boolean } {
     if (!style.dynamic || style.dynamic.length === 0) {
-      return "";
+      return { code: "", hasContent: false };
     }
 
     // variant prop별로 그룹화 (CSS 속성별 소유권 분석)
     const variantGroups = DynamicStyleDecomposer.decompose(style.dynamic);
 
     if (variantGroups.size === 0) {
-      return "";
+      return { code: "", hasContent: false };
     }
 
-    // 각 variant prop에 대해 클래스 객체 생성
-    const codeParts: string[] = [];
+    // 각 variant prop → cva variants 블록 내부 코드
+    const variantParts: string[] = [];
 
     for (const [propName, valueMap] of variantGroups) {
       const entries: string[] = [];
@@ -266,22 +259,22 @@ export class TailwindStrategy implements IStyleStrategy {
         const classes = this.cssObjectToTailwind(dynStyle);
         if (classes.length > 0) {
           const key = this.needsQuoting(value) ? `"${value}"` : value;
-          entries.push(`  ${key}: "${classes.join(" ")}",`);
+          entries.push(`        ${key}: "${classes.join(" ")}",`);
         }
       }
 
+      if (entries.length === 0) continue;
+
       // Figma prop 이름에서 제어 문자 제거 (backspace 등)
       const safePropName = propName.replace(/[\x00-\x1f\x7f]/g, "");
-      const varName = `${baseVarName}_${safePropName}Styles`;
-      if (entries.length > 0) {
-        codeParts.push(`const ${varName} = {\n${entries.join("\n")}\n};`);
-      } else {
-        // 빈 맵이라도 생성 (JSX에서 참조 시 ReferenceError 방지)
-        codeParts.push(`const ${varName} = {};`);
-      }
+      const propKey = this.needsQuoting(safePropName) ? `"${safePropName}"` : safePropName;
+      variantParts.push(`    ${propKey}: {\n${entries.join("\n")}\n    },`);
     }
 
-    return codeParts.join("\n\n");
+    return {
+      code: variantParts.join("\n"),
+      hasContent: variantParts.length > 0,
+    };
   }
 
   /**
