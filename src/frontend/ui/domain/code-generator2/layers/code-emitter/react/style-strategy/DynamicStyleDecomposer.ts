@@ -77,6 +77,9 @@ export class DynamicStyleDecomposer {
       this.decomposeMultiProp(multiPropEntries, result);
     }
 
+    // 후처리: 모든 variant 값이 동일한 CSS 속성 제거
+    this.removeUniformProperties(result);
+
     return result;
   }
 
@@ -124,6 +127,56 @@ export class DynamicStyleDecomposer {
   // ===========================================================================
   // Private
   // ===========================================================================
+
+  /**
+   * 모든 variant 값에서 동일한 CSS 속성을 제거.
+   *
+   * 예: activeStyles = { true: { opacity: 0.43 }, false: { opacity: 0.43 } }
+   * → opacity가 양쪽 동일 → active가 opacity를 제어하지 않음 → 제거.
+   * 결과적으로 빈 스타일 객체가 되면 해당 prop 그룹 전체 제거.
+   */
+  private static removeUniformProperties(
+    result: Map<string, Map<string, Record<string, string | number>>>
+  ): void {
+    for (const [propName, valueMap] of result) {
+      if (valueMap.size <= 1) continue;
+
+      // 모든 CSS 키 수집
+      const allCssKeys = new Set<string>();
+      for (const style of valueMap.values()) {
+        for (const key of Object.keys(style)) {
+          allCssKeys.add(key);
+        }
+      }
+
+      // 각 CSS 키: 모든 variant에서 동일한 값이면 제거
+      for (const cssKey of allCssKeys) {
+        const values = new Set<string>();
+        let allPresent = true;
+        for (const style of valueMap.values()) {
+          if (!(cssKey in style)) {
+            allPresent = false;
+            break;
+          }
+          values.add(String(style[cssKey]));
+        }
+        if (allPresent && values.size === 1) {
+          // 모든 variant에 존재하고 값이 동일 → 제거
+          for (const style of valueMap.values()) {
+            delete style[cssKey];
+          }
+        }
+      }
+
+      // 빈 스타일 객체만 남은 prop 그룹 제거
+      const allEmpty = [...valueMap.values()].every(
+        (s) => Object.keys(s).length === 0
+      );
+      if (allEmpty) {
+        result.delete(propName);
+      }
+    }
+  }
 
   /**
    * AND 조건 엔트리들을 CSS 속성별로 제어 prop에 분배.

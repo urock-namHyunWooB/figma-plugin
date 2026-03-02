@@ -310,10 +310,10 @@ describe("DynamicStyleDecomposer", () => {
       expect(result.get("variant")?.get("primary")).toEqual(expect.objectContaining({ backgroundColor: "blue" }));
       expect(result.get("variant")?.get("danger")).toEqual(expect.objectContaining({ backgroundColor: "red" }));
 
-      // gap은 size와 icon 양쪽에 의존 (size별/icon별 모두 불일치)
-      // → fallback: 첫 번째 prop(size)에 할당
-      expect(result.get("size")?.get("S")?.gap).toBeDefined();
-      expect(result.get("size")?.get("L")?.gap).toBeDefined();
+      // gap은 size와 icon 양쪽에 의존 → fallback으로 size에 할당되지만
+      // merge 후 모든 size 값에서 동일(0)이므로 uniform 제거됨
+      expect(result.get("size")?.get("S")?.gap).toBeUndefined();
+      expect(result.get("size")?.get("L")?.gap).toBeUndefined();
     });
 
     it("단일 prop + AND 혼합 처리", () => {
@@ -413,6 +413,46 @@ describe("DynamicStyleDecomposer", () => {
       expect(result.get("variant")?.get("danger")).toEqual(
         expect.objectContaining({ borderColor: "red" })
       );
+    });
+
+    it("모든 variant 값이 동일한 CSS 속성은 제거", () => {
+      const dynamic = [
+        {
+          condition: { type: "truthy", prop: "active" } as ConditionNode,
+          style: { opacity: 0.43 },
+        },
+        {
+          condition: {
+            type: "not",
+            condition: { type: "truthy", prop: "active" },
+          } as ConditionNode,
+          style: { opacity: 0.43 },
+        },
+      ];
+
+      const result = DynamicStyleDecomposer.decompose(dynamic);
+
+      // active=true와 false 모두 opacity 동일 → active가 opacity 미제어 → 그룹 자체 제거
+      expect(result.has("active")).toBe(false);
+    });
+
+    it("일부 CSS 속성만 동일하면 해당 속성만 제거", () => {
+      const dynamic = [
+        {
+          condition: { type: "eq", prop: "size", value: "S" } as ConditionNode,
+          style: { padding: 4, opacity: 1 },
+        },
+        {
+          condition: { type: "eq", prop: "size", value: "L" } as ConditionNode,
+          style: { padding: 12, opacity: 1 },
+        },
+      ];
+
+      const result = DynamicStyleDecomposer.decompose(dynamic);
+
+      // padding은 다름 → 유지
+      expect(result.get("size")?.get("S")).toEqual({ padding: 4 });
+      expect(result.get("size")?.get("L")).toEqual({ padding: 12 });
     });
   });
 });
