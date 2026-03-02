@@ -21,10 +21,11 @@ export interface SlotInfo {
 
 export interface PropDefinition {
   name: string;
-  type: "VARIANT" | "TEXT" | "BOOLEAN" | "SLOT";
+  type: "VARIANT" | "TEXT" | "BOOLEAN" | "SLOT" | "function";
   defaultValue: any;
   variantOptions?: string[];
   slotInfo?: SlotInfo;
+  functionSignature?: string;
 }
 
 // ─── 컴파일 결과 ────────────────────────────────────────────

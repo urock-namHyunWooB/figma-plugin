@@ -126,6 +126,9 @@ export function PropController({
     const value = propValues[prop.name] ?? prop.defaultValue;
 
     switch (prop.type) {
+      case "function":
+        return null;
+
       case "VARIANT":
         return (
           <select
@@ -203,7 +206,9 @@ export function PropController({
   return (
     <div css={containerStyle}>
       <div css={titleStyle}>Props Control</div>
-      {propDefinitions.map((prop) => (
+      {propDefinitions
+        .filter((prop) => prop.type !== "function")
+        .map((prop) => (
         <div key={prop.name} css={propRowStyle}>
           <label css={labelStyle}>{prop.name}</label>
           {renderControl(prop)}

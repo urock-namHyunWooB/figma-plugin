@@ -7,6 +7,7 @@ import { useComponentRenderer } from "./hooks/useComponentRenderer";
 import { PropController } from "./components/PropController";
 import { CodeViewer } from "./components/CodeViewer";
 import ErrorBoundary from "@frontend/ui/components/ErrorBoundary";
+import { wireFunctionProps } from "./utils/wireFunctionProps";
 
 /**
  * SLOT props에 대한 목업 엘리먼트 생성
@@ -366,6 +367,7 @@ function App() {
           initialValues[prop.name] = prop.defaultValue;
         }
       });
+      wireFunctionProps(initialValues, props, setPropValues);
       setSlotMockupEnabled(initialSlotEnabled);
       setPropValues(initialValues);
 

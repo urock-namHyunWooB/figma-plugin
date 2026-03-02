@@ -8,7 +8,7 @@
  * 이 어댑터가 DataManager를 통해 부족한 정보를 보완하여 변환한다.
  */
 
-import type { PropDefinition as InternalPropDefinition, SlotPropDefinition } from "../types/types";
+import type { PropDefinition as InternalPropDefinition, SlotPropDefinition, FunctionPropDefinition } from "../types/types";
 import type { PropDefinition } from "../types/public";
 import type DataManager from "../layers/data-manager/DataManager";
 
@@ -17,6 +17,7 @@ const TYPE_MAP: Record<string, PropDefinition["type"]> = {
   string: "TEXT",
   boolean: "BOOLEAN",
   slot: "SLOT",
+  function: "function",
 };
 
 /**
@@ -40,6 +41,10 @@ function toPublicProp(
     variantOptions:
       prop.type === "variant" ? (prop as any).options : undefined,
   };
+
+  if (prop.type === "function") {
+    result.functionSignature = (prop as FunctionPropDefinition).functionSignature;
+  }
 
   if (prop.type === "slot") {
     const slotProp = prop as SlotPropDefinition;

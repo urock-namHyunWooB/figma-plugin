@@ -14,6 +14,7 @@ const loadFonts = (data: FigmaNodeData) => loadFontsFromNodeData(data);
 const compareStyles = (data: FigmaNodeData, container: HTMLElement) =>
   compareNodeStyles(data, container);
 import { PropController } from "../components/PropController";
+import { wireFunctionProps } from "../utils/wireFunctionProps";
 // twind - main.tsx에서 export한 전역 인스턴스 사용
 import { twindTw } from "../main";
 
@@ -285,6 +286,7 @@ export default function TestPage() {
             initialValues[prop.name] = prop.defaultValue;
           }
         });
+        wireFunctionProps(initialValues, props, setPropValues);
         setSlotMockupEnabled(initialSlotEnabled);
         setPropValues(initialValues);
         setCurrentComponent(() => Component);
