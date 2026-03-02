@@ -499,15 +499,12 @@ export class TailwindStrategy implements IStyleStrategy {
   }
 
   /**
-   * ID 기반 변수명 생성 (Fallback, 안전성 우선)
-   * 예: nodeId="133:603", nodeName="Label" → "label_133_603"
+   * 이름 기반 변수명 생성 (Fallback, 충돌은 StylesGenerator.ensureUniqueNames이 처리)
+   * 예: nodeName="SwitchResourceSwitchWrapper" → "switchResourceSwitchWrapperClasses"
    */
-  private createIdBasedName(nodeId: string, nodeName: string): string {
-    const safeId = nodeId.replace(/[^a-zA-Z0-9]/g, "_");
+  private createIdBasedName(_nodeId: string, nodeName: string): string {
     const safeName = this.toCamelCase(nodeName) || "unnamed";
-    const result = `${safeName}_${safeId}`;
-    // Ensure it doesn't start with a digit
-    return /^[0-9]/.test(result) ? `_${result}` : result;
+    return /^[0-9]/.test(safeName) ? `_${safeName}Classes` : `${safeName}Classes`;
   }
 
 }

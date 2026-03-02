@@ -31,8 +31,8 @@ describe("Popup 시각적 스타일 제거 검증", () => {
     const compiler = new FigmaCodeGenerator(popup, { strategy: "emotion" });
     const result = await compiler.compile();
 
-    // v2: Wrapper CSS는 largeWrapper_ID 패턴 (INSTANCE ID별)
-    const wrapperMatches = result.match(/const largeWrapper_\w+ = css`([^`]+)`/g);
+    // Wrapper CSS는 largeWrapperCss 패턴 (충돌 시 _2 접미사, 번들 시 prefix 포함)
+    const wrapperMatches = result.match(/const \w*largeWrapperCss\w* = css`([^`]+)`/g);
     expect(wrapperMatches).toBeTruthy();
     expect(wrapperMatches!.length).toBeGreaterThanOrEqual(2);
 

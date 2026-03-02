@@ -311,18 +311,17 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
   }
 
   /**
-   * ID 기반 변수명 생성 (Fallback, 안전성 우선)
-   * 예: nodeId="133:603", nodeName="Label" → "label_133_603"
+   * 이름 기반 변수명 생성 (Fallback, 충돌은 StylesGenerator.ensureUniqueNames이 처리)
+   * 예: nodeName="SwitchResourceSwitchWrapper" → "switchResourceSwitchWrapperCss"
    */
-  private createIdBasedName(nodeId: string, nodeName: string): string {
-    const safeId = nodeId.replace(/[^a-zA-Z0-9]/g, "_");
+  private createIdBasedName(_nodeId: string, nodeName: string): string {
     let nameBase = this.toSafeVariableName(nodeName);
 
     if (/^[0-9]/.test(nameBase)) {
       nameBase = "_" + nameBase;
     }
 
-    return `${nameBase}_${safeId}`;
+    return `${nameBase}Css`;
   }
 
   /**
