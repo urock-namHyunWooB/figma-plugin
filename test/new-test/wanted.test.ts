@@ -29,7 +29,7 @@ import FigmaCodeGenerator from "@code-generator2";
 describe("Switch/Switch", () => {
   const fixturePath = path.join(
     process.cwd(),
-    "test/fixtures/failing/Switchswitch.json"
+    "test/fixtures/any/Switchswitch.json"
   );
 
   const compileFixture = async () => {
