@@ -140,6 +140,8 @@ export interface VariantPropDefinition extends PropBase {
 
 export interface BooleanPropDefinition extends PropBase {
   type: "boolean";
+  /** 추가 문자열 리터럴 값 (예: ["indeterminate"]) → boolean | "indeterminate" 타입 생성 */
+  extraValues?: string[];
 }
 
 export interface SlotPropDefinition extends PropBase {

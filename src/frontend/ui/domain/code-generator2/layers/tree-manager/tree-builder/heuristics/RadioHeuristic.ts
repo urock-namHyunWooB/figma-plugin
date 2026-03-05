@@ -15,7 +15,7 @@
  * - Disable=True 변형의 opacity:0.43 → :disabled pseudo-class
  */
 
-import type { ComponentType, InternalNode } from "../../../../types/types";
+import type { ComponentType, InternalNode, ConditionNode } from "../../../../types/types";
 import type {
   IHeuristic,
   HeuristicContext,
@@ -55,9 +55,11 @@ export class RadioHeuristic implements IHeuristic {
 
     // 제거된 prop이 있으면 트리 전체의 조건 참조를 boolean prop으로 치환
     if (removedProp) {
-      const stateValueMap = { Checked: "checked" };
-      rewritePropConditions(ctx.tree, removedProp, stateValueMap);
-      rewriteStateDynamicStyles(ctx.tree, removedProp, stateValueMap);
+      const stateConditionMap: Record<string, ConditionNode> = {
+        Checked: { type: "truthy", prop: "checked" },
+      };
+      rewritePropConditions(ctx.tree, removedProp, stateConditionMap);
+      rewriteStateDynamicStyles(ctx.tree, removedProp, stateConditionMap);
     }
 
     return {

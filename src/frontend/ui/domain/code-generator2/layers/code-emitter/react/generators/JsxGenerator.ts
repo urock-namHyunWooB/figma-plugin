@@ -938,7 +938,7 @@ ${indentStr}</${tag}>`;
 
     // decomposer 결과 기반으로 실제 스타일이 있는 prop만 반환
     // (JSX에서 빈 스타일 변수 참조 방지)
-    const groups = DynamicStyleDecomposer.decompose(styles.dynamic);
+    const groups = DynamicStyleDecomposer.decompose(styles.dynamic, styles.base);
     const propNames: string[] = [];
 
     for (const [propName, valueMap] of groups) {

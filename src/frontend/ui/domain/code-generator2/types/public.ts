@@ -26,6 +26,8 @@ export interface PropDefinition {
   variantOptions?: string[];
   slotInfo?: SlotInfo;
   functionSignature?: string;
+  /** 추가 문자열 리터럴 값 (예: ["indeterminate"]) — boolean | "indeterminate" 타입 */
+  extraValues?: string[];
 }
 
 // ─── 컴파일 결과 ────────────────────────────────────────────

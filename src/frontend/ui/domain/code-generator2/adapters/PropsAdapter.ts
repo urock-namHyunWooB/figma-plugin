@@ -8,7 +8,7 @@
  * 이 어댑터가 DataManager를 통해 부족한 정보를 보완하여 변환한다.
  */
 
-import type { PropDefinition as InternalPropDefinition, SlotPropDefinition, FunctionPropDefinition } from "../types/types";
+import type { PropDefinition as InternalPropDefinition, SlotPropDefinition, FunctionPropDefinition, BooleanPropDefinition } from "../types/types";
 import type { PropDefinition } from "../types/public";
 import type DataManager from "../layers/data-manager/DataManager";
 
@@ -40,6 +40,8 @@ function toPublicProp(
     defaultValue: prop.defaultValue,
     variantOptions:
       prop.type === "variant" ? (prop as any).options : undefined,
+    extraValues:
+      prop.type === "boolean" ? (prop as BooleanPropDefinition).extraValues : undefined,
   };
 
   if (prop.type === "function") {

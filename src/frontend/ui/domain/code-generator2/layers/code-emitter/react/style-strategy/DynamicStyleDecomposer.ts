@@ -33,7 +33,8 @@ export class DynamicStyleDecomposer {
     dynamic: Array<{
       condition: ConditionNode;
       style: Record<string, string | number>;
-    }>
+    }>,
+    base?: Record<string, string | number>
   ): Map<string, Map<string, Record<string, string | number>>> {
     const result = new Map<
       string,
@@ -77,8 +78,8 @@ export class DynamicStyleDecomposer {
       this.decomposeMultiProp(multiPropEntries, result);
     }
 
-    // 후처리: 모든 variant 값이 동일한 CSS 속성 제거
-    this.removeUniformProperties(result);
+    // 후처리: 모든 variant 값이 동일한 CSS 속성 제거 (base와 다르면 유지)
+    this.removeUniformProperties(result, base);
 
     return result;
   }
@@ -98,8 +99,8 @@ export class DynamicStyleDecomposer {
    * not(truthy) → propValue = "false"
    */
   static extractAllPropInfos(condition: ConditionNode): PropInfo[] {
-    if (condition.type === "eq" && typeof condition.value === "string") {
-      return [{ propName: condition.prop, propValue: condition.value }];
+    if (condition.type === "eq" && (typeof condition.value === "string" || typeof condition.value === "boolean" || typeof condition.value === "number")) {
+      return [{ propName: condition.prop, propValue: String(condition.value) }];
     }
 
     if (condition.type === "truthy") {
@@ -136,7 +137,8 @@ export class DynamicStyleDecomposer {
    * 결과적으로 빈 스타일 객체가 되면 해당 prop 그룹 전체 제거.
    */
   private static removeUniformProperties(
-    result: Map<string, Map<string, Record<string, string | number>>>
+    result: Map<string, Map<string, Record<string, string | number>>>,
+    base?: Record<string, string | number>
   ): void {
     for (const [propName, valueMap] of result) {
       if (valueMap.size <= 1) continue;
@@ -150,6 +152,7 @@ export class DynamicStyleDecomposer {
       }
 
       // 각 CSS 키: 모든 variant에서 동일한 값이면 제거
+      // 단, base 스타일과 다르거나 base에 없는 속성은 유지 (실제 override임)
       for (const cssKey of allCssKeys) {
         const values = new Set<string>();
         let allPresent = true;
@@ -161,7 +164,14 @@ export class DynamicStyleDecomposer {
           values.add(String(style[cssKey]));
         }
         if (allPresent && values.size === 1) {
-          // 모든 variant에 존재하고 값이 동일 → 제거
+          // base가 있으면: base와 다른 값이거나 base에 없는 키는 유지
+          if (base) {
+            const uniformValue = [...valueMap.values()][0][cssKey];
+            if (!(cssKey in base) || base[cssKey] !== uniformValue) {
+              continue; // base와 다름 → 실제 override이므로 유지
+            }
+          }
+          // 모든 variant에 존재하고 값이 동일 (+ base와도 동일) → 제거
           for (const style of valueMap.values()) {
             delete style[cssKey];
           }

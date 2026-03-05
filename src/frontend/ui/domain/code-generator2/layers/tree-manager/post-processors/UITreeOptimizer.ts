@@ -251,6 +251,14 @@ export class UITreeOptimizer {
 
       for (const propName of propsToMerge) {
         const commonStyle = propStyleMap.get(propName)!.values().next().value!;
+
+        // base와 다른 CSS 속성이 있으면 실제 override이므로 병합하지 않음
+        // (variant 값이 모두 같더라도 기본 상태와 다르면 의미 있는 조건부 스타일)
+        const differsFromBase = Object.entries(commonStyle).some(
+          ([key, val]) => !(key in node.styles.base) || node.styles.base[key] !== val
+        );
+        if (differsFromBase) continue;
+
         Object.assign(node.styles.base, commonStyle);
 
         const seen = new Set<string>();

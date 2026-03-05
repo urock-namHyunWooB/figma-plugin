@@ -54,7 +54,7 @@ export class EmotionStrategy implements IStyleStrategy {
     const pseudoCode = this.generatePseudoCode(style.base, style.pseudo);
 
     // Step 3: dynamic 스타일 생성 (variant별 조건부 스타일)
-    const dynamicCode = this.generateDynamicCode(variableName, style.dynamic);
+    const dynamicCode = this.generateDynamicCode(variableName, style.dynamic, style.base);
 
     // Step 4: 결과 조합
     return this.combineResults(variableName, baseCode, pseudoCode, dynamicCode);
@@ -108,14 +108,15 @@ export class EmotionStrategy implements IStyleStrategy {
 
   private generateDynamicCode(
     baseVarName: string,
-    dynamic?: Array<{ condition: ConditionNode; style: Record<string, string | number> }>
+    dynamic?: Array<{ condition: ConditionNode; style: Record<string, string | number> }>,
+    base?: Record<string, string | number>
   ): { code: string; hasContent: boolean } {
     if (!dynamic || dynamic.length === 0) {
       return { code: "", hasContent: false };
     }
 
     // variant prop별로 그룹화
-    const groups = this.groupByVariantProp(dynamic);
+    const groups = this.groupByVariantProp(dynamic, base);
     if (groups.size === 0) return { code: "", hasContent: false };
 
     // 각 그룹을 코드로 변환
@@ -173,9 +174,10 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
   }
 
   private groupByVariantProp(
-    dynamic: Array<{ condition: ConditionNode; style: Record<string, string | number> }>
+    dynamic: Array<{ condition: ConditionNode; style: Record<string, string | number> }>,
+    base?: Record<string, string | number>
   ): Map<string, Map<string, Record<string, string | number>>> {
-    return DynamicStyleDecomposer.decompose(dynamic);
+    return DynamicStyleDecomposer.decompose(dynamic, base);
   }
 
   private buildVariantEntries(

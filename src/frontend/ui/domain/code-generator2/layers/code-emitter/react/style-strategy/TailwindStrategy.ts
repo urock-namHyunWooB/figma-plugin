@@ -243,7 +243,7 @@ export class TailwindStrategy implements IStyleStrategy {
     }
 
     // variant prop별로 그룹화 (CSS 속성별 소유권 분석)
-    const variantGroups = DynamicStyleDecomposer.decompose(style.dynamic);
+    const variantGroups = DynamicStyleDecomposer.decompose(style.dynamic, style.base);
 
     if (variantGroups.size === 0) {
       return { code: "", hasContent: false };

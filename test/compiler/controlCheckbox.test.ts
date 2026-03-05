@@ -7,9 +7,9 @@ import path from "path";
  * Controlcheckbox.json 컴파일 테스트
  *
  * 설계 원칙:
- * - 외부 인터페이스: checked (boolean) + indeterminate (boolean) — React 표준
- * - state는 내부 파생 변수: checked ? "Checked" : indeterminate ? "Indeterminate" : "Unchecked"
- * - 스타일은 내부 state 변수 기반 stateStyles?.[state] 패턴으로 통합
+ * - 외부 인터페이스: checked?: boolean | "indeterminate" — Radix UI 패턴
+ * - onCheckedChange?: (checked: boolean | "indeterminate") => void
+ * - checked 값에 따라 체크/인디터미네이트 아이콘 조건부 렌더링
  */
 describe("Controlcheckbox 컴파일 테스트", () => {
   const fixturePath = path.join(
@@ -35,29 +35,19 @@ describe("Controlcheckbox 컴파일 테스트", () => {
   });
 
   describe("Props Interface", () => {
-    it("checked?: boolean 타입으로 정의되어야 한다", async () => {
+    it('checked?: boolean | "indeterminate" 타입으로 정의되어야 한다', async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/checked\?:\s*boolean/);
+      expect(code).toMatch(/checked\?:\s*boolean\s*\|\s*"indeterminate"/);
     });
 
-    it("indeterminate?: boolean 타입으로 정의되어야 한다", async () => {
+    it("onCheckedChange prop이 checked 파라미터 콜백으로 정의되어야 한다", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/indeterminate\?:\s*boolean/);
-    });
-
-    it("onChange prop이 boolean 콜백으로 정의되어야 한다", async () => {
-      const code = await getCompiledCode();
-      expect(code).toMatch(/onChange\?:\s*\(.*boolean.*\)\s*=>/);
+      expect(code).toMatch(/onCheckedChange\?:\s*\(checked:.*\)\s*=>/);
     });
 
     it("size?: 'Small' | 'Normal' 타입으로 정의되어야 한다", async () => {
       const code = await getCompiledCode();
       expect(code).toMatch(/size\?:.*"Small".*"Normal"|size\?:.*"Normal".*"Small"/);
-    });
-
-    it("tight?: boolean 타입으로 정의되어야 한다", async () => {
-      const code = await getCompiledCode();
-      expect(code).toMatch(/tight\?:\s*boolean/);
     });
 
     it("disable?: boolean 타입으로 정의되어야 한다", async () => {
@@ -67,58 +57,55 @@ describe("Controlcheckbox 컴파일 테스트", () => {
 
     it("state가 public props interface에 없어야 한다 (내부 파생 변수)", async () => {
       const code = await getCompiledCode();
-      // interface 블록 안에 state?: 가 없어야 함
       const interfaceMatch = code.match(/interface ControlcheckboxProps\s*\{([^}]+)\}/s);
       expect(interfaceMatch).toBeTruthy();
       const interfaceBody = interfaceMatch![1];
       expect(interfaceBody).not.toMatch(/\bstate\?:/);
     });
-  });
 
-  describe("Destructuring 기본값", () => {
-    it("checked 기본값이 false이어야 한다", async () => {
+    it("type prop이 없어야 한다 (checked로 통합)", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/checked\s*=\s*false/);
-    });
-
-    it("indeterminate 기본값이 false이어야 한다", async () => {
-      const code = await getCompiledCode();
-      expect(code).toMatch(/indeterminate\s*=\s*false/);
-    });
-
-    it("size 기본값이 'Normal'이어야 한다", async () => {
-      const code = await getCompiledCode();
-      expect(code).toMatch(/size\s*=\s*["']Normal["']/);
-    });
-
-    it("disable 기본값이 false이어야 한다", async () => {
-      const code = await getCompiledCode();
-      expect(code).toMatch(/disable\s*=\s*false/);
+      const interfaceMatch = code.match(/interface ControlcheckboxProps\s*\{([^}]+)\}/s);
+      expect(interfaceMatch).toBeTruthy();
+      const interfaceBody = interfaceMatch![1];
+      expect(interfaceBody).not.toMatch(/\btype\?:/);
     });
   });
 
   describe("내부 state 파생 없음", () => {
-    it("state 파생 변수가 없어야 한다 (checked/indeterminate로 직접 분기)", async () => {
+    it("state 파생 변수가 없어야 한다", async () => {
       const code = await getCompiledCode();
-      // const state = ... 가 없어야 함
       expect(code).not.toMatch(/const\s+state\s*=/);
     });
   });
 
   describe("JSX 바인딩", () => {
-    it("checked prop으로 체크 아이콘 조건부 렌더링이 되어야 한다", async () => {
+    it("checked === true 조건으로 체크 아이콘이 렌더링되어야 한다", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/\bchecked\b\s*&&/);
+      expect(code).toMatch(/checked\s*===\s*true\s*&&/);
     });
 
-    it("indeterminate prop으로 indeterminate 아이콘 조건부 렌더링이 되어야 한다", async () => {
+    it('checked === "indeterminate" 조건으로 indeterminate 아이콘이 렌더링되어야 한다', async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/\bindeterminate\b\s*&&/);
+      expect(code).toMatch(/checked\s*===\s*["']indeterminate['"]\s*&&/);
     });
 
-    it("disable 시 onChange가 호출되지 않아야 한다 (disabled 처리)", async () => {
+    it("disable 시 disabled 속성이 바인딩되어야 한다", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/disabled=\{disable\}|disable\s*&&.*onChange|onClick.*disable/s);
+      expect(code).toMatch(/disabled=\{disable\}/);
+    });
+  });
+
+  describe("클릭 인터랙션", () => {
+    it("onClick에서 onCheckedChange가 호출되어야 한다", async () => {
+      const code = await getCompiledCode();
+      expect(code).toMatch(/onClick/);
+      expect(code).toMatch(/onCheckedChange\?\./);
+    });
+
+    it("클릭 시 !checked를 전달해야 한다", async () => {
+      const code = await getCompiledCode();
+      expect(code).toMatch(/onCheckedChange\?\.\(!checked\)/);
     });
   });
 
@@ -128,22 +115,22 @@ describe("Controlcheckbox 컴파일 테스트", () => {
       expect(code).not.toMatch(/&:checked/);
     });
 
-    it("checked 상태의 스타일이 checkedStyles 맵으로 관리되어야 한다", async () => {
+    it("stateStyles 맵이 없어야 한다", async () => {
       const code = await getCompiledCode();
-      // Box의 border/background 변경은 CSS 기반 (JSX 조건부 렌더링으로는 처리 불가)
-      // stateStyles가 아닌 checked boolean prop 기반 checkedStyles 맵 사용
       expect(code).not.toMatch(/stateStyles/);
     });
 
-    it("state별 시각 차이는 boolean prop 조건부 렌더링으로 처리되어야 한다 (CSS 아닌 JSX 분기)", async () => {
+    it("checkboxBoxCss_checkedStyles가 생성되어야 한다 (조건부 스타일)", async () => {
       const code = await getCompiledCode();
-      // checked/indeterminate boolean prop으로 직접 조건부 렌더링
-      expect(code).toMatch(/\bchecked\b\s*&&/);
-      expect(code).toMatch(/\bindeterminate\b\s*&&/);
-      // state 파생 변수가 없어야 함
-      expect(code).not.toMatch(/const\s+state\s*=/);
-      // stateStyles 맵은 불필요
-      expect(code).not.toMatch(/stateStyles/);
+      expect(code).toMatch(/checkedStyles/);
+    });
+
+    it("기본 상태 border가 파란색이 아니어야 한다", async () => {
+      const code = await getCompiledCode();
+      // checkboxBoxCss base에 Primary-Normal(파란색)이 없어야 함
+      const boxCssMatch = code.match(/const checkboxBoxCss = css`([^`]+)`/);
+      expect(boxCssMatch).toBeTruthy();
+      expect(boxCssMatch![1]).not.toMatch(/Primary-Normal/);
     });
   });
 });

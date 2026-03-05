@@ -72,8 +72,13 @@ ${propLines.join("\n")}
         return options || "string";
       }
 
-      case "boolean":
+      case "boolean": {
+        if (prop.extraValues && prop.extraValues.length > 0) {
+          const extras = prop.extraValues.map((v) => `"${v}"`).join(" | ");
+          return `boolean | ${extras}`;
+        }
         return "boolean";
+      }
 
       case "string":
         return "string";

@@ -1,40 +1,48 @@
 /**
  * rewritePropConditions
  *
- * 제거된 variant prop의 조건 참조를 boolean prop으로 치환하는 범용 유틸리티
+ * 제거된 variant prop의 조건 참조를 대체 ConditionNode로 치환하는 범용 유틸리티
  *
  * 사용 예:
- *   // "state" prop 제거 후, Checked→checked / Indeterminate→indeterminate 로 치환
- *   rewritePropConditions(tree, "state", { Checked: "checked", Indeterminate: "indeterminate" });
+ *   // "state" prop 제거 후, Checked→eq(type,"checked") / Indeterminate→eq(type,"indeterminate") 로 치환
+ *   rewritePropConditions(tree, "state", {
+ *     Checked: { type: "eq", prop: "type", value: "checked" },
+ *     Indeterminate: { type: "eq", prop: "type", value: "indeterminate" },
+ *   });
  *
- * valueMap에 없는 값(예: "Unchecked")은 기본 상태로 간주 → 조건 제거
+ *   // boolean prop으로 치환하는 경우
+ *   rewritePropConditions(tree, "state", {
+ *     Checked: { type: "truthy", prop: "checked" },
+ *   });
+ *
+ * conditionMap에 없는 값(예: "Unchecked")은 기본 상태로 간주 → 조건 제거
  */
 
 import type { InternalNode, ConditionNode } from "../../../../types/types";
 
 /**
- * 트리 전체의 visibleCondition에서 removedProp 참조를 boolean prop으로 치환
+ * 트리 전체의 visibleCondition에서 removedProp 참조를 대체 ConditionNode로 치환
  *
  * @param tree - InternalNode 트리 루트
  * @param removedProp - 제거된 prop 이름 (예: "state")
- * @param valueMap - variant 값 → 대체 boolean prop 이름 매핑
- *                   매핑에 없는 값은 기본 상태로 간주하여 조건 제거
+ * @param conditionMap - variant 값 → 대체 ConditionNode 매핑
+ *                       매핑에 없는 값은 기본 상태로 간주하여 조건 제거
  */
 export function rewritePropConditions(
   tree: InternalNode,
   removedProp: string,
-  valueMap: Record<string, string>
+  conditionMap: Record<string, ConditionNode>
 ): void {
-  rewriteNode(tree, removedProp, valueMap);
+  rewriteNode(tree, removedProp, conditionMap);
 }
 
 function rewriteNode(
   node: InternalNode,
   removedProp: string,
-  valueMap: Record<string, string>
+  conditionMap: Record<string, ConditionNode>
 ): void {
   if (node.visibleCondition) {
-    const rewritten = rewriteCondition(node.visibleCondition, removedProp, valueMap);
+    const rewritten = rewriteCondition(node.visibleCondition, removedProp, conditionMap);
     if (rewritten) {
       node.visibleCondition = rewritten;
     } else {
@@ -43,33 +51,30 @@ function rewriteNode(
   }
 
   for (const child of node.children || []) {
-    rewriteNode(child, removedProp, valueMap);
+    rewriteNode(child, removedProp, conditionMap);
   }
 }
 
 function rewriteCondition(
   cond: ConditionNode,
   removedProp: string,
-  valueMap: Record<string, string>
+  conditionMap: Record<string, ConditionNode>
 ): ConditionNode | undefined {
-  // prop === "Value" → truthy(boolProp) or 제거
+  // prop === "Value" → conditionMap[value] or 제거
   if (cond.type === "eq" && cond.prop === removedProp) {
-    const boolProp = valueMap[cond.value as string];
-    return boolProp ? { type: "truthy", prop: boolProp } : undefined;
+    return conditionMap[cond.value as string] ?? undefined;
   }
 
-  // prop !== "Value" → not(truthy(boolProp)) or 유지
+  // prop !== "Value" → not(conditionMap[value]) or 유지
   if (cond.type === "neq" && cond.prop === removedProp) {
-    const boolProp = valueMap[cond.value as string];
-    return boolProp
-      ? { type: "not", condition: { type: "truthy", prop: boolProp } }
-      : undefined;
+    const targetCond = conditionMap[cond.value as string];
+    return targetCond ? { type: "not", condition: targetCond } : undefined;
   }
 
   // and / or: 자식 재귀 치환
   if (cond.type === "and" || cond.type === "or") {
     const rewritten = cond.conditions
-      .map((c) => rewriteCondition(c, removedProp, valueMap))
+      .map((c) => rewriteCondition(c, removedProp, conditionMap))
       .filter((c): c is ConditionNode => c !== undefined);
     if (rewritten.length === 0) return undefined;
     if (rewritten.length === 1) return rewritten[0];
@@ -78,7 +83,7 @@ function rewriteCondition(
 
   // not: 내부 재귀
   if (cond.type === "not") {
-    const inner = rewriteCondition(cond.condition, removedProp, valueMap);
+    const inner = rewriteCondition(cond.condition, removedProp, conditionMap);
     if (!inner) return undefined;
     return { type: "not", condition: inner };
   }
@@ -113,33 +118,33 @@ interface ParsedStateEntry {
 }
 
 /**
- * 트리 전체의 styles.dynamic에서 removedProp 참조를 boolean prop으로 치환
+ * 트리 전체의 styles.dynamic에서 removedProp 참조를 대체 ConditionNode로 치환
  */
 export function rewriteStateDynamicStyles(
   tree: InternalNode,
   removedProp: string,
-  valueMap: Record<string, string>
+  conditionMap: Record<string, ConditionNode>
 ): void {
-  rewriteDynamicWalk(tree, removedProp, valueMap);
+  rewriteDynamicWalk(tree, removedProp, conditionMap);
 }
 
 function rewriteDynamicWalk(
   node: InternalNode,
   removedProp: string,
-  valueMap: Record<string, string>
+  conditionMap: Record<string, ConditionNode>
 ): void {
   if (node.styles?.dynamic && node.styles.dynamic.length > 0) {
-    rewriteDynamic(node, removedProp, valueMap);
+    rewriteDynamic(node, removedProp, conditionMap);
   }
   for (const child of node.children || []) {
-    rewriteDynamicWalk(child, removedProp, valueMap);
+    rewriteDynamicWalk(child, removedProp, conditionMap);
   }
 }
 
 function rewriteDynamic(
   node: InternalNode,
   removedProp: string,
-  valueMap: Record<string, string>
+  conditionMap: Record<string, ConditionNode>
 ): void {
   const dynamic = node.styles!.dynamic;
 
@@ -175,40 +180,43 @@ function rewriteDynamic(
   // 3. 그룹별 처리
   const baseAdditions: Record<string, string | number> = {};
   const nonStateVaryingEntries: DynEntry[] = [];
-  // boolProp → 그룹별 { style, nonStateCondition } 수집
-  const truthyCollector = new Map<
+  // conditionKey → { condition, items } 수집
+  const conditionCollector = new Map<
     string,
-    Array<{ style: Record<string, string | number>; nonStateCondition: ConditionNode | null }>
+    {
+      condition: ConditionNode;
+      items: Array<{ style: Record<string, string | number>; nonStateCondition: ConditionNode | null }>;
+    }
   >();
 
   for (const group of groups.values()) {
-    processStateGroup(group, valueMap, baseAdditions, nonStateVaryingEntries, truthyCollector);
+    processStateGroup(group, conditionMap, baseAdditions, nonStateVaryingEntries, conditionCollector);
   }
 
-  // 4. truthy 엔트리 생성 (그룹 간 일관성 → 단일 엔트리, 아니면 비-state 조건 결합)
-  const truthyEntries: DynEntry[] = [];
-  for (const [boolProp, collected] of truthyCollector) {
+  // 4. 조건부 엔트리 생성 (그룹 간 일관성 → 단일 엔트리, 아니면 비-state 조건 결합)
+  const condEntries: DynEntry[] = [];
+  for (const [, { condition: targetCond, items: collected }] of conditionCollector) {
     const firstStr = JSON.stringify(collected[0].style);
     const allConsistent = collected.every((c) => JSON.stringify(c.style) === firstStr);
 
     if (allConsistent && Object.keys(collected[0].style).length > 0) {
-      truthyEntries.push({
-        condition: { type: "truthy", prop: boolProp },
+      condEntries.push({
+        condition: targetCond,
         style: collected[0].style,
       });
     } else {
       for (const c of collected) {
         if (Object.keys(c.style).length === 0) continue;
         const cond: ConditionNode = c.nonStateCondition
-          ? { type: "and", conditions: [{ type: "truthy", prop: boolProp }, c.nonStateCondition] }
-          : { type: "truthy", prop: boolProp };
-        truthyEntries.push({ condition: cond, style: c.style });
+          ? { type: "and", conditions: [targetCond, c.nonStateCondition] }
+          : targetCond;
+        condEntries.push({ condition: cond, style: c.style });
       }
     }
   }
 
   // 5. dynamic 교체 + base 병합
-  node.styles!.dynamic = [...otherEntries, ...nonStateVaryingEntries, ...truthyEntries];
+  node.styles!.dynamic = [...otherEntries, ...nonStateVaryingEntries, ...condEntries];
 
   if (Object.keys(baseAdditions).length > 0) {
     node.styles!.base = { ...node.styles!.base, ...baseAdditions };
@@ -217,25 +225,31 @@ function rewriteDynamic(
 
 function processStateGroup(
   group: ParsedStateEntry[],
-  valueMap: Record<string, string>,
+  conditionMap: Record<string, ConditionNode>,
   baseAdditions: Record<string, string | number>,
   nonStateVaryingEntries: DynEntry[],
-  truthyCollector: Map<
+  conditionCollector: Map<
     string,
-    Array<{ style: Record<string, string | number>; nonStateCondition: ConditionNode | null }>
+    {
+      condition: ConditionNode;
+      items: Array<{ style: Record<string, string | number>; nonStateCondition: ConditionNode | null }>;
+    }
   >
 ): void {
-  // a. default 찾기 (valueMap에 없는 값 = 기본 상태)
-  const defaultEntry = group.find((e) => !(e.stateValue in valueMap));
-  const nonDefaultEntries = group.filter((e) => e.stateValue in valueMap);
+  // a. default 찾기 (conditionMap에 없는 값 = 기본 상태)
+  const defaultEntry = group.find((e) => !(e.stateValue in conditionMap));
+  const nonDefaultEntries = group.filter((e) => e.stateValue in conditionMap);
 
   if (!defaultEntry) {
-    // default 없음 → 모든 엔트리를 truthy로 변환
+    // default 없음 → 모든 엔트리를 대체 조건으로 변환
     for (const entry of group) {
-      const boolProp = valueMap[entry.stateValue];
-      if (!boolProp) continue;
-      if (!truthyCollector.has(boolProp)) truthyCollector.set(boolProp, []);
-      truthyCollector.get(boolProp)!.push({
+      const targetCond = conditionMap[entry.stateValue];
+      if (!targetCond) continue;
+      const condKey = JSON.stringify(targetCond);
+      if (!conditionCollector.has(condKey)) {
+        conditionCollector.set(condKey, { condition: targetCond, items: [] });
+      }
+      conditionCollector.get(condKey)!.items.push({
         style: entry.style,
         nonStateCondition: entry.nonStateCondition,
       });
@@ -265,10 +279,10 @@ function processStateGroup(
     }
   }
 
-  // d. non-default → truthy 수집 (state-varying CSS만)
+  // d. non-default → 대체 조건 수집 (state-varying CSS만)
   for (const nd of nonDefaultEntries) {
-    const boolProp = valueMap[nd.stateValue];
-    if (!boolProp) continue;
+    const targetCond = conditionMap[nd.stateValue];
+    if (!targetCond) continue;
 
     const style: Record<string, string | number> = {};
     for (const key of stateVaryingKeys) {
@@ -277,8 +291,11 @@ function processStateGroup(
       }
     }
 
-    if (!truthyCollector.has(boolProp)) truthyCollector.set(boolProp, []);
-    truthyCollector.get(boolProp)!.push({
+    const condKey = JSON.stringify(targetCond);
+    if (!conditionCollector.has(condKey)) {
+      conditionCollector.set(condKey, { condition: targetCond, items: [] });
+    }
+    conditionCollector.get(condKey)!.items.push({
       style,
       nonStateCondition: nd.nonStateCondition,
     });

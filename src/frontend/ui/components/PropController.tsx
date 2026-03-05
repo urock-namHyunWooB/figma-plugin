@@ -155,7 +155,28 @@ export function PropController({
           />
         );
 
-      case "BOOLEAN":
+      case "BOOLEAN": {
+        // extraValues가 있으면 tri-state select (예: true / false / "indeterminate")
+        if (prop.extraValues && prop.extraValues.length > 0) {
+          return (
+            <select
+              css={selectStyle}
+              value={String(value ?? false)}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === "true") onPropChange(prop.name, true);
+                else if (v === "false") onPropChange(prop.name, false);
+                else onPropChange(prop.name, v);
+              }}
+            >
+              <option value="false">false</option>
+              <option value="true">true</option>
+              {prop.extraValues.map((ev) => (
+                <option key={ev} value={ev}>{ev}</option>
+              ))}
+            </select>
+          );
+        }
         return (
           <div css={checkboxContainerStyle}>
             <input
@@ -169,6 +190,7 @@ export function PropController({
             </span>
           </div>
         );
+      }
 
       case "SLOT": {
         const isEnabled = slotMockupEnabled[prop.name] ?? true;
