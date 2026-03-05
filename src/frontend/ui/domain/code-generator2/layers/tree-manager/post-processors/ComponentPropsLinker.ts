@@ -170,7 +170,9 @@ export class ComponentPropsLinker {
         }
         if (override.propName.endsWith("Bg")) {
           if (!node.bindings.style) node.bindings.style = {};
-          node.bindings.style.background = { prop: override.propName };
+          // vector 노드(VECTOR, BOOLEAN_OPERATION 등)는 background가 아닌 fill로 바인딩
+          const styleKey = node.type === "vector" ? "fill" : "background";
+          node.bindings.style[styleKey] = { prop: override.propName };
         }
         if (override.propName.startsWith("show")) {
           node.visibleCondition = {

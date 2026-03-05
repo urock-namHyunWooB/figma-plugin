@@ -45,7 +45,10 @@ describe("Controlcheckbox 브라우저 렌더링 검증", () => {
     const divs = button.querySelectorAll("div");
     for (const div of divs) {
       const style = getComputedStyle(div);
-      if (style.borderRadius && parseFloat(style.borderRadius) > 0) {
+      const radius = parseFloat(style.borderRadius);
+      // interaction wrapper는 border-radius: 1000px (pill shape) → 제외
+      // checkbox box는 border-radius: ~5px → 포함
+      if (radius > 0 && radius < 100) {
         return div as HTMLElement;
       }
     }

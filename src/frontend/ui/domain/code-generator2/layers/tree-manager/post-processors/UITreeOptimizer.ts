@@ -47,11 +47,38 @@ export class UITreeOptimizer {
     if (!root.styles) return;
 
     const base = root.styles.base;
+    const originalWidth = base.width;
+    const originalHeight = base.height;
+
     if (base.width && typeof base.width === "string" && base.width.endsWith("px")) {
       base.width = "100%";
     }
     if (base.height && typeof base.height === "string" && base.height.endsWith("px")) {
       base.height = "100%";
+    }
+
+    // 루트와 동일한 크기의 직접 자식도 100%로 변환하고,
+    // 그 자식의 px 기반 위치/크기를 원래 크기 대비 퍼센트로 변환
+    // (예: 아이콘 컴포넌트의 Shape 레이어가 루트와 같은 24×24px인 경우)
+    if ("children" in root && root.children && originalWidth && originalHeight) {
+      const parentW = parseFloat(originalWidth as string);
+      const parentH = parseFloat(originalHeight as string);
+
+      for (const child of root.children) {
+        if (!child.styles?.base) continue;
+        const childBase = child.styles.base;
+        if (childBase.width === originalWidth && childBase.height === originalHeight) {
+          childBase.width = "100%";
+          childBase.height = "100%";
+
+          // 손자 노드(grandchild)의 px 위치/크기를 퍼센트로 변환
+          if ("children" in child && child.children && !isNaN(parentW) && !isNaN(parentH)) {
+            for (const grandchild of child.children) {
+              this.convertPxToPercent(grandchild, parentW, parentH);
+            }
+          }
+        }
+      }
     }
 
     if (base.background) {
@@ -80,6 +107,29 @@ export class UITreeOptimizer {
         }
       }
     }
+  }
+
+  // ─── convertPxToPercent ───────────────────────────────────
+
+  /**
+   * 노드의 px 기반 position/size를 부모 크기 대비 퍼센트로 변환.
+   * 24×24 좌표계로 설계된 아이콘의 자식 요소들이 컨테이너 크기에 맞게 스케일되도록 한다.
+   */
+  private convertPxToPercent(node: UINode, parentW: number, parentH: number): void {
+    if (!node.styles?.base) return;
+    const base = node.styles.base;
+
+    const toPct = (val: unknown, ref: number): string | undefined => {
+      if (typeof val !== "string" || !val.endsWith("px")) return undefined;
+      const num = parseFloat(val);
+      if (isNaN(num)) return undefined;
+      return `${parseFloat(((num / ref) * 100).toFixed(2))}%`;
+    };
+
+    if (base.left !== undefined) base.left = toPct(base.left, parentW) ?? base.left;
+    if (base.top !== undefined) base.top = toPct(base.top, parentH) ?? base.top;
+    if (base.width !== undefined) base.width = toPct(base.width, parentW) ?? base.width;
+    if (base.height !== undefined) base.height = toPct(base.height, parentH) ?? base.height;
   }
 
   // ─── pruneUnusedProps ─────────────────────────────────────

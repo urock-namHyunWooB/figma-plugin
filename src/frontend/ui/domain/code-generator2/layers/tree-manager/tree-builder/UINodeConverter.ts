@@ -143,6 +143,7 @@ class UINodeConverter {
       case "LINE":
       case "POLYGON":
       case "STAR":
+      case "BOOLEAN_OPERATION":
         return "vector";
       default:
         return "container";
