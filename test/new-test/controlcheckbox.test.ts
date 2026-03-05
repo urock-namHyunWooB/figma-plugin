@@ -11,7 +11,7 @@ import FigmaCodeGenerator from "@code-generator2";
 describe("Controlcheckbox", () => {
   const fixturePath = path.join(
     process.cwd(),
-    "test/fixtures/failing/Controlcheckbox.json"
+    "test/fixtures/any/Controlcheckbox.json"
   );
 
   const compileFixture = async () => {

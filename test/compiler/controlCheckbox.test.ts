@@ -14,7 +14,7 @@ import path from "path";
 describe("Controlcheckbox 컴파일 테스트", () => {
   const fixturePath = path.join(
     __dirname,
-    "../fixtures/failing/Controlcheckbox.json"
+    "../fixtures/any/Controlcheckbox.json"
   );
 
   let result: string | undefined;

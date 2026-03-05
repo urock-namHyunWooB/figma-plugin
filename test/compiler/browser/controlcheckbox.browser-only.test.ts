@@ -15,7 +15,7 @@ import * as React from "react";
 import FigmaCodeGenerator from "@code-generator2";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
 
-import controlcheckboxMockData from "../../fixtures/failing/Controlcheckbox.json";
+import controlcheckboxMockData from "../../fixtures/any/Controlcheckbox.json";
 
 describe("Controlcheckbox 브라우저 렌더링 검증", () => {
   let Component: React.ComponentType<any>;
