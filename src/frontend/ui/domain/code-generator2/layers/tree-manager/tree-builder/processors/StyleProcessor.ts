@@ -191,8 +191,8 @@ export class StyleProcessor {
     parent: InternalNode,
     _child: InternalNode
   ): boolean {
-    // 부모가 FRAME 또는 GROUP이어야 함
-    if (parent.type !== "FRAME" && parent.type !== "GROUP") {
+    // 부모가 FRAME, GROUP, 또는 COMPONENT이어야 함
+    if (parent.type !== "FRAME" && parent.type !== "GROUP" && parent.type !== "COMPONENT") {
       return false;
     }
 

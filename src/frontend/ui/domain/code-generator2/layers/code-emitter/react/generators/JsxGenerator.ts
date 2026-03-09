@@ -478,7 +478,9 @@ ${indentStr})}` : jsx;
     const attrs = this.generateAttributes(node, styleStrategy, options);
 
     // bindings에서 텍스트 바인딩 확인
-    const textBinding = node.bindings?.content;
+    // textContent: CSS 유지하면서 텍스트만 교체 (slot wrapper 없이 직접 렌더링)
+    // content: slot wrapper로 렌더링 (CSS 소실)
+    const textBinding = node.bindings?.textContent ?? node.bindings?.content;
 
     let textContent: string;
     if (textBinding && "prop" in textBinding) {
@@ -555,16 +557,7 @@ ${indentStr})}` : jsx;
       }
     }
 
-    // bindings.attrs 처리 (prop 바인딩: active={active}, disable={disable} 등)
-    if (node.bindings?.attrs) {
-      for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
-        if ("prop" in source) {
-          componentAttrs += ` ${attrName}={${source.prop}}`;
-        }
-      }
-    }
-
-    // bindings.attrs에서 이벤트/속성 바인딩 처리
+    // bindings.attrs 처리 (prop 바인딩: active={active}, expr 바인딩 등)
     if (node.bindings?.attrs) {
       for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
         if ("prop" in source) {

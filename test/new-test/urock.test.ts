@@ -211,3 +211,69 @@ describe("Chips", () => {
     expect(body).toMatch(/background/);
   });
 });
+
+/**
+ * Badgesicon.json
+ * 레이아웃 잘 렌더링 되어야 한다.
+ * props에 숫자를 넣어서 표시 할 수 있어야 한다.
+ */
+describe("Badgesicon", () => {
+  const fixturePath = path.join(
+    process.cwd(),
+    "test/fixtures/failing/Badgesicon.json"
+  );
+
+  const compileFixture = async () => {
+    const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
+    return (await compiler.compile()) as unknown as string;
+  };
+
+  it("레이아웃이 겹침(overlay)으로 렌더링되어야 한다", async () => {
+    const result = await compileFixture();
+
+    // 루트에 position: relative
+    expect(result).toMatch(/position:\s*relative/);
+
+    // 자식에 position: absolute + left/top
+    expect(result).toMatch(/position:\s*absolute/);
+    expect(result).toMatch(/left:\s*\d+px/);
+    expect(result).toMatch(/top:\s*\d+px/);
+  });
+
+  it("count prop이 string 타입으로 있어야 한다", async () => {
+    const result = await compileFixture();
+
+    expect(result).toMatch(/count\?:\s*string/);
+  });
+
+  it("count prop이 의존 컴포넌트에 바인딩으로 전달되어야 한다", async () => {
+    const result = await compileFixture();
+
+    // <Badges count={count} /> 형태 (리터럴이 아닌 바인딩)
+    expect(result).toMatch(/count=\{count\}/);
+  });
+
+  it("불필요한 color override prop이 노출되지 않아야 한다", async () => {
+    const result = await compileFixture();
+
+    // BadgesiconProps에 vectorBg, _12Bg 없어야 함
+    const propsMatch = result.match(
+      /export interface BadgesiconProps\s*\{([^}]*)\}/s
+    );
+    expect(propsMatch).toBeTruthy();
+    const propsBody = propsMatch![1];
+    expect(propsBody).not.toMatch(/vectorBg/);
+    expect(propsBody).not.toMatch(/_12Bg/);
+  });
+
+  it("count prop이 중복 전달되지 않아야 한다", async () => {
+    const result = await compileFixture();
+
+    // <Badges ... /> 호출 부분에서 count가 1번만 나와야 함
+    const badgesCallMatch = result.match(/<Badges[^/]*\/>/);
+    expect(badgesCallMatch).toBeTruthy();
+    const countOccurrences = (badgesCallMatch![0].match(/count=/g) || []).length;
+    expect(countOccurrences).toBe(1);
+  });
+});

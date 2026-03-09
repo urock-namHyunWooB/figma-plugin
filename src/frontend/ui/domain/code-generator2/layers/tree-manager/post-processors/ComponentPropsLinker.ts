@@ -81,6 +81,20 @@ export class ComponentPropsLinker {
           Object.assign(node.bindings.attrs, attrsToAdd);
         }
       }
+
+      // overrideProps 중 mainProp과 이름이 같은 것 → bindings.attrs로 전환
+      // 리터럴 전달("12") 대신 prop 바인딩({count}) 으로 렌더링
+      const componentNode = node as any;
+      if (componentNode.overrideProps) {
+        for (const propName of Object.keys(componentNode.overrideProps)) {
+          if (mainPropNames.has(propName)) {
+            if (!node.bindings) node.bindings = {};
+            if (!node.bindings.attrs) node.bindings.attrs = {};
+            node.bindings.attrs[propName] = { prop: propName };
+            delete componentNode.overrideProps[propName];
+          }
+        }
+      }
     }
 
     if ("children" in node && node.children) {
@@ -165,7 +179,12 @@ export class ComponentPropsLinker {
       if (node.id === override.nodeId) {
         if (!node.bindings) node.bindings = {};
 
-        if (override.propName.endsWith("Text")) {
+        if (node.type === "text" && override.propType === "string") {
+          // TEXT 노드 + string 타입: textContent 바인딩 (CSS 유지하면서 텍스트만 교체)
+          // propName 규칙과 무관하게 text 노드면 항상 textContent 사용
+          node.bindings.textContent = { prop: override.propName };
+        } else if (override.propName.endsWith("Text")) {
+          // 비 TEXT 노드의 Text override: content 바인딩 (slot wrapper 렌더링)
           node.bindings.content = { prop: override.propName };
         }
         if (override.propName.endsWith("Bg")) {
