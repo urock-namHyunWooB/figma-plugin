@@ -21,8 +21,8 @@ import type {
   HeuristicContext,
   HeuristicResult,
 } from "./IHeuristic";
-import { rewritePropConditions, rewriteStateDynamicStyles } from "./rewritePropConditions";
-import { isCheckedProp, isDisableProp } from "./propPatterns";
+import { rewritePropConditions, rewriteStateDynamicStyles } from "../processors/utils/rewritePropConditions";
+import { isCheckedProp, isDisableProp } from "../processors/utils/propPatterns";
 
 export class RadioHeuristic implements IHeuristic {
   readonly name = "RadioHeuristic";

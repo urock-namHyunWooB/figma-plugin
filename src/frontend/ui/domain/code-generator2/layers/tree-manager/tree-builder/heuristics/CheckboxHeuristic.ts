@@ -25,8 +25,8 @@ import type {
   HeuristicContext,
   HeuristicResult,
 } from "./IHeuristic";
-import { rewritePropConditions, rewriteStateDynamicStyles } from "./rewritePropConditions";
-import { isDisableProp } from "./propPatterns";
+import { rewritePropConditions, rewriteStateDynamicStyles } from "../processors/utils/rewritePropConditions";
+import { isDisableProp } from "../processors/utils/propPatterns";
 
 /** Figma state variant 값 → 내부 상태 매핑 */
 const STATE_PATTERNS: Array<{

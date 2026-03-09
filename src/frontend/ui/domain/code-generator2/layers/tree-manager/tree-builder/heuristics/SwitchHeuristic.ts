@@ -19,7 +19,7 @@ import type {
   HeuristicContext,
   HeuristicResult,
 } from "./IHeuristic";
-import { isToggleProp, isDisableProp } from "./propPatterns";
+import { isToggleProp, isDisableProp } from "../processors/utils/propPatterns";
 
 export class SwitchHeuristic implements IHeuristic {
   readonly name = "SwitchHeuristic";
