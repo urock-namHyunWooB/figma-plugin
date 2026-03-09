@@ -220,7 +220,7 @@ describe("Chips", () => {
 describe("Badgesicon", () => {
   const fixturePath = path.join(
     process.cwd(),
-    "test/fixtures/failing/Badgesicon.json"
+    "test/fixtures/urock/Badgesicon.json"
   );
 
   const compileFixture = async () => {
