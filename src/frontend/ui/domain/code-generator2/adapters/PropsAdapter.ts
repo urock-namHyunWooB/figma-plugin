@@ -8,7 +8,7 @@
  * 이 어댑터가 DataManager를 통해 부족한 정보를 보완하여 변환한다.
  */
 
-import type { PropDefinition as InternalPropDefinition, SlotPropDefinition, FunctionPropDefinition, BooleanPropDefinition } from "../types/types";
+import type { PropDefinition as InternalPropDefinition, SlotPropDefinition, FunctionPropDefinition, BooleanPropDefinition, ArraySlotInfo } from "../types/types";
 import type { PropDefinition } from "../types/public";
 import type DataManager from "../layers/data-manager/DataManager";
 
@@ -25,14 +25,19 @@ const TYPE_MAP: Record<string, PropDefinition["type"]> = {
  */
 export function toPublicProps(
   internalProps: InternalPropDefinition[],
-  dataManager: DataManager
+  dataManager: DataManager,
+  arraySlots?: ArraySlotInfo[]
 ): PropDefinition[] {
-  return internalProps.map((prop) => toPublicProp(prop, dataManager));
+  const arraySlotMap = new Map(
+    (arraySlots || []).map((s) => [s.slotName, s])
+  );
+  return internalProps.map((prop) => toPublicProp(prop, dataManager, arraySlotMap));
 }
 
 function toPublicProp(
   prop: InternalPropDefinition,
-  dataManager: DataManager
+  dataManager: DataManager,
+  arraySlotMap: Map<string, ArraySlotInfo>
 ): PropDefinition {
   const result: PropDefinition = {
     name: prop.name,
@@ -67,6 +72,14 @@ function toPublicProp(
       width: bbox?.width,
       height: bbox?.height,
     };
+
+    // Array slot 정보 매핑
+    const arraySlot = arraySlotMap.get(prop.name);
+    if (arraySlot?.itemProps) {
+      result.arraySlotInfo = {
+        itemProps: arraySlot.itemProps,
+      };
+    }
   }
 
   return result;

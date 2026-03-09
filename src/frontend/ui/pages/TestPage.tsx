@@ -170,6 +170,22 @@ function createSlotMockup(prop: PropDefinition): React.ReactNode {
 }
 
 /**
+ * Array slot 기본 데이터 생성
+ */
+function createArraySlotDefault(
+  info: { itemProps: Array<{ name: string; type: string; defaultValue?: string }> },
+  count: number
+): any[] {
+  return Array.from({ length: count }, (_, i) => {
+    const item: Record<string, any> = {};
+    for (const p of info.itemProps) {
+      item[p.name] = p.defaultValue ?? `${p.name} ${i + 1}`;
+    }
+    return item;
+  });
+}
+
+/**
  * Props 정의에서 SLOT 타입의 mockup props 생성
  */
 function createSlotMockups(
@@ -278,8 +294,11 @@ export default function TestPage() {
         const initialValues: Record<string, any> = {};
         const initialSlotEnabled: Record<string, boolean> = {};
         props.forEach((prop) => {
-          if (prop.type === "SLOT") {
-            // 모든 SLOT에 대해 mockup 기본 활성화 (점선 박스 placeholder 표시)
+          if (prop.type === "SLOT" && prop.arraySlotInfo) {
+            // Array slot: 기본 3개 샘플 데이터 생성
+            initialValues[prop.name] = createArraySlotDefault(prop.arraySlotInfo, 3);
+          } else if (prop.type === "SLOT") {
+            // 단일 SLOT: mockup 기본 활성화 (점선 박스 placeholder 표시)
             initialSlotEnabled[prop.name] = true;
             initialValues[prop.name] = createSlotMockup(prop);
           } else {

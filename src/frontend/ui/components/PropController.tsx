@@ -115,6 +115,28 @@ const slotToggleStyle = css`
   color: #808080;
 `;
 
+const jsonInputStyle = css`
+  flex: 1;
+  padding: 8px 12px;
+  background: #2d2d2d;
+  border: 1px solid #404040;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: 12px;
+  font-family: "JetBrains Mono", monospace;
+  min-height: 32px;
+  resize: vertical;
+
+  &:hover {
+    border-color: #606060;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #0078d4;
+  }
+`;
+
 export function PropController({
   propDefinitions,
   propValues,
@@ -193,6 +215,30 @@ export function PropController({
       }
 
       case "SLOT": {
+        // Array slot: JSON 텍스트 입력 (Storybook 스타일)
+        if (prop.arraySlotInfo) {
+          const jsonStr = Array.isArray(value) ? JSON.stringify(value, null, 2) : "[]";
+          return (
+            <textarea
+              css={jsonInputStyle}
+              defaultValue={jsonStr}
+              rows={Math.min(Math.max(jsonStr.split("\n").length, 2), 8)}
+              onBlur={(e) => {
+                try {
+                  const parsed = JSON.parse(e.target.value);
+                  if (Array.isArray(parsed)) {
+                    onPropChange(prop.name, parsed);
+                  }
+                } catch {
+                  // JSON 파싱 실패 시 무시
+                }
+              }}
+              placeholder={`[{"${prop.arraySlotInfo.itemProps.map((p) => p.name).join('", "')}": ...}]`}
+            />
+          );
+        }
+
+        // 단일 slot: 기존 mockup 로직
         const isEnabled = slotMockupEnabled[prop.name] ?? true;
         const componentName = prop.slotInfo?.componentName || prop.name;
         return (

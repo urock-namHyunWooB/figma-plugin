@@ -130,6 +130,24 @@ class TreeBuilder {
       componentContext
     );
 
+    // 휴리스틱이 직접 생성한 arraySlots 병합 + props 추가
+    if (heuristicsResult.arraySlots?.length) {
+      const existingNames = new Set(props.map((p) => p.name));
+      for (const slot of heuristicsResult.arraySlots) {
+        if (!existingNames.has(slot.slotName)) {
+          props.push({
+            name: slot.slotName,
+            type: "slot",
+            required: false,
+            sourceKey: slot.slotName,
+            defaultValue: [],
+          });
+          existingNames.add(slot.slotName);
+        }
+        arraySlots.push(slot);
+      }
+    }
+
     // 최종 변환: InternalTree → UINode
     const root = this.nodeConverter.convert(tree, heuristicsResult.rootNodeType);
 
@@ -140,6 +158,9 @@ class TreeBuilder {
       arraySlots,
       ...(heuristicsResult.derivedVars?.length
         ? { derivedVars: heuristicsResult.derivedVars }
+        : {}),
+      ...(heuristicsResult.stateVars?.length
+        ? { stateVars: heuristicsResult.stateVars }
         : {}),
     };
   }

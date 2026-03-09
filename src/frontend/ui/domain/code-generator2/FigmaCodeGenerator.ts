@@ -133,7 +133,7 @@ class FigmaCodeGenerator {
    */
   getPropsDefinition(): PropDefinition[] {
     const uiTree = this.buildUITree().main;
-    return toPublicProps(uiTree.props, this.dataManager);
+    return toPublicProps(uiTree.props, this.dataManager, uiTree.arraySlots);
   }
 
   /**

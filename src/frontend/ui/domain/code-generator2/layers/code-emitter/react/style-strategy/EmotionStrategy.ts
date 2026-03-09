@@ -368,6 +368,8 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
   private objectToStyleString(obj: Record<string, string | number>): string {
     return Object.entries(obj)
       .map(([key, value]) => {
+        // __raw 키: 값을 그대로 출력 (중첩 선택자 등)
+        if (key === "__raw") return String(value);
         const cssKey = this.camelToKebab(key);
         const cssValue = typeof value === "number" ? `${value}px` : value;
         return `${cssKey}: ${cssValue};`;

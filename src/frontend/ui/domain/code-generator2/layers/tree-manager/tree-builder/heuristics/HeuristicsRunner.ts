@@ -29,6 +29,7 @@ import { CheckboxHeuristic } from "./CheckboxHeuristic";
 import { RadioHeuristic } from "./RadioHeuristic";
 import { ChipHeuristic } from "./ChipHeuristic";
 import { BadgeHeuristic } from "./BadgeHeuristic";
+import { DropdownHeuristic } from "./DropdownHeuristic";
 
 export class HeuristicsRunner {
   /** 매칭 임계점 */
@@ -40,6 +41,7 @@ export class HeuristicsRunner {
   /** 등록된 휴리스틱 목록 */
   private readonly heuristics: IHeuristic[] = [
     new SearchFieldHeuristic(), // SearchField를 먼저 (score 20, SwitchHeuristic의 10보다 높음)
+    new DropdownHeuristic(),    // Dropdown/Select (score 20, dropdown/select 이름 패턴)
     new CheckboxHeuristic(),    // Checkbox (score 20, checkbox 이름 패턴)
     new RadioHeuristic(),       // Radio (score 20, radio 이름 패턴)
     new BadgeHeuristic(),       // Badge notification (score 15, badge + 단일 컴포넌트)

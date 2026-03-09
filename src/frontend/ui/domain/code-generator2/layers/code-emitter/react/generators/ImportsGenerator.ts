@@ -15,8 +15,12 @@ export class ImportsGenerator {
   static generate(uiTree: UITree, styleStrategy: IStyleStrategy): string {
     const imports: string[] = [];
 
-    // 1. React import
-    imports.push('import React from "react";');
+    // 1. React import (stateVars 있으면 useState 포함)
+    if (uiTree.stateVars?.length) {
+      imports.push('import React, { useState } from "react";');
+    } else {
+      imports.push('import React from "react";');
+    }
 
     // 2. 스타일 전략 imports
     imports.push(...styleStrategy.getImports());

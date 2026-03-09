@@ -18,6 +18,8 @@ import type {
   ComponentType,
   InternalTree,
   PropDefinition,
+  ArraySlotInfo,
+  StateVar,
 } from "../../../../types/types";
 import type DataManager from "../../../data-manager/DataManager";
 
@@ -57,6 +59,10 @@ export interface HeuristicResult {
   rootNodeType?: "button" | "input" | "link";
   /** props destructuring 이후 삽입할 파생 변수 선언 */
   derivedVars?: Array<{ name: string; expression: string }>;
+  /** React useState 훅 선언 */
+  stateVars?: StateVar[];
+  /** 휴리스틱이 직접 생성한 array slots (SlotProcessor 이후 병합) */
+  arraySlots?: ArraySlotInfo[];
 }
 
 /**

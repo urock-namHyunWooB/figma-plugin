@@ -324,7 +324,8 @@ describe("Dropdowngeneric", () => {
 
   it("placeholder가 prop으로 렌더링되어야 한다 (하드코딩 X)", async () => {
     const result = await compileFixture();
-    expect(result).toMatch(/\{placeholder\}/);
+    // selectedValue || placeholder 표현식 또는 {placeholder} 직접 참조
+    expect(result).toMatch(/selectedValue\s*\|\|\s*placeholder|{placeholder}/);
   });
 
   // ── items prop ──
@@ -363,12 +364,99 @@ describe("Dropdowngeneric", () => {
     expect(result).toMatch(/\{open\s*&&/);
   });
 
+  // ── onChange 콜백 ──
+
+  it("onChange 콜백 prop이 있어야 한다", async () => {
+    const result = await compileFixture();
+    // onChange?: (value: string) => void
+    expect(result).toMatch(/onChange\?:\s*\(value:\s*string\)\s*=>\s*void/);
+  });
+
+  it("아이템 클릭 시 onChange가 호출되어야 한다", async () => {
+    const result = await compileFixture();
+    // onChange?.(item.content)
+    expect(result).toMatch(/onChange\?\.\(item\.content\)/);
+  });
+
+  // ── 선택 상태 관리 ──
+
+  it("selectedValue 내부 상태가 있어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/useState\(""\)/);
+    expect(result).toMatch(/selectedValue/);
+    expect(result).toMatch(/setSelectedValue/);
+  });
+
+  it("아이템 클릭 시 selectedValue가 업데이트되어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/setSelectedValue\(item\.content\)/);
+  });
+
+  it("아이템 클릭 시 리스트가 닫혀야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/setOpen\(false\)/);
+  });
+
+  it("선택된 값이 trigger에 표시되어야 한다 (placeholder 대체)", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/selectedValue\s*\|\|\s*placeholder/);
+  });
+
+  it("선택 후 텍스트 색상이 검정으로 변경되어야 한다", async () => {
+    const result = await compileFixture();
+    // selectedValue ? "var(--Color-text-03-high, ...)" : undefined
+    expect(result).toMatch(/selectedValue\s*\?\s*"var\(--Color-text-03-high/);
+  });
+
   // ── hover 스타일 ──
 
-  it("hover 시 스타일이 변경되어야 한다", async () => {
+  it("trigger에 hover border-color가 있어야 한다", async () => {
     const result = await compileFixture();
-    // :hover 또는 &:hover CSS pseudo-class
-    expect(result).toMatch(/&:hover|:hover/);
+    expect(result).toMatch(/&:hover\s*\{[^}]*border-color/);
+  });
+
+  it("리스트 아이템에 hover background가 있어야 한다", async () => {
+    const result = await compileFixture();
+    // 아이템 래퍼 CSS에 &:hover { background: ... } 존재
+    expect(result).toMatch(/cursor:\s*pointer[\s\S]*?&:hover\s*\{[^}]*background/);
+  });
+
+  it("hover에서 font-size가 변경되지 않아야 한다 (Size variant 오염 방지)", async () => {
+    const result = await compileFixture();
+    // &:hover { ... } 블록들에서 font-size가 없어야 함
+    const hoverBlocks = result.match(/&:hover\s*\{[^}]*\}/g) || [];
+    for (const block of hoverBlocks) {
+      expect(block).not.toMatch(/font-size/);
+    }
+  });
+
+  // ── 아이템 렌더링 품질 ──
+
+  it("아이템에 텍스트 색상이 적용되어야 한다", async () => {
+    const result = await compileFixture();
+    // 래퍼 CSS에 color: var(--Color-text-03-high, ...) 포함
+    expect(result).toMatch(/color:\s*var\(--Color-text-03-high/);
+  });
+
+  it("아이템에 padding이 적용되어야 한다", async () => {
+    const result = await compileFixture();
+    // 래퍼 CSS에 padding: 12px 20px 포함
+    expect(result).toMatch(/padding:\s*12px\s*20px/);
+  });
+
+  it("items.map에 Array.isArray 가드가 있어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/Array\.isArray\(items\)\s*&&\s*items\.map/);
+  });
+
+  // ── open 상태 gap ──
+
+  it("open 상태일 때 root gap이 8px로 변경되어야 한다", async () => {
+    const result = await compileFixture();
+    // openStyles가 정의되어야 함
+    expect(result).toMatch(/_openStyles/);
+    // JSX css 배열에서 openStyles가 참조되어야 함
+    expect(result).toMatch(/css=\{?\[.*_openStyles\?\.\[open\]/s);
   });
 
   // ── 불필요 prop 미노출 ──

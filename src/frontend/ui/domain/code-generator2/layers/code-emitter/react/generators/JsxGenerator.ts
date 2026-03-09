@@ -43,14 +43,20 @@ export class JsxGenerator {
       (uiTree.arraySlots || []).map((slot) => [slot.parentId, slot])
     );
 
-    // 컴포넌트에서 참조 가능한 변수 이름 수집 (props + 파생 변수)
+    // 컴포넌트에서 참조 가능한 변수 이름 수집 (props + 파생 변수 + state 변수)
     this.availableVarNames = new Set([
       ...uiTree.props.map((p) => p.name),
       ...(uiTree.derivedVars || []).map((dv) => dv.name),
+      ...(uiTree.stateVars || []).map((sv) => sv.name),
     ]);
 
     // Props destructuring (별도 줄에서 수행)
     const propsDestructuring = this.generatePropsDestructuring(uiTree);
+
+    // React useState 훅 선언 (props destructuring 직후)
+    const stateVarsCode = uiTree.stateVars?.length
+      ? uiTree.stateVars.map((sv) => `  const [${sv.name}, ${sv.setter}] = useState(${sv.initialValue});`).join("\n") + "\n"
+      : "";
 
     // 파생 변수 선언 (props destructuring 이후, return 이전)
     const derivedVarsCode = uiTree.derivedVars?.length
@@ -62,7 +68,7 @@ export class JsxGenerator {
 
     return `function ${componentName}(props: ${componentName}Props) {
   const ${propsDestructuring} = props;
-${derivedVarsCode}
+${stateVarsCode}${derivedVarsCode}
   return (
 ${jsxBody}
   );
@@ -262,16 +268,63 @@ export default ${componentName}`;
     // 외부 컴포넌트 이름 (refId에서 추출 또는 itemComponentName 사용)
     const componentName = arraySlot.itemComponentName || toComponentName(arrayItemNode.name);
 
-    // item props 매핑 (itemProps에서 prop 이름 목록 추출)
+    // item props 매핑 — "content"는 children으로, 나머지는 속성으로 전달
     const itemPropsMapping = arraySlot.itemProps || [];
+    const attrProps = itemPropsMapping.filter((p) => p.name !== "content");
+    const contentProp = itemPropsMapping.find((p) => p.name === "content");
 
-    // props 전달 문자열 생성
-    const propsStr = itemPropsMapping.length > 0
-      ? " " + itemPropsMapping.map((p) => `${p.name}={item.${p.name}}`).join(" ")
+    const propsStr = attrProps.length > 0
+      ? " " + attrProps.map((p) => `${p.name}={item.${p.name}}`).join(" ")
       : "";
 
-    return `${indentStr}{${arraySlot.slotName}.map((item, index) => (
-${indentStr}  <${componentName} key={index}${propsStr} />
+    // onItemClick 핸들러 (예: dropdown 아이템 선택)
+    const onClickStr = arraySlot.onItemClick
+      ? ` onClick={() => { ${arraySlot.onItemClick} }}`
+      : "";
+
+    // 래퍼 스타일 (첫 번째 아이템 노드에 스타일이 있으면 래퍼 div로 감싸기)
+    const wrapperStyle = arrayItemNode.styles;
+    const hasWrapper = wrapperStyle && Object.keys(wrapperStyle.base || {}).length > 0;
+
+    if (hasWrapper) {
+      // nodeStyleMap에서 래퍼 div의 CSS 변수명 조회 (StylesGenerator가 이미 생성)
+      const wrapperCssName = this.nodeStyleMap.get(arrayItemNode.id) || `${componentName}ItemCss`;
+
+      // 래퍼 CSS에 텍스트 스타일이 포함되면 → 의존 컴포넌트 스킵, 래퍼에서 직접 렌더링
+      const wrapperBase = wrapperStyle?.base || {};
+      const isDirectRender = "color" in wrapperBase || "font-size" in wrapperBase;
+
+      if (isDirectRender && contentProp) {
+        return `${indentStr}{Array.isArray(${arraySlot.slotName}) && ${arraySlot.slotName}.map((item, index) => (
+${indentStr}  <div key={index} css={${wrapperCssName}}${onClickStr}>
+${indentStr}    {item.content}
+${indentStr}  </div>
+${indentStr}))}`;
+      }
+
+      if (contentProp) {
+        return `${indentStr}{Array.isArray(${arraySlot.slotName}) && ${arraySlot.slotName}.map((item, index) => (
+${indentStr}  <div key={index} css={${wrapperCssName}}${onClickStr}>
+${indentStr}    <${componentName}${propsStr}>{item.content}</${componentName}>
+${indentStr}  </div>
+${indentStr}))}`;
+      }
+
+      return `${indentStr}{Array.isArray(${arraySlot.slotName}) && ${arraySlot.slotName}.map((item, index) => (
+${indentStr}  <div key={index} css={${wrapperCssName}}${onClickStr}>
+${indentStr}    <${componentName}${propsStr} />
+${indentStr}  </div>
+${indentStr}))}`;
+    }
+
+    if (contentProp) {
+      return `${indentStr}{Array.isArray(${arraySlot.slotName}) && ${arraySlot.slotName}.map((item, index) => (
+${indentStr}  <${componentName} key={index}${propsStr}${onClickStr}>{item.content}</${componentName}>
+${indentStr}))}`;
+    }
+
+    return `${indentStr}{Array.isArray(${arraySlot.slotName}) && ${arraySlot.slotName}.map((item, index) => (
+${indentStr}  <${componentName} key={index}${propsStr}${onClickStr} />
 ${indentStr}))}`;
   }
 
@@ -483,7 +536,10 @@ ${indentStr})}` : jsx;
     const textBinding = node.bindings?.textContent ?? node.bindings?.content;
 
     let textContent: string;
-    if (textBinding && "prop" in textBinding) {
+    if (textBinding && "expr" in textBinding) {
+      // expr 바인딩 (예: selectedValue || placeholder)
+      textContent = `{${textBinding.expr}}`;
+    } else if (textBinding && "prop" in textBinding) {
       // prop 바인딩이 있으면 prop 사용
       textContent = `{${textBinding.prop}}`;
     } else if (node.type === "text" && node.textSegments && node.textSegments.length > 0) {
@@ -789,7 +845,9 @@ ${indentStr}</${tag}>`;
     if (node.bindings?.style) {
       const styleEntries: string[] = [];
       for (const [cssKey, source] of Object.entries(node.bindings.style)) {
-        if ("prop" in source) {
+        if ("expr" in source) {
+          styleEntries.push(`${cssKey}: ${source.expr}`);
+        } else if ("prop" in source) {
           styleEntries.push(`${cssKey}: ${source.prop}`);
         } else if ("ref" in source) {
           styleEntries.push(`${cssKey}: "${source.ref}"`);

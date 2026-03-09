@@ -28,6 +28,10 @@ export interface PropDefinition {
   functionSignature?: string;
   /** 추가 문자열 리터럴 값 (예: ["indeterminate"]) — boolean | "indeterminate" 타입 */
   extraValues?: string[];
+  /** Array slot 메타 (SLOT이면서 배열인 경우) */
+  arraySlotInfo?: {
+    itemProps: Array<{ name: string; type: string; defaultValue?: string }>;
+  };
 }
 
 // ─── 컴파일 결과 ────────────────────────────────────────────

@@ -192,6 +192,8 @@ export interface ArraySlotInfo {
   itemComponentName?: string;
   /** 아이템 컴포넌트의 Props (예: [{ name: "label", type: "string" }]) */
   itemProps?: Array<{ name: string; type: string; defaultValue?: string }>;
+  /** 아이템 클릭 시 실행할 코드 (item 변수 참조 가능, 예: "setSelected(item.id); setOpen(false)") */
+  onItemClick?: string;
 }
 
 // ============================================================================
@@ -406,6 +408,13 @@ export interface DerivedVar {
 }
 
 /** TreeBuilder 출력, CodeEmitter 입력 */
+/** React useState 훅 선언 */
+export interface StateVar {
+  name: string;
+  setter: string;
+  initialValue: string;
+}
+
 export interface UITree {
   root: UINode;
   componentType?: ComponentType;
@@ -413,4 +422,6 @@ export interface UITree {
   arraySlots?: ArraySlotInfo[];
   /** props destructuring 이후 삽입할 파생 변수 선언 */
   derivedVars?: DerivedVar[];
+  /** React useState 훅 선언 */
+  stateVars?: StateVar[];
 }
