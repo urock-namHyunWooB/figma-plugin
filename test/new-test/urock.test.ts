@@ -277,3 +277,123 @@ describe("Badgesicon", () => {
     expect(countOccurrences).toBe(1);
   });
 });
+
+/**
+ * Dropdowngeneric.json
+ *
+ * prop에 label을 주입받을 수 있다.
+ * placeholder도 주입받을 수 있다.
+ * Dropdown이므로 해당 드랍다운을 클릭하면 리스트로 나타내질 아이템들을 prop으로 주입 받을 수 있다.
+ * 드랍다운을 클릭하면 아래 리스트가 노출된다.
+ * 호버하면 states=hover일때의 스타일이 된다.
+ */
+describe("Dropdowngeneric", () => {
+  const fixturePath = path.join(
+    process.cwd(),
+    "test/fixtures/failing/Dropdowngeneric.json"
+  );
+
+  const compileFixture = async () => {
+    const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
+    return (await compiler.compile()) as unknown as string;
+  };
+
+  // ── label prop ──
+
+  it("label prop이 string 타입으로 있어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/label\?:\s*string/);
+  });
+
+  it("label이 prop으로 렌더링되어야 한다 (하드코딩 X)", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/\{label\}/);
+    // "label" 리터럴이 JSX에 하드코딩되면 안 됨
+    const jsxMatch = result.match(/return\s*\(([\s\S]*)\);/);
+    expect(jsxMatch).toBeTruthy();
+    // JSX 내에서 >label< 하드코딩이 없어야 함 (css 변수명 제외)
+  });
+
+  // ── placeholder prop ──
+
+  it("placeholder prop이 string 타입으로 있어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/placeholder\?:\s*string/);
+  });
+
+  it("placeholder가 prop으로 렌더링되어야 한다 (하드코딩 X)", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/\{placeholder\}/);
+  });
+
+  // ── items prop ──
+
+  it("items prop이 배열 타입이어야 한다", async () => {
+    const result = await compileFixture();
+    // items?: Array<{id: ..., content: ...}> 또는 items?: {id: ..., content: ...}[]
+    expect(result).toMatch(/items\?:/);
+  });
+
+  it("리스트 아이템이 items.map으로 렌더링되어야 한다", async () => {
+    const result = await compileFixture();
+    // items.map(item => ...) 패턴
+    expect(result).toMatch(/items\.map/);
+  });
+
+  // ── open/close 토글 ──
+
+  it("내부 useState로 open 상태를 관리해야 한다", async () => {
+    const result = await compileFixture();
+    // useState 훅 사용
+    expect(result).toMatch(/useState/);
+    // open 상태 변수
+    expect(result).toMatch(/\bopen\b/);
+  });
+
+  it("클릭하면 리스트가 토글되어야 한다", async () => {
+    const result = await compileFixture();
+    // onClick 핸들러가 있어야 함
+    expect(result).toMatch(/onClick/);
+  });
+
+  it("리스트가 open 상태일 때만 렌더링되어야 한다", async () => {
+    const result = await compileFixture();
+    // {open && (...)} 조건부 렌더링 패턴
+    expect(result).toMatch(/\{open\s*&&/);
+  });
+
+  // ── hover 스타일 ──
+
+  it("hover 시 스타일이 변경되어야 한다", async () => {
+    const result = await compileFixture();
+    // :hover 또는 &:hover CSS pseudo-class
+    expect(result).toMatch(/&:hover|:hover/);
+  });
+
+  // ── 불필요 prop 미노출 ──
+
+  it("list 1~6 개별 boolean prop이 노출되지 않아야 한다", async () => {
+    const result = await compileFixture();
+    const propsMatch = result.match(
+      /export interface \w+Props\s*\{([^}]*)\}/s
+    );
+    expect(propsMatch).toBeTruthy();
+    const propsBody = propsMatch![1];
+    // list1, list2, ... 개별 prop 대신 items 배열이어야 함
+    expect(propsBody).not.toMatch(/list\s*\d/);
+  });
+
+  // ── states variant prop 미노출 ──
+
+  it("states variant prop이 외부에 노출되지 않아야 한다", async () => {
+    const result = await compileFixture();
+    const propsMatch = result.match(
+      /export interface \w+Props\s*\{([^}]*)\}/s
+    );
+    expect(propsMatch).toBeTruthy();
+    const propsBody = propsMatch![1];
+    // states는 내부 동작(hover/:hover, active/open)으로 처리되어야 함
+    expect(propsBody).not.toMatch(/\bstates\b/);
+  });
+});
