@@ -158,3 +158,56 @@ describe("urock-button", () => {
     expect(conditionalSlots!.length).toBe(2); // iconLeft, iconRight 2개
   });
 });
+
+
+/**
+ * Chips.json 대상
+ *
+ * props color가 바뀌면 색상이 바뀌어야한다.
+ * props에 text를 주입할 수 있어야 한다.
+ */
+describe("Chips", () => {
+  const fixturePath = path.join(
+    process.cwd(),
+    "test/fixtures/chip/Chips.json"
+  );
+
+  const compileFixture = async () => {
+    const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
+    return (await compiler.compile()) as unknown as string;
+  };
+
+  it("color prop이 variant union 타입으로 있어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/color\?:/);
+    for (const color of ["blue", "cyan", "gray", "navy", "red", "skyblue", "white-black", "white-blue"]) {
+      expect(result).toContain(`"${color}"`);
+    }
+  });
+
+  it("color prop이 스타일에 바인딩되어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/colorStyles\?\.\[color\]/);
+  });
+
+  it("text prop이 string 타입으로 있어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/text\?:\s*string/);
+  });
+
+  it("텍스트가 하드코딩이 아닌 prop으로 렌더링되어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/\{text\}/);
+  });
+
+  it("colorStyles에 background가 포함되어야 한다 (color별 배경색 변경)", async () => {
+    const result = await compileFixture();
+    const colorStylesMatch = result.match(
+      /colorStyles\s*=\s*\{([\s\S]*?)\n\};/
+    );
+    expect(colorStylesMatch).toBeTruthy();
+    const body = colorStylesMatch![1];
+    expect(body).toMatch(/background/);
+  });
+});

@@ -12,6 +12,16 @@
 
 import type { ConditionNode } from "../../../../types/types";
 
+/**
+ * CSS variable의 fallback 값을 추출하여 비교용 정규화 문자열 반환.
+ * 예: "var(--Color-bg-01, #F9F9F9)" → "#F9F9F9"
+ * var()가 아니면 원래 값 그대로 반환.
+ */
+function normalizeCssValue(value: string): string {
+  const match = value.match(/^var\([^,]+,\s*(.+)\)$/);
+  return match ? match[1].trim() : value;
+}
+
 export interface PropInfo {
   propName: string;
   propValue: string;
@@ -319,9 +329,9 @@ export class DynamicStyleDecomposer {
         return false;
       }
       if (group.present.length > 1) {
-        const first = String(group.present[0]);
+        const first = normalizeCssValue(String(group.present[0]));
         for (let i = 1; i < group.present.length; i++) {
-          if (String(group.present[i]) !== first) return false;
+          if (normalizeCssValue(String(group.present[i])) !== first) return false;
         }
       }
     }
@@ -331,7 +341,7 @@ export class DynamicStyleDecomposer {
     const groupSignatures = new Set<string>();
     for (const group of groups.values()) {
       if (group.present.length > 0) {
-        groupSignatures.add(String(group.present[0]));
+        groupSignatures.add(normalizeCssValue(String(group.present[0])));
       } else {
         groupSignatures.add("__absent__");
       }

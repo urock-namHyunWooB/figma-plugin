@@ -71,6 +71,16 @@ describe("Chips 컴파일 테스트", () => {
       const code = await getCompiledCode();
       expect(code).toMatch(/colorStyles\?\.\[color\]/);
     });
+
+    it("colorStyles에 background가 포함되어야 한다 (color별 배경색 변경)", async () => {
+      const code = await getCompiledCode();
+      const colorStylesMatch = code.match(
+        /colorStyles\s*=\s*\{([\s\S]*?)\n\};/
+      );
+      expect(colorStylesMatch).toBeTruthy();
+      const body = colorStylesMatch![1];
+      expect(body).toMatch(/background/);
+    });
   });
 
   describe("Text 주입", () => {

@@ -190,6 +190,23 @@ export function generateTextSlotPropName(nodeName: string): string {
 }
 
 /**
+ * 텍스트 내용이 플레이스홀더인지 판단
+ *
+ * 판단 기준: TEXT 노드의 characters가 레이어 이름과 동일하면 플레이스홀더.
+ * 디자이너가 "Text" 레이어에 "Text" 내용 → 동적 텍스트 의도.
+ *
+ * @param characters - 텍스트 내용
+ * @param nodeName - 노드 (레이어) 이름
+ * @returns 플레이스홀더이면 true
+ */
+export function isPlaceholderText(
+  characters: string,
+  nodeName: string
+): boolean {
+  return characters.trim().toLowerCase() === nodeName.trim().toLowerCase();
+}
+
+/**
  * TEXT 노드를 slot으로 변환하기 위한 정보 추출
  *
  * @param node - InternalTree 노드
