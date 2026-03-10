@@ -485,3 +485,60 @@ describe("Dropdowngeneric", () => {
     expect(propsBody).not.toMatch(/\bstates\b/);
   });
 });
+
+/**
+ * Fab.json
+ *
+ * FAB(Floating Action Button) 컴포넌트.
+ * ELLIPSE + INSTANCE(icon-fab) 구조로, icon-fab은 vector-only 의존 컴포넌트.
+ * states=default/hover/active 3가지 variant.
+ *
+ * - vector-only 의존 컴포넌트가 merged SVG로 인라인되어야 한다.
+ * - 아이콘이 올바른 크기로 렌더링되어야 한다 (CSS/SVG 스케일 불일치 없음).
+ * - states가 pseudo-class(:hover, :active)로 매핑되어야 한다.
+ */
+describe("Fab", () => {
+  const fixturePath = path.join(
+    process.cwd(),
+    "test/fixtures/urock/Fab.json"
+  );
+
+  const compileFixture = async () => {
+    const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
+    return (await compiler.compile()) as unknown as string;
+  };
+
+  it("vector-only 의존 컴포넌트(icon-fab)가 인라인 SVG로 렌더링되어야 한다", async () => {
+    const result = await compileFixture();
+
+    // icon-fab이 별도 컴포넌트로 분리되면 안 됨
+    expect(result).not.toMatch(/const Iconfab/);
+    expect(result).not.toMatch(/<Iconfab/);
+
+    // 대신 SVG가 직접 포함되어야 함
+    expect(result).toContain("<svg");
+    expect(result).toContain("<path");
+  });
+
+  it("states가 CSS pseudo-class로 매핑되어야 한다", async () => {
+    const result = await compileFixture();
+
+    // :hover, :active pseudo-class가 있어야 함
+    expect(result).toMatch(/&:hover\s*\{/);
+    expect(result).toMatch(/&:active\s*\{/);
+  });
+
+  it("ELLIPSE가 SVG로 렌더링되어야 한다", async () => {
+    const result = await compileFixture();
+    // ELLIPSE는 vector 타입 → SVG로 렌더링 (원형은 SVG viewBox로 표현)
+    expect(result).toMatch(/<svg[^>]*viewBox/);
+  });
+
+  it("아이콘 SVG가 컨테이너에 맞게 100% 크기여야 한다", async () => {
+    const result = await compileFixture();
+    // merged SVG는 width="100%" height="100%"로 변환됨
+    expect(result).toMatch(/width="100%"/);
+    expect(result).toMatch(/height="100%"/);
+  });
+});
