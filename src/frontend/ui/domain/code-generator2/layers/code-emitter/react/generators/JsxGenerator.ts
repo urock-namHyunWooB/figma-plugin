@@ -648,7 +648,7 @@ ${indentStr})}` : jsx;
         wrapperAttrs = `${styleAttr.attributeName}=${styleAttr.valueCode}`;
       }
 
-      return `${indentStr}<div ${wrapperAttrs}>
+      return `${indentStr}<div ${wrapperAttrs} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
 ${indentStr}  <${componentName}${componentAttrs} />
 ${indentStr}</div>`;
     }
@@ -698,8 +698,24 @@ ${indentStr}</div>`;
       .replace(/\bfill-opacity=/g, "fillOpacity=")
       .replace(/\bstop-color=/g, "stopColor=")
       .replace(/\bstop-opacity=/g, "stopOpacity=")
+      .replace(/\bcolor-interpolation-filters=/g, "colorInterpolationFilters=")
+      .replace(/\bflood-opacity=/g, "floodOpacity=")
+      .replace(/\bflood-color=/g, "floodColor=")
       .replace(/\bxlink:href=/g, "xlinkHref=")
-      .replace(/\bclass=/g, "className=");
+      .replace(/\bclass=/g, "className=")
+      .replace(/\bstyle="([^"]*)"/g, (_, cssStr: string) => {
+        const styleObj = cssStr
+          .split(";")
+          .filter((s: string) => s.trim())
+          .map((s: string) => {
+            const [key, ...rest] = s.split(":");
+            const prop = key.trim().replace(/-([a-z])/g, (_: string, c: string) => c.toUpperCase());
+            const value = rest.join(":").trim();
+            return `${prop}: "${value}"`;
+          })
+          .join(", ");
+        return `style={{ ${styleObj} }}`;
+      });
   }
 
   /**

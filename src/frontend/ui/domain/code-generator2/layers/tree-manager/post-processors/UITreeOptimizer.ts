@@ -50,16 +50,8 @@ export class UITreeOptimizer {
     const originalWidth = base.width;
     const originalHeight = base.height;
 
-    if (base.width && typeof base.width === "string" && base.width.endsWith("px")) {
-      base.width = "100%";
-    }
-    if (base.height && typeof base.height === "string" && base.height.endsWith("px")) {
-      base.height = "100%";
-    }
-
-    // 루트와 동일한 크기의 직접 자식도 100%로 변환하고,
-    // 그 자식의 px 기반 위치/크기를 원래 크기 대비 퍼센트로 변환
-    // (예: 아이콘 컴포넌트의 Shape 레이어가 루트와 같은 24×24px인 경우)
+    // 루트와 동일한 크기의 직접 자식이 있는지 확인
+    let hasScalableChild = false;
     if ("children" in root && root.children && originalWidth && originalHeight) {
       const parentW = parseFloat(originalWidth as string);
       const parentH = parseFloat(originalHeight as string);
@@ -68,16 +60,27 @@ export class UITreeOptimizer {
         if (!child.styles?.base) continue;
         const childBase = child.styles.base;
         if (childBase.width === originalWidth && childBase.height === originalHeight) {
+          hasScalableChild = true;
           childBase.width = "100%";
           childBase.height = "100%";
 
-          // 손자 노드(grandchild)의 px 위치/크기를 퍼센트로 변환
           if ("children" in child && child.children && !isNaN(parentW) && !isNaN(parentH)) {
             for (const grandchild of child.children) {
               this.convertPxToPercent(grandchild, parentW, parentH);
             }
           }
         }
+      }
+    }
+
+    // scalable child가 있으면 root도 100%로 확장
+    // 없으면 root 고정 크기 유지 (내부 SVG 좌표계 보존, wrapper가 센터링)
+    if (hasScalableChild) {
+      if (base.width && typeof base.width === "string" && base.width.endsWith("px")) {
+        base.width = "100%";
+      }
+      if (base.height && typeof base.height === "string" && base.height.endsWith("px")) {
+        base.height = "100%";
       }
     }
 

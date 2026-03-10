@@ -103,9 +103,16 @@ export class StyleProcessor {
     if (styles && StyleProcessor.VECTOR_TYPES.has(node.type)) {
       const filteredBase: Record<string, string | number> = { overflow: "visible" };
       for (const [key, value] of Object.entries(styles.base || {})) {
-        if (!StyleProcessor.SVG_ONLY_PROPERTIES.has(key)) {
-          filteredBase[key] = value;
+        if (StyleProcessor.SVG_ONLY_PROPERTIES.has(key)) continue;
+        // SVG exportAsync는 rotate를 path 좌표에 이미 반영 → CSS rotate 제거 (이중 적용 방지)
+        if (key === "transform" && typeof value === "string" && /rotate\(/.test(value)) {
+          const stripped = value.replace(/rotate\([^)]*\)\s*/g, "").trim();
+          if (stripped) {
+            filteredBase[key] = stripped;
+          }
+          continue;
         }
+        filteredBase[key] = value;
       }
       styles = {
         ...styles,

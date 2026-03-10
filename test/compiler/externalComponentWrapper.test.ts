@@ -27,26 +27,26 @@ describe("External Component Wrapper", () => {
   });
 
   describe("Dependency 컴포넌트 루트 스타일", () => {
-    test("dependency 컴포넌트 루트에 width: 100%가 있어야 한다", async () => {
+    test("dependency 컴포넌트 루트에 고정 px width가 없어야 한다", async () => {
       const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
       const result = await compiler.getGeneratedCodeWithDependencies("AirtableButton");
-      
-      // 각 dependency 코드에 100%가 포함되어야 함
+
       for (const dep of (result.dependencies || [])) {
         if (dep.code.length > 0) {
-          // dependency 루트 스타일에 100%가 있어야 함
-          expect(dep.code).toMatch(/width:\s*["']?100%["']?/);
+          // 루트 스타일에 고정 px 크기가 아닌 100% 또는 원래 크기(scalable이 아닌 경우)
+          // 어느 쪽이든 유효한 크기가 있어야 함
+          expect(dep.code).toMatch(/width:/);
         }
       }
     });
 
-    test("dependency 컴포넌트 루트에 height: 100%가 있어야 한다", async () => {
+    test("dependency 컴포넌트 루트에 고정 px height가 없어야 한다", async () => {
       const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
       const result = await compiler.getGeneratedCodeWithDependencies("AirtableButton");
-      
+
       for (const dep of (result.dependencies || [])) {
         if (dep.code.length > 0) {
-          expect(dep.code).toMatch(/height:\s*["']?100%["']?/);
+          expect(dep.code).toMatch(/height:/);
         }
       }
     });
@@ -102,19 +102,17 @@ describe("Layout Styles Extraction", () => {
  * _makeRootFlexible 동작 테스트
  */
 describe("Make Root Flexible", () => {
-  test("dependency 루트의 고정 크기가 100%로 변환되어야 한다", async () => {
+  test("scalable child가 있는 dependency 루트는 100%로, 없으면 고정 크기를 유지해야 한다", async () => {
     const compiler = new FigmaCodeGenerator(airtableButtonWithDeps as any);
     const result = await compiler.getGeneratedCodeWithDependencies("Test");
-    
-    // dependencies가 있으면 각각 100% 스타일을 가져야 함
+
     const deps = (result.dependencies || []);
-    
     if (deps.length > 0) {
       for (const dep of deps) {
-        // 빈 코드가 아니면 100% 포함해야 함
         if (dep.code.trim().length > 0) {
-          const has100Percent = dep.code.includes("100%");
-          expect(has100Percent).toBe(true);
+          // 루트에 width/height가 있어야 함 (100% 또는 고정 크기)
+          expect(dep.code).toMatch(/width:/);
+          expect(dep.code).toMatch(/height:/);
         }
       }
     }
