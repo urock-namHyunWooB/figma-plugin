@@ -46,6 +46,7 @@ class UINodeConverter {
 
     if (nodeType === "component" && node.refId) {
       const overrides = node.metadata?.instanceOverrides;
+      const instanceScale = this.computeInstanceScale(node);
       return {
         id: node.id,
         name: node.name,
@@ -66,6 +67,9 @@ class UINodeConverter {
               overrideMeta: overrides,
             }
           : {}),
+        ...(instanceScale && Math.abs(instanceScale - 1) > 0.01
+          ? { instanceScale }
+          : {}),
       } as UINode;
     }
 
@@ -85,6 +89,38 @@ class UINodeConverter {
     );
 
     const vectorSvg = nodeType === "vector" ? this.resolveVectorSvg(node) : undefined;
+
+    // VECTOR + SVG 처리:
+    // 1. SVG width/height를 100%로 → CSS 컨테이너에 맞춰 자동 스케일
+    //    (INSTANCE 스케일 SVG도 COMPONENT 스케일 컨테이너에 맞춰짐)
+    // 2. pseudo/dynamic에서 width/height 제거 (viewBox 고정이므로 크기 변경 시 왜곡)
+    if (vectorSvg && node.styles) {
+      if (node.styles.pseudo) {
+        const cleanedPseudo: typeof node.styles.pseudo = {};
+        for (const [key, pseudoStyle] of Object.entries(node.styles.pseudo)) {
+          const { width, height, ...rest } = pseudoStyle as Record<string, unknown>;
+          cleanedPseudo[key as keyof typeof cleanedPseudo] = rest as Record<string, string | number>;
+        }
+        node = { ...node, styles: { ...node.styles, pseudo: cleanedPseudo } };
+      }
+      if (node.styles.dynamic) {
+        const cleanedDynamic = node.styles.dynamic.map((entry) => {
+          const { width, height, ...rest } = entry.style as Record<string, unknown>;
+          return { ...entry, style: rest as Record<string, string | number> };
+        });
+        node = { ...node, styles: { ...node.styles, dynamic: cleanedDynamic } };
+      }
+    }
+
+    // SVG 100%: filter/effects가 없는 벡터만 적용
+    // (filter가 있으면 viewBox에 shadow 영역이 포함되어 100%로 축소 시 왜곡)
+    const hasFilter = node.styles?.base?.filter;
+    const finalVectorSvg = vectorSvg && !hasFilter
+      ? vectorSvg
+          .replace(/<svg([^>]*)\bwidth="[^"]+"/,  '<svg$1 width="100%"')
+          .replace(/<svg([^>]*)\bheight="[^"]+"/,  '<svg$1 height="100%"')
+      : vectorSvg;
+
     const textSegments =
       nodeType === "text"
         ? this.textProcessor.processTextNode(node.id)
@@ -103,7 +139,7 @@ class UINodeConverter {
       ...(node.semanticType ? { semanticType: node.semanticType } : {}),
       ...(!opts.isRoot && node.loop ? { loop: node.loop } : {}),
       ...(nodeType === "component" && node.refId ? { refId: node.refId } : {}),
-      ...(nodeType === "vector" && vectorSvg ? { vectorSvg } : {}),
+      ...(nodeType === "vector" && finalVectorSvg ? { vectorSvg: finalVectorSvg } : {}),
       ...(nodeType === "text" && textSegments ? { textSegments } : {}),
     } as UINode;
   }
@@ -118,6 +154,26 @@ class UINodeConverter {
     if (svg) return svg;
 
     return this.dataManager.getVectorSvgByLastSegment(node.id);
+  }
+
+  /**
+   * INSTANCE/COMPONENT 크기 비율 계산
+   * INSTANCE bounds (main 컴포넌트 내) vs dependency root bounds (원본 컴포넌트)
+   */
+  private computeInstanceScale(node: InternalTree): number | undefined {
+    if (!node.refId || !node.bounds) return undefined;
+
+    const depSpec = this.dataManager.getAllDependencies().get(node.refId);
+    if (!depSpec) return undefined;
+
+    const depRoot = depSpec.info?.document as any;
+    const depBox = depRoot?.absoluteBoundingBox;
+    if (!depBox || !depBox.width || !depBox.height) return undefined;
+
+    const scaleX = node.bounds.width / depBox.width;
+    const scaleY = node.bounds.height / depBox.height;
+
+    return Math.min(scaleX, scaleY);
   }
 
   private isInvisibleLayoutNode(node: InternalTree): boolean {

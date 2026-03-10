@@ -75,12 +75,14 @@ describe("ExternalRefsProcessor", () => {
     }
   });
 
-  it("should collect all component nodes with refIds", () => {
+  it("should inline vector-only dependencies (no component refId)", () => {
     const dataManager = new DataManager(airtableButton as any);
     const treeBuilder = new TreeBuilder(dataManager);
 
     const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
+    // vector-only 의존 컴포넌트는 merged SVG로 인라인되므로
+    // component 타입 + refId 노드가 0개여야 함
     const collectComponentNodes = (
       node: any,
       path: string = ""
@@ -109,11 +111,10 @@ describe("ExternalRefsProcessor", () => {
     );
 
     console.log(`Found ${componentNodes.length} component nodes with refIds`);
-    componentNodes.forEach(({ path, refId }) => {
-      console.log(`${path}: ${refId}`);
-    });
 
-    expect(componentNodes.length).toBeGreaterThan(0);
+    // airtable-button의 Icon 의존 컴포넌트는 vector-only이므로
+    // merged SVG로 인라인됨 → component refId 노드 없음
+    expect(componentNodes.length).toBe(0);
   });
 
   it("should verify refId format", () => {

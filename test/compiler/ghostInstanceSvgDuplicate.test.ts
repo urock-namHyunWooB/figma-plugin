@@ -9,13 +9,11 @@ import FigmaCodeGenerator from "@code-generator2";
  * 문제: INSTANCE 노드가 외부 컴포넌트로 렌더링될 때,
  * INSTANCE 내부의 VECTOR 노드가 추가로 렌더링되어 SVG가 2번 나타남
  *
- * 원인: NodeConverter에서 외부 컴포넌트 wrapper 생성 시
- * children을 함께 포함했기 때문
- *
- * 해결: 외부 컴포넌트가 내부 노드를 포함하므로 children 제외
+ * 해결 (v1): 외부 컴포넌트가 내부 노드를 포함하므로 children 제외
+ * 해결 (v2): vector-only 의존 컴포넌트는 merged SVG로 인라인
  */
 describe("Ghost INSTANCE SVG 중복 렌더링 회귀 테스트", () => {
-  test("외부 컴포넌트(Plus)만 렌더링되고 내부 VECTOR는 중복되지 않아야 한다", async () => {
+  test("SVG가 정확히 1번만 렌더링되어야 한다 (중복 없음)", async () => {
     const compiler = new FigmaCodeGenerator(ghostMockData as any);
     const code = await compiler.compile();
 
@@ -29,51 +27,54 @@ describe("Ghost INSTANCE SVG 중복 렌더링 회귀 테스트", () => {
 
     const ghostReturn = ghostMatch![1];
 
-    // Plus 컴포넌트 사용은 1번이어야 함
-    const plusUsageMatches = ghostReturn.match(/<Plus[^>]*\/?>/g);
-    expect(plusUsageMatches).not.toBeNull();
-    expect(plusUsageMatches!.length).toBe(1);
+    // vector-only dependency가 인라인되므로 SVG 또는 dangerouslySetInnerHTML 포함
+    const svgMatches = ghostReturn.match(/<svg[^>]*>|dangerouslySetInnerHTML/g);
+    expect(svgMatches).not.toBeNull();
 
-    // Ghost 내부에 직접적인 <svg> 태그가 없어야 함 (Plus가 SVG를 포함)
-    // Plus wrapper 내부에 svg가 직접 있으면 안 됨
-    const svgInGhost = ghostReturn.match(/<svg[^>]*>/g);
-    expect(svgInGhost).toBeNull();
+    // SVG가 정확히 1번만 나타나야 함 (중복 렌더링 방지)
+    expect(svgMatches!.length).toBe(1);
   });
 
-  test("Plus 의존 컴포넌트가 SVG를 내부에 포함해야 한다", async () => {
-    const compiler = new FigmaCodeGenerator(ghostMockData as any);
-    const result = await compiler.getGeneratedCodeWithDependencies();
-
-    // dependencies에 Plus 컴포넌트가 있어야 함 (v2는 배열)
-    const deps = result.dependencies || [];
-    expect(deps.length).toBeGreaterThan(0);
-
-    // Plus 컴포넌트 코드에 svg가 포함되어야 함
-    const plusDep = deps[0];
-    expect(plusDep.code).toContain("<svg");
-    expect(plusDep.code).toContain("<path");
-  });
-
-  test("wrapper 내부에 externalComponent와 svg가 동시에 존재하면 안 된다", async () => {
+  test("Plus 의존 컴포넌트가 인라인 SVG로 렌더링되어야 한다", async () => {
     const compiler = new FigmaCodeGenerator(ghostMockData as any);
     const code = await compiler.compile();
 
     expect(code).toBeDefined();
 
-    // Plus_wrapper 스타일이 적용된 span 내부 확인
-    // wrapper 안에 <Plus ... />와 <svg>가 동시에 있으면 안 됨
-    const wrapperPattern = /<span[^>]*Plus_wrapper[^>]*>([\s\S]*?)<\/span>/g;
-    const wrapperMatches = [...code!.matchAll(wrapperPattern)];
+    // Ghost 컴포넌트의 return 부분 추출
+    const ghostMatch = code!.match(
+      /function Ghost\([^)]*\)\s*\{[\s\S]*?return\s*\(([\s\S]*?)\);\s*\}/
+    );
+    expect(ghostMatch).not.toBeNull();
 
-    for (const match of wrapperMatches) {
-      const wrapperContent = match[1];
-      const hasPlusComponent = /<Plus[^>]*\/?>/g.test(wrapperContent);
-      const hasSvgElement = /<svg[^>]*>/g.test(wrapperContent);
+    const ghostReturn = ghostMatch![1];
 
-      // Plus 컴포넌트가 있으면 svg가 직접 있으면 안 됨
-      if (hasPlusComponent) {
-        expect(hasSvgElement).toBe(false);
-      }
-    }
+    // Ghost 내부에 <Plus /> 참조 대신 인라인 SVG가 있어야 함
+    expect(ghostReturn).not.toMatch(/<Plus[^>]*\/?>/);
+
+    // SVG가 직접 포함되어야 함
+    expect(ghostReturn).toMatch(/<svg[^>]*>|dangerouslySetInnerHTML/);
+  });
+
+  test("SVG 관련 요소가 wrapper 내부에서 중복되지 않아야 한다", async () => {
+    const compiler = new FigmaCodeGenerator(ghostMockData as any);
+    const code = await compiler.compile();
+
+    expect(code).toBeDefined();
+
+    // Ghost 컴포넌트의 return 부분에서 <svg> 태그 수 확인
+    const ghostMatch = code!.match(
+      /function Ghost\([^)]*\)\s*\{[\s\S]*?return\s*\(([\s\S]*?)\);\s*\}/
+    );
+    expect(ghostMatch).not.toBeNull();
+
+    const ghostReturn = ghostMatch![1];
+
+    // dangerouslySetInnerHTML 또는 <svg> 중 하나만 사용
+    const svgCount = (ghostReturn.match(/<svg[^>]*>/g) || []).length;
+    const innerHtmlCount = (ghostReturn.match(/dangerouslySetInnerHTML/g) || []).length;
+
+    // SVG 렌더링 방식이 1번만 사용되어야 함
+    expect(svgCount + innerHtmlCount).toBeLessThanOrEqual(1);
   });
 });

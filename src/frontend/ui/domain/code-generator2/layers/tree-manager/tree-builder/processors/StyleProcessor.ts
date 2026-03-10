@@ -83,8 +83,8 @@ export class StyleProcessor {
    * variant 기반 스타일 적용 (재귀)
    */
   private applyVariantStyles(node: InternalNode): InternalNode {
-    // 스타일 객체 생성
-    let styles = this.createStyleObject(node);
+    // 스타일 객체 생성 (synthetic 노드는 기존 styles 유지)
+    let styles = this.createStyleObject(node) ?? node.styles;
 
     // HORIZONTAL layoutMode 처리: flex-direction: row 명시적 추가
     // (CSS 기본값이므로 styleTree에 포함되지 않는 경우가 있음)
@@ -100,12 +100,15 @@ export class StyleProcessor {
     }
 
     // VECTOR 타입 처리: SVG 전용 속성 제거, overflow: visible 추가
+    let correctedBounds: typeof node.bounds | undefined;
     if (styles && StyleProcessor.VECTOR_TYPES.has(node.type)) {
       const filteredBase: Record<string, string | number> = { overflow: "visible" };
+      let hasRotate = false;
       for (const [key, value] of Object.entries(styles.base || {})) {
         if (StyleProcessor.SVG_ONLY_PROPERTIES.has(key)) continue;
         // SVG exportAsync는 rotate를 path 좌표에 이미 반영 → CSS rotate 제거 (이중 적용 방지)
         if (key === "transform" && typeof value === "string" && /rotate\(/.test(value)) {
+          hasRotate = true;
           const stripped = value.replace(/rotate\([^)]*\)\s*/g, "").trim();
           if (stripped) {
             filteredBase[key] = stripped;
@@ -114,6 +117,33 @@ export class StyleProcessor {
         }
         filteredBase[key] = value;
       }
+
+      // rotate 제거 시 width/height를 회전 후 값으로 교체
+      // getCSSAsync는 회전 전 치수를 반환하므로, absoluteBoundingBox(회전 후)로 보정
+      if (hasRotate && node.bounds) {
+        let w = node.bounds.width;
+        let h = node.bounds.height;
+        let bx = node.bounds.x;
+        let by = node.bounds.y;
+
+        // 한 축이 ~0인 경우 (직선 등): absoluteRenderBounds(stroke 포함)로 fallback
+        if (w < 1 || h < 1) {
+          const { node: sceneNode } = this.dataManager.getById(node.id);
+          const renderBounds = (sceneNode as any)?.absoluteRenderBounds;
+          if (renderBounds) {
+            // bounds.x는 폭≈0일 때 중심점 → renderBounds.x(왼쪽 가장자리)로 교체
+            if (w < 1) { w = renderBounds.width; bx = renderBounds.x; }
+            if (h < 1) { h = renderBounds.height; by = renderBounds.y; }
+          }
+        }
+
+        filteredBase["width"] = `${Math.round(w * 1000) / 1000}px`;
+        filteredBase["height"] = `${Math.round(h * 1000) / 1000}px`;
+
+        // bounds도 교정 (applyPositionStyles에서 올바른 left/top 계산용)
+        correctedBounds = { x: bx, y: by, width: w, height: h };
+      }
+
       styles = {
         ...styles,
         base: filteredBase,
@@ -128,6 +158,7 @@ export class StyleProcessor {
     return {
       ...node,
       styles,
+      ...(correctedBounds ? { bounds: correctedBounds } : {}),
       children: styledChildren,
     };
   }

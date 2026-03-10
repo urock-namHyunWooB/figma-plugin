@@ -5,9 +5,8 @@
   "children": [
     {
       "name": "Icon",
-      "type": "component",
+      "type": "container",
       "depth": 1,
-      "refId": "91:1058",
       "children": []
     },
     {

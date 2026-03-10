@@ -30,6 +30,7 @@ import { RadioHeuristic } from "./RadioHeuristic";
 import { ChipHeuristic } from "./ChipHeuristic";
 import { BadgeHeuristic } from "./BadgeHeuristic";
 import { DropdownHeuristic } from "./DropdownHeuristic";
+import { FabHeuristic } from "./FabHeuristic";
 
 export class HeuristicsRunner {
   /** 매칭 임계점 */
@@ -44,6 +45,7 @@ export class HeuristicsRunner {
     new DropdownHeuristic(),    // Dropdown/Select (score 20, dropdown/select 이름 패턴)
     new CheckboxHeuristic(),    // Checkbox (score 20, checkbox 이름 패턴)
     new RadioHeuristic(),       // Radio (score 20, radio 이름 패턴)
+    new FabHeuristic(),         // FAB (score 15, ELLIPSE + INSTANCE 패턴)
     new BadgeHeuristic(),       // Badge notification (score 15, badge + 단일 컴포넌트)
     new ChipHeuristic(),        // Chip/Tag/Badge (score 10, 이름 패턴)
     new InputHeuristic(),  // Input을 먼저 (Caret 패턴이 더 특수)

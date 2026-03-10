@@ -22,6 +22,28 @@ export class ExternalRefsProcessor {
     // INSTANCE 노드면 refId 설정
     const refId = this.extractRefId(node);
 
+    // Vector-only 의존성: 컴포넌트 참조 대신 merged SVG 인라인
+    // 개별 VECTOR 노드 컴파일은 CSS(COMPONENT 스케일)/SVG(INSTANCE 스케일) 불일치 발생
+    // merged SVG는 INSTANCE 좌표계로 통일되어 정확한 렌더링 보장
+    if (refId && !isRoot && this.isVectorOnlyDependency(refId)) {
+      const mergedSvg = this.tryMergeInstanceVectors(node);
+      if (mergedSvg) {
+        return {
+          ...node,
+          // refId 없음 → container로 렌더링
+          children: [{
+            id: `${node.id}_merged_vector`,
+            name: "Merged Vector",
+            type: "VECTOR",
+            parent: node,
+            children: [],
+            metadata: { vectorSvg: mergedSvg },
+            styles: { base: { width: "100%", height: "100%" }, dynamic: [] },
+          }],
+        };
+      }
+    }
+
     // children 재귀 처리 (children은 root가 아님)
     let children = node.children.map((child) =>
       this.resolveExternalRefs(child, false)
@@ -118,6 +140,42 @@ export class ExternalRefsProcessor {
     return depSpec.info.document?.name || null;
   }
 
+  // ===========================================================================
+  // Vector-only dependency helpers
+  // ===========================================================================
+
+  private static readonly VECTOR_LEAF_TYPES = new Set([
+    "VECTOR", "LINE", "ELLIPSE", "STAR", "POLYGON", "BOOLEAN_OPERATION",
+  ]);
+
+  private static readonly CONTAINER_TYPES = new Set([
+    "FRAME", "GROUP", "COMPONENT", "COMPONENT_SET",
+  ]);
+
+  private isVectorOnlyDependency(componentId: string): boolean {
+    const depSpec = this.dataManager.getAllDependencies().get(componentId);
+    const doc = depSpec?.info?.document;
+    return doc ? this.hasOnlyVectorLeaves(doc) : false;
+  }
+
+  private hasOnlyVectorLeaves(node: any): boolean {
+    if (ExternalRefsProcessor.VECTOR_LEAF_TYPES.has(node.type)) return true;
+    if (ExternalRefsProcessor.CONTAINER_TYPES.has(node.type)) {
+      const children = node.children;
+      if (!children || children.length === 0) return true;
+      return children.every((c: any) => this.hasOnlyVectorLeaves(c));
+    }
+    return false;
+  }
+
+  private tryMergeInstanceVectors(node: InternalNode): string | undefined {
+    for (const m of node.mergedNodes || []) {
+      const svg = this.dataManager.mergeInstanceVectorSvgs(m.id);
+      if (svg) return svg;
+    }
+    return undefined;
+  }
+
   /**
    * 의존 컴포넌트의 병합된 Vector SVG를 InternalNode로 생성
    * DataManager가 정규화한 데이터 사용
@@ -139,6 +197,7 @@ export class ExternalRefsProcessor {
       metadata: {
         vectorSvg: mergedSvg,  // 직접 전달
       },
+      styles: { base: {}, dynamic: [] },
     };
   }
 }

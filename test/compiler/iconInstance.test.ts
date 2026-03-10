@@ -15,32 +15,13 @@ describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
       expect(code).toContain("svg");
     });
 
-    test("의존 컴포넌트(Iconanchor)가 SVG를 내부에 포함해야 한다", async () => {
+    test("vector-only 의존 컴포넌트는 인라인 SVG로 렌더링되어야 한다", async () => {
       const compiler = new FigmaCodeGenerator(frame03MockData as any);
       const code = await compiler.compile();
 
       expect(code).toBeDefined();
 
-      // Iconanchor 컴포넌트 정의 부분 추출 (arrow function)
-      const iconanchorMatch = code!.match(
-        /const Iconanchor[\s\S]*?=>\s*\{[\s\S]*?return\s*([\s\S]*?);\s*\};/
-      );
-      expect(iconanchorMatch).not.toBeNull();
-
-      const iconanchorReturn = iconanchorMatch![1];
-
-      // Iconanchor가 <svg> 또는 vectorSvg를 포함해야 함
-      expect(iconanchorReturn).toMatch(/<svg[^>]*>|dangerouslySetInnerHTML/);
-      expect(iconanchorReturn).toMatch(/<path|dangerouslySetInnerHTML/);
-    });
-
-    test("메인 컴포넌트(Frame)에서 Iconanchor를 self-closing 태그로 참조해야 한다", async () => {
-      const compiler = new FigmaCodeGenerator(frame03MockData as any);
-      const code = await compiler.compile();
-
-      expect(code).toBeDefined();
-
-      // Frame 컴포넌트 정의 부분 추출 (대소문자 무관)
+      // Frame 컴포넌트 내부에 직접 SVG가 포함되어야 함
       const frameMatch = code!.match(
         /function Frame\([^)]*\)\s*\{[\s\S]*?return\s*\(?([\s\S]*?)\)?;\s*\}/
       );
@@ -48,42 +29,60 @@ describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
 
       const frameReturn = frameMatch![1];
 
-      // Frame에서 Iconanchor는 self-closing (<Iconanchor ... />) 이어야 함
-      expect(frameReturn).toMatch(/<Iconanchor[^>]*\/>/);
-
-      // Frame 내부에 직접적인 <svg> 태그가 없어야 함 (Iconanchor 참조만 있어야 함)
-      expect(frameReturn).not.toMatch(/<svg[^>]*>/);
+      // 인라인 SVG가 Frame 내부에 직접 존재해야 함
+      expect(frameReturn).toContain("<svg");
+      expect(frameReturn).toContain("<path");
     });
 
-    test("의존 컴포넌트에 vectorSvg가 주입되어야 한다", async () => {
-      const compiler = new FigmaCodeGenerator(frame03MockData as any);
-      const result = await compiler.getGeneratedCodeWithDependencies();
-
-      // dependencies에 Iconanchor가 있어야 함 (v2는 배열)
-      const deps = result.dependencies || [];
-      expect(deps.length).toBeGreaterThan(0);
-
-      // 의존 컴포넌트 코드에 svg가 포함되어야 함
-      const firstDep = deps[0];
-      expect(firstDep.code).toContain("<svg");
-      expect(firstDep.code).toContain("<path");
-    });
-
-    test("여러 인스턴스가 있어도 의존 컴포넌트는 하나만 생성되어야 한다", async () => {
+    test("vector-only 의존 컴포넌트는 별도 컴포넌트로 분리되지 않아야 한다", async () => {
       const compiler = new FigmaCodeGenerator(frame03MockData as any);
       const code = await compiler.compile();
 
       expect(code).toBeDefined();
 
-      // Iconanchor 정의가 정확히 1개만 있어야 함 (arrow function)
-      const iconanchorDefMatches = code!.match(/const Iconanchor:/g);
-      expect(iconanchorDefMatches).not.toBeNull();
-      expect(iconanchorDefMatches!.length).toBe(1);
+      // Iconanchor 컴포넌트 정의가 없어야 함 (인라인됨)
+      expect(code).not.toMatch(/const Iconanchor/);
 
-      // Frame에서 Iconanchor 사용은 3번 (frame-03.json에 3개의 인스턴스가 있음)
-      const iconanchorUsageMatches = code!.match(/<Iconanchor[^>]*\/>/g);
-      expect(iconanchorUsageMatches).not.toBeNull();
-      expect(iconanchorUsageMatches!.length).toBe(3);
+      // Frame에서 <Iconanchor> 참조도 없어야 함
+      expect(code).not.toMatch(/<Iconanchor/);
+    });
+
+    test("vector-only 의존 컴포넌트의 SVG가 메인 컴포넌트에 인라인되어야 한다", async () => {
+      const compiler = new FigmaCodeGenerator(frame03MockData as any);
+      const code = await compiler.compile();
+
+      expect(code).toBeDefined();
+
+      // Frame 컴포넌트의 return 부분에 SVG가 직접 포함되어야 함
+      const frameMatch = code!.match(
+        /function Frame\([^)]*\)\s*\{[\s\S]*?return\s*\(?([\s\S]*?)\)?;\s*\}/
+      );
+      expect(frameMatch).not.toBeNull();
+
+      const frameReturn = frameMatch![1];
+
+      // dangerouslySetInnerHTML로 SVG가 인라인됨
+      expect(frameReturn).toMatch(/dangerouslySetInnerHTML|<svg/);
+    });
+
+    test("여러 인스턴스에서도 각각 인라인 SVG가 렌더링되어야 한다", async () => {
+      const compiler = new FigmaCodeGenerator(frame03MockData as any);
+      const code = await compiler.compile();
+
+      expect(code).toBeDefined();
+
+      // Frame 컴포넌트의 return 부분 추출
+      const frameMatch = code!.match(
+        /function Frame\([^)]*\)\s*\{[\s\S]*?return\s*\(?([\s\S]*?)\)?;\s*\}/
+      );
+      expect(frameMatch).not.toBeNull();
+
+      const frameReturn = frameMatch![1];
+
+      // frame-03.json에 3개의 인스턴스가 있으므로 SVG도 3개 있어야 함
+      const svgMatches = frameReturn.match(/<svg[^>]*>/g);
+      expect(svgMatches).not.toBeNull();
+      expect(svgMatches!.length).toBe(3);
     });
   });
 });

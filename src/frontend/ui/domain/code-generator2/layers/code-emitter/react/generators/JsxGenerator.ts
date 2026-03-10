@@ -648,8 +648,11 @@ ${indentStr})}` : jsx;
         wrapperAttrs = `${styleAttr.attributeName}=${styleAttr.valueCode}`;
       }
 
+      // INSTANCE/COMPONENT 크기가 다르면 scale 적용
+      const scale = (node as any).instanceScale as number | undefined;
+
       return `${indentStr}<div ${wrapperAttrs} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-${indentStr}  <${componentName}${componentAttrs} />
+${indentStr}  <${componentName}${componentAttrs}${scale ? ` style={{ transform: "scale(${scale.toFixed(3)})" }}` : ""} />
 ${indentStr}</div>`;
     }
 

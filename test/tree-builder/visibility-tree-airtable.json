@@ -5,7 +5,7 @@
   "children": [
     {
       "name": "Icon",
-      "type": "component",
+      "type": "container",
       "depth": 1,
       "visibleCondition": {
         "type": "truthy",

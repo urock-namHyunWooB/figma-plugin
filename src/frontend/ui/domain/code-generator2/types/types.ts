@@ -386,6 +386,8 @@ export interface ComponentNode extends UINodeBase {
   overrideProps?: Record<string, string>;
   /** Override 메타 정보 (ComponentPropsLinker가 linking에 사용) */
   overrideMeta?: InstanceOverride[];
+  /** INSTANCE/COMPONENT 크기 비율 (1이 아닌 경우만 설정) */
+  instanceScale?: number;
 }
 
 export type UINode =
