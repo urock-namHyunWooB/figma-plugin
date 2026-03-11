@@ -11,6 +11,7 @@
  * 보정:
  * - ELLIPSE의 렌더 오프셋 보정 (absoluteRenderBounds vs absoluteBoundingBox)
  * - states prop 제거 (pseudo-class로 처리)
+ * - 아이콘 SVG stroke 색상 hover/active 변경 (__raw CSS)
  */
 
 import type {
@@ -18,7 +19,7 @@ import type {
   HeuristicContext,
   HeuristicResult,
 } from "./IHeuristic";
-import type { ComponentType, InternalNode } from "../../../../types/types";
+import type { ComponentType, InternalNode, PseudoClass } from "../../../../types/types";
 
 export class FabHeuristic implements IHeuristic {
   readonly name = "FabHeuristic";
@@ -39,10 +40,15 @@ export class FabHeuristic implements IHeuristic {
 
   apply(ctx: HeuristicContext): HeuristicResult {
     // states prop 제거 (pseudo-class로 이미 처리됨)
-    ctx.props = ctx.props.filter((p) => p.name !== "states");
+    // splice로 원본 배열 직접 mutate (filter는 새 배열 할당이라 TreeBuilder 참조가 끊김)
+    const statesIdx = ctx.props.findIndex((p) => p.name === "states");
+    if (statesIdx !== -1) ctx.props.splice(statesIdx, 1);
 
     // ELLIPSE 렌더 오프셋 보정
     this.fixEllipseRenderOffset(ctx);
+
+    // 아이콘 hover/active stroke 색상 변경
+    this.setIconHoverStroke(ctx);
 
     return {
       componentType: "button",
@@ -82,6 +88,77 @@ export class FabHeuristic implements IHeuristic {
         child.styles.base.left = `${currentLeft - offsetX}px`;
         child.styles.base.top = `${currentTop - offsetY}px`;
       }
+    }
+  }
+
+  /**
+   * 아이콘 INSTANCE의 variant별 SVG stroke 색상을 비교하여
+   * hover/active 시 stroke 변경 CSS를 root button에 추가.
+   *
+   * root button에 걸어야 FAB 전체 영역(80x80)에서 호버 반응.
+   * `& > div svg path` 셀렉터로 ELLIPSE SVG(<span>)에 영향 안 줌.
+   *
+   * variant별 mergedNode의 SVG stroke 추출 → 색상이 다르면
+   * :hover/:active pseudo에 `& > div svg path { stroke: #color; }` 삽입.
+   */
+  private setIconHoverStroke(ctx: HeuristicContext): void {
+    const iconInst = ctx.tree.children.find((c) => c.type === "INSTANCE");
+    if (!iconInst || !iconInst.mergedNodes || iconInst.mergedNodes.length < 2) return;
+
+    // variant별 stroke 색상 수집: variantName → stroke color
+    const variantStrokes = new Map<string, string>();
+    for (const m of iconInst.mergedNodes) {
+      const svg = ctx.dataManager.getFirstVectorSvgByInstanceId(m.id);
+      if (!svg) continue;
+      const match = svg.match(/stroke="(#[0-9A-Fa-f]{3,8})"/);
+      if (match) {
+        variantStrokes.set(m.variantName || m.name, match[1]);
+      }
+    }
+
+    if (variantStrokes.size < 2) return;
+
+    // default stroke 추출 (default/Default 패턴)
+    let defaultStroke: string | undefined;
+    for (const [name, color] of variantStrokes) {
+      if (/default/i.test(name)) {
+        defaultStroke = color;
+        break;
+      }
+    }
+    if (!defaultStroke) defaultStroke = [...variantStrokes.values()][0];
+
+    // 다른 색상이 없으면 종료
+    const otherColors = new Set<string>();
+    for (const color of variantStrokes.values()) {
+      if (color !== defaultStroke) otherColors.add(color);
+    }
+    if (otherColors.size === 0) return;
+
+    // pseudo-class 매핑: variant 이름에서 hover/active 감지
+    const pseudoMap: Record<string, PseudoClass> = {
+      hover: ":hover",
+      active: ":active",
+    };
+
+    // root button에 pseudo 적용 (FAB 전체 영역에서 호버 반응)
+    const root = ctx.tree;
+    if (!root.styles) root.styles = { base: {}, dynamic: [] };
+    if (!root.styles.pseudo) root.styles.pseudo = {};
+
+    for (const [variantName, color] of variantStrokes) {
+      if (color === defaultStroke) continue;
+
+      // variant 이름에서 state 추출 (예: "states=hover" → "hover")
+      const stateMatch = variantName.match(/states?=(\w+)/i);
+      const state = stateMatch ? stateMatch[1].toLowerCase() : null;
+      const pseudo = state ? pseudoMap[state] : null;
+      if (!pseudo) continue;
+
+      const existing = root.styles.pseudo[pseudo] || {};
+      // & > div: icon container만 타겟 (ELLIPSE는 <span>이라 매치 안 됨)
+      existing["__raw"] = `& > div svg path { stroke: ${color}; }`;
+      root.styles.pseudo[pseudo] = existing;
     }
   }
 }

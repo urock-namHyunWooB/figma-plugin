@@ -529,10 +529,28 @@ describe("Fab", () => {
     expect(result).toMatch(/&:active\s*\{/);
   });
 
+  it("states variant prop이 외부에 노출되지 않아야 한다", async () => {
+    const result = await compileFixture();
+
+    const propsMatch = result.match(
+      /export interface \w+Props\s*\{([^}]*)\}/s
+    );
+    if (propsMatch) {
+      expect(propsMatch[1]).not.toMatch(/\bstates\b/);
+    }
+  });
+
   it("ELLIPSE가 SVG로 렌더링되어야 한다", async () => {
     const result = await compileFixture();
     // ELLIPSE는 vector 타입 → SVG로 렌더링 (원형은 SVG viewBox로 표현)
     expect(result).toMatch(/<svg[^>]*viewBox/);
+  });
+
+  it("hover/active 시 아이콘 stroke 색상이 변경되어야 한다", async () => {
+    const result = await compileFixture();
+    // root button에 & > div svg path stroke 변경 CSS (FAB 전체 영역 호버)
+    expect(result).toMatch(/&:hover\s*\{\s*& > div svg path\s*\{\s*stroke:/);
+    expect(result).toMatch(/&:active\s*\{\s*& > div svg path\s*\{\s*stroke:/);
   });
 
   it("아이콘 SVG가 컨테이너에 맞게 100% 크기여야 한다", async () => {
