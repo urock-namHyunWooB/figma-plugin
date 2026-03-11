@@ -227,14 +227,16 @@ export class InputHeuristic implements IHeuristic {
     // 1. boolean prop 제거
     ctx.props.splice(propIndex, 1);
 
-    // 2. string prop 추가
-    ctx.props.push({
-      type: "string",
-      name: stringPropName,
-      sourceKey: boolProp.sourceKey,
-      required: false,
-      defaultValue: textInfo.text,
-    });
+    // 2. string prop 추가 (같은 이름이 이미 있으면 스킵)
+    if (!ctx.props.some((p) => p.name === stringPropName)) {
+      ctx.props.push({
+        type: "string",
+        name: stringPropName,
+        sourceKey: boolProp.sourceKey,
+        required: false,
+        defaultValue: textInfo.text,
+      });
+    }
 
     // 3. TEXT 노드에 bindings.content 설정
     if (!textInfo.textNode.bindings) {

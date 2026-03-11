@@ -212,6 +212,7 @@ export type ComponentType =
   | "dropdown"
   | "link"
   | "icon"
+  | "frame"
   | "custom"
   | "unknown";
 
@@ -286,6 +287,8 @@ export interface InternalNode extends UINodeBase {
   };
   /** 루프 설정 (Heuristic이 설정, UINode로 전달) */
   loop?: { dataProp: string; keyField?: string };
+  /** children slot (FrameHeuristic이 설정, 래퍼 컴포넌트의 {children} 렌더링용) */
+  childrenSlot?: string;
 }
 
 /**
@@ -341,6 +344,8 @@ export interface ContainerNode extends UINodeBase {
   type: "container";
   children: UINode[];
   loop?: { dataProp: string; keyField?: string };
+  /** children slot (래퍼 컴포넌트의 {children} 렌더링용) */
+  childrenSlot?: string;
 }
 
 export interface TextNode extends UINodeBase {

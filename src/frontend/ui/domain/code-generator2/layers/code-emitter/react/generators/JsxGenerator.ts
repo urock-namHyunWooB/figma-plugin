@@ -745,8 +745,11 @@ ${indentStr}</div>`;
     // Void elements는 항상 self-closing (자식 가질 수 없음)
     const isVoidElement = this.isVoidElement(tag);
 
-    // 자식이 없거나 void element이면 self-closing
-    if (isVoidElement || !("children" in node) || !node.children || node.children.length === 0) {
+    // childrenSlot 확인 (래퍼 컴포넌트의 {children} 렌더링)
+    const childrenSlotName = node.type === "container" ? (node as ContainerNode).childrenSlot : undefined;
+
+    // 자식이 없거나 void element이면 self-closing (단, childrenSlot이 있으면 open tag 유지)
+    if (!childrenSlotName && (isVoidElement || !("children" in node) || !node.children || node.children.length === 0)) {
       return `${indentStr}<${tag}${attrs} />`;
     }
 
@@ -760,17 +763,26 @@ ${indentStr}</${tag}>`;
 
     // Array Slot 확인
     const arraySlot = this.arraySlots.get(node.id);
-    let childrenJsx: string;
+    const parts: string[] = [];
+
+    // childrenSlot을 먼저 렌더링
+    if (childrenSlotName) {
+      parts.push(`${" ".repeat(indent + 2)}{${childrenSlotName}}`);
+    }
 
     if (arraySlot) {
       // Array Slot이 있으면 .map() 렌더링
-      childrenJsx = this.generateArraySlotMap(arraySlot, node, styleStrategy, options, indent + 2);
-    } else {
+      parts.push(this.generateArraySlotMap(arraySlot, node, styleStrategy, options, indent + 2));
+    } else if ("children" in node && node.children && node.children.length > 0) {
       // 일반 children 렌더링 (isRoot는 전파하지 않음)
-      childrenJsx = node.children
-        .map((child) => this.generateNode(child, styleStrategy, options, indent + 2, false))
-        .join("\n");
+      parts.push(
+        node.children
+          .map((child) => this.generateNode(child, styleStrategy, options, indent + 2, false))
+          .join("\n")
+      );
     }
+
+    const childrenJsx = parts.join("\n");
 
     return `${indentStr}<${tag}${attrs}>
 ${childrenJsx}
