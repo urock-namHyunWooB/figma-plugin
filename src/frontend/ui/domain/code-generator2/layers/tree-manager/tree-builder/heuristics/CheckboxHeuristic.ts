@@ -26,7 +26,7 @@ import type {
   HeuristicResult,
 } from "./IHeuristic";
 import { rewritePropConditions, rewriteStateDynamicStyles } from "../processors/utils/rewritePropConditions";
-import { isDisableProp } from "../processors/utils/propPatterns";
+import { isDisableProp, isStateProp } from "../processors/utils/propPatterns";
 
 /** Figma state variant 값 → 내부 상태 매핑 */
 const STATE_PATTERNS: Array<{
@@ -87,7 +87,7 @@ export class CheckboxHeuristic implements IHeuristic {
     removedProp: string | null;
     detectedStates: Array<"checked" | "indeterminate">;
   } {
-    const idx = ctx.props.findIndex((p) => p.name === "state");
+    const idx = ctx.props.findIndex((p) => isStateProp(p.name));
     if (idx === -1) return { removedProp: null, detectedStates: ["checked"] };
 
     const stateProp = ctx.props[idx];

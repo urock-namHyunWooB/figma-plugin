@@ -15,14 +15,17 @@
  * - Disable=True 변형의 opacity:0.43 → :disabled pseudo-class
  */
 
-import type { ComponentType, InternalNode, ConditionNode } from "../../../../types/types";
+import type { ComponentType, InternalNode, ConditionNode, VariantPropDefinition } from "../../../../types/types";
 import type {
   IHeuristic,
   HeuristicContext,
   HeuristicResult,
 } from "./IHeuristic";
 import { rewritePropConditions, rewriteStateDynamicStyles } from "../processors/utils/rewritePropConditions";
-import { isCheckedProp, isDisableProp } from "../processors/utils/propPatterns";
+import { isCheckedProp, isDisableProp, isStateProp } from "../processors/utils/propPatterns";
+
+/** variant 값에서 "checked" 상태를 감지하는 패턴 */
+const CHECKED_VALUE_PATTERNS = /^(checked|active|selected|on)$/i;
 
 export class RadioHeuristic implements IHeuristic {
   readonly name = "RadioHeuristic";
@@ -34,7 +37,7 @@ export class RadioHeuristic implements IHeuristic {
   }
 
   apply(ctx: HeuristicContext): HeuristicResult {
-    const removedProp = this.removeStateProp(ctx);
+    const { removedProp, checkedValues } = this.removeStateProp(ctx);
     this.removeTightProp(ctx); // tight는 Radio 외부 인터페이스에 불필요
     const checkedName = this.addCheckedProp(ctx);
     const onChangeName = this.addOnChangeProp(ctx);
@@ -47,7 +50,7 @@ export class RadioHeuristic implements IHeuristic {
       disabled: { prop: disableName },
     }};
     this.addDisabledOpacity(ctx); // Disable=True 변형의 opacity:0.43 → :disabled pseudo-class
-    this.fixStateCheckedSizeConflict(ctx); // AND(state=Checked, size=*) → Checked 스타일에서 size 담당 속성 제거
+    this.fixStateCheckedSizeConflict(ctx, removedProp); // AND(state=Checked, size=*) → Checked 스타일에서 size 담당 속성 제거
 
     // dot 아이콘 slot → boolean prop 조건부 렌더링으로 변환
     // interactionNormal slot 제거
@@ -55,9 +58,12 @@ export class RadioHeuristic implements IHeuristic {
 
     // 제거된 prop이 있으면 트리 전체의 조건 참조를 boolean prop으로 치환
     if (removedProp) {
-      const stateConditionMap: Record<string, ConditionNode> = {
-        Checked: { type: "truthy", prop: "checked" },
-      };
+      // variant 값에서 동적으로 conditionMap 생성
+      // checked/active/selected → truthy(checked), 나머지는 default(map에 없음)
+      const stateConditionMap: Record<string, ConditionNode> = {};
+      for (const val of checkedValues) {
+        stateConditionMap[val] = { type: "truthy", prop: "checked" };
+      }
       rewritePropConditions(ctx.tree, removedProp, stateConditionMap);
       rewriteStateDynamicStyles(ctx.tree, removedProp, stateConditionMap);
     }
@@ -68,12 +74,33 @@ export class RadioHeuristic implements IHeuristic {
     };
   }
 
-  private removeStateProp(ctx: HeuristicContext): string | null {
-    const idx = ctx.props.findIndex((p) => p.name === "state");
-    if (idx === -1) return null;
-    const removed = ctx.props[idx].name;
+  /**
+   * state/states variant prop을 제거하고, "checked" 상태에 해당하는 variant 값 목록 반환
+   *
+   * variant options에서 checked/active/selected/on 패턴 → checked 상태
+   * 나머지(disable, unchecked 등) → default(비선택) 상태
+   */
+  private removeStateProp(ctx: HeuristicContext): {
+    removedProp: string | null;
+    checkedValues: string[];
+  } {
+    const idx = ctx.props.findIndex((p) => isStateProp(p.name));
+    if (idx === -1) return { removedProp: null, checkedValues: [] };
+
+    const stateProp = ctx.props[idx];
+    const removedProp = stateProp.name;
     ctx.props.splice(idx, 1);
-    return removed;
+
+    // variant options에서 checked 상태 값 감지
+    const options = (stateProp as VariantPropDefinition).options ?? [];
+    const checkedValues = options.filter((opt) => CHECKED_VALUE_PATTERNS.test(opt));
+
+    // 패턴 매칭 실패 시 기존 "Checked" 키 폴백
+    if (checkedValues.length === 0) {
+      checkedValues.push("Checked");
+    }
+
+    return { removedProp, checkedValues };
   }
 
   private removeTightProp(ctx: HeuristicContext): void {
@@ -144,27 +171,27 @@ export class RadioHeuristic implements IHeuristic {
    * size에 따라 variant 스타일이 달라지는 경우 교집합이 비어 키가 사라진다.
    * 따라서 이 처리는 RadioHeuristic에서 도메인 지식으로 직접 해결한다.
    */
-  private fixStateCheckedSizeConflict(ctx: HeuristicContext): void {
-    this.traverseForSizeStateConflict(ctx.tree);
+  private fixStateCheckedSizeConflict(ctx: HeuristicContext, statePropName: string | null): void {
+    if (!statePropName) return;
+    this.traverseForSizeStateConflict(ctx.tree, statePropName);
   }
 
-  private traverseForSizeStateConflict(node: InternalNode): void {
+  private traverseForSizeStateConflict(node: InternalNode, statePropName: string): void {
     if (node.styles?.dynamic && node.styles.dynamic.length > 0) {
       // AND(state=Checked, size=*) 패턴이 있는지 확인
       const hasStateAndSize = node.styles.dynamic.some((entry) => {
         if (entry.condition.type !== "and") return false;
         const conds = entry.condition.conditions;
-        const hasState = conds.some((c) => c.type === "eq" && c.prop === "state");
+        const hasState = conds.some((c) => c.type === "eq" && isStateProp(c.prop));
         const hasSize = conds.some((c) => c.type === "eq" && c.prop === "size");
         return hasState && hasSize;
       });
 
       if (hasStateAndSize) {
-        // state=Checked + size 조합의 스타일에서 width/height 제거
         for (const entry of node.styles.dynamic) {
           if (entry.condition.type !== "and") continue;
           const conds = entry.condition.conditions;
-          const stateEq = conds.find((c) => c.type === "eq" && c.prop === "state");
+          const stateEq = conds.find((c) => c.type === "eq" && isStateProp(c.prop));
           const sizeEq = conds.find((c) => c.type === "eq" && c.prop === "size");
           if (stateEq && sizeEq) {
             delete entry.style["width"];
@@ -175,7 +202,7 @@ export class RadioHeuristic implements IHeuristic {
     }
 
     for (const child of node.children || []) {
-      this.traverseForSizeStateConflict(child);
+      this.traverseForSizeStateConflict(child, statePropName);
     }
   }
 
