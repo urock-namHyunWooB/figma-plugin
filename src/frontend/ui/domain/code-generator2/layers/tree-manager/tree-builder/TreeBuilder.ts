@@ -2,6 +2,7 @@ import {
   UITree,
   InternalTree,
   PropDefinition,
+  ConditionNode,
 } from "../../../types/types";
 import DataManager from "../../data-manager/DataManager";
 import { VariantMerger } from "./processors/VariantMerger";
@@ -14,6 +15,8 @@ import { HeuristicsRunner } from "./heuristics/HeuristicsRunner";
 import { BreakpointHeuristic } from "./heuristics/BreakpointHeuristic";
 import UINodeConverter from "./UINodeConverter";
 import { detectInstanceOverrides } from "./processors/utils/overrideUtils";
+import { convertStateDynamicToPseudo, rewritePropConditions } from "./processors/utils/rewritePropConditions";
+
 
 /**
  * TreeBuilder
@@ -130,6 +133,9 @@ class TreeBuilder {
       componentContext
     );
 
+    // Step 6.5: State fallback — 휴리스틱이 처리하지 않은 state dynamic → pseudo 자동 변환
+    this.fallbackStateToPseudo(tree, props);
+
     // 휴리스틱이 직접 생성한 arraySlots 병합 + props 추가
     if (heuristicsResult.arraySlots?.length) {
       const existingNames = new Set(props.map((p) => p.name));
@@ -163,6 +169,54 @@ class TreeBuilder {
         ? { stateVars: heuristicsResult.stateVars }
         : {}),
     };
+  }
+
+  /**
+   * 휴리스틱이 처리하지 않은 state dynamic → pseudo-class 자동 변환
+   *
+   * 휴리스틱이 state prop을 제거했으면 이미 처리된 것이므로 스킵.
+   * state prop이 아직 남아있으면 이 fallback이 pseudo 변환을 수행한다.
+   */
+  private fallbackStateToPseudo(
+    tree: InternalTree,
+    props: PropDefinition[]
+  ): void {
+    const stateIdx = props.findIndex(
+      (p) => p.sourceKey.toLowerCase() === "state" || p.sourceKey.toLowerCase() === "states"
+    );
+    if (stateIdx === -1) return;
+
+    const stateProp = props[stateIdx];
+    // name은 normalized (camelCase) — condition.prop과 일치
+    const removedProp = stateProp.name;
+
+    const CSS_CONVERTIBLE = StyleProcessor.CSS_CONVERTIBLE_STATES;
+
+    // 항상 변환 가능한 state 값은 pseudo로 변환 (나머지는 dynamic 유지)
+    convertStateDynamicToPseudo(tree, removedProp, StyleProcessor.STATE_TO_PSEUDO);
+
+    // visibility 조건에서 CSS-convertible 값만 제거, non-convertible 값은 보존
+    const conditionMap: Record<string, ConditionNode> = {};
+    if (stateProp.type === "variant" && stateProp.options?.length) {
+      for (const opt of stateProp.options) {
+        if (!CSS_CONVERTIBLE.has(opt.toLowerCase())) {
+          conditionMap[opt] = { type: "eq", prop: removedProp, value: opt };
+        }
+      }
+    }
+    rewritePropConditions(tree, removedProp, conditionMap);
+
+    // 모든 옵션이 CSS 변환 가능하면 prop 완전 제거
+    if (stateProp.type === "variant" && stateProp.options?.length) {
+      const allConvertible = stateProp.options.every(
+        (opt) => CSS_CONVERTIBLE.has(opt.toLowerCase())
+      );
+      if (allConvertible) {
+        props.splice(stateIdx, 1);
+      }
+    } else {
+      props.splice(stateIdx, 1);
+    }
   }
 
   /**

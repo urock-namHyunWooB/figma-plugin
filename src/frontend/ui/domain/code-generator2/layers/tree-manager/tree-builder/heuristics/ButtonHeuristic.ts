@@ -14,13 +14,15 @@
  * - INSTANCE/VECTOR (작은 크기): "icon"
  */
 
-import type { ComponentType, InternalNode } from "../../../../types/types";
+import type { ComponentType, ConditionNode, InternalNode } from "../../../../types/types";
 import type {
   IHeuristic,
   HeuristicContext,
   HeuristicResult,
 } from "./IHeuristic";
 import { extractTextSlotInfo } from "../processors/utils/textSlotUtils";
+import { convertStateDynamicToPseudo, rewritePropConditions } from "../processors/utils/rewritePropConditions";
+import { StyleProcessor } from "../processors/StyleProcessor";
 import DataManager from "@code-generator2/layers/data-manager/DataManager";
 
 export class ButtonHeuristic implements IHeuristic {
@@ -174,57 +176,54 @@ export class ButtonHeuristic implements IHeuristic {
     };
   }
 
-  /**
-   * CSS pseudo-class로 변환 가능한 State 값 목록
-   */
-  private static readonly CSS_CONVERTIBLE_STATES = new Set([
-    "default",
-    "normal",
-    "enabled",
-    "rest",
-    "idle",
-    "hover",
-    "hovered",
-    "hovering",
-    "active",
-    "pressed",
-    "pressing",
-    "clicked",
-    "focus",
-    "focused",
-    "focus-visible",
-    "disabled",
-    "inactive",
-    "selected",
-    "checked",
-    "visited",
-  ]);
+  /** StyleProcessor.CSS_CONVERTIBLE_STATES 참조 */
+  private static get CSS_CONVERTIBLE_STATES() {
+    return StyleProcessor.CSS_CONVERTIBLE_STATES;
+  }
 
   /**
-   * State prop 제거 (CSS pseudo-class 변환 대상)
-   * 버튼 컴포넌트의 State (Default/Hover/Pressed/Disabled)는
-   * :hover, :active, :disabled 등으로 변환되므로 prop에서 제외
+   * State prop 제거 + state dynamic → CSS pseudo-class 변환
    *
-   * 단, Error/Insert 등 CSS 변환 불가한 옵션이 포함된 경우 State prop 유지
+   * CSS 변환 가능한 state 값 (Hover, Active, Disabled 등)은 pseudo-class로 변환.
+   * 변환 불가한 값 (loading, error 등)은 dynamic에 유지.
+   * 모든 값이 변환 가능하면 state prop 완전 제거.
    */
   private removeStateProp(ctx: HeuristicContext): void {
     const stateIndex = ctx.props.findIndex(
-      (p) => p.sourceKey.toLowerCase() === "state"
+      (p) => p.sourceKey.toLowerCase() === "state" || p.sourceKey.toLowerCase() === "states"
     );
     if (stateIndex === -1) return;
 
     const stateProp = ctx.props[stateIndex];
+    // name은 normalized (camelCase) — StyleProcessor.createCondition이 생성한 condition.prop과 일치
+    const removedProp = stateProp.name;
 
-    // variant 타입이고 options가 있으면 CSS 변환 가능 여부 확인
+    // state dynamic → CSS pseudo-class 변환 (변환 가능한 값만, 나머지는 dynamic 유지)
+    convertStateDynamicToPseudo(ctx.tree, removedProp, StyleProcessor.STATE_TO_PSEUDO);
+
+    // visibility 조건: CSS-convertible 값은 제거, non-convertible 값은 보존
+    const conditionMap: Record<string, ConditionNode> = {};
+    if (stateProp.type === "variant" && stateProp.options && stateProp.options.length > 0) {
+      for (const opt of stateProp.options) {
+        if (!ButtonHeuristic.CSS_CONVERTIBLE_STATES.has(opt.toLowerCase())) {
+          conditionMap[opt] = { type: "eq", prop: removedProp, value: opt };
+        }
+      }
+    }
+    rewritePropConditions(ctx.tree, removedProp, conditionMap);
+
+    // 모든 옵션이 CSS 변환 가능하면 prop 완전 제거
     if (stateProp.type === "variant" && stateProp.options && stateProp.options.length > 0) {
       const allConvertible = stateProp.options.every(
         (opt) => ButtonHeuristic.CSS_CONVERTIBLE_STATES.has(opt.toLowerCase())
       );
-      // CSS 변환 불가 옵션이 있으면 State prop 유지
-      if (!allConvertible) return;
+      if (allConvertible) {
+        ctx.props.splice(stateIndex, 1);
+      }
+      // 일부만 변환 가능: prop 유지 (loading 등 non-CSS 값은 사용자가 제어)
+    } else {
+      ctx.props.splice(stateIndex, 1);
     }
-
-    ctx.props.splice(stateIndex, 1);
   }
 
   /**

@@ -560,3 +560,93 @@ describe("Fab", () => {
     expect(result).toMatch(/height="100%"/);
   });
 });
+
+/**
+ * Radio 컴파일 테스트
+ *
+ * 기대 스펙:
+ * - states variant → checked boolean prop으로 변환
+ * - states prop이 외부 인터페이스에 노출되지 않음
+ * - base CSS에 width/height가 있어야 함 (0x0 렌더링 방지)
+ * - states=active → :active CSS pseudo가 아닌 checked 조건부 스타일
+ * - 내부 dot은 checked일 때만 렌더링
+ * - 루트는 <button> + onClick/disabled 처리
+ */
+describe("Radio", () => {
+  const fixturePath = path.join(
+    process.cwd(),
+    "test/fixtures/urock/Radio.json"
+  );
+
+  const compileFixture = async () => {
+    const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
+    return (await compiler.compile()) as unknown as string;
+  };
+
+  it("컴파일이 성공해야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toBeTruthy();
+    expect(result.length).toBeGreaterThan(100);
+  });
+
+  it("base CSS에 width/height가 있어야 한다 (0x0 렌더링 방지)", async () => {
+    const result = await compileFixture();
+    // 루트 또는 자식 CSS에 base width/height가 포함되어야 함
+    // pseudo-class 안이 아닌 base에 있어야 정상 렌더링됨
+    const cssBlocks = result.match(/const \w+Css = css`([^`]*)`/gs) || [];
+    const hasBaseSize = cssBlocks.some(
+      (block) =>
+        /width:\s*\d+px/.test(block) &&
+        !/&:active\s*\{[^}]*width/.test(block) // :active 안의 width가 아닌 base width
+    );
+    expect(hasBaseSize).toBe(true);
+  });
+
+  it("states variant prop이 외부에 노출되지 않아야 한다", async () => {
+    const result = await compileFixture();
+    const propsMatch = result.match(
+      /export interface \w+Props\s*\{([^}]*)\}/s
+    );
+    expect(propsMatch).toBeTruthy();
+    expect(propsMatch![1]).not.toMatch(/\bstates\b/);
+  });
+
+  it("checked?: boolean prop이 있어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/checked\?.*boolean/);
+  });
+
+  it("onChange?: (checked: boolean) => void prop이 있어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/onChange\?/);
+  });
+
+  it("disable?: boolean prop이 있어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/disable\?.*boolean/);
+  });
+
+
+  it("onClick={() => onChange?.(!checked)} 핸들러가 있어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/onClick=\{.*onChange.*checked/);
+  });
+
+  it("disabled={disable} 속성이 있어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/disabled=\{disable\}/);
+  });
+
+  it("states=active가 CSS :active pseudo-class로 매핑되면 안 된다", async () => {
+    const result = await compileFixture();
+    // :active는 클릭 중 상태이지, radio 선택 상태가 아님
+    // 단, :disabled pseudo는 opacity 용도로 있을 수 있음
+    expect(result).not.toMatch(/&:active\s*\{\s*width:/);
+  });
+
+  it("내부 dot이 checked 조건부 렌더링되어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/checked\s*&&/);
+  });
+});

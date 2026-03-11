@@ -32,7 +32,9 @@ import type {
 import {
   rewritePropConditions,
   rewriteStateDynamicStyles,
+  convertStateDynamicToPseudo,
 } from "../processors/utils/rewritePropConditions";
+import { StyleProcessor } from "../processors/StyleProcessor";
 
 export class DropdownHeuristic implements IHeuristic {
   readonly name = "DropdownHeuristic";
@@ -56,6 +58,13 @@ export class DropdownHeuristic implements IHeuristic {
   apply(ctx: HeuristicContext): HeuristicResult {
     // 1. states variant prop 제거
     const removedStateProp = this.removeVariantProp(ctx, "states");
+
+    // 1.5. state dynamic → pseudo 변환 (hover → :hover, active → :active)
+    // 후속 단계(convertActivePseudoToOpenCondition, moveTriggerChildHoverToParent)가
+    // pseudo 엔트리를 참조하므로, 먼저 state dynamic을 pseudo로 변환해야 함.
+    if (removedStateProp) {
+      convertStateDynamicToPseudo(ctx.tree, removedStateProp, StyleProcessor.STATE_TO_PSEUDO);
+    }
 
     // 2. list N boolean props 제거 (props 배열에서만)
     this.removeListBooleanProps(ctx);

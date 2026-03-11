@@ -41,8 +41,17 @@ export class StyleProcessor {
   // 이전에는 PROP_BASED_STATE_VALUES 화이트리스트로 Checked/Indeterminate만 포함했지만,
   // Unchecked 등 default 값을 제외하면 UITreeOptimizer가 잘못 병합하는 버그 발생.
 
-  /** State prop 값 → CSS pseudo-class 매핑 */
-  private readonly STATE_TO_PSEUDO: Record<string, PseudoClass> = {
+  /** CSS pseudo-class로 변환 가능한 State 값 (lowercase 비교용) */
+  static readonly CSS_CONVERTIBLE_STATES = new Set([
+    "default", "normal", "enabled", "rest", "idle",
+    "hover", "hovered", "hovering",
+    "active", "pressed", "pressing", "clicked",
+    "focus", "focused", "focus-visible",
+    "disabled", "inactive", "selected", "checked", "visited",
+  ]);
+
+  /** State prop 값 → CSS pseudo-class 매핑 (heuristics에서 사용) */
+  static readonly STATE_TO_PSEUDO: Record<string, PseudoClass> = {
     Hover: ":hover",
     hover: ":hover",
     Active: ":active",
@@ -313,13 +322,15 @@ export class StyleProcessor {
     // dynamic 스타일 계산
     const dynamic = this.extractDynamicStyles(baseVariants, base, includeStateInConditions);
 
-    // pseudo 스타일 계산
-    const pseudo = this.extractPseudoStyles(pseudoVariants);
+    // pseudo variant → state 조건 dynamic 엔트리로 변환
+    // 각 pseudo-class에 해당하는 모든 variant의 "공통 diff" (base 대비)만 추출.
+    // customType/size 등으로 달라지는 속성은 제외 → 순수 state-varying CSS만 포함.
+    const stateDynamic = this.extractStateDynamicEntries(pseudoVariants, base);
+    dynamic.push(...stateDynamic);
 
     return {
       base,
       dynamic,
-      ...(Object.keys(pseudo).length > 0 ? { pseudo } : {}),
     };
   }
 
@@ -365,6 +376,10 @@ export class StyleProcessor {
 
   /**
    * State 기반 variant 분리
+   *
+   * STATE_TO_PSEUDO에 매칭되는 state variant를 분리한다.
+   * 분리된 variant는 base/dynamic 계산에서 제외되어 스타일 왜곡 방지.
+   * pseudo-class 생성 여부는 heuristic이 결정한다.
    */
   private separateStateVariants(
     variantStyles: Array<{ variantName: string; cssStyle: Record<string, string> }>
@@ -389,7 +404,7 @@ export class StyleProcessor {
     for (const variant of variantStyles) {
       const state = this.extractStateFromVariantName(variant.variantName);
 
-      if (state && this.STATE_TO_PSEUDO[state]) {
+      if (state && StyleProcessor.STATE_TO_PSEUDO[state]) {
         pseudoVariants.push({
           ...variant,
           state,
@@ -505,11 +520,9 @@ export class StyleProcessor {
 
     for (const { key, value } of props) {
       if (key.toLowerCase() === "state" || key.toLowerCase() === "states") {
-        // pseudo-class로 변환 가능한 State 값 → 제외 (separateStateVariants에서 처리)
-        if (this.STATE_TO_PSEUDO[value] !== undefined) continue;
-        // 비-pseudo state 값이 2개 이상일 때만 조건에 포함
-        // (Unchecked/Checked/Indeterminate 등 모든 state 값을 포함해야
-        //  UITreeOptimizer가 정확한 variant 수를 감지하여 잘못된 병합을 방지)
+        // state 값은 2개 이상일 때만 조건에 포함
+        // (1개면 조건 불필요, 2개 이상이면 UITreeOptimizer 오병합 방지)
+        // state→pseudo 변환은 heuristic이 결정한다.
         if (includeStateInConditions) {
           conditions.push(this.createCondition(key, value));
         }
@@ -607,25 +620,57 @@ export class StyleProcessor {
   }
 
   /**
-   * pseudo-class 스타일 추출
+   * pseudo variant → state 조건 dynamic 엔트리 변환
+   *
+   * 같은 state 값을 가진 모든 variant의 스타일에서:
+   * 1. base와의 diff 계산
+   * 2. 모든 variant에 공통인 diff만 추출 (customType/size로 달라지는 속성 제외)
+   * 3. state 조건 (eq(states, "hover") 등) dynamic 엔트리 생성
    */
-  private extractPseudoStyles(
+  private extractStateDynamicEntries(
     pseudoVariants: Array<{
       variantName: string;
       state: string;
       cssStyle: Record<string, string>;
-    }>
-  ): Partial<Record<PseudoClass, Record<string, string | number>>> {
-    const pseudo: Partial<Record<PseudoClass, Record<string, string | number>>> =
-      {};
+    }>,
+    base: Record<string, string | number>
+  ): Array<{ condition: ConditionNode; style: Record<string, string | number> }> {
+    // state 값별 그룹핑
+    const stateGroups = new Map<string, Array<Record<string, string>>>();
+    const stateKeys = new Map<string, string>(); // state value → prop key (State or states)
 
     for (const variant of pseudoVariants) {
-      const pseudoClass = this.STATE_TO_PSEUDO[variant.state];
-      if (pseudoClass) {
-        pseudo[pseudoClass] = variant.cssStyle;
+      if (!stateGroups.has(variant.state)) {
+        stateGroups.set(variant.state, []);
+      }
+      stateGroups.get(variant.state)!.push(variant.cssStyle);
+
+      // state prop key 추출 (State= or states=)
+      if (!stateKeys.has(variant.state)) {
+        const match = variant.variantName.match(/(State|states)\s*=/i);
+        if (match) stateKeys.set(variant.state, match[1]);
       }
     }
 
-    return pseudo;
+    const result: Array<{ condition: ConditionNode; style: Record<string, string | number> }> = [];
+
+    for (const [stateValue, variants] of stateGroups) {
+      // 각 variant의 base 대비 diff
+      const diffs = variants.map((css) => this.getDifferentStyles(css, base));
+
+      // 모든 variant에 공통인 diff만 추출
+      const commonDiff = this.extractCommonStyles(
+        diffs as Array<Record<string, string>>
+      );
+
+      if (Object.keys(commonDiff).length === 0) continue;
+
+      const propKey = stateKeys.get(stateValue) || "states";
+      const condition = this.createCondition(propKey, stateValue);
+
+      result.push({ condition, style: commonDiff });
+    }
+
+    return result;
   }
 }

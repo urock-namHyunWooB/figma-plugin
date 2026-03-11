@@ -18,7 +18,7 @@
  * conditionMap에 없는 값(예: "Unchecked")은 기본 상태로 간주 → 조건 제거
  */
 
-import type { InternalNode, ConditionNode } from "../../../../types/types";
+import type { InternalNode, ConditionNode, PseudoClass } from "../../../../types/types";
 
 /**
  * 트리 전체의 visibleCondition에서 removedProp 참조를 대체 ConditionNode로 치환
@@ -299,6 +299,227 @@ function processStateGroup(
       style,
       nonStateCondition: nd.nonStateCondition,
     });
+  }
+
+  // e. 비-state-varying CSS → state 조건 제거 후 유지 (그룹당 1개)
+  const nonStateVaryingStyle: Record<string, string | number> = {};
+  for (const [key, value] of Object.entries(defaultEntry.style)) {
+    if (!stateVaryingKeys.has(key)) {
+      nonStateVaryingStyle[key] = value;
+    }
+  }
+
+  if (Object.keys(nonStateVaryingStyle).length > 0) {
+    if (defaultEntry.nonStateCondition) {
+      nonStateVaryingEntries.push({
+        condition: defaultEntry.nonStateCondition,
+        style: nonStateVaryingStyle,
+      });
+    } else {
+      // nonStateCondition 없음 → base에 병합
+      Object.assign(baseAdditions, nonStateVaryingStyle);
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// convertStateDynamicToPseudo
+//
+// styles.dynamic 내 state variant 조건을 CSS pseudo-class로 변환.
+// heuristic이 state prop 제거 후 호출하여, state dynamic → pseudo 변환을 수행.
+//
+// 처리 흐름:
+// 1. dynamic 엔트리에서 eq(removedProp, value) 추출
+// 2. 비-state 조건 기준 그룹핑
+// 3. 그룹별: default 상태의 state-varying CSS → base 병합,
+//    non-default → pseudo[pseudoMap[value]] 엔트리 생성
+// 4. 비-state-varying CSS는 state 조건 제거 후 dynamic 유지
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * 트리 전체의 styles.dynamic에서 state 조건을 CSS pseudo-class로 변환
+ */
+export function convertStateDynamicToPseudo(
+  tree: InternalNode,
+  removedProp: string,
+  pseudoMap: Record<string, PseudoClass>
+): void {
+  pseudoConvertWalk(tree, removedProp, pseudoMap);
+}
+
+function pseudoConvertWalk(
+  node: InternalNode,
+  removedProp: string,
+  pseudoMap: Record<string, PseudoClass>
+): void {
+  if (node.styles?.dynamic && node.styles.dynamic.length > 0) {
+    pseudoConvertNode(node, removedProp, pseudoMap);
+  }
+  for (const child of node.children || []) {
+    pseudoConvertWalk(child, removedProp, pseudoMap);
+  }
+}
+
+function pseudoConvertNode(
+  node: InternalNode,
+  removedProp: string,
+  pseudoMap: Record<string, PseudoClass>
+): void {
+  const dynamic = node.styles!.dynamic;
+
+  // 1. state 조건 유무로 분리
+  const stateEntries: ParsedStateEntry[] = [];
+  const otherEntries: DynEntry[] = [];
+
+  for (const entry of dynamic) {
+    const parsed = extractStateEq(entry.condition, removedProp);
+    if (parsed) {
+      stateEntries.push({
+        stateValue: parsed.stateValue,
+        style: { ...entry.style },
+        nonStateCondition: parsed.remaining,
+      });
+    } else {
+      otherEntries.push(entry);
+    }
+  }
+
+  if (stateEntries.length === 0) return;
+
+  // 2. 비-state 조건 기준 그룹핑
+  const groups = new Map<string, ParsedStateEntry[]>();
+  for (const entry of stateEntries) {
+    const key = entry.nonStateCondition
+      ? JSON.stringify(entry.nonStateCondition)
+      : "__none__";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(entry);
+  }
+
+  // 3. 그룹별 처리
+  const baseAdditions: Record<string, string | number> = {};
+  const nonStateVaryingEntries: DynEntry[] = [];
+  const pseudoAdditions: Map<PseudoClass, Record<string, string | number>> = new Map();
+  const keptEntries: DynEntry[] = [];
+
+  for (const group of groups.values()) {
+    processPseudoGroup(group, pseudoMap, removedProp, baseAdditions, nonStateVaryingEntries, pseudoAdditions, keptEntries);
+  }
+
+  // 4. dynamic 교체 + base 병합 + pseudo 병합
+  node.styles!.dynamic = [...otherEntries, ...nonStateVaryingEntries, ...keptEntries];
+
+  if (Object.keys(baseAdditions).length > 0) {
+    node.styles!.base = { ...node.styles!.base, ...baseAdditions };
+  }
+
+  if (pseudoAdditions.size > 0) {
+    if (!node.styles!.pseudo) node.styles!.pseudo = {};
+    for (const [pseudo, style] of pseudoAdditions) {
+      node.styles!.pseudo[pseudo] = {
+        ...(node.styles!.pseudo[pseudo] || {}),
+        ...style,
+      };
+    }
+  }
+}
+
+/** default 상태 이름 패턴 (base로 병합됨) */
+const DEFAULT_STATE_NAMES = new Set([
+  "default", "normal", "enabled", "rest", "idle",
+]);
+
+function processPseudoGroup(
+  group: ParsedStateEntry[],
+  pseudoMap: Record<string, PseudoClass>,
+  removedProp: string,
+  baseAdditions: Record<string, string | number>,
+  nonStateVaryingEntries: DynEntry[],
+  pseudoAdditions: Map<PseudoClass, Record<string, string | number>>,
+  keptEntries: DynEntry[]
+): void {
+  // a. 3가지로 분류:
+  //    - pseudo: pseudoMap에 있는 값 (hover → :hover)
+  //    - default: DEFAULT_STATE_NAMES에 있는 값 (default → base로 병합)
+  //    - kept: 위 둘 다 아닌 값 (loading → dynamic에 유지)
+  const pseudoEntries = group.filter((e) => e.stateValue in pseudoMap);
+  const defaultEntry = group.find(
+    (e) => !(e.stateValue in pseudoMap) && DEFAULT_STATE_NAMES.has(e.stateValue.toLowerCase())
+  );
+  const keptStateEntries = group.filter(
+    (e) => !(e.stateValue in pseudoMap) && !DEFAULT_STATE_NAMES.has(e.stateValue.toLowerCase())
+  );
+
+  // kept entries → state 조건 유지한 채로 dynamic에 보존
+  for (const entry of keptStateEntries) {
+    const cond: ConditionNode = { type: "eq", prop: removedProp, value: entry.stateValue };
+    const fullCond = entry.nonStateCondition
+      ? { type: "and" as const, conditions: [cond, entry.nonStateCondition] }
+      : cond;
+    keptEntries.push({ condition: fullCond, style: entry.style });
+  }
+
+  if (pseudoEntries.length === 0) {
+    // default-only group: pseudo 변환할 것이 없지만,
+    // default 스타일은 비-state 조건으로 dynamic에 보존해야 함
+    if (defaultEntry && defaultEntry.nonStateCondition) {
+      nonStateVaryingEntries.push({
+        condition: defaultEntry.nonStateCondition,
+        style: defaultEntry.style,
+      });
+    }
+    return;
+  }
+
+  if (!defaultEntry) {
+    // default 없음 → pseudo 엔트리만 변환
+    for (const entry of pseudoEntries) {
+      const pseudo = pseudoMap[entry.stateValue];
+      if (!pseudo) continue;
+      const existing = pseudoAdditions.get(pseudo) || {};
+      pseudoAdditions.set(pseudo, { ...existing, ...entry.style });
+    }
+    return;
+  }
+
+  // b. state-varying CSS 키 계산 (default vs pseudo)
+  const stateVaryingKeys = new Set<string>();
+  for (const pe of pseudoEntries) {
+    for (const key of Object.keys(pe.style)) {
+      if (defaultEntry.style[key] !== pe.style[key]) {
+        stateVaryingKeys.add(key);
+      }
+    }
+    for (const key of Object.keys(defaultEntry.style)) {
+      if (!(key in pe.style)) {
+        stateVaryingKeys.add(key);
+      }
+    }
+  }
+
+  // c. default의 state-varying CSS → base에 병합
+  for (const key of stateVaryingKeys) {
+    if (key in defaultEntry.style) {
+      baseAdditions[key] = defaultEntry.style[key];
+    }
+  }
+
+  // d. pseudo 엔트리 → pseudo 스타일로 이동 (state-varying CSS만)
+  for (const pe of pseudoEntries) {
+    const pseudo = pseudoMap[pe.stateValue];
+    if (!pseudo) continue;
+
+    const style: Record<string, string | number> = {};
+    for (const key of stateVaryingKeys) {
+      if (key in pe.style) {
+        style[key] = pe.style[key];
+      }
+    }
+
+    if (Object.keys(style).length > 0) {
+      const existing = pseudoAdditions.get(pseudo) || {};
+      pseudoAdditions.set(pseudo, { ...existing, ...style });
+    }
   }
 
   // e. 비-state-varying CSS → state 조건 제거 후 유지 (그룹당 1개)

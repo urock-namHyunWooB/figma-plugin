@@ -256,30 +256,12 @@
     ],
     "pseudo": {
       ":disabled": {
-        "display": "inline-flex",
-        "padding": "3px 4px",
-        "flex-direction": "column",
-        "justify-content": "center",
-        "align-items": "center",
-        "border-radius": "4px",
         "background": "var(--Primary-300, #B0EBEC)"
       },
       ":active": {
-        "display": "inline-flex",
-        "padding": "3px 4px",
-        "flex-direction": "column",
-        "justify-content": "center",
-        "align-items": "center",
-        "border-radius": "4px",
         "background": "var(--Primary-700, #00ABB6)"
       },
       ":hover": {
-        "display": "inline-flex",
-        "padding": "3px 4px",
-        "flex-direction": "column",
-        "justify-content": "center",
-        "align-items": "center",
-        "border-radius": "4px",
         "background": "var(--Primary-500, #47CFD6)"
       }
     }

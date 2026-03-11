@@ -19,7 +19,9 @@ import type {
   HeuristicContext,
   HeuristicResult,
 } from "./IHeuristic";
-import type { ComponentType, InternalNode, PseudoClass } from "../../../../types/types";
+import type { ComponentType, ConditionNode, PseudoClass } from "../../../../types/types";
+import { convertStateDynamicToPseudo, rewritePropConditions } from "../processors/utils/rewritePropConditions";
+import { StyleProcessor } from "../processors/StyleProcessor";
 
 export class FabHeuristic implements IHeuristic {
   readonly name = "FabHeuristic";
@@ -39,10 +41,26 @@ export class FabHeuristic implements IHeuristic {
   }
 
   apply(ctx: HeuristicContext): HeuristicResult {
-    // states prop 제거 (pseudo-class로 이미 처리됨)
-    // splice로 원본 배열 직접 mutate (filter는 새 배열 할당이라 TreeBuilder 참조가 끊김)
-    const statesIdx = ctx.props.findIndex((p) => p.name === "states");
-    if (statesIdx !== -1) ctx.props.splice(statesIdx, 1);
+    // states prop 제거 + state dynamic → CSS pseudo-class 변환
+    const statesIdx = ctx.props.findIndex((p) => p.name === "states" || p.name === "state");
+    if (statesIdx !== -1) {
+      const stateProp = ctx.props[statesIdx];
+      // name은 normalized — condition.prop과 일치해야 함
+      const removedProp = stateProp.name;
+      ctx.props.splice(statesIdx, 1);
+      convertStateDynamicToPseudo(ctx.tree, removedProp, StyleProcessor.STATE_TO_PSEUDO);
+
+      // non-convertible state 값은 visibility 조건에 보존
+      const conditionMap: Record<string, ConditionNode> = {};
+      if (stateProp.type === "variant" && stateProp.options?.length) {
+        for (const opt of stateProp.options) {
+          if (!StyleProcessor.CSS_CONVERTIBLE_STATES.has(opt.toLowerCase())) {
+            conditionMap[opt] = { type: "eq", prop: removedProp, value: opt };
+          }
+        }
+      }
+      rewritePropConditions(ctx.tree, removedProp, conditionMap);
+    }
 
     // ELLIPSE 렌더 오프셋 보정
     this.fixEllipseRenderOffset(ctx);
