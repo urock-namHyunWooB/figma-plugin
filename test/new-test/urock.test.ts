@@ -653,6 +653,58 @@ describe("Radio", () => {
 
 
 /**
+ * Frame.json
+ *
+ * children에 리액트 태그를 주입할 수 있어야 한다.
+ * frame은 해당 children을 감싸는 래퍼 역할이다.
+ * 장식용 자식 노드(Card Background)는 children 뒤에 유지되어야 한다.
+ */
+describe("Frame", () => {
+  const fixturePath = path.join(
+    process.cwd(),
+    "test/fixtures/failing/Frame.json"
+  );
+
+  const compileFixture = async () => {
+    const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
+    return (await compiler.compile()) as unknown as string;
+  };
+
+  it("children?: React.ReactNode prop이 interface에 있어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toContain("children?: React.ReactNode");
+  });
+
+  it("props destructuring에서 children을 추출해야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toContain("children,");
+  });
+
+  it("JSX에서 {children}이 렌더링되어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toContain("{children}");
+  });
+
+  it("장식 노드(Card Background)가 children 뒤에 유지되어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toContain("Card Background");
+
+    // {children}이 Card Background보다 먼저 나와야 함
+    const childrenIdx = result.indexOf("{children}");
+    const cardBgIdx = result.indexOf("Card Background");
+    expect(childrenIdx).toBeLessThan(cardBgIdx);
+  });
+
+  it("variant props(color, stroke, customType)가 정상 생성되어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/color\?:/);
+    expect(result).toMatch(/stroke\?:/);
+    expect(result).toMatch(/customType\?:/);
+  });
+});
+
+/**
  * urock/Checkbox.json
  *
  * check 일때 v 표시가 가운데 정렬이여야 한다.
@@ -661,7 +713,7 @@ describe("Radio", () => {
 describe("Checkbox", () => {
   const fixturePath = path.join(
     process.cwd(),
-    "test/fixtures/failing/Checkbox.json"
+    "test/fixtures/urock/Checkbox.json"
   );
 
   const compileFixture = async () => {
@@ -760,5 +812,74 @@ describe("Checkbox", () => {
       );
       expect(hasZeroHeight).toBe(false);
     });
+  });
+});
+
+
+/**
+ * Profile.json
+ *
+ * 프로필 아바타 컴포넌트:
+ * - states prop 제거 (dimmed→:hover, none→!imageSrc)
+ * - text: boolean → string (default: "홍")
+ * - imageSrc: optional string + inline backgroundImage
+ * - hover ::after overlay + text opacity 전환
+ * - !imageSrc일 때 placeholder 실루엣 표시
+ */
+describe("Profile", () => {
+  const fixturePath = path.join(
+    process.cwd(),
+    "test/fixtures/urock/Profile.json"
+  );
+
+  const compileFixture = async () => {
+    const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
+    return (await compiler.compile()) as string;
+  };
+
+  it("states prop이 제거되어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).not.toMatch(/states\?.*"default".*"dimmed".*"none"/);
+    expect(result).not.toMatch(/states\s*=/);
+  });
+
+  it("text는 string이어야 한다 (default: 홍)", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/text\?\s*:\s*string/);
+    expect(result).toMatch(/text\s*=\s*"홍"/);
+  });
+
+  it("imageSrc는 optional string이어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/imageSrc\?\s*:\s*string/);
+  });
+
+  it("size prop이 유지되어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/size\?/);
+  });
+
+  it("hover ::after overlay가 있어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/&::after/);
+    expect(result).toMatch(/rgba\(0,\s*0,\s*0,\s*0\.25\)/);
+    expect(result).toMatch(/&:hover::after/);
+    expect(result).toMatch(/&:hover\s*>\s*span/);
+  });
+
+  it("{text}로 렌더링해야 한다 (하드코딩 아님)", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/\{text\}/);
+  });
+
+  it("!imageSrc일 때 placeholder가 표시되어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/!imageSrc/);
+  });
+
+  it("imageSrc가 inline backgroundImage로 바인딩되어야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toMatch(/backgroundImage.*imageSrc.*url/);
   });
 });
