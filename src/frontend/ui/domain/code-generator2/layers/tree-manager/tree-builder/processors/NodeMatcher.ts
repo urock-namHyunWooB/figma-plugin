@@ -19,6 +19,11 @@ export class NodeMatcher {
   /** 노드 ID → 원본 variant 루트 ID 매핑 */
   private nodeToVariantRoot: Map<string, string>;
 
+  /** Shape 계열 타입 — Figma가 같은 도형을 다른 타입으로 표현할 수 있으므로 상호 호환 */
+  private static readonly SHAPE_TYPES = new Set([
+    "RECTANGLE", "VECTOR", "ELLIPSE", "LINE", "STAR", "POLYGON", "BOOLEAN_OPERATION",
+  ]);
+
   constructor(
     dataManager: DataManager,
     nodeToVariantRoot: Map<string, string>
@@ -31,9 +36,12 @@ export class NodeMatcher {
    * 두 노드가 같은 역할을 하는지 판단
    */
   public isSameNode(nodeA: InternalNode, nodeB: InternalNode): boolean {
-    // 1. 타입이 다르면 다른 노드
+    // 1. 타입 호환성 체크 (shape 계열은 상호 호환)
     if (nodeA.type !== nodeB.type) {
-      return false;
+      const bothShapes =
+        NodeMatcher.SHAPE_TYPES.has(nodeA.type) &&
+        NodeMatcher.SHAPE_TYPES.has(nodeB.type);
+      if (!bothShapes) return false;
     }
 
     // 2. 같은 ID면 같은 노드

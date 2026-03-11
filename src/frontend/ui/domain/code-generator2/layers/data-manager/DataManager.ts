@@ -454,8 +454,11 @@ class DataManager {
       const pathMatch = svg.match(/<path[^>]*\/>/g);
       if (!pathMatch) continue;
 
-      const relX = boundingBox.x - instX;
-      const relY = boundingBox.y - instY;
+      // path 좌표의 최솟값 추출: SVG viewBox 내에서 path가 (0,0)이 아닌
+      // 오프셋에서 시작할 수 있음. translate에서 이를 보정해야 중앙 정렬됨.
+      const pathOffset = DataManager.getPathMinCoords(pathMatch);
+      const relX = boundingBox.x - instX - pathOffset.minX;
+      const relY = boundingBox.y - instY - pathOffset.minY;
 
       for (const path of pathMatch) {
         if (relX !== 0 || relY !== 0) {
@@ -471,6 +474,42 @@ class DataManager {
     if (pathElements.length === 0) return undefined;
 
     return `<svg width="${instWidth}" height="${instHeight}" viewBox="0 0 ${instWidth} ${instHeight}" fill="none" xmlns="http://www.w3.org/2000/svg">${pathElements.join("")}</svg>`;
+  }
+
+  /**
+   * SVG path 데이터에서 좌표 최솟값 추출
+   *
+   * exportAsync의 SVG viewBox 내에서 path가 (0,0)이 아닌 오프셋에서 시작하는 경우,
+   * translate 보정에 사용. M, L, H, V 커맨드만 처리 (절대좌표).
+   */
+  private static getPathMinCoords(paths: string[]): { minX: number; minY: number } {
+    let minX = Infinity;
+    let minY = Infinity;
+
+    for (const path of paths) {
+      const dMatch = path.match(/\bd="([^"]+)"/);
+      if (!dMatch) continue;
+      const d = dMatch[1];
+
+      // M, L 커맨드 (절대좌표 x,y 쌍)
+      for (const m of d.matchAll(/[ML]\s*(-?[\d.]+)[\s,]+(-?[\d.]+)/g)) {
+        minX = Math.min(minX, parseFloat(m[1]));
+        minY = Math.min(minY, parseFloat(m[2]));
+      }
+      // H 커맨드 (절대좌표 x)
+      for (const m of d.matchAll(/H\s*(-?[\d.]+)/g)) {
+        minX = Math.min(minX, parseFloat(m[1]));
+      }
+      // V 커맨드 (절대좌표 y)
+      for (const m of d.matchAll(/V\s*(-?[\d.]+)/g)) {
+        minY = Math.min(minY, parseFloat(m[1]));
+      }
+    }
+
+    return {
+      minX: minX === Infinity ? 0 : minX,
+      minY: minY === Infinity ? 0 : minY,
+    };
   }
 
   /**

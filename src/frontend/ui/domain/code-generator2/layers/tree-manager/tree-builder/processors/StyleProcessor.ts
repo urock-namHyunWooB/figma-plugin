@@ -127,9 +127,12 @@ export class StyleProcessor {
         filteredBase[key] = value;
       }
 
-      // rotate 제거 시 width/height를 회전 후 값으로 교체
+      // rotate 보정 + zero-dimension vector 보정 (stroke-only 경로)
       // getCSSAsync는 회전 전 치수를 반환하므로, absoluteBoundingBox(회전 후)로 보정
-      if (hasRotate && node.bounds) {
+      // LINE 제외: height:0 LINE은 레이아웃 구분선으로 display:none 처리됨 (UINodeConverter)
+      const hasZeroDim = node.type !== "LINE" && node.bounds &&
+        (node.bounds.width < 1 || node.bounds.height < 1);
+      if (node.bounds && (hasRotate || hasZeroDim)) {
         let w = node.bounds.width;
         let h = node.bounds.height;
         let bx = node.bounds.x;
@@ -157,6 +160,18 @@ export class StyleProcessor {
         ...styles,
         base: filteredBase,
       };
+    }
+
+    // strokeAlign: INSIDE → box-sizing: border-box 보정
+    // Figma INSIDE stroke는 width/height 안에 border 포함. CSS content-box는 밖에 추가.
+    if (styles && this.hasBorderInStyles(styles)) {
+      const strokeAlign = this.getStrokeAlign(node);
+      if (strokeAlign === "INSIDE") {
+        styles = {
+          ...styles,
+          base: { ...(styles.base || {}), "box-sizing": "border-box" },
+        };
+      }
     }
 
     // children 재귀 처리
@@ -265,11 +280,25 @@ export class StyleProcessor {
 
   /**
    * position 스타일 계산 (left, top)
+   *
+   * variant 병합 후 parent와 child의 bounds가 서로 다른 variant의
+   * 절대 좌표일 수 있으므로, 같은 variant의 원본 bounds로 상대 좌표를 계산한다.
    */
   private calculatePositionStyles(
     parent: InternalNode,
     child: InternalNode
   ): Record<string, string | number> | null {
+    // 같은 variant의 원본 bounds로 정확한 상대 좌표 계산 시도
+    const relPos = this.getRelativePositionFromVariant(parent, child);
+    if (relPos) {
+      return {
+        position: "absolute",
+        left: `${relPos.x}px`,
+        top: `${relPos.y}px`,
+      };
+    }
+
+    // fallback: node.bounds 직접 사용
     const parentBounds = parent.bounds;
     const childBounds = child.bounds;
 
@@ -284,6 +313,50 @@ export class StyleProcessor {
       position: "absolute",
       left: `${left}px`,
       top: `${top}px`,
+    };
+  }
+
+  /**
+   * child의 첫 번째 mergedNode가 속한 variant에서 parent의 원본 bounds를 찾아
+   * 정확한 상대 좌표를 반환한다.
+   *
+   * variant 병합 후 parent.bounds는 variant 0의 절대 좌표이지만,
+   * unmatched child.bounds는 다른 variant의 절대 좌표일 수 있다.
+   * 같은 variant 내의 parent bounds를 사용해야 올바른 상대 좌표가 나온다.
+   */
+  private getRelativePositionFromVariant(
+    parent: InternalNode,
+    child: InternalNode
+  ): { x: number; y: number } | null {
+    if (!child.mergedNodes?.[0] || !parent.mergedNodes?.length) return null;
+
+    const childFirst = child.mergedNodes[0];
+    const childVariant = childFirst.variantName;
+    if (!childVariant) return null;
+
+    // child의 원본 bounds 조회
+    const { node: childOriginal } = this.dataManager.getById(childFirst.id);
+    if (!childOriginal) return null;
+    const childBounds = (childOriginal as any).absoluteBoundingBox as
+      | { x: number; y: number } | undefined;
+    if (!childBounds) return null;
+
+    // parent에서 같은 variant의 mergedNode 찾기
+    const parentSameVariant = parent.mergedNodes.find(
+      (m) => m.variantName === childVariant
+    );
+    if (!parentSameVariant) return null;
+
+    // parent의 같은 variant 원본 bounds 조회
+    const { node: parentOriginal } = this.dataManager.getById(parentSameVariant.id);
+    if (!parentOriginal) return null;
+    const parentBounds = (parentOriginal as any).absoluteBoundingBox as
+      | { x: number; y: number } | undefined;
+    if (!parentBounds) return null;
+
+    return {
+      x: Math.round(childBounds.x - parentBounds.x),
+      y: Math.round(childBounds.y - parentBounds.y),
     };
   }
 
@@ -581,8 +654,12 @@ export class StyleProcessor {
    * Prop 이름 정규화 (PropsExtractor와 동일한 로직)
    */
   private normalizePropName(key: string): string {
-    let propName = key
+    // 비 ASCII/특수문자를 공백으로 변환 (슬래시, dot 등 JS 식별자 불가 문자)
+    const cleaned = key.replace(/[^a-zA-Z0-9\s]/g, " ").trim();
+
+    let propName = cleaned
       .split(/\s+/)
+      .filter(Boolean)
       .map((word, index) => {
         if (index === 0) {
           return word.charAt(0).toLowerCase() + word.slice(1);
@@ -590,6 +667,8 @@ export class StyleProcessor {
         return word.charAt(0).toUpperCase() + word.slice(1);
       })
       .join("");
+
+    if (!propName) propName = "prop";
 
     // Native HTML prop과 충돌하는 이름은 custom 접두사 추가
     if (this.isNativePropConflict(propName)) {
@@ -672,5 +751,44 @@ export class StyleProcessor {
     }
 
     return result;
+  }
+
+  /**
+   * 스타일에 border 관련 속성이 있는지 확인 (base + dynamic)
+   */
+  private hasBorderInStyles(styles: StyleObject): boolean {
+    const hasBorder = (obj: Record<string, any>): boolean =>
+      Object.keys(obj).some(k =>
+        k === "border" || k.startsWith("border-") ||
+        k === "borderWidth" || k === "borderColor" || k === "borderStyle"
+      );
+    if (styles.base && hasBorder(styles.base)) return true;
+    if (styles.dynamic) {
+      for (const entry of styles.dynamic) {
+        if (hasBorder(entry.style)) return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * 노드의 strokeAlign 조회 (DataManager 경유)
+   */
+  private getStrokeAlign(node: InternalNode): string | undefined {
+    const { node: sceneNode } = this.dataManager.getById(node.id);
+    if (sceneNode) {
+      const align = (sceneNode as any).strokeAlign;
+      if (align) return align;
+    }
+    if (node.mergedNodes?.length) {
+      for (const merged of node.mergedNodes) {
+        const { node: mergedScene } = this.dataManager.getById(merged.id);
+        if (mergedScene) {
+          const align = (mergedScene as any).strokeAlign;
+          if (align) return align;
+        }
+      }
+    }
+    return undefined;
   }
 }

@@ -574,3 +574,63 @@ function extractStateEq(
 
   return null;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// renamePropInConditions
+//
+// 트리 전체의 조건(visibleCondition + styles.dynamic)에서
+// 특정 prop 이름을 다른 이름으로 변경.
+//
+// 예: on/off → checked (boolean prop 리네임)
+//     truthy(onOff) → truthy(checked)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * 트리 전체에서 prop 이름 변경 (visibility + dynamic 조건 모두)
+ */
+export function renamePropInConditions(
+  tree: InternalNode,
+  oldProp: string,
+  newProp: string
+): void {
+  renameWalk(tree, oldProp, newProp);
+}
+
+function renameWalk(
+  node: InternalNode,
+  oldProp: string,
+  newProp: string
+): void {
+  if (node.visibleCondition) {
+    renameInCondition(node.visibleCondition, oldProp, newProp);
+  }
+  if (node.styles?.dynamic) {
+    for (const entry of node.styles.dynamic) {
+      renameInCondition(entry.condition, oldProp, newProp);
+    }
+  }
+  for (const child of node.children || []) {
+    renameWalk(child, oldProp, newProp);
+  }
+}
+
+function renameInCondition(
+  cond: ConditionNode,
+  oldProp: string,
+  newProp: string
+): void {
+  if (
+    (cond.type === "eq" || cond.type === "neq" || cond.type === "truthy") &&
+    cond.prop === oldProp
+  ) {
+    (cond as any).prop = newProp;
+  }
+  if (cond.type === "and" || cond.type === "or") {
+    for (const child of cond.conditions) {
+      renameInCondition(child, oldProp, newProp);
+    }
+  }
+  if (cond.type === "not") {
+    renameInCondition(cond.condition, oldProp, newProp);
+  }
+}

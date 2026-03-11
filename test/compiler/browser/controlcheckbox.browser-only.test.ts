@@ -177,8 +177,7 @@ describe("Controlcheckbox 브라우저 렌더링 검증", () => {
   describe("3. Indeterminate 상태", () => {
     test("Box의 배경색과 테두리가 파란색이어야 한다", () => {
       const { container } = renderCheckbox({
-        checked: false,
-        indeterminate: true,
+        checked: "indeterminate",
       });
       
       dumpStyles(container, "Indeterminate");

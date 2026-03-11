@@ -650,3 +650,115 @@ describe("Radio", () => {
     expect(result).toMatch(/checked\s*&&/);
   });
 });
+
+
+/**
+ * urock/Checkbox.json
+ *
+ * check 일때 v 표시가 가운데 정렬이여야 한다.
+ * 사각형 테두리는 살짝 둥근 모형이다.
+ */
+describe("Checkbox", () => {
+  const fixturePath = path.join(
+    process.cwd(),
+    "test/fixtures/failing/Checkbox.json"
+  );
+
+  const compileFixture = async () => {
+    const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
+    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
+    return (await compiler.compile()) as unknown as string;
+  };
+
+  it("컴파일이 성공해야 한다", async () => {
+    const result = await compileFixture();
+    expect(result).toBeTruthy();
+    expect(result).toMatch(/export default function Checkbox/);
+  });
+
+  describe("Props Interface", () => {
+    it('checked?: boolean | "indeterminate" 타입으로 정의되어야 한다', async () => {
+      const result = await compileFixture();
+      expect(result).toMatch(/checked\?:\s*boolean\s*\|\s*"indeterminate"/);
+    });
+
+    it("onCheckedChange 콜백이 있어야 한다", async () => {
+      const result = await compileFixture();
+      expect(result).toMatch(/onCheckedChange\?:/);
+    });
+
+    it("disable?: boolean 타입이 있어야 한다", async () => {
+      const result = await compileFixture();
+      expect(result).toMatch(/disable\?:\s*boolean/);
+    });
+  });
+
+  describe("체크마크 v 표시 가운데 정렬", () => {
+    it("체크마크 컨테이너가 absolute로 중앙 배치되어야 한다", async () => {
+      const result = await compileFixture();
+      // 체크마크 컨테이너: 12×12 within 24×24 parent → left:6, top:6
+      expect(result).toMatch(/left:\s*6px/);
+      expect(result).toMatch(/top:\s*6px/);
+    });
+
+    it("체크마크 SVG에 overflow visible이 있어야 한다 (stroke 클리핑 방지)", async () => {
+      const result = await compileFixture();
+      expect(result).toMatch(/overflow="visible"/);
+    });
+
+    it("SVG translate가 path 좌표 기준으로 보정되어야 한다", async () => {
+      const result = await compileFixture();
+      // path 시작점이 (1.25, 1.25)이므로 translate에서 해당 값을 빼야 함
+      // 잘못된 translate(1.5, 2.5)가 아닌 보정된 값이어야 한다
+      const translateMatch = result.match(/translate\(([^)]+)\)/);
+      expect(translateMatch).toBeTruthy();
+      const [tx, ty] = translateMatch![1].split(",").map((s) => parseFloat(s.trim()));
+      expect(tx).toBeLessThan(1.5);
+      expect(ty).toBeLessThan(2.5);
+    });
+  });
+
+  describe("사각형 테두리 둥근 모형", () => {
+    it("border-radius: 6px가 있어야 한다", async () => {
+      const result = await compileFixture();
+      expect(result).toMatch(/border-radius:\s*6px/);
+    });
+
+    it("모든 checked 상태에서 border-radius가 적용되어야 한다", async () => {
+      const result = await compileFixture();
+      // radio 요소의 checkedStyles에 각 상태별 border-radius가 있어야 함
+      const allCheckedStyles = [...result.matchAll(/checkedStyles\s*=\s*\{([\s\S]*?)\n\};/g)];
+      const hasRadiusInAnyMap = allCheckedStyles.some(
+        (m) => m[1].includes("border-radius")
+      );
+      expect(hasRadiusInAnyMap).toBe(true);
+    });
+
+    it("strokeAlign INSIDE 보정: box-sizing border-box가 있어야 한다", async () => {
+      const result = await compileFixture();
+      expect(result).toMatch(/box-sizing:\s*border-box/);
+    });
+  });
+
+  describe("indeterminate 상태", () => {
+    it("indeterminate 조건부 렌더링이 있어야 한다", async () => {
+      const result = await compileFixture();
+      expect(result).toMatch(/checked\s*===\s*["']indeterminate['"]/);
+    });
+
+    it("indeterminate 아이콘에 border-style solid가 있어야 한다", async () => {
+      const result = await compileFixture();
+      expect(result).toMatch(/border-style:\s*solid/);
+    });
+
+    it("minus 라인의 height가 0보다 커야 한다", async () => {
+      const result = await compileFixture();
+      // height: 0px 패턴이 indeterminate 이후에 없어야 함
+      const heightMatches = [...result.matchAll(/height:\s*([\d.]+)px/g)];
+      const hasZeroHeight = heightMatches.some(
+        (m) => parseFloat(m[1]) === 0 && result.indexOf(m[0]) > result.indexOf("indeterminate")
+      );
+      expect(hasZeroHeight).toBe(false);
+    });
+  });
+});

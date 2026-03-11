@@ -114,11 +114,13 @@ class UINodeConverter {
 
     // SVG 100%: filter/effects가 없는 벡터만 적용
     // (filter가 있으면 viewBox에 shadow 영역이 포함되어 100%로 축소 시 왜곡)
+    // overflow="visible": stroke가 viewBox 밖으로 확장될 수 있으므로 clipping 방지
     const hasFilter = node.styles?.base?.filter;
     const finalVectorSvg = vectorSvg && !hasFilter
       ? vectorSvg
           .replace(/<svg([^>]*)\bwidth="[^"]+"/,  '<svg$1 width="100%"')
           .replace(/<svg([^>]*)\bheight="[^"]+"/,  '<svg$1 height="100%"')
+          .replace(/<svg\b/,  '<svg overflow="visible"')
       : vectorSvg;
 
     const textSegments =
