@@ -68,7 +68,7 @@ export type VisibleValue =
 /**
  * 스타일 객체
  * base: 기본 스타일, dynamic: 조건부 스타일, pseudo: CSS pseudo-class 스타일
- * mediaQueries: @media 쿼리 스타일 (BreakpointHeuristic이 생성)
+ * mediaQueries: @media 쿼리 스타일 (ResponsiveProcessor가 생성)
  */
 export type StyleObject = {
   base: Record<string, string | number>;

@@ -4,18 +4,18 @@ import path from "path";
 import FigmaCodeGenerator from "@code-generator2";
 
 /**
- * BreakpointHeuristic TDD
+ * ModuleHeuristic + ResponsiveProcessor TDD
  *
- * 핵심 목표: variant prop이 "반응형 브레이크포인트"인지 스스로 인식하고
- *            인식된 경우 CSS @media query로 변환한다.
+ * 핵심 목표: 모듈 레벨 컴포넌트의 breakpoint variant prop을 감지하고
+ *            CSS @media query로 변환한다.
  *
- * 인식 기준 (아래 중 하나 이상 해당하면 브레이크포인트로 판단):
- *   - prop 이름에 breakpoint, device, screen, platform 등 포함
- *   - prop 값에 xs, sm, md, lg, xl, mobile, desktop, tablet 등 포함
+ * 인식 기준:
+ *   - prop 이름에 breakpoint, device, screen 포함 → 명시적 breakpoint
+ *   - (향후) 모듈 레벨 컴포넌트의 size variant → responsive 변환
  *
  * 인식 제외:
+ *   - 작은 컴포넌트의 size variant (XL/L/M/S 등) → prop으로 유지
  *   - 위 기준에 해당하지 않는 일반 variant (State, Color 등)
- *     → 그대로 prop으로 유지
  *
  * 픽스처: BreakpointdesktopmdlgStatelogin.json
  *   - GNB/Wanted 컴포넌트
@@ -28,7 +28,7 @@ import FigmaCodeGenerator from "@code-generator2";
  *   - Desktop(md-lg) → default (base CSS)
  *   - Desktop(xl)    → min-width: 1280px
  */
-describe("BreakpointHeuristic — 브레이크포인트 인식 및 @media 변환", () => {
+describe("ModuleHeuristic — 브레이크포인트 인식 및 @media 변환", () => {
   const fixturePath = path.join(
     process.cwd(),
     "test/fixtures/regression/BreakpointdesktopmdlgStatelogin.json"

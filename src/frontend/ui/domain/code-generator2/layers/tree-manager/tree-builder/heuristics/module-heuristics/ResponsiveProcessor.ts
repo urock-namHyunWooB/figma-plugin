@@ -1,35 +1,20 @@
 /**
- * BreakpointHeuristic
+ * ResponsiveProcessor
  *
- * Figma Breakpoint variant prop을 감지하고 CSS @media query로 변환한다.
+ * 모듈 레벨 컴포넌트에서 breakpoint variant prop을 CSS @media query로 변환한다.
  *
- * 인식 기준 (아래 중 하나 이상):
- *   - prop 이름에 breakpoint, device, screen, platform 등 포함
- *   - prop 값에 xs, sm, md, lg, xl, mobile, desktop, tablet 등 포함
- *
- * 변환 내용:
+ * BreakpointHeuristic에서 이관된 변환 로직:
  *   1. styles.dynamic의 브레이크포인트 조건 → styles.mediaQueries
  *   2. visibleCondition의 브레이크포인트 조건 → 반대 방향 @media { display: none }
  *   3. breakpoint prop → props에서 제거
  *
  * 미디어 쿼리 매핑:
- *   - Mobile(xs-sm)  → @media (max-width: 767px)  [스타일 적용용]
+ *   - Mobile(xs-sm)  → @media (max-width: 767px)
  *   - Desktop(md-lg) → null (기본값, base CSS에 유지)
- *   - Desktop(xl)    → @media (min-width: 1280px) [스타일 적용용]
- *
- * 가시성 반전 매핑 (요소 숨김용):
- *   - 모바일 전용 요소 → @media (min-width: 1280px) { display: none }
- *   - 데스크탑 전용 요소 → @media (max-width: 767px) { display: none }
+ *   - Desktop(xl)    → @media (min-width: 1280px)
  */
 
-import type { InternalTree, PropDefinition, ConditionNode } from "../../../../types/types";
-
-// 브레이크포인트 prop 이름 패턴
-// platform은 제외 (Platform=iOS/Normal 같은 것은 breakpoint가 아님)
-const BP_NAME_RE = /breakpoint|device|screen/i;
-
-// 브레이크포인트 prop 값 패턴 (Figma 스타일 또는 일반 약자)
-const BP_VALUE_RE = /\b(xs|sm|md|lg|xl|mobile|desktop|tablet|Mobile|Desktop)\b/i;
+import type { InternalTree, PropDefinition, ConditionNode } from "../../../../../types/types";
 
 // Figma 브레이크포인트 값 → 스타일 적용 @media 쿼리
 const STYLE_QUERY_MAP: Record<string, string | null> = {
@@ -37,18 +22,6 @@ const STYLE_QUERY_MAP: Record<string, string | null> = {
   "Desktop(md-lg)": null, // 기본값 — base CSS에 유지
   "Desktop(xl)": "(min-width: 1280px)",
 };
-
-/**
- * prop이 브레이크포인트 prop인지 판단
- */
-function isBreakpointProp(prop: PropDefinition): boolean {
-  if (prop.type !== "variant") return false;
-  if (BP_NAME_RE.test(prop.name)) return true;
-  if ("options" in prop && Array.isArray(prop.options)) {
-    if (prop.options.some((v) => BP_VALUE_RE.test(v))) return true;
-  }
-  return false;
-}
 
 /**
  * Figma 브레이크포인트 값 → 스타일 적용 @media 쿼리
@@ -63,8 +36,6 @@ function getStyleQuery(value: string): string | null {
 
 /**
  * 브레이크포인트 값 → 이 요소를 숨길 @media 쿼리 (반전)
- * - 모바일 전용 → 큰 화면에서 숨김 (min-width)
- * - 데스크탑 전용 → 작은 화면에서 숨김 (max-width)
  */
 function getHideQuery(value: string): string | null {
   if (/mobile|xs|sm/i.test(value)) return "(min-width: 1280px)";
@@ -74,9 +45,6 @@ function getHideQuery(value: string): string | null {
 
 /**
  * 조건에서 브레이크포인트 prop을 추출하고 나머지 조건을 반환
- * - eq 단독: { bpValue, rest: null }
- * - and 포함: { bpValue, rest: 나머지 조건 }
- * - 브레이크포인트 없음: { bpValue: null, rest: 원본 조건 }
  */
 function extractBpFromCondition(
   condition: ConditionNode,
@@ -122,20 +90,16 @@ function processNode(node: InternalTree, bpPropName: string): void {
       if (bpValue !== null) {
         const query = getStyleQuery(bpValue);
         if (query !== null) {
-          // 비기본 브레이크포인트 → @media 블록
           mediaEntries.push({ query, style: entry.style });
         } else {
-          // 기본 브레이크포인트(Desktop(md-lg)) → base CSS로 승격
-          // (base에 아직 해당 속성이 없는 경우에만 병합)
+          // 기본 브레이크포인트 → base CSS로 승격
           for (const [prop, value] of Object.entries(entry.style)) {
             if (!(prop in node.styles!.base)) {
               node.styles!.base[prop] = value;
             }
           }
         }
-        // 어떤 경우든 dynamic에서 제거 (bp 조건 소멸)
       } else {
-        // 브레이크포인트 아닌 조건 → dynamic 유지
         remainingDynamic.push(entry);
       }
     }
@@ -166,7 +130,6 @@ function processNode(node: InternalTree, bpPropName: string): void {
           { query: hideQuery, style: { display: "none" } },
         ];
       }
-      // 브레이크포인트 조건 제거, 나머지(state 등) 유지
       node.visibleCondition = rest !== null ? rest : undefined;
     }
   }
@@ -178,27 +141,25 @@ function processNode(node: InternalTree, bpPropName: string): void {
 }
 
 /**
- * BreakpointHeuristic
+ * ResponsiveProcessor
  *
- * TreeBuilder Step 5.5에서 실행 (컴포넌트 휴리스틱 이전)
- * 브레이크포인트 variant prop을 감지하고 @media query로 변환
+ * breakpoint prop을 감지하고 CSS @media query로 변환한다.
+ * ModuleHeuristic이 모듈로 판별한 컴포넌트에 대해서만 실행된다.
  */
-export class BreakpointHeuristic {
+export class ResponsiveProcessor {
   /**
-   * 브레이크포인트 variant prop을 감지하고 @media query로 변환
+   * breakpoint prop을 @media query로 변환
    * @param tree - InternalTree (in-place 수정)
    * @param props - PropDefinition 배열 (in-place 수정)
+   * @param bpPropIndex - breakpoint prop의 인덱스
    */
-  static run(tree: InternalTree, props: PropDefinition[]): void {
-    const bpIdx = props.findIndex(isBreakpointProp);
-    if (bpIdx === -1) return; // 브레이크포인트 prop 없음
-
-    const bpProp = props[bpIdx];
+  static run(tree: InternalTree, props: PropDefinition[], bpPropIndex: number): void {
+    const bpProp = props[bpPropIndex];
 
     // 트리 전체 변환
     processNode(tree, bpProp.name);
 
     // 브레이크포인트 prop 제거
-    props.splice(bpIdx, 1);
+    props.splice(bpPropIndex, 1);
   }
 }

@@ -12,7 +12,7 @@ import { StyleProcessor } from "./processors/StyleProcessor";
 import { VisibilityProcessor } from "./processors/VisibilityProcessor";
 import { ExternalRefsProcessor } from "./processors/ExternalRefsProcessor";
 import { HeuristicsRunner } from "./heuristics/HeuristicsRunner";
-import { BreakpointHeuristic } from "./heuristics/BreakpointHeuristic";
+import { ModuleHeuristic } from "./heuristics/module-heuristics/ModuleHeuristic";
 import UINodeConverter from "./UINodeConverter";
 import { detectInstanceOverrides } from "./processors/utils/overrideUtils";
 import { convertStateDynamicToPseudo, rewritePropConditions } from "./processors/utils/rewritePropConditions";
@@ -113,8 +113,8 @@ class TreeBuilder {
 
     this.applyTextPropertyBindings(tree, props);
 
-    // Step 5.5: 브레이크포인트 variant → CSS @media (컴포넌트 휴리스틱과 독립적으로 실행)
-    BreakpointHeuristic.run(tree, props);
+    // Step 5.5: 모듈 휴리스틱 — breakpoint variant → CSS @media 등 (컴포넌트 휴리스틱과 독립적으로 실행)
+    ModuleHeuristic.run(tree, props);
 
     // Step 6: 휴리스틱 (컴포넌트 타입 판별, semanticType 설정, props 추가)
     // 현재 컴포넌트의 고유 이름과 propDefs를 전달 (의존 컴포넌트가 메인 컴포넌트의 점수를 상속하지 않도록)
