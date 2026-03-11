@@ -31,7 +31,7 @@ import FigmaCodeGenerator from "@code-generator2";
 describe("BreakpointHeuristic — 브레이크포인트 인식 및 @media 변환", () => {
   const fixturePath = path.join(
     process.cwd(),
-    "test/fixtures/failing/BreakpointdesktopmdlgStatelogin.json"
+    "test/fixtures/regression/BreakpointdesktopmdlgStatelogin.json"
   );
 
   const compileFixture = async () => {

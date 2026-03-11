@@ -12,7 +12,7 @@ import path from "path";
  * - dot 아이콘은 checked && 조건부 렌더링
  */
 describe("Controlradio 컴파일 테스트", () => {
-  const fixturePath = path.join(__dirname, "../fixtures/failing/Controlradio.json");
+  const fixturePath = path.join(__dirname, "../fixtures/regression/Controlradio.json");
 
   let result: string | undefined;
 

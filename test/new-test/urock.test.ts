@@ -290,7 +290,7 @@ describe("Badgesicon", () => {
 describe("Dropdowngeneric", () => {
   const fixturePath = path.join(
     process.cwd(),
-    "test/fixtures/failing/Dropdowngeneric.json"
+    "test/fixtures/urock/Dropdowngeneric.json"
   );
 
   const compileFixture = async () => {

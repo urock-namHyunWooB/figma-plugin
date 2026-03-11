@@ -78,7 +78,7 @@ describe("Switch/Switch", () => {
 describe("Segmented Control/Segmented Control", () => {
   const fixturePath = path.join(
     process.cwd(),
-    "test/fixtures/failing/SegmentedControlsegmentedControl.json"
+    "test/fixtures/wanted/SegmentedControlsegmentedControl.json"
   );
 
   const compileFixture = async () => {

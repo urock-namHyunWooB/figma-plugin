@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 import FigmaCodeGenerator, { FigmaNodeData } from "@code-generator2";
 import component02 from "../fixtures/any/component-02.json";
-import listFixture from "../fixtures/failing/List.json";
+import listFixture from "../fixtures/regression/List.json";
 
 describe("Prop 이름 정규화 테스트", () => {
   describe("box-drawing 문자 포함 visible ref (List fixture)", () => {

@@ -14,7 +14,7 @@ import path from "path";
 describe("Searchfieldsearchfield 컴파일 테스트", () => {
   const fixturePath = path.join(
     __dirname,
-    "../fixtures/failing/Searchfieldsearchfield.json"
+    "../fixtures/regression/Searchfieldsearchfield.json"
   );
 
   let result: string | undefined;

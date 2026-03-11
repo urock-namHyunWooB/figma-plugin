@@ -4,7 +4,7 @@ import FigmaCodeGenerator from "@code-generator2";
 
 const fixturePath = path.join(
   process.cwd(),
-  "test/fixtures/failing/SegmentedControlsegmentedControl.json"
+  "test/fixtures/wanted/SegmentedControlsegmentedControl.json"
 );
 
 const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
