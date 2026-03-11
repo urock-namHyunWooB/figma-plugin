@@ -7,6 +7,7 @@ import { useComponentRenderer } from "./hooks/useComponentRenderer";
 import { PropController } from "./components/PropController";
 import { CodeViewer } from "./components/CodeViewer";
 import ErrorBoundary from "@frontend/ui/components/ErrorBoundary";
+import { DeployButton } from "./components/DeployButton";
 import { wireFunctionProps } from "./utils/wireFunctionProps";
 
 /**
@@ -563,25 +564,31 @@ function App() {
         <div css={codeSectionStyle}>
           <div css={codeHeaderStyle}>
             <span css={codeTitleStyle}>Generated Code</span>
-            <div css={styleToggleStyle}>
-              <button
-                css={[
-                  styleButtonStyle,
-                  styleStrategy === "emotion" && styleButtonActiveStyle,
-                ]}
-                onClick={() => setStyleStrategy("emotion")}
-              >
-                Emotion
-              </button>
-              <button
-                css={[
-                  styleButtonStyle,
-                  styleStrategy === "tailwind" && styleButtonActiveStyle,
-                ]}
-                onClick={() => setStyleStrategy("tailwind")}
-              >
-                Tailwind
-              </button>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div css={styleToggleStyle}>
+                <button
+                  css={[
+                    styleButtonStyle,
+                    styleStrategy === "emotion" && styleButtonActiveStyle,
+                  ]}
+                  onClick={() => setStyleStrategy("emotion")}
+                >
+                  Emotion
+                </button>
+                <button
+                  css={[
+                    styleButtonStyle,
+                    styleStrategy === "tailwind" && styleButtonActiveStyle,
+                  ]}
+                  onClick={() => setStyleStrategy("tailwind")}
+                >
+                  Tailwind
+                </button>
+              </div>
+              <DeployButton
+                componentName={componentName}
+                generatedCode={generatedCode}
+              />
             </div>
           </div>
           <CodeViewer code={generatedCode} />
