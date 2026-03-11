@@ -31,6 +31,8 @@ import { ChipHeuristic } from "./ChipHeuristic";
 import { BadgeHeuristic } from "./BadgeHeuristic";
 import { DropdownHeuristic } from "./DropdownHeuristic";
 import { FabHeuristic } from "./FabHeuristic";
+import { FrameHeuristic } from "./FrameHeuristic";
+import { ProfileHeuristic } from "./ProfileHeuristic";
 
 export class HeuristicsRunner {
   /** 매칭 임계점 */
@@ -45,6 +47,7 @@ export class HeuristicsRunner {
     new DropdownHeuristic(),    // Dropdown/Select (score 20, dropdown/select 이름 패턴)
     new CheckboxHeuristic(),    // Checkbox (score 20, checkbox 이름 패턴)
     new RadioHeuristic(),       // Radio (score 20, radio 이름 패턴)
+    new ProfileHeuristic(),     // Profile/Avatar (score 15, profile/avatar + states)
     new FabHeuristic(),         // FAB (score 15, ELLIPSE + INSTANCE 패턴)
     new BadgeHeuristic(),       // Badge notification (score 15, badge + 단일 컴포넌트)
     new ChipHeuristic(),        // Chip/Tag/Badge (score 10, 이름 패턴)
@@ -53,6 +56,7 @@ export class HeuristicsRunner {
     new SegmentedControlHeuristic(), // SegmentedControl (Tab props 패턴)
     new LinkHeuristic(),
     new ButtonHeuristic(),
+    new FrameHeuristic(),   // Frame/Card/Container (score 10, 래퍼 컴포넌트)
   ];
 
   // ===========================================================================
