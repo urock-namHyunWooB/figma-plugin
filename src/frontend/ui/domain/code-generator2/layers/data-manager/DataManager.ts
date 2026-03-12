@@ -480,7 +480,7 @@ class DataManager {
    * SVG path 데이터에서 좌표 최솟값 추출
    *
    * exportAsync의 SVG viewBox 내에서 path가 (0,0)이 아닌 오프셋에서 시작하는 경우,
-   * translate 보정에 사용. M, L, H, V 커맨드만 처리 (절대좌표).
+   * translate 보정에 사용. M, L, H, V, C, S, Q, T 커맨드 처리 (절대좌표).
    */
   private static getPathMinCoords(paths: string[]): { minX: number; minY: number } {
     let minX = Infinity;
@@ -495,6 +495,27 @@ class DataManager {
       for (const m of d.matchAll(/[ML]\s*(-?[\d.]+)[\s,]+(-?[\d.]+)/g)) {
         minX = Math.min(minX, parseFloat(m[1]));
         minY = Math.min(minY, parseFloat(m[2]));
+      }
+      // C 커맨드 (큐빅 베지어: cp1x cp1y cp2x cp2y x y)
+      for (const m of d.matchAll(
+        /C\s*(-?[\d.]+)[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+)/g
+      )) {
+        minX = Math.min(minX, parseFloat(m[1]), parseFloat(m[3]), parseFloat(m[5]));
+        minY = Math.min(minY, parseFloat(m[2]), parseFloat(m[4]), parseFloat(m[6]));
+      }
+      // S 커맨드 (스무스 큐빅 베지어: cp2x cp2y x y)
+      for (const m of d.matchAll(
+        /S\s*(-?[\d.]+)[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+)/g
+      )) {
+        minX = Math.min(minX, parseFloat(m[1]), parseFloat(m[3]));
+        minY = Math.min(minY, parseFloat(m[2]), parseFloat(m[4]));
+      }
+      // Q 커맨드 (쿼드라틱 베지어: cpx cpy x y)
+      for (const m of d.matchAll(
+        /Q\s*(-?[\d.]+)[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+)[\s,]+(-?[\d.]+)/g
+      )) {
+        minX = Math.min(minX, parseFloat(m[1]), parseFloat(m[3]));
+        minY = Math.min(minY, parseFloat(m[2]), parseFloat(m[4]));
       }
       // H 커맨드 (절대좌표 x)
       for (const m of d.matchAll(/H\s*(-?[\d.]+)/g)) {

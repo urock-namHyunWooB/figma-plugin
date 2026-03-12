@@ -590,6 +590,49 @@ describe("Fab", () => {
     expect(result).toMatch(/width="100%"/);
     expect(result).toMatch(/height="100%"/);
   });
+
+  it("아이콘 ㅅ(chevron)과 |(line)이 연결되어 렌더링되어야 한다", async () => {
+    const result = await compileFixture();
+
+    // merged icon SVG (40×40 viewBox) 추출
+    const iconSvg = result.match(/viewBox="0 0 40 40"[\s\S]*?<\/svg>/)?.[0];
+    expect(iconSvg).toBeTruthy();
+
+    // g translate + path d 추출 (멀티라인 JSX 포맷 대응)
+    const groups = [...iconSvg!.matchAll(
+      /<g transform="translate\(([^,]+),\s*([^)]+)\)">[\s\S]*?d="([^"]+)"/g
+    )];
+    expect(groups.length).toBeGreaterThanOrEqual(2);
+
+    // line(L 커맨드만)과 chevron(C 커맨드) 구분
+    const lineG = groups.find((g) => g[3].includes("L") && !g[3].includes("C"));
+    const chevronG = groups.find((g) => g[3].includes("C"));
+    expect(lineG).toBeTruthy();
+    expect(chevronG).toBeTruthy();
+
+    // line top y = translate_y + path min y
+    const lineTY = parseFloat(lineG![2]);
+    const lineYs = [...lineG![3].matchAll(/[ML]\s*[\d.]+[\s,]+([\d.]+)/g)]
+      .map((m) => parseFloat(m[1]));
+    const lineTopY = lineTY + Math.min(...lineYs);
+
+    // chevron peak y = translate_y + path min y (C 커맨드 좌표 포함)
+    const chevTY = parseFloat(chevronG![2]);
+    const chevYs: number[] = [];
+    for (const m of chevronG![3].matchAll(/[ML]\s*[\d.]+[\s,]+([\d.]+)/g)) {
+      chevYs.push(parseFloat(m[1]));
+    }
+    for (const m of chevronG![3].matchAll(
+      /C\s*[\d.]+[\s,]+([\d.]+)[\s,]+[\d.]+[\s,]+([\d.]+)[\s,]+[\d.]+[\s,]+([\d.]+)/g
+    )) {
+      chevYs.push(parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]));
+    }
+    const chevPeakY = chevTY + Math.min(...chevYs);
+
+    // chevron peak와 line top이 2px 이내여야 함 (연결 상태)
+    // 정상: ~0.5px, 버그(C 미파싱 시): ~12px 격차
+    expect(Math.abs(chevPeakY - lineTopY)).toBeLessThan(2);
+  });
 });
 
 /**
@@ -693,7 +736,7 @@ describe("Radio", () => {
 describe("Frame", () => {
   const fixturePath = path.join(
     process.cwd(),
-    "test/fixtures/urock/Frame.json"
+    "test/fixtures/failing/Frame.json"
   );
 
   const compileFixture = async () => {
