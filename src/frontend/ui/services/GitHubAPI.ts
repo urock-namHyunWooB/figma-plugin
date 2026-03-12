@@ -4,6 +4,7 @@ const BASE_BRANCH = "main";
 const API_BASE = "https://api.github.com";
 
 export const STAGING_BRANCH = "design/staging";
+export const COMPONENT_BRANCH_PREFIX = "design/components/";
 export const ACTIONS_URL = `https://github.com/${REPO_OWNER}/${REPO_NAME}/actions`;
 
 /**
@@ -153,6 +154,23 @@ export async function findStagingPR(): Promise<OpenPR | null> {
   return prs.find((pr) => pr.head.ref === STAGING_BRANCH) ?? null;
 }
 
+/** 컴포넌트별 PR 검색 (design/components/{name} 브랜치) */
+export async function findComponentPR(componentName: string): Promise<OpenPR | null> {
+  const branch = `${COMPONENT_BRANCH_PREFIX}${componentName}`;
+  const prs = await api<OpenPR[]>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls?state=open&head=${REPO_OWNER}:${branch}`
+  );
+  return prs[0] ?? null;
+}
+
+/** 모든 컴포넌트 PR 검색 (design/components/* 브랜치) */
+export async function findAllComponentPRs(): Promise<OpenPR[]> {
+  const prs = await api<OpenPR[]>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls?state=open`
+  );
+  return prs.filter((pr) => pr.head.ref.startsWith(COMPONENT_BRANCH_PREFIX));
+}
+
 /** release-please 릴리즈 PR 검색 */
 export async function findReleasePR(): Promise<OpenPR | null> {
   const prs = await api<OpenPR[]>(
@@ -221,16 +239,33 @@ export interface CheckRun {
   html_url: string;
 }
 
-export interface StagingCIStatus {
+export interface ComponentCIStatus {
   pr: OpenPR;
+  componentName: string;
   checks: CheckRun[];
   overall: CheckStatus;
 }
 
-export async function getStagingCIStatus(): Promise<StagingCIStatus | null> {
-  const pr = await findStagingPR();
+/** 특정 컴포넌트 PR의 CI 상태 조회 */
+export async function getComponentCIStatus(componentName: string): Promise<ComponentCIStatus | null> {
+  const pr = await findComponentPR(componentName);
   if (!pr) return null;
 
+  return getPRCIDetail(pr, componentName);
+}
+
+/** 모든 컴포넌트 PR의 CI 상태 조회 */
+export async function getAllComponentCIStatus(): Promise<ComponentCIStatus[]> {
+  const prs = await findAllComponentPRs();
+  return Promise.all(
+    prs.map((pr) => {
+      const name = pr.head.ref.replace(COMPONENT_BRANCH_PREFIX, "");
+      return getPRCIDetail(pr, name);
+    })
+  );
+}
+
+async function getPRCIDetail(pr: OpenPR, componentName: string): Promise<ComponentCIStatus> {
   const result = await api<{ check_runs: Array<{ name: string; status: string; conclusion: string | null; html_url: string }> }>(
     `/repos/${REPO_OWNER}/${REPO_NAME}/commits/${pr.head.sha}/check-runs`
   );
@@ -251,7 +286,7 @@ export async function getStagingCIStatus(): Promise<StagingCIStatus | null> {
     }
   }
 
-  return { pr, checks, overall };
+  return { pr, componentName, checks, overall };
 }
 
 /** 파일에서 @figma-node-id 메타데이터 추출 (D2/D3) */
