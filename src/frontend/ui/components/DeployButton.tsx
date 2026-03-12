@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { css } from "@emotion/react";
 import { deployComponent, releaseComponent, type DeployStatus } from "../services/deployService";
+import { typeCheckCode } from "../services/typeChecker";
 
 interface DeployButtonProps {
   componentName: string;
@@ -68,6 +69,17 @@ export function DeployButton({ componentName, generatedCode, figmaNodeId }: Depl
 
   const handleDeploy = async () => {
     if (!generatedCode || !componentName || !figmaNodeId) return;
+
+    // Deploy 전 타입 체크 — CI 실패 사전 차단
+    setStatus({ step: "checking-pr", message: "타입 체크 중..." });
+    const checkResult = typeCheckCode(generatedCode, `${componentName}.tsx`);
+    if (!checkResult.success) {
+      const firstError = checkResult.errors[0];
+      const errorMsg = `TS 타입 에러 (${checkResult.errors.length}건): L${firstError.line} — ${firstError.message}`;
+      setStatus({ step: "error", message: errorMsg });
+      return;
+    }
+
     await deployComponent(componentName, generatedCode, figmaNodeId, setStatus);
   };
 
