@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { css } from "@emotion/react";
 import { deployComponent, releaseComponent, type DeployStatus } from "../services/deployService";
 import { typeCheckCode, type TypeCheckError } from "../services/typeChecker";
-import { getStagingCIStatus, type StagingCIStatus } from "../services/GitHubAPI";
+import { getComponentCIStatus, getAllComponentCIStatus, type ComponentCIStatus } from "../services/GitHubAPI";
 
 interface PublishTabProps {
   componentName: string;
@@ -378,7 +378,7 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
   const [activeFlow, setActiveFlow] = useState<FlowType>(null);
   const [typeErrors, setTypeErrors] = useState<TypeCheckError[]>([]);
   const [typeCheckPassed, setTypeCheckPassed] = useState(false);
-  const [ciStatus, setCIStatus] = useState<StagingCIStatus | null>(null);
+  const [ciStatuses, setCIStatuses] = useState<ComponentCIStatus[]>([]);
   const [ciLoading, setCILoading] = useState(false);
   const ciPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -387,16 +387,15 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
   const isReleaseDone = status.step === "release-done";
   const isError = status.step === "error";
 
-  // CI status fetch
+  // CI status fetch — 모든 컴포넌트 PR 조회
   const fetchCI = useCallback(async () => {
     setCILoading(true);
     try {
-      const result = await getStagingCIStatus();
-      setCIStatus(result);
-      return result;
+      const results = await getAllComponentCIStatus();
+      setCIStatuses(results);
+      return results;
     } catch {
-      // API 호출 실패 시 무시 (Figma 외부 환경 등)
-      return null;
+      return [];
     } finally {
       setCILoading(false);
     }
@@ -413,9 +412,10 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
     }
   }, [isDone, fetchCI]);
 
-  // pending 상태일 때 15초 간격 자동 폴링
+  // pending 상태가 있으면 15초 간격 자동 폴링
+  const hasPending = ciStatuses.some((s) => s.overall === "pending");
   useEffect(() => {
-    if (ciStatus?.overall === "pending") {
+    if (hasPending) {
       ciPollRef.current = setInterval(() => { fetchCI(); }, 15000);
     }
     return () => {
@@ -424,7 +424,7 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
         ciPollRef.current = null;
       }
     };
-  }, [ciStatus?.overall, fetchCI]);
+  }, [hasPending, fetchCI]);
 
   // Checklist
   const hasComponent = Boolean(componentName);
@@ -571,29 +571,34 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
       </div>
 
       {/* CI Status */}
-      {ciStatus && (
+      {ciStatuses.length > 0 && (
         <div css={sectionStyle}>
-          <div css={sectionTitleStyle}>CI 빌드 상태</div>
-          <div css={ciCardStyle}>
-            <div css={ciHeaderStyle}>
-              <a
-                css={ciPrLinkStyle}
-                href={ciStatus.pr.html_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => { e.preventDefault(); window.open(ciStatus.pr.html_url, "_blank"); }}
-              >
-                PR #{ciStatus.pr.number}
-              </a>
-              <button css={ciRefreshBtnStyle} onClick={fetchCI} disabled={ciLoading}>
-                {ciLoading ? "..." : "Refresh"}
-              </button>
-            </div>
-            {ciStatus.checks.length === 0 ? (
-              <div css={ciEmptyStyle}>체크 런 대기 중...</div>
-            ) : (
-              <>
-                {ciStatus.checks.map((run) => {
+          <div css={sectionTitleStyle}>
+            CI 빌드 상태
+            <button css={ciRefreshBtnStyle} onClick={fetchCI} disabled={ciLoading} style={{ marginLeft: 8 }}>
+              {ciLoading ? "..." : "Refresh"}
+            </button>
+          </div>
+          {ciStatuses.map((ci) => (
+            <div key={ci.pr.number} css={ciCardStyle} style={{ marginBottom: 8 }}>
+              <div css={ciHeaderStyle}>
+                <a
+                  css={ciPrLinkStyle}
+                  href={ci.pr.html_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => { e.preventDefault(); window.open(ci.pr.html_url, "_blank"); }}
+                >
+                  {ci.componentName} — PR #{ci.pr.number}
+                </a>
+                <span css={ciRunStatusStyle(ci.overall)}>
+                  {ci.overall === "success" ? "passed" : ci.overall === "failure" ? "failed" : "pending"}
+                </span>
+              </div>
+              {ci.checks.length === 0 ? (
+                <div css={ciEmptyStyle}>체크 런 대기 중...</div>
+              ) : (
+                ci.checks.map((run) => {
                   const runStatus: "success" | "failure" | "pending" =
                     run.status !== "completed" ? "pending"
                     : run.conclusion === "failure" ? "failure"
@@ -609,15 +614,10 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
                       <span css={ciRunStatusStyle(runStatus)}>{label}</span>
                     </div>
                   );
-                })}
-                <div css={ciOverallStyle(ciStatus.overall)}>
-                  {ciStatus.overall === "success" ? "✓ 모든 체크 통과" :
-                   ciStatus.overall === "failure" ? "✗ 빌드 실패" :
-                   "● 빌드 진행 중..."}
-                </div>
-              </>
-            )}
-          </div>
+                })
+              )}
+            </div>
+          ))}
         </div>
       )}
 

@@ -2,9 +2,9 @@ import {
   getBaseSha,
   createBranch,
   commitFile,
-  getFileContent,
   createPullRequest,
-  findStagingPR,
+  findComponentPR,
+  findAllComponentPRs,
   findReleasePR,
   mergePR,
   deleteBranch,
@@ -12,7 +12,7 @@ import {
   getPRCheckStatus,
   getStagingCIStatus,
   getFileNodeId,
-  STAGING_BRANCH,
+  COMPONENT_BRANCH_PREFIX,
   ACTIONS_URL,
   type OpenPR,
   type CheckStatus,
@@ -35,22 +35,22 @@ export type DeployStatus =
 
 interface PackageTarget {
   componentsDir: string;
-  indexPath: string;
   label: string;
 }
 
 const PACKAGES: PackageTarget[] = [
-  { componentsDir: "packages/react/src/components", indexPath: "packages/react/src/index.ts", label: "Emotion" },
-  { componentsDir: "packages/react-tailwind/src/components", indexPath: "packages/react-tailwind/src/index.ts", label: "Tailwind" },
+  { componentsDir: "packages/react/src/components", label: "Emotion" },
+  { componentsDir: "packages/react-tailwind/src/components", label: "Tailwind" },
 ];
 
 /**
- * 컴파일된 컴포넌트를 스테이징 브랜치에 배포 (Emotion + Tailwind 동시)
+ * 컴파일된 컴포넌트를 컴포넌트별 독립 브랜치에 배포 (Emotion + Tailwind 동시)
  *
- * - 스테이징 PR이 있으면 기존 브랜치에 커밋 누적
+ * - 기존 PR이 있으면 기존 브랜치에 커밋 누적
  * - 없으면 새 브랜치 + PR 생성
  * - D2/D3: 이름 충돌 시 node ID로 소유권 검증
  * - D8: 커밋 후 브랜치 유효성 검증
+ * - barrel export는 커밋하지 않음 (릴리즈 시 자동 생성)
  */
 export async function deployComponent(
   componentName: string,
@@ -60,17 +60,18 @@ export async function deployComponent(
 ): Promise<void> {
   try {
     const safeName = componentName.replace(/\s+/g, "");
+    const branchName = `${COMPONENT_BRANCH_PREFIX}${safeName}`;
     const codeByLabel: Record<string, string> = {
       Emotion: compiledCodes.emotion,
       Tailwind: compiledCodes.tailwind,
     };
 
-    // 1. 스테이징 PR 확인
-    onStatus({ step: "checking-pr", message: "스테이징 PR 확인 중..." });
-    const existingPR = await findStagingPR();
+    // 1. 기존 컴포넌트 PR 확인
+    onStatus({ step: "checking-pr", message: `${safeName} PR 확인 중...` });
+    const existingPR = await findComponentPR(safeName);
 
-    // D2/D3: 이름 충돌 검증 (첫 번째 패키지 기준)
-    const checkBranch = existingPR ? STAGING_BRANCH : "main";
+    // D2/D3: 이름 충돌 검증
+    const checkBranch = existingPR ? branchName : "main";
     const emotionFilePath = `${PACKAGES[0].componentsDir}/${safeName}.tsx`;
     const existingNodeId = await getFileNodeId(emotionFilePath, checkBranch);
     if (existingNodeId && existingNodeId !== figmaNodeId) {
@@ -86,13 +87,13 @@ export async function deployComponent(
     if (existingPR) {
       prUrl = existingPR.html_url;
     } else {
-      // 새 스테이징 브랜치 생성
-      onStatus({ step: "creating-branch", message: "스테이징 브랜치 생성 중..." });
+      // 새 브랜치 생성
+      onStatus({ step: "creating-branch", message: `${branchName} 브랜치 생성 중...` });
       const baseSha = await getBaseSha();
-      await createBranch(STAGING_BRANCH, baseSha);
+      await createBranch(branchName, baseSha);
     }
 
-    // 2. 각 패키지에 컴포넌트 파일 + barrel export 커밋
+    // 2. 각 패키지에 컴포넌트 파일 커밋 (barrel export 제외)
     let lastCommitSha = "";
 
     for (const pkg of PACKAGES) {
@@ -102,48 +103,28 @@ export async function deployComponent(
 
       onStatus({ step: "committing", message: `${safeName}.tsx 커밋 중... (${pkg.label})` });
       lastCommitSha = await commitFile(
-        STAGING_BRANCH, filePath, codeWithMeta, `feat: update ${safeName} component (${pkg.label.toLowerCase()})`
+        branchName, filePath, codeWithMeta, `feat: update ${safeName} component (${pkg.label.toLowerCase()})`
       );
-
-      // barrel export 업데이트
-      onStatus({ step: "committing", message: `index.ts 업데이트 중... (${pkg.label})` });
-      const currentIndex = await getFileContent(pkg.indexPath, STAGING_BRANCH);
-      const exportLine = `export { default as ${safeName} } from "./components/${safeName}";`;
-
-      let newIndex: string;
-      if (!currentIndex || currentIndex.includes("export {};")) {
-        newIndex = exportLine + "\n";
-      } else if (currentIndex.includes(exportLine)) {
-        newIndex = currentIndex;
-      } else {
-        newIndex = currentIndex.trimEnd() + "\n" + exportLine + "\n";
-      }
-
-      if (newIndex !== currentIndex) {
-        lastCommitSha = await commitFile(
-          STAGING_BRANCH, pkg.indexPath, newIndex, `feat: export ${safeName} from index (${pkg.label.toLowerCase()})`
-        );
-      }
     }
 
     // 3. D8 방어: 커밋 검증
     onStatus({ step: "verifying", message: "커밋 검증 중..." });
-    const verified = await verifyBranchHead(STAGING_BRANCH, lastCommitSha);
+    const verified = await verifyBranchHead(branchName, lastCommitSha);
     if (!verified) {
       onStatus({
         step: "error",
-        message: "커밋이 유실되었습니다. 릴리즈가 진행 중일 수 있습니다. 잠시 후 다시 시도하세요.",
+        message: "커밋이 유실되었습니다. 잠시 후 다시 시도하세요.",
       });
       return;
     }
 
     // 4. PR 생성 (새 브랜치일 때만)
     if (!existingPR) {
-      onStatus({ step: "creating-pr", message: "스테이징 PR 생성 중..." });
+      onStatus({ step: "creating-pr", message: `${safeName} PR 생성 중...` });
       prUrl = await createPullRequest(
-        STAGING_BRANCH,
-        "Update design system components",
-        "## Component Updates\n\n> Auto-generated from Figma plugin"
+        branchName,
+        `feat: add ${safeName} component`,
+        `## ${safeName}\n\n> Auto-generated from Figma plugin\n> Figma Node ID: ${figmaNodeId}`
       );
     }
 
@@ -208,46 +189,62 @@ async function pollCIStatus(
 /**
  * 릴리즈 실행
  *
- * ① 스테이징 PR CI 확인 (R3)
- * ② 스테이징 PR 머지
- * ③ 릴리즈 PR 폴링 (R5: 10초 간격, 최대 180초)
+ * ① 모든 컴포넌트 PR의 CI 상태 확인
+ * ② CI 통과한 PR만 main에 머지 + 브랜치 삭제
+ * ③ 릴리즈 PR 폴링 (10초 간격, 최대 180초)
  * ④ 릴리즈 PR 머지 → npm publish 트리거
  */
 export async function releaseComponent(
   onStatus: (status: DeployStatus) => void
 ): Promise<void> {
   try {
-    // 1. 스테이징 PR 검색
-    onStatus({ step: "checking-pr", message: "스테이징 PR 검색 중..." });
-    const stagingPR = await findStagingPR();
+    // 1. 모든 컴포넌트 PR 검색
+    onStatus({ step: "checking-pr", message: "컴포넌트 PR 검색 중..." });
+    const componentPRs = await findAllComponentPRs();
 
-    if (!stagingPR) {
-      onStatus({ step: "error", message: "스테이징 PR이 없습니다. 먼저 컴포넌트를 Deploy하세요." });
+    if (componentPRs.length === 0) {
+      onStatus({ step: "error", message: "배포된 컴포넌트 PR이 없습니다. 먼저 Deploy하세요." });
       return;
     }
 
-    // 2. R3: CI 상태 확인
-    onStatus({ step: "checking-ci", message: "CI 빌드 상태 확인 중..." });
-    const ciStatus = await getPRCheckStatus(stagingPR.number);
+    // 2. 각 PR의 CI 상태 확인 → 통과한 것만 머지
+    onStatus({ step: "checking-ci", message: `${componentPRs.length}개 PR의 CI 상태 확인 중...` });
 
-    if (ciStatus === "failure") {
-      onStatus({ step: "error", message: "CI 빌드가 실패했습니다. 컴포넌트 코드를 확인하세요." });
-      return;
+    const mergeable: OpenPR[] = [];
+    const skipped: string[] = [];
+
+    for (const pr of componentPRs) {
+      const ciStatus = await getPRCheckStatus(pr.number);
+      const name = pr.head.ref.replace(COMPONENT_BRANCH_PREFIX, "");
+      if (ciStatus === "success") {
+        mergeable.push(pr);
+      } else {
+        skipped.push(`${name} (${ciStatus})`);
+      }
     }
-    if (ciStatus === "pending") {
-      onStatus({ step: "error", message: "CI 빌드가 진행 중입니다. 완료 후 다시 시도하세요." });
+
+    if (mergeable.length === 0) {
+      const detail = skipped.join(", ");
+      onStatus({ step: "error", message: `CI 통과한 PR이 없습니다: ${detail}` });
       return;
     }
 
     // 3. 기존 릴리즈 PR 확인 (업데이트 감지용)
     const preExisting = await findReleasePR();
 
-    // 4. 스테이징 PR 머지 + 브랜치 삭제
-    onStatus({ step: "merging", message: `스테이징 PR #${stagingPR.number} 머지 중...` });
-    await mergePR(stagingPR.number);
-    await deleteBranch(STAGING_BRANCH).catch(() => {});
+    // 4. CI 통과한 PR들 머지 + 브랜치 삭제
+    for (const pr of mergeable) {
+      const name = pr.head.ref.replace(COMPONENT_BRANCH_PREFIX, "");
+      onStatus({ step: "merging", message: `${name} PR #${pr.number} 머지 중...` });
+      await mergePR(pr.number);
+      await deleteBranch(pr.head.ref).catch(() => {});
+    }
 
-    // 5. R5: 릴리즈 PR 폴링
+    if (skipped.length > 0) {
+      onStatus({ step: "merging", message: `${mergeable.length}개 머지 완료. 스킵: ${skipped.join(", ")}` });
+    }
+
+    // 5. 릴리즈 PR 폴링
     onStatus({ step: "waiting-release", message: "릴리즈 PR 생성 대기 중..." });
     const releasePR = await pollForReleasePR(preExisting, onStatus);
 
@@ -263,9 +260,10 @@ export async function releaseComponent(
     onStatus({ step: "merging", message: `릴리즈 PR #${releasePR.number} 머지 중...` });
     await mergePR(releasePR.number);
 
+    const mergedNames = mergeable.map((pr) => pr.head.ref.replace(COMPONENT_BRANCH_PREFIX, ""));
     onStatus({
       step: "release-done",
-      message: "릴리즈 완료! npm publish가 자동 실행됩니다.",
+      message: `릴리즈 완료! (${mergedNames.join(", ")})`,
     });
   } catch (e) {
     onStatus({ step: "error", message: (e as Error).message });
@@ -274,8 +272,6 @@ export async function releaseComponent(
 
 /**
  * 릴리즈 PR이 생성/업데이트될 때까지 폴링
- * - 기존 릴리즈 PR이 없었으면 → 새로 생성될 때까지 대기
- * - 기존 릴리즈 PR이 있었으면 → HEAD SHA 변경(업데이트)될 때까지 대기
  */
 async function pollForReleasePR(
   preExisting: OpenPR | null,
