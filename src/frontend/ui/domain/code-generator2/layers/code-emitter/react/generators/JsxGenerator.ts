@@ -634,7 +634,7 @@ ${indentStr})}` : jsx;
       if (dynamicProps.length > 0) {
         if (styleStrategy.name === "emotion") {
           const dynamicStyleRefs = dynamicProps.map(
-            (prop) => `${wrapperStyleVarName}_${prop}Styles?.[${prop}]`
+            (prop) => `${wrapperStyleVarName}_${prop}Styles?.[String(${prop})]`
           );
           wrapperAttrs = `css={[${wrapperStyleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
         } else {
@@ -839,7 +839,7 @@ ${indentStr}</${tag}>`;
           const dynamicStyleRefs = dynamicProps.map(
             (prop) => {
               const safeProp = prop.replace(/[\x00-\x1f\x7f]/g, "");
-              return `${styleVarName}_${safeProp}Styles?.[${safeProp}]`;
+              return `${styleVarName}_${safeProp}Styles?.[String(${safeProp})]`;
             }
           );
           attrs.push(`css={[${styleVarName}, ${dynamicStyleRefs.join(", ")}]}`);
@@ -1074,7 +1074,7 @@ ${indentStr}</${tag}>`;
         const dynamicStyleRefs = dynamicProps.map(
           (prop) => {
             const safeProp = prop.replace(/[\x00-\x1f\x7f]/g, "");
-            return `${styleVarName}_${safeProp}Styles?.[${safeProp}]`;
+            return `${styleVarName}_${safeProp}Styles?.[String(${safeProp})]`;
           }
         );
         wrapperAttrs = `css={[${styleVarName}, ${dynamicStyleRefs.join(", ")}]}`;

@@ -331,8 +331,8 @@ describe("Segmented Control/Segmented Control", () => {
     const result = await compileFixture();
 
     // variant 값으로 스타일을 선택하는 로직
-    // variantStyles?.[variant] 또는 [variant] 형태
-    const usesVariantForStyle = /\[variant\]|\?\.\[variant\]/i.test(result);
+    // variantStyles?.[String(variant)] 또는 [variant] 형태
+    const usesVariantForStyle = /\[String\(variant\)\]|\[variant\]/i.test(result);
 
     expect(usesVariantForStyle).toBe(true);
   });
@@ -341,7 +341,7 @@ describe("Segmented Control/Segmented Control", () => {
     const result = await compileFixture();
 
     // size 값으로 스타일을 선택하는 로직
-    const usesSizeForStyle = /\[size\]|\?\.\[size\]/i.test(result);
+    const usesSizeForStyle = /\[String\(size\)\]|\[size\]/i.test(result);
 
     expect(usesSizeForStyle).toBe(true);
   });

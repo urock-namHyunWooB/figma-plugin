@@ -86,7 +86,7 @@ describe("urock-button", () => {
     expect(result).toMatch(/btnCss_customTypeStyles/);
 
     // JSX에서 customTypeStyles가 사용되어야 함 (optional chaining)
-    expect(result).toMatch(/btnCss_customTypeStyles\?\.\[customType\]/);
+    expect(result).toMatch(/btnCss_customTypeStyles\?\.\[String\(customType\)\]/);
   });
 
   it("btnCss_customTypeStyles에 고유 CSS가 있는 customType variant 키들이 있어야 한다", async () => {
@@ -188,7 +188,7 @@ describe("Chips", () => {
 
   it("color prop이 스타일에 바인딩되어야 한다", async () => {
     const result = await compileFixture();
-    expect(result).toMatch(/colorStyles\?\.\[color\]/);
+    expect(result).toMatch(/colorStyles\?\.\[String\(color\)\]/);
   });
 
   it("text prop이 string 타입으로 있어야 한다", async () => {
@@ -456,7 +456,7 @@ describe("Dropdowngeneric", () => {
     // openStyles가 정의되어야 함
     expect(result).toMatch(/_openStyles/);
     // JSX css 배열에서 openStyles가 참조되어야 함
-    expect(result).toMatch(/css=\{?\[.*_openStyles\?\.\[open\]/s);
+    expect(result).toMatch(/css=\{?\[.*_openStyles\?\.\[String\(open\)\]/s);
   });
 
   // ── 불필요 prop 미노출 ──
