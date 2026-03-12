@@ -293,7 +293,7 @@ export class DropdownHeuristic implements IHeuristic {
     // 리스트를 오버레이로 표시 (트리거 아래에 겹쳐서 렌더링)
     if (!listNode.styles) listNode.styles = { base: {}, dynamic: [] };
     listNode.styles.base["position"] = "absolute";
-    listNode.styles.base["top"] = "100%";
+    listNode.styles.base["top"] = "calc(100% + 4px)";
     listNode.styles.base["left"] = "0";
     listNode.styles.base["width"] = "100%";
     listNode.styles.base["z-index"] = "10";
@@ -301,6 +301,26 @@ export class DropdownHeuristic implements IHeuristic {
     // root에 position: relative 설정 (리스트의 기준점)
     if (!ctx.tree.styles) ctx.tree.styles = { base: {}, dynamic: [] };
     ctx.tree.styles.base["position"] = "relative";
+
+    // root의 open 조건 gap 변경 제거 (list가 absolute이므로 불필요, 덜컹거림 방지)
+    this.removeRootOpenGap(ctx.tree);
+  }
+
+  /**
+   * root의 open 조건 dynamic style에서 gap 변경 제거
+   * list가 absolute이므로 open 시 gap 변경은 label↔trigger 간격만 흔들림
+   */
+  private removeRootOpenGap(root: InternalNode): void {
+    if (!root.styles?.dynamic) return;
+    for (const entry of root.styles.dynamic) {
+      if (entry.condition.type === "truthy" && (entry.condition as any).prop === "open") {
+        delete entry.style["gap"];
+      }
+    }
+    // 빈 dynamic entry 정리
+    root.styles.dynamic = root.styles.dynamic.filter(
+      (e) => Object.keys(e.style).length > 0
+    );
   }
 
   private findListContainer(node: InternalNode): InternalNode | null {
