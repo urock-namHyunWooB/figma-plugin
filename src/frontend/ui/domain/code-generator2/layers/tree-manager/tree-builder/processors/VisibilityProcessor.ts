@@ -3,6 +3,7 @@ import {
   ConditionNode,
   VariantOrigin,
   PropDefinition,
+  VariantPropDefinition,
 } from "../../../../types/types";
 
 /**
@@ -20,6 +21,9 @@ import {
 export class VisibilityProcessor {
   // sourceKey → PropDefinition 매핑 (exact match)
   private propMap: Map<string, PropDefinition> = new Map();
+
+  // 루트 variant의 prop별 value 분포: propKey → (value → count)
+  private rootValueDistribution: Map<string, Map<string, number>> = new Map();
 
   /**
    * InternalNode에 가시성 조건 적용 (재귀)
@@ -49,6 +53,9 @@ export class VisibilityProcessor {
         this.propMap.set(normalized, p);
       }
     }
+
+    // 루트 variant의 prop별 value 분포 구축
+    this.rootValueDistribution = this.buildValueDistribution(root.mergedNodes || []);
 
     return this.applyVisibilityRecursive(root, totalVariants);
   }
@@ -182,7 +189,10 @@ export class VisibilityProcessor {
   }
 
   /**
-   * mergedNodes에서 공통 조건 추출
+   * mergedNodes에서 조건 추출
+   *
+   * 1. findCommonProps: 모든 mergedNodes가 동일 value를 공유하는 prop → eq/truthy 조건
+   * 2. findSubsetConditions: 일부 value만 완전 커버 → OR 조건 (fallback)
    */
   private extractConditionFromMergedNodes(
     mergedNodes: VariantOrigin[]
@@ -194,20 +204,19 @@ export class VisibilityProcessor {
       this.parseVariantName(merged.variantName || merged.name)
     );
 
-    // 공통 prop 찾기
+    // 1. 공통 prop 찾기 (모든 mergedNode가 같은 value)
     const commonProps = this.findCommonProps(allVariantProps);
 
-    if (commonProps.length === 0) return undefined;
+    if (commonProps.length > 0) {
+      const conditions = commonProps.map(({ key, value }) =>
+        this.createCondition(key, value)
+      );
+      if (conditions.length === 1) return conditions[0];
+      return { type: "and", conditions };
+    }
 
-    // 조건 노드 생성
-    const conditions = commonProps.map(({ key, value }) =>
-      this.createCondition(key, value)
-    );
-
-    if (conditions.length === 0) return undefined;
-    if (conditions.length === 1) return conditions[0];
-
-    return { type: "and", conditions };
+    // 2. 공통 prop이 없으면 subset 조건 시도 (OR 조건)
+    return this.findSubsetConditions(allVariantProps);
   }
 
   /**
@@ -258,7 +267,95 @@ export class VisibilityProcessor {
     return common;
   }
 
+  /**
+   * mergedNodes에서 prop별 value 분포 구축
+   * propKey → (value → count)
+   */
+  private buildValueDistribution(
+    mergedNodes: VariantOrigin[]
+  ): Map<string, Map<string, number>> {
+    const dist = new Map<string, Map<string, number>>();
+    for (const merged of mergedNodes) {
+      const props = this.parseVariantName(merged.variantName || merged.name);
+      for (const { key, value } of props) {
+        if (!dist.has(key)) dist.set(key, new Map());
+        const valMap = dist.get(key)!;
+        valMap.set(value, (valMap.get(value) || 0) + 1);
+      }
+    }
+    return dist;
+  }
 
+  /**
+   * 자식 mergedNodes가 특정 prop의 일부 value만 완전히 커버하는 경우 OR 조건 생성
+   *
+   * 예: root에 CustomType=text(16), number(16), password(16), search(8), search-gray(2), date(6)
+   *     자식의 mergedNodes(50개)가 text(16), number(16), password(16), search(2) 포함
+   *     → text, number, password만 "완전 커버" → OR(customType=text, customType=number, customType=password)
+   */
+  private findSubsetConditions(
+    allVariantProps: Array<Array<{ key: string; value: string }>>
+  ): ConditionNode | undefined {
+    if (allVariantProps.length === 0 || this.rootValueDistribution.size === 0) {
+      return undefined;
+    }
+
+    // 자식 mergedNodes의 prop별 value 분포
+    const childDist = new Map<string, Map<string, number>>();
+    for (const variantProps of allVariantProps) {
+      for (const { key, value } of variantProps) {
+        if (!childDist.has(key)) childDist.set(key, new Map());
+        const valMap = childDist.get(key)!;
+        valMap.set(value, (valMap.get(value) || 0) + 1);
+      }
+    }
+
+    // 각 prop에 대해 "완전 커버" value 집합 찾기
+    // breakpoint/device/screen prop은 ResponsiveProcessor가 @media로 처리하므로 제외
+    const BP_NAME_RE = /breakpoint|device|screen/i;
+    const conditions: ConditionNode[] = [];
+
+    for (const [propKey, childValMap] of childDist) {
+      // breakpoint prop 스킵 (ResponsiveProcessor가 처리)
+      if (BP_NAME_RE.test(propKey)) continue;
+      const rootValMap = this.rootValueDistribution.get(propKey);
+      if (!rootValMap) continue;
+
+      // 전체 value 수와 자식이 가진 value 수 비교
+      const rootValueCount = rootValMap.size;
+      const childValues = [...childValMap.keys()];
+
+      // 모든 value를 커버하면 이 prop은 조건에 불필요
+      if (childValues.length >= rootValueCount) continue;
+
+      // 완전 커버된 value만 추출 (child count === root count)
+      const fullyCovered: string[] = [];
+      for (const [value, childCount] of childValMap) {
+        const rootCount = rootValMap.get(value) || 0;
+        if (rootCount > 0 && childCount >= rootCount) {
+          fullyCovered.push(value);
+        }
+      }
+
+      // 완전 커버된 value가 없거나 전체와 같으면 스킵
+      if (fullyCovered.length === 0 || fullyCovered.length >= rootValueCount) continue;
+
+      // OR 조건 생성
+      const eqConditions = fullyCovered.map((value) =>
+        this.createCondition(propKey, value)
+      );
+
+      if (eqConditions.length === 1) {
+        conditions.push(eqConditions[0]);
+      } else {
+        conditions.push({ type: "or", conditions: eqConditions });
+      }
+    }
+
+    if (conditions.length === 0) return undefined;
+    if (conditions.length === 1) return conditions[0];
+    return { type: "and", conditions };
+  }
 
   /**
    * prop 조건 노드 생성
