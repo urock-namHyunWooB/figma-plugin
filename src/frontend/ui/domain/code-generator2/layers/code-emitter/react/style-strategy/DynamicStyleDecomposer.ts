@@ -170,7 +170,8 @@ export class DynamicStyleDecomposer {
       }
 
       // 각 CSS 키: 모든 variant에서 동일한 값이면 제거
-      // 단, base 스타일과 다르거나 base에 없는 속성은 유지 (실제 override임)
+      // 이 prop이 해당 CSS 속성을 제어하지 않음을 의미
+      // 단, base에 해당 속성이 없으면 유일한 source이므로 유지
       for (const cssKey of allCssKeys) {
         const values = new Set<string>();
         let allPresent = true;
@@ -182,14 +183,12 @@ export class DynamicStyleDecomposer {
           values.add(String(style[cssKey]));
         }
         if (allPresent && values.size === 1) {
-          // base가 있으면: base와 다른 값이거나 base에 없는 키는 유지
-          if (base) {
-            const uniformValue = [...valueMap.values()][0][cssKey];
-            if (!(cssKey in base) || base[cssKey] !== uniformValue) {
-              continue; // base와 다름 → 실제 override이므로 유지
-            }
+          // base에 해당 속성이 없으면: 유일한 source → 유지
+          if (base && !(cssKey in base)) {
+            continue;
           }
-          // 모든 variant에 존재하고 값이 동일 (+ base와도 동일) → 제거
+          // base에 있거나 base 없음 → uniform이므로 제거
+          // (base가 default 제공, 다른 dimension이 override 담당)
           for (const style of valueMap.values()) {
             delete style[cssKey];
           }

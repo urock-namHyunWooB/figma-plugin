@@ -472,6 +472,37 @@ describe("Dropdowngeneric", () => {
     expect(propsBody).not.toMatch(/list\s*\d/);
   });
 
+  // ── 삼각형 화살표 색상 ──
+
+  it("open 상태가 아니라면 삼각형 화살표는 검은색이다", async () => {
+    const result = await compileFixture();
+
+    // 화살표 SVG가 currentColor로 부모 CSS color를 상속
+    expect(result).toMatch(/fill="currentColor"/);
+    // base CSS에 dark color
+    expect(result).toMatch(/color:\s*#464a4e/);
+
+    // sizeStyles(항상 적용)에서 color를 blue로 덮어쓰면 base 검은색이 무효화됨
+    // → 화살표 아이콘 sizeStyles(width 24px/20px 포함)에 color: #628cf5가 없어야 함
+    const sizeStyleBlocks = [...result.matchAll(/_sizeStyles\s*=\s*\{([\s\S]*?)\n\};/g)];
+    const arrowIconBlock = sizeStyleBlocks.find(
+      (m) => /width:\s*24px/.test(m[1]) && /width:\s*20px/.test(m[1])
+    );
+    expect(arrowIconBlock).toBeTruthy();
+    expect(arrowIconBlock![1]).not.toMatch(/color:\s*#628cf5/);
+  });
+
+  it("open 상태라면 삼각형 화살표는 파란색이 된다", async () => {
+    const result = await compileFixture();
+
+    // 드롭다운 wrapper의 openStyles에서 svg path fill이 파란색(#628cf5)으로 변경
+    const openStylesMatch = result.match(
+      /DropdownCss_openStyles\s*=\s*\{([\s\S]*?)\n\};/
+    );
+    expect(openStylesMatch).toBeTruthy();
+    expect(openStylesMatch![1]).toMatch(/svg path[\s\S]*?fill:\s*#628cf5/);
+  });
+
   // ── states variant prop 미노출 ──
 
   it("states variant prop이 외부에 노출되지 않아야 한다", async () => {
@@ -662,7 +693,7 @@ describe("Radio", () => {
 describe("Frame", () => {
   const fixturePath = path.join(
     process.cwd(),
-    "test/fixtures/failing/Frame.json"
+    "test/fixtures/urock/Frame.json"
   );
 
   const compileFixture = async () => {
