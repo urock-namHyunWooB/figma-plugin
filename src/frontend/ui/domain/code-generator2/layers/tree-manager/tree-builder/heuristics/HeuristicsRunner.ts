@@ -32,6 +32,7 @@ import { BadgeHeuristic } from "./BadgeHeuristic";
 import { DropdownHeuristic } from "./DropdownHeuristic";
 import { FabHeuristic } from "./FabHeuristic";
 import { FrameHeuristic } from "./FrameHeuristic";
+import { ProfileHeuristic } from "./ProfileHeuristic";
 
 export class HeuristicsRunner {
   /** 매칭 임계점 */
@@ -54,6 +55,7 @@ export class HeuristicsRunner {
     new SegmentedControlHeuristic(), // SegmentedControl (Tab props 패턴)
     new LinkHeuristic(),
     new ButtonHeuristic(),
+    new ProfileHeuristic(),   // Profile/Avatar (score 15, profile/avatar + states)
     new FrameHeuristic(),   // Frame/Card/Container (score 10, 래퍼 컴포넌트)
   ];
 
