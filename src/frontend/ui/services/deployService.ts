@@ -10,12 +10,10 @@ import {
   deleteBranch,
   verifyBranchHead,
   getPRCheckStatus,
-  getStagingCIStatus,
   getFileNodeId,
   COMPONENT_BRANCH_PREFIX,
   ACTIONS_URL,
   type OpenPR,
-  type CheckStatus,
 } from "./GitHubAPI";
 
 export type DeployStatus =
