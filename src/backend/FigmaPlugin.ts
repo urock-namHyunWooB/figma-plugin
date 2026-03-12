@@ -59,6 +59,10 @@ export class FigmaPlugin {
         await this.handleGitHubFetch(msg);
         break;
 
+      case MESSAGE_TYPES.RESIZE_UI:
+        figma.ui.resize(msg.width, msg.height);
+        break;
+
       default:
         console.log("⚠️ [Plugin Backend] Unknown message type:", msg.type);
     }

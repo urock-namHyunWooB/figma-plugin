@@ -1,14 +1,32 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { css } from "@emotion/react";
 import { useNavigate } from "react-router-dom";
 import useMessageHandler from "./useMessageHandler";
 import FigmaCodeGenerator, { type PropDefinition } from "@code-generator2";
 import { useComponentRenderer } from "./hooks/useComponentRenderer";
 import { PropController } from "./components/PropController";
-import { CodeViewer } from "./components/CodeViewer";
+import { CodeEditor } from "./components/CodeEditor";
+import { PropsMatrix } from "./components/PropsMatrix";
 import ErrorBoundary from "@frontend/ui/components/ErrorBoundary";
 import { DeployButton } from "./components/DeployButton";
 import { wireFunctionProps } from "./utils/wireFunctionProps";
+
+declare const __DEV_BUILD__: boolean;
+
+type TabId = "preview" | "variants" | "code";
+
+const TAB_SIZES: Record<TabId, { width: number; height: number }> = {
+  preview: { width: 400, height: 1000 },
+  variants: { width: 900, height: 1000 },
+  code: { width: 400, height: 1000 },
+};
+
+function resizePluginUI(width: number, height: number) {
+  parent.postMessage(
+    { pluginMessage: { type: "resize-ui", width, height } },
+    "*"
+  );
+}
 
 /**
  * SLOT props에 대한 목업 엘리먼트 생성
@@ -16,7 +34,6 @@ import { wireFunctionProps } from "./utils/wireFunctionProps";
 function createSlotMockup(prop: PropDefinition): React.ReactNode {
   const slotInfo = prop.slotInfo;
 
-  // dependency에 SVG가 있으면 SVG 렌더링
   if (slotInfo?.mockupSvg) {
     return React.createElement("div", {
       key: `slot-mockup-${prop.name}`,
@@ -25,7 +42,6 @@ function createSlotMockup(prop: PropDefinition): React.ReactNode {
     });
   }
 
-  // 실제 크기로 반투명 + 점선 placeholder
   const componentName = slotInfo?.componentName || prop.name;
   const width = slotInfo?.width;
   const height = slotInfo?.height;
@@ -56,43 +72,113 @@ function createSlotMockup(prop: PropDefinition): React.ReactNode {
   );
 }
 
-// twind는 main.tsx에서 전역 초기화됨
+// ─── Styles ────────────────────────────────────────────────
 
-const appContainerStyle = css`
+const appStyle = css`
   display: flex;
   flex-direction: column;
   height: 100vh;
   background: #ffffff;
   color: #1a1a1a;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 `;
 
-const previewSectionStyle = css`
+const headerStyle = css`
   flex: 0 0 auto;
-  padding: 16px;
-  padding-bottom: 8px;
+  padding: 12px 16px;
   border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 `;
 
-const scrollSectionStyle = css`
+const headerLeftStyle = css`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+`;
+
+const componentNameStyle = css`
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const headerRightStyle = css`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+`;
+
+const styleToggleStyle = css`
+  display: flex;
+  gap: 2px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  padding: 2px;
+`;
+
+const styleButtonStyle = css`
+  padding: 4px 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: transparent;
+  color: #6b7280;
+  &:hover { color: #1a1a1a; }
+`;
+
+const styleButtonActiveStyle = css`
+  background: #00c2e0;
+  color: #ffffff;
+`;
+
+const tabBarStyle = css`
+  flex: 0 0 auto;
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 16px;
+  gap: 0;
+`;
+
+const tabStyle = css`
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  &:hover { color: #1a1a1a; }
+`;
+
+const tabActiveStyle = css`
+  color: #1a1a1a;
+  border-bottom-color: #00c2e0;
+`;
+
+const tabContentStyle = css`
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
 `;
 
-const previewTitleStyle = css`
-  margin-bottom: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1a1a1a;
-`;
-
+// Preview tab
 const previewContainerStyle = css`
   background: white;
   border-radius: 8px;
-  margin-bottom: 16px;
+  margin: 16px;
   height: 200px;
   overflow: hidden;
   position: relative;
@@ -107,122 +193,79 @@ const previewContentStyle = css`
   height: max-content;
 `;
 
-const emptyPreviewStyle = css`
+const emptyStyle = css`
   color: #6b7280;
-  font-size: 14px;
+  font-size: 13px;
+  text-align: center;
+  padding: 24px;
 `;
 
 const errorStyle = css`
   color: #dc2626;
   font-size: 13px;
   padding: 12px;
+  margin: 16px;
   background: rgba(220, 38, 38, 0.1);
   border-radius: 4px;
-  margin-bottom: 16px;
 `;
 
 const propsControlSectionStyle = css`
-  padding: 16px;
-  padding-top: 8px;
+  padding: 0 16px 16px;
 `;
 
-const codeSectionStyle = css`
+// Code tab
+const codeTabStyle = css`
   flex: 1;
   padding: 16px;
-  padding-top: 8px;
   display: flex;
   flex-direction: column;
-  min-height: 200px;
+  min-height: 0;
 `;
 
-const codeHeaderStyle = css`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-`;
-
-const codeTitleStyle = css`
-  font-size: 14px;
-  font-weight: 600;
-  color: #1a1a1a;
-`;
-
-const styleToggleStyle = css`
-  display: flex;
-  gap: 4px;
-  background: #f3f4f6;
-  border-radius: 6px;
-  padding: 2px;
-`;
-
-const styleButtonStyle = css`
-  padding: 6px 12px;
-  border: none;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  background: transparent;
-  color: #6b7280;
-
-  &:hover {
-    color: #1a1a1a;
-  }
-`;
-
-const styleButtonActiveStyle = css`
-  background: #00c2e0;
-  color: #ffffff;
-`;
-
+// Dev
 const saveButtonStyle = css`
-  padding: 6px 12px;
+  padding: 4px 10px;
   border: none;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   cursor: pointer;
   background: #7dc728;
   color: #ffffff;
   transition: all 0.15s ease;
-
-  &:hover {
-    background: #6bb020;
-  }
-
-  &:disabled {
-    background: #e5e7eb;
-    color: #9ca3af;
-    cursor: not-allowed;
-  }
+  &:hover { background: #6bb020; }
+  &:disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; }
 `;
+
+// ─── Component ─────────────────────────────────────────────
 
 function App() {
   const navigate = useNavigate();
   const { selectionNodeData } = useMessageHandler();
 
+  const [activeTab, setActiveTab] = useState<TabId>("preview");
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [propDefinitions, setPropDefinitions] = useState<PropDefinition[]>([]);
   const [propValues, setPropValues] = useState<Record<string, any>>({});
   const [componentName, setComponentName] = useState<string>("");
   const [errorBoundaryKey, setErrorBoundaryKey] = useState(0);
   const [scale, setScale] = useState(1);
-  const [originalSize, setOriginalSize] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
-  const [styleStrategy, setStyleStrategy] = useState<"emotion" | "tailwind">(
-    "emotion"
-  );
-  const [slotMockupEnabled, setSlotMockupEnabled] = useState<
-    Record<string, boolean>
-  >({});
+  const [originalSize, setOriginalSize] = useState<{ width: number; height: number } | null>(null);
+  const [styleStrategy, setStyleStrategy] = useState<"emotion" | "tailwind">("emotion");
+  const [slotMockupEnabled, setSlotMockupEnabled] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [editedCode, setEditedCode] = useState<string | null>(null);
+  const editDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const previewContentRef = useRef<HTMLDivElement>(null);
+
+  // 탭 전환 시 패널 리사이즈
+  const handleTabChange = useCallback((tab: TabId) => {
+    setActiveTab(tab);
+    const size = TAB_SIZES[tab];
+    resizePluginUI(size.width, size.height);
+  }, []);
 
   // Figma 데이터에서 원본 크기 추출
   useEffect(() => {
@@ -237,104 +280,46 @@ function App() {
   // 컨테이너에 맞춰 자동 스케일 계산
   const updateAutoScale = useCallback(() => {
     const container = previewContainerRef.current;
+    if (!container) { setScale(1); return; }
 
-    if (!container) {
-      setScale(1);
-      return;
-    }
+    const content = previewContentRef.current;
+    if (!content) { setScale(1); return; }
 
-    // 항상 DOM에서 실제 렌더링된 크기를 계산 (gap으로 인한 overflow 포함)
+    content.style.transform = "translate(-50%, -50%) scale(1)";
+    void content.offsetHeight;
+    const renderedChild = content.firstElementChild as HTMLElement;
+
     let contentWidth: number;
     let contentHeight: number;
 
-    {
-      const content = previewContentRef.current;
-      if (!content) {
-        setScale(1);
-        return;
-      }
-      content.style.transform = "translate(-50%, -50%) scale(1)";
-      void content.offsetHeight;
-      const renderedChild = content.firstElementChild as HTMLElement;
-
-      // 실제 컨텐츠 크기 계산: flexbox의 자식들 + gap 값 포함
-      const calculateActualWidth = (el: HTMLElement): number => {
-        const style = getComputedStyle(el);
-        const display = style.display;
-
-        // flex container인 경우 자식들의 실제 크기 + gap 계산
-        if (display === "flex" || display === "inline-flex") {
-          const gap = parseInt(style.gap, 10) || 0;
-          const flexDirection = style.flexDirection;
-          const children = Array.from(el.children) as HTMLElement[];
-
-          if (flexDirection === "row" || flexDirection === "row-reverse") {
-            // 가로 방향: 자식 너비 합 + gap
-            let totalWidth = 0;
-            children.forEach((child, i) => {
-              totalWidth += child.offsetWidth;
-              if (i < children.length - 1) totalWidth += gap;
-            });
-            // padding 추가
-            totalWidth += parseInt(style.paddingLeft, 10) || 0;
-            totalWidth += parseInt(style.paddingRight, 10) || 0;
-            return Math.max(totalWidth, el.offsetWidth);
-          }
-        }
-
-        // 재귀적으로 자식 탐색
-        let maxChildWidth = el.offsetWidth;
-        Array.from(el.children).forEach((child) => {
-          const childWidth = calculateActualWidth(child as HTMLElement);
-          maxChildWidth = Math.max(maxChildWidth, childWidth);
-        });
-
-        return maxChildWidth;
-      };
-
-      if (renderedChild) {
-        contentWidth = calculateActualWidth(renderedChild);
-        contentHeight = renderedChild.offsetHeight;
-      } else {
-        contentWidth = content.scrollWidth;
-        contentHeight = content.scrollHeight;
-      }
+    if (renderedChild) {
+      contentWidth = renderedChild.offsetWidth;
+      contentHeight = renderedChild.offsetHeight;
+    } else {
+      contentWidth = content.scrollWidth;
+      contentHeight = content.scrollHeight;
     }
 
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
-
-    // 패딩 여유
     const padding = 32;
-    const availableWidth = containerWidth - padding;
-    const availableHeight = containerHeight - padding;
+    const availableWidth = container.clientWidth - padding;
+    const availableHeight = container.clientHeight - padding;
 
-    if (contentWidth === 0 || contentHeight === 0) {
-      setScale(1);
-      return;
-    }
+    if (contentWidth === 0 || contentHeight === 0) { setScale(1); return; }
 
-    // 컨테이너에 맞춰 스케일 계산 (최대 1)
-    const scaleX = availableWidth / contentWidth;
-    const scaleY = availableHeight / contentHeight;
-    const fitScale = Math.min(scaleX, scaleY, 1);
+    const fitScale = Math.min(availableWidth / contentWidth, availableHeight / contentHeight, 1);
 
-    // 컴포넌트에 직접 transform 적용 (overflow: hidden 문제 해결)
-    const content = previewContentRef.current;
     if (content) {
-      const renderedChild = content.firstElementChild as HTMLElement;
-      if (renderedChild && fitScale < 1) {
-        renderedChild.style.transform = `scale(${fitScale})`;
-        renderedChild.style.transformOrigin = "top left";
+      const child = content.firstElementChild as HTMLElement;
+      if (child && fitScale < 1) {
+        child.style.transform = `scale(${fitScale})`;
+        child.style.transformOrigin = "top left";
       }
     }
-
     setScale(fitScale);
   }, [originalSize]);
 
   // FigmaCodeGenerator로 코드 생성
   useEffect(() => {
-    // selectionNodeData가 변경될 때마다 상태 리셋
     setErrorBoundaryKey((prev) => prev + 1);
     setGeneratedCode(null);
 
@@ -352,16 +337,13 @@ function App() {
       const name = codeGenerator.getComponentName();
       setComponentName(name);
 
-      // Props 정의 가져오기
       const props = codeGenerator.getPropsDefinition();
       setPropDefinitions(props);
 
-      // Props 초기값 설정 (SLOT에는 목업 주입)
       const initialValues: Record<string, any> = {};
       const initialSlotEnabled: Record<string, boolean> = {};
       props.forEach((prop) => {
         if (prop.type === "SLOT") {
-          // 모든 SLOT에 대해 mockup 기본 활성화 (점선 박스 placeholder 표시)
           initialSlotEnabled[prop.name] = true;
           initialValues[prop.name] = createSlotMockup(prop);
         } else {
@@ -372,9 +354,9 @@ function App() {
       setSlotMockupEnabled(initialSlotEnabled);
       setPropValues(initialValues);
 
-      // 코드 생성
       codeGenerator.compile().then((code) => {
         setGeneratedCode(code);
+        setEditedCode(null);
       });
     } catch (e) {
       console.error("FigmaCodeGenerator error:", e);
@@ -382,35 +364,42 @@ function App() {
   }, [selectionNodeData, styleStrategy]);
 
   // 동적 컴포넌트 렌더러
-  const { Component, error, isLoading } = useComponentRenderer(generatedCode);
+  const activeCode = editedCode ?? generatedCode;
+  const { Component, error, isLoading } = useComponentRenderer(activeCode);
 
-  // Component가 렌더링되거나 props가 변경되면 자동 스케일 업데이트
+  // 코드 편집 핸들러 (debounce 500ms)
+  const handleCodeChange = useCallback((newCode: string) => {
+    if (editDebounceRef.current) clearTimeout(editDebounceRef.current);
+    editDebounceRef.current = setTimeout(() => {
+      setEditedCode(newCode);
+    }, 500);
+  }, []);
+
+  // PropsMatrix에 넘길 고정 props (SLOT/TEXT/function)
+  const fixedProps = useMemo(() => {
+    const fixed: Record<string, any> = {};
+    propDefinitions.forEach((p) => {
+      if (p.type === "SLOT" || p.type === "TEXT" || p.type === "function") {
+        fixed[p.name] = propValues[p.name];
+      }
+    });
+    return fixed;
+  }, [propDefinitions, propValues]);
+
+  // Preview 탭: 스케일 업데이트
   useEffect(() => {
-    if (Component && !isLoading && !error) {
-      // 렌더링 완료 후 스케일 계산 (약간의 딜레이)
-      const timer = setTimeout(() => {
-        updateAutoScale();
-      }, 50);
+    if (activeTab === "preview" && Component && !isLoading && !error) {
+      const timer = setTimeout(() => updateAutoScale(), 50);
       return () => clearTimeout(timer);
     }
-  }, [Component, isLoading, error, propValues, updateAutoScale]);
+  }, [activeTab, Component, isLoading, error, propValues, updateAutoScale]);
 
-  // Prop 변경 핸들러
   const handlePropChange = (name: string, value: any) => {
-    setPropValues((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setPropValues((prev) => ({ ...prev, [name]: value }));
   };
 
-  // SLOT 목업 토글 핸들러
   const handleSlotMockupToggle = (name: string, enabled: boolean) => {
-    setSlotMockupEnabled((prev) => ({
-      ...prev,
-      [name]: enabled,
-    }));
-
-    // 해당 prop 값 업데이트
+    setSlotMockupEnabled((prev) => ({ ...prev, [name]: enabled }));
     const propDef = propDefinitions.find((p) => p.name === name);
     if (propDef) {
       setPropValues((prev) => ({
@@ -420,18 +409,12 @@ function App() {
     }
   };
 
-  // 로컬 failing 폴더에 저장 (dev 전용)
+  // Dev: Save to Failing
   const saveToFailing = async () => {
-    if (!selectionNodeData || !componentName) {
-      setSaveStatus("No data to save");
-      return;
-    }
-
+    if (!selectionNodeData || !componentName) return;
     setIsSaving(true);
-    setSaveStatus("Exporting image...");
-
+    setSaveStatus("Exporting...");
     try {
-      // 1. Figma에서 이미지 요청
       const imageBase64 = await new Promise<string | null>((resolve) => {
         const handler = (event: MessageEvent) => {
           const msg = event.data.pluginMessage;
@@ -441,158 +424,124 @@ function App() {
           }
         };
         window.addEventListener("message", handler);
-
-        // 3초 타임아웃
-        setTimeout(() => {
-          window.removeEventListener("message", handler);
-          resolve(null);
-        }, 3000);
-
-        // 이미지 요청 전송
-        parent.postMessage(
-          { pluginMessage: { type: "export-selection-image" } },
-          "*"
-        );
+        setTimeout(() => { window.removeEventListener("message", handler); resolve(null); }, 3000);
+        parent.postMessage({ pluginMessage: { type: "export-selection-image" } }, "*");
       });
-
-      setSaveStatus("Saving...");
-
-      // 2. 파일명 안전하게 처리 (공백 → 언더스코어)
       const safeName = componentName.replace(/\s+/g, "_");
-
-      // 3. 서버에 저장
       const response = await fetch("http://localhost:5173/api/save-failing", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileName: safeName,
-          nodeData: selectionNodeData,
-          imageBase64: imageBase64,
-        }),
+        body: JSON.stringify({ fileName: safeName, nodeData: selectionNodeData, imageBase64 }),
       });
-
-      if (response.ok) {
-        setSaveStatus(`✅ Saved: ${componentName}`);
-      } else {
-        const error = await response.text();
-        setSaveStatus(`❌ Error: ${error}`);
-      }
+      setSaveStatus(response.ok ? `Saved: ${componentName}` : `Error`);
     } catch (e) {
-      setSaveStatus(`❌ Failed: ${(e as Error).message}`);
+      setSaveStatus(`Failed`);
     } finally {
       setIsSaving(false);
-      // 3초 후 상태 메시지 제거
       setTimeout(() => setSaveStatus(null), 3000);
     }
   };
 
   return (
-    <div css={appContainerStyle}>
-      {/* 상단 고정: Preview */}
-      <div css={previewSectionStyle}>
-        <div
-          css={previewTitleStyle}
-          style={{ display: "flex", alignItems: "center", gap: "12px" }}
-        >
-          <span>Preview {componentName && `- ${componentName}`}</span>
-
-          {/* Dev 전용: Save to Failing 버튼 (build:dev에서만 표시) */}
+    <div css={appStyle}>
+      {/* ─── Header ─── */}
+      <div css={headerStyle}>
+        <div css={headerLeftStyle}>
+          <span css={componentNameStyle}>
+            {componentName || "CodeMate"}
+          </span>
           {__DEV_BUILD__ && selectionNodeData && (
-            <button
-              css={saveButtonStyle}
-              onClick={saveToFailing}
-              disabled={isSaving}
-            >
-              {isSaving ? "Saving..." : "💾 Save to Failing"}
+            <button css={saveButtonStyle} onClick={saveToFailing} disabled={isSaving}>
+              {isSaving ? "..." : "Save"}
             </button>
           )}
-
-          {__DEV_BUILD__ && saveStatus && (
-            <span
-              style={{
-                fontSize: "11px",
-                color: saveStatus.startsWith("✅") ? "#7dc728" : "#dc2626",
-              }}
-            >
-              {saveStatus}
-            </span>
-          )}
         </div>
-
-        <ErrorBoundary key={errorBoundaryKey}>
-          <div ref={previewContainerRef} css={previewContainerStyle}>
-            <div
-              ref={previewContentRef}
-              css={previewContentStyle}
-              style={{
-                // transform은 자식 컴포넌트에 직접 적용됨 (updateAutoScale에서)
-                transform: "translate(-50%, -50%)",
-              }}
+        <div css={headerRightStyle}>
+          <div css={styleToggleStyle}>
+            <button
+              css={[styleButtonStyle, styleStrategy === "emotion" && styleButtonActiveStyle]}
+              onClick={() => setStyleStrategy("emotion")}
             >
-              {isLoading && <span css={emptyPreviewStyle}>Loading...</span>}
-
-              {error && <div css={errorStyle}>Error: {error}</div>}
-
-              {!isLoading && !error && Component && (
-                <Component {...propValues} />
-              )}
-
-              {!isLoading && !error && !Component && (
-                <span css={emptyPreviewStyle}>
-                  Select a component in Figma to preview
-                </span>
-              )}
-            </div>
+              Emotion
+            </button>
+            <button
+              css={[styleButtonStyle, styleStrategy === "tailwind" && styleButtonActiveStyle]}
+              onClick={() => setStyleStrategy("tailwind")}
+            >
+              Tailwind
+            </button>
           </div>
-        </ErrorBoundary>
+          <DeployButton componentName={componentName} generatedCode={generatedCode} />
+        </div>
       </div>
 
-      {/* 스크롤 영역: Props Control + Generated Code */}
-      <div css={scrollSectionStyle}>
-        {propDefinitions.length > 0 && (
-          <div css={propsControlSectionStyle}>
-            <PropController
-              slotMockupEnabled={slotMockupEnabled}
-              onSlotMockupToggle={handleSlotMockupToggle}
+      {/* ─── Tab Bar ─── */}
+      <div css={tabBarStyle}>
+        {(["preview", "variants", "code"] as TabId[]).map((tab) => (
+          <button
+            key={tab}
+            css={[tabStyle, activeTab === tab && tabActiveStyle]}
+            onClick={() => handleTabChange(tab)}
+          >
+            {tab === "preview" ? "Preview" : tab === "variants" ? "Variants" : "Code"}
+          </button>
+        ))}
+      </div>
+
+      {/* ─── Tab Content ─── */}
+      <div css={tabContentStyle}>
+        {/* Preview Tab */}
+        {activeTab === "preview" && (
+          <>
+            <ErrorBoundary key={errorBoundaryKey}>
+              <div ref={previewContainerRef} css={previewContainerStyle}>
+                <div
+                  ref={previewContentRef}
+                  css={previewContentStyle}
+                  style={{ transform: "translate(-50%, -50%)" }}
+                >
+                  {isLoading && <span css={emptyStyle}>Loading...</span>}
+                  {error && <div css={errorStyle}>Error: {error}</div>}
+                  {!isLoading && !error && Component && <Component {...propValues} />}
+                  {!isLoading && !error && !Component && (
+                    <span css={emptyStyle}>Select a component in Figma</span>
+                  )}
+                </div>
+              </div>
+            </ErrorBoundary>
+            {propDefinitions.length > 0 && (
+              <div css={propsControlSectionStyle}>
+                <PropController
+                  slotMockupEnabled={slotMockupEnabled}
+                  onSlotMockupToggle={handleSlotMockupToggle}
+                  propDefinitions={propDefinitions}
+                  propValues={propValues}
+                  onPropChange={handlePropChange}
+                />
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Variants Tab */}
+        {activeTab === "variants" && (
+          <div style={{ padding: 16 }}>
+            <PropsMatrix
+              Component={Component}
               propDefinitions={propDefinitions}
-              propValues={propValues}
-              onPropChange={handlePropChange}
+              fixedProps={fixedProps}
+              isLoading={isLoading}
+              error={error}
             />
           </div>
         )}
 
-        <div css={codeSectionStyle}>
-          <div css={codeHeaderStyle}>
-            <span css={codeTitleStyle}>Generated Code</span>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <div css={styleToggleStyle}>
-                <button
-                  css={[
-                    styleButtonStyle,
-                    styleStrategy === "emotion" && styleButtonActiveStyle,
-                  ]}
-                  onClick={() => setStyleStrategy("emotion")}
-                >
-                  Emotion
-                </button>
-                <button
-                  css={[
-                    styleButtonStyle,
-                    styleStrategy === "tailwind" && styleButtonActiveStyle,
-                  ]}
-                  onClick={() => setStyleStrategy("tailwind")}
-                >
-                  Tailwind
-                </button>
-              </div>
-              <DeployButton
-                componentName={componentName}
-                generatedCode={generatedCode}
-              />
-            </div>
+        {/* Code Tab */}
+        {activeTab === "code" && (
+          <div css={codeTabStyle}>
+            <CodeEditor code={generatedCode} onChange={handleCodeChange} />
           </div>
-          <CodeViewer code={generatedCode} />
-        </div>
+        )}
       </div>
     </div>
   );

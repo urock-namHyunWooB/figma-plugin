@@ -16,6 +16,9 @@ export const MESSAGE_TYPES = {
   // GitHub API 프록시
   GITHUB_FETCH_REQUEST: "github-fetch-request",    // UI → Plugin: fetch 요청
   GITHUB_FETCH_RESPONSE: "github-fetch-response",  // Plugin → UI: fetch 응답
+
+  // UI 리사이즈
+  RESIZE_UI: "resize-ui",  // UI → Plugin: 패널 크기 변경 요청
 } as const;
 
 export interface OnSelectionChangeMessage {
@@ -58,6 +61,13 @@ export interface GitHubFetchResponseMessage {
   body: string;
 }
 
+// UI 리사이즈 요청 (UI → Plugin)
+export interface ResizeUIMessage {
+  type: typeof MESSAGE_TYPES.RESIZE_UI;
+  width: number;
+  height: number;
+}
+
 /**
  * UI로 전송되는 모든 메시지의 Union 타입
  */
@@ -67,4 +77,5 @@ export type PluginMessage =
   | ExportSelectionImageMessage
   | SelectionImageResultMessage
   | GitHubFetchRequestMessage
-  | GitHubFetchResponseMessage;
+  | GitHubFetchResponseMessage
+  | ResizeUIMessage;
