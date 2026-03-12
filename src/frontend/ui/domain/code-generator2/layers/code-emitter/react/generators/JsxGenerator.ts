@@ -1089,6 +1089,6 @@ ${indentStr}</${tag}>`;
       wrapperAttrs = `${styleAttr.attributeName}=${styleAttr.valueCode}`;
     }
 
-    return `${indentStr}{${slotProp} && (\n${indentStr}  <div ${wrapperAttrs}>{${slotProp}}</div>\n${indentStr})}`;
+    return `${indentStr}{${slotProp} && (\n${indentStr}  <div ${wrapperAttrs} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>{${slotProp}}</div>\n${indentStr})}`;
   }
 }

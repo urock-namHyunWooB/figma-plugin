@@ -17,6 +17,46 @@
       "name": "button",
       "type": "text",
       "depth": 1,
+      "visibleCondition": {
+        "type": "or",
+        "conditions": [
+          {
+            "type": "eq",
+            "prop": "customType",
+            "value": "filled"
+          },
+          {
+            "type": "eq",
+            "prop": "customType",
+            "value": "filled-red"
+          },
+          {
+            "type": "eq",
+            "prop": "customType",
+            "value": "outlined_black"
+          },
+          {
+            "type": "eq",
+            "prop": "customType",
+            "value": "outlined_blue"
+          },
+          {
+            "type": "eq",
+            "prop": "customType",
+            "value": "outlined_red"
+          },
+          {
+            "type": "eq",
+            "prop": "customType",
+            "value": "text"
+          },
+          {
+            "type": "eq",
+            "prop": "customType",
+            "value": "text-black"
+          }
+        ]
+      },
       "children": []
     },
     {

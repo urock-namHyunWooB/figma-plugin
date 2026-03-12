@@ -1,4 +1,4 @@
-import { InternalNode } from "../../../../types/types";
+import { InternalNode, ConditionNode, StyleObject } from "../../../../types/types";
 import DataManager from "../../../data-manager/DataManager";
 
 /**
@@ -26,18 +26,24 @@ export class ExternalRefsProcessor {
     // 개별 VECTOR 노드 컴파일은 CSS(COMPONENT 스케일)/SVG(INSTANCE 스케일) 불일치 발생
     // merged SVG는 INSTANCE 좌표계로 통일되어 정확한 렌더링 보장
     if (refId && !isRoot && this.isVectorOnlyDependency(refId)) {
-      const mergedSvg = this.tryMergeInstanceVectors(node);
-      if (mergedSvg) {
+      const mergeResult = this.tryMergeInstanceVectorsWithColorMap(node);
+      if (mergeResult) {
+        const { svg, colorMap } = mergeResult;
+
+        // wrapper 노드의 styles에 variant별 color CSS 추가
+        const wrapperStyles = this.buildColorStyles(node, colorMap);
+
         return {
           ...node,
           // refId 없음 → container로 렌더링
+          ...(wrapperStyles ? { styles: wrapperStyles } : {}),
           children: [{
             id: `${node.id}_merged_vector`,
             name: "Merged Vector",
             type: "VECTOR",
             parent: node,
             children: [],
-            metadata: { vectorSvg: mergedSvg },
+            metadata: { vectorSvg: svg },
             styles: { base: { width: "100%", height: "100%" }, dynamic: [] },
           }],
         };
@@ -168,12 +174,249 @@ export class ExternalRefsProcessor {
     return false;
   }
 
-  private tryMergeInstanceVectors(node: InternalNode): string | undefined {
-    for (const m of node.mergedNodes || []) {
+  /**
+   * 모든 variant의 SVG를 수집하여 색상 비교 후 currentColor 치환.
+   *
+   * 1. 모든 variant SVG 수집
+   * 2. variant 간 달라지는 stroke/fill → currentColor 치환
+   * 3. 상수 색상 유지
+   * 4. variant별 원래 색상 맵 반환
+   */
+  private tryMergeInstanceVectorsWithColorMap(
+    node: InternalNode
+  ): { svg: string; colorMap: Map<string, string> } | undefined {
+    const mergedNodes = node.mergedNodes || [];
+    if (mergedNodes.length === 0) return undefined;
+
+    // 1. 모든 variant의 SVG 수집: variantName → svg
+    const variantSvgs = new Map<string, string>();
+    for (const m of mergedNodes) {
       const svg = this.dataManager.mergeInstanceVectorSvgs(m.id);
-      if (svg) return svg;
+      if (svg) {
+        variantSvgs.set(m.variantName || m.name, svg);
+      }
     }
-    return undefined;
+
+    if (variantSvgs.size === 0) return undefined;
+
+    // variant가 1개면 색상 비교 불필요, 그냥 반환
+    if (variantSvgs.size === 1) {
+      const [, svg] = [...variantSvgs.entries()][0];
+      return { svg, colorMap: new Map() };
+    }
+
+    // 2. variant 간 색상 비교 → 달라지는 색상 감지
+    const colorPattern = /(stroke|fill)="(#[0-9A-Fa-f]{3,8})"/g;
+
+    // 각 variant에서 모든 stroke/fill 색상값 수집 (속성+값 쌍)
+    // key: "stroke:#050506" 형태로 추적
+    const variantColorSets = new Map<string, Map<string, string>>(); // variantName → (attrKey → color)
+    for (const [variantName, svg] of variantSvgs) {
+      const colors = new Map<string, string>();
+      // 각 속성의 첫 번째 등장 색상을 추적 (같은 속성이 여러 path에 있으면 첫 번째 기준)
+      const seen = new Set<string>();
+      for (const match of svg.matchAll(colorPattern)) {
+        const attr = match[1]; // "stroke" or "fill"
+        if (!seen.has(attr)) {
+          seen.add(attr);
+          colors.set(attr, match[2]); // attr → color
+        }
+      }
+      variantColorSets.set(variantName, colors);
+    }
+
+    // 3. 속성별로 모든 variant에서 같은 값인지 비교
+    const allAttrs = new Set<string>();
+    for (const colors of variantColorSets.values()) {
+      for (const attr of colors.keys()) {
+        allAttrs.add(attr);
+      }
+    }
+
+    const varyingAttrs = new Set<string>(); // variant마다 다른 속성
+    for (const attr of allAttrs) {
+      const values = new Set<string>();
+      for (const colors of variantColorSets.values()) {
+        const val = colors.get(attr);
+        if (val) values.add(val);
+      }
+      if (values.size > 1) {
+        varyingAttrs.add(attr);
+      }
+    }
+
+    // 변하는 색상이 없으면 첫 번째 SVG 그대로 반환
+    if (varyingAttrs.size === 0) {
+      const [, svg] = [...variantSvgs.entries()][0];
+      return { svg, colorMap: new Map() };
+    }
+
+    // 4. 첫 번째 variant의 SVG에서 변하는 속성만 currentColor로 치환
+    const [firstVariantName] = [...variantSvgs.keys()];
+    let baseSvg = variantSvgs.get(firstVariantName)!;
+
+    for (const attr of varyingAttrs) {
+      // 해당 속성의 모든 색상값을 currentColor로 치환
+      // fill="none"은 제외 (SVG wrapper 기본값)
+      const attrPattern = new RegExp(`${attr}="(#[0-9A-Fa-f]{3,8})"`, "g");
+      baseSvg = baseSvg.replace(attrPattern, `${attr}="currentColor"`);
+    }
+
+    // 5. variant별 원래 색상 맵 구축 (첫 번째 변하는 속성 기준)
+    const colorMap = new Map<string, string>(); // variantName → original color
+    const primaryAttr = [...varyingAttrs][0]; // 첫 번째 변하는 속성
+    for (const [variantName, colors] of variantColorSets) {
+      const color = colors.get(primaryAttr);
+      if (color) {
+        colorMap.set(variantName, color);
+      }
+    }
+
+    return { svg: baseSvg, colorMap };
+  }
+
+  /**
+   * variant별 색상 맵 → wrapper 노드의 StyleObject 생성
+   *
+   * - 첫 번째 variant 색상 → base.color
+   * - 나머지 → dynamic entries (condition + { color })
+   * - State prop (hover/active 등)은 condition에서 제외 (pseudo-class로 처리됨)
+   */
+  private buildColorStyles(
+    node: InternalNode,
+    colorMap: Map<string, string>
+  ): StyleObject | undefined {
+    if (colorMap.size === 0) return undefined;
+
+    const existingStyles = node.styles || { base: {}, dynamic: [] };
+
+    // 같은 색상끼리 그룹핑
+    const colorGroups = new Map<string, string[]>(); // color → variantName[]
+    for (const [variantName, color] of colorMap) {
+      if (!colorGroups.has(color)) {
+        colorGroups.set(color, []);
+      }
+      colorGroups.get(color)!.push(variantName);
+    }
+
+    // 첫 번째 variant의 색상 → base
+    const firstVariantName = [...colorMap.keys()][0];
+    const baseColor = colorMap.get(firstVariantName)!;
+
+    const dynamicEntries: Array<{ condition: ConditionNode; style: Record<string, string | number> }> = [];
+
+    // 나머지 색상 그룹 → dynamic entries
+    for (const [color, variantNames] of colorGroups) {
+      if (color === baseColor) continue;
+
+      for (const variantName of variantNames) {
+        const condition = this.createConditionFromVariantName(variantName);
+        if (condition) {
+          dynamicEntries.push({ condition, style: { color } });
+        }
+      }
+    }
+
+    return {
+      ...existingStyles,
+      base: { ...existingStyles.base, color: baseColor },
+      dynamic: [...(existingStyles.dynamic || []), ...dynamicEntries],
+    };
+  }
+
+  // ===========================================================================
+  // Variant condition helpers (StyleProcessor 패턴 참고)
+  // ===========================================================================
+
+  /** CSS pseudo-class로 변환되는 State 값 (condition에서 제외) */
+  private static readonly STATE_PSEUDO_VALUES = new Set([
+    "hover", "hovered", "hovering",
+    "active", "pressed", "pressing", "clicked",
+    "focus", "focused", "focus-visible",
+    "disabled", "inactive",
+  ]);
+
+  /**
+   * variant 이름 → ConditionNode 생성
+   * State prop 중 pseudo-class 대상 값은 제외
+   */
+  private createConditionFromVariantName(variantName: string): ConditionNode | null {
+    const props = this.parseVariantName(variantName);
+    if (props.length === 0) return null;
+
+    const conditions: ConditionNode[] = [];
+
+    for (const { key, value } of props) {
+      // State/states prop 중 pseudo-class 대상은 제외
+      if (key.toLowerCase() === "state" || key.toLowerCase() === "states") {
+        if (ExternalRefsProcessor.STATE_PSEUDO_VALUES.has(value.toLowerCase())) {
+          continue;
+        }
+      }
+
+      conditions.push(this.createCondition(key, value));
+    }
+
+    if (conditions.length === 0) return null;
+    if (conditions.length === 1) return conditions[0];
+
+    return { type: "and", conditions };
+  }
+
+  /**
+   * variant 이름 파싱
+   * "Color=blue, Size=small" → [{key: "Color", value: "blue"}, {key: "Size", value: "small"}]
+   */
+  private parseVariantName(variantName: string): Array<{ key: string; value: string }> {
+    const result: Array<{ key: string; value: string }> = [];
+    const parts = variantName.split(",");
+
+    for (const part of parts) {
+      const [key, value] = part.split("=").map((s) => s.trim());
+      if (key && value) {
+        result.push({ key, value });
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * prop 조건 노드 생성
+   */
+  private createCondition(key: string, value: string): ConditionNode {
+    const propName = this.normalizePropName(key);
+
+    if (value.toLowerCase() === "true") {
+      return { type: "truthy", prop: propName };
+    }
+    if (value.toLowerCase() === "false") {
+      return { type: "not", condition: { type: "truthy", prop: propName } };
+    }
+
+    return { type: "eq", prop: propName, value };
+  }
+
+  /**
+   * Prop 이름 정규화 (camelCase 변환)
+   */
+  private normalizePropName(key: string): string {
+    const cleaned = key.replace(/[^a-zA-Z0-9\s]/g, " ").trim();
+
+    let propName = cleaned
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((word, index) => {
+        if (index === 0) {
+          return word.charAt(0).toLowerCase() + word.slice(1);
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      })
+      .join("");
+
+    if (!propName) propName = "prop";
+
+    return propName;
   }
 
   /**
