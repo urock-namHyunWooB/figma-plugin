@@ -130,6 +130,9 @@ export class DropdownHeuristic implements IHeuristic {
     //     root 직계 자식 중 label, trigger(onClick), list, 조건부 노드만 유지
     this.pruneOrphanRootChildren(ctx.tree);
 
+    // 12. root의 open 조건 gap 변경 제거 (list가 absolute이므로 불필요, 덜컹거림 방지)
+    this.removeRootOpenGap(ctx.tree);
+
     const stateVars: StateVar[] = [
       { name: "open", setter: "setOpen", initialValue: "false" },
       { name: "selectedValue", setter: "setSelectedValue", initialValue: 'defaultValue ?? ""' },
@@ -304,6 +307,23 @@ export class DropdownHeuristic implements IHeuristic {
 
     // root의 open 조건 gap 변경 제거 (list가 absolute이므로 불필요, 덜컹거림 방지)
     this.removeRootOpenGap(ctx.tree);
+  }
+
+  /**
+   * root의 open 조건 dynamic style에서 gap 변경 제거
+   * list가 absolute이므로 open 시 gap 변경은 label↔trigger 간격만 흔들림
+   */
+  private removeRootOpenGap(root: InternalNode): void {
+    if (!root.styles?.dynamic) return;
+    for (const entry of root.styles.dynamic) {
+      if (entry.condition.type === "truthy" && (entry.condition as any).prop === "open") {
+        delete entry.style["gap"];
+      }
+    }
+    // 빈 dynamic entry 정리
+    root.styles.dynamic = root.styles.dynamic.filter(
+      (e) => Object.keys(e.style).length > 0
+    );
   }
 
   /**
