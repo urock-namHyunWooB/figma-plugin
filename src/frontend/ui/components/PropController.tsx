@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { css } from "@emotion/react";
 import type { PropDefinition } from "@code-generator2";
 
@@ -137,6 +137,73 @@ const jsonInputStyle = css`
   }
 `;
 
+const jsonErrorStyle = css`
+  border-color: #e04040 !important;
+`;
+
+function JsonArrayTextarea({
+  value,
+  onParsed,
+  placeholder,
+}: {
+  value: any;
+  onParsed: (parsed: any[]) => void;
+  placeholder?: string;
+}) {
+  const jsonStr = Array.isArray(value) ? JSON.stringify(value, null, 2) : "[]";
+  const [text, setText] = useState(jsonStr);
+  const [hasError, setHasError] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // 외부 value 변경 시 텍스트 동기화
+  const prevJsonRef = useRef(jsonStr);
+  if (jsonStr !== prevJsonRef.current) {
+    prevJsonRef.current = jsonStr;
+    setText(jsonStr);
+    setHasError(false);
+  }
+
+  const tryParse = useCallback(
+    (raw: string) => {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setHasError(false);
+          onParsed(parsed);
+          return;
+        }
+      } catch {
+        // fall through
+      }
+      setHasError(true);
+    },
+    [onParsed]
+  );
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const raw = e.target.value;
+    setText(raw);
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => tryParse(raw), 400);
+  };
+
+  const handleBlur = () => {
+    clearTimeout(timerRef.current);
+    tryParse(text);
+  };
+
+  return (
+    <textarea
+      css={[jsonInputStyle, hasError && jsonErrorStyle]}
+      value={text}
+      rows={Math.min(Math.max(text.split("\n").length, 2), 8)}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      placeholder={placeholder}
+    />
+  );
+}
+
 export function PropController({
   propDefinitions,
   propValues,
@@ -217,22 +284,10 @@ export function PropController({
       case "SLOT": {
         // Array slot: JSON 텍스트 입력 (Storybook 스타일)
         if (prop.arraySlotInfo) {
-          const jsonStr = Array.isArray(value) ? JSON.stringify(value, null, 2) : "[]";
           return (
-            <textarea
-              css={jsonInputStyle}
-              defaultValue={jsonStr}
-              rows={Math.min(Math.max(jsonStr.split("\n").length, 2), 8)}
-              onBlur={(e) => {
-                try {
-                  const parsed = JSON.parse(e.target.value);
-                  if (Array.isArray(parsed)) {
-                    onPropChange(prop.name, parsed);
-                  }
-                } catch {
-                  // JSON 파싱 실패 시 무시
-                }
-              }}
+            <JsonArrayTextarea
+              value={value}
+              onParsed={(parsed) => onPropChange(prop.name, parsed)}
               placeholder={`[{"${prop.arraySlotInfo.itemProps.map((p) => p.name).join('", "')}": ...}]`}
             />
           );
