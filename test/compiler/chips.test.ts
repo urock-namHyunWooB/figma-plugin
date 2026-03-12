@@ -75,7 +75,7 @@ describe("Chips 컴파일 테스트", () => {
     it("colorStyles에 background가 포함되어야 한다 (color별 배경색 변경)", async () => {
       const code = await getCompiledCode();
       const colorStylesMatch = code.match(
-        /colorStyles\s*=\s*\{([\s\S]*?)\n\};/
+        /colorStyles[^=]*=\s*\{([\s\S]*?)\n\};/
       );
       expect(colorStylesMatch).toBeTruthy();
       const body = colorStylesMatch![1];

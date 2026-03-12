@@ -128,10 +128,10 @@ export class EmotionStrategy implements IStyleStrategy {
       const safePropName = propName.replace(/[\x00-\x1f\x7f]/g, "");
       const varName = `${baseVarName}_${safePropName}Styles`;
       if (entries.length > 0) {
-        codeParts.push(`const ${varName} = {\n${entries.join("\n")}\n};`);
+        codeParts.push(`const ${varName}: Record<string, any> = {\n${entries.join("\n")}\n};`);
       } else {
         // 빈 맵이라도 생성 (JSX에서 참조 시 ReferenceError 방지)
-        codeParts.push(`const ${varName} = {};`);
+        codeParts.push(`const ${varName}: Record<string, any> = {};`);
       }
     }
 

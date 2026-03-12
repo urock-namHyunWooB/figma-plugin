@@ -94,7 +94,7 @@ describe("urock-button", () => {
 
     // customTypeStyles 객체에 box-shadow 등 고유 CSS가 있는 variant 키가 있어야 함
     const customTypeStylesMatch = result.match(
-      /btnCss_customTypeStyles\s*=\s*\{([\s\S]*?)\n\};/
+      /btnCss_customTypeStyles[^=]*=\s*\{([\s\S]*?)\n\};/
     );
     expect(customTypeStylesMatch).toBeTruthy();
 
@@ -204,7 +204,7 @@ describe("Chips", () => {
   it("colorStyles에 background가 포함되어야 한다 (color별 배경색 변경)", async () => {
     const result = await compileFixture();
     const colorStylesMatch = result.match(
-      /colorStyles\s*=\s*\{([\s\S]*?)\n\};/
+      /colorStyles[^=]*=\s*\{([\s\S]*?)\n\};/
     );
     expect(colorStylesMatch).toBeTruthy();
     const body = colorStylesMatch![1];
@@ -484,7 +484,7 @@ describe("Dropdowngeneric", () => {
 
     // sizeStyles(항상 적용)에서 color를 blue로 덮어쓰면 base 검은색이 무효화됨
     // → 화살표 아이콘 sizeStyles(width 24px/20px 포함)에 color: #628cf5가 없어야 함
-    const sizeStyleBlocks = [...result.matchAll(/_sizeStyles\s*=\s*\{([\s\S]*?)\n\};/g)];
+    const sizeStyleBlocks = [...result.matchAll(/_sizeStyles[^=]*=\s*\{([\s\S]*?)\n\};/g)];
     const arrowIconBlock = sizeStyleBlocks.find(
       (m) => /width:\s*24px/.test(m[1]) && /width:\s*20px/.test(m[1])
     );
@@ -497,7 +497,7 @@ describe("Dropdowngeneric", () => {
 
     // 드롭다운 wrapper의 openStyles에서 svg path fill이 파란색(#628cf5)으로 변경
     const openStylesMatch = result.match(
-      /DropdownCss_openStyles\s*=\s*\{([\s\S]*?)\n\};/
+      /DropdownCss_openStyles[^=]*=\s*\{([\s\S]*?)\n\};/
     );
     expect(openStylesMatch).toBeTruthy();
     expect(openStylesMatch![1]).toMatch(/svg path[\s\S]*?fill:\s*#628cf5/);
@@ -853,7 +853,7 @@ describe("Checkbox", () => {
     it("모든 checked 상태에서 border-radius가 적용되어야 한다", async () => {
       const result = await compileFixture();
       // radio 요소의 checkedStyles에 각 상태별 border-radius가 있어야 함
-      const allCheckedStyles = [...result.matchAll(/checkedStyles\s*=\s*\{([\s\S]*?)\n\};/g)];
+      const allCheckedStyles = [...result.matchAll(/checkedStyles[^=]*=\s*\{([\s\S]*?)\n\};/g)];
       const hasRadiusInAnyMap = allCheckedStyles.some(
         (m) => m[1].includes("border-radius")
       );
