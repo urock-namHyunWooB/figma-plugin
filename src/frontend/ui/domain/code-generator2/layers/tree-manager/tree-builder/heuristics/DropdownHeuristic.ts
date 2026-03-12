@@ -286,9 +286,21 @@ export class DropdownHeuristic implements IHeuristic {
 
   private setListVisibility(ctx: HeuristicContext): void {
     const listNode = this.findListContainer(ctx.tree);
-    if (listNode) {
-      listNode.visibleCondition = { type: "truthy", prop: "open" };
-    }
+    if (!listNode) return;
+
+    listNode.visibleCondition = { type: "truthy", prop: "open" };
+
+    // 리스트를 오버레이로 표시 (트리거 아래에 겹쳐서 렌더링)
+    if (!listNode.styles) listNode.styles = { base: {}, dynamic: [] };
+    listNode.styles.base["position"] = "absolute";
+    listNode.styles.base["top"] = "100%";
+    listNode.styles.base["left"] = "0";
+    listNode.styles.base["width"] = "100%";
+    listNode.styles.base["z-index"] = "10";
+
+    // root에 position: relative 설정 (리스트의 기준점)
+    if (!ctx.tree.styles) ctx.tree.styles = { base: {}, dynamic: [] };
+    ctx.tree.styles.base["position"] = "relative";
   }
 
   private findListContainer(node: InternalNode): InternalNode | null {
