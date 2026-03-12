@@ -147,10 +147,9 @@ export interface OpenPR {
 export async function findOpenPR(componentName: string): Promise<OpenPR | null> {
   const safeName = componentName.replace(/\s+/g, "");
   const prs = await api<OpenPR[]>(
-    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls?state=open&head=${REPO_OWNER}:design/${safeName}`
+    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls?state=open`
   );
-  // head 파라미터는 정확 매칭이 아니므로 prefix 필터 적용
-  const match = prs.find((pr) => pr.head.ref.startsWith(`design/${safeName}`));
+  const match = prs.find((pr) => pr.head.ref.startsWith(`design/${safeName}-`));
   return match ?? null;
 }
 
@@ -160,7 +159,7 @@ export async function findOpenPR(componentName: string): Promise<OpenPR | null> 
  */
 export async function findReleasePR(): Promise<OpenPR | null> {
   const prs = await api<OpenPR[]>(
-    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls?state=open&head=${REPO_OWNER}:release-please--branches--main`
+    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls?state=open`
   );
   const match = prs.find((pr) =>
     pr.head.ref.startsWith("release-please--branches--main")
