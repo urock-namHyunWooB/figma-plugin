@@ -8,17 +8,25 @@ import { PropController } from "./components/PropController";
 import { CodeEditor } from "./components/CodeEditor";
 import { PropsMatrix } from "./components/PropsMatrix";
 import ErrorBoundary from "@frontend/ui/components/ErrorBoundary";
-import { DeployButton } from "./components/DeployButton";
+import { PublishTab } from "./components/PublishTab";
 import { wireFunctionProps } from "./utils/wireFunctionProps";
 
 declare const __DEV_BUILD__: boolean;
 
-type TabId = "preview" | "variants" | "code";
+type TabId = "preview" | "variants" | "code" | "publish";
 
 const TAB_SIZES: Record<TabId, { width: number; height: number }> = {
   preview: { width: 400, height: 1000 },
   variants: { width: 900, height: 1000 },
   code: { width: 400, height: 1000 },
+  publish: { width: 400, height: 1000 },
+};
+
+const TAB_LABELS: Record<TabId, string> = {
+  preview: "Preview",
+  variants: "Variants",
+  code: "Code",
+  publish: "Publish",
 };
 
 function resizePluginUI(width: number, height: number) {
@@ -502,19 +510,18 @@ function App() {
               Tailwind
             </button>
           </div>
-          <DeployButton componentName={componentName} generatedCode={generatedCode} figmaNodeId={selectionNodeData?.info?.document?.id} />
         </div>
       </div>
 
       {/* ─── Tab Bar ─── */}
       <div css={tabBarStyle}>
-        {(["preview", "variants", "code"] as TabId[]).map((tab) => (
+        {(["preview", "variants", "code", "publish"] as TabId[]).map((tab) => (
           <button
             key={tab}
             css={[tabStyle, activeTab === tab && tabActiveStyle]}
             onClick={() => handleTabChange(tab)}
           >
-            {tab === "preview" ? "Preview" : tab === "variants" ? "Variants" : "Code"}
+            {TAB_LABELS[tab]}
           </button>
         ))}
       </div>
@@ -573,6 +580,11 @@ function App() {
             <CodeEditor code={generatedCode} onChange={handleCodeChange} />
           </div>
         )}
+
+        {/* Publish Tab — 항상 mount, 탭 전환 시 숨김 (deploy 상태 유지) */}
+        <div style={{ display: activeTab === "publish" ? "block" : "none" }}>
+          <PublishTab componentName={componentName} generatedCode={generatedCode} figmaNodeId={selectionNodeData?.info?.document?.id} />
+        </div>
       </div>
     </div>
   );

@@ -213,6 +213,47 @@ export async function getPRCheckStatus(prNumber: number): Promise<CheckStatus> {
   return "pending";
 }
 
+/** 스테이징 PR의 개별 체크 런 상태 조회 */
+export interface CheckRun {
+  name: string;
+  status: "queued" | "in_progress" | "completed";
+  conclusion: "success" | "failure" | "neutral" | "cancelled" | "skipped" | "timed_out" | "action_required" | null;
+  html_url: string;
+}
+
+export interface StagingCIStatus {
+  pr: OpenPR;
+  checks: CheckRun[];
+  overall: CheckStatus;
+}
+
+export async function getStagingCIStatus(): Promise<StagingCIStatus | null> {
+  const pr = await findStagingPR();
+  if (!pr) return null;
+
+  const result = await api<{ check_runs: Array<{ name: string; status: string; conclusion: string | null; html_url: string }> }>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/commits/${pr.head.sha}/check-runs`
+  );
+
+  const checks: CheckRun[] = result.check_runs.map((r) => ({
+    name: r.name,
+    status: r.status as CheckRun["status"],
+    conclusion: r.conclusion as CheckRun["conclusion"],
+    html_url: r.html_url,
+  }));
+
+  let overall: CheckStatus = "pending";
+  if (checks.length > 0) {
+    if (checks.some((r) => r.status === "completed" && r.conclusion === "failure")) {
+      overall = "failure";
+    } else if (checks.every((r) => r.status === "completed")) {
+      overall = "success";
+    }
+  }
+
+  return { pr, checks, overall };
+}
+
 /** 파일에서 @figma-node-id 메타데이터 추출 (D2/D3) */
 export async function getFileNodeId(filePath: string, branch: string): Promise<string | null> {
   const content = await getFileContent(filePath, branch);
