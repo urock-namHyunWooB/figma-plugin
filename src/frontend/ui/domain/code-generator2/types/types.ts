@@ -431,4 +431,6 @@ export interface UITree {
   derivedVars?: DerivedVar[];
   /** React useState 훅 선언 */
   stateVars?: StateVar[];
+  /** dependency 컴포넌트 여부 (root width/height를 100%로 변환) */
+  isDependency?: boolean;
 }

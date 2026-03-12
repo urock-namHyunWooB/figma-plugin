@@ -37,7 +37,8 @@ export class StylesGenerator {
     // Step 2: 트리 순회하며 스타일 수집
     const { styleResults, nodeStyleMap } = this.collectAllStyles(
       uiTree.root,
-      styleStrategy
+      styleStrategy,
+      uiTree.isDependency
     );
 
     // Step 3: 변수명 고유성 보장 (충돌 감지 및 카운터 추가)
@@ -60,14 +61,46 @@ export class StylesGenerator {
    */
   private static collectAllStyles(
     root: UINode,
-    styleStrategy: IStyleStrategy
+    styleStrategy: IStyleStrategy,
+    isDependency?: boolean
   ): { styleResults: StyleResult[]; nodeStyleMap: Map<string, string> } {
     const styleResults: StyleResult[] = [];
     const nodeStyleMap = new Map<string, string>();
 
+    // dependency 컴포넌트의 root width/height를 100%로 변환
+    // (slot으로 사용될 때 부모 wrapper 크기에 맞추기 위함)
+    if (isDependency && root.styles) {
+      this.convertRootToFluid(root);
+    }
+
     this.collectStyles(root, styleStrategy, styleResults, nodeStyleMap, []);
 
     return { styleResults, nodeStyleMap };
+  }
+
+  /**
+   * dependency root의 고정 width/height를 100%로 변환
+   */
+  private static convertRootToFluid(root: UINode): void {
+    if (!root.styles) return;
+
+    const replaceSize = (styles: Record<string, string>) => {
+      if (styles.width && styles.width.endsWith("px")) {
+        styles.width = "100%";
+      }
+      if (styles.height && styles.height.endsWith("px")) {
+        styles.height = "100%";
+      }
+    };
+
+    if (root.styles.base) replaceSize(root.styles.base);
+    if (root.styles.variants) {
+      for (const variantMap of Object.values(root.styles.variants)) {
+        for (const styles of Object.values(variantMap)) {
+          replaceSize(styles);
+        }
+      }
+    }
   }
 
   /**
@@ -169,10 +202,24 @@ export class StylesGenerator {
     nodeStyleMap: Map<string, string>,
     parentPath: string[]
   ): void {
-    // slot binding이 있으면 노드 자체와 children 스타일 수집 모두 skip
-    // (JsxGenerator가 slot binding 시 {propName}으로 대체하므로 스타일 불필요)
+    // slot binding 노드: children은 skip하되, 노드 자체의 스타일은 수집
+    // (variant별 텍스트 color 등이 slot wrapper에 적용되어야 함)
     const slotBinding = node.bindings?.content;
     if (slotBinding && "prop" in slotBinding) {
+      if (node.styles) {
+        const currentPath_ = [...parentPath, node.name];
+        const result = styleStrategy.generateStyle(
+          node.id,
+          node.name,
+          node.styles,
+          currentPath_
+        );
+        result.nodeId = node.id;
+        results.push(result);
+        if (!result.isEmpty) {
+          nodeStyleMap.set(node.id, result.variableName);
+        }
+      }
       return;
     }
 

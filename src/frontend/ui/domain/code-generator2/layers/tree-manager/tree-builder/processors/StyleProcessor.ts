@@ -162,15 +162,36 @@ export class StyleProcessor {
       };
     }
 
-    // strokeAlign: INSIDE → box-sizing: border-box 보정
-    // Figma INSIDE stroke는 width/height 안에 border 포함. CSS content-box는 밖에 추가.
+    // strokeAlign: INSIDE → box-sizing: border-box + padding 보정
+    // Figma INSIDE stroke: border가 padding 안에 포함됨 (padding은 element edge 기준)
+    // CSS border-box: padding은 border 안쪽에서 측정됨
+    // → CSS padding = Figma padding - strokeWeight
     if (styles && this.hasBorderInStyles(styles)) {
       const strokeAlign = this.getStrokeAlign(node);
       if (strokeAlign === "INSIDE") {
-        styles = {
-          ...styles,
-          base: { ...(styles.base || {}), "box-sizing": "border-box" },
-        };
+        const strokeWeight = this.getStrokeWeight(node);
+        const adjustedBase = { ...(styles.base || {}), "box-sizing": "border-box" };
+
+        if (strokeWeight > 0) {
+          this.adjustPaddingForInsideStroke(adjustedBase, strokeWeight);
+          if (styles.variants) {
+            for (const [prop, variantMap] of Object.entries(styles.variants)) {
+              for (const [val, variantStyles] of Object.entries(variantMap)) {
+                this.adjustPaddingForInsideStroke(variantStyles, strokeWeight);
+              }
+            }
+          }
+          if (styles.dynamic) {
+            for (const entry of styles.dynamic) {
+              this.adjustPaddingForInsideStroke(
+                entry.style as Record<string, string>,
+                strokeWeight
+              );
+            }
+          }
+        }
+
+        styles = { ...styles, base: adjustedBase };
       }
     }
 
@@ -759,7 +780,9 @@ export class StyleProcessor {
   private hasBorderInStyles(styles: StyleObject): boolean {
     const hasBorder = (obj: Record<string, any>): boolean =>
       Object.keys(obj).some(k =>
-        k === "border" || k.startsWith("border-") ||
+        k === "border" ||
+        k === "border-width" || k === "border-color" || k === "border-style" ||
+        k === "border-top" || k === "border-right" || k === "border-bottom" || k === "border-left" ||
         k === "borderWidth" || k === "borderColor" || k === "borderStyle"
       );
     if (styles.base && hasBorder(styles.base)) return true;
@@ -769,6 +792,59 @@ export class StyleProcessor {
       }
     }
     return false;
+  }
+
+  /**
+   * strokeAlign: INSIDE일 때 padding을 strokeWeight만큼 감소
+   * Figma padding은 element edge 기준이지만, CSS border-box padding은 border 안쪽 기준
+   */
+  private adjustPaddingForInsideStroke(
+    styles: Record<string, string>,
+    strokeWeight: number
+  ): void {
+    const paddingKeys = ["padding", "padding-top", "padding-right", "padding-bottom", "padding-left"];
+    for (const key of paddingKeys) {
+      if (styles[key]) {
+        styles[key] = this.reducePaddingValues(styles[key], strokeWeight);
+      }
+    }
+  }
+
+  /**
+   * padding 값에서 strokeWeight 차감 (shorthand 포함)
+   * "4px 10px" → "3px 9px" (strokeWeight=1)
+   */
+  private reducePaddingValues(value: string, strokeWeight: number): string {
+    return value
+      .split(/\s+/)
+      .map((part) => {
+        const match = part.match(/^(-?[\d.]+)(px)$/);
+        if (!match) return part;
+        const adjusted = Math.max(0, parseFloat(match[1]) - strokeWeight);
+        return `${adjusted}px`;
+      })
+      .join(" ");
+  }
+
+  /**
+   * 노드의 strokeWeight 조회
+   */
+  private getStrokeWeight(node: InternalNode): number {
+    const { node: sceneNode } = this.dataManager.getById(node.id);
+    if (sceneNode) {
+      const w = (sceneNode as any).strokeWeight;
+      if (typeof w === "number") return w;
+    }
+    if (node.mergedNodes?.length) {
+      for (const merged of node.mergedNodes) {
+        const { node: mergedScene } = this.dataManager.getById(merged.id);
+        if (mergedScene) {
+          const w = (mergedScene as any).strokeWeight;
+          if (typeof w === "number") return w;
+        }
+      }
+    }
+    return 0;
   }
 
   /**

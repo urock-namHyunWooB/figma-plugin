@@ -90,6 +90,7 @@ class TreeManager {
       }
 
       const tree = this.buildDependencyTree(componentSetId, group);
+      tree.isDependency = true;
 
       // 모든 variant ID로 같은 tree 저장 (ComponentPropsLinker가 어떤 variant를 참조해도 찾을 수 있도록)
       for (const variant of group.variants) {

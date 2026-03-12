@@ -6,8 +6,6 @@ import { javascript } from "@codemirror/lang-javascript";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import {
-  syntaxHighlighting,
-  defaultHighlightStyle,
   bracketMatching,
 } from "@codemirror/language";
 
@@ -132,7 +130,6 @@ export function CodeEditor({ code, onChange }: CodeEditorProps) {
         history(),
         bracketMatching(),
         highlightActiveLine(),
-        syntaxHighlighting(defaultHighlightStyle),
         javascript({ jsx: true, typescript: true }),
         oneDark,
         keymap.of([...defaultKeymap, ...historyKeymap]),

@@ -2,7 +2,7 @@
 name: browser-validator
 description: "컴파일된 React 컴포넌트의 브라우저 렌더링을 검증합니다. 스타일 값 확인, 시각적 비교, Figma 원본과의 일치 여부를 확인할 때 사용합니다."
 tools: Read, Bash, Glob, Grep, mcp__chrome-devtools__take_screenshot, mcp__chrome-devtools__take_snapshot, mcp__chrome-devtools__evaluate_script, mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__list_pages, mcp__chrome-devtools__new_page
-model: opus
+model: inherit
 ---
 
 # Browser Validator Agent

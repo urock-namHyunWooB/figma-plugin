@@ -4,8 +4,7 @@
     "base": {
       "display": "inline-flex",
       "align-items": "center",
-      "border-radius": "3px",
-      "box-sizing": "border-box"
+      "border-radius": "3px"
     },
     "dynamic": [
       {

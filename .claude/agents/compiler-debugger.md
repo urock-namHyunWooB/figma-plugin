@@ -1,8 +1,8 @@
 ---
 name: compiler-debugger
-description: 컴파일러 오류를 분석하고 디버깅합니다. 컴파일 실패, AST 트리 문제, 6단계 파이프라인 추적, 코드 생성 오류를 해결할 때 사용합니다.
+description: "컴파일러 오류를 분석하고 디버깅합니다. 컴파일 실패, AST 트리 문제, 6단계 파이프라인 추적, 코드 생성 오류를 해결할 때 사용합니다."
 tools: Read, Bash, Glob, Grep, Edit
-model: opus
+model: inherit
 ---
 
 # Compiler Debugger Agent
