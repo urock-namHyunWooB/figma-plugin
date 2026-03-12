@@ -19,6 +19,7 @@ const DEPLOY_STEPS = [
   { key: "committing", label: "커밋" },
   { key: "creating-pr", label: "PR 생성" },
   { key: "verifying", label: "검증" },
+  { key: "waiting-ci", label: "CI 빌드" },
 ] as const;
 
 const RELEASE_STEPS = [
@@ -369,7 +370,7 @@ const ciOverallStyle = (status: "success" | "failure" | "pending") => css`
 
 const BUSY_STEPS = new Set([
   "checking-pr", "creating-branch", "committing", "creating-pr",
-  "verifying", "checking-ci", "merging", "waiting-release",
+  "verifying", "waiting-ci", "checking-ci", "merging", "waiting-release",
 ]);
 
 export function PublishTab({ componentName, generatedCode, deployCodes, figmaNodeId }: PublishTabProps) {

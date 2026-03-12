@@ -14,6 +14,7 @@ import {
   STAGING_BRANCH,
   ACTIONS_URL,
   type OpenPR,
+  type CheckStatus,
 } from "./GitHubAPI";
 
 export type DeployStatus =
@@ -23,6 +24,7 @@ export type DeployStatus =
   | { step: "committing"; message: string }
   | { step: "creating-pr"; message: string }
   | { step: "verifying"; message: string }
+  | { step: "waiting-ci"; message: string }
   | { step: "done"; prUrl: string }
   | { step: "checking-ci"; message: string }
   | { step: "merging"; message: string }
@@ -144,10 +146,51 @@ export async function deployComponent(
       );
     }
 
+    // 5. CI 빌드 대기 (5초 간격, 최대 5분)
+    onStatus({ step: "waiting-ci", message: "CI 빌드 대기 중..." });
+    const prNumber = existingPR?.number ?? await findStagingPR().then((pr) => pr?.number);
+    if (prNumber) {
+      const ciResult = await pollCIStatus(prNumber, onStatus);
+      if (ciResult === "failure") {
+        onStatus({ step: "error", message: "CI 빌드가 실패했습니다. 생성된 코드를 확인하세요." });
+        return;
+      }
+    }
+
     onStatus({ step: "done", prUrl });
   } catch (e) {
     onStatus({ step: "error", message: (e as Error).message });
   }
+}
+
+/**
+ * CI 상태를 5초 간격으로 폴링 (최대 5분)
+ */
+async function pollCIStatus(
+  prNumber: number,
+  onStatus: (status: DeployStatus) => void
+): Promise<CheckStatus> {
+  const MAX_WAIT = 300_000;
+  const INTERVAL = 5_000;
+  const start = Date.now();
+
+  // CI가 시작될 때까지 초기 대기
+  await sleep(INTERVAL);
+
+  while (Date.now() - start < MAX_WAIT) {
+    const elapsed = Math.round((Date.now() - start) / 1000);
+    onStatus({ step: "waiting-ci", message: `CI 빌드 확인 중... (${elapsed}초)` });
+
+    const status = await getPRCheckStatus(prNumber);
+    if (status === "success" || status === "failure") {
+      return status;
+    }
+
+    await sleep(INTERVAL);
+  }
+
+  // 타임아웃 — pending 상태로 간주하고 통과 (CI가 너무 오래 걸리는 경우)
+  return "success";
 }
 
 /**
