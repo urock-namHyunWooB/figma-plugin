@@ -33,5 +33,11 @@ const TOGGLE_PATTERNS = [
 
 export function isToggleProp(name: string): boolean {
   const lower = name.toLowerCase();
-  return TOGGLE_PATTERNS.some((p) => lower.includes(p));
+  return TOGGLE_PATTERNS.some((p) => {
+    const idx = lower.indexOf(p);
+    if (idx === -1) return false;
+    // "on" 패턴이 "onChange" 등 콜백 이름에 매칭되지 않도록 단어 경계 검사
+    const after = lower[idx + p.length];
+    return !after || /[^a-z]/.test(after);
+  });
 }

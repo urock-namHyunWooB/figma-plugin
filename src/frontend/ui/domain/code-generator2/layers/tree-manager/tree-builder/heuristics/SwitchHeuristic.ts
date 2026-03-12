@@ -115,8 +115,22 @@ export class SwitchHeuristic implements IHeuristic {
     const onChangeName = this.addOnChangeProp(ctx);
 
     // 토글 상태 prop 이름 찾기 (active, on, toggled 등)
-    const toggleProp = ctx.props.find((p) => isToggleProp(p.name));
-    const activeName = toggleProp?.name ?? "active";
+    let toggleProp = ctx.props.find((p) => isToggleProp(p.name));
+
+    // toggle prop이 없으면 active: boolean prop 자동 생성
+    if (!toggleProp) {
+      const activeProp = {
+        type: "boolean" as const,
+        name: "active",
+        defaultValue: "false",
+        required: false,
+        sourceKey: "",
+      };
+      ctx.props.push(activeProp);
+      toggleProp = activeProp;
+    }
+
+    const activeName = toggleProp.name;
 
     // 루트에 onClick 바인딩 (+ disable 계열 prop이 있으면 disabled도)
     const disableProp = ctx.props.find((p) => isDisableProp(p.name));
