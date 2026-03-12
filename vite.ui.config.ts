@@ -136,6 +136,7 @@ function saveFailingFixturePlugin(): Plugin {
 export default defineConfig(({ mode }) => ({
   plugins: [viteSingleFile(), tsconfigPaths(), saveFailingFixturePlugin(), saveCompiledPlugin()],
   root: path.resolve(__dirname, "src/frontend/ui"),
+  envDir: path.resolve(__dirname),
 
   // mode에 따라 DEV_BUILD 플래그 설정
   // - development: DEV 기능 활성화 (Save to Failing 버튼 등)

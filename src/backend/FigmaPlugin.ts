@@ -1,3 +1,5 @@
+declare const GITHUB_TOKEN: string;
+
 import { MESSAGE_TYPES, PluginMessage } from "./types/messages";
 
 import {
@@ -53,6 +55,10 @@ export class FigmaPlugin {
         await this.handleExportSelectionImage();
         break;
 
+      case MESSAGE_TYPES.GITHUB_FETCH_REQUEST:
+        await this.handleGitHubFetch(msg);
+        break;
+
       default:
         console.log("⚠️ [Plugin Backend] Unknown message type:", msg.type);
     }
@@ -102,6 +108,43 @@ export class FigmaPlugin {
         type: MESSAGE_TYPES.SELECTION_IMAGE_RESULT,
         imageBase64: null,
         error: (error as Error).message,
+      });
+    }
+  }
+
+  /**
+   * GitHub API fetch 프록시 — UI iframe의 CSP 제한 우회
+   */
+  private async handleGitHubFetch(msg: PluginMessage): Promise<void> {
+    if (msg.type !== MESSAGE_TYPES.GITHUB_FETCH_REQUEST) return;
+    const { requestId, url, method, body } = msg;
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${GITHUB_TOKEN}`,
+          Accept: "application/vnd.github+json",
+          "Content-Type": "application/json",
+        },
+        ...(body ? { body } : {}),
+      });
+
+      const responseBody = await res.text();
+      figma.ui.postMessage({
+        type: MESSAGE_TYPES.GITHUB_FETCH_RESPONSE,
+        requestId,
+        ok: res.ok,
+        status: res.status,
+        body: responseBody,
+      });
+    } catch (e) {
+      figma.ui.postMessage({
+        type: MESSAGE_TYPES.GITHUB_FETCH_RESPONSE,
+        requestId,
+        ok: false,
+        status: 0,
+        body: (e as Error).message,
       });
     }
   }

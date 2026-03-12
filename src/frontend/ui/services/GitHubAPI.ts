@@ -3,30 +3,53 @@ const REPO_NAME = "design-system";
 const BASE_BRANCH = "main";
 const API_BASE = "https://api.github.com";
 
-function getToken(): string {
-  const token = import.meta.env.VITE_GITHUB_TOKEN;
-  if (!token) throw new Error("VITE_GITHUB_TOKEN이 설정되지 않았습니다. .env 파일을 확인하세요.");
-  return token;
-}
+/**
+ * 플러그인 백엔드를 통한 GitHub API 프록시
+ * Figma iframe CSP가 외부 API 직접 호출을 차단하므로,
+ * postMessage로 백엔드 sandbox에 fetch를 위임한다.
+ */
+function pluginFetch(url: string, method: string, body?: string): Promise<{ ok: boolean; status: number; body: string }> {
+  return new Promise((resolve, reject) => {
+    const requestId = `gh-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-function headers() {
-  return {
-    Authorization: `Bearer ${getToken()}`,
-    Accept: "application/vnd.github+json",
-    "Content-Type": "application/json",
-  };
-}
+    const handler = (event: MessageEvent) => {
+      const msg = event.data.pluginMessage;
+      if (msg?.type === "github-fetch-response" && msg.requestId === requestId) {
+        window.removeEventListener("message", handler);
+        resolve({ ok: msg.ok, status: msg.status, body: msg.body });
+      }
+    };
 
-async function api<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: { ...headers(), ...options?.headers },
+    window.addEventListener("message", handler);
+
+    // 10초 타임아웃
+    setTimeout(() => {
+      window.removeEventListener("message", handler);
+      reject(new Error("GitHub API 요청 타임아웃 (10s)"));
+    }, 10000);
+
+    parent.postMessage({
+      pluginMessage: {
+        type: "github-fetch-request",
+        requestId,
+        url,
+        method,
+        body,
+      },
+    }, "*");
   });
+}
+
+async function api<T>(path: string, options?: { method?: string; body?: string }): Promise<T> {
+  const res = await pluginFetch(
+    `${API_BASE}${path}`,
+    options?.method || "GET",
+    options?.body
+  );
   if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`GitHub API ${res.status}: ${body}`);
+    throw new Error(`GitHub API ${res.status}: ${res.body}`);
   }
-  return res.json();
+  return JSON.parse(res.body);
 }
 
 /** main 브랜치의 최신 SHA 가져오기 */
