@@ -4,9 +4,15 @@ import {
   commitFile,
   getFileContent,
   createPullRequest,
-  findOpenPR,
+  findStagingPR,
   findReleasePR,
   mergePR,
+  verifyBranchHead,
+  getPRCheckStatus,
+  getFileNodeId,
+  STAGING_BRANCH,
+  ACTIONS_URL,
+  type OpenPR,
 } from "./GitHubAPI";
 
 export type DeployStatus =
@@ -15,8 +21,11 @@ export type DeployStatus =
   | { step: "creating-branch"; message: string }
   | { step: "committing"; message: string }
   | { step: "creating-pr"; message: string }
+  | { step: "verifying"; message: string }
   | { step: "done"; prUrl: string }
+  | { step: "checking-ci"; message: string }
   | { step: "merging"; message: string }
+  | { step: "waiting-release"; message: string }
   | { step: "release-done"; message: string }
   | { step: "error"; message: string };
 
@@ -24,54 +33,59 @@ const COMPONENTS_DIR = "packages/react/src/components";
 const INDEX_PATH = "packages/react/src/index.ts";
 
 /**
- * 컴파일된 컴포넌트를 GitHub에 PR로 배포
- * - 같은 컴포넌트의 열린 PR이 있으면 기존 브랜치에 커밋 업데이트
- * - 없으면 새 브랜치 + 새 PR 생성
+ * 컴파일된 컴포넌트를 스테이징 브랜치에 배포
+ *
+ * - 스테이징 PR이 있으면 기존 브랜치에 커밋 누적
+ * - 없으면 새 브랜치 + PR 생성
+ * - D2/D3: 이름 충돌 시 node ID로 소유권 검증
+ * - D8: 커밋 후 브랜치 유효성 검증
  */
 export async function deployComponent(
   componentName: string,
   compiledCode: string,
+  figmaNodeId: string,
   onStatus: (status: DeployStatus) => void
 ): Promise<void> {
   try {
     const safeName = componentName.replace(/\s+/g, "");
     const filePath = `${COMPONENTS_DIR}/${safeName}.tsx`;
+    const codeWithMeta = `// @figma-node-id ${figmaNodeId}\n${compiledCode}`;
 
-    // 1. 기존 열린 PR 검색
-    onStatus({ step: "checking-pr", message: "기존 PR 확인 중..." });
-    const existingPR = await findOpenPR(componentName);
+    // 1. 스테이징 PR 확인
+    onStatus({ step: "checking-pr", message: "스테이징 PR 확인 중..." });
+    const existingPR = await findStagingPR();
 
-    let branchName: string;
-    let prUrl: string;
+    // D2/D3: 이름 충돌 검증 (브랜치 생성 전에 체크)
+    const checkBranch = existingPR ? STAGING_BRANCH : "main";
+    const existingNodeId = await getFileNodeId(filePath, checkBranch);
+    if (existingNodeId && existingNodeId !== figmaNodeId) {
+      onStatus({
+        step: "error",
+        message: `${safeName}.tsx는 다른 Figma 노드(${existingNodeId})가 소유 중입니다.`,
+      });
+      return;
+    }
+
+    let prUrl = "";
 
     if (existingPR) {
-      // 기존 PR이 있으면 해당 브랜치에 커밋 업데이트
-      branchName = existingPR.head.ref;
       prUrl = existingPR.html_url;
-
-      onStatus({ step: "committing", message: `${safeName}.tsx 업데이트 중... (기존 PR #${existingPR.number})` });
     } else {
-      // 새 브랜치 생성
-      branchName = `design/${safeName}-${Date.now().toString(36)}`;
-
-      onStatus({ step: "creating-branch", message: "브랜치 생성 중..." });
+      // 새 스테이징 브랜치 생성
+      onStatus({ step: "creating-branch", message: "스테이징 브랜치 생성 중..." });
       const baseSha = await getBaseSha();
-      await createBranch(branchName, baseSha);
-
-      onStatus({ step: "committing", message: `${safeName}.tsx 커밋 중...` });
+      await createBranch(STAGING_BRANCH, baseSha);
     }
 
     // 2. 컴포넌트 파일 커밋
-    await commitFile(
-      branchName,
-      filePath,
-      compiledCode,
-      `feat: update ${safeName} component`
+    onStatus({ step: "committing", message: `${safeName}.tsx 커밋 중...` });
+    let lastCommitSha = await commitFile(
+      STAGING_BRANCH, filePath, codeWithMeta, `feat: update ${safeName} component`
     );
 
     // 3. barrel export 업데이트
     onStatus({ step: "committing", message: "index.ts 업데이트 중..." });
-    const currentIndex = await getFileContent(INDEX_PATH, branchName);
+    const currentIndex = await getFileContent(INDEX_PATH, STAGING_BRANCH);
     const exportLine = `export { default as ${safeName} } from "./components/${safeName}";`;
 
     let newIndex: string;
@@ -84,61 +98,132 @@ export async function deployComponent(
     }
 
     if (newIndex !== currentIndex) {
-      await commitFile(
-        branchName,
-        INDEX_PATH,
-        newIndex,
-        `feat: export ${safeName} from index`
+      lastCommitSha = await commitFile(
+        STAGING_BRANCH, INDEX_PATH, newIndex, `feat: export ${safeName} from index`
       );
     }
 
-    // 4. PR 생성 (기존 PR이 없을 때만)
+    // 4. D8 방어: 커밋 검증
+    onStatus({ step: "verifying", message: "커밋 검증 중..." });
+    const verified = await verifyBranchHead(STAGING_BRANCH, lastCommitSha);
+    if (!verified) {
+      onStatus({
+        step: "error",
+        message: "커밋이 유실되었습니다. 릴리즈가 진행 중일 수 있습니다. 잠시 후 다시 시도하세요.",
+      });
+      return;
+    }
+
+    // 5. PR 생성 (새 브랜치일 때만)
     if (!existingPR) {
-      onStatus({ step: "creating-pr", message: "PR 생성 중..." });
+      onStatus({ step: "creating-pr", message: "스테이징 PR 생성 중..." });
       prUrl = await createPullRequest(
-        branchName,
-        `Update ${safeName} component`,
-        [
-          `## Component Update`,
-          ``,
-          `- **Component**: \`${safeName}\``,
-          `- **File**: \`${filePath}\``,
-          ``,
-          `> Auto-generated from Figma plugin`,
-        ].join("\n")
+        STAGING_BRANCH,
+        "Update design system components",
+        "## Component Updates\n\n> Auto-generated from Figma plugin"
       );
     }
 
-    onStatus({ step: "done", prUrl: prUrl! });
+    onStatus({ step: "done", prUrl });
   } catch (e) {
     onStatus({ step: "error", message: (e as Error).message });
   }
 }
 
 /**
- * 릴리즈 PR을 찾아서 머지
- * release-please가 생성한 PR을 머지하면 GitHub Actions가 npm publish를 트리거한다.
+ * 릴리즈 실행
+ *
+ * ① 스테이징 PR CI 확인 (R3)
+ * ② 스테이징 PR 머지
+ * ③ 릴리즈 PR 폴링 (R5: 10초 간격, 최대 180초)
+ * ④ 릴리즈 PR 머지 → npm publish 트리거
  */
 export async function releaseComponent(
   onStatus: (status: DeployStatus) => void
 ): Promise<void> {
   try {
-    onStatus({ step: "checking-pr", message: "릴리즈 PR 검색 중..." });
-    const releasePR = await findReleasePR();
+    // 1. 스테이징 PR 검색
+    onStatus({ step: "checking-pr", message: "스테이징 PR 검색 중..." });
+    const stagingPR = await findStagingPR();
 
-    if (!releasePR) {
-      onStatus({ step: "error", message: "릴리즈 PR이 없습니다. 먼저 컴포넌트를 Deploy하세요." });
+    if (!stagingPR) {
+      onStatus({ step: "error", message: "스테이징 PR이 없습니다. 먼저 컴포넌트를 Deploy하세요." });
       return;
     }
 
+    // 2. R3: CI 상태 확인
+    onStatus({ step: "checking-ci", message: "CI 빌드 상태 확인 중..." });
+    const ciStatus = await getPRCheckStatus(stagingPR.number);
+
+    if (ciStatus === "failure") {
+      onStatus({ step: "error", message: "CI 빌드가 실패했습니다. 컴포넌트 코드를 확인하세요." });
+      return;
+    }
+    if (ciStatus === "pending") {
+      onStatus({ step: "error", message: "CI 빌드가 진행 중입니다. 완료 후 다시 시도하세요." });
+      return;
+    }
+
+    // 3. 기존 릴리즈 PR 확인 (업데이트 감지용)
+    const preExisting = await findReleasePR();
+
+    // 4. 스테이징 PR 머지
+    onStatus({ step: "merging", message: `스테이징 PR #${stagingPR.number} 머지 중...` });
+    await mergePR(stagingPR.number);
+
+    // 5. R5: 릴리즈 PR 폴링
+    onStatus({ step: "waiting-release", message: "릴리즈 PR 생성 대기 중..." });
+    const releasePR = await pollForReleasePR(preExisting, onStatus);
+
+    if (!releasePR) {
+      onStatus({
+        step: "error",
+        message: `릴리즈 PR이 생성되지 않았습니다. GitHub Actions를 확인하세요: ${ACTIONS_URL}`,
+      });
+      return;
+    }
+
+    // 6. 릴리즈 PR 머지
     onStatus({ step: "merging", message: `릴리즈 PR #${releasePR.number} 머지 중...` });
     await mergePR(releasePR.number);
 
     onStatus({
       step: "release-done",
-      message: `릴리즈 PR #${releasePR.number} 머지 완료. npm publish가 자동 실행됩니다.`,
+      message: "릴리즈 완료! npm publish가 자동 실행됩니다.",
     });
   } catch (e) {
     onStatus({ step: "error", message: (e as Error).message });
   }
+}
+
+/**
+ * 릴리즈 PR이 생성/업데이트될 때까지 폴링
+ * - 기존 릴리즈 PR이 없었으면 → 새로 생성될 때까지 대기
+ * - 기존 릴리즈 PR이 있었으면 → HEAD SHA 변경(업데이트)될 때까지 대기
+ */
+async function pollForReleasePR(
+  preExisting: OpenPR | null,
+  onStatus: (status: DeployStatus) => void
+): Promise<OpenPR | null> {
+  const MAX_WAIT = 180_000;
+  const INTERVAL = 10_000;
+  const start = Date.now();
+
+  while (Date.now() - start < MAX_WAIT) {
+    await sleep(INTERVAL);
+    const elapsed = Math.round((Date.now() - start) / 1000);
+    onStatus({ step: "waiting-release", message: `릴리즈 PR 대기 중... (${elapsed}초)` });
+
+    const releasePR = await findReleasePR();
+    if (!releasePR) continue;
+
+    if (!preExisting) return releasePR;
+    if (releasePR.head.sha !== preExisting.head.sha) return releasePR;
+  }
+
+  return null;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

@@ -3,6 +3,9 @@ const REPO_NAME = "design-system";
 const BASE_BRANCH = "main";
 const API_BASE = "https://api.github.com";
 
+export const STAGING_BRANCH = "design/staging";
+export const ACTIONS_URL = `https://github.com/${REPO_OWNER}/${REPO_NAME}/actions`;
+
 /**
  * 플러그인 백엔드를 통한 GitHub API 프록시
  * Figma iframe CSP가 외부 API 직접 호출을 차단하므로,
@@ -22,7 +25,6 @@ function pluginFetch(url: string, method: string, body?: string): Promise<{ ok: 
 
     window.addEventListener("message", handler);
 
-    // 10초 타임아웃
     setTimeout(() => {
       window.removeEventListener("message", handler);
       reject(new Error("GitHub API 요청 타임아웃 (10s)"));
@@ -71,14 +73,13 @@ export async function createBranch(branchName: string, sha: string): Promise<voi
   });
 }
 
-/** 파일 생성 또는 업데이트 (단일 파일) */
+/** 파일 생성 또는 업데이트 — 커밋 SHA 반환 */
 export async function commitFile(
   branchName: string,
   filePath: string,
   content: string,
   message: string
-): Promise<void> {
-  // 기존 파일 SHA 확인 (업데이트 시 필요)
+): Promise<string> {
   let existingSha: string | undefined;
   try {
     const existing = await api<{ sha: string }>(
@@ -89,15 +90,19 @@ export async function commitFile(
     // 파일이 없으면 새로 생성
   }
 
-  await api(`/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}`, {
-    method: "PUT",
-    body: JSON.stringify({
-      message,
-      content: btoa(unescape(encodeURIComponent(content))),
-      branch: branchName,
-      ...(existingSha ? { sha: existingSha } : {}),
-    }),
-  });
+  const result = await api<{ commit: { sha: string } }>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({
+        message,
+        content: btoa(unescape(encodeURIComponent(content))),
+        branch: branchName,
+        ...(existingSha ? { sha: existingSha } : {}),
+      }),
+    }
+  );
+  return result.commit.sha;
 }
 
 /** 파일 내용 읽기 (base64 디코딩) */
@@ -133,44 +138,78 @@ export async function createPullRequest(
   return pr.html_url;
 }
 
-/** 열린 PR 검색 결과 */
+/** PR 검색 결과 */
 export interface OpenPR {
   number: number;
   html_url: string;
-  head: { ref: string };
+  head: { ref: string; sha: string };
 }
 
-/**
- * 해당 컴포넌트의 열린 PR 검색
- * 브랜치명이 `design/${componentName}`으로 시작하는 PR을 찾는다.
- */
-export async function findOpenPR(componentName: string): Promise<OpenPR | null> {
-  const safeName = componentName.replace(/\s+/g, "");
+/** 스테이징 PR 검색 (design/staging 브랜치 exact match) */
+export async function findStagingPR(): Promise<OpenPR | null> {
   const prs = await api<OpenPR[]>(
-    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls?state=open`
+    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls?state=open&head=${REPO_OWNER}:${STAGING_BRANCH}`
   );
-  const match = prs.find((pr) => pr.head.ref.startsWith(`design/${safeName}-`));
-  return match ?? null;
+  return prs[0] ?? null;
 }
 
-/**
- * release-please가 생성한 릴리즈 PR 검색
- * 브랜치명이 `release-please--branches--main`으로 시작하는 열린 PR을 찾는다.
- */
+/** release-please 릴리즈 PR 검색 */
 export async function findReleasePR(): Promise<OpenPR | null> {
   const prs = await api<OpenPR[]>(
     `/repos/${REPO_OWNER}/${REPO_NAME}/pulls?state=open`
   );
-  const match = prs.find((pr) =>
+  return prs.find((pr) =>
     pr.head.ref.startsWith("release-please--branches--main")
-  );
-  return match ?? null;
+  ) ?? null;
 }
 
-/** PR을 merge 방식으로 머지 */
+/** PR 머지 */
 export async function mergePR(prNumber: number): Promise<void> {
   await api(`/repos/${REPO_OWNER}/${REPO_NAME}/pulls/${prNumber}/merge`, {
     method: "PUT",
     body: JSON.stringify({ merge_method: "merge" }),
   });
+}
+
+/** 브랜치 HEAD가 특정 커밋인지 검증 (D8 방어) */
+export async function verifyBranchHead(branchName: string, expectedSha: string): Promise<boolean> {
+  try {
+    const ref = await api<{ object: { sha: string } }>(
+      `/repos/${REPO_OWNER}/${REPO_NAME}/git/ref/heads/${branchName}`
+    );
+    return ref.object.sha === expectedSha;
+  } catch {
+    return false;
+  }
+}
+
+/** PR의 CI 체크 상태 조회 (R3) */
+export type CheckStatus = "success" | "failure" | "pending";
+
+export async function getPRCheckStatus(prNumber: number): Promise<CheckStatus> {
+  const pr = await api<{ head: { sha: string } }>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls/${prNumber}`
+  );
+
+  const checks = await api<{ check_runs: Array<{ status: string; conclusion: string | null }> }>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/commits/${pr.head.sha}/check-runs`
+  );
+
+  if (checks.check_runs.length === 0) return "pending";
+
+  if (checks.check_runs.some((r) => r.status === "completed" && r.conclusion === "failure")) {
+    return "failure";
+  }
+  if (checks.check_runs.every((r) => r.status === "completed")) {
+    return "success";
+  }
+  return "pending";
+}
+
+/** 파일에서 @figma-node-id 메타데이터 추출 (D2/D3) */
+export async function getFileNodeId(filePath: string, branch: string): Promise<string | null> {
+  const content = await getFileContent(filePath, branch);
+  if (!content) return null;
+  const match = content.match(/\/\/ @figma-node-id (.+)/);
+  return match?.[1]?.trim() ?? null;
 }
