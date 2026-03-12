@@ -382,7 +382,7 @@ describe("Dropdowngeneric", () => {
 
   it("selectedValue 내부 상태가 있어야 한다", async () => {
     const result = await compileFixture();
-    expect(result).toMatch(/useState\(""\)/);
+    expect(result).toMatch(/useState\(defaultValue \?\? ""\)/);
     expect(result).toMatch(/selectedValue/);
     expect(result).toMatch(/setSelectedValue/);
   });

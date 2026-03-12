@@ -117,6 +117,9 @@ export class DropdownHeuristic implements IHeuristic {
     // 8.5. onChange 콜백 prop 추가 (외부에서 선택 감지)
     this.ensureOnChangeProp(ctx);
 
+    // 8.6. defaultValue prop 추가 (초기 선택값, uncontrolled)
+    this.ensureDefaultValueProp(ctx);
+
     // 9. ArraySlotInfo 생성 + 개별 slot 바인딩 제거
     const arraySlots = this.createArraySlot(ctx);
 
@@ -129,7 +132,7 @@ export class DropdownHeuristic implements IHeuristic {
 
     const stateVars: StateVar[] = [
       { name: "open", setter: "setOpen", initialValue: "false" },
-      { name: "selectedValue", setter: "setSelectedValue", initialValue: '""' },
+      { name: "selectedValue", setter: "setSelectedValue", initialValue: 'defaultValue ?? ""' },
     ];
 
     return {
@@ -582,6 +585,17 @@ export class DropdownHeuristic implements IHeuristic {
       if (!trigger.bindings) trigger.bindings = {};
       if (!trigger.bindings.attrs) trigger.bindings.attrs = {};
       trigger.bindings.attrs.onClick = { expr: "() => setOpen(!open)" };
+    }
+  }
+
+  private ensureDefaultValueProp(ctx: HeuristicContext): void {
+    if (!ctx.props.some((p) => p.name === "defaultValue")) {
+      ctx.props.push({
+        type: "string",
+        name: "defaultValue",
+        required: false,
+        sourceKey: "",
+      });
     }
   }
 

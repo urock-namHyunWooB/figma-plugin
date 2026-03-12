@@ -80,7 +80,13 @@ export class DynamicStyleDecomposer {
         if (!result.get(propName)!.has(propValue)) {
           result.get(propName)!.set(propValue, { ...style });
         } else {
-          Object.assign(result.get(propName)!.get(propValue)!, style);
+          // 기존 속성 보존, 새 속성만 추가 (first-write per property)
+          const existing = result.get(propName)!.get(propValue)!;
+          for (const [k, v] of Object.entries(style)) {
+            if (!(k in existing)) {
+              existing[k] = v;
+            }
+          }
         }
       }
     }
