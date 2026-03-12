@@ -471,7 +471,7 @@ function App() {
               Tailwind
             </button>
           </div>
-          <DeployButton componentName={componentName} generatedCode={generatedCode} />
+          <DeployButton componentName={componentName} generatedCode={generatedCode} figmaNodeId={selectionNodeData?.info?.document?.id} />
         </div>
       </div>
 

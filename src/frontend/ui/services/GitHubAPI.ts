@@ -148,9 +148,9 @@ export interface OpenPR {
 /** 스테이징 PR 검색 (design/staging 브랜치 exact match) */
 export async function findStagingPR(): Promise<OpenPR | null> {
   const prs = await api<OpenPR[]>(
-    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls?state=open&head=${REPO_OWNER}:${STAGING_BRANCH}`
+    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls?state=open`
   );
-  return prs[0] ?? null;
+  return prs.find((pr) => pr.head.ref === STAGING_BRANCH) ?? null;
 }
 
 /** release-please 릴리즈 PR 검색 */
@@ -168,6 +168,13 @@ export async function mergePR(prNumber: number): Promise<void> {
   await api(`/repos/${REPO_OWNER}/${REPO_NAME}/pulls/${prNumber}/merge`, {
     method: "PUT",
     body: JSON.stringify({ merge_method: "merge" }),
+  });
+}
+
+/** 브랜치 삭제 */
+export async function deleteBranch(branchName: string): Promise<void> {
+  await api(`/repos/${REPO_OWNER}/${REPO_NAME}/git/refs/heads/${branchName}`, {
+    method: "DELETE",
   });
 }
 

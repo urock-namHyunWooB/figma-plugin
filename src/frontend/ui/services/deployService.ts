@@ -7,6 +7,7 @@ import {
   findStagingPR,
   findReleasePR,
   mergePR,
+  deleteBranch,
   verifyBranchHead,
   getPRCheckStatus,
   getFileNodeId,
@@ -167,9 +168,10 @@ export async function releaseComponent(
     // 3. 기존 릴리즈 PR 확인 (업데이트 감지용)
     const preExisting = await findReleasePR();
 
-    // 4. 스테이징 PR 머지
+    // 4. 스테이징 PR 머지 + 브랜치 삭제
     onStatus({ step: "merging", message: `스테이징 PR #${stagingPR.number} 머지 중...` });
     await mergePR(stagingPR.number);
+    await deleteBranch(STAGING_BRANCH).catch(() => {});
 
     // 5. R5: 릴리즈 PR 폴링
     onStatus({ step: "waiting-release", message: "릴리즈 PR 생성 대기 중..." });
