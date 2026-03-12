@@ -70,7 +70,7 @@ export class DynamicStyleDecomposer {
       }
     }
 
-    // 단일 prop: 기존 로직 (first-write wins)
+    // 단일 prop: 같은 condition이면 스타일 병합
     for (const { condition, style } of singlePropEntries) {
       const propInfos = this.extractAllPropInfos(condition);
       for (const { propName, propValue } of propInfos) {
@@ -78,7 +78,9 @@ export class DynamicStyleDecomposer {
           result.set(propName, new Map());
         }
         if (!result.get(propName)!.has(propValue)) {
-          result.get(propName)!.set(propValue, style);
+          result.get(propName)!.set(propValue, { ...style });
+        } else {
+          Object.assign(result.get(propName)!.get(propValue)!, style);
         }
       }
     }

@@ -4,9 +4,17 @@ import DataManager from "../../../data-manager/DataManager";
 /**
  * ExternalRefsProcessor
  *
- * 외부 참조 처리:
- * 1. INSTANCE 노드 → refId 설정
- * 2. 의존 컴포넌트 Vector SVG 주입 (DataManager 정규화 데이터 사용)
+ * 외부 참조 처리 (2단계 분리):
+ *
+ * Phase 1 — resolveStructure (StyleProcessor 이전):
+ *   순수 구조 변환만 수행. 스타일 미접근.
+ *   - INSTANCE → refId 설정
+ *   - Vector-only 의존성 → wrapper + merged SVG child
+ *   - colorMap → metadata.vectorColorMap에 저장 (스타일 생성은 Phase 2로 위임)
+ *
+ * Phase 2 — applyColorStyles (StyleProcessor 이후):
+ *   metadata.vectorColorMap을 읽어 styles에 color dynamic 추가.
+ *   이 시점엔 StyleProcessor가 width/height를 이미 계산 완료.
  */
 export class ExternalRefsProcessor {
   private readonly dataManager: DataManager;
@@ -15,28 +23,32 @@ export class ExternalRefsProcessor {
     this.dataManager = dataManager;
   }
 
+  // ===========================================================================
+  // Phase 1: 구조 변환 (StyleProcessor 이전)
+  // ===========================================================================
+
   /**
-   * 외부 참조 해결 (재귀)
+   * 외부 참조 구조 해결 (재귀)
+   * - INSTANCE → refId 설정
+   * - Vector-only 의존성 → wrapper + merged SVG child
+   * - colorMap은 metadata에만 저장 (스타일 미접근)
    */
-  public resolveExternalRefs(node: InternalNode, isRoot: boolean = true): InternalNode {
-    // INSTANCE 노드면 refId 설정
+  public resolveStructure(node: InternalNode, isRoot: boolean = true): InternalNode {
     const refId = this.extractRefId(node);
 
-    // Vector-only 의존성: 컴포넌트 참조 대신 merged SVG 인라인
-    // 개별 VECTOR 노드 컴파일은 CSS(COMPONENT 스케일)/SVG(INSTANCE 스케일) 불일치 발생
-    // merged SVG는 INSTANCE 좌표계로 통일되어 정확한 렌더링 보장
+    // Vector-only 의존성: wrapper 구조 변환 + colorMap metadata 저장
     if (refId && !isRoot && this.isVectorOnlyDependency(refId)) {
       const mergeResult = this.tryMergeInstanceVectorsWithColorMap(node);
       if (mergeResult) {
         const { svg, colorMap } = mergeResult;
 
-        // wrapper 노드의 styles에 variant별 color CSS 추가
-        const wrapperStyles = this.buildColorStyles(node, colorMap);
-
         return {
           ...node,
           // refId 없음 → container로 렌더링
-          ...(wrapperStyles ? { styles: wrapperStyles } : {}),
+          metadata: {
+            ...node.metadata,
+            ...(colorMap.size > 0 ? { vectorColorMap: Object.fromEntries(colorMap) } : {}),
+          },
           children: [{
             id: `${node.id}_merged_vector`,
             name: "Merged Vector",
@@ -52,7 +64,7 @@ export class ExternalRefsProcessor {
 
     // children 재귀 처리 (children은 root가 아님)
     let children = node.children.map((child) =>
-      this.resolveExternalRefs(child, false)
+      this.resolveStructure(child, false)
     );
 
     // 루트 노드이고 children이 비어있으면 merged Vector SVG 확인
@@ -64,7 +76,6 @@ export class ExternalRefsProcessor {
     }
 
     // v1 호환: INSTANCE 노드의 이름을 dependency의 ComponentSet 이름으로 변경
-    // INSTANCE 이름 "Plus"가 아닌, dependency 이름 "Theme=Line" → "Themeline" 사용
     let name = node.name;
     if (refId) {
       const depName = this.resolveDependencyName(refId);
@@ -81,22 +92,54 @@ export class ExternalRefsProcessor {
     };
   }
 
+  // ===========================================================================
+  // Phase 2: 색상 스타일 적용 (StyleProcessor 이후)
+  // ===========================================================================
+
+  /**
+   * metadata.vectorColorMap → styles.color dynamic 적용 (재귀)
+   * StyleProcessor가 width/height를 이미 계산한 후 실행
+   */
+  public applyColorStyles(node: InternalNode): InternalNode {
+    const children = node.children.map((child) => this.applyColorStyles(child));
+
+    const colorMapData = node.metadata?.vectorColorMap;
+    if (!colorMapData) {
+      return children === node.children ? node : { ...node, children };
+    }
+
+    const colorMap = new Map(Object.entries(colorMapData));
+    const mergedStyles = this.buildColorStyles(node, colorMap);
+
+    // metadata에서 vectorColorMap 제거 (소비 완료)
+    const { vectorColorMap: _, ...restMetadata } = node.metadata!;
+    const hasMetadata = Object.keys(restMetadata).length > 0;
+
+    return {
+      ...node,
+      children,
+      ...(mergedStyles ? { styles: mergedStyles } : {}),
+      metadata: hasMetadata ? restMetadata : undefined,
+    };
+  }
+
+  // ===========================================================================
+  // Shared: refId / dependency helpers
+  // ===========================================================================
+
   /**
    * INSTANCE 노드의 componentId 추출
    * dependencies에 있는 INSTANCE만 외부 참조로 처리
    */
   private extractRefId(node: InternalNode): string | undefined {
-    // INSTANCE 타입이 아니면 무시
     if (node.type !== "INSTANCE") {
       return undefined;
     }
 
-    // mergedNodes가 없으면 무시
     if (!node.mergedNodes || node.mergedNodes.length === 0) {
       return undefined;
     }
 
-    // 첫 번째 mergedNode의 id로 원본 SceneNode 가져오기
     const firstMergedId = node.mergedNodes[0].id;
     const { node: sceneNode } = this.dataManager.getById(firstMergedId);
 
@@ -104,10 +147,8 @@ export class ExternalRefsProcessor {
       return undefined;
     }
 
-    // componentId 추출
     const componentId = (sceneNode as any).componentId as string | undefined;
 
-    // dependencies에 없으면 외부 참조로 처리하지 않음 (v1 호환)
     if (!componentId || !this.dataManager.getAllDependencies().has(componentId)) {
       return undefined;
     }
@@ -117,17 +158,11 @@ export class ExternalRefsProcessor {
 
   /**
    * v1 호환: dependency의 ComponentSet 이름 결정
-   *
-   * 우선순위 (v1 InstanceProcessor.buildExternalRef 참고):
-   * 1. componentSets[componentSetId].name (ComponentSet 이름)
-   * 2. document.name (dependency 문서 이름)
-   * 3. null (원래 INSTANCE 이름 유지)
    */
   private resolveDependencyName(componentId: string): string | null {
     const depSpec = this.dataManager.getAllDependencies().get(componentId);
     if (!depSpec) return null;
 
-    // ComponentSet 이름 우선
     const componentInfo = depSpec.info.components?.[componentId] as
       | { componentSetId?: string }
       | undefined;
@@ -142,7 +177,6 @@ export class ExternalRefsProcessor {
       }
     }
 
-    // ComponentSet 이름이 없으면 document.name
     return depSpec.info.document?.name || null;
   }
 
@@ -176,11 +210,6 @@ export class ExternalRefsProcessor {
 
   /**
    * 모든 variant의 SVG를 수집하여 색상 비교 후 currentColor 치환.
-   *
-   * 1. 모든 variant SVG 수집
-   * 2. variant 간 달라지는 stroke/fill → currentColor 치환
-   * 3. 상수 색상 유지
-   * 4. variant별 원래 색상 맵 반환
    */
   private tryMergeInstanceVectorsWithColorMap(
     node: InternalNode
@@ -188,7 +217,6 @@ export class ExternalRefsProcessor {
     const mergedNodes = node.mergedNodes || [];
     if (mergedNodes.length === 0) return undefined;
 
-    // 1. 모든 variant의 SVG 수집: variantName → svg
     const variantSvgs = new Map<string, string>();
     for (const m of mergedNodes) {
       const svg = this.dataManager.mergeInstanceVectorSvgs(m.id);
@@ -199,33 +227,27 @@ export class ExternalRefsProcessor {
 
     if (variantSvgs.size === 0) return undefined;
 
-    // variant가 1개면 색상 비교 불필요, 그냥 반환
     if (variantSvgs.size === 1) {
       const [, svg] = [...variantSvgs.entries()][0];
       return { svg, colorMap: new Map() };
     }
 
-    // 2. variant 간 색상 비교 → 달라지는 색상 감지
     const colorPattern = /(stroke|fill)="(#[0-9A-Fa-f]{3,8})"/g;
 
-    // 각 variant에서 모든 stroke/fill 색상값 수집 (속성+값 쌍)
-    // key: "stroke:#050506" 형태로 추적
-    const variantColorSets = new Map<string, Map<string, string>>(); // variantName → (attrKey → color)
+    const variantColorSets = new Map<string, Map<string, string>>();
     for (const [variantName, svg] of variantSvgs) {
       const colors = new Map<string, string>();
-      // 각 속성의 첫 번째 등장 색상을 추적 (같은 속성이 여러 path에 있으면 첫 번째 기준)
       const seen = new Set<string>();
       for (const match of svg.matchAll(colorPattern)) {
-        const attr = match[1]; // "stroke" or "fill"
+        const attr = match[1];
         if (!seen.has(attr)) {
           seen.add(attr);
-          colors.set(attr, match[2]); // attr → color
+          colors.set(attr, match[2]);
         }
       }
       variantColorSets.set(variantName, colors);
     }
 
-    // 3. 속성별로 모든 variant에서 같은 값인지 비교
     const allAttrs = new Set<string>();
     for (const colors of variantColorSets.values()) {
       for (const attr of colors.keys()) {
@@ -233,7 +255,7 @@ export class ExternalRefsProcessor {
       }
     }
 
-    const varyingAttrs = new Set<string>(); // variant마다 다른 속성
+    const varyingAttrs = new Set<string>();
     for (const attr of allAttrs) {
       const values = new Set<string>();
       for (const colors of variantColorSets.values()) {
@@ -245,26 +267,21 @@ export class ExternalRefsProcessor {
       }
     }
 
-    // 변하는 색상이 없으면 첫 번째 SVG 그대로 반환
     if (varyingAttrs.size === 0) {
       const [, svg] = [...variantSvgs.entries()][0];
       return { svg, colorMap: new Map() };
     }
 
-    // 4. 첫 번째 variant의 SVG에서 변하는 속성만 currentColor로 치환
     const [firstVariantName] = [...variantSvgs.keys()];
     let baseSvg = variantSvgs.get(firstVariantName)!;
 
     for (const attr of varyingAttrs) {
-      // 해당 속성의 모든 색상값을 currentColor로 치환
-      // fill="none"은 제외 (SVG wrapper 기본값)
       const attrPattern = new RegExp(`${attr}="(#[0-9A-Fa-f]{3,8})"`, "g");
       baseSvg = baseSvg.replace(attrPattern, `${attr}="currentColor"`);
     }
 
-    // 5. variant별 원래 색상 맵 구축 (첫 번째 변하는 속성 기준)
-    const colorMap = new Map<string, string>(); // variantName → original color
-    const primaryAttr = [...varyingAttrs][0]; // 첫 번째 변하는 속성
+    const colorMap = new Map<string, string>();
+    const primaryAttr = [...varyingAttrs][0];
     for (const [variantName, colors] of variantColorSets) {
       const color = colors.get(primaryAttr);
       if (color) {
@@ -290,8 +307,7 @@ export class ExternalRefsProcessor {
 
     const existingStyles = node.styles || { base: {}, dynamic: [] };
 
-    // 같은 색상끼리 그룹핑
-    const colorGroups = new Map<string, string[]>(); // color → variantName[]
+    const colorGroups = new Map<string, string[]>();
     for (const [variantName, color] of colorMap) {
       if (!colorGroups.has(color)) {
         colorGroups.set(color, []);
@@ -299,13 +315,11 @@ export class ExternalRefsProcessor {
       colorGroups.get(color)!.push(variantName);
     }
 
-    // 첫 번째 variant의 색상 → base
     const firstVariantName = [...colorMap.keys()][0];
     const baseColor = colorMap.get(firstVariantName)!;
 
     const dynamicEntries: Array<{ condition: ConditionNode; style: Record<string, string | number> }> = [];
 
-    // 나머지 색상 그룹 → dynamic entries
     for (const [color, variantNames] of colorGroups) {
       if (color === baseColor) continue;
 
@@ -325,7 +339,7 @@ export class ExternalRefsProcessor {
   }
 
   // ===========================================================================
-  // Variant condition helpers (StyleProcessor 패턴 참고)
+  // Variant condition helpers
   // ===========================================================================
 
   /** CSS pseudo-class로 변환되는 State 값 (condition에서 제외) */
@@ -336,10 +350,6 @@ export class ExternalRefsProcessor {
     "disabled", "inactive",
   ]);
 
-  /**
-   * variant 이름 → ConditionNode 생성
-   * State prop 중 pseudo-class 대상 값은 제외
-   */
   private createConditionFromVariantName(variantName: string): ConditionNode | null {
     const props = this.parseVariantName(variantName);
     if (props.length === 0) return null;
@@ -347,7 +357,6 @@ export class ExternalRefsProcessor {
     const conditions: ConditionNode[] = [];
 
     for (const { key, value } of props) {
-      // State/states prop 중 pseudo-class 대상은 제외
       if (key.toLowerCase() === "state" || key.toLowerCase() === "states") {
         if (ExternalRefsProcessor.STATE_PSEUDO_VALUES.has(value.toLowerCase())) {
           continue;
@@ -363,10 +372,6 @@ export class ExternalRefsProcessor {
     return { type: "and", conditions };
   }
 
-  /**
-   * variant 이름 파싱
-   * "Color=blue, Size=small" → [{key: "Color", value: "blue"}, {key: "Size", value: "small"}]
-   */
   private parseVariantName(variantName: string): Array<{ key: string; value: string }> {
     const result: Array<{ key: string; value: string }> = [];
     const parts = variantName.split(",");
@@ -381,9 +386,6 @@ export class ExternalRefsProcessor {
     return result;
   }
 
-  /**
-   * prop 조건 노드 생성
-   */
   private createCondition(key: string, value: string): ConditionNode {
     const propName = this.normalizePropName(key);
 
@@ -397,9 +399,6 @@ export class ExternalRefsProcessor {
     return { type: "eq", prop: propName, value };
   }
 
-  /**
-   * Prop 이름 정규화 (camelCase 변환)
-   */
   private normalizePropName(key: string): string {
     const cleaned = key.replace(/[^a-zA-Z0-9\s]/g, " ").trim();
 
@@ -421,16 +420,13 @@ export class ExternalRefsProcessor {
 
   /**
    * 의존 컴포넌트의 병합된 Vector SVG를 InternalNode로 생성
-   * DataManager가 정규화한 데이터 사용
    */
   private createMergedVectorChild(componentId: string): InternalNode | null {
-    // DataManager에서 정규화된 병합 SVG 가져오기
     const mergedSvg = this.dataManager.getMergedVectorSvgForComponent(componentId);
     if (!mergedSvg) {
       return null;
     }
 
-    // Vector InternalNode 생성 (SVG를 metadata에 직접 저장)
     return {
       id: `${componentId}_vector`,
       name: "Merged Vector",
@@ -438,7 +434,7 @@ export class ExternalRefsProcessor {
       parent: null,
       children: [],
       metadata: {
-        vectorSvg: mergedSvg,  // 직접 전달
+        vectorSvg: mergedSvg,
       },
       styles: { base: {}, dynamic: [] },
     };

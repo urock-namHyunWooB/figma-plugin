@@ -667,8 +667,10 @@
     {
       "name": "Icon",
       "hasStyles": true,
-      "baseKeys": [],
-      "dynamicCount": 12,
+      "baseKeys": [
+        "color"
+      ],
+      "dynamicCount": 13,
       "pseudoKeys": []
     },
     {

@@ -23,13 +23,22 @@ import { convertStateDynamicToPseudo, rewritePropConditions } from "./processors
  *
  * FigmaNodeData → UITree 변환 파이프라인 오케스트레이터
  *
- * 6단계 파이프라인:
- * 1. 변형 병합 (VariantMerger)
- * 2. Props 추출/바인딩
- * 3. 스타일 처리
- * 4. 가시성 조건
- * 5. 외부 참조
- * 6. 휴리스틱 (HeuristicsRunner)
+ * 2-Phase 파이프라인:
+ *
+ * Phase 1 — 구조 확정 (스타일 미접근):
+ *   1. 변형 병합 (VariantMerger)
+ *   2. Props 추출/바인딩 (PropsExtractor)
+ *   3. Slot 처리 (SlotProcessor)
+ *   4. 가시성 조건 (VisibilityProcessor)
+ *   5. 외부 참조 — 구조 (ExternalRefsProcessor.resolveStructure)
+ *
+ * Phase 2 — 스타일 + 후처리 (구조 확정 후):
+ *   6. 스타일 처리 (StyleProcessor)
+ *   7. 외부 참조 — 색상 (ExternalRefsProcessor.applyColorStyles)
+ *   8. Override 감지 / 텍스트 바인딩
+ *   9. 모듈 휴리스틱 (ModuleHeuristic)
+ *  10. 컴포넌트 휴리스틱 (HeuristicsRunner)
+ *  11. State fallback
  */
 class TreeBuilder {
   private readonly dataManager: DataManager;
@@ -63,19 +72,20 @@ class TreeBuilder {
    * SceneNode → UITree 변환
    */
   public build(node: SceneNode): UITree {
+    // =====================================================================
+    // Phase 1: 구조 확정 (스타일 미접근)
+    // =====================================================================
+
     // Step 1: 변형 병합
     let tree = this.variantMerger.merge(node);
 
     // Step 2: Props 추출/바인딩 (mergedNodes 전달하여 variant props 추출)
     let props = this.propsExtractor.extract(node, tree.mergedNodes);
 
-    // Step 2.5: Slot 처리 (통합: 개별 slot + 배열 slot)
+    // Step 3: Slot 처리 (통합: 개별 slot + 배열 slot)
     const slotResult = this.slotProcessor.process(tree, props);
     props = slotResult.props;
     let arraySlots = slotResult.arraySlots;
-
-    // Step 3: 스타일 처리
-    tree = this.styleProcessor.applyStyles(tree);
 
     // Array Slot 중복 제거 (동일한 slotName)
     const uniqueArraySlots = Array.from(
@@ -105,21 +115,29 @@ class TreeBuilder {
     // Step 4: 가시성 조건 (props 전달하여 rename 매핑 사용)
     tree = this.visibilityProcessor.applyVisibility(tree, props);
 
-    // Step 5: 외부 참조 (INSTANCE refId + 의존 컴포넌트 Vector SVG)
-    tree = this.externalRefsProcessor.resolveExternalRefs(tree);
+    // Step 5: 외부 참조 — 구조 변환 (INSTANCE → vector wrapper, refId 설정)
+    // colorMap은 metadata에 저장만 하고 스타일은 미접근
+    tree = this.externalRefsProcessor.resolveStructure(tree);
 
-    // Step 5.1: INSTANCE override 감지 (StyleProcessor + ExternalRefsProcessor 이후)
+    // =====================================================================
+    // Phase 2: 스타일 + 후처리 (구조 확정 후)
+    // =====================================================================
+
+    // Step 6: 스타일 처리 (구조 확정 상태에서 실행 → vector wrapper의 width/height 정상 계산)
+    tree = this.styleProcessor.applyStyles(tree);
+
+    // Step 7: 외부 참조 — 색상 스타일 (StyleProcessor가 width/height 계산 완료 후)
+    // metadata.vectorColorMap → styles.color dynamic 적용
+    tree = this.externalRefsProcessor.applyColorStyles(tree);
+
+    // Step 8: INSTANCE override 감지 + 텍스트 바인딩
     this.detectOverrides(tree);
-
     this.applyTextPropertyBindings(tree, props);
 
-    // Step 5.5: 모듈 휴리스틱 — breakpoint variant → CSS @media 등 (컴포넌트 휴리스틱과 독립적으로 실행)
+    // Step 9: 모듈 휴리스틱 — breakpoint variant → CSS @media 등
     ModuleHeuristic.run(tree, props);
 
-    // Step 6: 휴리스틱 (컴포넌트 타입 판별, semanticType 설정, props 추가)
-    // 현재 컴포넌트의 고유 이름과 propDefs를 전달 (의존 컴포넌트가 메인 컴포넌트의 점수를 상속하지 않도록)
-    // NOTE: VariantMerger가 COMPONENT_SET ID를 merged tree.id에 보존하지 않으므로,
-    //       원본 node에서 직접 읽어서 전달해야 함
+    // Step 10: 컴포넌트 휴리스틱 (타입 판별, semanticType 설정, props 추가)
     const componentContext = {
       componentName: node.name,
       propDefs: (node as any)?.componentPropertyDefinitions as
@@ -133,7 +151,7 @@ class TreeBuilder {
       componentContext
     );
 
-    // Step 6.5: State fallback — 휴리스틱이 처리하지 않은 state dynamic → pseudo 자동 변환
+    // Step 11: State fallback — 휴리스틱이 처리하지 않은 state dynamic → pseudo 자동 변환
     this.fallbackStateToPseudo(tree, props);
 
     // 휴리스틱이 직접 생성한 arraySlots 병합 + props 추가

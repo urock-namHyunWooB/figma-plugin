@@ -284,6 +284,8 @@ export interface InternalNode extends UINodeBase {
     vectorSvg?: string;
     /** INSTANCE override 감지 결과 (TreeBuilder에서 설정) */
     instanceOverrides?: InstanceOverride[];
+    /** Vector-only 의존성의 variant별 색상 맵 (ExternalRefsProcessor → StyleProcessor 간 전달) */
+    vectorColorMap?: Record<string, string>;
   };
   /** 루프 설정 (Heuristic이 설정, UINode로 전달) */
   loop?: { dataProp: string; keyField?: string };
