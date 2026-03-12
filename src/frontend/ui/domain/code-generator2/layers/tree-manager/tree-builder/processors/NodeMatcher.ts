@@ -91,6 +91,10 @@ export class NodeMatcher {
 
   /**
    * 정규화된 위치가 같은지 확인 (±0.1 오차 허용)
+   *
+   * Fallback: 정규화 매칭 실패 시, variant root 높이 비율이 2배 이상 차이나고
+   * 절대 좌표 차이가 5px 이내이면 같은 노드로 판단.
+   * (visibility toggle로 컨테이너가 확장/축소되는 경우 정규화가 왜곡되는 문제 보완)
    */
   private isSamePosition(nodeA: InternalNode, nodeB: InternalNode): boolean {
     const posA = this.getNormalizedPosition(nodeA);
@@ -103,7 +107,31 @@ export class NodeMatcher {
     const dx = Math.abs(posA.x - posB.x);
     const dy = Math.abs(posA.y - posB.y);
 
-    return dx <= 0.1 && dy <= 0.1;
+    if (dx <= 0.1 && dy <= 0.1) {
+      return true;
+    }
+
+    // Fallback: root 높이 비율이 극단적으로 다르면 root 기준 상대 좌표로 비교
+    // (Figma 캔버스에서 variant는 나란히 배치되므로 절대좌표가 아닌 상대좌표 사용)
+    if (nodeA.bounds && nodeB.bounds) {
+      const rootBoundsA = this.getVariantRootBounds(nodeA);
+      const rootBoundsB = this.getVariantRootBounds(nodeB);
+      if (rootBoundsA && rootBoundsB) {
+        const heightRatio = Math.max(rootBoundsA.height, rootBoundsB.height) /
+          Math.min(rootBoundsA.height, rootBoundsB.height);
+        if (heightRatio >= 2) {
+          const relAx = nodeA.bounds.x - rootBoundsA.x;
+          const relAy = nodeA.bounds.y - rootBoundsA.y;
+          const relBx = nodeB.bounds.x - rootBoundsB.x;
+          const relBy = nodeB.bounds.y - rootBoundsB.y;
+          if (Math.abs(relAx - relBx) <= 5 && Math.abs(relAy - relBy) <= 5) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -153,6 +181,22 @@ export class NodeMatcher {
       x: (node.bounds.x - baseX) / normWidth,
       y: (node.bounds.y - baseY) / normHeight,
     };
+  }
+
+  /**
+   * 노드가 속한 variant root의 bounds 조회
+   */
+  private getVariantRootBounds(
+    node: InternalNode
+  ): { x: number; y: number; width: number; height: number } | null {
+    if (!node.mergedNodes || node.mergedNodes.length === 0) return null;
+    const originalId = node.mergedNodes[0].id;
+    const variantRoot = this.findOriginalVariantRoot(originalId);
+    if (!variantRoot) return null;
+    const bounds = (variantRoot as any).absoluteBoundingBox as
+      | { x: number; y: number; width: number; height: number }
+      | undefined;
+    return bounds && bounds.width > 0 && bounds.height > 0 ? bounds : null;
   }
 
   /**
