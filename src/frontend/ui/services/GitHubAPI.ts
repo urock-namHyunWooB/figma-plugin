@@ -132,3 +132,46 @@ export async function createPullRequest(
   );
   return pr.html_url;
 }
+
+/** 열린 PR 검색 결과 */
+export interface OpenPR {
+  number: number;
+  html_url: string;
+  head: { ref: string };
+}
+
+/**
+ * 해당 컴포넌트의 열린 PR 검색
+ * 브랜치명이 `design/${componentName}`으로 시작하는 PR을 찾는다.
+ */
+export async function findOpenPR(componentName: string): Promise<OpenPR | null> {
+  const safeName = componentName.replace(/\s+/g, "");
+  const prs = await api<OpenPR[]>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls?state=open&head=${REPO_OWNER}:design/${safeName}`
+  );
+  // head 파라미터는 정확 매칭이 아니므로 prefix 필터 적용
+  const match = prs.find((pr) => pr.head.ref.startsWith(`design/${safeName}`));
+  return match ?? null;
+}
+
+/**
+ * release-please가 생성한 릴리즈 PR 검색
+ * 브랜치명이 `release-please--branches--main`으로 시작하는 열린 PR을 찾는다.
+ */
+export async function findReleasePR(): Promise<OpenPR | null> {
+  const prs = await api<OpenPR[]>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls?state=open&head=${REPO_OWNER}:release-please--branches--main`
+  );
+  const match = prs.find((pr) =>
+    pr.head.ref.startsWith("release-please--branches--main")
+  );
+  return match ?? null;
+}
+
+/** PR을 merge 방식으로 머지 */
+export async function mergePR(prNumber: number): Promise<void> {
+  await api(`/repos/${REPO_OWNER}/${REPO_NAME}/pulls/${prNumber}/merge`, {
+    method: "PUT",
+    body: JSON.stringify({ merge_method: "merge" }),
+  });
+}
