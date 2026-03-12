@@ -222,6 +222,17 @@ declare module "@emotion/css" {
 }
 `;
 
+const CVA_TYPES = `
+declare module "class-variance-authority" {
+  export type VariantProps<T extends (...args: any) => any> = any;
+  export function cva(base?: string, config?: {
+    variants?: Record<string, Record<string, string>>;
+    defaultVariants?: Record<string, string>;
+    compoundVariants?: Array<Record<string, any> & { class?: string; className?: string }>;
+  }): (...args: any[]) => string;
+}
+`;
+
 const GLOBAL_JSX_TYPES = `
 // 글로벌 React 네임스페이스 — React.ReactNode, React.FC 등 참조 지원
 // import 없이 직접 정의 (import 사용 시 모듈 스코프 오염)
@@ -362,6 +373,7 @@ interface StringConstructor {
   new(value?: any): String;
   (value?: any): string;
   fromCharCode(...codes: number[]): string;
+  raw(template: { raw: readonly string[] | ArrayLike<string> }, ...substitutions: any[]): string;
 }
 declare var String: StringConstructor;
 
@@ -701,6 +713,7 @@ const VIRTUAL_FILES: Record<string, string> = {
   "/@types/react/index.d.ts": REACT_TYPES,
   "/@types/react/jsx-runtime.d.ts": REACT_JSX_RUNTIME_TYPES,
   "/@types/emotion/index.d.ts": EMOTION_TYPES,
+  "/@types/cva/index.d.ts": CVA_TYPES,
   "/globals.d.ts": GLOBAL_JSX_TYPES,
 };
 
@@ -839,6 +852,10 @@ function createInMemoryHost(
         // @emotion/* → /@types/emotion/index.d.ts
         if (moduleName.startsWith("@emotion/")) {
           return { resolvedFileName: "/@types/emotion/index.d.ts" };
+        }
+        // class-variance-authority → /@types/cva/index.d.ts
+        if (moduleName === "class-variance-authority") {
+          return { resolvedFileName: "/@types/cva/index.d.ts" };
         }
         // 상대 경로 import (번들 내 sub-component) → any 타입으로 처리
         if (moduleName.startsWith("./") || moduleName.startsWith("../")) {
