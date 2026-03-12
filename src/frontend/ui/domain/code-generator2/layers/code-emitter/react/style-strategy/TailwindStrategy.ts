@@ -202,10 +202,10 @@ export class TailwindStrategy implements IStyleStrategy {
     let code: string;
     if (hasDynamicStyles) {
       // cva() 함수로 base + variants 통합
-      code = `const ${variableName} = cva("${baseStr}", {\n  variants: {\n${dynamicResult.code}\n  },\n});`;
+      code = `const ${variableName} = cva(${this.wrapClassString(baseStr)}, {\n  variants: {\n${dynamicResult.code}\n  },\n});`;
     } else {
       // dynamic 없으면 plain string
-      code = `const ${variableName} = "${baseStr}";`;
+      code = `const ${variableName} = ${this.wrapClassString(baseStr)};`;
     }
 
     return { variableName, code, isEmpty: false };
@@ -259,7 +259,8 @@ export class TailwindStrategy implements IStyleStrategy {
         const classes = this.cssObjectToTailwind(dynStyle);
         if (classes.length > 0) {
           const key = this.needsQuoting(value) ? `"${value}"` : value;
-          entries.push(`        ${key}: "${classes.join(" ")}",`);
+          const classStr = classes.join(" ");
+          entries.push(`        ${key}: ${this.wrapClassString(classStr)},`);
         }
       }
 
@@ -419,6 +420,17 @@ export class TailwindStrategy implements IStyleStrategy {
     // 기타: arbitrary property
     const cssKey = this.camelToKebab(camelProperty);
     return `[${cssKey}:${this.escapeArbitraryValue(valueStr)}]`;
+  }
+
+  /**
+   * 클래스 문자열을 JS 리터럴로 감싸기
+   * \_가 포함된 경우 String.raw를 사용해 백슬래시 보존
+   */
+  private wrapClassString(str: string): string {
+    if (str.includes("\\")) {
+      return "String.raw`" + str + "`";
+    }
+    return `"${str}"`;
   }
 
   /**
