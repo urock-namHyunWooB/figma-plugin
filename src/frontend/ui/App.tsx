@@ -281,6 +281,7 @@ function App() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [editedCode, setEditedCode] = useState<string | null>(null);
+  const [deployCodes, setDeployCodes] = useState<{ emotion: string; tailwind: string } | null>(null);
   const editDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const previewContentRef = useRef<HTMLDivElement>(null);
@@ -352,6 +353,7 @@ function App() {
       setPropDefinitions([]);
       setPropValues({});
       setComponentName("");
+      setDeployCodes(null);
       return;
     }
 
@@ -379,9 +381,26 @@ function App() {
       setSlotMockupEnabled(initialSlotEnabled);
       setPropValues(initialValues);
 
+      // 프리뷰용 코드 생성 (현재 선택된 전략)
       codeGenerator.compile().then((code) => {
         setGeneratedCode(code);
         setEditedCode(null);
+      });
+
+      // 배포용: emotion + tailwind 둘 다 생성
+      const otherStrategy = styleStrategy === "emotion" ? "tailwind" : "emotion";
+      const otherGenerator = new FigmaCodeGenerator(selectionNodeData, {
+        styleStrategy: { type: otherStrategy },
+      });
+      Promise.all([
+        codeGenerator.compile(),
+        otherGenerator.compile(),
+      ]).then(([currentCode, otherCode]) => {
+        setDeployCodes(
+          styleStrategy === "emotion"
+            ? { emotion: currentCode, tailwind: otherCode }
+            : { emotion: otherCode, tailwind: currentCode }
+        );
       });
     } catch (e) {
       console.error("FigmaCodeGenerator error:", e);
@@ -583,7 +602,7 @@ function App() {
 
         {/* Publish Tab — 항상 mount, 탭 전환 시 숨김 (deploy 상태 유지) */}
         <div style={{ display: activeTab === "publish" ? "block" : "none" }}>
-          <PublishTab componentName={componentName} generatedCode={generatedCode} figmaNodeId={selectionNodeData?.info?.document?.id} />
+          <PublishTab componentName={componentName} generatedCode={generatedCode} deployCodes={deployCodes} figmaNodeId={selectionNodeData?.info?.document?.id} />
         </div>
       </div>
     </div>

@@ -30,11 +30,19 @@ export type DeployStatus =
   | { step: "release-done"; message: string }
   | { step: "error"; message: string };
 
-const COMPONENTS_DIR = "packages/react/src/components";
-const INDEX_PATH = "packages/react/src/index.ts";
+interface PackageTarget {
+  componentsDir: string;
+  indexPath: string;
+  label: string;
+}
+
+const PACKAGES: PackageTarget[] = [
+  { componentsDir: "packages/react/src/components", indexPath: "packages/react/src/index.ts", label: "Emotion" },
+  { componentsDir: "packages/react-tailwind/src/components", indexPath: "packages/react-tailwind/src/index.ts", label: "Tailwind" },
+];
 
 /**
- * 컴파일된 컴포넌트를 스테이징 브랜치에 배포
+ * 컴파일된 컴포넌트를 스테이징 브랜치에 배포 (Emotion + Tailwind 동시)
  *
  * - 스테이징 PR이 있으면 기존 브랜치에 커밋 누적
  * - 없으면 새 브랜치 + PR 생성
@@ -43,22 +51,25 @@ const INDEX_PATH = "packages/react/src/index.ts";
  */
 export async function deployComponent(
   componentName: string,
-  compiledCode: string,
+  compiledCodes: { emotion: string; tailwind: string },
   figmaNodeId: string,
   onStatus: (status: DeployStatus) => void
 ): Promise<void> {
   try {
     const safeName = componentName.replace(/\s+/g, "");
-    const filePath = `${COMPONENTS_DIR}/${safeName}.tsx`;
-    const codeWithMeta = `// @figma-node-id ${figmaNodeId}\n${compiledCode}`;
+    const codeByLabel: Record<string, string> = {
+      Emotion: compiledCodes.emotion,
+      Tailwind: compiledCodes.tailwind,
+    };
 
     // 1. 스테이징 PR 확인
     onStatus({ step: "checking-pr", message: "스테이징 PR 확인 중..." });
     const existingPR = await findStagingPR();
 
-    // D2/D3: 이름 충돌 검증 (브랜치 생성 전에 체크)
+    // D2/D3: 이름 충돌 검증 (첫 번째 패키지 기준)
     const checkBranch = existingPR ? STAGING_BRANCH : "main";
-    const existingNodeId = await getFileNodeId(filePath, checkBranch);
+    const emotionFilePath = `${PACKAGES[0].componentsDir}/${safeName}.tsx`;
+    const existingNodeId = await getFileNodeId(emotionFilePath, checkBranch);
     if (existingNodeId && existingNodeId !== figmaNodeId) {
       onStatus({
         step: "error",
@@ -78,33 +89,41 @@ export async function deployComponent(
       await createBranch(STAGING_BRANCH, baseSha);
     }
 
-    // 2. 컴포넌트 파일 커밋
-    onStatus({ step: "committing", message: `${safeName}.tsx 커밋 중...` });
-    let lastCommitSha = await commitFile(
-      STAGING_BRANCH, filePath, codeWithMeta, `feat: update ${safeName} component`
-    );
+    // 2. 각 패키지에 컴포넌트 파일 + barrel export 커밋
+    let lastCommitSha = "";
 
-    // 3. barrel export 업데이트
-    onStatus({ step: "committing", message: "index.ts 업데이트 중..." });
-    const currentIndex = await getFileContent(INDEX_PATH, STAGING_BRANCH);
-    const exportLine = `export { default as ${safeName} } from "./components/${safeName}";`;
+    for (const pkg of PACKAGES) {
+      const filePath = `${pkg.componentsDir}/${safeName}.tsx`;
+      const code = codeByLabel[pkg.label];
+      const codeWithMeta = `// @figma-node-id ${figmaNodeId}\n${code}`;
 
-    let newIndex: string;
-    if (!currentIndex || currentIndex.includes("export {};")) {
-      newIndex = exportLine + "\n";
-    } else if (currentIndex.includes(exportLine)) {
-      newIndex = currentIndex;
-    } else {
-      newIndex = currentIndex.trimEnd() + "\n" + exportLine + "\n";
-    }
-
-    if (newIndex !== currentIndex) {
+      onStatus({ step: "committing", message: `${safeName}.tsx 커밋 중... (${pkg.label})` });
       lastCommitSha = await commitFile(
-        STAGING_BRANCH, INDEX_PATH, newIndex, `feat: export ${safeName} from index`
+        STAGING_BRANCH, filePath, codeWithMeta, `feat: update ${safeName} component (${pkg.label.toLowerCase()})`
       );
+
+      // barrel export 업데이트
+      onStatus({ step: "committing", message: `index.ts 업데이트 중... (${pkg.label})` });
+      const currentIndex = await getFileContent(pkg.indexPath, STAGING_BRANCH);
+      const exportLine = `export { default as ${safeName} } from "./components/${safeName}";`;
+
+      let newIndex: string;
+      if (!currentIndex || currentIndex.includes("export {};")) {
+        newIndex = exportLine + "\n";
+      } else if (currentIndex.includes(exportLine)) {
+        newIndex = currentIndex;
+      } else {
+        newIndex = currentIndex.trimEnd() + "\n" + exportLine + "\n";
+      }
+
+      if (newIndex !== currentIndex) {
+        lastCommitSha = await commitFile(
+          STAGING_BRANCH, pkg.indexPath, newIndex, `feat: export ${safeName} from index (${pkg.label.toLowerCase()})`
+        );
+      }
     }
 
-    // 4. D8 방어: 커밋 검증
+    // 3. D8 방어: 커밋 검증
     onStatus({ step: "verifying", message: "커밋 검증 중..." });
     const verified = await verifyBranchHead(STAGING_BRANCH, lastCommitSha);
     if (!verified) {
@@ -115,7 +134,7 @@ export async function deployComponent(
       return;
     }
 
-    // 5. PR 생성 (새 브랜치일 때만)
+    // 4. PR 생성 (새 브랜치일 때만)
     if (!existingPR) {
       onStatus({ step: "creating-pr", message: "스테이징 PR 생성 중..." });
       prUrl = await createPullRequest(
