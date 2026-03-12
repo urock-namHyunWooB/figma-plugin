@@ -678,7 +678,24 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
 
       {/* Error */}
       {isError && "message" in status && (
-        <div css={errorBannerStyle}>{status.message}</div>
+        <div css={errorBannerStyle}>
+          {status.message.split("\n").map((line, i) =>
+            line.startsWith("http") ? (
+              <a
+                key={i}
+                href={line}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => { e.preventDefault(); window.open(line, "_blank"); }}
+                style={{ color: "#8b5cf6", textDecoration: "underline", display: "block", marginTop: 4 }}
+              >
+                Actions 로그 보기
+              </a>
+            ) : (
+              <span key={i}>{line}</span>
+            )
+          )}
+        </div>
       )}
     </div>
   );

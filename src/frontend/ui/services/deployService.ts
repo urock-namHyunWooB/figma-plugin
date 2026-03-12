@@ -10,6 +10,7 @@ import {
   deleteBranch,
   verifyBranchHead,
   getPRCheckStatus,
+  getStagingCIStatus,
   getFileNodeId,
   STAGING_BRANCH,
   ACTIONS_URL,
@@ -152,7 +153,18 @@ export async function deployComponent(
     if (prNumber) {
       const ciResult = await pollCIStatus(prNumber, onStatus);
       if (ciResult === "failure") {
-        onStatus({ step: "error", message: "CI 빌드가 실패했습니다. 생성된 코드를 확인하세요." });
+        // 실패 상세 정보 조회
+        const ciDetail = await getStagingCIStatus();
+        const failedChecks = ciDetail?.checks
+          .filter((c) => c.conclusion === "failure")
+          .map((c) => c.name) ?? [];
+        const detail = failedChecks.length > 0
+          ? `실패한 체크: ${failedChecks.join(", ")}`
+          : "빌드 로그를 확인하세요";
+        onStatus({
+          step: "error",
+          message: `CI 빌드 실패 — ${detail}\n${ACTIONS_URL}`,
+        });
         return;
       }
     }
