@@ -124,7 +124,7 @@ export class NodeMatcher {
           const relAy = nodeA.bounds.y - rootBoundsA.y;
           const relBx = nodeB.bounds.x - rootBoundsB.x;
           const relBy = nodeB.bounds.y - rootBoundsB.y;
-          if (Math.abs(relAx - relBx) <= 5 && Math.abs(relAy - relBy) <= 5) {
+          if (Math.abs(relAx - relBx) <= 10 && Math.abs(relAy - relBy) <= 10) {
             return true;
           }
         }
@@ -147,10 +147,40 @@ export class NodeMatcher {
       return null;
     }
 
-    const originalId = node.mergedNodes[0].id;
-    const variantRoot = this.findOriginalVariantRoot(originalId);
+    // mergedNodes[0]으로 먼저 시도, 범위 밖이면 다른 mergedNode로 재시도
+    const result = this.calcNormalizedForMergedNode(node.mergedNodes[0].id);
+    if (result && result.x >= 0 && result.x <= 1 && result.y >= 0 && result.y <= 1) {
+      return result;
+    }
 
+    // 첫 번째가 범위 밖 (hidden/collapsed variant) → 다른 mergedNode 시도
+    for (let i = 1; i < node.mergedNodes.length; i++) {
+      const alt = this.calcNormalizedForMergedNode(node.mergedNodes[i].id);
+      if (alt && alt.x >= 0 && alt.x <= 1 && alt.y >= 0 && alt.y <= 1) {
+        return alt;
+      }
+    }
+
+    // 모두 범위 밖이면 첫 번째 결과라도 반환
+    return result;
+  }
+
+  /**
+   * 특정 mergedNode ID로 정규화된 위치 계산
+   */
+  private calcNormalizedForMergedNode(
+    nodeId: string
+  ): { x: number; y: number } | null {
+    const variantRoot = this.findOriginalVariantRoot(nodeId);
     if (!variantRoot) return null;
+
+    const { node: originalNode } = this.dataManager.getById(nodeId);
+    if (!originalNode) return null;
+
+    const nodeBounds = (originalNode as any).absoluteBoundingBox as
+      | { x: number; y: number }
+      | undefined;
+    if (!nodeBounds) return null;
 
     const rootBounds = (variantRoot as any).absoluteBoundingBox as
       | { x: number; y: number; width: number; height: number }
@@ -171,15 +201,14 @@ export class NodeMatcher {
     const contentWidth = rootBounds.width - paddingLeft - paddingRight;
     const contentHeight = rootBounds.height - paddingTop - paddingBottom;
 
-    // content 크기가 0 이하이면 root 자체로 fallback
     const baseX = contentWidth > 0 ? contentX : rootBounds.x;
     const baseY = contentHeight > 0 ? contentY : rootBounds.y;
     const normWidth = contentWidth > 0 ? contentWidth : rootBounds.width;
     const normHeight = contentHeight > 0 ? contentHeight : rootBounds.height;
 
     return {
-      x: (node.bounds.x - baseX) / normWidth,
-      y: (node.bounds.y - baseY) / normHeight,
+      x: (nodeBounds.x - baseX) / normWidth,
+      y: (nodeBounds.y - baseY) / normHeight,
     };
   }
 
