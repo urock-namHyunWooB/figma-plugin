@@ -7,6 +7,7 @@ import { getStagingCIStatus, type StagingCIStatus } from "../services/GitHubAPI"
 interface PublishTabProps {
   componentName: string;
   generatedCode: string | null;
+  deployCodes: { emotion: string; tailwind: string } | null;
   figmaNodeId: string | undefined;
 }
 
@@ -371,7 +372,7 @@ const BUSY_STEPS = new Set([
   "verifying", "checking-ci", "merging", "waiting-release",
 ]);
 
-export function PublishTab({ componentName, generatedCode, figmaNodeId }: PublishTabProps) {
+export function PublishTab({ componentName, generatedCode, deployCodes, figmaNodeId }: PublishTabProps) {
   const [status, setStatus] = useState<DeployStatus>({ step: "idle" });
   const [activeFlow, setActiveFlow] = useState<FlowType>(null);
   const [typeErrors, setTypeErrors] = useState<TypeCheckError[]>([]);
@@ -429,23 +430,27 @@ export function PublishTab({ componentName, generatedCode, figmaNodeId }: Publis
   const hasCode = Boolean(generatedCode);
   const hasNodeId = Boolean(figmaNodeId);
 
-  // Run type check when code changes
+  // Run type check on both codes
   useEffect(() => {
-    if (!generatedCode || !componentName) {
+    if (!deployCodes || !componentName) {
       setTypeErrors([]);
       setTypeCheckPassed(false);
       return;
     }
-    const result = typeCheckCode(generatedCode, `${componentName}.tsx`);
-    setTypeCheckPassed(result.success);
-    setTypeErrors(result.errors);
-  }, [generatedCode, componentName]);
+    const emotionResult = typeCheckCode(deployCodes.emotion, `${componentName}.tsx`);
+    const tailwindResult = typeCheckCode(deployCodes.tailwind, `${componentName}.tsx`);
+    const allErrors = [
+      ...emotionResult.errors.map((e) => ({ ...e, message: `[Emotion] ${e.message}` })),
+      ...tailwindResult.errors.map((e) => ({ ...e, message: `[Tailwind] ${e.message}` })),
+    ];
+    setTypeCheckPassed(emotionResult.success && tailwindResult.success);
+    setTypeErrors(allErrors);
+  }, [deployCodes, componentName]);
 
   const safeName = componentName.replace(/\s+/g, "");
-  const filePath = safeName ? `packages/react/src/components/${safeName}.tsx` : "";
 
   const handleDeploy = useCallback(async () => {
-    if (!generatedCode || !componentName || !figmaNodeId) return;
+    if (!deployCodes || !componentName || !figmaNodeId) return;
 
     // Pre-check type errors
     if (!typeCheckPassed) {
@@ -454,8 +459,8 @@ export function PublishTab({ componentName, generatedCode, figmaNodeId }: Publis
     }
 
     setActiveFlow("deploy");
-    await deployComponent(componentName, generatedCode, figmaNodeId, setStatus);
-  }, [generatedCode, componentName, figmaNodeId, typeCheckPassed, typeErrors.length]);
+    await deployComponent(componentName, deployCodes, figmaNodeId, setStatus);
+  }, [deployCodes, componentName, figmaNodeId, typeCheckPassed, typeErrors.length]);
 
   const handleRelease = useCallback(async () => {
     setActiveFlow("release");
@@ -489,8 +494,12 @@ export function PublishTab({ componentName, generatedCode, figmaNodeId }: Publis
             <span css={targetValueStyle}>{componentName || "—"}</span>
           </div>
           <div css={targetRowStyle}>
-            <span css={targetLabelStyle}>파일 경로</span>
-            <span css={targetValueStyle}>{filePath || "—"}</span>
+            <span css={targetLabelStyle}>Emotion</span>
+            <span css={targetValueStyle}>{safeName ? `packages/react/src/components/${safeName}.tsx` : "—"}</span>
+          </div>
+          <div css={targetRowStyle}>
+            <span css={targetLabelStyle}>Tailwind</span>
+            <span css={targetValueStyle}>{safeName ? `packages/react-tailwind/src/components/${safeName}.tsx` : "—"}</span>
           </div>
           {figmaNodeId && (
             <div css={targetRowStyle}>
@@ -546,7 +555,7 @@ export function PublishTab({ componentName, generatedCode, figmaNodeId }: Publis
           <button
             css={deployBtnStyle}
             onClick={handleDeploy}
-            disabled={!hasCode || !hasNodeId || isBusy}
+            disabled={!deployCodes || !hasNodeId || isBusy}
           >
             {isBusy && activeFlow === "deploy" ? "Deploying..." : "Deploy"}
           </button>
