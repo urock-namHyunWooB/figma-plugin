@@ -24,5 +24,6 @@ export default function useMessageHandler() {
 
   return {
     selectionNodeData,
+    setSelectionNodeData,
   };
 }

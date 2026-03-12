@@ -241,7 +241,24 @@ const saveButtonStyle = css`
 
 function App() {
   const navigate = useNavigate();
-  const { selectionNodeData } = useMessageHandler();
+  const { selectionNodeData, setSelectionNodeData } = useMessageHandler();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportJson = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string);
+        setSelectionNodeData(data);
+      } catch (err) {
+        console.error("Invalid JSON:", err);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }, [setSelectionNodeData]);
 
   const [activeTab, setActiveTab] = useState<TabId>("preview");
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
@@ -450,10 +467,24 @@ function App() {
           <span css={componentNameStyle}>
             {componentName || "CodeMate"}
           </span>
-          {__DEV_BUILD__ && selectionNodeData && (
-            <button css={saveButtonStyle} onClick={saveToFailing} disabled={isSaving}>
-              {isSaving ? "..." : "Save"}
-            </button>
+          {__DEV_BUILD__ && (
+            <>
+              {selectionNodeData && (
+                <button css={saveButtonStyle} onClick={saveToFailing} disabled={isSaving}>
+                  {isSaving ? "..." : "Save"}
+                </button>
+              )}
+              <button css={saveButtonStyle} onClick={() => fileInputRef.current?.click()}>
+                Import
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                style={{ display: "none" }}
+                onChange={handleImportJson}
+              />
+            </>
           )}
         </div>
         <div css={headerRightStyle}>
