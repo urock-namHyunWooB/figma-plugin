@@ -33,12 +33,13 @@ export type DeployStatus =
 
 interface PackageTarget {
   componentsDir: string;
+  tokensPath: string;
   label: string;
 }
 
 const PACKAGES: PackageTarget[] = [
-  { componentsDir: "packages/react/src/components", label: "Emotion" },
-  { componentsDir: "packages/react-tailwind/src/components", label: "Tailwind" },
+  { componentsDir: "packages/react/src/components", tokensPath: "packages/react/src/tokens.css", label: "Emotion" },
+  { componentsDir: "packages/react-tailwind/src/components", tokensPath: "packages/react-tailwind/src/tokens.css", label: "Tailwind" },
 ];
 
 /**
@@ -54,7 +55,8 @@ export async function deployComponent(
   componentName: string,
   compiledCodes: { emotion: string; tailwind: string },
   figmaNodeId: string,
-  onStatus: (status: DeployStatus) => void
+  onStatus: (status: DeployStatus) => void,
+  tokensCss?: string
 ): Promise<void> {
   try {
     const safeName = componentName.replace(/\s+/g, "");
@@ -99,6 +101,13 @@ export async function deployComponent(
       path: `${pkg.componentsDir}/${safeName}.tsx`,
       content: `// @figma-node-id ${figmaNodeId}\n${codeByLabel[pkg.label]}`,
     }));
+
+    // 디자인 토큰 CSS도 atomic commit에 포함
+    if (tokensCss) {
+      for (const pkg of PACKAGES) {
+        files.push({ path: pkg.tokensPath, content: tokensCss });
+      }
+    }
 
     const lastCommitSha = await commitFiles(
       branchName,

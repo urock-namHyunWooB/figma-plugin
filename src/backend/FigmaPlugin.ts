@@ -63,6 +63,10 @@ export class FigmaPlugin {
         figma.ui.resize(msg.width, msg.height);
         break;
 
+      case MESSAGE_TYPES.EXTRACT_DESIGN_TOKENS:
+        await this.handleExtractDesignTokens();
+        break;
+
       default:
         console.log("⚠️ [Plugin Backend] Unknown message type:", msg.type);
     }
@@ -151,6 +155,109 @@ export class FigmaPlugin {
         body: (e as Error).message,
       });
     }
+  }
+
+  /**
+   * Figma Variables에서 COLOR 토큰 추출 → UI로 전달
+   */
+  private async handleExtractDesignTokens(): Promise<void> {
+    try {
+      const variables = await figma.variables.getLocalVariablesAsync("COLOR");
+
+      // collection별 defaultModeId 캐시
+      const collectionModeCache = new Map<string, string>();
+
+      const tokens: { name: string; value: string }[] = [];
+
+      for (const variable of variables) {
+        let modeId = collectionModeCache.get(variable.variableCollectionId);
+        if (!modeId) {
+          const collection = await figma.variables.getVariableCollectionByIdAsync(
+            variable.variableCollectionId
+          );
+          if (!collection) continue;
+          modeId = collection.defaultModeId;
+          collectionModeCache.set(variable.variableCollectionId, modeId);
+        }
+
+        const resolved = await this.resolveVariableValue(variable, modeId);
+        if (resolved) {
+          // Figma 변수명 → CSS custom property 이름
+          // "/" → "-", 공백/특수문자 제거
+          const cssName = variable.name
+            .replace(/\//g, "-")
+            .replace(/[^a-zA-Z0-9-_]/g, "");
+          if (cssName) {
+            tokens.push({ name: cssName, value: resolved });
+          }
+        }
+      }
+
+      figma.ui.postMessage({
+        type: MESSAGE_TYPES.DESIGN_TOKENS_RESULT,
+        tokens,
+      });
+    } catch (error) {
+      figma.ui.postMessage({
+        type: MESSAGE_TYPES.DESIGN_TOKENS_RESULT,
+        tokens: [],
+        error: (error as Error).message,
+      });
+    }
+  }
+
+  /**
+   * Variable 값을 hex 문자열로 resolve (alias 체인 추적)
+   */
+  private async resolveVariableValue(
+    variable: Variable,
+    modeId: string,
+    depth = 0
+  ): Promise<string | null> {
+    if (depth > 10) return null; // 순환 참조 방지
+
+    const value = variable.valuesByMode[modeId];
+    if (!value) return null;
+
+    // alias인 경우 재귀 resolve
+    if (typeof value === "object" && "type" in value && value.type === "VARIABLE_ALIAS") {
+      const referenced = await figma.variables.getVariableByIdAsync(value.id);
+      if (!referenced) return null;
+
+      // 참조 변수의 collection에서 default mode 가져오기
+      const refCollection = await figma.variables.getVariableCollectionByIdAsync(
+        referenced.variableCollectionId
+      );
+      if (!refCollection) return null;
+
+      return this.resolveVariableValue(referenced, refCollection.defaultModeId, depth + 1);
+    }
+
+    // RGBA 값인 경우 hex로 변환
+    if (typeof value === "object" && "r" in value) {
+      return this.rgbaToHex(value as RGBA);
+    }
+
+    return null;
+  }
+
+  /**
+   * Figma RGBA (0-1 범위) → hex 문자열
+   */
+  private rgbaToHex(rgba: RGBA): string {
+    const r = Math.round(rgba.r * 255);
+    const g = Math.round(rgba.g * 255);
+    const b = Math.round(rgba.b * 255);
+
+    const hex = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+
+    // alpha가 1이 아니면 8자리 hex
+    if (rgba.a !== undefined && rgba.a < 1) {
+      const a = Math.round(rgba.a * 255);
+      return `${hex}${a.toString(16).padStart(2, "0")}`;
+    }
+
+    return hex;
   }
 
   private async getNodeData(selection: SceneNode[]): Promise<FigmaNodeData> {

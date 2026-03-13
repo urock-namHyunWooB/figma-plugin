@@ -1,4 +1,4 @@
-import { FigmaNodeData } from "@frontend/ui/domain/transpiler/types/figma-api";
+import type { FigmaNodeData } from "@frontend/ui/domain/transpiler/types/figma-api";
 
 /**
  * 메시지 타입 상수
@@ -19,6 +19,10 @@ export const MESSAGE_TYPES = {
 
   // UI 리사이즈
   RESIZE_UI: "resize-ui",  // UI → Plugin: 패널 크기 변경 요청
+
+  // 디자인 토큰 추출
+  EXTRACT_DESIGN_TOKENS: "extract-design-tokens",    // UI → Plugin: 토큰 추출 요청
+  DESIGN_TOKENS_RESULT: "design-tokens-result",      // Plugin → UI: 토큰 결과
 } as const;
 
 export interface OnSelectionChangeMessage {
@@ -68,6 +72,24 @@ export interface ResizeUIMessage {
   height: number;
 }
 
+// 디자인 토큰 추출 요청 (UI → Plugin)
+export interface ExtractDesignTokensMessage {
+  type: typeof MESSAGE_TYPES.EXTRACT_DESIGN_TOKENS;
+}
+
+// 디자인 토큰
+export interface DesignToken {
+  name: string;   // CSS 변수명 (-- 제외), e.g. "Color-primary-01"
+  value: string;  // resolved hex, e.g. "#628cf5"
+}
+
+// 디자인 토큰 결과 (Plugin → UI)
+export interface DesignTokensResultMessage {
+  type: typeof MESSAGE_TYPES.DESIGN_TOKENS_RESULT;
+  tokens: DesignToken[];
+  error?: string;
+}
+
 /**
  * UI로 전송되는 모든 메시지의 Union 타입
  */
@@ -78,4 +100,6 @@ export type PluginMessage =
   | SelectionImageResultMessage
   | GitHubFetchRequestMessage
   | GitHubFetchResponseMessage
-  | ResizeUIMessage;
+  | ResizeUIMessage
+  | ExtractDesignTokensMessage
+  | DesignTokensResultMessage;
