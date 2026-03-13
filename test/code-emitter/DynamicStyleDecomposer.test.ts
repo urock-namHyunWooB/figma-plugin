@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { DynamicStyleDecomposer } from "../../src/frontend/ui/domain/code-generator2/layers/code-emitter/react/style-strategy/DynamicStyleDecomposer";
 import type { ConditionNode } from "../../src/frontend/ui/domain/code-generator2/types/types";
+import type { VariantInconsistency } from "../../src/frontend/ui/domain/code-generator2/layers/code-emitter/react/style-strategy/DynamicStyleDecomposer";
 
 describe("DynamicStyleDecomposer", () => {
   describe("extractAllPropInfos", () => {
@@ -511,6 +512,146 @@ describe("DynamicStyleDecomposer", () => {
       // padding은 다름 → 유지
       expect(result.get("size")?.get("S")).toEqual({ padding: 4 });
       expect(result.get("size")?.get("L")).toEqual({ padding: 12 });
+    });
+  });
+
+  // ===========================================================================
+  // diagnostics — variant inconsistency detection
+  // ===========================================================================
+
+  describe("diagnostics", () => {
+    // Helper: AND condition 생성
+    const and = (...conditions: ConditionNode[]): ConditionNode => ({
+      type: "and",
+      conditions,
+    });
+    const eq = (prop: string, value: string): ConditionNode => ({
+      type: "eq" as const,
+      prop,
+      value,
+    });
+
+    it("일관된 데이터 → 빈 diagnostics", () => {
+      const dynamic = [
+        { condition: and(eq("size", "small"), eq("color", "cyan")), style: { background: "#aef2f6", padding: "2px" } },
+        { condition: and(eq("size", "large"), eq("color", "cyan")), style: { background: "#aef2f6", padding: "4px" } },
+        { condition: and(eq("size", "small"), eq("color", "red")),  style: { background: "#ffb9b9", padding: "2px" } },
+        { condition: and(eq("size", "large"), eq("color", "red")),  style: { background: "#ffb9b9", padding: "4px" } },
+      ];
+
+      const { result, diagnostics } = DynamicStyleDecomposer.decomposeWithDiagnostics(dynamic);
+
+      expect(diagnostics).toEqual([]);
+      // 기존 분류도 정상 동작
+      expect(result.get("color")?.get("cyan")?.background).toBe("#aef2f6");
+      expect(result.get("color")?.get("red")?.background).toBe("#ffb9b9");
+      expect(result.get("size")?.get("small")?.padding).toBe("2px");
+      expect(result.get("size")?.get("large")?.padding).toBe("4px");
+    });
+
+    it("한 variant만 다른 값 → 해당 그룹을 지목하는 diagnostic (다수결 expectedValue)", () => {
+      // 8 colors × 2 sizes, red/small만 background가 다름
+      const dynamic = [
+        { condition: and(eq("size", "small"), eq("color", "cyan")),    style: { background: "#aef2f6" } },
+        { condition: and(eq("size", "large"), eq("color", "cyan")),    style: { background: "#aef2f6" } },
+        { condition: and(eq("size", "small"), eq("color", "red")),     style: { background: "#201d30" } }, // ← 불일치
+        { condition: and(eq("size", "large"), eq("color", "red")),     style: { background: "#ffb9b9" } },
+        { condition: and(eq("size", "small"), eq("color", "blue")),    style: { background: "#628cf5" } },
+        { condition: and(eq("size", "large"), eq("color", "blue")),    style: { background: "#628cf5" } },
+        { condition: and(eq("size", "small"), eq("color", "gray")),    style: { background: "#f9f9f9" } },
+        { condition: and(eq("size", "large"), eq("color", "gray")),    style: { background: "#f9f9f9" } },
+      ];
+
+      const { diagnostics } = DynamicStyleDecomposer.decomposeWithDiagnostics(dynamic);
+
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0]).toEqual(expect.objectContaining({
+        cssProperty: "background",
+        propName: "color",       // color 축이 "거의" 일관적 → 의도된 제어 축
+        propValue: "red",        // red 그룹만 불일치
+      }));
+
+      // red 그룹의 두 variant 상세
+      expect(diagnostics[0].variants).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ props: { size: "small", color: "red" }, value: "#201d30" }),
+          expect.objectContaining({ props: { size: "large", color: "red" }, value: "#ffb9b9" }),
+        ])
+      );
+
+      // red 그룹 내 2개 중 1:1 동률 → expectedValue null
+      expect(diagnostics[0].expectedValue).toBeNull();
+    });
+
+    it("3개 이상 variant에서 1개만 다르면 → 다수결로 expectedValue 결정", () => {
+      // 3 sizes × 2 colors, red/small만 다름
+      const dynamic = [
+        { condition: and(eq("size", "small"),  eq("color", "cyan")), style: { background: "#aef2f6" } },
+        { condition: and(eq("size", "medium"), eq("color", "cyan")), style: { background: "#aef2f6" } },
+        { condition: and(eq("size", "large"),  eq("color", "cyan")), style: { background: "#aef2f6" } },
+        { condition: and(eq("size", "small"),  eq("color", "red")),  style: { background: "#201d30" } }, // ← 불일치
+        { condition: and(eq("size", "medium"), eq("color", "red")),  style: { background: "#ffb9b9" } },
+        { condition: and(eq("size", "large"),  eq("color", "red")),  style: { background: "#ffb9b9" } },
+      ];
+
+      const { diagnostics } = DynamicStyleDecomposer.decomposeWithDiagnostics(dynamic);
+
+      expect(diagnostics).toHaveLength(1);
+      expect(diagnostics[0].cssProperty).toBe("background");
+      expect(diagnostics[0].propName).toBe("color");
+      expect(diagnostics[0].propValue).toBe("red");
+      // 2 vs 1 → 다수(#ffb9b9)가 expectedValue
+      expect(diagnostics[0].expectedValue).toBe("#ffb9b9");
+    });
+
+    it("여러 CSS 속성이 불일치 → 각각 별도 diagnostic", () => {
+      const dynamic = [
+        { condition: and(eq("size", "small"), eq("color", "cyan")), style: { background: "#aef2f6", border: "1px solid #000" } },
+        { condition: and(eq("size", "large"), eq("color", "cyan")), style: { background: "#aef2f6", border: "1px solid #000" } },
+        { condition: and(eq("size", "small"), eq("color", "red")),  style: { background: "#201d30", border: "1px solid #fff" } }, // ← 둘 다 불일치
+        { condition: and(eq("size", "large"), eq("color", "red")),  style: { background: "#ffb9b9", border: "1px solid #000" } },
+      ];
+
+      const { diagnostics } = DynamicStyleDecomposer.decomposeWithDiagnostics(dynamic);
+
+      const bgDiag = diagnostics.find(d => d.cssProperty === "background");
+      const borderDiag = diagnostics.find(d => d.cssProperty === "border");
+
+      expect(bgDiag).toBeDefined();
+      expect(borderDiag).toBeDefined();
+      expect(bgDiag!.propValue).toBe("red");
+      expect(borderDiag!.propValue).toBe("red");
+    });
+
+    it("단일 prop 조건 → diagnostics 불필요 (AND가 아니므로 불일치 판단 불가)", () => {
+      const dynamic = [
+        { condition: eq("size", "small"), style: { padding: "2px" } },
+        { condition: eq("size", "large"), style: { padding: "4px" } },
+      ];
+
+      const { diagnostics } = DynamicStyleDecomposer.decomposeWithDiagnostics(dynamic);
+      expect(diagnostics).toEqual([]);
+    });
+
+    it("불일치가 있어도 기존 분류 결과에 영향 없음 (background는 가장 적합한 축에 배치)", () => {
+      const dynamic = [
+        { condition: and(eq("size", "small"), eq("color", "cyan")),  style: { background: "#aef2f6", padding: "2px" } },
+        { condition: and(eq("size", "large"), eq("color", "cyan")),  style: { background: "#aef2f6", padding: "4px" } },
+        { condition: and(eq("size", "small"), eq("color", "red")),   style: { background: "#201d30", padding: "2px" } },
+        { condition: and(eq("size", "large"), eq("color", "red")),   style: { background: "#ffb9b9", padding: "4px" } },
+        { condition: and(eq("size", "small"), eq("color", "blue")),  style: { background: "#628cf5", padding: "2px" } },
+        { condition: and(eq("size", "large"), eq("color", "blue")),  style: { background: "#628cf5", padding: "4px" } },
+      ];
+
+      const { result, diagnostics } = DynamicStyleDecomposer.decomposeWithDiagnostics(dynamic);
+
+      // diagnostic은 발생하지만
+      expect(diagnostics.length).toBeGreaterThan(0);
+
+      // background는 여전히 color 축에 배치 (size보다 color가 더 일관적)
+      expect(result.get("color")?.get("cyan")?.background).toBe("#aef2f6");
+      // padding은 size 축
+      expect(result.get("size")?.get("small")?.padding).toBe("2px");
     });
   });
 });
