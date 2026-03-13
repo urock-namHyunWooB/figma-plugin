@@ -331,8 +331,8 @@ export async function getLatestCIStatus(pr: OpenPR): Promise<CheckStatus> {
     }
   }
 
-  // 모든 커밋에 check run 없음 → pending
-  return "pending";
+  // 모든 커밋에 check run 없음 → CI 미설정으로 간주하여 통과 처리
+  return "success";
 }
 
 /** 스테이징 PR의 개별 체크 런 상태 조회 */
