@@ -301,6 +301,8 @@ export default ${componentName}`;
     if (hasWrapper) {
       // nodeStyleMap에서 래퍼 div의 CSS 변수명 조회 (StylesGenerator가 이미 생성)
       const wrapperCssName = this.nodeStyleMap.get(arrayItemNode.id) || `${componentName}ItemCss`;
+      const wrapperAttr = styleStrategy.getJsxStyleAttribute(wrapperCssName, false);
+      const wrapperAttrStr = `${wrapperAttr.attributeName}=${wrapperAttr.valueCode}`;
 
       // 래퍼 CSS에 텍스트 스타일이 포함되면 → 의존 컴포넌트 스킵, 래퍼에서 직접 렌더링
       const wrapperBase = wrapperStyle?.base || {};
@@ -308,7 +310,7 @@ export default ${componentName}`;
 
       if (isDirectRender && contentProp) {
         return `${indentStr}{Array.isArray(${arraySlot.slotName}) && ${arraySlot.slotName}.map((item, index) => (
-${indentStr}  <div key={index} css={${wrapperCssName}}${onClickStr}>
+${indentStr}  <div key={index} ${wrapperAttrStr}${onClickStr}>
 ${indentStr}    {item.content}
 ${indentStr}  </div>
 ${indentStr}))}`;
@@ -316,14 +318,14 @@ ${indentStr}))}`;
 
       if (contentProp) {
         return `${indentStr}{Array.isArray(${arraySlot.slotName}) && ${arraySlot.slotName}.map((item, index) => (
-${indentStr}  <div key={index} css={${wrapperCssName}}${onClickStr}>
+${indentStr}  <div key={index} ${wrapperAttrStr}${onClickStr}>
 ${indentStr}    <${componentName}${propsStr}>{item.content}</${componentName}>
 ${indentStr}  </div>
 ${indentStr}))}`;
       }
 
       return `${indentStr}{Array.isArray(${arraySlot.slotName}) && ${arraySlot.slotName}.map((item, index) => (
-${indentStr}  <div key={index} css={${wrapperCssName}}${onClickStr}>
+${indentStr}  <div key={index} ${wrapperAttrStr}${onClickStr}>
 ${indentStr}    <${componentName}${propsStr} />
 ${indentStr}  </div>
 ${indentStr}))}`;
@@ -1078,7 +1080,10 @@ ${indentStr}</${tag}>`;
     // 스타일이 없으면 조건부로 slot만 렌더링
     // 80자 초과하도록 하여 Prettier가 줄바꿈과 괄호를 유지하도록 함
     if (!styleVarName || !node.styles || !this.hasNonEmptyStyles(node.styles)) {
-      return `${indentStr}{${slotProp} && (\n${indentStr}  <div css={{ display: "contents", alignItems: "center", justifyContent: "center" }}>\n${indentStr}    {${slotProp}}\n${indentStr}  </div>\n${indentStr})}`;
+      const inlineAttr = styleStrategy.name === "emotion"
+        ? `css={{ display: "contents", alignItems: "center", justifyContent: "center" }}`
+        : `style={{ display: "contents", alignItems: "center", justifyContent: "center" }}`;
+      return `${indentStr}{${slotProp} && (\n${indentStr}  <div ${inlineAttr}>\n${indentStr}    {${slotProp}}\n${indentStr}  </div>\n${indentStr})}`;
     }
 
     const dynamicProps = this.extractDynamicProps(node.styles);
