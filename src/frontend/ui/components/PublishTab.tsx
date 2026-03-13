@@ -3,7 +3,6 @@ import { css } from "@emotion/react";
 import { deployComponent, type DeployStatus } from "../services/deployService";
 import { typeCheckCode, type TypeCheckError } from "../services/typeChecker";
 import { findComponentPR, getComponentCIStatus, type ComponentCIStatus } from "../services/GitHubAPI";
-import { requestDesignTokens, generateTokensCSS } from "../services/tokenService";
 
 interface PublishTabProps {
   componentName: string;
@@ -451,19 +450,7 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
       return;
     }
 
-    // 디자인 토큰 추출 → tokens.css 생성
-    let tokensCss: string | undefined;
-    try {
-      setStatus({ step: "committing", message: "디자인 토큰 추출 중..." });
-      const tokens = await requestDesignTokens();
-      if (tokens.length > 0) {
-        tokensCss = generateTokensCSS(tokens);
-      }
-    } catch (e) {
-      console.warn("디자인 토큰 추출 실패, tokens.css 없이 진행:", e);
-    }
-
-    await deployComponent(componentName, deployCodes, figmaNodeId, setStatus, tokensCss);
+    await deployComponent(componentName, deployCodes, figmaNodeId, setStatus);
   }, [deployCodes, componentName, figmaNodeId, typeCheckPassed, typeErrors.length]);
 
   const currentStepIndex = (status.step === "idle" || isDone || isError)

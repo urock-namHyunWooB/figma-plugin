@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { css } from "@emotion/react";
-import { releaseComponent, type DeployStatus } from "../services/deployService";
+import { releaseComponent, deployTokens, type DeployStatus } from "../services/deployService";
+import { requestDesignTokens, generateTokensCSS } from "../services/tokenService";
 import {
   getAllComponentCIStatus,
   closePR,
@@ -180,6 +181,32 @@ const releaseBtnStyle = css`
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 `;
 
+const tokenBtnStyle = css`
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: #fff;
+  color: #374151;
+  margin-bottom: 8px;
+  &:hover:not(:disabled) { background: #f3f4f6; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+`;
+
+const tokenMsgStyle = (isError: boolean) => css`
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  ${isError
+    ? "background: #fef2f2; color: #dc2626;"
+    : "background: #f0fdf4; color: #16a34a;"}
+`;
+
 const emptyContainerStyle = css`
   display: flex;
   flex-direction: column;
@@ -293,6 +320,8 @@ export function ReleaseSection() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<DeployStatus>({ step: "idle" });
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [tokenBusy, setTokenBusy] = useState(false);
+  const [tokenMsg, setTokenMsg] = useState<{ text: string; isError: boolean } | null>(null);
 
   const fetchComponents = useCallback(async () => {
     setLoading(true);
@@ -358,6 +387,30 @@ export function ReleaseSection() {
     fetchComponents();
   }, [fetchComponents]);
 
+  const handleDeployTokens = useCallback(async () => {
+    setTokenBusy(true);
+    setTokenMsg(null);
+    try {
+      const tokens = await requestDesignTokens();
+      if (tokens.length === 0) {
+        setTokenMsg({ text: "추출된 디자인 토큰이 없습니다.", isError: true });
+        return;
+      }
+      const css = generateTokensCSS(tokens);
+      await deployTokens(css, (s) => {
+        if (s.step === "done" && "message" in s) {
+          setTokenMsg({ text: s.message ?? `${tokens.length}개 토큰 배포 완료`, isError: false });
+        } else if (s.step === "error" && "message" in s) {
+          setTokenMsg({ text: s.message, isError: true });
+        }
+      });
+    } catch (e) {
+      setTokenMsg({ text: (e as Error).message, isError: true });
+    } finally {
+      setTokenBusy(false);
+    }
+  }, []);
+
   // Step progress
   const currentStepIndex = (() => {
     if (status.step === "idle" || isReleaseDone || isError) return -1;
@@ -385,6 +438,12 @@ export function ReleaseSection() {
           </div>
         )}
       </div>
+
+      {/* Design Tokens */}
+      <button css={tokenBtnStyle} onClick={handleDeployTokens} disabled={tokenBusy || isBusy}>
+        {tokenBusy ? "토큰 추출 중..." : "디자인 토큰 배포"}
+      </button>
+      {tokenMsg && <div css={tokenMsgStyle(tokenMsg.isError)}>{tokenMsg.text}</div>}
 
       {/* Empty State */}
       {components.length === 0 && !loading ? (

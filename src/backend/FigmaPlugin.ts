@@ -177,38 +177,51 @@ export class FigmaPlugin {
   }
 
   /**
-   * 팀 라이브러리 + 로컬 Variables에서 COLOR 토큰 추출 → UI로 전달
+   * 현재 페이지의 boundVariables + 로컬 Variables에서 COLOR 토큰 추출 → UI로 전달
    */
   private async handleExtractDesignTokens(): Promise<void> {
     try {
       const tokens: { name: string; value: string }[] = [];
       const collectionModeCache = new Map<string, string>();
+      const seenVarIds = new Set<string>();
 
-      // 팀 라이브러리 컬렉션 → 변수 가져오기
-      const libraryCollections =
-        await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
-      const colorLibVars: LibraryVariable[] = [];
-      for (const col of libraryCollections) {
-        const vars = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(col.key);
-        colorLibVars.push(...vars.filter((v) => v.resolvedType === "COLOR"));
+      // 1. 현재 페이지의 모든 노드에서 바인딩된 변수 ID 수집
+      const allNodes = figma.currentPage.findAll();
+      const varIds = new Set<string>();
+      for (const node of allNodes) {
+        const bv = (node as SceneNode).boundVariables;
+        if (!bv) continue;
+        for (const bindings of Object.values(bv)) {
+          const list = Array.isArray(bindings) ? bindings : [bindings];
+          for (const binding of list) {
+            if (binding && typeof binding === "object" && "id" in binding) {
+              varIds.add((binding as { id: string }).id);
+            }
+          }
+        }
       }
 
-      for (const libVar of colorLibVars) {
+      // 2. 수집된 변수 중 COLOR 타입만 resolve
+      for (const varId of varIds) {
+        if (seenVarIds.has(varId)) continue;
+        seenVarIds.add(varId);
         try {
-          const imported = await figma.variables.importVariableByKeyAsync(libVar.key);
-          let modeId = collectionModeCache.get(imported.variableCollectionId);
+          const variable = await figma.variables.getVariableByIdAsync(varId);
+          if (!variable || variable.resolvedType !== "COLOR") continue;
+
+          let modeId = collectionModeCache.get(variable.variableCollectionId);
           if (!modeId) {
             const collection = await figma.variables.getVariableCollectionByIdAsync(
-              imported.variableCollectionId
+              variable.variableCollectionId
             );
             if (!collection) continue;
             modeId = collection.defaultModeId;
-            collectionModeCache.set(imported.variableCollectionId, modeId);
+            collectionModeCache.set(variable.variableCollectionId, modeId);
           }
 
-          const resolved = await this.resolveVariableValue(imported, modeId);
+          const resolved = await this.resolveVariableValue(variable, modeId);
           if (resolved) {
-            const cssName = imported.name
+            const cssName = variable.name
               .replace(/\//g, "-")
               .replace(/[^a-zA-Z0-9-_]/g, "");
             if (cssName) {
@@ -216,15 +229,17 @@ export class FigmaPlugin {
             }
           }
         } catch {
-          // 개별 변수 import 실패 시 스킵
+          // 개별 변수 resolve 실패 시 스킵
         }
       }
 
-      // 로컬 변수도 추가 (중복 제거)
+      // 3. 로컬 변수도 추가 (중복 제거)
       const localVars = await figma.variables.getLocalVariablesAsync("COLOR");
       const existingNames = new Set(tokens.map((t) => t.name));
 
       for (const variable of localVars) {
+        if (seenVarIds.has(variable.id)) continue;
+
         let modeId = collectionModeCache.get(variable.variableCollectionId);
         if (!modeId) {
           const collection = await figma.variables.getVariableCollectionByIdAsync(

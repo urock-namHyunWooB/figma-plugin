@@ -56,7 +56,6 @@ export async function deployComponent(
   compiledCodes: { emotion: string; tailwind: string },
   figmaNodeId: string,
   onStatus: (status: DeployStatus) => void,
-  tokensCss?: string
 ): Promise<void> {
   try {
     const safeName = componentName.replace(/\s+/g, "");
@@ -101,13 +100,6 @@ export async function deployComponent(
       path: `${pkg.componentsDir}/${safeName}.tsx`,
       content: `// @figma-node-id ${figmaNodeId}\n${codeByLabel[pkg.label]}`,
     }));
-
-    // 디자인 토큰 CSS도 atomic commit에 포함
-    if (tokensCss) {
-      for (const pkg of PACKAGES) {
-        files.push({ path: pkg.tokensPath, content: tokensCss });
-      }
-    }
 
     const lastCommitSha = await commitFiles(
       branchName,
@@ -321,6 +313,34 @@ async function pollForReleasePR(
   }
 
   return null;
+}
+
+/**
+ * 디자인 토큰만 main 브랜치에 직접 커밋
+ */
+export async function deployTokens(
+  tokensCss: string,
+  onStatus: (status: DeployStatus) => void
+): Promise<void> {
+  try {
+    onStatus({ step: "committing", message: "디자인 토큰 커밋 중..." });
+
+    const files = PACKAGES.map((pkg) => ({
+      path: pkg.tokensPath,
+      content: tokensCss,
+    }));
+
+    const sha = await commitFiles("main", files, "feat: update design tokens");
+
+    if (!sha) {
+      onStatus({ step: "done", prUrl: "", message: "토큰이 이미 최신 상태입니다." });
+      return;
+    }
+
+    onStatus({ step: "done", prUrl: "", message: "디자인 토큰이 배포되었습니다." });
+  } catch (e) {
+    onStatus({ step: "error", message: (e as Error).message });
+  }
 }
 
 function sleep(ms: number): Promise<void> {

@@ -4,6 +4,7 @@
   "api": "1.0.0",
   "main": "dist/code.js",
   "capabilities": ["inspect", "vscode"],
+  "permissions": ["teamlibrary"],
   "enableProposedApi": false,
   "documentAccess": "dynamic-page",
   "editorType": ["figma", "dev"],
