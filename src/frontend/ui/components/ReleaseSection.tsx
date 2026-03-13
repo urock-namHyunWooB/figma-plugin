@@ -166,6 +166,46 @@ const closeBtnStyle = css`
   &:disabled { opacity: 0.3; cursor: not-allowed; }
 `;
 
+const confirmRowStyle = css`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: #fef2f2;
+  border-bottom: 1px solid #fecaca;
+  font-size: 11px;
+  color: #dc2626;
+`;
+
+const confirmActionsStyle = css`
+  display: flex;
+  gap: 6px;
+`;
+
+const confirmBtnStyle = css`
+  padding: 3px 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #dc2626;
+  color: #fff;
+  &:hover { background: #b91c1c; }
+`;
+
+const cancelBtnStyle = css`
+  padding: 3px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  background: #fff;
+  color: #374151;
+  &:hover { background: #f3f4f6; }
+`;
+
 const releaseBtnStyle = css`
   width: 100%;
   padding: 10px 16px;
@@ -354,20 +394,19 @@ export function ReleaseSection() {
   }, [hasPending, fetchComponents]);
 
   const [closingPR, setClosingPR] = useState<number | null>(null);
+  const [confirmingPR, setConfirmingPR] = useState<number | null>(null);
+  const [closeError, setCloseError] = useState<string | null>(null);
 
   const handleClosePR = useCallback(async (comp: ComponentCIStatus) => {
-    const ok = window.confirm(
-      `"${comp.componentName}" PR #${comp.pr.number}을 닫고 브랜치를 삭제합니다.\n계속하시겠습니까?`
-    );
-    if (!ok) return;
-
+    setCloseError(null);
     setClosingPR(comp.pr.number);
+    setConfirmingPR(null);
     try {
       await closePR(comp.pr.number);
       await deleteBranch(comp.pr.head.ref).catch(() => {});
       await fetchComponents();
     } catch (e) {
-      alert(`PR 닫기 실패: ${e instanceof Error ? e.message : e}`);
+      setCloseError(`PR #${comp.pr.number} 닫기 실패: ${e instanceof Error ? e.message : e}`);
     } finally {
       setClosingPR(null);
     }
@@ -460,30 +499,41 @@ export function ReleaseSection() {
           {/* Component List */}
           <div css={componentCardStyle}>
             {components.map((comp) => (
-              <div key={comp.componentName} css={componentRowStyle}>
-                <div css={statusDotStyle(comp.overall)} />
-                <span css={componentNameStyle}>{comp.componentName}</span>
-                <span css={statusLabelStyle(comp.overall)}>
-                  {comp.overall === "success" ? "CI 통과" : comp.overall === "failure" ? "CI 실패" : "대기중"}
-                </span>
-                <a
-                  css={prLinkStyle}
-                  href={comp.pr.html_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => { e.preventDefault(); window.open(comp.pr.html_url, "_blank"); }}
-                >
-                  #{comp.pr.number}
-                </a>
-                <button
-                  css={closeBtnStyle}
-                  title="PR 닫기"
-                  disabled={isBusy || closingPR === comp.pr.number}
-                  onClick={() => handleClosePR(comp)}
-                >
-                  {closingPR === comp.pr.number ? "..." : "×"}
-                </button>
-              </div>
+              <React.Fragment key={comp.componentName}>
+                <div css={componentRowStyle}>
+                  <div css={statusDotStyle(comp.overall)} />
+                  <span css={componentNameStyle}>{comp.componentName}</span>
+                  <span css={statusLabelStyle(comp.overall)}>
+                    {comp.overall === "success" ? "CI 통과" : comp.overall === "failure" ? "CI 실패" : "대기중"}
+                  </span>
+                  <a
+                    css={prLinkStyle}
+                    href={comp.pr.html_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => { e.preventDefault(); window.open(comp.pr.html_url, "_blank"); }}
+                  >
+                    #{comp.pr.number}
+                  </a>
+                  <button
+                    css={closeBtnStyle}
+                    title="PR 닫기"
+                    disabled={isBusy || closingPR === comp.pr.number}
+                    onClick={() => setConfirmingPR(comp.pr.number)}
+                  >
+                    {closingPR === comp.pr.number ? "..." : "×"}
+                  </button>
+                </div>
+                {confirmingPR === comp.pr.number && (
+                  <div css={confirmRowStyle}>
+                    <span>PR #{comp.pr.number} 닫기 + 브랜치 삭제</span>
+                    <div css={confirmActionsStyle}>
+                      <button css={confirmBtnStyle} onClick={() => handleClosePR(comp)}>삭제</button>
+                      <button css={cancelBtnStyle} onClick={() => setConfirmingPR(null)}>취소</button>
+                    </div>
+                  </div>
+                )}
+              </React.Fragment>
             ))}
           </div>
 
@@ -527,6 +577,13 @@ export function ReleaseSection() {
         <div css={successBannerStyle}>
           <span>✓</span>
           <span>{status.message}</span>
+        </div>
+      )}
+
+      {/* Close PR Error */}
+      {closeError && (
+        <div css={errorBannerStyle}>
+          <span>{closeError}</span>
         </div>
       )}
 
