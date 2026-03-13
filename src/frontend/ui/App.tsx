@@ -9,17 +9,19 @@ import { CodeEditor } from "./components/CodeEditor";
 import { PropsMatrix } from "./components/PropsMatrix";
 import ErrorBoundary from "@frontend/ui/components/ErrorBoundary";
 import { PublishTab } from "./components/PublishTab";
+import { ReleaseSection } from "./components/ReleaseSection";
 import { wireFunctionProps } from "./utils/wireFunctionProps";
 
 declare const __DEV_BUILD__: boolean;
 
-type TabId = "preview" | "variants" | "code" | "publish";
+type TabId = "preview" | "variants" | "code" | "publish" | "release";
 
 const TAB_SIZES: Record<TabId, { width: number; height: number }> = {
   preview: { width: 400, height: 1000 },
   variants: { width: 900, height: 1000 },
   code: { width: 400, height: 1000 },
   publish: { width: 400, height: 1000 },
+  release: { width: 400, height: 1000 },
 };
 
 const TAB_LABELS: Record<TabId, string> = {
@@ -27,6 +29,7 @@ const TAB_LABELS: Record<TabId, string> = {
   variants: "Variants",
   code: "Code",
   publish: "Publish",
+  release: "Release",
 };
 
 function resizePluginUI(width: number, height: number) {
@@ -534,7 +537,7 @@ function App() {
 
       {/* ─── Tab Bar ─── */}
       <div css={tabBarStyle}>
-        {(["preview", "variants", "code", "publish"] as TabId[]).map((tab) => (
+        {(["preview", "variants", "code", "publish", "release"] as TabId[]).map((tab) => (
           <button
             key={tab}
             css={[tabStyle, activeTab === tab && tabActiveStyle]}
@@ -603,6 +606,11 @@ function App() {
         {/* Publish Tab — 항상 mount, 탭 전환 시 숨김 (deploy 상태 유지) */}
         <div style={{ display: activeTab === "publish" ? "block" : "none" }}>
           <PublishTab componentName={componentName} generatedCode={generatedCode} deployCodes={deployCodes} figmaNodeId={selectionNodeData?.info?.document?.id} />
+        </div>
+
+        {/* Release Tab — 항상 mount, 폴링 상태 유지 */}
+        <div style={{ display: activeTab === "release" ? "block" : "none" }}>
+          <ReleaseSection />
         </div>
       </div>
     </div>

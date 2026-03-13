@@ -3,7 +3,6 @@ import { css } from "@emotion/react";
 import { releaseComponent, type DeployStatus } from "../services/deployService";
 import {
   getAllComponentCIStatus,
-  ACTIONS_URL,
   type ComponentCIStatus,
   type CheckStatus,
 } from "../services/GitHubAPI";
@@ -25,53 +24,75 @@ const BUSY_STEPS = new Set([
 
 // ─── Styles ───
 
-const dividerStyle = css`
-  height: 1px;
-  background: #e5e7eb;
-  margin: 24px 0;
+const containerStyle = css`
+  padding: 16px;
 `;
 
 const headerStyle = css`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 `;
 
-const sectionTitleStyle = css`
-  font-size: 11px;
+const headerLeftStyle = css`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const titleStyle = css`
+  font-size: 14px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #9ca3af;
+  color: #1a1a1a;
 `;
 
 const refreshBtnStyle = css`
-  padding: 2px 8px;
+  padding: 4px 10px;
   border: 1px solid #e5e7eb;
-  border-radius: 4px;
+  border-radius: 6px;
   background: #fff;
-  font-size: 10px;
+  font-size: 11px;
   color: #6b7280;
   cursor: pointer;
+  transition: all 0.15s ease;
   &:hover { background: #f3f4f6; }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 `;
 
-const listCardStyle = css`
+const summaryBarStyle = css`
+  display: flex;
+  gap: 6px;
+`;
+
+const summaryBadgeStyle = (status: CheckStatus) => css`
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 12px;
+  ${status === "success"
+    ? "background: #dcfce7; color: #16a34a;"
+    : status === "failure"
+      ? "background: #fef2f2; color: #dc2626;"
+      : "background: #fef9c3; color: #a16207;"}
+`;
+
+const componentCardStyle = css`
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 8px 12px;
-  margin-bottom: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
 `;
 
 const componentRowStyle = css`
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 0;
+  gap: 10px;
+  padding: 10px 14px;
   font-size: 12px;
+  transition: background 0.1s ease;
+  &:hover { background: #f3f4f6; }
   &:not(:last-child) {
     border-bottom: 1px solid #f3f4f6;
   }
@@ -118,25 +139,8 @@ const prLinkStyle = css`
   color: #8b5cf6;
   text-decoration: none;
   flex-shrink: 0;
+  font-weight: 500;
   &:hover { text-decoration: underline; }
-`;
-
-const summaryStyle = css`
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-`;
-
-const summaryBadgeStyle = (status: CheckStatus) => css`
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  ${status === "success"
-    ? "background: #dcfce7; color: #16a34a;"
-    : status === "failure"
-      ? "background: #fef2f2; color: #dc2626;"
-      : "background: #fef9c3; color: #a16207;"}
 `;
 
 const releaseBtnStyle = css`
@@ -154,18 +158,39 @@ const releaseBtnStyle = css`
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 `;
 
-const emptyStyle = css`
+const emptyContainerStyle = css`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 8px;
+`;
+
+const emptyIconStyle = css`
+  font-size: 32px;
+  opacity: 0.3;
+  margin-bottom: 4px;
+`;
+
+const emptyTitleStyle = css`
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+`;
+
+const emptyDescStyle = css`
   font-size: 12px;
   color: #9ca3af;
-  text-align: center;
-  padding: 16px;
+  line-height: 1.5;
 `;
 
 const stepperStyle = css`
   display: flex;
   align-items: center;
   gap: 0;
-  margin-top: 12px;
+  margin-top: 16px;
 `;
 
 const stepDotStyle = (state: "done" | "active" | "pending") => css`
@@ -226,7 +251,7 @@ const successBannerStyle = css`
   gap: 8px;
   font-size: 12px;
   color: #16a34a;
-  margin-top: 12px;
+  margin-top: 16px;
 `;
 
 const errorBannerStyle = css`
@@ -236,7 +261,7 @@ const errorBannerStyle = css`
   padding: 12px;
   font-size: 12px;
   color: #dc2626;
-  margin-top: 12px;
+  margin-top: 16px;
 `;
 
 // ─── Component ───
@@ -301,22 +326,38 @@ export function ReleaseSection() {
   })();
 
   return (
-    <div>
-      <div css={dividerStyle} />
-
+    <div css={containerStyle}>
+      {/* Header */}
       <div css={headerStyle}>
-        <span css={sectionTitleStyle}>릴리즈</span>
-        <button css={refreshBtnStyle} onClick={fetchComponents} disabled={loading || isBusy}>
-          {loading ? "..." : "Refresh"}
-        </button>
+        <div css={headerLeftStyle}>
+          <span css={titleStyle}>Release</span>
+          <button css={refreshBtnStyle} onClick={fetchComponents} disabled={loading || isBusy}>
+            {loading ? "..." : "Refresh"}
+          </button>
+        </div>
+        {components.length > 0 && (
+          <div css={summaryBarStyle}>
+            {passed > 0 && <span css={summaryBadgeStyle("success")}>{passed} passed</span>}
+            {pending > 0 && <span css={summaryBadgeStyle("pending")}>{pending} pending</span>}
+            {failed > 0 && <span css={summaryBadgeStyle("failure")}>{failed} failed</span>}
+          </div>
+        )}
       </div>
 
-      {/* Component List */}
+      {/* Empty State */}
       {components.length === 0 && !loading ? (
-        <div css={emptyStyle}>배포된 컴포넌트가 없습니다</div>
+        <div css={emptyContainerStyle}>
+          <div css={emptyIconStyle}>&#x1F4E6;</div>
+          <div css={emptyTitleStyle}>배포된 컴포넌트가 없습니다</div>
+          <div css={emptyDescStyle}>
+            Publish 탭에서 컴포넌트를 배포하면<br />
+            여기서 릴리즈할 수 있습니다.
+          </div>
+        </div>
       ) : (
         <>
-          <div css={listCardStyle}>
+          {/* Component List */}
+          <div css={componentCardStyle}>
             {components.map((comp) => (
               <div key={comp.componentName} css={componentRowStyle}>
                 <div css={statusDotStyle(comp.overall)} />
@@ -335,13 +376,6 @@ export function ReleaseSection() {
                 </a>
               </div>
             ))}
-          </div>
-
-          {/* Summary */}
-          <div css={summaryStyle}>
-            {passed > 0 && <span css={summaryBadgeStyle("success")}>{passed}개 릴리즈 가능</span>}
-            {pending > 0 && <span css={summaryBadgeStyle("pending")}>{pending}개 대기중</span>}
-            {failed > 0 && <span css={summaryBadgeStyle("failure")}>{failed}개 실패</span>}
           </div>
 
           {/* Release Button */}

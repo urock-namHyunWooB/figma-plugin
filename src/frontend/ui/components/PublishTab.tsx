@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { css } from "@emotion/react";
 import { deployComponent, type DeployStatus } from "../services/deployService";
-import { ReleaseSection } from "./ReleaseSection";
 import { typeCheckCode, type TypeCheckError } from "../services/typeChecker";
 import { findComponentPR, getComponentCIStatus, type ComponentCIStatus } from "../services/GitHubAPI";
 import { requestDesignTokens, generateTokensCSS } from "../services/tokenService";
@@ -675,8 +674,6 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
         </div>
       )}
 
-      {/* Release Section */}
-      <ReleaseSection />
     </div>
   );
 }
