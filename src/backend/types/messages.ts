@@ -19,6 +19,9 @@ export const MESSAGE_TYPES = {
 
   // UI 리사이즈
   RESIZE_UI: "resize-ui",  // UI → Plugin: 패널 크기 변경 요청
+
+  // 노드 선택
+  SELECT_NODE: "select-node",  // UI → Plugin: Figma 캔버스에서 노드 선택
 } as const;
 
 export interface OnSelectionChangeMessage {
@@ -68,6 +71,12 @@ export interface ResizeUIMessage {
   height: number;
 }
 
+// 노드 선택 요청 (UI → Plugin)
+export interface SelectNodeMessage {
+  type: typeof MESSAGE_TYPES.SELECT_NODE;
+  nodeId: string;
+}
+
 /**
  * UI로 전송되는 모든 메시지의 Union 타입
  */
@@ -78,4 +87,5 @@ export type PluginMessage =
   | SelectionImageResultMessage
   | GitHubFetchRequestMessage
   | GitHubFetchResponseMessage
-  | ResizeUIMessage;
+  | ResizeUIMessage
+  | SelectNodeMessage;

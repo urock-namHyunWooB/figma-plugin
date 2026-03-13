@@ -605,6 +605,9 @@ describe("DynamicStyleDecomposer", () => {
     });
 
     it("여러 CSS 속성이 불일치 → 각각 별도 diagnostic", () => {
+      // red/small만 background와 border 모두 다름
+      // background: color 축이 best-fit (cyan 일관, red 불일치)
+      // border: size/color 동률 — size 축이 먼저 선택됨 (small 그룹 불일치)
       const dynamic = [
         { condition: and(eq("size", "small"), eq("color", "cyan")), style: { background: "#aef2f6", border: "1px solid #000" } },
         { condition: and(eq("size", "large"), eq("color", "cyan")), style: { background: "#aef2f6", border: "1px solid #000" } },
@@ -619,8 +622,15 @@ describe("DynamicStyleDecomposer", () => {
 
       expect(bgDiag).toBeDefined();
       expect(borderDiag).toBeDefined();
+      // background는 color 축 best-fit → red 그룹 불일치
+      expect(bgDiag!.propName).toBe("color");
       expect(bgDiag!.propValue).toBe("red");
-      expect(borderDiag!.propValue).toBe("red");
+      // border는 두 축 동률 → 모두 outlier variant(red/small)를 포함
+      expect(borderDiag!.variants).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ value: "1px solid #fff" }),
+        ])
+      );
     });
 
     it("단일 prop 조건 → diagnostics 불필요 (AND가 아니므로 불일치 판단 불가)", () => {

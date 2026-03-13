@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { css } from "@emotion/react";
 import { useNavigate } from "react-router-dom";
 import useMessageHandler from "./useMessageHandler";
-import FigmaCodeGenerator, { type PropDefinition } from "@code-generator2";
+import FigmaCodeGenerator, { type PropDefinition, type VariantInconsistency } from "@code-generator2";
 import { useComponentRenderer } from "./hooks/useComponentRenderer";
 import { PropController } from "./components/PropController";
 import { CodeEditor } from "./components/CodeEditor";
@@ -282,6 +282,7 @@ function App() {
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [editedCode, setEditedCode] = useState<string | null>(null);
   const [deployCodes, setDeployCodes] = useState<{ emotion: string; tailwind: string } | null>(null);
+  const [variantWarnings, setVariantWarnings] = useState<VariantInconsistency[]>([]);
   const editDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const previewContentRef = useRef<HTMLDivElement>(null);
@@ -381,9 +382,10 @@ function App() {
       setSlotMockupEnabled(initialSlotEnabled);
       setPropValues(initialValues);
 
-      // 프리뷰용 코드 생성 (현재 선택된 전략)
-      codeGenerator.compile().then((code) => {
-        setGeneratedCode(code);
+      // 프리뷰용 코드 생성 (현재 선택된 전략) + 진단 수집
+      codeGenerator.compileWithDiagnostics().then((result) => {
+        setGeneratedCode(result.code);
+        setVariantWarnings(result.diagnostics);
         setEditedCode(null);
       });
 
@@ -398,8 +400,8 @@ function App() {
       ]).then(([currentCode, otherCode]) => {
         setDeployCodes(
           styleStrategy === "emotion"
-            ? { emotion: currentCode, tailwind: otherCode }
-            : { emotion: otherCode, tailwind: currentCode }
+            ? { emotion: currentCode ?? "", tailwind: otherCode ?? "" }
+            : { emotion: otherCode ?? "", tailwind: currentCode ?? "" }
         );
       });
     } catch (e) {
@@ -589,6 +591,7 @@ function App() {
               fixedProps={fixedProps}
               isLoading={isLoading}
               error={error}
+              warnings={variantWarnings}
             />
           </div>
         )}

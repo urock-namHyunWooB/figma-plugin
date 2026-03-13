@@ -1,6 +1,7 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import { css } from "@emotion/react";
 import type { PropDefinition } from "@code-generator2/types/public";
+import type { VariantInconsistency } from "@code-generator2";
 import ErrorBoundary from "./ErrorBoundary";
 
 interface PropsMatrixProps {
@@ -10,6 +11,8 @@ interface PropsMatrixProps {
   fixedProps: Record<string, any>;
   isLoading: boolean;
   error: string | null;
+  /** variant 불일치 진단 정보 */
+  warnings?: VariantInconsistency[];
 }
 
 interface Axis {
@@ -234,6 +237,111 @@ const singleCellPreviewStyle = css`
   min-height: 60px;
 `;
 
+const warningCellStyle = css`
+  outline: 2px solid #ef4444;
+  outline-offset: -2px;
+  position: relative;
+`;
+
+const warningBadgeStyle = css`
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 1;
+`;
+
+const warningTooltipStyle = css`
+  position: absolute;
+  bottom: calc(100% + 4px);
+  right: 0;
+  background: #1f2937;
+  color: #fff;
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  white-space: pre;
+  z-index: 10;
+  pointer-events: none;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    right: 8px;
+    border: 4px solid transparent;
+    border-top-color: #1f2937;
+  }
+`;
+
+/**
+ * 셀의 prop 조합이 진단의 outlier variant와 매치되는지 확인
+ */
+function findCellWarnings(
+  cellProps: Record<string, any>,
+  warnings: VariantInconsistency[]
+): VariantInconsistency[] {
+  if (!warnings.length) return [];
+
+  return warnings.filter((w) =>
+    w.variants.some((v) =>
+      Object.entries(v.props).every(
+        ([key, val]) => String(cellProps[key]) === val
+      )
+    )
+  );
+}
+
+/**
+ * 경고가 있는 셀에 하이라이트 + 툴팁을 표시하는 래퍼
+ */
+function WarningOverlay({
+  cellWarnings,
+  onSelectNode,
+}: {
+  cellWarnings: VariantInconsistency[];
+  onSelectNode?: (nodeId: string) => void;
+}) {
+  const [showTooltip, setShowTooltip] = React.useState(false);
+
+  if (cellWarnings.length === 0) return null;
+
+  const tooltipLines = cellWarnings.map((w) => {
+    const variantDetails = w.variants.map((v) => {
+      // 현재 셀의 축(propName) 외 다른 prop만 표시
+      const otherProps = Object.entries(v.props)
+        .filter(([k]) => k !== w.propName)
+        .map(([k, val]) => `${k}=${val}`)
+        .join(", ");
+      return `  ${otherProps || "default"}: ${v.value}`;
+    });
+    const expected = w.expectedValue ? `\n  (기대값: ${w.expectedValue})` : "";
+    return `${w.cssProperty} 값 불일치:\n${variantDetails.join("\n")}${expected}`;
+  });
+
+  return (
+    <>
+      <span
+        css={warningBadgeStyle}
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        title={tooltipLines.join("\n")}
+      >
+        ⚠️
+      </span>
+      {showTooltip && (
+        <div css={warningTooltipStyle}>
+          {tooltipLines.map((line, i) => (
+            <div key={i}>{line}</div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
 const MAX_TOTAL = 200;
 
 export function PropsMatrix({
@@ -242,6 +350,7 @@ export function PropsMatrix({
   fixedProps,
   isLoading,
   error,
+  warnings = [],
 }: PropsMatrixProps) {
   const tableData = useMemo(
     () => buildTableData(propDefinitions, fixedProps),
@@ -360,39 +469,49 @@ export function PropsMatrix({
             {rowAxis.values.map((rowVal) => (
               <tr key={String(rowVal)}>
                 <td css={rowHeaderStyle}>{String(rowVal)}</td>
-                {colAxis.values.map((colVal) => (
-                  <td key={String(colVal)} css={cellTdStyle}>
-                    <div css={cellInnerStyle}>
-                      {extraCombos.map((extra, ei) => {
-                        const props = {
-                          ...fixedProps,
-                          [rowAxis.name]: rowVal,
-                          [colAxis.name]: colVal,
-                          ...extra,
-                        };
-                        const extraLabel = Object.entries(extra)
-                          .map(([k, v]) => `${k}=${String(v)}`)
-                          .join(", ");
-                        return (
-                          <React.Fragment key={ei}>
-                            {extraLabel && (
-                              <span css={subLabelStyle}>{extraLabel}</span>
-                            )}
-                            <ErrorBoundary
-                              fallback={
-                                <span style={{ color: "#dc2626", fontSize: 11 }}>
-                                  Render error
-                                </span>
-                              }
-                            >
-                              <Component {...props} />
-                            </ErrorBoundary>
-                          </React.Fragment>
-                        );
-                      })}
-                    </div>
-                  </td>
-                ))}
+                {colAxis.values.map((colVal) => {
+                  const cellProps = {
+                    ...fixedProps,
+                    [rowAxis.name]: rowVal,
+                    [colAxis.name]: colVal,
+                  };
+                  const cellWarnings = findCellWarnings(cellProps, warnings);
+                  return (
+                    <td
+                      key={String(colVal)}
+                      css={[cellTdStyle, cellWarnings.length > 0 && warningCellStyle]}
+                      style={{ position: "relative" }}
+                    >
+                      {cellWarnings.length > 0 && (
+                        <WarningOverlay cellWarnings={cellWarnings} />
+                      )}
+                      <div css={cellInnerStyle}>
+                        {extraCombos.map((extra, ei) => {
+                          const props = { ...cellProps, ...extra };
+                          const extraLabel = Object.entries(extra)
+                            .map(([k, v]) => `${k}=${String(v)}`)
+                            .join(", ");
+                          return (
+                            <React.Fragment key={ei}>
+                              {extraLabel && (
+                                <span css={subLabelStyle}>{extraLabel}</span>
+                              )}
+                              <ErrorBoundary
+                                fallback={
+                                  <span style={{ color: "#dc2626", fontSize: 11 }}>
+                                    Render error
+                                  </span>
+                                }
+                              >
+                                <Component {...props} />
+                              </ErrorBoundary>
+                            </React.Fragment>
+                          );
+                        })}
+                      </div>
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
