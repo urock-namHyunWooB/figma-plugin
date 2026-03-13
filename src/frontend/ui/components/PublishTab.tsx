@@ -357,9 +357,12 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
   const [ciStatus, setCIStatus] = useState<ComponentCIStatus | null>(null);
   const [ciLoading, setCILoading] = useState(false);
   const ciPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const currentComponentRef = useRef(componentName);
+  currentComponentRef.current = componentName;
 
   // 컴포넌트 전환 시 기존 PR 상태 확인
   useEffect(() => {
+    let cancelled = false;
     setStatus({ step: "idle" });
     setCIStatus(null);
 
@@ -367,23 +370,27 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
 
     const safeName = componentName.replace(/\s+/g, "");
     findComponentPR(safeName).then((pr) => {
-      if (pr) {
+      if (!cancelled && pr) {
         setStatus({ step: "done", prUrl: pr.html_url });
       }
     }).catch(() => {});
+    return () => { cancelled = true; };
   }, [componentName, figmaNodeId]);
 
   const isBusy = BUSY_STEPS.has(status.step);
   const isDone = status.step === "done";
   const isError = status.step === "error";
 
-  // CI status fetch — 현재 컴포넌트 PR만 조회
+  // CI status fetch — 현재 컴포넌트 PR만 조회 (stale 응답 무시)
   const fetchCI = useCallback(async () => {
     if (!componentName) return null;
+    const targetName = componentName.replace(/\s+/g, "");
     setCILoading(true);
     try {
-      const result = await getComponentCIStatus(componentName.replace(/\s+/g, ""));
-      setCIStatus(result);
+      const result = await getComponentCIStatus(targetName);
+      if (currentComponentRef.current.replace(/\s+/g, "") === targetName) {
+        setCIStatus(result);
+      }
       return result;
     } catch {
       return null;

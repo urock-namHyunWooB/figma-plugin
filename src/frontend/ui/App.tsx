@@ -350,6 +350,7 @@ function App() {
 
   // FigmaCodeGenerator로 코드 생성
   useEffect(() => {
+    let cancelled = false;
     setErrorBoundaryKey((prev) => prev + 1);
     setGeneratedCode(null);
 
@@ -387,6 +388,7 @@ function App() {
 
       // 프리뷰용 코드 생성 (현재 선택된 전략) + 진단 수집
       codeGenerator.compileWithDiagnostics().then((result) => {
+        if (cancelled) return;
         setGeneratedCode(result.code);
         setVariantWarnings(result.diagnostics);
         setEditedCode(null);
@@ -401,6 +403,7 @@ function App() {
         codeGenerator.compile(),
         otherGenerator.compile(),
       ]).then(([currentCode, otherCode]) => {
+        if (cancelled) return;
         setDeployCodes(
           styleStrategy === "emotion"
             ? { emotion: currentCode, tailwind: otherCode }
@@ -410,6 +413,7 @@ function App() {
     } catch (e) {
       console.error("FigmaCodeGenerator error:", e);
     }
+    return () => { cancelled = true; };
   }, [selectionNodeData, styleStrategy]);
 
   // 동적 컴포넌트 렌더러
