@@ -254,12 +254,19 @@ export async function mergePR(prNumber: number): Promise<void> {
   }
 }
 
-/** PR 닫기 (머지 없이) */
+/** PR 닫기 (머지 없이) — 닫기 후 상태 검증 */
 export async function closePR(prNumber: number): Promise<void> {
   await api(`/repos/${REPO_OWNER}/${REPO_NAME}/pulls/${prNumber}`, {
     method: "PATCH",
     body: JSON.stringify({ state: "closed" }),
   });
+
+  const pr = await api<{ state: string }>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls/${prNumber}`
+  );
+  if (pr.state !== "closed") {
+    throw new Error(`PR #${prNumber} 닫기 실패 (state: ${pr.state})`);
+  }
 }
 
 /** 브랜치 삭제 */

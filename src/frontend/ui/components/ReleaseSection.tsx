@@ -404,13 +404,13 @@ export function ReleaseSection() {
     try {
       await closePR(comp.pr.number);
       await deleteBranch(comp.pr.head.ref).catch(() => {});
-      setComponents((prev) => prev.filter((c) => c.pr.number !== comp.pr.number));
+      await fetchComponents();
     } catch (e) {
       setCloseError(`PR #${comp.pr.number} 닫기 실패: ${e instanceof Error ? e.message : e}`);
     } finally {
       setClosingPR(null);
     }
-  }, []);
+  }, [fetchComponents]);
 
   const isBusy = BUSY_STEPS.has(status.step);
   const isReleaseDone = status.step === "release-done";
