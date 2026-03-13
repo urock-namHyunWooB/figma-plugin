@@ -38,8 +38,8 @@ interface PackageTarget {
 }
 
 const PACKAGES: PackageTarget[] = [
-  { componentsDir: "packages/react/src/components", tokensPath: "packages/react/src/tokens.css", label: "Emotion" },
-  { componentsDir: "packages/react-tailwind/src/components", tokensPath: "packages/react-tailwind/src/tokens.css", label: "Tailwind" },
+  { componentsDir: "packages/react/src/components", tokensPath: "packages/react/tokens.css", label: "Emotion" },
+  { componentsDir: "packages/react-tailwind/src/components", tokensPath: "packages/react-tailwind/tokens.css", label: "Tailwind" },
 ];
 
 /**

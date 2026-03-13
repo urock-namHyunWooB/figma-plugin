@@ -158,18 +158,54 @@ export class FigmaPlugin {
   }
 
   /**
-   * Figma Variables에서 COLOR 토큰 추출 → UI로 전달
+   * 팀 라이브러리 + 로컬 Variables에서 COLOR 토큰 추출 → UI로 전달
    */
   private async handleExtractDesignTokens(): Promise<void> {
     try {
-      const variables = await figma.variables.getLocalVariablesAsync("COLOR");
-
-      // collection별 defaultModeId 캐시
+      const tokens: { name: string; value: string }[] = [];
       const collectionModeCache = new Map<string, string>();
 
-      const tokens: { name: string; value: string }[] = [];
+      // 팀 라이브러리 컬렉션 → 변수 가져오기
+      const libraryCollections =
+        await figma.teamLibrary.getAvailableLibraryVariableCollectionsAsync();
+      const colorLibVars: LibraryVariable[] = [];
+      for (const col of libraryCollections) {
+        const vars = await figma.teamLibrary.getVariablesInLibraryCollectionAsync(col.key);
+        colorLibVars.push(...vars.filter((v) => v.resolvedType === "COLOR"));
+      }
 
-      for (const variable of variables) {
+      for (const libVar of colorLibVars) {
+        try {
+          const imported = await figma.variables.importVariableByKeyAsync(libVar.key);
+          let modeId = collectionModeCache.get(imported.variableCollectionId);
+          if (!modeId) {
+            const collection = await figma.variables.getVariableCollectionByIdAsync(
+              imported.variableCollectionId
+            );
+            if (!collection) continue;
+            modeId = collection.defaultModeId;
+            collectionModeCache.set(imported.variableCollectionId, modeId);
+          }
+
+          const resolved = await this.resolveVariableValue(imported, modeId);
+          if (resolved) {
+            const cssName = imported.name
+              .replace(/\//g, "-")
+              .replace(/[^a-zA-Z0-9-_]/g, "");
+            if (cssName) {
+              tokens.push({ name: cssName, value: resolved });
+            }
+          }
+        } catch {
+          // 개별 변수 import 실패 시 스킵
+        }
+      }
+
+      // 로컬 변수도 추가 (중복 제거)
+      const localVars = await figma.variables.getLocalVariablesAsync("COLOR");
+      const existingNames = new Set(tokens.map((t) => t.name));
+
+      for (const variable of localVars) {
         let modeId = collectionModeCache.get(variable.variableCollectionId);
         if (!modeId) {
           const collection = await figma.variables.getVariableCollectionByIdAsync(
@@ -182,12 +218,10 @@ export class FigmaPlugin {
 
         const resolved = await this.resolveVariableValue(variable, modeId);
         if (resolved) {
-          // Figma 변수명 → CSS custom property 이름
-          // "/" → "-", 공백/특수문자 제거
           const cssName = variable.name
             .replace(/\//g, "-")
             .replace(/[^a-zA-Z0-9-_]/g, "");
-          if (cssName) {
+          if (cssName && !existingNames.has(cssName)) {
             tokens.push({ name: cssName, value: resolved });
           }
         }
