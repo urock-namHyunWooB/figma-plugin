@@ -12,6 +12,7 @@ import {
   getComponentCIStatus,
   getLatestCIStatus,
   getFileNodeId,
+  findTokensPR,
   COMPONENT_BRANCH_PREFIX,
   ACTIONS_URL,
   type OpenPR,
@@ -193,25 +194,30 @@ export async function releaseComponent(
   onStatus: (status: DeployStatus) => void
 ): Promise<void> {
   try {
-    // 1. 모든 컴포넌트 PR 검색
-    onStatus({ step: "checking-pr", message: "컴포넌트 PR 검색 중..." });
+    // 1. 모든 컴포넌트 PR + 토큰 PR 검색
+    onStatus({ step: "checking-pr", message: "PR 검색 중..." });
     const componentPRs = await findAllComponentPRs();
+    const tokenPR = await findTokensPR();
 
-    if (componentPRs.length === 0) {
-      onStatus({ step: "error", message: "배포된 컴포넌트 PR이 없습니다. 먼저 Deploy하세요." });
+    const allPRs = [...componentPRs];
+    if (tokenPR) allPRs.push(tokenPR);
+
+    if (allPRs.length === 0) {
+      onStatus({ step: "error", message: "배포된 PR이 없습니다. 먼저 Deploy하세요." });
       return;
     }
 
     // 2. 각 PR의 CI 상태 확인 → 통과한 것만 머지
-    onStatus({ step: "checking-ci", message: `${componentPRs.length}개 PR의 CI 상태 확인 중...` });
+    onStatus({ step: "checking-ci", message: `${allPRs.length}개 PR의 CI 상태 확인 중...` });
 
     const mergeable: OpenPR[] = [];
     const pendingNames: string[] = [];
     const failedNames: string[] = [];
 
-    for (const pr of componentPRs) {
+    for (const pr of allPRs) {
       const ciStatus = await getLatestCIStatus(pr);
-      const name = pr.head.ref.replace(COMPONENT_BRANCH_PREFIX, "");
+      const ref = pr.head.ref;
+      const name = ref === "design/tokens" ? "tokens" : ref.replace(COMPONENT_BRANCH_PREFIX, "");
       if (ciStatus === "success") {
         mergeable.push(pr);
       } else if (ciStatus === "pending") {
@@ -315,33 +321,66 @@ async function pollForReleasePR(
   return null;
 }
 
+const TOKENS_BRANCH = "design/tokens";
+
 /**
- * 디자인 토큰만 main 브랜치에 직접 커밋
+ * 디자인 토큰을 전용 브랜치/PR로 배포 (컴포넌트와 동일한 패턴)
  */
 export async function deployTokens(
   tokensCss: string,
   onStatus: (status: DeployStatus) => void
 ): Promise<void> {
   try {
-    onStatus({ step: "committing", message: "디자인 토큰 커밋 중..." });
+    // 1. 기존 토큰 PR 확인
+    onStatus({ step: "checking-pr", message: "토큰 PR 확인 중..." });
+    const existingPR = await findTokensPR();
 
+    let prUrl = "";
+
+    if (existingPR) {
+      prUrl = existingPR.html_url;
+    } else {
+      // 새 브랜치 생성
+      onStatus({ step: "creating-branch", message: "토큰 브랜치 생성 중..." });
+      await deleteBranch(TOKENS_BRANCH).catch(() => {});
+      const baseSha = await getBaseSha();
+      await createBranch(TOKENS_BRANCH, baseSha);
+    }
+
+    // 2. 토큰 파일 커밋
+    onStatus({ step: "committing", message: "디자인 토큰 커밋 중..." });
     const files = PACKAGES.map((pkg) => ({
       path: pkg.tokensPath,
       content: tokensCss,
     }));
 
-    const sha = await commitFiles("main", files, "feat: update design tokens");
+    const lastCommitSha = await commitFiles(
+      TOKENS_BRANCH,
+      files,
+      "feat: update design tokens"
+    );
 
-    if (!sha) {
-      onStatus({ step: "done", prUrl: "", message: "토큰이 이미 최신 상태입니다." });
+    if (!lastCommitSha) {
+      onStatus({ step: "done", prUrl, message: "토큰이 이미 최신 상태입니다." });
       return;
     }
 
-    onStatus({ step: "done", prUrl: "", message: "디자인 토큰이 배포되었습니다." });
+    // 3. PR 생성 (새 브랜치일 때만)
+    if (!existingPR) {
+      onStatus({ step: "creating-pr", message: "토큰 PR 생성 중..." });
+      prUrl = await createPullRequest(
+        TOKENS_BRANCH,
+        "feat: update design tokens",
+        "## Design Tokens\n\n> Auto-generated from Figma plugin\n> Extracted via boundVariables scan"
+      );
+    }
+
+    onStatus({ step: "done", prUrl, message: "디자인 토큰이 배포되었습니다." });
   } catch (e) {
     onStatus({ step: "error", message: (e as Error).message });
   }
 }
+
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

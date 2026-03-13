@@ -218,6 +218,16 @@ export async function findAllComponentPRs(): Promise<OpenPR[]> {
   return prs.filter((pr) => pr.head.ref.startsWith(COMPONENT_BRANCH_PREFIX));
 }
 
+const TOKENS_BRANCH = "design/tokens";
+
+/** 토큰 PR 검색 (design/tokens 브랜치) */
+export async function findTokensPR(): Promise<OpenPR | null> {
+  const prs = await api<OpenPR[]>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls?state=open&head=${REPO_OWNER}:${TOKENS_BRANCH}`
+  );
+  return prs[0] ?? null;
+}
+
 /** release-please 릴리즈 PR 검색 */
 export async function findReleasePR(): Promise<OpenPR | null> {
   const prs = await api<OpenPR[]>(
