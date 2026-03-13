@@ -284,6 +284,7 @@ export class DynamicStyleDecomposer {
       }
     }
 
+
     // Step 3: 모든 CSS 속성 수집
     const allCssKeys = new Set<string>();
     for (const entry of matrix) {
@@ -297,12 +298,12 @@ export class DynamicStyleDecomposer {
     for (const cssKey of allCssKeys) {
       const owner = this.findControllingProp(cssKey, matrix, allProps, diagnostics);
       cssKeyOwner.set(cssKey, owner);
-    }
+      }
 
     // Step 5: 결과 맵 구성 — 각 엔트리에서 소유 prop에 해당하는 CSS 속성만 배치
     for (const entry of matrix) {
       for (const [propName, propValue] of entry.propValues) {
-        // 이 prop이 소유하는 CSS 속성만 수집
+        // 이 prop이 소유하는 CSS 속성만 수집 (compound owner는 건너뜀)
         const ownedStyle: Record<string, string | number> = {};
         for (const [cssKey, cssValue] of Object.entries(entry.style)) {
           if (cssKeyOwner.get(cssKey) === propName) {
@@ -322,6 +323,39 @@ export class DynamicStyleDecomposer {
         } else {
           // 이미 존재하면 merge (단일 prop 엔트리가 먼저 들어갔을 수 있음)
           Object.assign(propMap.get(propValue)!, ownedStyle);
+        }
+      }
+    }
+
+    // Step 5b: compound owner 처리 — "propA+propB" 형태의 복합 키
+    const compoundOwners = new Set(
+      [...cssKeyOwner.values()].filter((o) => o.includes("+"))
+    );
+    for (const owner of compoundOwners) {
+      const parts = owner.split("+");
+      if (!result.has(owner)) result.set(owner, new Map());
+      const propMap = result.get(owner)!;
+
+      for (const entry of matrix) {
+        const values = parts.map((p) => entry.propValues.get(p));
+        if (values.some((v) => v === undefined)) continue;
+        const compoundValue = values.join("+");
+
+        const ownedStyle: Record<string, string | number> = {};
+        for (const [cssKey, cssValue] of Object.entries(entry.style)) {
+          if (cssKeyOwner.get(cssKey) === owner) {
+            ownedStyle[cssKey] = cssValue;
+          }
+        }
+        if (Object.keys(ownedStyle).length === 0) continue;
+
+        if (!propMap.has(compoundValue)) {
+          propMap.set(compoundValue, ownedStyle);
+        } else {
+          const existing = propMap.get(compoundValue)!;
+          for (const [k, v] of Object.entries(ownedStyle)) {
+            if (!(k in existing)) existing[k] = v;
+          }
         }
       }
     }
@@ -346,7 +380,46 @@ export class DynamicStyleDecomposer {
       }
     }
 
-    // 2차: best-fit — 일관적 그룹이 가장 많은 prop 선택
+    // 2차: 복합 prop — N-prop 조합이 일관적인지 확인 (2-prop → 3-prop 순)
+    // 단, 단일 prop으로 과반수 초과 그룹이 일관적이면 compound보다 single+diagnostic 선호
+    if (allProps.length >= 2) {
+      let bestSingleRatio = 0;
+      for (const propName of allProps) {
+        const groups = this.buildPropGroups(propName, cssKey, matrix);
+        if (groups.size <= 1) continue;
+        let consistent = 0;
+        for (const group of groups.values()) {
+          if (this.isGroupConsistent(group)) consistent++;
+        }
+        bestSingleRatio = Math.max(bestSingleRatio, consistent / groups.size);
+      }
+
+      if (bestSingleRatio <= 0.5) {
+        // 2-prop compound
+        const n = allProps.length;
+        for (let i = 0; i < n; i++) {
+          for (let j = i + 1; j < n; j++) {
+            if (this.isCompoundConsistent([allProps[i], allProps[j]], cssKey, matrix)) {
+              return `${allProps[i]}+${allProps[j]}`;
+            }
+          }
+        }
+        // 3-prop compound
+        if (n >= 3) {
+          for (let i = 0; i < n; i++) {
+            for (let j = i + 1; j < n; j++) {
+              for (let k = j + 1; k < n; k++) {
+                if (this.isCompoundConsistent([allProps[i], allProps[j], allProps[k]], cssKey, matrix)) {
+                  return `${allProps[i]}+${allProps[j]}+${allProps[k]}`;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 3차: best-fit — 일관적 그룹이 가장 많은 prop 선택
     let bestProp = allProps[0];
     let bestConsistent = -1;
 
@@ -427,6 +500,60 @@ export class DynamicStyleDecomposer {
     }
 
     return groups;
+  }
+
+  /**
+   * N개 prop의 복합 조합이 CSS 속성을 일관적으로 제어하는지 확인.
+   * 예: [style, tone] → style=filled + tone=blue 조합에서 background가 항상 동일한 값
+   */
+  private static isCompoundConsistent(
+    props: string[],
+    cssKey: string,
+    matrix: MatrixEntry[]
+  ): boolean {
+    const groups = new Map<string, PropGroup>();
+
+    for (const entry of matrix) {
+      const values = props.map((p) => entry.propValues.get(p));
+      if (values.some((v) => v === undefined)) continue;
+
+      const compoundKey = values.join("+");
+      if (!groups.has(compoundKey)) {
+        groups.set(compoundKey, { entries: [], presentValues: [], absentCount: 0 });
+      }
+
+      const group = groups.get(compoundKey)!;
+      group.entries.push(entry);
+
+      if (cssKey in entry.style) {
+        group.presentValues.push(entry.style[cssKey]);
+      } else {
+        group.absentCount++;
+      }
+    }
+
+    if (groups.size <= 1) return false;
+
+    // compound가 의미있으려면 최소 1개 그룹에 2+ 엔트리가 있어야 함
+    // (모든 그룹이 1개 엔트리 = 단순 열거이므로 compound 불필요)
+    let hasMultiEntryGroup = false;
+    for (const group of groups.values()) {
+      if (!this.isGroupConsistent(group)) return false;
+      if (group.entries.length > 1) hasMultiEntryGroup = true;
+    }
+    if (!hasMultiEntryGroup) return false;
+
+    // 그룹 간 차이가 있어야 "제어"한다고 판단
+    const signatures = new Set<string>();
+    for (const group of groups.values()) {
+      if (group.presentValues.length > 0) {
+        signatures.add(normalizeCssValue(String(group.presentValues[0])));
+      } else {
+        signatures.add("__absent__");
+      }
+    }
+
+    return signatures.size > 1;
   }
 
   /** 그룹 내 CSS 값이 모두 동일한지 확인 */

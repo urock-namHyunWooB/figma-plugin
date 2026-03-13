@@ -207,15 +207,28 @@ export class VisibilityProcessor {
     // 1. 공통 prop 찾기 (모든 mergedNode가 같은 value)
     const commonProps = this.findCommonProps(allVariantProps);
 
+    const conditions: ConditionNode[] = commonProps.map(({ key, value }) =>
+      this.createCondition(key, value)
+    );
+
+    // 2. 비공통 prop의 부분 커버리지 확인
+    // 예: icon_delete가 State=loading(공통) + Size=M,S(비공통, L 미포함)인 경우
+    //     → AND(state=loading, OR(size=M, size=S))
     if (commonProps.length > 0) {
-      const conditions = commonProps.map(({ key, value }) =>
-        this.createCondition(key, value)
+      const commonKeys = new Set(commonProps.map((p) => p.key));
+      const partialConditions = this.findPartialCoverageConditions(
+        allVariantProps,
+        commonKeys
       );
+      conditions.push(...partialConditions);
+    }
+
+    if (conditions.length > 0) {
       if (conditions.length === 1) return conditions[0];
       return { type: "and", conditions };
     }
 
-    // 2. 공통 prop이 없으면 subset 조건 시도 (OR 조건)
+    // 3. 공통 prop이 없으면 subset 조건 시도 (OR 조건)
     return this.findSubsetConditions(allVariantProps);
   }
 
@@ -355,6 +368,54 @@ export class VisibilityProcessor {
     if (conditions.length === 0) return undefined;
     if (conditions.length === 1) return conditions[0];
     return { type: "and", conditions };
+  }
+
+  /**
+   * 공통 prop 이외의 prop에서 부분 커버리지 조건 생성
+   *
+   * 공통 prop이 이미 조건을 제한하므로, 나머지 prop은 value 집합 비교만으로 충분.
+   * (count 기반이 아닌 set 기반 — 공통 조건이 count 차이를 설명하기 때문)
+   *
+   * 예: icon_delete → State=loading(공통), Size={M,S} vs root Size={L,M,S}
+   *     → OR(size=M, size=S)
+   */
+  private findPartialCoverageConditions(
+    allVariantProps: Array<Array<{ key: string; value: string }>>,
+    commonKeys: Set<string>
+  ): ConditionNode[] {
+    const BP_NAME_RE = /breakpoint|device|screen/i;
+
+    // 비공통 prop의 value 집합 수집
+    const childValueSets = new Map<string, Set<string>>();
+    for (const variantProps of allVariantProps) {
+      for (const { key, value } of variantProps) {
+        if (commonKeys.has(key)) continue;
+        if (!childValueSets.has(key)) childValueSets.set(key, new Set());
+        childValueSets.get(key)!.add(value);
+      }
+    }
+
+    const conditions: ConditionNode[] = [];
+    for (const [propKey, childValues] of childValueSets) {
+      if (BP_NAME_RE.test(propKey)) continue;
+      const rootValMap = this.rootValueDistribution.get(propKey);
+      if (!rootValMap) continue;
+
+      // child가 root의 모든 value를 가지면 제약 불필요
+      if (childValues.size >= rootValMap.size) continue;
+
+      // 부분 커버리지 → OR 조건
+      const eqConditions = [...childValues].map((v) =>
+        this.createCondition(propKey, v)
+      );
+      if (eqConditions.length === 1) {
+        conditions.push(eqConditions[0]);
+      } else {
+        conditions.push({ type: "or", conditions: eqConditions });
+      }
+    }
+
+    return conditions;
   }
 
   /**

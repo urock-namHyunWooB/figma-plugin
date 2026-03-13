@@ -266,6 +266,8 @@ export class TailwindStrategy implements IStyleStrategy {
 
       if (entries.length === 0) continue;
 
+      // compound prop ("style+tone")은 cva variants로 표현 불가 → 건너뜀
+      if (propName.includes("+")) continue;
       // Figma prop 이름에서 제어 문자 제거 (backspace 등)
       const safePropName = propName.replace(/[\x00-\x1f\x7f]/g, "");
       const propKey = this.needsQuoting(safePropName) ? `"${safePropName}"` : safePropName;

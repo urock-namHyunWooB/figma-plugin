@@ -370,6 +370,12 @@ export class SlotProcessor {
           continue;
         }
 
+        // 같은 componentId 인스턴스들이 다른 타입의 노드로 분리되어 있으면
+        // array slot이 아닌 개별 요소 (예: 버튼의 좌/우 아이콘)
+        if (!this.areContiguous(group, children)) {
+          continue;
+        }
+
         return {
           parentId,
           nodeIds: group.map((node) => node.id),
@@ -384,6 +390,22 @@ export class SlotProcessor {
   // ==========================================================================
   // Helper Methods
   // ==========================================================================
+
+  /**
+   * 그룹 내 인스턴스들이 children 배열에서 연속으로 배치되어 있는지 확인.
+   * 비연속이면 개별 요소 (예: 버튼 좌/우 아이콘처럼 TEXT로 분리된 경우)
+   */
+  private areContiguous(
+    group: InternalTree[],
+    children: InternalTree[]
+  ): boolean {
+    const indices = group.map((node) => children.indexOf(node));
+    indices.sort((a, b) => a - b);
+    for (let i = 1; i < indices.length; i++) {
+      if (indices[i] !== indices[i - 1] + 1) return false;
+    }
+    return true;
+  }
 
   /**
    * INSTANCE 노드 ID에서 slot 컴포넌트 관계 정보 추출
