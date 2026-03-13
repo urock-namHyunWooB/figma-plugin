@@ -31,7 +31,7 @@ export function requestDesignTokens(): Promise<DesignToken[]> {
     timer = setTimeout(() => {
       cleanup();
       reject(new Error("디자인 토큰 추출 타임아웃"));
-    }, 10_000);
+    }, 60_000);
 
     parent.postMessage(
       { pluginMessage: { type: MESSAGE_TYPES.EXTRACT_DESIGN_TOKENS } },

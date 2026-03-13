@@ -398,8 +398,9 @@ export class TailwindStrategy implements IStyleStrategy {
     // 접두사 기반 변환
     const prefix = CSS_TO_PREFIX[camelProperty];
     if (prefix) {
-      if (camelProperty === "borderRadius") {
-        return `${prefix}-[${this.escapeArbitraryValue(valueStr)}]`;
+      // text-[var(...)]은 Tailwind이 color로 해석하므로 length: 타입 힌트 필요
+      if (camelProperty === "fontSize") {
+        return `${prefix}-[length:${this.escapeArbitraryValue(valueStr)}]`;
       }
       return `${prefix}-[${this.escapeArbitraryValue(valueStr)}]`;
     }

@@ -249,7 +249,7 @@ export class FigmaPlugin {
 
       // 3. 로컬 변수도 추가 (중복 제거)
       const localVars = await figma.variables.getLocalVariablesAsync("COLOR");
-      const existingNames = new Set(tokens.map((t) => t.name));
+      let existingNames = new Set(tokens.map((t) => t.name));
 
       for (const variable of localVars) {
         if (seenVarIds.has(variable.id)) continue;
@@ -270,6 +270,43 @@ export class FigmaPlugin {
           const cssName = toTokenCssName(variable, collectionNameCache.get(variable.variableCollectionId));
           if (cssName && !existingNames.has(cssName)) {
             tokens.push({ name: cssName, value: resolved });
+          }
+        }
+      }
+
+      // 4. 문서 전체의 COMPONENT_SET/COMPONENT에서 getCSSAsync로 누락 토큰 보충
+      //    boundVariables가 INSTANCE 상속 변수를 노출하지 않는 Figma API 한계 보완
+      //    성능: COMPONENT_SET의 직계 variant + 깊이 2까지만 스캔
+      existingNames = new Set(tokens.map((t) => t.name));
+      await figma.loadAllPagesAsync();
+      const componentSets = figma.root.findAll(
+        (n) => n.type === "COMPONENT_SET"
+      );
+
+      const extractVarsFromCss = (css: Record<string, string>) => {
+        for (const val of Object.values(css)) {
+          const matches = val.matchAll(/var\(--([^,]+),\s*([^)]+)\)/g);
+          for (const m of matches) {
+            const name = m[1].trim();
+            const fallback = m[2].trim();
+            if (!existingNames.has(name) && /^#[0-9a-fA-F]{3,8}$/.test(fallback)) {
+              tokens.push({ name, value: fallback.toLowerCase() });
+              existingNames.add(name);
+            }
+          }
+        }
+      };
+
+      for (const cs of componentSets) {
+        if (!("children" in cs)) continue;
+        // variant(직계 자식) 순회
+        for (const variant of (cs as FrameNode).children) {
+          try { extractVarsFromCss(await variant.getCSSAsync()); } catch { /* skip */ }
+          // variant의 직계 자식 (깊이 1) 순회
+          if ("children" in variant) {
+            for (const child of (variant as FrameNode).children) {
+              try { extractVarsFromCss(await child.getCSSAsync()); } catch { /* skip */ }
+            }
           }
         }
       }
