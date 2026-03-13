@@ -380,14 +380,11 @@ export class ButtonHeuristic implements IHeuristic {
     });
 
     // 2. Slot 노드 처리
-    //    - TEXT slot: {text}로만 렌더링 → wrapper div 불필요 → styles 제거
+    //    - TEXT slot: {text}로 렌더링하되 styles는 유지 (font-size, color 등 필요)
     //    - INSTANCE slot: wrapper div가 CSS를 사용 → styles 유지, children만 제거
     for (const child of node.children) {
       const slotProp = (child.bindings as any)?.content?.prop;
       if (typeof slotProp === "string") {
-        if (child.type === "TEXT") {
-          child.styles = undefined;
-        }
         child.children = [];
       } else {
         // 재귀 처리

@@ -714,17 +714,19 @@ export class StyleProcessor {
     }>,
     base: Record<string, string | number>
   ): Array<{ condition: ConditionNode; style: Record<string, string | number> }> {
-    // state 값별 그룹핑
-    const stateGroups = new Map<string, Array<Record<string, string>>>();
-    const stateKeys = new Map<string, string>(); // state value → prop key (State or states)
+    // state 값별 그룹핑 (variant 이름도 보존)
+    const stateGroups = new Map<string, Array<{variantName: string; cssStyle: Record<string, string>}>>();
+    const stateKeys = new Map<string, string>();
 
     for (const variant of pseudoVariants) {
       if (!stateGroups.has(variant.state)) {
         stateGroups.set(variant.state, []);
       }
-      stateGroups.get(variant.state)!.push(variant.cssStyle);
+      stateGroups.get(variant.state)!.push({
+        variantName: variant.variantName,
+        cssStyle: variant.cssStyle,
+      });
 
-      // state prop key 추출 (State= or states=)
       if (!stateKeys.has(variant.state)) {
         const match = variant.variantName.match(/(State|states)\s*=/i);
         if (match) stateKeys.set(variant.state, match[1]);
@@ -734,20 +736,39 @@ export class StyleProcessor {
     const result: Array<{ condition: ConditionNode; style: Record<string, string | number> }> = [];
 
     for (const [stateValue, variants] of stateGroups) {
-      // 각 variant의 base 대비 diff
-      const diffs = variants.map((css) => this.getDifferentStyles(css, base));
+      const diffs = variants.map((v) => this.getDifferentStyles(v.cssStyle, base));
 
-      // 모든 variant에 공통인 diff만 추출
       const commonDiff = this.extractCommonStyles(
         diffs as Array<Record<string, string>>
       );
 
-      if (Object.keys(commonDiff).length === 0) continue;
+      // 공통 diff → 단일 state 조건 엔트리
+      if (Object.keys(commonDiff).length > 0) {
+        const propKey = stateKeys.get(stateValue) || "states";
+        const condition = this.createCondition(propKey, stateValue);
+        result.push({ condition, style: commonDiff });
+      }
 
-      const propKey = stateKeys.get(stateValue) || "states";
-      const condition = this.createCondition(propKey, stateValue);
+      // 비공통 diff → per-variant 엔트리 (compound-varying CSS 보존)
+      // tone/style에 따라 다른 background 등이 여기에 해당
+      for (let i = 0; i < variants.length; i++) {
+        const diff = diffs[i];
+        const nonCommonDiff: Record<string, string | number> = {};
+        for (const [key, val] of Object.entries(diff)) {
+          if (!(key in commonDiff)) {
+            nonCommonDiff[key] = val;
+          }
+        }
+        if (Object.keys(nonCommonDiff).length === 0) continue;
 
-      result.push({ condition, style: commonDiff });
+        const condition = this.createConditionFromVariantName(
+          variants[i].variantName,
+          true // state 조건 포함
+        );
+        if (condition) {
+          result.push({ condition, style: nonCommonDiff });
+        }
+      }
     }
 
     return result;

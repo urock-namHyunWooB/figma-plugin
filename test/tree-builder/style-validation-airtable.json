@@ -675,9 +675,13 @@
     },
     {
       "name": "Label",
-      "hasStyles": false,
-      "baseKeys": [],
-      "dynamicCount": 0,
+      "hasStyles": true,
+      "baseKeys": [
+        "font-family",
+        "font-style",
+        "font-weight"
+      ],
+      "dynamicCount": 21,
       "pseudoKeys": []
     }
   ]

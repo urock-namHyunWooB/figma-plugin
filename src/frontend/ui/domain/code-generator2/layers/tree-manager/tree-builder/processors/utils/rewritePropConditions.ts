@@ -396,6 +396,31 @@ function pseudoConvertNode(
     groups.get(key)!.push(entry);
   }
 
+  // 2.5 compound-varying CSS 속성 감지
+  // 같은 state 값이 여러 nonStateCondition 그룹에서 다른 CSS 값을 가지면 compound
+  const compoundProps = new Set<string>();
+  if (groups.size > 1) {
+    const propStateValues = new Map<string, Map<string, Set<string>>>();
+    for (const group of groups.values()) {
+      for (const entry of group) {
+        for (const [key, val] of Object.entries(entry.style)) {
+          if (!propStateValues.has(key)) propStateValues.set(key, new Map());
+          const stateMap = propStateValues.get(key)!;
+          if (!stateMap.has(entry.stateValue)) stateMap.set(entry.stateValue, new Set());
+          stateMap.get(entry.stateValue)!.add(String(val));
+        }
+      }
+    }
+    for (const [prop, stateMap] of propStateValues) {
+      for (const [, values] of stateMap) {
+        if (values.size > 1) {
+          compoundProps.add(prop);
+          break;
+        }
+      }
+    }
+  }
+
   // 3. 그룹별 처리
   const baseAdditions: Record<string, string | number> = {};
   const nonStateVaryingEntries: DynEntry[] = [];
@@ -403,7 +428,7 @@ function pseudoConvertNode(
   const keptEntries: DynEntry[] = [];
 
   for (const group of groups.values()) {
-    processPseudoGroup(group, pseudoMap, removedProp, baseAdditions, nonStateVaryingEntries, pseudoAdditions, keptEntries);
+    processPseudoGroup(group, pseudoMap, removedProp, baseAdditions, nonStateVaryingEntries, pseudoAdditions, keptEntries, compoundProps);
   }
 
   // 4. dynamic 교체 + base 병합 + pseudo 병합
@@ -436,7 +461,8 @@ function processPseudoGroup(
   baseAdditions: Record<string, string | number>,
   nonStateVaryingEntries: DynEntry[],
   pseudoAdditions: Map<PseudoClass, Record<string, string | number>>,
-  keptEntries: DynEntry[]
+  keptEntries: DynEntry[],
+  compoundProps: Set<string>
 ): void {
   // a. 3가지로 분류:
   //    - pseudo: pseudoMap에 있는 값 (hover → :hover)
@@ -460,9 +486,19 @@ function processPseudoGroup(
   }
 
   if (pseudoEntries.length === 0) {
-    // default-only group: pseudo 변환할 것이 없지만,
-    // default 스타일은 비-state 조건으로 dynamic에 보존해야 함
-    if (defaultEntry && defaultEntry.nonStateCondition) {
+    if (defaultEntry && keptStateEntries.length > 0) {
+      // kept entries(loading 등)가 존재 → default도 state 조건을 유지하여
+      // decomposer의 compound 분해가 대칭적으로 작동하도록 보장.
+      // (state 조건을 제거하면 3-prop vs 4-prop 비대칭 → compound 감지 실패)
+      // non-state-varying CSS(font-size 등)는 decomposer의 removeUniformProperties가
+      // state 차원에서 동일 값을 자동 제거하므로 중복 문제 없음.
+      const cond: ConditionNode = { type: "eq", prop: removedProp, value: defaultEntry.stateValue };
+      const fullCond = defaultEntry.nonStateCondition
+        ? { type: "and" as const, conditions: [cond, defaultEntry.nonStateCondition] }
+        : cond;
+      keptEntries.push({ condition: fullCond, style: defaultEntry.style });
+    } else if (defaultEntry && defaultEntry.nonStateCondition) {
+      // kept entries 없음 → 기존 동작: 전체 스타일을 비-state 조건으로 보존
       nonStateVaryingEntries.push({
         condition: defaultEntry.nonStateCondition,
         style: defaultEntry.style,
@@ -497,20 +533,45 @@ function processPseudoGroup(
     }
   }
 
-  // c. default의 state-varying CSS → base에 병합
+  // b-2. compound-varying keys: pseudo/base 대신 keptEntries로 보존
+  const compoundVaryingKeys = new Set(
+    [...stateVaryingKeys].filter(k => compoundProps.has(k))
+  );
+
+  if (compoundVaryingKeys.size > 0) {
+    // default + pseudo entries → keptEntries (전체 스타일로 대칭 유지)
+    if (defaultEntry) {
+      const cond: ConditionNode = { type: "eq", prop: removedProp, value: defaultEntry.stateValue };
+      const fullCond = defaultEntry.nonStateCondition
+        ? { type: "and" as const, conditions: [cond, defaultEntry.nonStateCondition] }
+        : cond;
+      keptEntries.push({ condition: fullCond, style: { ...defaultEntry.style } });
+    }
+    for (const pe of pseudoEntries) {
+      const cond: ConditionNode = { type: "eq", prop: removedProp, value: pe.stateValue };
+      const fullCond = pe.nonStateCondition
+        ? { type: "and" as const, conditions: [cond, pe.nonStateCondition] }
+        : cond;
+      keptEntries.push({ condition: fullCond, style: { ...pe.style } });
+    }
+  }
+
+  // c. default의 state-varying CSS → base에 병합 (compound 제외)
   for (const key of stateVaryingKeys) {
+    if (compoundVaryingKeys.has(key)) continue;
     if (key in defaultEntry.style) {
       baseAdditions[key] = defaultEntry.style[key];
     }
   }
 
-  // d. pseudo 엔트리 → pseudo 스타일로 이동 (state-varying CSS만)
+  // d. pseudo 엔트리 → pseudo 스타일로 이동 (state-varying CSS만, compound 제외)
   for (const pe of pseudoEntries) {
     const pseudo = pseudoMap[pe.stateValue];
     if (!pseudo) continue;
 
     const style: Record<string, string | number> = {};
     for (const key of stateVaryingKeys) {
+      if (compoundVaryingKeys.has(key)) continue;
       if (key in pe.style) {
         style[key] = pe.style[key];
       }

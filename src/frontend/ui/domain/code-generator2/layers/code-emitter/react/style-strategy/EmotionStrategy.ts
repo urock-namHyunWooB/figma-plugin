@@ -124,8 +124,10 @@ export class EmotionStrategy implements IStyleStrategy {
 
     for (const [propName, valueMap] of groups) {
       const entries = this.buildVariantEntries(valueMap);
-      // Figma prop 이름에서 제어 문자 제거 (backspace 등)
-      const safePropName = propName.replace(/[\x00-\x1f\x7f]/g, "");
+      // Figma prop 이름에서 제어 문자 제거 + compound prop 처리 ("style+tone" → "styleTone")
+      const safePropName = propName
+        .replace(/[\x00-\x1f\x7f]/g, "")
+        .replace(/\+(\w)/g, (_, c: string) => c.toUpperCase());
       const varName = `${baseVarName}_${safePropName}Styles`;
       if (entries.length > 0) {
         codeParts.push(`const ${varName}: Record<string, any> = {\n${entries.join("\n")}\n};`);

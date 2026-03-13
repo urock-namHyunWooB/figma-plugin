@@ -646,12 +646,12 @@ ${indentStr})}` : jsx;
       if (dynamicProps.length > 0) {
         if (styleStrategy.name === "emotion") {
           const dynamicStyleRefs = dynamicProps.map(
-            (prop) => `${wrapperStyleVarName}_${prop}Styles?.[String(${prop})]`
+            (prop) => this.buildDynamicStyleRef(wrapperStyleVarName, prop)
           );
           wrapperAttrs = `css={[${wrapperStyleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
         } else {
-          const propArgs = dynamicProps.map(
-            (prop) => prop.replace(/[\x00-\x1f\x7f]/g, "")
+          const propArgs = dynamicProps.flatMap(
+            (prop) => prop.split("+").map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
           );
           wrapperAttrs = `className={${wrapperStyleVarName}({ ${propArgs.join(", ")} })}`;
         }
@@ -849,16 +849,13 @@ ${indentStr}</${tag}>`;
         if (styleStrategy.name === "emotion") {
           // Emotion: css prop 배열
           const dynamicStyleRefs = dynamicProps.map(
-            (prop) => {
-              const safeProp = prop.replace(/[\x00-\x1f\x7f]/g, "");
-              return `${styleVarName}_${safeProp}Styles?.[String(${safeProp})]`;
-            }
+            (prop) => this.buildDynamicStyleRef(styleVarName, prop)
           );
           attrs.push(`css={[${styleVarName}, ${dynamicStyleRefs.join(", ")}]}`);
         } else {
           // Tailwind: cva 함수 호출
-          const propArgs = dynamicProps.map(
-            (prop) => prop.replace(/[\x00-\x1f\x7f]/g, "")
+          const propArgs = dynamicProps.flatMap(
+            (prop) => prop.split("+").map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
           );
           attrs.push(`className={${styleVarName}({ ${propArgs.join(", ")} })}`);
         }
@@ -1040,7 +1037,13 @@ ${indentStr}</${tag}>`;
 
     for (const [propName, valueMap] of groups) {
       // 컴포넌트에서 참조 가능한 변수만 포함 (props 또는 파생 변수)
-      if (!this.availableVarNames.has(propName)) continue;
+      // compound prop ("style+tone")은 구성 prop들이 모두 사용 가능해야 함
+      if (propName.includes("+")) {
+        const parts = propName.split("+");
+        if (!parts.every((p) => this.availableVarNames.has(p))) continue;
+      } else {
+        if (!this.availableVarNames.has(propName)) continue;
+      }
 
       // 최소 하나의 value에 실제 CSS 속성이 있는 경우만 포함
       const hasContent = [...valueMap.values()].some(
@@ -1052,6 +1055,24 @@ ${indentStr}</${tag}>`;
     }
 
     return propNames;
+  }
+
+  /**
+   * dynamic style prop에 대한 Emotion css 배열 참조 코드 생성.
+   * compound prop ("style+tone") → `varName_styleToneStyles?.[`${style}+${tone}`]`
+   * single prop ("size") → `varName_sizeStyles?.[String(size)]`
+   */
+  private static buildDynamicStyleRef(styleVarName: string, prop: string): string {
+    if (prop.includes("+")) {
+      const parts = prop.split("+");
+      const safeName = parts
+        .map((p, i) => (i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)))
+        .join("");
+      const lookupParts = parts.map((p) => `\${${p}}`).join("+");
+      return `${styleVarName}_${safeName}Styles?.[\`${lookupParts}\`]`;
+    }
+    const safeProp = prop.replace(/[\x00-\x1f\x7f]/g, "");
+    return `${styleVarName}_${safeProp}Styles?.[String(${safeProp})]`;
   }
 
   /**
@@ -1087,15 +1108,12 @@ ${indentStr}</${tag}>`;
     if (dynamicProps.length > 0) {
       if (styleStrategy.name === "emotion") {
         const dynamicStyleRefs = dynamicProps.map(
-          (prop) => {
-            const safeProp = prop.replace(/[\x00-\x1f\x7f]/g, "");
-            return `${styleVarName}_${safeProp}Styles?.[String(${safeProp})]`;
-          }
+          (prop) => this.buildDynamicStyleRef(styleVarName, prop)
         );
         wrapperAttrs = `css={[${styleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
       } else {
-        const propArgs = dynamicProps.map(
-          (prop) => prop.replace(/[\x00-\x1f\x7f]/g, "")
+        const propArgs = dynamicProps.flatMap(
+          (prop) => prop.split("+").map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
         );
         wrapperAttrs = `className={${styleVarName}({ ${propArgs.join(", ")} })}`;
       }
