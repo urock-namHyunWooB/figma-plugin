@@ -87,10 +87,11 @@ export async function commitFiles(
   const baseCommitSha = ref.object.sha;
 
   // 2. 기존 파일과 비교 — 변경된 파일만 추림
+  const normalize = (s: string) => s.replace(/\r\n/g, "\n").trimEnd();
   const changedFiles: Array<{ path: string; content: string }> = [];
   for (const file of files) {
     const existing = await getFileContent(file.path, branchName);
-    if (existing !== file.content) {
+    if (existing === null || normalize(existing) !== normalize(file.content)) {
       changedFiles.push(file);
     }
   }
@@ -368,7 +369,7 @@ export async function getAllComponentCIStatus(): Promise<ComponentCIStatus[]> {
   );
 }
 
-async function getPRCIDetail(pr: OpenPR, componentName: string): Promise<ComponentCIStatus> {
+export async function getPRCIDetail(pr: OpenPR, componentName: string): Promise<ComponentCIStatus> {
   const result = await api<{ check_runs: Array<{ name: string; status: string; conclusion: string | null; html_url: string }> }>(
     `/repos/${REPO_OWNER}/${REPO_NAME}/commits/${pr.head.sha}/check-runs`
   );

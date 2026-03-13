@@ -6,6 +6,9 @@ import {
   getAllComponentCIStatus,
   closePR,
   deleteBranch,
+  findTokensPR,
+  getPRCIDetail,
+  ACTIONS_URL,
   type ComponentCIStatus,
   type CheckStatus,
 } from "../services/GitHubAPI";
@@ -367,6 +370,11 @@ export function ReleaseSection() {
     setLoading(true);
     try {
       const statuses = await getAllComponentCIStatus();
+      const tokenPR = await findTokensPR();
+      if (tokenPR) {
+        const tokenStatus = await getPRCIDetail(tokenPR, "design-tokens");
+        statuses.push(tokenStatus);
+      }
       setComponents(statuses);
     } catch {
       // silently fail
@@ -443,12 +451,13 @@ export function ReleaseSection() {
           setTokenMsg({ text: s.message, isError: true });
         }
       });
+      fetchComponents();
     } catch (e) {
       setTokenMsg({ text: (e as Error).message, isError: true });
     } finally {
       setTokenBusy(false);
     }
-  }, []);
+  }, [fetchComponents]);
 
   // Step progress
   const currentStepIndex = (() => {

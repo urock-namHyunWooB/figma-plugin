@@ -108,13 +108,7 @@ export async function deployComponent(
       `feat: update ${safeName} component`
     );
 
-    // 코드 변경 없으면 바로 완료 (CI 불필요)
-    if (!lastCommitSha) {
-      onStatus({ step: "done", prUrl, message: "이미 최신 상태입니다." });
-      return;
-    }
-
-    // 3. PR 생성 (새 브랜치일 때만)
+    // 3. PR 생성 (PR이 없을 때 — 커밋 변경 없어도 PR은 생성)
     if (!existingPR) {
       onStatus({ step: "creating-pr", message: `${safeName} PR 생성 중...` });
       prUrl = await createPullRequest(
@@ -122,6 +116,12 @@ export async function deployComponent(
         `feat: add ${safeName} component`,
         `## ${safeName}\n\n> Auto-generated from Figma plugin\n> Figma Node ID: ${figmaNodeId}`
       );
+    }
+
+    // 코드 변경 없으면 완료 (CI 불필요)
+    if (!lastCommitSha) {
+      onStatus({ step: "done", prUrl, message: "이미 최신 상태입니다." });
+      return;
     }
 
     // 5. CI 빌드 대기 — lastCommitSha로 직접 체크 (PR head.sha stale 방지)
@@ -360,12 +360,13 @@ export async function deployTokens(
       "feat: update design tokens"
     );
 
-    if (!lastCommitSha) {
+    // 코드 변경 없고 PR도 이미 있으면 완료
+    if (!lastCommitSha && existingPR) {
       onStatus({ step: "done", prUrl, message: "토큰이 이미 최신 상태입니다." });
       return;
     }
 
-    // 3. PR 생성 (새 브랜치일 때만)
+    // 3. PR 생성 (PR이 없을 때 — 커밋 변경 없어도 PR은 생성)
     if (!existingPR) {
       onStatus({ step: "creating-pr", message: "토큰 PR 생성 중..." });
       prUrl = await createPullRequest(

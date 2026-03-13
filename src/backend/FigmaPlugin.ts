@@ -183,7 +183,22 @@ export class FigmaPlugin {
     try {
       const tokens: { name: string; value: string }[] = [];
       const collectionModeCache = new Map<string, string>();
+      const collectionNameCache = new Map<string, string>();
       const seenVarIds = new Set<string>();
+
+      /** getCSSAsync()와 일치하는 토큰 CSS 변수명 생성 */
+      const toTokenCssName = (v: Variable, collectionName?: string): string => {
+        // 1. codeSyntax.WEB 우선 (Figma에서 설정한 코드 구문)
+        if (v.codeSyntax?.WEB) {
+          return v.codeSyntax.WEB.replace(/^--/, "");
+        }
+        // 2. 컬렉션명 prefix 제거 후 변환
+        let name = v.name;
+        if (collectionName && name.startsWith(collectionName + "/")) {
+          name = name.slice(collectionName.length + 1);
+        }
+        return name.replace(/\//g, "-").replace(/[^a-zA-Z0-9-_]/g, "");
+      };
 
       // 1. 현재 페이지의 모든 노드에서 바인딩된 변수 ID 수집
       const allNodes = figma.currentPage.findAll();
@@ -217,13 +232,12 @@ export class FigmaPlugin {
             if (!collection) continue;
             modeId = collection.defaultModeId;
             collectionModeCache.set(variable.variableCollectionId, modeId);
+            collectionNameCache.set(variable.variableCollectionId, collection.name);
           }
 
           const resolved = await this.resolveVariableValue(variable, modeId);
           if (resolved) {
-            const cssName = variable.name
-              .replace(/\//g, "-")
-              .replace(/[^a-zA-Z0-9-_]/g, "");
+            const cssName = toTokenCssName(variable, collectionNameCache.get(variable.variableCollectionId));
             if (cssName) {
               tokens.push({ name: cssName, value: resolved });
             }
@@ -248,13 +262,12 @@ export class FigmaPlugin {
           if (!collection) continue;
           modeId = collection.defaultModeId;
           collectionModeCache.set(variable.variableCollectionId, modeId);
+          collectionNameCache.set(variable.variableCollectionId, collection.name);
         }
 
         const resolved = await this.resolveVariableValue(variable, modeId);
         if (resolved) {
-          const cssName = variable.name
-            .replace(/\//g, "-")
-            .replace(/[^a-zA-Z0-9-_]/g, "");
+          const cssName = toTokenCssName(variable, collectionNameCache.get(variable.variableCollectionId));
           if (cssName && !existingNames.has(cssName)) {
             tokens.push({ name: cssName, value: resolved });
           }
