@@ -23,6 +23,9 @@ export const MESSAGE_TYPES = {
   // 디자인 토큰 추출
   EXTRACT_DESIGN_TOKENS: "extract-design-tokens",    // UI → Plugin: 토큰 추출 요청
   DESIGN_TOKENS_RESULT: "design-tokens-result",      // Plugin → UI: 토큰 결과
+
+  // 노드 선택
+  SELECT_NODE: "select-node",  // UI → Plugin: Figma 캔버스에서 노드 선택
 } as const;
 
 export interface OnSelectionChangeMessage {
@@ -90,6 +93,12 @@ export interface DesignTokensResultMessage {
   error?: string;
 }
 
+// 노드 선택 요청 (UI → Plugin)
+export interface SelectNodeMessage {
+  type: typeof MESSAGE_TYPES.SELECT_NODE;
+  nodeId: string;
+}
+
 /**
  * UI로 전송되는 모든 메시지의 Union 타입
  */
@@ -102,4 +111,5 @@ export type PluginMessage =
   | GitHubFetchResponseMessage
   | ResizeUIMessage
   | ExtractDesignTokensMessage
-  | DesignTokensResultMessage;
+  | DesignTokensResultMessage
+  | SelectNodeMessage;

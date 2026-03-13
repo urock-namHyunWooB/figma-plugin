@@ -27,9 +27,27 @@ export interface PropInfo {
   propValue: string;
 }
 
+/** variant 불일치 진단 정보 */
+export interface VariantInconsistency {
+  cssProperty: string;
+  propName: string;
+  propValue: string;
+  variants: Array<{
+    props: Record<string, string>;
+    value: string;
+  }>;
+  expectedValue: string | null;
+}
+
 interface MatrixEntry {
   propValues: Map<string, string>;
   style: Record<string, string | number>;
+}
+
+interface PropGroup {
+  entries: MatrixEntry[];
+  presentValues: (string | number)[];
+  absentCount: number;
 }
 
 export class DynamicStyleDecomposer {
@@ -45,6 +63,38 @@ export class DynamicStyleDecomposer {
       style: Record<string, string | number>;
     }>,
     base?: Record<string, string | number>
+  ): Map<string, Map<string, Record<string, string | number>>> {
+    return this.decomposeInternal(dynamic, base);
+  }
+
+  /**
+   * decompose + variant 불일치 진단 정보 반환.
+   *
+   * AND 조건에서 어떤 prop도 CSS 속성을 완전히 제어하지 못할 때,
+   * 가장 적합한 축(best-fit)에 배치하고 불일치 그룹을 diagnostics로 보고한다.
+   */
+  static decomposeWithDiagnostics(
+    dynamic: Array<{
+      condition: ConditionNode;
+      style: Record<string, string | number>;
+    }>,
+    base?: Record<string, string | number>
+  ): {
+    result: Map<string, Map<string, Record<string, string | number>>>;
+    diagnostics: VariantInconsistency[];
+  } {
+    const diagnostics: VariantInconsistency[] = [];
+    const result = this.decomposeInternal(dynamic, base, diagnostics);
+    return { result, diagnostics };
+  }
+
+  private static decomposeInternal(
+    dynamic: Array<{
+      condition: ConditionNode;
+      style: Record<string, string | number>;
+    }>,
+    base?: Record<string, string | number>,
+    diagnostics?: VariantInconsistency[]
   ): Map<string, Map<string, Record<string, string | number>>> {
     const result = new Map<
       string,
@@ -93,7 +143,7 @@ export class DynamicStyleDecomposer {
 
     // 다중 prop: dimensional decomposition
     if (multiPropEntries.length > 0) {
-      this.decomposeMultiProp(multiPropEntries, result);
+      this.decomposeMultiProp(multiPropEntries, result, diagnostics);
     }
 
     // 후처리: 모든 variant 값이 동일한 CSS 속성 제거 (base와 다르면 유지)
@@ -213,7 +263,8 @@ export class DynamicStyleDecomposer {
       condition: ConditionNode;
       style: Record<string, string | number>;
     }>,
-    result: Map<string, Map<string, Record<string, string | number>>>
+    result: Map<string, Map<string, Record<string, string | number>>>,
+    diagnostics?: VariantInconsistency[]
   ): void {
     // Step 1: matrix 구성 — 각 엔트리의 prop→value 매핑과 스타일
     const matrix: MatrixEntry[] = entries.map((entry) => ({
@@ -244,7 +295,7 @@ export class DynamicStyleDecomposer {
     // Step 4: 각 CSS 속성의 소유 prop 결정
     const cssKeyOwner = new Map<string, string>();
     for (const cssKey of allCssKeys) {
-      const owner = this.findControllingProp(cssKey, matrix, allProps);
+      const owner = this.findControllingProp(cssKey, matrix, allProps, diagnostics);
       cssKeyOwner.set(cssKey, owner);
     }
 
@@ -279,82 +330,178 @@ export class DynamicStyleDecomposer {
   /**
    * 특정 CSS 속성을 제어하는 prop 찾기.
    *
-   * "일관성 체크": prop P의 같은 값끼리 묶었을 때,
-   * 해당 CSS 속성 값이 모두 동일하면 P가 제어한다고 판단.
+   * 1차: 엄격한 일관성 체크 — 모든 그룹이 내부적으로 일관적인 prop
+   * 2차: best-fit — 일관적 그룹이 가장 많은 prop (불일치 시 diagnostics 수집)
    */
   private static findControllingProp(
     cssKey: string,
     matrix: MatrixEntry[],
-    allProps: string[]
+    allProps: string[],
+    diagnostics?: VariantInconsistency[]
   ): string {
+    // 1차: 엄격한 일관성 체크
     for (const propName of allProps) {
       if (this.isPropConsistentForCssKey(propName, cssKey, matrix)) {
         return propName;
       }
     }
-    // fallback: 어떤 prop도 단독 제어하지 않음 → 첫 번째 prop에 할당
-    return allProps[0];
+
+    // 2차: best-fit — 일관적 그룹이 가장 많은 prop 선택
+    let bestProp = allProps[0];
+    let bestConsistent = -1;
+
+    for (const propName of allProps) {
+      const groups = this.buildPropGroups(propName, cssKey, matrix);
+      if (groups.size <= 1) continue;
+
+      let consistentCount = 0;
+      for (const group of groups.values()) {
+        if (this.isGroupConsistent(group)) consistentCount++;
+      }
+      if (consistentCount > bestConsistent) {
+        bestConsistent = consistentCount;
+        bestProp = propName;
+      }
+    }
+
+    // diagnostics 수집: bestProp의 불일치 그룹 보고
+    if (diagnostics) {
+      this.collectDiagnostics(cssKey, bestProp, matrix, diagnostics);
+    }
+
+    return bestProp;
   }
 
   /**
    * prop P의 같은 값을 가진 엔트리들에서 cssKey의 값이 동일한지 확인.
-   * sparse data: cssKey가 없는 엔트리는 무시.
    */
   private static isPropConsistentForCssKey(
     propName: string,
     cssKey: string,
     matrix: MatrixEntry[]
   ): boolean {
-    // prop의 값별로 그룹화 (CSS 속성이 없는 엔트리도 absent로 추적)
-    const groups = new Map<
-      string,
-      { present: (string | number)[]; absentCount: number }
-    >();
-
-    for (const entry of matrix) {
-      const propValue = entry.propValues.get(propName);
-      if (propValue === undefined) continue;
-
-      if (!groups.has(propValue)) {
-        groups.set(propValue, { present: [], absentCount: 0 });
-      }
-
-      if (cssKey in entry.style) {
-        groups.get(propValue)!.present.push(entry.style[cssKey]);
-      } else {
-        groups.get(propValue)!.absentCount++;
-      }
-    }
-
+    const groups = this.buildPropGroups(propName, cssKey, matrix);
     if (groups.size <= 1) return false;
 
-    // 각 그룹 내에서 일관적이어야 함:
-    // - present 값끼리 동일하고
-    // - present와 absent가 섞이지 않아야 함
     for (const group of groups.values()) {
-      if (group.present.length > 0 && group.absentCount > 0) {
-        return false;
-      }
-      if (group.present.length > 1) {
-        const first = normalizeCssValue(String(group.present[0]));
-        for (let i = 1; i < group.present.length; i++) {
-          if (normalizeCssValue(String(group.present[i])) !== first) return false;
-        }
-      }
+      if (!this.isGroupConsistent(group)) return false;
     }
 
     // 그룹 간에 차이가 있어야 "제어"한다고 판단
-    // (값이 다르거나, 있음/없음이 다르거나)
     const groupSignatures = new Set<string>();
     for (const group of groups.values()) {
-      if (group.present.length > 0) {
-        groupSignatures.add(normalizeCssValue(String(group.present[0])));
+      if (group.presentValues.length > 0) {
+        groupSignatures.add(normalizeCssValue(String(group.presentValues[0])));
       } else {
         groupSignatures.add("__absent__");
       }
     }
 
     return groupSignatures.size > 1;
+  }
+
+  /** prop별로 엔트리를 그룹화 (진단 + 일관성 체크 공용) */
+  private static buildPropGroups(
+    propName: string,
+    cssKey: string,
+    matrix: MatrixEntry[]
+  ): Map<string, PropGroup> {
+    const groups = new Map<string, PropGroup>();
+
+    for (const entry of matrix) {
+      const propValue = entry.propValues.get(propName);
+      if (propValue === undefined) continue;
+
+      if (!groups.has(propValue)) {
+        groups.set(propValue, { entries: [], presentValues: [], absentCount: 0 });
+      }
+
+      const group = groups.get(propValue)!;
+      group.entries.push(entry);
+
+      if (cssKey in entry.style) {
+        group.presentValues.push(entry.style[cssKey]);
+      } else {
+        group.absentCount++;
+      }
+    }
+
+    return groups;
+  }
+
+  /** 그룹 내 CSS 값이 모두 동일한지 확인 */
+  private static isGroupConsistent(group: PropGroup): boolean {
+    if (group.presentValues.length > 0 && group.absentCount > 0) return false;
+    if (group.presentValues.length <= 1) return true;
+
+    const first = normalizeCssValue(String(group.presentValues[0]));
+    for (let i = 1; i < group.presentValues.length; i++) {
+      if (normalizeCssValue(String(group.presentValues[i])) !== first) return false;
+    }
+    return true;
+  }
+
+  /** best-fit prop의 불일치 그룹에 대한 진단 정보 수집 */
+  private static collectDiagnostics(
+    cssKey: string,
+    bestProp: string,
+    matrix: MatrixEntry[],
+    diagnostics: VariantInconsistency[]
+  ): void {
+    const groups = this.buildPropGroups(bestProp, cssKey, matrix);
+
+    for (const [propValue, group] of groups) {
+      if (this.isGroupConsistent(group)) continue;
+
+      // 모든 present 값이 동일하면 absent만 있는 경우 → 디자인 실수 아님
+      if (group.presentValues.length > 0) {
+        const first = normalizeCssValue(String(group.presentValues[0]));
+        const allSame = group.presentValues.every(
+          (v) => normalizeCssValue(String(v)) === first
+        );
+        if (allSame) continue;
+      }
+
+      // 불일치 그룹 — variant 상세 수집
+      const variants: VariantInconsistency["variants"] = [];
+      for (const entry of group.entries) {
+        if (!(cssKey in entry.style)) continue;
+        const props: Record<string, string> = {};
+        for (const [k, v] of entry.propValues) {
+          props[k] = v;
+        }
+        variants.push({
+          props,
+          value: normalizeCssValue(String(entry.style[cssKey])),
+        });
+      }
+
+      // 다수결로 expectedValue 결정
+      const valueCounts = new Map<string, number>();
+      for (const v of variants) {
+        valueCounts.set(v.value, (valueCounts.get(v.value) || 0) + 1);
+      }
+      let maxCount = 0;
+      let maxValue: string | null = null;
+      let isTie = false;
+      for (const [val, count] of valueCounts) {
+        if (count > maxCount) {
+          maxCount = count;
+          maxValue = val;
+          isTie = false;
+        } else if (count === maxCount) {
+          isTie = true;
+        }
+      }
+
+      diagnostics.push({
+        cssProperty: cssKey,
+        propName: bestProp,
+        propValue,
+        variants,
+        expectedValue: isTie ? null : maxValue,
+      });
+    }
   }
 
   /**

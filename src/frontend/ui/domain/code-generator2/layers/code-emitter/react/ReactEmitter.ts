@@ -30,12 +30,14 @@ import type {
   ICodeEmitter,
   EmittedCode,
   GeneratedResult,
+  BundledResult,
 } from "../ICodeEmitter";
 import { ReactBundler } from "./ReactBundler";
 import { ImportsGenerator } from "./generators/ImportsGenerator";
 import { PropsGenerator } from "./generators/PropsGenerator";
 import { StylesGenerator } from "./generators/StylesGenerator";
-import { JsxGenerator } from "./generators/JsxGenerator";
+import { JsxGenerator, type JsxGenerateResult } from "./generators/JsxGenerator";
+import type { VariantInconsistency } from "./style-strategy/DynamicStyleDecomposer";
 import { EmotionStrategy } from "./style-strategy/EmotionStrategy";
 import { TailwindStrategy } from "./style-strategy/TailwindStrategy";
 import type { IStyleStrategy } from "./style-strategy/IStyleStrategy";
@@ -94,6 +96,7 @@ export class ReactEmitter implements ICodeEmitter {
       code,
       componentName,
       fileExtension: ".tsx",
+      diagnostics: sections.diagnostics,
     };
   }
 
@@ -125,10 +128,20 @@ export class ReactEmitter implements ICodeEmitter {
   async emitBundled(
     main: UITree,
     deps: Map<string, UITree>
-  ): Promise<string> {
+  ): Promise<BundledResult> {
     const result = await this.emitAll(main, deps);
     const depArray = Array.from(result.dependencies.values());
-    return this.bundler.bundle(result.main, depArray);
+    const code = this.bundler.bundle(result.main, depArray);
+
+    // 모든 컴포넌트의 diagnostics 합산
+    const diagnostics: VariantInconsistency[] = [
+      ...(result.main.diagnostics || []),
+    ];
+    for (const dep of Array.from(result.dependencies.values())) {
+      if (dep.diagnostics) diagnostics.push(...dep.diagnostics);
+    }
+
+    return { code, diagnostics };
   }
 
   /**
@@ -142,23 +155,25 @@ export class ReactEmitter implements ICodeEmitter {
     propsInterface: string;
     styles: string;
     jsx: string;
+    diagnostics: VariantInconsistency[];
   } {
     const propsInterface = PropsGenerator.generate(uiTree, componentName);
     const stylesResult = StylesGenerator.generate(uiTree, componentName, this.styleStrategy);
-    const jsx = JsxGenerator.generate(uiTree, componentName, this.styleStrategy, {
+    const jsxResult = JsxGenerator.generate(uiTree, componentName, this.styleStrategy, {
       debug: this.options.debug,
       nodeStyleMap: stylesResult.nodeStyleMap,
     });
 
     // JSX에서 실제 사용되는 컴포넌트만 import (slot binding → JSX 미생성 케이스 제거)
     const rawImports = ImportsGenerator.generate(uiTree, this.styleStrategy);
-    const imports = this.filterComponentImportsByJsx(rawImports, jsx);
+    const imports = this.filterComponentImportsByJsx(rawImports, jsxResult.code);
 
     return {
       imports,
       propsInterface,
       styles: stylesResult.code,
-      jsx,
+      jsx: jsxResult.code,
+      diagnostics: jsxResult.diagnostics,
     };
   }
 

@@ -45,12 +45,22 @@ import type {
   ICodeEmitter,
   EmittedCode,
   GeneratedResult,
+  BundledResult,
 } from "./layers/code-emitter/ICodeEmitter";
+import type { VariantInconsistency } from "./layers/code-emitter/react/style-strategy/DynamicStyleDecomposer";
 import { ReactEmitter } from "./layers/code-emitter/react/ReactEmitter";
 import { toComponentName } from "./utils/nameUtils";
 import { toPublicProps } from "./adapters/PropsAdapter";
 
-export type { GeneratedResult } from "./layers/code-emitter/ICodeEmitter";
+export type { GeneratedResult, BundledResult } from "./layers/code-emitter/ICodeEmitter";
+export type { VariantInconsistency } from "./layers/code-emitter/react/style-strategy/DynamicStyleDecomposer";
+
+/** compile() 반환 타입: 코드 + 진단 */
+export interface CompileResult {
+  code: string | null;
+  diagnostics: VariantInconsistency[];
+}
+
 export type {
   SlotInfo,
   PropDefinition,
@@ -118,12 +128,20 @@ class FigmaCodeGenerator {
    * 코드 생성 (단일 파일 번들)
    */
   async compile(): Promise<string | null> {
+    const result = await this.compileWithDiagnostics();
+    return result.code;
+  }
+
+  /**
+   * 코드 생성 + variant 불일치 진단 (단일 파일 번들)
+   */
+  async compileWithDiagnostics(): Promise<CompileResult> {
     try {
       const { main, dependencies } = this.treeManager.build();
       return await this.codeEmitter.emitBundled(main, dependencies);
     } catch (e) {
       console.error("Compile error:", e);
-      return null;
+      return { code: null, diagnostics: [] };
     }
   }
 

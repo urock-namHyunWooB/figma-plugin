@@ -19,6 +19,7 @@
  */
 
 import type { UITree } from "../../types/types";
+import type { VariantInconsistency } from "./react/style-strategy/DynamicStyleDecomposer";
 
 /** 코드 생성 결과 (단일 컴포넌트) */
 export interface EmittedCode {
@@ -28,6 +29,14 @@ export interface EmittedCode {
   componentName: string;
   /** 파일 확장자 */
   fileExtension: string;
+  /** variant 불일치 진단 (있으면 디자인 점검 필요) */
+  diagnostics?: VariantInconsistency[];
+}
+
+/** 번들 코드 + 진단 결과 */
+export interface BundledResult {
+  code: string;
+  diagnostics: VariantInconsistency[];
 }
 
 /** 코드 생성 결과 (메인 + 의존 컴포넌트) */
@@ -62,5 +71,5 @@ export interface ICodeEmitter {
   emitBundled(
     main: UITree,
     deps: Map<string, UITree>
-  ): Promise<string>;
+  ): Promise<BundledResult>;
 }

@@ -67,6 +67,10 @@ export class FigmaPlugin {
         await this.handleExtractDesignTokens();
         break;
 
+      case MESSAGE_TYPES.SELECT_NODE:
+        await this.handleSelectNode(msg.nodeId);
+        break;
+
       default:
         console.log("⚠️ [Plugin Backend] Unknown message type:", msg.type);
     }
@@ -74,6 +78,21 @@ export class FigmaPlugin {
 
   private async handleCancel(): Promise<void> {
     figma.closePlugin();
+  }
+
+  /**
+   * Figma 캔버스에서 특정 노드를 선택하고 화면에 표시
+   */
+  private async handleSelectNode(nodeId: string): Promise<void> {
+    try {
+      const node = figma.getNodeById(nodeId);
+      if (node && "type" in node && node.type !== "DOCUMENT" && node.type !== "PAGE") {
+        figma.currentPage.selection = [node as SceneNode];
+        figma.viewport.scrollAndZoomIntoView([node as SceneNode]);
+      }
+    } catch (error) {
+      console.error("Failed to select node:", error);
+    }
   }
 
   /**

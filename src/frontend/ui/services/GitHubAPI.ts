@@ -367,6 +367,64 @@ async function getPRCIDetail(pr: OpenPR, componentName: string): Promise<Compone
   return { pr, componentName, checks, overall };
 }
 
+/** 스테이징 PR의 개별 체크 런 상태 조회 */
+export interface CheckRun {
+  name: string;
+  status: "queued" | "in_progress" | "completed";
+  conclusion: "success" | "failure" | "neutral" | "cancelled" | "skipped" | "timed_out" | "action_required" | null;
+  html_url: string;
+}
+
+export interface ComponentCIStatus {
+  pr: OpenPR;
+  componentName: string;
+  checks: CheckRun[];
+  overall: CheckStatus;
+}
+
+/** 특정 컴포넌트 PR의 CI 상태 조회 */
+export async function getComponentCIStatus(componentName: string): Promise<ComponentCIStatus | null> {
+  const pr = await findComponentPR(componentName);
+  if (!pr) return null;
+
+  return getPRCIDetail(pr, componentName);
+}
+
+/** 모든 컴포넌트 PR의 CI 상태 조회 */
+export async function getAllComponentCIStatus(): Promise<ComponentCIStatus[]> {
+  const prs = await findAllComponentPRs();
+  return Promise.all(
+    prs.map((pr) => {
+      const name = pr.head.ref.replace(COMPONENT_BRANCH_PREFIX, "");
+      return getPRCIDetail(pr, name);
+    })
+  );
+}
+
+async function getPRCIDetail(pr: OpenPR, componentName: string): Promise<ComponentCIStatus> {
+  const result = await api<{ check_runs: Array<{ name: string; status: string; conclusion: string | null; html_url: string }> }>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/commits/${pr.head.sha}/check-runs`
+  );
+
+  const checks: CheckRun[] = result.check_runs.map((r) => ({
+    name: r.name,
+    status: r.status as CheckRun["status"],
+    conclusion: r.conclusion as CheckRun["conclusion"],
+    html_url: r.html_url,
+  }));
+
+  let overall: CheckStatus = "pending";
+  if (checks.length > 0) {
+    if (checks.some((r) => r.status === "completed" && r.conclusion === "failure")) {
+      overall = "failure";
+    } else if (checks.every((r) => r.status === "completed")) {
+      overall = "success";
+    }
+  }
+
+  return { pr, componentName, checks, overall };
+}
+
 /** 파일에서 @figma-node-id 메타데이터 추출 (D2/D3) */
 export async function getFileNodeId(filePath: string, branch: string): Promise<string | null> {
   const content = await getFileContent(filePath, branch);

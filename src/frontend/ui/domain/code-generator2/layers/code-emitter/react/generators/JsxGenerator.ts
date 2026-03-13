@@ -6,8 +6,13 @@
 
 import type { UITree, UINode, ContainerNode, ButtonNode, InputNode, LinkNode, ComponentNode, ConditionNode, StyleObject, ArraySlotInfo } from "../../../../types/types";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
-import { DynamicStyleDecomposer } from "../style-strategy/DynamicStyleDecomposer";
+import { DynamicStyleDecomposer, type VariantInconsistency } from "../style-strategy/DynamicStyleDecomposer";
 import { toComponentName } from "../../../../utils/nameUtils";
+
+export interface JsxGenerateResult {
+  code: string;
+  diagnostics: VariantInconsistency[];
+}
 
 interface JsxGeneratorOptions {
   debug?: boolean;
@@ -16,6 +21,9 @@ interface JsxGeneratorOptions {
 }
 
 export class JsxGenerator {
+  /** 진단 정보 수집기 (generate() 호출 동안 유효) */
+  private static collectedDiagnostics: VariantInconsistency[] = [];
+
   /**
    * 컴포넌트 코드 생성
    */
@@ -24,7 +32,9 @@ export class JsxGenerator {
     componentName: string,
     styleStrategy: IStyleStrategy,
     options: JsxGeneratorOptions = {}
-  ): string {
+  ): JsxGenerateResult {
+    this.collectedDiagnostics = [];
+
     // Slot props 설정 (조건부 렌더링에서 사용)
     this.slotProps = new Set(
       uiTree.props.filter((p) => p.type === "slot").map((p) => p.name)
@@ -66,7 +76,7 @@ export class JsxGenerator {
     // JSX body (루트 노드는 isRoot=true로 restProps 전파)
     const jsxBody = this.generateNode(uiTree.root, styleStrategy, options, 2, true);
 
-    return `function ${componentName}(props: ${componentName}Props) {
+    const code = `function ${componentName}(props: ${componentName}Props) {
   const ${propsDestructuring} = props;
 ${stateVarsCode}${derivedVarsCode}
   return (
@@ -75,6 +85,8 @@ ${jsxBody}
 }
 
 export default ${componentName}`;
+
+    return { code, diagnostics: this.collectedDiagnostics };
   }
 
   /**
@@ -1020,7 +1032,10 @@ ${indentStr}</${tag}>`;
 
     // decomposer 결과 기반으로 실제 스타일이 있는 prop만 반환
     // (JSX에서 빈 스타일 변수 참조 방지)
-    const groups = DynamicStyleDecomposer.decompose(styles.dynamic, styles.base);
+    const { result: groups, diagnostics } = DynamicStyleDecomposer.decomposeWithDiagnostics(styles.dynamic, styles.base);
+    if (diagnostics.length > 0) {
+      this.collectedDiagnostics.push(...diagnostics);
+    }
     const propNames: string[] = [];
 
     for (const [propName, valueMap] of groups) {
