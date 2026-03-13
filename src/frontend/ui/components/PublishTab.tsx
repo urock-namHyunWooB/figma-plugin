@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { css } from "@emotion/react";
-import { deployComponent, releaseComponent, type DeployStatus } from "../services/deployService";
+import { deployComponent, type DeployStatus } from "../services/deployService";
+import { ReleaseSection } from "./ReleaseSection";
 import { typeCheckCode, type TypeCheckError } from "../services/typeChecker";
-import { getComponentCIStatus, getAllComponentCIStatus, type ComponentCIStatus } from "../services/GitHubAPI";
+import { findComponentPR, getComponentCIStatus, type ComponentCIStatus } from "../services/GitHubAPI";
 
 interface PublishTabProps {
   componentName: string;
@@ -18,24 +19,8 @@ const DEPLOY_STEPS = [
   { key: "creating-branch", label: "브랜치 생성" },
   { key: "committing", label: "커밋" },
   { key: "creating-pr", label: "PR 생성" },
-  { key: "verifying", label: "검증" },
   { key: "waiting-ci", label: "CI 빌드" },
 ] as const;
-
-const RELEASE_STEPS = [
-  { key: "checking-pr", label: "스테이징 PR 확인" },
-  { key: "checking-ci", label: "CI 확인" },
-  { key: "merging", label: "머지" },
-  { key: "waiting-release", label: "릴리즈 PR 대기" },
-  { key: "release-merge", label: "릴리즈 머지" },
-] as const;
-
-type FlowType = "deploy" | "release" | null;
-
-function getStepIndex(steps: readonly { key: string }[], currentStep: string): number {
-  // "merging" appears twice in release flow — second occurrence is release-merge
-  return steps.findIndex((s) => s.key === currentStep);
-}
 
 // ─── Styles ───
 
@@ -138,12 +123,6 @@ const deployBtnStyle = css`
   &:hover:not(:disabled) { background: #7c3aed; }
 `;
 
-const releaseBtnStyle = css`
-  ${buttonBase}
-  background: #f97316;
-  color: #fff;
-  &:hover:not(:disabled) { background: #ea580c; }
-`;
 
 const stepperStyle = css`
   display: flex;
@@ -369,37 +348,50 @@ const ciOverallStyle = (status: "success" | "failure" | "pending") => css`
 // ─── Component ───
 
 const BUSY_STEPS = new Set([
-  "checking-pr", "creating-branch", "committing", "creating-pr",
-  "verifying", "waiting-ci", "checking-ci", "merging", "waiting-release",
+  "checking-pr", "creating-branch", "committing", "creating-pr", "waiting-ci",
 ]);
 
 export function PublishTab({ componentName, generatedCode, deployCodes, figmaNodeId }: PublishTabProps) {
   const [status, setStatus] = useState<DeployStatus>({ step: "idle" });
-  const [activeFlow, setActiveFlow] = useState<FlowType>(null);
   const [typeErrors, setTypeErrors] = useState<TypeCheckError[]>([]);
   const [typeCheckPassed, setTypeCheckPassed] = useState(false);
-  const [ciStatuses, setCIStatuses] = useState<ComponentCIStatus[]>([]);
+  const [ciStatus, setCIStatus] = useState<ComponentCIStatus | null>(null);
   const [ciLoading, setCILoading] = useState(false);
   const ciPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // 컴포넌트 전환 시 기존 PR 상태 확인
+  useEffect(() => {
+    setStatus({ step: "idle" });
+    setCIStatus(null);
+
+    if (!componentName) return;
+
+    const safeName = componentName.replace(/\s+/g, "");
+    findComponentPR(safeName).then((pr) => {
+      if (pr) {
+        setStatus({ step: "done", prUrl: pr.html_url });
+      }
+    }).catch(() => {});
+  }, [componentName, figmaNodeId]);
+
   const isBusy = BUSY_STEPS.has(status.step);
   const isDone = status.step === "done";
-  const isReleaseDone = status.step === "release-done";
   const isError = status.step === "error";
 
-  // CI status fetch — 모든 컴포넌트 PR 조회
+  // CI status fetch — 현재 컴포넌트 PR만 조회
   const fetchCI = useCallback(async () => {
+    if (!componentName) return null;
     setCILoading(true);
     try {
-      const results = await getAllComponentCIStatus();
-      setCIStatuses(results);
-      return results;
+      const result = await getComponentCIStatus(componentName.replace(/\s+/g, ""));
+      setCIStatus(result);
+      return result;
     } catch {
-      return [];
+      return null;
     } finally {
       setCILoading(false);
     }
-  }, []);
+  }, [componentName]);
 
   // 마운트 시 + Deploy 완료 후 CI 상태 조회
   useEffect(() => {
@@ -412,8 +404,8 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
     }
   }, [isDone, fetchCI]);
 
-  // pending 상태가 있으면 15초 간격 자동 폴링
-  const hasPending = ciStatuses.some((s) => s.overall === "pending");
+  // pending 상태면 15초 간격 자동 폴링
+  const hasPending = ciStatus?.overall === "pending";
   useEffect(() => {
     if (hasPending) {
       ciPollRef.current = setInterval(() => { fetchCI(); }, 15000);
@@ -459,26 +451,12 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
       return;
     }
 
-    setActiveFlow("deploy");
     await deployComponent(componentName, deployCodes, figmaNodeId, setStatus);
   }, [deployCodes, componentName, figmaNodeId, typeCheckPassed, typeErrors.length]);
 
-  const handleRelease = useCallback(async () => {
-    setActiveFlow("release");
-    await releaseComponent(setStatus);
-  }, []);
-
-  // Pick steps based on active flow
-  const steps = activeFlow === "release" ? RELEASE_STEPS : DEPLOY_STEPS;
-
-  const currentStepIndex = (() => {
-    if (status.step === "idle" || isDone || isReleaseDone || isError) return -1;
-    // Release flow: second "merging" maps to release-merge
-    if (activeFlow === "release" && status.step === "merging" && status.message?.includes("릴리즈")) {
-      return RELEASE_STEPS.findIndex((s) => s.key === "release-merge");
-    }
-    return getStepIndex(steps, status.step);
-  })();
+  const currentStepIndex = (status.step === "idle" || isDone || isError)
+    ? -1
+    : DEPLOY_STEPS.findIndex((s) => s.key === status.step);
 
   if (!hasComponent && !hasCode) {
     return <div css={emptyStateStyle}>Figma에서 컴포넌트를 선택하세요</div>;
@@ -558,20 +536,13 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
             onClick={handleDeploy}
             disabled={!deployCodes || !hasNodeId || isBusy}
           >
-            {isBusy && activeFlow === "deploy" ? "Deploying..." : "Deploy"}
-          </button>
-          <button
-            css={releaseBtnStyle}
-            onClick={handleRelease}
-            disabled={isBusy}
-          >
-            {isBusy && activeFlow === "release" ? "Releasing..." : "Release"}
+            {isBusy ? "Deploying..." : "Deploy"}
           </button>
         </div>
       </div>
 
       {/* CI Status */}
-      {ciStatuses.length > 0 && (
+      {ciStatus && (
         <div css={sectionStyle}>
           <div css={sectionTitleStyle}>
             CI 빌드 상태
@@ -579,54 +550,52 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
               {ciLoading ? "..." : "Refresh"}
             </button>
           </div>
-          {ciStatuses.map((ci) => (
-            <div key={ci.pr.number} css={ciCardStyle} style={{ marginBottom: 8 }}>
-              <div css={ciHeaderStyle}>
-                <a
-                  css={ciPrLinkStyle}
-                  href={ci.pr.html_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => { e.preventDefault(); window.open(ci.pr.html_url, "_blank"); }}
-                >
-                  {ci.componentName} — PR #{ci.pr.number}
-                </a>
-                <span css={ciRunStatusStyle(ci.overall)}>
-                  {ci.overall === "success" ? "passed" : ci.overall === "failure" ? "failed" : "pending"}
-                </span>
-              </div>
-              {ci.checks.length === 0 ? (
-                <div css={ciEmptyStyle}>체크 런 대기 중...</div>
-              ) : (
-                ci.checks.map((run) => {
-                  const runStatus: "success" | "failure" | "pending" =
-                    run.status !== "completed" ? "pending"
-                    : run.conclusion === "failure" ? "failure"
-                    : "success";
-                  const label =
-                    runStatus === "success" ? "passed"
-                    : runStatus === "failure" ? "failed"
-                    : run.status === "in_progress" ? "running" : "queued";
-                  return (
-                    <div key={run.name} css={ciRunStyle}>
-                      <div css={ciDotStyle(runStatus)} />
-                      <span css={ciRunNameStyle}>{run.name}</span>
-                      <span css={ciRunStatusStyle(runStatus)}>{label}</span>
-                    </div>
-                  );
-                })
-              )}
+          <div css={ciCardStyle}>
+            <div css={ciHeaderStyle}>
+              <a
+                css={ciPrLinkStyle}
+                href={ciStatus.pr.html_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => { e.preventDefault(); window.open(ciStatus.pr.html_url, "_blank"); }}
+              >
+                {ciStatus.componentName} — PR #{ciStatus.pr.number}
+              </a>
+              <span css={ciRunStatusStyle(ciStatus.overall)}>
+                {ciStatus.overall === "success" ? "passed" : ciStatus.overall === "failure" ? "failed" : "pending"}
+              </span>
             </div>
-          ))}
+            {ciStatus.checks.length === 0 ? (
+              <div css={ciEmptyStyle}>체크 런 대기 중...</div>
+            ) : (
+              ciStatus.checks.map((run) => {
+                const runStatus: "success" | "failure" | "pending" =
+                  run.status !== "completed" ? "pending"
+                  : run.conclusion === "failure" ? "failure"
+                  : "success";
+                const label =
+                  runStatus === "success" ? "passed"
+                  : runStatus === "failure" ? "failed"
+                  : run.status === "in_progress" ? "running" : "queued";
+                return (
+                  <div key={run.name} css={ciRunStyle}>
+                    <div css={ciDotStyle(runStatus)} />
+                    <span css={ciRunNameStyle}>{run.name}</span>
+                    <span css={ciRunStatusStyle(runStatus)}>{label}</span>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       )}
 
       {/* Step Progress */}
-      {isBusy && activeFlow && (
+      {isBusy && (
         <div css={sectionStyle}>
           <div css={sectionTitleStyle}>진행 상황</div>
           <div css={stepperStyle}>
-            {steps.map((step, i) => {
+            {DEPLOY_STEPS.map((step, i) => {
               const state = i < currentStepIndex ? "done" : i === currentStepIndex ? "active" : "pending";
               return (
                 <React.Fragment key={step.key}>
@@ -639,7 +608,7 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
             })}
           </div>
           <div css={stepLabelsStyle}>
-            {steps.map((step, i) => {
+            {DEPLOY_STEPS.map((step, i) => {
               const state = i < currentStepIndex ? "done" : i === currentStepIndex ? "active" : "pending";
               return (
                 <span key={step.key} css={stepLabelStyle(state)}>{step.label}</span>
@@ -656,23 +625,18 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
       {isDone && "prUrl" in status && (
         <div css={successBannerStyle}>
           <span>✓</span>
-          <span>Deploy 완료 —</span>
-          <a
-            css={prLinkStyle}
-            href={status.prUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => { e.preventDefault(); window.open(status.prUrl, "_blank"); }}
-          >
-            PR 보기
-          </a>
-        </div>
-      )}
-
-      {isReleaseDone && "message" in status && (
-        <div css={successBannerStyle}>
-          <span>✓</span>
-          <span>{status.message}</span>
+          <span>{"message" in status && status.message ? status.message : "Deploy 완료"}{status.prUrl ? " —" : ""}</span>
+          {status.prUrl && (
+            <a
+              css={prLinkStyle}
+              href={status.prUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => { e.preventDefault(); window.open(status.prUrl, "_blank"); }}
+            >
+              PR 보기
+            </a>
+          )}
         </div>
       )}
 
@@ -697,6 +661,9 @@ export function PublishTab({ componentName, generatedCode, deployCodes, figmaNod
           )}
         </div>
       )}
+
+      {/* Release Section */}
+      <ReleaseSection />
     </div>
   );
 }

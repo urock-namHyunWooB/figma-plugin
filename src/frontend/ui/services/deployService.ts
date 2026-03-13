@@ -1,15 +1,16 @@
 import {
   getBaseSha,
   createBranch,
-  commitFile,
+  commitFiles,
   createPullRequest,
   findComponentPR,
   findAllComponentPRs,
   findReleasePR,
   mergePR,
   deleteBranch,
-  verifyBranchHead,
-  getPRCheckStatus,
+  getCommitCheckStatusDetail,
+  getComponentCIStatus,
+  getLatestCIStatus,
   getFileNodeId,
   COMPONENT_BRANCH_PREFIX,
   ACTIONS_URL,
@@ -22,9 +23,8 @@ export type DeployStatus =
   | { step: "creating-branch"; message: string }
   | { step: "committing"; message: string }
   | { step: "creating-pr"; message: string }
-  | { step: "verifying"; message: string }
   | { step: "waiting-ci"; message: string }
-  | { step: "done"; prUrl: string }
+  | { step: "done"; prUrl: string; message?: string }
   | { step: "checking-ci"; message: string }
   | { step: "merging"; message: string }
   | { step: "waiting-release"; message: string }
@@ -85,38 +85,34 @@ export async function deployComponent(
     if (existingPR) {
       prUrl = existingPR.html_url;
     } else {
-      // 새 브랜치 생성
+      // 새 브랜치 생성 (이전 릴리즈에서 잔여 브랜치가 있으면 삭제 후 재생성)
       onStatus({ step: "creating-branch", message: `${branchName} 브랜치 생성 중...` });
+      await deleteBranch(branchName).catch(() => {});
       const baseSha = await getBaseSha();
       await createBranch(branchName, baseSha);
     }
 
-    // 2. 각 패키지에 컴포넌트 파일 커밋 (barrel export 제외)
-    let lastCommitSha = "";
+    // 2. Emotion + Tailwind 파일을 하나의 커밋으로 배포 (동일 내용 스킵)
+    onStatus({ step: "committing", message: `${safeName}.tsx 커밋 중...` });
 
-    for (const pkg of PACKAGES) {
-      const filePath = `${pkg.componentsDir}/${safeName}.tsx`;
-      const code = codeByLabel[pkg.label];
-      const codeWithMeta = `// @figma-node-id ${figmaNodeId}\n${code}`;
+    const files = PACKAGES.map((pkg) => ({
+      path: `${pkg.componentsDir}/${safeName}.tsx`,
+      content: `// @figma-node-id ${figmaNodeId}\n${codeByLabel[pkg.label]}`,
+    }));
 
-      onStatus({ step: "committing", message: `${safeName}.tsx 커밋 중... (${pkg.label})` });
-      lastCommitSha = await commitFile(
-        branchName, filePath, codeWithMeta, `feat: update ${safeName} component (${pkg.label.toLowerCase()})`
-      );
-    }
+    const lastCommitSha = await commitFiles(
+      branchName,
+      files,
+      `feat: update ${safeName} component`
+    );
 
-    // 3. D8 방어: 커밋 검증
-    onStatus({ step: "verifying", message: "커밋 검증 중..." });
-    const verified = await verifyBranchHead(branchName, lastCommitSha);
-    if (!verified) {
-      onStatus({
-        step: "error",
-        message: "커밋이 유실되었습니다. 잠시 후 다시 시도하세요.",
-      });
+    // 코드 변경 없으면 바로 완료 (CI 불필요)
+    if (!lastCommitSha) {
+      onStatus({ step: "done", prUrl, message: "이미 최신 상태입니다." });
       return;
     }
 
-    // 4. PR 생성 (새 브랜치일 때만)
+    // 3. PR 생성 (새 브랜치일 때만)
     if (!existingPR) {
       onStatus({ step: "creating-pr", message: `${safeName} PR 생성 중...` });
       prUrl = await createPullRequest(
@@ -126,26 +122,22 @@ export async function deployComponent(
       );
     }
 
-    // 5. CI 빌드 대기 (5초 간격, 최대 5분)
+    // 5. CI 빌드 대기 — lastCommitSha로 직접 체크 (PR head.sha stale 방지)
     onStatus({ step: "waiting-ci", message: "CI 빌드 대기 중..." });
-    const prNumber = existingPR?.number ?? await findStagingPR().then((pr) => pr?.number);
-    if (prNumber) {
-      const ciResult = await pollCIStatus(prNumber, onStatus);
-      if (ciResult === "failure") {
-        // 실패 상세 정보 조회
-        const ciDetail = await getStagingCIStatus();
-        const failedChecks = ciDetail?.checks
-          .filter((c) => c.conclusion === "failure")
-          .map((c) => c.name) ?? [];
-        const detail = failedChecks.length > 0
-          ? `실패한 체크: ${failedChecks.join(", ")}`
-          : "빌드 로그를 확인하세요";
-        onStatus({
-          step: "error",
-          message: `CI 빌드 실패 — ${detail}\n${ACTIONS_URL}`,
-        });
-        return;
-      }
+    const ciResult = await pollCIStatus(lastCommitSha, onStatus);
+    if (ciResult === "failure") {
+      const ciDetail = await getComponentCIStatus(safeName);
+      const failedChecks = ciDetail?.checks
+        .filter((c) => c.conclusion === "failure")
+        .map((c) => c.name) ?? [];
+      const detail = failedChecks.length > 0
+        ? `실패한 체크: ${failedChecks.join(", ")}`
+        : "빌드 로그를 확인하세요";
+      onStatus({
+        step: "error",
+        message: `CI 빌드 실패 — ${detail}\n${ACTIONS_URL}`,
+      });
+      return;
     }
 
     onStatus({ step: "done", prUrl });
@@ -156,31 +148,35 @@ export async function deployComponent(
 
 /**
  * CI 상태를 5초 간격으로 폴링 (최대 5분)
+ * commitSha를 직접 받아서 PR API의 stale head.sha 문제를 방지
  */
 async function pollCIStatus(
-  prNumber: number,
+  commitSha: string,
   onStatus: (status: DeployStatus) => void
-): Promise<CheckStatus> {
+): Promise<"success" | "failure" | "pending"> {
   const MAX_WAIT = 300_000;
   const INTERVAL = 5_000;
+  const NO_CI_TIMEOUT = 30_000;
   const start = Date.now();
 
-  // CI가 시작될 때까지 초기 대기
   await sleep(INTERVAL);
 
   while (Date.now() - start < MAX_WAIT) {
     const elapsed = Math.round((Date.now() - start) / 1000);
     onStatus({ step: "waiting-ci", message: `CI 빌드 확인 중... (${elapsed}초)` });
 
-    const status = await getPRCheckStatus(prNumber);
-    if (status === "success" || status === "failure") {
-      return status;
+    const result = await getCommitCheckStatusDetail(commitSha);
+    if (result.status === "success" || result.status === "failure") {
+      return result.status;
+    }
+
+    if (result.totalRuns === 0 && Date.now() - start > NO_CI_TIMEOUT) {
+      return "success";
     }
 
     await sleep(INTERVAL);
   }
 
-  // 타임아웃 — pending 상태로 간주하고 통과 (CI가 너무 오래 걸리는 경우)
   return "success";
 }
 
@@ -209,21 +205,33 @@ export async function releaseComponent(
     onStatus({ step: "checking-ci", message: `${componentPRs.length}개 PR의 CI 상태 확인 중...` });
 
     const mergeable: OpenPR[] = [];
-    const skipped: string[] = [];
+    const pendingNames: string[] = [];
+    const failedNames: string[] = [];
 
     for (const pr of componentPRs) {
-      const ciStatus = await getPRCheckStatus(pr.number);
+      const ciStatus = await getLatestCIStatus(pr);
       const name = pr.head.ref.replace(COMPONENT_BRANCH_PREFIX, "");
       if (ciStatus === "success") {
         mergeable.push(pr);
+      } else if (ciStatus === "pending") {
+        pendingNames.push(name);
       } else {
-        skipped.push(`${name} (${ciStatus})`);
+        failedNames.push(name);
       }
     }
 
     if (mergeable.length === 0) {
-      const detail = skipped.join(", ");
-      onStatus({ step: "error", message: `CI 통과한 PR이 없습니다: ${detail}` });
+      if (pendingNames.length > 0) {
+        onStatus({
+          step: "error",
+          message: `CI 실행 중인 PR이 있습니다: ${pendingNames.join(", ")}. CI 완료 후 다시 시도하세요.`,
+        });
+      } else {
+        onStatus({
+          step: "error",
+          message: `CI 통과한 PR이 없습니다: ${failedNames.join(", ")}\n${ACTIONS_URL}`,
+        });
+      }
       return;
     }
 
@@ -238,8 +246,9 @@ export async function releaseComponent(
       await deleteBranch(pr.head.ref).catch(() => {});
     }
 
-    if (skipped.length > 0) {
-      onStatus({ step: "merging", message: `${mergeable.length}개 머지 완료. 스킵: ${skipped.join(", ")}` });
+    const skippedAll = [...pendingNames.map(n => `${n} (CI 실행 중)`), ...failedNames.map(n => `${n} (CI 실패)`)];
+    if (skippedAll.length > 0) {
+      onStatus({ step: "merging", message: `${mergeable.length}개 머지 완료. 스킵: ${skippedAll.join(", ")}` });
     }
 
     // 5. 릴리즈 PR 폴링
@@ -254,7 +263,18 @@ export async function releaseComponent(
       return;
     }
 
-    // 6. 릴리즈 PR 머지
+    // 6. 릴리즈 PR CI 대기
+    onStatus({ step: "waiting-ci", message: "릴리즈 PR CI 대기 중..." });
+    const releaseCIResult = await pollCIStatus(releasePR.head.sha, onStatus);
+    if (releaseCIResult === "failure") {
+      onStatus({
+        step: "error",
+        message: `릴리즈 CI 빌드 실패\n${ACTIONS_URL}`,
+      });
+      return;
+    }
+
+    // 7. 릴리즈 PR 머지
     onStatus({ step: "merging", message: `릴리즈 PR #${releasePR.number} 머지 중...` });
     await mergePR(releasePR.number);
 

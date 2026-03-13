@@ -28,8 +28,8 @@ function pluginFetch(url: string, method: string, body?: string): Promise<{ ok: 
 
     setTimeout(() => {
       window.removeEventListener("message", handler);
-      reject(new Error("GitHub API 요청 타임아웃 (10s)"));
-    }, 10000);
+      reject(new Error("GitHub API 요청 타임아웃 (30s)"));
+    }, 30000);
 
     parent.postMessage({
       pluginMessage: {
@@ -74,36 +74,83 @@ export async function createBranch(branchName: string, sha: string): Promise<voi
   });
 }
 
-/** 파일 생성 또는 업데이트 — 커밋 SHA 반환 */
-export async function commitFile(
+/** 여러 파일을 하나의 커밋으로 묶어 push — Git Trees API 사용 */
+export async function commitFiles(
   branchName: string,
-  filePath: string,
-  content: string,
+  files: Array<{ path: string; content: string }>,
   message: string
-): Promise<string> {
-  let existingSha: string | undefined;
-  try {
-    const existing = await api<{ sha: string }>(
-      `/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}?ref=${branchName}`
-    );
-    existingSha = existing.sha;
-  } catch {
-    // 파일이 없으면 새로 생성
+): Promise<string | null> {
+  // 1. 브랜치 HEAD SHA 가져오기
+  const ref = await api<{ object: { sha: string } }>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/git/ref/heads/${branchName}`
+  );
+  const baseCommitSha = ref.object.sha;
+
+  // 2. 기존 파일과 비교 — 변경된 파일만 추림
+  const changedFiles: Array<{ path: string; content: string }> = [];
+  for (const file of files) {
+    const existing = await getFileContent(file.path, branchName);
+    if (existing !== file.content) {
+      changedFiles.push(file);
+    }
   }
 
-  const result = await api<{ commit: { sha: string } }>(
-    `/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}`,
+  // 모든 파일 동일 → 커밋 불필요
+  if (changedFiles.length === 0) {
+    return null;
+  }
+
+  // 3. 각 파일의 blob 생성
+  const treeItems: Array<{ path: string; mode: string; type: string; sha: string }> = [];
+  for (const file of changedFiles) {
+    const blob = await api<{ sha: string }>(
+      `/repos/${REPO_OWNER}/${REPO_NAME}/git/blobs`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          content: file.content,
+          encoding: "utf-8",
+        }),
+      }
+    );
+    treeItems.push({ path: file.path, mode: "100644", type: "blob", sha: blob.sha });
+  }
+
+  // 4. Tree 생성 (base_tree로 기존 파일 유지)
+  const baseCommit = await api<{ tree: { sha: string } }>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/git/commits/${baseCommitSha}`
+  );
+  const tree = await api<{ sha: string }>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/git/trees`,
     {
-      method: "PUT",
+      method: "POST",
       body: JSON.stringify({
-        message,
-        content: btoa(unescape(encodeURIComponent(content))),
-        branch: branchName,
-        ...(existingSha ? { sha: existingSha } : {}),
+        base_tree: baseCommit.tree.sha,
+        tree: treeItems,
       }),
     }
   );
-  return result.commit.sha;
+
+  // 5. Commit 생성
+  const commit = await api<{ sha: string }>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/git/commits`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        message,
+        tree: tree.sha,
+        parents: [baseCommitSha],
+      }),
+    }
+  );
+
+  // 6. 브랜치 ref 업데이트
+  await api(`/repos/${REPO_OWNER}/${REPO_NAME}/git/refs/heads/${branchName}`, {
+    method: "PATCH",
+    body: JSON.stringify({ sha: commit.sha }),
+  });
+
+  return commit.sha;
 }
 
 /** 파일 내용 읽기 (base64 디코딩) */
@@ -181,12 +228,20 @@ export async function findReleasePR(): Promise<OpenPR | null> {
   ) ?? null;
 }
 
-/** PR 머지 */
+/** PR 머지 — 머지 후 상태 검증 */
 export async function mergePR(prNumber: number): Promise<void> {
   await api(`/repos/${REPO_OWNER}/${REPO_NAME}/pulls/${prNumber}/merge`, {
     method: "PUT",
     body: JSON.stringify({ merge_method: "merge" }),
   });
+
+  // 머지 검증
+  const pr = await api<{ merged: boolean; state: string }>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls/${prNumber}`
+  );
+  if (!pr.merged) {
+    throw new Error(`PR #${prNumber} 머지 실패 (state: ${pr.state})`);
+  }
 }
 
 /** 브랜치 삭제 */
@@ -196,38 +251,61 @@ export async function deleteBranch(branchName: string): Promise<void> {
   });
 }
 
-/** 브랜치 HEAD가 특정 커밋인지 검증 (D8 방어) */
-export async function verifyBranchHead(branchName: string, expectedSha: string): Promise<boolean> {
-  try {
-    const ref = await api<{ object: { sha: string } }>(
-      `/repos/${REPO_OWNER}/${REPO_NAME}/git/ref/heads/${branchName}`
-    );
-    return ref.object.sha === expectedSha;
-  } catch {
-    return false;
-  }
-}
 
 /** PR의 CI 체크 상태 조회 (R3) */
 export type CheckStatus = "success" | "failure" | "pending";
 
 export async function getPRCheckStatus(prNumber: number): Promise<CheckStatus> {
+  const result = await getPRCheckStatusDetail(prNumber);
+  return result.status;
+}
+
+/** PR의 CI 체크 상태 + run 개수 조회 */
+export async function getPRCheckStatusDetail(prNumber: number): Promise<{ status: CheckStatus; totalRuns: number }> {
   const pr = await api<{ head: { sha: string } }>(
     `/repos/${REPO_OWNER}/${REPO_NAME}/pulls/${prNumber}`
   );
+  return getCommitCheckStatusDetail(pr.head.sha);
+}
 
+/** 특정 커밋의 CI 체크 상태 조회 (PR API 경유하지 않음 — stale head.sha 방지) */
+export async function getCommitCheckStatusDetail(commitSha: string): Promise<{ status: CheckStatus; totalRuns: number }> {
   const checks = await api<{ check_runs: Array<{ status: string; conclusion: string | null }> }>(
-    `/repos/${REPO_OWNER}/${REPO_NAME}/commits/${pr.head.sha}/check-runs`
+    `/repos/${REPO_OWNER}/${REPO_NAME}/commits/${commitSha}/check-runs`
   );
 
-  if (checks.check_runs.length === 0) return "pending";
+  const totalRuns = checks.check_runs.length;
+
+  if (totalRuns === 0) return { status: "pending", totalRuns: 0 };
 
   if (checks.check_runs.some((r) => r.status === "completed" && r.conclusion === "failure")) {
-    return "failure";
+    return { status: "failure", totalRuns };
   }
   if (checks.check_runs.every((r) => r.status === "completed")) {
-    return "success";
+    return { status: "success", totalRuns };
   }
+  return { status: "pending", totalRuns };
+}
+
+/**
+ * PR 브랜치에서 check run이 존재하는 가장 최신 커밋의 CI 결과 반환
+ * 동일 코드 재배포로 check run 0개인 커밋이 쌓여도 정확한 CI 상태를 얻는다.
+ */
+export async function getLatestCIStatus(pr: OpenPR): Promise<CheckStatus> {
+  // GitHub PR commits API는 오래된 순 반환 — per_page=100으로 최대한 가져옴
+  const commits = await api<Array<{ sha: string }>>(
+    `/repos/${REPO_OWNER}/${REPO_NAME}/pulls/${pr.number}/commits?per_page=100`
+  );
+
+  // 최신 커밋부터 역순 탐색
+  for (let i = commits.length - 1; i >= 0; i--) {
+    const result = await getCommitCheckStatusDetail(commits[i].sha);
+    if (result.totalRuns > 0) {
+      return result.status;
+    }
+  }
+
+  // 모든 커밋에 check run 없음 → pending
   return "pending";
 }
 
