@@ -3,6 +3,8 @@ import { css } from "@emotion/react";
 import { releaseComponent, type DeployStatus } from "../services/deployService";
 import {
   getAllComponentCIStatus,
+  closePR,
+  deleteBranch,
   type ComponentCIStatus,
   type CheckStatus,
 } from "../services/GitHubAPI";
@@ -141,6 +143,26 @@ const prLinkStyle = css`
   flex-shrink: 0;
   font-weight: 500;
   &:hover { text-decoration: underline; }
+`;
+
+const closeBtnStyle = css`
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  transition: all 0.15s ease;
+  &:hover { background: #fef2f2; color: #dc2626; }
+  &:disabled { opacity: 0.3; cursor: not-allowed; }
 `;
 
 const releaseBtnStyle = css`
@@ -302,6 +324,26 @@ export function ReleaseSection() {
     };
   }, [hasPending, fetchComponents]);
 
+  const [closingPR, setClosingPR] = useState<number | null>(null);
+
+  const handleClosePR = useCallback(async (comp: ComponentCIStatus) => {
+    const ok = window.confirm(
+      `"${comp.componentName}" PR #${comp.pr.number}을 닫고 브랜치를 삭제합니다.\n계속하시겠습니까?`
+    );
+    if (!ok) return;
+
+    setClosingPR(comp.pr.number);
+    try {
+      await closePR(comp.pr.number);
+      await deleteBranch(comp.pr.head.ref).catch(() => {});
+      await fetchComponents();
+    } catch (e) {
+      alert(`PR 닫기 실패: ${e instanceof Error ? e.message : e}`);
+    } finally {
+      setClosingPR(null);
+    }
+  }, [fetchComponents]);
+
   const isBusy = BUSY_STEPS.has(status.step);
   const isReleaseDone = status.step === "release-done";
   const isError = status.step === "error";
@@ -374,6 +416,14 @@ export function ReleaseSection() {
                 >
                   #{comp.pr.number}
                 </a>
+                <button
+                  css={closeBtnStyle}
+                  title="PR 닫기"
+                  disabled={isBusy || closingPR === comp.pr.number}
+                  onClick={() => handleClosePR(comp)}
+                >
+                  {closingPR === comp.pr.number ? "..." : "×"}
+                </button>
               </div>
             ))}
           </div>

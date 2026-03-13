@@ -244,6 +244,14 @@ export async function mergePR(prNumber: number): Promise<void> {
   }
 }
 
+/** PR 닫기 (머지 없이) */
+export async function closePR(prNumber: number): Promise<void> {
+  await api(`/repos/${REPO_OWNER}/${REPO_NAME}/pulls/${prNumber}`, {
+    method: "PATCH",
+    body: JSON.stringify({ state: "closed" }),
+  });
+}
+
 /** 브랜치 삭제 */
 export async function deleteBranch(branchName: string): Promise<void> {
   await api(`/repos/${REPO_OWNER}/${REPO_NAME}/git/refs/heads/${branchName}`, {
