@@ -335,6 +335,10 @@ hasIcon=false:                [Label x=0.05]
 
 매칭 실패 시 해당 노드는 **variant-specific 노드**가 되어 최종 코드에 중복 출력될 수 있습니다.
 
+### Cross-Depth 잔여 중복
+
+노드 매칭은 같은 depth의 children끼리 비교하므로, variant 간 트리 구조가 다르면 같은 역할의 노드가 **다른 depth에 중복으로 남을 수 있습니다**. 이 문제는 병합 후 `UpdateSquashByIou`의 cross-depth squash 후처리가 해결합니다. 자세한 내용은 [변형병합 개념원리 — Cross-Depth Squash](변형병합-개념원리.md#cross-depth-squash)를 참조하세요.
+
 ---
 
 ## 참고
