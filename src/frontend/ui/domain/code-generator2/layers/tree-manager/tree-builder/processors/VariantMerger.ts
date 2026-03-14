@@ -7,6 +7,7 @@ import {
 import DataManager from "../../../data-manager/DataManager";
 import { NodeMatcher } from "./NodeMatcher";
 import { VariantGraphBuilder } from "./VariantGraphBuilder";
+import { UpdateSquashByIou } from "./UpdateSquashByIou";
 
 /**
  * VariantMerger
@@ -67,6 +68,14 @@ export class VariantMerger {
 
     // 3. 병합: 순서대로 트리 병합
     const merged = this.mergeTreesInOrder(graph, mergeOrder);
+
+    // 3.5. IoU 기반 cross-depth squash (v1 UpdateSquashByIou 포팅)
+    const squasher = new UpdateSquashByIou(
+      this.dataManager,
+      this.nodeToVariantRoot
+    );
+    const variantTrees = graph.nodes.map((n) => n.tree);
+    squasher.execute(merged, variantTrees);
 
     // 4. 정렬: children x 좌표 정렬
     this.sortChildrenByPosition(merged);
