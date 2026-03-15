@@ -294,8 +294,8 @@ interface HeuristicContext {
   tree: InternalTree;
   dataManager: DataManager;
   componentName: string;
-  propDefs: PropDefinition[];
-  props: Map<string, PropDefinition>;
+  propDefs: Record<string, ComponentPropertyDef> | undefined;  // Figma 원본
+  props: PropDefinition[];                                     // 추출된 props 배열
 }
 
 interface IHeuristic {
@@ -478,10 +478,10 @@ type ConditionNode =
 
 ```typescript
 interface StyleObject {
-  base: Record<string, string>;                      // 공통 스타일
-  dynamic: DynamicStyleEntry[];                      // 조건부 스타일
-  pseudo: Record<PseudoClass, Record<string, string>>; // :hover, :active 등
-  mediaQueries?: MediaQueryEntry[];                  // @media 반응형
+  base: Record<string, string | number>;                      // 공통 스타일
+  dynamic: DynamicStyleEntry[];                               // 조건부 스타일
+  pseudo: Record<PseudoClass, Record<string, string | number>>; // :hover, :active 등
+  mediaQueries?: MediaQueryEntry[];                           // @media 반응형
 }
 ```
 

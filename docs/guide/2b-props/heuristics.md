@@ -132,7 +132,7 @@ Props 변경 없음.
 
 **핵심: 여러 variant를 단일 `checked` 상태로 통합**
 
-**apply() 실행 순서 (12단계):**
+**apply() 실행 순서 (10단계):**
 
 ```
  1. removeAndDetectStateProp()
@@ -145,21 +145,16 @@ Props 변경 없음.
  2. removeOnOffProp()
     → /^on\/?off$/i 패턴의 boolean prop 제거, 이름 반환
 
- 3. addCheckedProp()
-    → checked: boolean 추가
-    → indeterminate 감지 시: checked: boolean | "indeterminate" (extraValues)
-
- 4. addOnCheckedChangeProp()
+ 3. addCheckedProp() + addOnCheckedChangeProp() + addDisableProp()
+    → checked: boolean 추가 (indeterminate 감지 시 extraValues)
     → onCheckedChange: (checked: boolean | "indeterminate") => void 추가
-
- 5. addDisableProp()
     → disable: boolean 추가
 
- 6. Root bindings 설정
+ 4. Root bindings 설정
     → attrs.onClick = () => onCheckedChange?.(!checked)
     → attrs.disabled = {prop: "disable"}
 
- 7. convertIconSlots()
+ 5. convertIconSlots()
     → 재귀 순회: slot binding된 INSTANCE 탐색
     → 이름에 "check" 포함 (checkbox 제외)
       → bindings.content 삭제, visibleCondition = eq(checked, true)
@@ -167,21 +162,21 @@ Props 변경 없음.
       → bindings.content 삭제, visibleCondition = eq(checked, "indeterminate")
     → 이름에 "interaction" 포함 → bindings + slot prop 삭제
 
- 8. renamePropInConditions() (onOffProp이 있을 때)
+ 6. renamePropInConditions() (onOffProp이 있을 때)
     → 트리 전체에서 onOff prop 참조를 "checked"로 rename
 
- 9. convertStateDynamicToPseudo()
+ 7. convertStateDynamicToPseudo()
     → DISABLE_PSEUDO_MAP: { disable: ":disabled", disabled: ":disabled" }
     → disable 관련 dynamic → :disabled pseudo로 이동
 
-10. rewritePropConditions() + rewriteStateDynamicStyles()
+ 8. rewritePropConditions() + rewriteStateDynamicStyles()
     → 제거된 state prop의 모든 참조를 checked/disable 조건으로 재작성
 
-11. refineIconConditions()
+ 9. refineIconConditions()
     → check icon이 active+partial 모두에서 보여지는 문제 보정
     → "check" 이름 → 강제로 eq(checked, true)로 수정
 
-12. convertSvgPropsToCss() + normalizeBorderRadiusForSvgVariants()
+10. convertSvgPropsToCss() + normalizeBorderRadiusForSvgVariants()
     → SVG fill → background, stroke → borderColor, strokeWidth → borderWidth+"px"
     → borderColor/borderWidth 있으면 border-style: "solid" 자동 추가
     → SVG 변환 엔트리에 누락된 border-radius 보충
@@ -250,7 +245,10 @@ Props 변경 없음.
    → attrs.onClick = () => onChange?.(!active)
    → attrs.disabled = {prop: disableProp.name} (있을 때만)
 
-5. addDisableDynamicStyles() (disable prop이 있을 때)
+5. addActiveDynamicStyles()
+   → active prop 기반 동적 스타일 생성
+
+6. addDisableDynamicStyles() (disable prop이 있을 때)
    → styles.dynamic 추가: eq(disable, "true") → { opacity: 0.5, cursor: "not-allowed" }
 ```
 
@@ -285,7 +283,7 @@ Props 변경 없음.
      visibleCondition에서 prop 이름 추출
      → 매칭되는 boolean prop 찾기
      → sourceKey가 /label/i         → stringPropName = "label"
-     → sourceKey가 /guide|helper/i  → stringPropName = "helperText"
+     → sourceKey가 /guide|helper|error|message/i  → stringPropName = "helperText"
      → TEXT 내용 추출 (defaultValue로 사용)
 
    변환:

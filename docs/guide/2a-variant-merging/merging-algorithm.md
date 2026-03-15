@@ -71,16 +71,18 @@ Figma에서 버튼 컴포넌트를 만들 때:
 
 ### 1. InternalTree
 
-병합 과정의 중간 표현 (Intermediate Representation)
+병합 과정의 중간 표현 (Intermediate Representation). `InternalTree`는 `InternalNode`의 타입 별칭이다.
 
 ```typescript
-interface InternalTree {
-  id: string;
+type InternalTree = InternalNode;  // 루트 노드 = 트리
+
+interface InternalNode extends UINodeBase {
   type: string;
-  name: string;
+  parent?: InternalNode | null;
   children: InternalNode[];
   mergedNodes?: VariantOrigin[];  // 병합된 원본 정보
-  bounds?: { x, y, width, height };
+  bounds?: { x: number; y: number; width: number; height: number };
+  refId?: string;                 // 외부 컴포넌트 참조 ID (INSTANCE만)
 }
 ```
 
