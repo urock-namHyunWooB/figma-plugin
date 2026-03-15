@@ -117,9 +117,15 @@ INSTANCE children have compound IDs like `I704:56;704:29;692:1613`. The last seg
 
 ## Documentation
 
-Detailed technical docs in `docs/`:
-- `ARCHITECTURE.md` - New pipeline architecture
-- `COMPILER_ENGINE.md` - Architecture and algorithms
+Detailed technical docs in `docs/guide/`:
+- `architecture/pipeline-overview.md` - 파이프라인 아키텍처 (Layer 1-2, 타입, 디렉토리)
+- `code-generation/emitter.md` - 코드 생성 레이어 (ReactEmitter, Generators, StyleStrategy)
+- `props/extraction.md` - Props 추출 (Stage 1-2)
+- `props/heuristics.md` - 컴포넌트 Heuristics (Stage 3, 15개 상세)
+- `props/style-decomposition.md` - 스타일 분해 (Stage 4-5, DynamicStyleDecomposer)
+- `variant-merging/merging-algorithm.md` - 변형병합 알고리즘
+- `variant-merging/node-matching.md` - 노드 매칭 원리
+- `deployment/pipeline.md` - 배포 파이프라인
 
 ## Workflow Guidelines
 

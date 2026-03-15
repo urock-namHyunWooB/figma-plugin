@@ -206,53 +206,133 @@ nodeToVariantRoot = {
 // 병합 후에도 각 mergedNode의 원본 위치를 찾을 수 있음
 ```
 
-### 2단계: Variant 그래프 구축
+### 2단계: Variant 그래프 구축 + 병합 순서 결정
+
+#### 왜 그래프가 필요한가?
+
+4개 variant를 병합할 때, 아무 순서로 합쳐도 최종 트리 구조는 같습니다.
+하지만 **생성되는 조건 코드의 품질이 달라집니다.**
+
+```
+나쁜 순서: Size=Large/State=Default + Size=Small/State=Hover (2개 prop 동시 변경)
+→ "이 스타일 변화가 Size 때문인지 State 때문인지 모름"
+
+좋은 순서: Size=Large/State=Default + Size=Small/State=Default (Size 1개만 변경)
+→ "Size가 바뀌면 이 스타일이 달라진다"는 인과관계가 명확
+```
+
+**목표: 매번 prop 1개만 달라지는 순서를 찾는 것.**
+
+#### 2-1. Props 추출
+
+각 variant에서 props를 추출합니다.
+- `variantProperties`가 있으면 그대로 사용
+- 없으면 `variant.name`을 파싱 (예: `"Size=Large, State=Default"` → `{Size: "Large", State: "Default"}`)
 
 ```typescript
-// 각 variant를 InternalTree로 변환
-const nodes = variants.map(variant => ({
-  tree: convertToInternalTree(variant),
-  props: extractVariantProps(variant)  // { Size: "default", Icon: "true" }
-}));
+extractVariantProps(variant):
+  // Figma API의 variantProperties 우선 사용
+  if (variant.variantProperties) return variant.variantProperties;
 
-// 1-prop 차이인 variant 쌍을 엣지로 연결
-const edges = [];
-for (let i = 0; i < nodes.length; i++) {
-  for (let j = i + 1; j < nodes.length; j++) {
-    const propDiff = calculatePropDiff(nodes[i].props, nodes[j].props);
-    if (propDiff.count <= 1) {
-      edges.push({ from: i, to: j, propDiffCount: propDiff.count });
-    }
-  }
+  // fallback: name 문자열 파싱
+  "Size=Large, State=Default"
+    .split(",")     → ["Size=Large", " State=Default"]
+    .map(trim)      → ["Size=Large", "State=Default"]
+    .split("=")     → { Size: "Large", State: "Default" }
+```
+
+#### 2-2. 그래프 구축: "비슷한 것끼리 연결"
+
+모든 variant 쌍(i, j)을 비교해서, **prop 값이 다른 게 1개 이하**인 쌍만 엣지로 연결합니다.
+
+```typescript
+for (i = 0; i < N; i++)
+  for (j = i+1; j < N; j++)
+    // 두 variant의 모든 prop key를 합집합으로 모음
+    allKeys = union(keys(propsA), keys(propsB))
+    // 값이 다른 key만 수집
+    diffs = allKeys.filter(key => propsA[key] !== propsB[key])
+    // diff가 1개 이하면 엣지 생성
+    if (diffs.length <= 1)
+      edges.push({ from: i, to: j, propDiff: diffs.length })
+```
+
+**구체적 예시** (4개 variant):
+
+```
+[0] Size=Large, State=Default
+[1] Size=Small, State=Default
+[2] Size=Large, State=Hover
+[3] Size=Small, State=Hover
+
+모든 쌍 비교:
+(0,1) → diff: ["Size"]         → 1개 → 엣지 ✓
+(0,2) → diff: ["State"]        → 1개 → 엣지 ✓
+(0,3) → diff: ["Size","State"] → 2개 → 엣지 ✗  ← 대각선은 연결 안 됨
+(1,2) → diff: ["Size","State"] → 2개 → 엣지 ✗
+(1,3) → diff: ["State"]        → 1개 → 엣지 ✓
+(2,3) → diff: ["Size"]         → 1개 → 엣지 ✓
+```
+
+결과 그래프:
+
+```
+ [0] Large/Default ──── [1] Small/Default
+       │                       │
+   (State만 다름)          (State만 다름)
+       │                       │
+ [2] Large/Hover   ──── [3] Small/Hover
+
+* 대각선(0↔3, 1↔2)은 2개 prop이 다르므로 연결 안 됨
+```
+
+> **복잡도**: O(N²) — 모든 쌍을 비교하지만, variant 수는 보통 10개 미만이므로 문제없음
+
+#### 2-3. 병합 순서 결정 (BFS)
+
+그래프에서 **0번 노드부터 BFS**로 순회한 방문 순서 = 병합 순서입니다.
+
+```
+시작: queue=[0], visited={0}, order=[]
+
+① current=0 → order에 추가 → order=[0]
+   이웃: [1], [2] (미방문)
+   queue=[1, 2], visited={0, 1, 2}
+
+② current=1 → order에 추가 → order=[0, 1]
+   이웃: [3] (미방문)
+   queue=[2, 3], visited={0, 1, 2, 3}
+
+③ current=2 → order에 추가 → order=[0, 1, 2]
+   이웃: [3] → 이미 방문 → skip
+   queue=[3]
+
+④ current=3 → order에 추가 → order=[0, 1, 2, 3]
+
+최종 병합 순서: [0, 1, 2, 3]
+```
+
+이 순서로 병합하면:
+```
+0 + 1: Size만 다름 ✓ → "Size가 바뀌면 이 스타일이 변한다"
+(0+1) + 2: State만 다름 ✓ → "State가 바뀌면 이 스타일이 변한다"
+(0+1+2) + 3: State만 다름 ✓
+```
+
+**매번 1개 prop만 달라지므로 prop↔스타일 인과관계가 명확해집니다.**
+
+#### 2-4. Disconnected 처리
+
+만약 1-prop 경로로 도달할 수 없는 variant가 있으면 (그래프가 끊어진 경우),
+BFS 후 미방문 노드를 순서 끝에 추가합니다.
+
+```typescript
+for (let i = 0; i < graph.nodes.length; i++) {
+  if (!visited.has(i)) order.push(i);
 }
 ```
 
-### 3단계: 병합 순서 결정 (BFS)
-
-```typescript
-function determineMergeOrder(graph: VariantGraph): number[] {
-  const visited = new Set([0]);  // 0번부터 시작
-  const order = [];
-  const queue = [0];
-
-  while (queue.length > 0) {
-    const current = queue.shift();
-    order.push(current);
-
-    // 인접 노드를 propDiffCount 오름차순으로 정렬
-    const neighbors = getNeighbors(current)
-      .filter(n => !visited.has(n))
-      .sort((a, b) => getPropDiff(current, a) - getPropDiff(current, b));
-
-    for (const neighbor of neighbors) {
-      visited.add(neighbor);
-      queue.push(neighbor);
-    }
-  }
-
-  return order;  // [0, 1, 3, 4, 2, 5, ...]
-}
-```
+이런 경우는 드물지만, 발생해도 모든 variant가 빠짐없이 병합됩니다.
 
 ### 4단계: 트리 병합
 
@@ -323,90 +403,7 @@ function mergeChildren(
 
 ## 노드 매칭 방식
 
-### isSameNode 알고리즘
-
-두 노드가 "같은 역할"을 하는지 판단하는 핵심 함수
-
-```typescript
-function isSameNode(nodeA: InternalNode, nodeB: InternalNode): boolean {
-  // 1. 타입이 다르면 다른 노드
-  if (nodeA.type !== nodeB.type) return false;
-
-  // 2. 같은 ID면 같은 노드 (드물지만 가능)
-  if (nodeA.id === nodeB.id) return true;
-
-  // 3. 루트끼리는 항상 같음
-  if (!nodeA.parent && !nodeB.parent) return true;
-
-  // 4. 정규화된 위치 비교 (±0.1 오차 허용)
-  const posA = getNormalizedPosition(nodeA);
-  const posB = getNormalizedPosition(nodeB);
-
-  if (posA && posB) {
-    const dx = Math.abs(posA.x - posB.x);
-    const dy = Math.abs(posA.y - posB.y);
-
-    if (dx <= 0.1 && dy <= 0.1) {
-      return true;  // 위치가 거의 같음 → 같은 노드!
-    }
-  }
-
-  // 5. TEXT 노드 특별 처리
-  // 같은 이름 + 같은 부모 타입 → 같은 역할의 텍스트
-  if (nodeA.type === "TEXT" && nodeA.name === nodeB.name) {
-    const parentAType = nodeA.parent?.type;
-    const parentBType = nodeB.parent?.type;
-
-    if (parentAType && parentBType && parentAType === parentBType) {
-      return true;
-    }
-  }
-
-  return false;
-}
-```
-
-### 정규화된 위치 계산
-
-```typescript
-function getNormalizedPosition(node: InternalNode): { x, y } | null {
-  // 1. 노드의 원본 ID 가져오기
-  const originalId = node.mergedNodes[0].id;
-
-  // 2. 원본이 속한 variant 루트 찾기
-  const variantRootId = nodeToVariantRoot.get(originalId);
-  const variantRoot = dataManager.getById(variantRootId);
-
-  // 3. 정규화 (0~1 범위)
-  const normalizedX = (node.bounds.x - variantRoot.bounds.x)
-                      / variantRoot.bounds.width;
-  const normalizedY = (node.bounds.y - variantRoot.bounds.y)
-                      / variantRoot.bounds.height;
-
-  return { x: normalizedX, y: normalizedY };
-}
-```
-
-### 왜 ±0.1 오차를 허용하나?
-
-1. **Figma의 Auto Layout**: Variant마다 크기가 약간 다를 수 있음
-   ```
-   Size=small → width: 80px
-   Size=default → width: 100px
-   Size=large → width: 120px
-   ```
-
-2. **정규화 후에도 미세한 차이 발생**
-   ```
-   // Icon 위치
-   Small:   (8 - 0) / 80  = 0.100
-   Default: (10 - 0) / 100 = 0.100
-   Large:   (12 - 0) / 120 = 0.100
-
-   // 완벽하게 0.1로 정렬되지만, floating point 오차 가능
-   ```
-
-3. **디자이너의 수동 조정**: 픽셀 단위 미세 조정
+노드 매칭의 상세 알고리즘(타입 호환성, padding-aware 정규화, height ratio fallback, INSTANCE/TEXT 폴백 전략 등)은 [노드 매칭 원리](node-matching.md)를 참조하세요.
 
 ---
 
