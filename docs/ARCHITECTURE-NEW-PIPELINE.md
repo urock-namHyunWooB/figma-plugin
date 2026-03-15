@@ -1,19 +1,19 @@
 # FigmaCodeGenerator Architecture
 
-> 이 문서는 FigmaCodeGenerator의 새로운 아키텍처를 정의합니다.
-> 기존 코드를 이 구조로 점진적으로 리팩토링합니다.
+> 이 문서는 FigmaCodeGenerator의 현재 아키텍처를 정의합니다.
+> 레거시 파이프라인은 완전히 제거되었으며, 이 문서는 현재 운영 중인 유일한 파이프라인을 설명합니다.
 
 ## Overview
 
-FigmaCodeGenerator는 Figma 디자인 데이터를 React/Vue/Swift 등의 컴포넌트 코드로 변환합니다.
+FigmaCodeGenerator는 Figma 디자인 데이터를 React 컴포넌트 코드로 변환합니다.
 
 ### 설계 원칙
 
 1. **레이어 분리**: 각 레이어는 명확한 단일 책임을 가짐
 2. **단방향 의존성**: 상위 레이어만 하위 레이어를 참조
-3. **플랫폼 독립적 IR**: TreeBuilder까지는 플랫폼에 독립적
-4. **Policy 기반 확장**: 하드코딩 대신 정책으로 동작 커스터마이징
-5. **의존성 그래프 기반 컴파일**: 토폴로지 정렬로 컴파일 순서 결정
+3. **플랫폼 독립적 IR**: TreeBuilder까지는 플랫폼에 독립적 (UITree)
+4. **휴리스틱 기반 컴포넌트 감지**: 점수 기반 매칭으로 UX 패턴 자동 인식
+5. **Strategy 패턴**: 스타일 전략 (Emotion/Tailwind)을 교체 가능
 
 ---
 
@@ -22,35 +22,41 @@ FigmaCodeGenerator는 Figma 디자인 데이터를 React/Vue/Swift 등의 컴포
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                      FigmaCodeGenerator                          │
-│                          (Facade)                                │
+│                        (Orchestrator)                             │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  ┌────────────────────────────────────────────────────────────┐ │
-│  │                     PolicyManager                           │ │
-│  │                    (정책 관리 및 제공)                        │ │
-│  └────────────────────────────────────────────────────────────┘ │
-│                                                                  │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │                  DependencyAnalyzer                         │ │
-│  │        (의존성 그래프 구축 + 토폴로지 정렬 + 순환 감지)         │ │
+│  │  Layer 1: DataManager                                       │ │
+│  │  (HashMap 기반 O(1) 데이터 접근 + 벡터/이미지 정규화)          │ │
 │  └────────────────────────────────────────────────────────────┘ │
 │                               │                                  │
 │                               ▼                                  │
 │  ┌────────────────────────────────────────────────────────────┐ │
-│  │                                                              │ │
-│  │    ┌────────────┐   ┌───────────┐   ┌───────────┐          │ │
-│  │    │DataPreparer│ → │TreeBuilder│ → │CodeEmitter│          │ │
-│  │    └────────────┘   └───────────┘   └───────────┘          │ │
-│  │         ↑                ↑               ↑                  │ │
-│  │         └────────────────┴───────────────┘                  │ │
-│  │                    Policy Hooks                              │ │
-│  │                                                              │ │
+│  │  Layer 2: TreeManager                                       │ │
+│  │  ┌───────────────────────────────────────────────────────┐ │ │
+│  │  │  TreeBuilder (2-Phase 파이프라인)                       │ │ │
+│  │  │  ┌──────────┐  ┌──────────┐  ┌────────────────────┐  │ │ │
+│  │  │  │Processors│→ │Heuristics│→ │UINodeConverter     │  │ │ │
+│  │  │  └──────────┘  └──────────┘  └────────────────────┘  │ │ │
+│  │  └───────────────────────────────────────────────────────┘ │ │
+│  │  ┌───────────────────────────────────────────────────────┐ │ │
+│  │  │  Post-Processors                                       │ │ │
+│  │  │  ComponentPropsLinker → UITreeOptimizer                │ │ │
+│  │  └───────────────────────────────────────────────────────┘ │ │
 │  └────────────────────────────────────────────────────────────┘ │
 │                               │                                  │
 │                               ▼                                  │
 │  ┌────────────────────────────────────────────────────────────┐ │
-│  │                        Bundler                              │ │
-│  │                  (번들링 + 포맷팅 + 최적화)                    │ │
+│  │  Layer 3: ReactEmitter (ICodeEmitter)                       │ │
+│  │  ┌────────────┐ ┌──────────┐ ┌─────────────┐ ┌─────────┐ │ │
+│  │  │ImportsGen. │ │PropsGen. │ │StylesGen.   │ │JsxGen.  │ │ │
+│  │  └────────────┘ └──────────┘ └─────────────┘ └─────────┘ │ │
+│  │  ┌──────────────────────────────────────────────────────┐  │ │
+│  │  │  IStyleStrategy: EmotionStrategy / TailwindStrategy  │  │ │
+│  │  └──────────────────────────────────────────────────────┘  │ │
+│  │  ┌──────────────────────────────────────────────────────┐  │ │
+│  │  │  ReactBundler (멀티 컴포넌트 번들링)                    │  │ │
+│  │  └──────────────────────────────────────────────────────┘  │ │
 │  └────────────────────────────────────────────────────────────┘ │
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
@@ -60,735 +66,709 @@ FigmaCodeGenerator는 Figma 디자인 데이터를 React/Vue/Swift 등의 컴포
 
 | 컴포넌트 | 역할 |
 |---------|------|
-| **PolicyManager** | 정책 관리 및 각 단계에 제공 |
-| **DependencyAnalyzer** | 의존성 분석, 컴파일 순서 결정 |
-| **DataPreparer** | 데이터 저장/조회 + enrichment + props 추출 |
-| **TreeBuilder** | 플랫폼 독립적 IR 생성 |
-| **CodeEmitter** | 플랫폼별 코드 생성 (React/Vue/Swift) |
-| **Bundler** | 번들링 + 포맷팅 |
+| **DataManager** | HashMap 기반 O(1) 데이터 접근, 벡터/이미지 정규화 |
+| **TreeManager** | 트리 빌딩 오케스트레이션 + 의존성 트리 구축 |
+| **TreeBuilder** | 2-Phase 파이프라인으로 UITree 생성 |
+| **ReactEmitter** | UITree → React 코드 생성 (ICodeEmitter 구현) |
+| **ReactBundler** | 멀티 컴포넌트 단일 파일 번들링 |
 
 ---
 
-## DataPreparer
+## Layer 1: DataManager
 
 ### 책임
 
-- Figma 원본 데이터를 준비된 형태로 변환
-- 데이터 접근을 위한 효율적인 자료구조 제공 (HashMap 등)
-- INSTANCE override 병합
-- Variant 데이터 enrichment
-- Props 정의 추출
+- FigmaNodeData를 HashMap 기반으로 O(1) 조회 가능하게 변환
+- 노드, 스타일, 의존성, 이미지, 벡터 SVG 통합 관리
+- INSTANCE 벡터 SVG 병합 및 정규화
+- 생성자에서 모든 데이터 구조를 한 번에 구축 (이후 불변)
 
 ### Input / Output
 
 ```typescript
 Input:  FigmaNodeData (raw JSON from Figma)
-Output: PreparedDesignData
+Output: DataManager (O(1) lookup 인스턴스)
 ```
 
-### 인터페이스
+### 내부 자료구조
 
 ```typescript
-interface DataPreparer {
-  prepare(data: FigmaNodeData): PreparedDesignData;
-}
-
-interface PreparedDesignData {
-  document: PreparedNode;
-  styleTree: StyleTree;
-  dependencies: Map<string, FigmaNodeData>;  // 아직 준비 안된 raw 데이터
-  props: ExtractedProps;
-
-  // 조회 메서드
-  getNodeById(id: string): PreparedNode | undefined;
-  getStyleById(id: string): StyleTree | undefined;
+class DataManager {
+  private spec: FigmaNodeData;          // 원본 데이터 deep copy
+  private document: SceneNode;          // 루트 문서 노드
+  private styleTree: StyleTree;         // 루트 스타일 트리
+  private nodeMap: Map<string, SceneNode>;     // ID → SceneNode
+  private styleMap: Map<string, StyleTree>;    // ID → StyleTree
+  private dependencies: Map<string, FigmaNodeData>;  // 재귀 수집된 의존성
+  private imageUrls: Map<string, string>;      // imageRef → URL
+  private vectorSvgs: Map<string, string>;     // nodeId → SVG 문자열
+  private dependencyMergedSvgs: Map<string, string>; // 정규화된 병합 SVG
 }
 ```
 
-### Policy Hooks
+### 주요 API
 
-```typescript
-interface DataPreparerPolicy {
-  /** 특정 레이어 무시 */
-  shouldIgnore?: (node: FigmaNode) => boolean;
+| 메서드 | 반환 | 설명 |
+|--------|------|------|
+| `getById(id)` | `{node?, style?, spec?}` | 통합 O(1) 조회 |
+| `getDocument()` | `SceneNode` | 루트 문서 노드 |
+| `getMainComponentId()` | `string` | 루트 노드 ID |
+| `getRootNodeType()` | `string` | 문서 노드 타입 |
+| `totalVariantCount` | `number` | COMPONENT_SET 자식 수 또는 1 |
+| `getAllDependencies()` | `Map<string, FigmaNodeData>` | 모든 의존성 |
+| `getDependenciesGroupedByComponentSet()` | `Record<id, {name, variants}>` | ComponentSet별 그룹 |
+| `getImageUrlByNodeId(nodeId)` | `string?` | 노드 이미지 URL |
+| `getVectorSvgByNodeId(nodeId)` | `string?` | 벡터 SVG 직접 조회 |
+| `getVectorSvgByLastSegment(nodeId)` | `string?` | INSTANCE 복합 ID 접미사 매칭 |
+| `mergeInstanceVectorSvgs(instanceId)` | `string?` | 멀티 벡터 → 단일 SVG 병합 |
+| `getMergedVectorSvgForComponent(componentId)` | `string?` | 의존성용 정규화 SVG |
+| `getComponentPropertyDefinitions()` | `Record?` | 컴포넌트 속성 정의 |
 
-  /** 노드 변환 규칙 */
-  transformNode?: (node: FigmaNode) => FigmaNode;
+### INSTANCE 복합 ID 처리
 
-  /** 커스텀 props 추출 */
-  extractCustomProps?: (node: FigmaNode) => Record<string, any>;
-}
+INSTANCE 자식 노드는 `I704:56;704:29;692:1613` 형태의 복합 ID를 가집니다:
+- `I704:56` = 외부 INSTANCE
+- `704:29` = 중간 컴포넌트
+- `692:1613` = 원본 컴포넌트 노드 ID (마지막 세그먼트)
+
+`getVectorSvgByLastSegment()`는 마지막 세그먼트로 접미사 매칭을 수행합니다.
+
+### 파일 위치
+
 ```
-
-### 내부 구성
-
+layers/data-manager/
+└── DataManager.ts    # 단일 파일, 서브 컴포넌트 없음
 ```
-DataPreparer
-  │
-  ├── DataStore (현재 SpecDataManager)
-  │     - HashMap 생성 및 관리
-  │     - 데이터 조회 메서드
-  │
-  ├── OverrideProcessor (현재 InstanceOverrideManager)
-  │     - INSTANCE override 병합
-  │
-  ├── Enricher (현재 VariantEnrichManager)
-  │     - SVG, 의존성 정보 enrichment
-  │
-  └── PropsExtractor
-        - Props 정의 추출
-```
-
-### 현재 코드 매핑
-
-| 현재 | 새 구조 |
-|------|---------|
-| SpecDataManager | DataPreparer.DataStore |
-| InstanceOverrideManager | DataPreparer.OverrideProcessor |
-| VariantEnrichManager | DataPreparer.Enricher |
-| PropsExtractor | DataPreparer.PropsExtractor |
 
 ---
 
-## Layer 2: TreeBuilder
+## Layer 2: TreeManager + TreeBuilder
 
-### 책임
+### TreeManager
 
-- 정규화된 데이터를 플랫폼 독립적인 IR(Intermediate Representation)로 변환
-- Variant 병합 (IoU 기반 노드 매칭)
-- 스타일 분류 (base/dynamic/pseudo)
-- 조건부 렌더링 로직 결정
-- Slot 및 배열 슬롯 감지
+#### 책임
 
-### Input / Output
+- 메인 컴포넌트와 의존성 컴포넌트 트리 빌딩 오케스트레이션
+- 의존성을 ComponentSet별로 그룹화하여 variant 병합
+- 빌드 완료 후 Post-Processing (Props 연결, 최적화)
 
-```typescript
-Input:  PreparedDesignData
-Output: DesignTree (Platform-Independent IR)
-```
-
-### 변환 파이프라인
-
-```
-PreparedDesignData
-    │
-    ▼
-Phase 1: 구조 생성
-    VariantProcessor.merge()     → internalTree (IoU 기반 variant 병합)
-    PropsProcessor.extract()     → propsMap
-    │
-    ▼
-Phase 2: 분석
-    NodeProcessor.detectSemanticRoles() → semanticRoles
-    VisibilityProcessor.processHidden() → hiddenConditions
-    │
-    ▼
-Heuristics: 컴포넌트 패턴 감지 (COMPONENT_SET만)
-    HeuristicsRunner.run()       → componentType, nodeSemanticTypes
-    │
-    ▼
-Phase 3: 노드별 변환
-    NodeProcessor.mapTypes()             → nodeTypes
-    StyleProcessor.build()               → nodeStyles
-    StyleProcessor.applyPositions()      → nodeStyles (position 추가)
-    StyleProcessor.handleRotation()      → nodeStyles (rotation 처리)
-    PropsProcessor.bindProps()           → nodePropBindings
-    SlotProcessor.detectTextSlots()      → propsMap, nodePropBindings 업데이트
-    VisibilityProcessor.resolve()        → conditionals
-    SlotProcessor.detectSlots()          → slots
-    SlotProcessor.detectArraySlots()     → arraySlots
-    InstanceProcessor.buildExternalRefs() → nodeExternalRefs
-    │
-    ▼
-Phase 4: 최종 조립
-    NodeConverter.assemble()             → root (DesignNode 트리)
-    │
-    ▼
-DesignTree { root, props, slots, conditionals, arraySlots }
-```
-
-### 내부 구성
-
-```
-tree-builder/
-├── TreeBuilder.ts           # 파이프라인 오케스트레이터
-├── index.ts                 # 모듈 public API
-│
-├── heuristics/              # 컴포넌트 패턴 감지
-│   ├── HeuristicsRunner.ts  # 휴리스틱 오케스트레이터
-│   ├── index.ts             # 모듈 export
-│   └── components/          # 컴포넌트별 휴리스틱
-│       ├── IComponentHeuristic.ts  # canProcess + process 인터페이스
-│       └── InputHeuristic.ts       # Input 판별 + 처리
-│
-├── workers/
-│   ├── VariantProcessor.ts  # IoU 기반 variant 병합 + 스쿼시
-│   ├── PropsProcessor.ts    # Props 추출 + 바인딩
-│   ├── NodeProcessor.ts     # 타입 매핑 + 의미론적 역할 감지
-│   ├── StyleProcessor.ts    # 스타일 분류 + Position + Rotation
-│   ├── VisibilityProcessor.ts # 조건 파싱 + visibility 추론 + hidden 처리
-│   ├── SlotProcessor.ts     # Slot 감지 (text/instance/array)
-│   ├── InstanceProcessor.ts # INSTANCE override + 외부 참조
-│   ├── NodeConverter.ts     # InternalNode → DesignNode 최종 조립
-│   ├── BuildContext.ts      # 파이프라인 상태 타입 (BuildContext, SemanticRoleEntry, ExternalRefData)
-│   ├── constants.ts         # IoU 임계값 등 상수
-│   │
-│   ├── interfaces/          # Worker 인터페이스 (도메인별 분리)
-│   │   ├── index.ts         # barrel re-export
-│   │   ├── core.ts          # InternalNode, MergedNodeWithVariant, Figma 타입
-│   │   ├── variant.ts       # IVariantMerger, ISquashByIou
-│   │   ├── node.ts          # INodeTypeMapper, ISemanticRoleDetector
-│   │   ├── style.ts         # IStyleClassifier, IPositionStyler
-│   │   ├── props.ts         # IPropsExtractor, IPropsLinker
-│   │   ├── slot.ts          # ISlotDetector, ITextSlotDetector
-│   │   ├── visibility.ts    # IVisibilityDetector, IVisibilityResolver, IConditionParser, IHiddenNodeProcessor
-│   │   └── instance.ts      # IInstanceOverrideHandler, IExternalRefBuilder
-│   │
-│   └── utils/               # 공유 유틸리티
-│       ├── treeUtils.ts     # traverseTree, flattenTree, mapTree
-│       ├── typeGuards.ts    # hasChildren, isInstanceNode, isComponentSetNode
-│       ├── instanceUtils.ts # INSTANCE ID 처리, FigmaFill
-│       ├── stringUtils.ts   # toCamelCase, toPascalCase, toKebabCase
-│       └── nodeTypeUtils.ts # Figma → DesignNodeType 매핑 테이블
-```
-
-### Policy Hooks
+#### Input / Output
 
 ```typescript
-interface TreeBuilderPolicy {
-  /** 특정 레이어를 특정 컴포넌트로 해석 */
-  interpretAs?: Map<string, ComponentType>;
-
-  /** 컴포넌트 분리 기준 */
-  shouldSplitComponent?: (node: DesignNode) => boolean;
-
-  /** 커스텀 조건부 렌더링 규칙 */
-  customConditionals?: (node: DesignNode) => ConditionalRule | null;
-
-  /** 배열 슬롯 감지 커스터마이징 */
-  detectArraySlot?: (nodes: DesignNode[]) => ArraySlotInfo | null;
-}
+Input:  DataManager
+Output: { main: UITree, dependencies: Map<string, UITree> }
 ```
 
-### 레거시 코드 매핑
+#### 빌드 흐름
 
-| 레거시 | TreeBuilder |
-|--------|-------------|
-| CreateSuperTree | VariantProcessor.merge() |
-| _TempAstTree (스타일) | StyleProcessor.build/applyPositions/handleRotation() |
-| _TempAstTree (visibility) | VisibilityProcessor.processHidden/resolve() |
-| _TempAstTree (props) | PropsProcessor.bindProps() |
-| _FinalAstTree (slots) | SlotProcessor.detectSlots/detectTextSlots/detectArraySlots() |
-| _FinalAstTree (외부참조) | InstanceProcessor.buildExternalRefs() |
-| NodeMatcher (IoU) | VariantProcessor.calculateIoU() |
-| ArraySlotDetector | SlotProcessor.detectArraySlot() |
+```
+TreeManager.build()
+│
+├── 1. buildComponentTree(mainId)     → 메인 UITree
+│
+├── 2. buildDependencyTrees()         → Map<id, UITree>
+│     ├── getDependenciesGroupedByComponentSet()
+│     ├── 단일 variant → 개별 컴포넌트 빌드
+│     └── 다중 variants → COMPONENT_SET 병합 빌드
+│           └── inferComponentPropertyDefinitions()
+│               (variant 이름에서 props 추론: "State=Normal, Guide=False")
+│
+├── 3. ComponentPropsLinker.process() → INSTANCE override props 연결
+│
+└── 4. UITreeOptimizer.optimize()     → 중복 동적 스타일 병합, 미사용 props 제거
+```
+
+### TreeBuilder
+
+#### 책임
+
+- 단일 컴포넌트의 SceneNode → UITree 변환
+- 2-Phase 파이프라인 (구조 확정 → 스타일 적용)
+- 11단계 순차 처리 + 휴리스틱 기반 컴포넌트 감지
+
+#### Input / Output
+
+```typescript
+Input:  SceneNode (Figma document 노드)
+Output: UITree { root: UINode, props, arraySlots, derivedVars, stateVars }
+```
+
+#### 2-Phase 파이프라인
+
+```
+SceneNode
+    │
+    ▼
+═══════════════════════════════════════════════════════
+Phase 1: 구조 확정 (스타일 접근 없음)
+═══════════════════════════════════════════════════════
+    │
+    ├── 1. VariantMerger.merge()
+    │      COMPONENT_SET variants → InternalTree (IoU 기반 노드 매칭)
+    │
+    ├── 2. PropsExtractor.extract()
+    │      componentPropertyDefinitions → PropDefinition[]
+    │
+    ├── 3. SlotProcessor.process()
+    │      개별 슬롯 + 배열 슬롯 + 텍스트 슬롯 감지
+    │
+    ├── 4. VisibilityProcessor.apply()
+    │      variant별 가시성 → ConditionNode 생성
+    │
+    ├── 5. ExternalRefsProcessor.resolveStructure()
+    │      INSTANCE → refId 설정, 벡터 전용 의존성 SVG 병합
+    │
+    ▼
+═══════════════════════════════════════════════════════
+Phase 2: 스타일 + 후처리 (구조 잠금)
+═══════════════════════════════════════════════════════
+    │
+    ├── 6. StyleProcessor.applyStyles()
+    │      variant 스타일 → base/dynamic/pseudo 분류
+    │
+    ├── 7. ExternalRefsProcessor.applyColorStyles()
+    │      벡터 colorMap 동적 스타일 적용
+    │
+    ├── 8. Override Detection + Text Bindings
+    │      INSTANCE override 감지 + TEXT 바인딩
+    │
+    ├── 9. ModuleHeuristic.run()
+    │      반응형 breakpoint → @media 쿼리 변환
+    │
+    ├── 10. HeuristicsRunner.run()
+    │       점수 기반 컴포넌트 타입 감지 (threshold: 10)
+    │
+    ├── 11. State → Pseudo 변환
+    │       미처리 State props → :hover, :active 등 의사 클래스
+    │
+    ▼
+═══════════════════════════════════════════════════════
+최종 변환
+═══════════════════════════════════════════════════════
+    │
+    └── UINodeConverter.convert()
+        InternalTree → UITree (UINode 트리)
+```
+
+### Processors
+
+| Processor | 역할 |
+|-----------|------|
+| **VariantMerger** | IoU 기반 노드 매칭으로 COMPONENT_SET variants 병합 |
+| **VariantGraphBuilder** | variant 병합 순서 결정 (의존성 그래프) |
+| **NodeMatcher** | 위치/ID/타입 기반 노드 매칭 |
+| **PropsExtractor** | componentPropertyDefinitions → PropDefinition[] |
+| **SlotProcessor** | 통합 슬롯 감지 (개별 + 배열 + 텍스트) |
+| **InstanceSlotProcessor** | INSTANCE 슬롯 바인딩 처리 |
+| **ArraySlotProcessor** | 반복 INSTANCE → 배열 슬롯 |
+| **TextProcessor** | TEXT 노드 콘텐츠 추출 + 바인딩 |
+| **VisibilityProcessor** | variant 조건 파싱 + 중복 조건 최적화 |
+| **StyleProcessor** | variant 스타일 → CSS (base/dynamic/pseudo/mediaQuery) |
+| **ExternalRefsProcessor** | INSTANCE 외부 참조 + 벡터 SVG 병합 |
+
+### Processor 유틸리티
+
+```
+processors/utils/
+├── overrideUtils.ts        # INSTANCE override 감지
+├── instanceSlotUtils.ts    # INSTANCE 슬롯 유틸리티
+├── propPatterns.ts         # prop 이름 패턴 매칭
+├── rewritePropConditions.ts # State → pseudo-class 변환
+└── textSlotUtils.ts        # 텍스트 슬롯 유틸리티
+```
 
 ### Heuristics 시스템
 
-COMPONENT_SET에서 특정 UX 패턴(Input, Button 등)을 감지하는 시스템.
+COMPONENT_SET에서 특정 UX 패턴을 **점수 기반**으로 감지하는 시스템.
 
 #### 설계 원칙
 
-1. **각 Heuristic이 판별과 처리를 모두 담당** - 중앙 Detector 없음
-2. **canProcess()로 자신이 처리할 컴포넌트인지 판별**
-3. **process()로 세부 패턴 감지 및 semanticType 설정**
+1. **점수 기반 매칭**: 각 Heuristic이 `score()`로 점수 반환, 최고 점수 ≥ 10이면 선택
+2. **score() + apply() 분리**: 판별과 처리를 분리
+3. **GenericHeuristic 폴백**: 매칭 실패 시 범용 처리 (score: 0)
 
 #### 인터페이스
 
 ```typescript
-interface IComponentHeuristic {
-  componentType: ComponentType;
-  canProcess(ctx: BuildContext): boolean;  // 판별
-  process(ctx: BuildContext): BuildContext; // 처리
+interface IHeuristic {
+  score(tree: InternalTree, dataManager: DataManager, props: PropDefinition[]): number;
+  apply(tree: InternalTree, dataManager: DataManager, props: PropDefinition[]): HeuristicResult;
 }
 ```
 
-#### InputHeuristic 판별 기준
+#### 등록된 Heuristics (17개)
 
-| 기준 | 설명 |
-|------|------|
-| 이름 패턴 | `input`, `textfield`, `searchbar` 등 |
-| Caret 패턴 | `\|` 문자 또는 얇은 세로 막대 (width ≤ 3px) |
+| Heuristic | 감지 대상 | 점수 기준 |
+|-----------|----------|-----------|
+| **ButtonHeuristic** | 버튼 | 이름(+10) + State prop(+10) + 시각적 특성(0~10) |
+| **InputHeuristic** | 입력 필드 | 이름(+10) + 캐럿(+15) + placeholder(+5) |
+| **SearchFieldHeuristic** | 검색 필드 | 이름 패턴 매칭 |
+| **CheckboxHeuristic** | 체크박스 | 이름 매칭 (score: 20) |
+| **RadioHeuristic** | 라디오 버튼 | 이름 매칭 |
+| **SwitchHeuristic** | 토글 스위치 | 이름 매칭 |
+| **ChipHeuristic** | 칩/태그 | 이름 매칭 |
+| **BadgeHeuristic** | 배지 | 이름 매칭 |
+| **DropdownHeuristic** | 드롭다운/셀렉트 | 이름 매칭 |
+| **LinkHeuristic** | 링크/앵커 | 이름 매칭 |
+| **FabHeuristic** | FAB 버튼 | 이름 매칭 |
+| **ProfileHeuristic** | 프로필 카드 | 이름 매칭 |
+| **SegmentedControlHeuristic** | 세그먼트 컨트롤 | 이름 매칭 |
+| **FrameHeuristic** | 프레임/컨테이너 | 이름 매칭 |
+| **GenericHeuristic** | 범용 (폴백) | score: 0, boolean/text/instance 슬롯 감지 |
+| **ModuleHeuristic** | 반응형 모듈 | breakpoint/device/screen prop 감지 |
+| **ResponsiveProcessor** | @media 변환 | ModuleHeuristic 내부 사용 |
 
-#### 데이터 흐름
+#### 데이터 흐름 예시 (Button)
 
 ```
-1. InputHeuristic.canProcess() → true
-2. InputHeuristic.process() → nodeSemanticTypes.set(id, { type: "textInput", placeholder })
-3. NodeProcessor.mapTypes() → if (semanticType === "textInput") nodeTypes.set(id, "input")
-4. NodeConverter.assemble() → DesignNode.type = "input"
-5. ComponentGenerator → if (node.type === "input") createInputElement()
+1. ButtonHeuristic.score() → 20 (이름 + State prop)
+2. ButtonHeuristic.apply()
+   → semanticType = "button"
+   → rootNodeType = "button"
+   → State prop 제거, child semanticType 설정
+3. UINodeConverter → UINode.type = "button"
+4. JsxGenerator → <button> 태그 생성
 ```
 
-#### 관심사 분리
+### Post-Processors
 
-| 레이어 | 책임 |
-|--------|------|
-| InputHeuristic | 판별 + semanticType 설정 |
-| NodeProcessor | semanticType → nodeType 매핑 |
-| NodeConverter | Map 조회 → DesignNode 조립 |
-| ComponentGenerator | type 기반 렌더링 (판단 없음) |
+| Post-Processor | 역할 |
+|----------------|------|
+| **ComponentPropsLinker** | INSTANCE override → 의존성 컴포넌트 props 연결, 바인딩 전파 |
+| **UITreeOptimizer** | 항상-true 동적 스타일 → base로 병합, 의존성 루트 유연화 (px → %), 미사용 props 제거 |
+
+### 디렉토리 구조
+
+```
+layers/tree-manager/
+├── TreeManager.ts                   # 오케스트레이터
+│
+├── post-processors/
+│   ├── ComponentPropsLinker.ts      # INSTANCE override props 연결
+│   └── UITreeOptimizer.ts           # 트리 최적화
+│
+└── tree-builder/
+    ├── TreeBuilder.ts               # 2-Phase 파이프라인
+    ├── UINodeConverter.ts           # InternalTree → UINode 변환
+    │
+    ├── heuristics/
+    │   ├── IHeuristic.ts            # 인터페이스
+    │   ├── HeuristicsRunner.ts      # 점수 기반 매칭 오케스트레이터
+    │   ├── GenericHeuristic.ts      # 폴백 휴리스틱
+    │   ├── FrameHeuristic.ts
+    │   ├── ButtonHeuristic.ts
+    │   ├── BadgeHeuristic.ts
+    │   ├── CheckboxHeuristic.ts
+    │   ├── ChipHeuristic.ts
+    │   ├── DropdownHeuristic.ts
+    │   ├── FabHeuristic.ts
+    │   ├── InputHeuristic.ts
+    │   ├── LinkHeuristic.ts
+    │   ├── ProfileHeuristic.ts
+    │   ├── RadioHeuristic.ts
+    │   ├── SearchFieldHeuristic.ts
+    │   ├── SegmentedControlHeuristic.ts
+    │   ├── SwitchHeuristic.ts
+    │   └── module-heuristics/
+    │       ├── ModuleHeuristic.ts    # 반응형 breakpoint 감지
+    │       └── ResponsiveProcessor.ts # @media 쿼리 생성
+    │
+    └── processors/
+        ├── VariantMerger.ts
+        ├── VariantGraphBuilder.ts
+        ├── NodeMatcher.ts
+        ├── PropsExtractor.ts
+        ├── SlotProcessor.ts
+        ├── InstanceSlotProcessor.ts
+        ├── ArraySlotProcessor.ts
+        ├── TextProcessor.ts
+        ├── VisibilityProcessor.ts
+        ├── StyleProcessor.ts
+        ├── ExternalRefsProcessor.ts
+        └── utils/
+            ├── overrideUtils.ts
+            ├── instanceSlotUtils.ts
+            ├── propPatterns.ts
+            ├── rewritePropConditions.ts
+            └── textSlotUtils.ts
+```
+
+### 핵심 알고리즘
+
+#### Variant 병합 (VariantMerger + NodeMatcher)
+
+```
+1. VariantGraphBuilder → 병합 순서 그래프 구축
+2. 각 variant에 대해:
+   - 위치(IoU), ID, 타입으로 노드 매칭
+   - 매칭된 노드 mergedNodes 배열에 추적
+3. 결과: 단일 InternalTree + 각 노드에 variant별 데이터
+```
+
+#### 조건 최적화 (VisibilityProcessor)
+
+```
+1. 조상의 보장된 atomic 조건 수집
+2. 자식의 중복 하위 조건 제거
+3. 보장된 조건 집합을 하위로 전파
+```
+
+#### 동적 스타일 분류 (StyleProcessor)
+
+```
+Phase 1: 모든 variant에서 같은 값 → base, 다르면 → dynamic
+Phase 2: 모든 variant에 적용되는 dynamic → base로 승격
+```
 
 ---
 
-## CodeEmitter
+## Layer 3: CodeEmitter
 
-### 책임
-
-- 플랫폼별 코드 생성 (React, Vue, Swift 등)
-- 스타일 전략 적용 (Emotion, Tailwind, CSS Modules 등)
-- 코드 컨벤션 적용
-- 디자인 시스템 메타데이터 삽입
-
-### Input / Output
-
-```typescript
-Input:  DesignTree + Policy
-Output: EmittedCode
-```
-
-### 인터페이스
+### ICodeEmitter 인터페이스
 
 ```typescript
 interface ICodeEmitter {
-  emit(tree: DesignTree, policy: CodeEmitterPolicy): Promise<EmittedCode>;
+  readonly framework: string;
+
+  /** 단일 UITree → 코드 */
+  emit(uiTree: UITree): Promise<EmittedCode>;
+
+  /** 메인 + 의존성 → 개별 코드 */
+  emitAll(main: UITree, deps: Map<string, UITree>): Promise<GeneratedResult>;
+
+  /** 메인 + 의존성 → 단일 파일 */
+  emitBundled(main: UITree, deps: Map<string, UITree>): Promise<BundledResult>;
 }
 
 interface EmittedCode {
-  code: string;           // 컴포넌트 코드
-  imports: ImportStatement[];
-  types: string;          // TypeScript 타입 정의
-  componentName: string;  // 생성된 컴포넌트 이름
+  code: string;                          // 생성된 컴포넌트 코드
+  componentName: string;                 // 컴포넌트 이름
+  fileExtension: string;                 // ".tsx"
+  diagnostics?: VariantInconsistency[];  // 디자인 불일치 진단
+}
+
+interface BundledResult {
+  code: string;                          // 번들된 단일 파일
+  diagnostics: VariantInconsistency[];   // 모든 컴포넌트 진단 집계
 }
 ```
 
-### 내부 구성 (Phase 5 완료)
+### ReactEmitter
+
+#### 책임
+
+- UITree를 React TypeScript 코드로 변환
+- 4개 Generator 조합으로 코드 생성
+- Prettier 포맷팅 적용
+- 미사용 import 필터링
+
+#### 코드 생성 파이프라인
 
 ```
-ReactEmitter
+UITree
   │
-  ├── ImportsGenerator
-  │     - React import 생성
-  │     - StyleStrategy import 위임
-  │     - 외부 컴포넌트 import
+  ├── 1. toComponentName(root.name)          컴포넌트 이름 결정
   │
-  ├── InterfaceGenerator
-  │     - PropDefinition[] → type aliases (Size, Variant 등)
-  │     - PropDefinition[] → Props interface
-  │     - semanticRole → extends 타입 (ButtonHTMLAttributes 등)
+  ├── 2. generateAllSections()               4개 섹션 병렬 생성
+  │      ├── ImportsGenerator.generate()     → import 문
+  │      ├── PropsGenerator.generate()       → interface Props { ... }
+  │      ├── StylesGenerator.generate()      → const css / className 선언
+  │      └── JsxGenerator.generate()         → function Component() { return (...) }
   │
-  ├── StylesGenerator
-  │     - StyleStrategy.generateDeclarations() 위임
+  ├── 3. filterComponentImportsByJsx()       미사용 컴포넌트 import 제거
   │
-  ├── ComponentGenerator
-  │     - Props 구조 분해 생성
-  │     - JSX 트리 재귀 생성
-  │     - 조건부 렌더링 (ConditionNode → ts.Expression)
-  │     - 배열 슬롯 .map() 표현식
-  │     - SVG 문자열 → JSX 변환 (SvgToJsx)
-  │
-  └── IStyleStrategy (인터페이스)
-        │
-        ├── EmotionStyleStrategy
-        │     - css() 함수 호출
-        │     - Record<variant, css()> 객체
-        │     - css={variantCss(size, state)} 속성
-        │
-        └── TailwindStyleStrategy
-              - 클래스명 문자열
-              - cn() 유틸리티
-              - className={cn(base, variants[size])} 속성
+  └── 4. assembleAndFormat()                 조합 + Prettier
+         │
+         ▼
+      EmittedCode
 ```
 
-### StyleStrategy 인터페이스 (DesignTree용)
+#### 옵션
+
+```typescript
+interface ReactEmitterOptions {
+  styleStrategy?: "emotion" | "tailwind";  // 기본: "emotion"
+  debug?: boolean;                          // data-figma-id 속성 추가
+  tailwind?: {
+    inlineCn?: boolean;                     // cn 함수 인라인 vs import
+    cnImportPath?: string;                  // cn import 경로
+  };
+}
+```
+
+### Generators
+
+#### ImportsGenerator
+
+```typescript
+// 출력 예시
+import React, { useState } from "react";
+import { css } from "@emotion/react";
+import { NavigationItem } from "./NavigationItem";
+```
+
+- `useState`은 `uiTree.stateVars`가 있을 때만 포함
+- 스타일 전략별 import 추가
+- 외부 컴포넌트 (type === "component") import 수집
+
+#### PropsGenerator
+
+```typescript
+// 출력 예시
+export interface ButtonProps {
+  size?: "small" | "medium" | "large";       // variant
+  disabled?: boolean;                         // boolean
+  label: string;                              // string
+  children?: React.ReactNode;                 // slot
+  items?: Array<{ label: string; }>;          // array slot
+  onClick?: (...args: any[]) => void;         // function
+}
+```
+
+- Variant props → TypeScript union 타입
+- Boolean + extras → `boolean | "extra1" | "extra2"`
+- Array Slot → `Array<{ itemProps }>` 또는 `Array<React.ReactNode>`
+
+#### StylesGenerator
+
+```typescript
+// Emotion 출력 예시
+const buttonCss = css`
+  display: flex;
+  width: 100%;
+  padding: 8px;
+`;
+const buttonCss_sizeStyles: Record<string, any> = {
+  "small": css`font-size: 12px;`,
+  "large": css`font-size: 16px;`,
+};
+```
+
+- 변수명 고유성 보장 (충돌 시 `_2`, `_3` 접미사)
+- 의존성 루트 유동화 (고정 width/height → `100%`)
+- 슬롯 노드: 자식 순회 건너뛰기, 노드 자체 스타일만 포함
+- 출력: `{ code, nodeStyleMap: Map<nodeId, variableName> }`
+
+#### JsxGenerator
+
+```typescript
+// 출력 예시
+function ButtonComponent(props: ButtonComponentProps) {
+  const { size = "medium", disabled, label, ...restProps } = props;
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <button css={[buttonCss, buttonCss_sizeStyles?.[String(size)]]} {...restProps}>
+      {label}
+    </button>
+  );
+}
+
+export default ButtonComponent;
+```
+
+주요 기능:
+- Props 구조 분해 + 기본값
+- 조건부 렌더링: `{isOpen && (<div>...</div>)}`
+- 슬롯 바인딩: `{slotProp && (<div css={styles}>{slotProp}</div>)}`
+- 배열 슬롯: `{items.map((item, index) => <Item key={index} {...item} />)}`
+- SVG → JSX 변환 (kebab-case → camelCase, class → className)
+- 텍스트 세그먼트 스타일 분리, `\n` → `<br />`
+
+### StyleStrategy 패턴
+
+#### IStyleStrategy 인터페이스
 
 ```typescript
 interface IStyleStrategy {
-  readonly name: "emotion" | "tailwind";
-
-  /** Import 문 생성 */
-  generateImports(): ts.ImportDeclaration[];
-
-  /** 스타일 선언부 생성 (CSS 변수, Record 객체 등) */
-  generateDeclarations(
-    tree: DesignTree,
-    componentName: string,
-    props: PropDefinition[]
-  ): ts.Statement[];
-
-  /** JSX 요소에 스타일 속성 추가 */
-  createStyleAttribute(
-    node: DesignNode,
-    props: PropDefinition[]
-  ): ts.JsxAttribute | null;
-
-  /** 동적 스타일 정보 조회 */
-  getDynamicStyleInfo(node: DesignNode): DynamicStyleInfo | null;
-
-  /** CSS 변수 이름 조회 */
-  getCssVariableName(node: DesignNode, componentName: string): string;
-}
-```
-
-### Policy Hooks
-
-```typescript
-interface CodeEmitterPolicy {
-  /** 타겟 플랫폼 */
-  platform: 'react' | 'vue' | 'svelte' | 'swift' | 'kotlin';
-
-  /** 스타일 전략 */
-  styleStrategy: 'emotion' | 'tailwind' | 'css-modules' | 'styled-components';
-
-  /** 디버그 모드: data-figma-id 속성 추가 */
-  debug?: boolean;
-
-  /** Prettier 설정 */
-  prettier?: PrettierConfig;
-
-  /** 커스텀 import 추가 */
-  additionalImports?: ImportStatement[];
-}
-```
-
-### 파이프라인 비교
-
-**레거시 (react-generator/)**:
-```
-FinalAstTree → ReactGenerator → 코드
-     ↑
- (Adapter 변환 필요)
-```
-
-**새 아키텍처 (code-emitter/)**:
-```
-DesignTree → ReactEmitter → 코드 (직접 생성, Adapter 불필요)
-```
-
-### 코드 매핑
-
-| 레거시 (react-generator/) | 새 구조 (code-emitter/) |
-|--------------------------|------------------------|
-| ReactGenerator | ReactEmitter |
-| GenerateImports | ImportsGenerator |
-| GenerateInterface | InterfaceGenerator |
-| GenerateStyles | StylesGenerator |
-| CreateJsxTree | ComponentGenerator |
-| StyleStrategy (FinalAstTree용) | IStyleStrategy (DesignTree용) |
-| EmotionStrategy | EmotionStyleStrategy |
-| TailwindStrategy | TailwindStyleStrategy |
-
----
-
-## Bundler
-
-### 책임
-
-- 여러 컴포넌트 코드 번들링
-- Import 문 정리 및 최적화
-- 코드 포맷팅 (Prettier 등)
-- 최종 출력 최적화
-
-### Input / Output
-
-```typescript
-Input:  Map<ComponentId, EmittedCode>
-Output: string (최종 코드)
-```
-
-### 인터페이스
-
-```typescript
-interface Bundler {
-  bundle(codes: Map<ComponentId, EmittedCode>, policy: BundlerPolicy): string;
-}
-```
-
-### Policy Hooks
-
-```typescript
-interface BundlerPolicy {
-  /** 코드 스타일 */
-  codeStyle?: 'airbnb' | 'google' | 'standard' | 'custom';
-
-  /** Prettier 설정 */
-  prettier?: PrettierConfig;
-
-  /** Import 정렬 규칙 */
-  importOrder?: string[];
-
-  /** 번들링 옵션 */
-  bundling?: {
-    singleFile: boolean;        // 단일 파일로 출력
-    separateTypes: boolean;     // 타입 정의 분리
-    separateStyles: boolean;    // 스타일 분리
-  };
-
-  /** 후처리 훅 */
-  postProcess?: (code: string) => string;
-}
-```
-
-### 현재 코드 매핑
-
-| 현재 | 새 구조 |
-|------|---------|
-| DependencyManager.bundle() | Bundler |
-
----
-
-## PolicyManager
-
-### 책임
-
-- Policy 정의 로드 및 검증
-- 각 단계에 해당하는 Policy 제공
-- Policy 병합 (기본값 + 사용자 정의)
-
-### 인터페이스
-
-```typescript
-interface PolicyManager {
-  load(policy: Partial<Policy>): void;
-  getDataPreparerPolicy(): DataPreparerPolicy;
-  getTreeBuilderPolicy(): TreeBuilderPolicy;
-  getCodeEmitterPolicy(): CodeEmitterPolicy;
-  getBundlerPolicy(): BundlerPolicy;
-}
-
-interface Policy {
-  dataPreparer?: DataPreparerPolicy;
-  treeBuilder?: TreeBuilderPolicy;
-  codeEmitter?: CodeEmitterPolicy;
-  bundler?: BundlerPolicy;
-}
-```
-
----
-
-## DependencyAnalyzer
-
-### 책임
-
-- 전체 의존성 그래프 구축
-- 순환 의존성 감지
-- 토폴로지 정렬로 컴파일 순서 결정
-- 각 컴포넌트가 한 번만 컴파일되도록 보장
-
-### 왜 필요한가?
-
-컴포넌트가 다른 컴포넌트를 **정적으로 참조**할 때:
-
-```
-COMPONENT_SET: Card
-  └── COMPONENT: variant
-        ├── CloseButton (INSTANCE) ← 정적 참조, 항상 렌더링
-        └── {children}              ← slot
-
-생성되는 코드:
-  function Card({ children }) {
-    return (
-      <div>
-        <CloseButton />  {/* CloseButton도 함께 컴파일 필요 */}
-        {children}
-      </div>
-    );
-  }
-```
-
-### 인터페이스
-
-```typescript
-interface DependencyAnalyzer {
-  /**
-   * 의존성 그래프 구축
-   * @param rootData 루트 컴포넌트 데이터
-   * @returns 의존성 그래프 (인접 리스트)
-   */
-  buildGraph(rootData: FigmaNodeData): DependencyGraph;
-
-  /**
-   * 토폴로지 정렬 (컴파일 순서 결정)
-   * @throws CircularDependencyError 순환 의존성 발견 시
-   */
-  topologicalSort(graph: DependencyGraph): ComponentId[];
-
-  /**
-   * 순환 의존성 감지
-   */
-  detectCycles(graph: DependencyGraph): Cycle[] | null;
-}
-
-interface DependencyGraph {
-  nodes: Map<ComponentId, ComponentInfo>;
-  edges: Map<ComponentId, Set<ComponentId>>;  // A → B (A가 B를 의존)
-}
-
-interface ComponentInfo {
-  id: ComponentId;
   name: string;
-  data: FigmaNodeData;
+  getImports(): string[];
+  generateStyle(nodeId, nodeName, style, parentPath?): StyleResult;
+  getJsxStyleAttribute(styleVarName, hasConditional): JsxStyleAttribute;
+  generateConditionalStyle(baseStyle, conditions): string;
+  generatePseudoStyle(pseudoClass, style): string;
 }
-
-type ComponentId = string;  // componentSetId
-type Cycle = ComponentId[];
 ```
 
-### 컴파일 흐름
+#### EmotionStrategy
 
 ```typescript
-class FigmaCodeGenerator {
-  async compile(): Promise<string> {
-    // 1단계: 의존성 분석
-    const graph = this.dependencyResolver.buildGraph(this.data);
+// 스타일 선언
+const buttonCss = css`
+  display: flex;
+  &:hover { background: #e0e0e0; }
+  @media (max-width: 768px) { width: 100%; }
+`;
+const buttonCss_sizeStyles: Record<string, any> = {
+  "small": css`font-size: 12px;`,
+};
 
-    // 2단계: 순환 의존성 확인
-    const cycles = this.dependencyResolver.detectCycles(graph);
-    if (cycles) {
-      throw new CircularDependencyError(cycles);
-    }
-
-    // 3단계: 토폴로지 정렬 (의존되는 것부터)
-    const order = this.dependencyResolver.topologicalSort(graph);
-    // 예: [Badge, Icon, Large, Case]
-
-    // 4단계: 순서대로 컴파일 (각각 한 번만)
-    const compiled = new Map<ComponentId, GeneratedCode>();
-    for (const componentId of order) {
-      const componentData = graph.nodes.get(componentId)!.data;
-      const code = await this.pipeline.compileSingle(componentData);
-      compiled.set(componentId, code);
-    }
-
-    // 5단계: 번들링
-    return this.codeFormatter.bundle(Array.from(compiled.values()));
-  }
-}
+// JSX 속성
+css={buttonCss}
+css={[buttonCss, buttonCss_sizeStyles?.[String(size)]]}
 ```
 
-### 예시: 의존성 그래프
+#### TailwindStrategy
+
+```typescript
+// 스타일 선언 (CVA 사용)
+const buttonClasses = cva("flex w-full p-2 rounded-lg", {
+  variants: {
+    size: {
+      "small": "text-[length:12px]",
+      "large": "text-[length:16px]",
+    },
+  },
+});
+
+// JSX 속성
+className="flex w-full p-2"
+className={buttonClasses({ size, disabled })}
+```
+
+- CSS → Tailwind 매핑: `display: flex` → `flex`, `width: 100px` → `w-[100px]`
+- 반응형: `(max-width: 767px)` → `max-md:`, `(min-width: 1280px)` → `xl:`
+- CVA (Class Variance Authority)로 variant 생성
+
+### DynamicStyleDecomposer
+
+복합 AND 조건(`size=M AND active=true`)에서 각 CSS 속성의 "소유 prop"을 결정합니다.
 
 ```
-입력:
-  Case → Large, Icon
-  Large → Badge
-  Icon → (없음)
-  Badge → (없음)
+Step 1: 단일 prop vs 다중 prop 분리
+Step 2: 다중 prop → [prop 값] × [스타일] 매트릭스
+Step 3: CSS 속성별 controlling prop 탐색
+  ├── Level 1: 단일 prop 일관성
+  ├── Level 2: 복합 prop (style+tone) 일관성
+  └── Level 3: 최적 적합도
+Step 4: CSS 속성 → 소유 prop 할당
+Step 5: 균일 속성 제거 (모든 variant 동일 = 비제어)
+```
 
-그래프:
-  Case ──→ Large ──→ Badge
+**진단 출력**: variant 그룹 내 CSS 속성 불일치 시 `VariantInconsistency` 보고
+→ UI에서 "디자인 불일치: Button color가 size=M에서 일관되지 않음" 표시 가능
+
+### ReactBundler
+
+멀티 컴포넌트를 단일 `.tsx` 파일로 번들링합니다.
+
+#### 번들링 파이프라인
+
+```
+Map<id, EmittedCode>
+  │
+  ├── 1. 이름 중복 제거 (deduplicateByName)
+  ├── 2. 미참조 의존성 필터링 (filterReferencedDependencies)
+  ├── 3. 이름 충돌 해결 → "_" 접두사 리네이밍
+  ├── 4. Import 추출 + 통합 (React/라이브러리만 유지)
+  ├── 5. 의존성 코드 정리:
+  │      - import 제거
+  │      - CSS 변수 접두사 (btnCss → Button_btnCss)
+  │      - cn 함수 중복 제거
+  │      - export default → const 화살표 함수
+  │      - export 키워드 제거
+  ├── 6. <button> 루트 중화 (HTML 중첩 방지)
+  │
+  └── BundledResult { code, diagnostics }
+```
+
+### 디렉토리 구조
+
+```
+layers/code-emitter/
+├── ICodeEmitter.ts                  # 인터페이스 (확장 가능: Vue, Svelte)
+├── index.ts
+│
+└── react/
+    ├── ReactEmitter.ts              # ICodeEmitter 구현
+    ├── ReactBundler.ts              # 멀티 컴포넌트 번들링
     │
-    └───→ Icon
-
-토폴로지 정렬 결과:
-  [Badge, Icon, Large, Case]
-  또는
-  [Icon, Badge, Large, Case]
-  (둘 다 유효)
-
-컴파일 순서:
-  1. Badge 컴파일
-  2. Icon 컴파일
-  3. Large 컴파일 (Badge 참조 가능)
-  4. Case 컴파일 (Large, Icon 참조 가능)
+    ├── generators/
+    │   ├── index.ts
+    │   ├── ImportsGenerator.ts      # import 문 생성
+    │   ├── PropsGenerator.ts        # Props interface 생성
+    │   ├── StylesGenerator.ts       # 스타일 선언 생성
+    │   └── JsxGenerator.ts          # JSX + 함수 컴포넌트 생성
+    │
+    └── style-strategy/
+        ├── index.ts
+        ├── IStyleStrategy.ts        # 스타일 전략 인터페이스
+        ├── EmotionStrategy.ts       # Emotion CSS-in-JS
+        ├── TailwindStrategy.ts      # Tailwind CSS + CVA
+        └── DynamicStyleDecomposer.ts # 다중 prop 스타일 분해 + 진단
 ```
-
-### 기존 코드와 비교
-
-| 기존 방식 | 새 방식 |
-|----------|---------|
-| 재귀적으로 FigmaCodeGenerator 생성 | 의존성 그래프 먼저 구축 |
-| `_skipDependencyCompilation` 플래그 | 토폴로지 정렬로 순서 보장 |
-| 같은 dependency 중복 컴파일 가능 | 각 컴포넌트 한 번만 컴파일 |
-| 순환 의존성 감지 어려움 | 명시적 순환 감지 |
 
 ---
 
-## 현재 상태: 두 파이프라인 공존
+## 타입 시스템
 
-### 레거시 파이프라인 (Engine.ts 사용)
-
-```
-FigmaNodeData
-     │
-     ▼
-┌────────────────┐
-│SpecDataManager│ HashMap 구축
-└───────┬────────┘
-        │
-        ▼
-┌────────────────┐
-│CreateSuperTree │ Variant 병합 (IoU)
-└───────┬────────┘
-        │
-        ▼
-┌────────────────┐
-│  _TempAstTree  │ Props/Style/Visible
-└───────┬────────┘
-        │
-        ▼
-┌────────────────┐
-│ _FinalAstTree  │ 정규화, 외부참조, Slot
-└───────┬────────┘
-        │
-        ▼
-┌────────────────┐
-│ReactGenerator  │ TypeScript AST 생성
-│(react-generator/)
-└───────┬────────┘
-        │
-        ▼
-   React Code
-```
-
-### 새 파이프라인 (ReactEmitter 사용)
+### 주요 타입
 
 ```
-FigmaNodeData
-     │
-     ▼
-┌────────────────┐
-│  DataPreparer  │ 데이터 준비 + Props 추출
-└───────┬────────┘
-        │
-        ▼
- PreparedDesignData
-        │
-        ▼
-┌────────────────┐
-│  TreeBuilder   │ IR 생성 (DesignTree)
-│  - VariantProcessor
-│  - StyleProcessor
-│  - VisibilityProcessor
-│  - SlotProcessor
-│  - InstanceProcessor
-└───────┬────────┘
-        │
-        ▼
-   DesignTree (플랫폼 독립적 IR)
-        │
-        ▼
-┌────────────────┐
-│  ReactEmitter  │ 직접 코드 생성
-│  (code-emitter/)
-│  - ImportsGenerator
-│  - InterfaceGenerator
-│  - StylesGenerator
-│  - ComponentGenerator
-└───────┬────────┘
-        │
-        ▼
-   React Code
+types/
+├── types.ts     # 내부 타입 (UITree, UINode, StyleObject, ConditionNode, InternalNode 등)
+├── public.ts    # 공개 API 타입 (PropDefinition, GeneratorOptions, MultiComponentResult 등)
+└── emitter.ts   # Emitter 전용 타입
 ```
 
-### 마이그레이션 계획
+#### UITree (최종 IR)
 
-| 단계 | 작업 | 상태 |
-|------|------|------|
-| 1 | ReactEmitter 구현 | ✅ 완료 |
-| 2 | Engine.ts → 새 파이프라인 마이그레이션 | ⏳ 예정 |
-| 3 | FigmaCodeGenerator 업데이트 | ⏳ 예정 |
-| 4 | react-generator/ 삭제 | ⏳ 예정 |
+```typescript
+interface UITree {
+  root: UINode;                    // 루트 노드
+  props: PropDefinition[];         // 컴포넌트 props
+  arraySlots?: ArraySlotInfo[];    // 배열 슬롯 정보
+  derivedVars?: DerivedVar[];      // 파생 변수
+  stateVars?: StateVar[];          // 상태 변수 (useState)
+}
+```
+
+#### UINode 타입들
+
+`ContainerNode`, `TextNode`, `ImageNode`, `VectorNode`, `ButtonNode`, `InputNode`, `LinkNode`, `SlotNode`, `ComponentNode`
+
+#### ConditionNode (조건부 렌더링)
+
+```typescript
+type ConditionNode =
+  | { type: "eq"; prop: string; value: string }     // prop === value
+  | { type: "neq"; prop: string; value: string }    // prop !== value
+  | { type: "truthy"; prop: string }                 // !!prop
+  | { type: "and"; conditions: ConditionNode[] }     // A && B
+  | { type: "or"; conditions: ConditionNode[] }      // A || B
+  | { type: "not"; condition: ConditionNode }         // !A
+```
+
+#### StyleObject
+
+```typescript
+interface StyleObject {
+  base: Record<string, string>;                      // 공통 스타일
+  dynamic: DynamicStyleEntry[];                      // 조건부 스타일
+  pseudo: Record<PseudoClass, Record<string, string>>; // :hover, :active 등
+  mediaQueries?: MediaQueryEntry[];                  // @media 반응형
+}
+```
+
+---
+
+## 보조 모듈
+
+### PropsAdapter
+
+내부 props → UI용 props 변환 (mockupSvg, 치수 정보 보강)
+
+```
+adapters/
+└── PropsAdapter.ts    # toPublicProps(): 내부 PropDefinition → 공개 PropDefinition
+```
+
+### 유틸리티
+
+```
+utils/
+└── nameUtils.ts       # toComponentName(): 텍스트 → PascalCase 컴포넌트 이름
+```
 
 ---
 
@@ -799,101 +779,157 @@ FigmaNodeData
 │                         FigmaCodeGenerator                          │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │ 1단계: 의존성 분석 (DependencyAnalyzer)                       │   │
-│  │                                                               │   │
-│  │    FigmaNodeData                                              │   │
-│  │         │                                                     │   │
-│  │         ▼                                                     │   │
-│  │    ┌─────────────┐      ┌─────────────┐                      │   │
-│  │    │ buildGraph  │  →   │ Dependency  │                      │   │
-│  │    │             │      │   Graph     │                      │   │
-│  │    └─────────────┘      └──────┬──────┘                      │   │
-│  │                                │                              │   │
-│  │                                ▼                              │   │
-│  │                     ┌──────────────────┐                     │   │
-│  │                     │ topologicalSort  │                     │   │
-│  │                     └────────┬─────────┘                     │   │
-│  │                              │                                │   │
-│  │                              ▼                                │   │
-│  │                   [Badge, Icon, Large, Case]                  │   │
-│  │                      (컴파일 순서)                             │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                                │                                    │
-│                                ▼                                    │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │ 2단계: 순서대로 변환                                           │   │
-│  │                                                               │   │
-│  │    for each component in order:                               │   │
-│  │                                                               │   │
-│  │    FigmaNodeData ──→ DataPreparer ──→ PreparedData           │   │
-│  │                                            │                  │   │
-│  │                                            ▼                  │   │
-│  │                                      TreeBuilder              │   │
-│  │                                            │                  │   │
-│  │                                            ▼                  │   │
-│  │                                       DesignTree (IR)         │   │
-│  │                                            │                  │   │
-│  │                                            ▼                  │   │
-│  │                                       CodeEmitter             │   │
-│  │                                            │                  │   │
-│  │                                            ▼                  │   │
-│  │                                       EmittedCode             │   │
-│  │                                            │                  │   │
-│  │                              ┌─────────────┴─────────────┐   │   │
-│  │                              ▼                           ▼   │   │
-│  │                         Cache에 저장              다음 컴포넌트 │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                                │                                    │
-│                                ▼                                    │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │ 3단계: 번들링 (Bundler)                                       │   │
-│  │                                                               │   │
-│  │    Map<ComponentId, EmittedCode>                             │   │
-│  │              │                                                │   │
-│  │              ▼                                                │   │
-│  │    ┌─────────────────┐                                       │   │
-│  │    │     Bundler     │                                       │   │
-│  │    │  - import 정리   │                                       │   │
-│  │    │  - 번들링        │                                       │   │
-│  │    │  - 포맷팅        │                                       │   │
-│  │    └────────┬────────┘                                       │   │
-│  │             │                                                 │   │
-│  │             ▼                                                 │   │
-│  │       Final Code (string)                                    │   │
-│  └─────────────────────────────────────────────────────────────┘   │
+│  FigmaNodeData (document, components, styles, deps, images, SVGs)  │
+│       │                                                             │
+│       ▼                                                             │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │ Layer 1: DataManager                                          │   │
+│  │  - nodeMap, styleMap, dependencies (HashMap 구축)              │   │
+│  │  - imageUrls, vectorSvgs 정규화                                │   │
+│  └─────────────────────────┬────────────────────────────────────┘   │
+│                              │                                       │
+│                              ▼                                       │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │ Layer 2: TreeManager                                          │   │
+│  │                                                                │   │
+│  │  ┌────────────────────────────────────────────────────────┐   │   │
+│  │  │ TreeBuilder (메인 + 각 의존성)                           │   │   │
+│  │  │  Phase 1: VariantMerger → Props → Slots → Visibility  │   │   │
+│  │  │  Phase 2: Styles → Heuristics → UINodeConverter        │   │   │
+│  │  └────────────────────────────────────────────────────────┘   │   │
+│  │                              │                                 │   │
+│  │  ┌────────────────────────────────────────────────────────┐   │   │
+│  │  │ Post-Processing                                         │   │   │
+│  │  │  ComponentPropsLinker → UITreeOptimizer                 │   │   │
+│  │  └────────────────────────────────────────────────────────┘   │   │
+│  │                              │                                 │   │
+│  │  Output: { main: UITree, dependencies: Map<id, UITree> }     │   │
+│  └─────────────────────────┬────────────────────────────────────┘   │
+│                              │                                       │
+│                              ▼                                       │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │ Layer 3: ReactEmitter                                         │   │
+│  │                                                                │   │
+│  │  ┌────────────────────────────────────────────────────────┐   │   │
+│  │  │ emit() per UITree:                                      │   │   │
+│  │  │  Imports → Props → Styles → JSX → Prettier             │   │   │
+│  │  └────────────────────────────────────────────────────────┘   │   │
+│  │                              │                                 │   │
+│  │  ┌────────────────────────────────────────────────────────┐   │   │
+│  │  │ ReactBundler.bundle() (compile 모드)                    │   │   │
+│  │  │  중복 제거 → import 통합 → CSS 접두사 → 이름 충돌 해결    │   │   │
+│  │  └────────────────────────────────────────────────────────┘   │   │
+│  │                              │                                 │   │
+│  │  Output: BundledResult { code, diagnostics }                  │   │
+│  └──────────────────────────────────────────────────────────────┘   │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### 단일 컴포넌트 변환 흐름
+### 출력 모드
+
+| 메서드 | 출력 | 설명 |
+|--------|------|------|
+| `generate()` | `GeneratedResult` | 메인 + 의존성 개별 파일 |
+| `compile()` | `string` | 단일 번들 파일 |
+| `compileWithDiagnostics()` | `BundledResult` | 번들 + 진단 정보 |
+| `buildUITree()` | `{main, deps}` | 디버그: 코드 생성 없이 UITree만 |
+| `getPropsDefinition()` | `PropDefinition[]` | UI 컨트롤러용 props 메타데이터 |
+
+---
+
+## 전체 디렉토리 구조
 
 ```
-FigmaNodeData
-     │
-     ▼
-┌────────────┐
-│DataPreparer│ + DataPreparerPolicy
-└─────┬──────┘
-     │
-     ▼
-PreparedDesignData
-     │
-     ▼
-┌───────────┐
-│TreeBuilder│ + TreeBuilderPolicy
-└─────┬─────┘
-     │
-     ▼
-DesignTree (플랫폼 독립적 IR)
-     │
-     ▼
-┌───────────┐
-│CodeEmitter│ + CodeEmitterPolicy
-└─────┬─────┘
-     │
-     ▼
-EmittedCode
+src/frontend/ui/domain/code-generator2/
+├── FigmaCodeGenerator.ts              # 메인 오케스트레이터
+├── index.ts                            # barrel export
+│
+├── adapters/
+│   └── PropsAdapter.ts                 # 내부 → 공개 props 변환
+│
+├── layers/
+│   ├── data-manager/
+│   │   └── DataManager.ts              # Layer 1: O(1) 데이터 접근
+│   │
+│   ├── tree-manager/
+│   │   ├── TreeManager.ts              # Layer 2: 트리 빌딩 오케스트레이터
+│   │   │
+│   │   ├── post-processors/
+│   │   │   ├── ComponentPropsLinker.ts
+│   │   │   └── UITreeOptimizer.ts
+│   │   │
+│   │   └── tree-builder/
+│   │       ├── TreeBuilder.ts          # 2-Phase 파이프라인
+│   │       ├── UINodeConverter.ts
+│   │       │
+│   │       ├── heuristics/             # 17개 컴포넌트 패턴 감지기
+│   │       │   ├── IHeuristic.ts
+│   │       │   ├── HeuristicsRunner.ts
+│   │       │   ├── GenericHeuristic.ts
+│   │       │   ├── FrameHeuristic.ts
+│   │       │   ├── ButtonHeuristic.ts
+│   │       │   ├── BadgeHeuristic.ts
+│   │       │   ├── CheckboxHeuristic.ts
+│   │       │   ├── ChipHeuristic.ts
+│   │       │   ├── DropdownHeuristic.ts
+│   │       │   ├── FabHeuristic.ts
+│   │       │   ├── InputHeuristic.ts
+│   │       │   ├── LinkHeuristic.ts
+│   │       │   ├── ProfileHeuristic.ts
+│   │       │   ├── RadioHeuristic.ts
+│   │       │   ├── SearchFieldHeuristic.ts
+│   │       │   ├── SegmentedControlHeuristic.ts
+│   │       │   ├── SwitchHeuristic.ts
+│   │       │   └── module-heuristics/
+│   │       │       ├── ModuleHeuristic.ts
+│   │       │       └── ResponsiveProcessor.ts
+│   │       │
+│   │       └── processors/             # 11개 데이터 변환 프로세서
+│   │           ├── VariantMerger.ts
+│   │           ├── VariantGraphBuilder.ts
+│   │           ├── NodeMatcher.ts
+│   │           ├── PropsExtractor.ts
+│   │           ├── SlotProcessor.ts
+│   │           ├── InstanceSlotProcessor.ts
+│   │           ├── ArraySlotProcessor.ts
+│   │           ├── TextProcessor.ts
+│   │           ├── VisibilityProcessor.ts
+│   │           ├── StyleProcessor.ts
+│   │           ├── ExternalRefsProcessor.ts
+│   │           └── utils/
+│   │               ├── overrideUtils.ts
+│   │               ├── instanceSlotUtils.ts
+│   │               ├── propPatterns.ts
+│   │               ├── rewritePropConditions.ts
+│   │               └── textSlotUtils.ts
+│   │
+│   └── code-emitter/
+│       ├── ICodeEmitter.ts             # Layer 3 인터페이스
+│       ├── index.ts
+│       └── react/
+│           ├── ReactEmitter.ts         # React 코드 생성
+│           ├── ReactBundler.ts         # 멀티 컴포넌트 번들링
+│           ├── generators/
+│           │   ├── index.ts
+│           │   ├── ImportsGenerator.ts
+│           │   ├── PropsGenerator.ts
+│           │   ├── StylesGenerator.ts
+│           │   └── JsxGenerator.ts
+│           └── style-strategy/
+│               ├── index.ts
+│               ├── IStyleStrategy.ts
+│               ├── EmotionStrategy.ts
+│               ├── TailwindStrategy.ts
+│               └── DynamicStyleDecomposer.ts
+│
+├── types/
+│   ├── types.ts                        # 내부 타입
+│   ├── public.ts                       # 공개 API 타입
+│   └── emitter.ts                      # Emitter 전용 타입
+│
+└── utils/
+    └── nameUtils.ts                    # 컴포넌트 이름 정규화
 ```
 
 ---
@@ -901,189 +937,89 @@ EmittedCode
 ## Usage Example
 
 ```typescript
-import { FigmaCodeGenerator } from '@anthropic/figma-to-code';
+import { FigmaCodeGenerator } from "./code-generator2";
 
-// 기본 사용
+// 기본 사용 (Emotion)
 const generator = new FigmaCodeGenerator(figmaData);
-const code = await generator.generate();
+const { code, diagnostics } = await generator.compileWithDiagnostics();
 
-// Policy 적용
+// Tailwind 사용
 const generator = new FigmaCodeGenerator(figmaData, {
-  policy: {
-    treeBuilder: {
-      interpretAs: new Map([
-        ['PrimaryButton', 'Button'],
-        ['SecondaryButton', 'Button'],
-      ]),
-    },
-    codeEmitter: {
-      platform: 'react',
-      styleStrategy: 'tailwind',
-      designSystem: {
-        name: 'MyDesignSystem',
-        componentMapping: new Map([
-          ['Button', '@myds/Button'],
-        ]),
-      },
-    },
-    bundler: {
-      codeStyle: 'airbnb',
-      bundling: { singleFile: true },
-    },
-  },
+  styleStrategy: "tailwind",
 });
+const bundled = await generator.compile();
 
-const code = await generator.generate();
+// 멀티 파일 출력
+const result = await generator.generate();
+// result.main: EmittedCode
+// result.dependencies: Map<id, EmittedCode>
+
+// Props 정보 (UI 컨트롤러용)
+const props = generator.getPropsDefinition();
+
+// 디버그: UITree만 확인
+const { main, dependencies } = generator.buildUITree();
 ```
 
 ---
 
-## Migration Plan
+## Key Concepts
 
-### Phase 1: 인터페이스 정의 ✅
-- [x] 각 컴포넌트 인터페이스 TypeScript 정의
-- [x] Policy 타입 정의
-- [x] 중간 데이터 구조 (PreparedDesignData, DesignTree) 정의
-- [x] DependencyGraph 타입 정의
+### Variant Merging
+COMPONENT_SET의 여러 variant (예: Size=Large/Small, State=Default/Hover)를 단일 InternalTree로 병합합니다.
+노드는 IoU (Intersection over Union) 위치 기반 유사도로 매칭됩니다 — 같은 위치 ≥ 0.8 IoU = 동일 노드.
 
-> 구현: `src/frontend/ui/domain/code-generator/types/architecture.ts`
+### Props 변환 규칙
+- `State` prop → CSS pseudo-class (`:hover`, `:active`, `:disabled`)
+- Boolean props → INSTANCE 가시성 제어 시 Slot props (`React.ReactNode`)
+- `componentPropertyReferences` → prop 바인딩
 
-### Phase 2: DependencyAnalyzer 구현 ✅
-- [x] 의존성 그래프 구축 로직 (buildGraph)
-- [x] 토폴로지 정렬 구현 (topologicalSort) - Kahn's algorithm
-- [x] 순환 의존성 감지 (detectCycles) - DFS 기반
-- [ ] 기존 DependencyManager 재귀 로직 대체 (Phase 3 이후)
-
-> 구현: `src/frontend/ui/domain/code-generator/core/DependencyAnalyzer.ts`
-> 테스트: `test/compiler/dependencyAnalyzer.test.ts`
-
-### Phase 3: DataPreparer 통합 ✅
-- [x] SpecDataManager + PropsExtractor 통합
-- [x] DataPreparer 인터페이스 구현
-- [x] PreparedDesignData 출력 구조 정의
-- [ ] ~~InstanceOverrideManager, VariantEnrichManager 통합~~ → 분리 유지 결정 (DependencyManager 전용)
-
-> 구현:
-> - `src/frontend/ui/domain/code-generator/core/data-preparer/DataPreparer.ts`
-> - `src/frontend/ui/domain/code-generator/core/data-preparer/PreparedDesignData.ts`
-
-#### ⚠️ TODO: PreparedNode 정규화 (Phase 4에서 검토)
-
-현재 구현은 `SceneNode`를 그대로 사용합니다. `PreparedNode`로의 정규화는 다음 이유로 보류:
-
-1. **기존 코드 의존성**: Engine, CreateSuperTree, CreateAstTree 등이 SceneNode의 세부 속성(`type`, `fills`, `componentPropertyReferences` 등)에 직접 접근
-2. **TreeBuilder에서 변환이 더 적합**: Phase 4에서 `DesignNode`로 변환할 때 정규화하는 것이 자연스러움
-3. **중복 변환 방지**: PreparedNode → DesignNode 이중 변환 불필요
-
-**나중에 검토할 사항:**
-- `architecture.ts`의 `PreparedDesignData` 인터페이스에서 `PreparedNode` → `SceneNode`로 수정 필요
-- 또는 Phase 4에서 TreeBuilder 구현 시 PreparedNode 정규화 포함
-
-### Phase 4: TreeBuilder 구현 ✅
-- [x] VariantProcessor: IoU 기반 variant 병합 (CreateSuperTree 대체)
-- [x] StyleProcessor: 스타일 분류 + position + rotation
-- [x] VisibilityProcessor: 조건 파싱 + visibility 추론
-- [x] PropsProcessor: props 추출 + 바인딩
-- [x] SlotProcessor: text/instance/array slot 감지
-- [x] InstanceProcessor: override 처리 + 외부 참조
-- [x] NodeConverter: InternalNode → DesignNode 최종 조립
-- [x] TreeBuilder: BuildContext 기반 파이프라인 오케스트레이터
-- [x] 155개 단위 테스트 작성
-
-> 구현: `src/frontend/ui/domain/code-generator/core/tree-builder/`
-
-#### Phase 4 리팩토링 ✅
-- [x] Magic Number 상수화 (constants.ts)
-- [x] 테스트 파일명 정리 (Processor 1:1 매핑)
-- [x] 레거시 코드 제거 (MergedNodeInfo 등)
-- [x] any 타입 제거 (FigmaFill, InstanceChildNode 등 구체 타입)
-- [x] TreeTraverser 유틸리티 (traverseTree/mapTree로 13개 인라인 순회 통합)
-- [x] BuildContext 타입 분리 (BuildContext.ts)
-- [x] interfaces.ts 분리 (interfaces/ 디렉토리, 8개 파일)
-
-### Phase 5: CodeEmitter 리팩토링 ✅
-- [x] ReactEmitter: DesignTree에서 직접 코드 생성 (Adapter 패턴 제거)
-- [x] 새 generators/ 모듈 구현:
-  - ImportsGenerator: React/스타일 import 생성
-  - InterfaceGenerator: Props 인터페이스 및 타입 별칭 생성
-  - StylesGenerator: StyleStrategy에 위임
-  - ComponentGenerator: JSX 트리 + 함수 컴포넌트 생성
-- [x] 새 style-strategy/ 모듈 구현 (DesignTree용):
-  - IStyleStrategy 인터페이스 정의
-  - EmotionStyleStrategy: css() 함수 + Record 객체 기반
-  - TailwindStyleStrategy: className + cn() 유틸리티 기반
-- [x] adapters/ 폴더 삭제 (DesignTreeAdapter, PropsAdapter, StyleAdapter)
-- [x] 155개 테스트 통과
-
-> 구현: `src/frontend/ui/domain/code-generator/core/code-emitter/`
-
-**파일 구조**:
-```
-code-emitter/
-├── ReactEmitter.ts              # ICodeEmitter 구현체
-├── PolicyMapper.ts              # 레거시 호환용
-├── utils.ts
-├── generators/
-│   ├── index.ts
-│   ├── ImportsGenerator.ts
-│   ├── InterfaceGenerator.ts
-│   ├── StylesGenerator.ts
-│   └── ComponentGenerator.ts
-└── style-strategy/
-    ├── index.ts
-    ├── IStyleStrategy.ts        # DesignTree용 인터페이스
-    ├── EmotionStyleStrategy.ts
-    └── TailwindStyleStrategy.ts
-```
-
-**⚠️ 레거시 유지**: `react-generator/`는 `Engine.ts`와 `FigmaCodeGenerator`가 의존하므로 아직 삭제되지 않음.
-다음 Phase에서 마이그레이션 예정.
-
-### Phase 6: Bundler 분리
-- [ ] DependencyManager에서 번들링 로직만 분리
-- [ ] 포맷팅/최적화 로직 추가
-
-### Phase 7: PolicyManager 시스템
-- [ ] PolicyManager 구현
-- [ ] 각 컴포넌트에 Policy Hook 연결
-- [ ] 기본 Policy 정의
+### 의존성 처리
+- DataManager가 재귀적으로 모든 의존성 수집
+- TreeManager가 ComponentSet별 그룹화 후 variant 병합
+- ComponentPropsLinker가 INSTANCE override → 의존성 props 연결
+- ReactBundler가 미참조 의존성 필터링 + CSS 충돌 방지
 
 ---
 
 ## Future Extensions
 
 ### 새 플랫폼 추가
+
 ```typescript
-// VueGenerator 구현
-class VueGenerator implements CodeGenerator {
-  generate(tree: DesignTree, policy: CodeGeneratorPolicy): GeneratedCode {
+// ICodeEmitter 인터페이스 구현
+class VueEmitter implements ICodeEmitter {
+  readonly framework = "vue";
+  async emit(uiTree: UITree): Promise<EmittedCode> {
     // Vue SFC 생성 로직
   }
 }
 ```
 
 ### 새 스타일 전략 추가
+
 ```typescript
-// CSS Modules 전략
-class CssModulesStrategy implements StyleStrategy {
-  generateStyles(node: DesignNode): StyleOutput {
+// IStyleStrategy 인터페이스 구현
+class CssModulesStrategy implements IStyleStrategy {
+  name = "css-modules";
+  generateStyle(nodeId, nodeName, style, parentPath?) {
     // CSS Modules 생성 로직
   }
 }
 ```
 
-### 커스텀 Policy 플러그인
+### 새 Heuristic 추가
+
 ```typescript
-// 회사별 디자인 시스템 플러그인
-const myCompanyPolicy: Policy = {
-  tree: {
-    interpretAs: loadFromFigmaPluginData(),
-  },
-  code: {
-    designSystem: {
-      name: '@mycompany/design-system',
-      componentMapping: loadComponentMapping(),
-    },
-  },
-};
+// IHeuristic 인터페이스 구현
+class TabBarHeuristic implements IHeuristic {
+  score(tree, dataManager, props) {
+    // 탭 바 패턴 점수 계산
+    return nameMatches ? 20 : 0;
+  }
+  apply(tree, dataManager, props) {
+    // semanticType, props, bindings 설정
+  }
+}
+// HeuristicsRunner에 등록
 ```

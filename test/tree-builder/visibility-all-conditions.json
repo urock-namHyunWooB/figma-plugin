@@ -36,27 +36,5 @@
         }
       ]
     }
-  },
-  {
-    "path": "Primary/Text",
-    "condition": {
-      "type": "and",
-      "conditions": [
-        {
-          "type": "not",
-          "condition": {
-            "type": "truthy",
-            "prop": "leftIcon"
-          }
-        },
-        {
-          "type": "not",
-          "condition": {
-            "type": "truthy",
-            "prop": "rightIcon"
-          }
-        }
-      ]
-    }
   }
 ]

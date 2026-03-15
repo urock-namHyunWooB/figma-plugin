@@ -256,13 +256,16 @@
     ],
     "pseudo": {
       ":disabled": {
-        "background": "var(--Primary-300, #B0EBEC)"
+        "background": "var(--Primary-300, #B0EBEC)",
+        "padding": "3px 4px"
       },
       ":active": {
-        "background": "var(--Primary-700, #00ABB6)"
+        "background": "var(--Primary-700, #00ABB6)",
+        "padding": "3px 4px"
       },
       ":hover": {
-        "background": "var(--Primary-500, #47CFD6)"
+        "background": "var(--Primary-500, #47CFD6)",
+        "padding": "3px 4px"
       }
     }
   },
