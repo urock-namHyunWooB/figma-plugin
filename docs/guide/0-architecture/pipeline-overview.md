@@ -296,27 +296,28 @@ interface IHeuristic {
 }
 ```
 
-#### 등록된 Heuristics (17개)
+#### 등록된 Heuristics (14개)
 
 | Heuristic | 감지 대상 | 점수 기준 |
 |-----------|----------|-----------|
-| **ButtonHeuristic** | 버튼 | 이름(+10) + State prop(+10) + 시각적 특성(0~10) |
-| **InputHeuristic** | 입력 필드 | 이름(+10) + 캐럿(+15) + placeholder(+5) |
-| **SearchFieldHeuristic** | 검색 필드 | 이름 패턴 매칭 |
+| **SearchFieldHeuristic** | 검색 필드 | 이름 패턴 매칭 (score: 20) |
+| **DropdownHeuristic** | 드롭다운/셀렉트 | 이름 매칭 (score: 20) |
 | **CheckboxHeuristic** | 체크박스 | 이름 매칭 (score: 20) |
-| **RadioHeuristic** | 라디오 버튼 | 이름 매칭 |
-| **SwitchHeuristic** | 토글 스위치 | 이름 매칭 |
-| **ChipHeuristic** | 칩/태그 | 이름 매칭 |
-| **BadgeHeuristic** | 배지 | 이름 매칭 |
-| **DropdownHeuristic** | 드롭다운/셀렉트 | 이름 매칭 |
-| **LinkHeuristic** | 링크/앵커 | 이름 매칭 |
-| **FabHeuristic** | FAB 버튼 | 이름 매칭 |
-| **ProfileHeuristic** | 프로필 카드 | 이름 매칭 |
+| **RadioHeuristic** | 라디오 버튼 | 이름 매칭 (score: 20) |
+| **FabHeuristic** | FAB 버튼 | 이름 매칭 (score: 15) |
+| **BadgeHeuristic** | 배지 | 이름 매칭 (score: 15) |
+| **ProfileHeuristic** | 프로필 카드 | 이름 매칭 (score: 15) |
+| **ChipHeuristic** | 칩/태그 | 이름 매칭 (score: 10) |
+| **InputHeuristic** | 입력 필드 | 이름(+10) + 캐럿(+15) + placeholder(+5) |
+| **SwitchHeuristic** | 토글 스위치 | 이름 매칭 (score: 10) |
 | **SegmentedControlHeuristic** | 세그먼트 컨트롤 | 이름 매칭 |
-| **FrameHeuristic** | 프레임/컨테이너 | 이름 매칭 |
-| **GenericHeuristic** | 범용 (폴백) | score: 0, boolean/text/instance 슬롯 감지 |
-| **ModuleHeuristic** | 반응형 모듈 | breakpoint/device/screen prop 감지 |
-| **ResponsiveProcessor** | @media 변환 | ModuleHeuristic 내부 사용 |
+| **LinkHeuristic** | 링크/앵커 | 이름 매칭 |
+| **ButtonHeuristic** | 버튼 | 이름(+10) + State prop(+10) + 시각적 특성(0~10) |
+| **FrameHeuristic** | 프레임/컨테이너 | 이름 매칭 (score: 10) |
+
+**특수 Heuristics** (배열 외):
+- **GenericHeuristic** — 폴백 (score: 0). 다른 heuristic이 threshold(10) 미달 시 사용. boolean/text/instance 슬롯 감지
+- **ModuleHeuristic** — TreeBuilder에서 별도 호출. breakpoint/device/screen prop → @media 반응형 변환
 
 #### 데이터 흐름 예시 (Button)
 

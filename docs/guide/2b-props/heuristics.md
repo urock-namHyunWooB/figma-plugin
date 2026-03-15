@@ -2,7 +2,7 @@
 
 > Stage 1-2는 [Props 추출 가이드](extraction.md), Stage 4-5는 [스타일 분해 가이드](style-decomposition.md)를 참조하세요.
 
-점수 기반 매칭(threshold >= 10)으로 선택된 Heuristic이 컴포넌트 의미에 맞게 props를 재구성한다. 현재 15개 Heuristic이 등록되어 있다.
+점수 기반 매칭(threshold >= 10)으로 선택된 Heuristic이 컴포넌트 의미에 맞게 props를 재구성한다. 현재 14개 Heuristic이 등록되어 있다 (+ GenericHeuristic 폴백, ModuleHeuristic 별도 호출).
 
 ### 공통 메커니즘
 
