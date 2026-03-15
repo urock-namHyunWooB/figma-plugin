@@ -1,4 +1,5 @@
 import { UITree } from "../../types/types";
+import type { VariantInconsistency } from "../code-emitter/react/style-strategy/DynamicStyleDecomposer";
 import DataManager from "../data-manager/DataManager";
 import TreeBuilder from "./tree-builder/TreeBuilder";
 import { ComponentPropsLinker } from "./post-processors/ComponentPropsLinker";
@@ -20,7 +21,7 @@ class TreeManager {
   /**
    * 메인 컴포넌트와 모든 의존 컴포넌트의 UITree 빌드
    */
-  public build(): {
+  public build(diagnostics?: VariantInconsistency[]): {
     main: UITree;
     dependencies: Map<string, UITree>;
   } {
@@ -31,11 +32,11 @@ class TreeManager {
     this.linkComponents(main, dependencies);
 
     // 3. 트리 최적화 (dynamic styles 병합, 미사용 props 제거, dep 루트 유연화)
-    this.optimizer.optimizeMain(main);
+    this.optimizer.optimizeMain(main, diagnostics);
     const optimized = new Set<UITree>();
     for (const tree of dependencies.values()) {
       if (!optimized.has(tree)) {
-        this.optimizer.optimizeDependency(tree);
+        this.optimizer.optimizeDependency(tree, diagnostics);
         optimized.add(tree);
       }
     }

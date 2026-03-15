@@ -3,29 +3,33 @@
  *
  * UITree 후처리 최적화:
  * 1. mergeRedundantDynamicStyles — 모든 variant에서 동일한 dynamic style을 base에 병합
- * 2. pruneUnusedProps — 트리에서 참조되지 않는 variant/boolean props 제거
- * 3. makeRootFlexible — dependency 루트의 고정 크기를 100%로 변환
+ * 2. decomposeDynamicStyles — AND 조건 폭발을 FD 분해하여 단일 prop 조건으로 축소
+ * 3. pruneUnusedProps — 트리에서 참조되지 않는 variant/boolean props 제거
+ * 4. makeRootFlexible — dependency 루트의 고정 크기를 100%로 변환
  *
  * CodeEmitter가 아닌 TreeManager 단계에서 실행되어,
  * 어떤 emitter(React/Vue/Svelte)를 사용하든 동일한 최적화가 적용된다.
  */
 
 import type { UITree, UINode, ConditionNode } from "../../../types/types";
+import { DynamicStyleDecomposer, type VariantInconsistency } from "../../code-emitter/react/style-strategy/DynamicStyleDecomposer";
 
 export class UITreeOptimizer {
   /**
-   * 메인 트리 최적화 (dynamic styles 병합)
+   * 메인 트리 최적화 (dynamic styles 병합 → FD 분해)
    */
-  optimizeMain(tree: UITree): void {
+  optimizeMain(tree: UITree, diagnostics?: VariantInconsistency[]): void {
     this.mergeRedundantDynamicStyles(tree.root);
+    this.decomposeDynamicStyles(tree.root, diagnostics);
   }
 
   /**
-   * 의존 트리 최적화 (dynamic styles 병합 + 루트 유연화)
+   * 의존 트리 최적화 (dynamic styles 병합 + 루트 유연화 → FD 분해)
    */
-  optimizeDependency(tree: UITree): void {
+  optimizeDependency(tree: UITree, diagnostics?: VariantInconsistency[]): void {
     this.mergeRedundantDynamicStyles(tree.root);
     this.makeRootFlexible(tree);
+    this.decomposeDynamicStyles(tree.root, diagnostics);
   }
 
   /**
@@ -170,7 +174,7 @@ export class UITreeOptimizer {
 
     if (node.styles?.dynamic) {
       for (const { condition } of node.styles.dynamic) {
-        this.collectEqOnlyPropsFromCondition(condition, usedProps);
+        this.collectPropsFromCondition(condition, usedProps);
       }
     }
 
@@ -196,18 +200,6 @@ export class UITreeOptimizer {
     }
   }
 
-  private collectEqOnlyPropsFromCondition(condition: ConditionNode, usedProps: Set<string>): void {
-    if (condition.type === "eq") {
-      usedProps.add(condition.prop);
-    } else if (condition.type === "and" || condition.type === "or") {
-      for (const c of condition.conditions) {
-        this.collectEqOnlyPropsFromCondition(c, usedProps);
-      }
-    } else if (condition.type === "not") {
-      this.collectEqOnlyPropsFromCondition(condition.condition, usedProps);
-    }
-  }
-
   private collectPropsFromCondition(condition: ConditionNode, usedProps: Set<string>): void {
     switch (condition.type) {
       case "eq":
@@ -225,6 +217,103 @@ export class UITreeOptimizer {
         this.collectPropsFromCondition(condition.condition, usedProps);
         break;
     }
+  }
+
+  // ─── decomposeDynamicStyles ──────────────────────────────
+
+  /**
+   * AND 조건 폭발된 dynamic style을 FD 분해하여 단일 prop 조건으로 축소.
+   *
+   * Before: AND(size=L, leftIcon=T, rightIcon=F) → {padding:"8px"} (9 entries)
+   * After:  eq(size, "Large") → {padding:"8px"} (3 entries)
+   *
+   * DynamicStyleDecomposer의 FD 분석을 UITree 레벨에서 1회 실행하여,
+   * code-emitter에서 중복 계산을 방지한다.
+   */
+  private decomposeDynamicStyles(node: UINode, diagnostics?: VariantInconsistency[]): void {
+    if (node.styles?.dynamic && node.styles.dynamic.length > 0) {
+      const { result: decomposed, diagnostics: diag } =
+        DynamicStyleDecomposer.decomposeWithDiagnostics(
+          node.styles.dynamic,
+          node.styles.base
+        );
+
+      if (diagnostics && diag.length > 0) {
+        diagnostics.push(...diag);
+      }
+
+      if (decomposed.size > 0) {
+        node.styles.dynamic = this.rebuildDynamicFromDecomposed(decomposed);
+      }
+    }
+
+    if ("children" in node && node.children) {
+      for (const child of node.children) {
+        this.decomposeDynamicStyles(child, diagnostics);
+      }
+    }
+  }
+
+  /**
+   * DynamicStyleDecomposer 결과 Map을 다시 dynamic Array로 역변환.
+   *
+   * Map<propName, Map<propValue, style>> → Array<{condition, style}>
+   */
+  private rebuildDynamicFromDecomposed(
+    decomposed: Map<string, Map<string, Record<string, string | number>>>
+  ): Array<{ condition: ConditionNode; style: Record<string, string | number> }> {
+    const result: Array<{
+      condition: ConditionNode;
+      style: Record<string, string | number>;
+    }> = [];
+
+    for (const [propName, valueMap] of decomposed) {
+      if (propName.includes("+")) {
+        // compound prop: "size+tone" → AND(eq(size, s), eq(tone, t))
+        const parts = propName.split("+");
+        for (const [compoundValue, style] of valueMap) {
+          if (Object.keys(style).length === 0) continue;
+          const values = compoundValue.split("+");
+          const conditions = parts.map((p, i) =>
+            this.createConditionFromPropValue(p, values[i])
+          );
+          result.push({
+            condition:
+              conditions.length === 1
+                ? conditions[0]
+                : { type: "and", conditions },
+            style,
+          });
+        }
+      } else {
+        // 단일 prop
+        for (const [propValue, style] of valueMap) {
+          if (Object.keys(style).length === 0) continue;
+          result.push({
+            condition: this.createConditionFromPropValue(propName, propValue),
+            style,
+          });
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * propName + propValue → ConditionNode 변환
+   */
+  private createConditionFromPropValue(
+    propName: string,
+    propValue: string
+  ): ConditionNode {
+    if (propValue === "true") {
+      return { type: "truthy", prop: propName };
+    }
+    if (propValue === "false") {
+      return { type: "not", condition: { type: "truthy", prop: propName } };
+    }
+    return { type: "eq", prop: propName, value: propValue };
   }
 
   // ─── mergeRedundantDynamicStyles ──────────────────────────

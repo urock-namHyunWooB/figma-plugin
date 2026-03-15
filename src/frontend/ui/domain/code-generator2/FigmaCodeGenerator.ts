@@ -137,8 +137,10 @@ class FigmaCodeGenerator {
    */
   async compileWithDiagnostics(): Promise<CompileResult> {
     try {
-      const { main, dependencies } = this.treeManager.build();
-      return await this.codeEmitter.emitBundled(main, dependencies);
+      const diagnostics: VariantInconsistency[] = [];
+      const { main, dependencies } = this.treeManager.build(diagnostics);
+      const result = await this.codeEmitter.emitBundled(main, dependencies);
+      return { code: result.code, diagnostics };
     } catch (e) {
       console.error("Compile error:", e);
       return { code: null, diagnostics: [] };

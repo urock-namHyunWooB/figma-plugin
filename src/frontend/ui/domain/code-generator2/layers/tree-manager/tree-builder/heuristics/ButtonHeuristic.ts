@@ -22,6 +22,7 @@ import type {
 } from "./IHeuristic";
 import { extractTextSlotInfo } from "../processors/utils/textSlotUtils";
 import { convertStateDynamicToPseudo, rewritePropConditions } from "../processors/utils/rewritePropConditions";
+import { isStateProp } from "../processors/utils/propPatterns";
 import { StyleProcessor } from "../processors/StyleProcessor";
 import DataManager from "@code-generator2/layers/data-manager/DataManager";
 
@@ -80,7 +81,7 @@ export class ButtonHeuristic implements IHeuristic {
 
     // State prop 찾기
     const stateProp = Object.entries(propDefs).find(
-      ([key]) => key.toLowerCase() === "state"
+      ([key]) => isStateProp(key)
     );
 
     if (!stateProp || stateProp[1].type !== "VARIANT") return 0;

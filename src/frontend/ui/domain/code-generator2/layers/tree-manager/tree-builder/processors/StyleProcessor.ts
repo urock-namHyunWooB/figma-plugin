@@ -47,7 +47,7 @@ export class StyleProcessor {
     "hover", "hovered", "hovering",
     "active", "pressed", "pressing", "clicked",
     "focus", "focused", "focus-visible",
-    "disabled", "inactive", "selected", "checked", "visited",
+    "disabled", "disable", "inactive", "selected", "checked", "visited",
   ]);
 
   /** State prop 값 → CSS pseudo-class 매핑 (heuristics에서 사용) */
