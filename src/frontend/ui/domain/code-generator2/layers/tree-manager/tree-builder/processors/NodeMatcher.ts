@@ -92,23 +92,85 @@ export class NodeMatcher {
   /**
    * 정규화된 위치가 같은지 확인 (±0.1 오차 허용)
    *
-   * Fallback: 정규화 매칭 실패 시, variant root 높이 비율이 2배 이상 차이나고
-   * 절대 좌표 차이가 5px 이내이면 같은 노드로 판단.
-   * (visibility toggle로 컨테이너가 확장/축소되는 경우 정규화가 왜곡되는 문제 보완)
+   * 4가지 비교를 동시에 수행하여 최소 오차로 판단:
+   *  1) 비례 배치: 각자 contentWidth로 정규화 (현행)
+   *  2) 좌정렬 기준: 왼쪽 오프셋을 avgWidth로 정규화
+   *  3) 가운데정렬 기준: 중앙 오프셋을 avgWidth로 정규화
+   *  4) 우정렬 기준: 오른쪽 오프셋을 avgWidth로 정규화
+   *
+   * X축·Y축 각각 4가지 중 최소 오차를 취하여 둘 다 ≤ 0.1이면 매칭.
+   *
+   * Fallback: 위 매칭 실패 시 heightRatio ≥ 2이면 상대 좌표 ±10px 비교.
    */
   private isSamePosition(nodeA: InternalNode, nodeB: InternalNode): boolean {
-    const posA = this.getNormalizedPosition(nodeA);
-    const posB = this.getNormalizedPosition(nodeB);
+    // 양쪽 노드의 contentBox 정보 조회
+    const boxA = this.getContentBoxInfo(nodeA);
+    const boxB = this.getContentBoxInfo(nodeB);
 
-    if (!posA || !posB) {
-      return false;
-    }
+    if (boxA && boxB) {
+      // --- X축: 4가지 비교 ---
+      const offsetAx = boxA.nodeX - boxA.contentX;
+      const offsetBx = boxB.nodeX - boxB.contentX;
+      const nodeWidthA = boxA.nodeWidth;
+      const nodeWidthB = boxB.nodeWidth;
+      const avgW = (boxA.contentWidth + boxB.contentWidth) / 2;
 
-    const dx = Math.abs(posA.x - posB.x);
-    const dy = Math.abs(posA.y - posB.y);
+      // 1) 비례 배치 (각자 contentWidth로 정규화)
+      const propX = Math.abs(
+        offsetAx / boxA.contentWidth - offsetBx / boxB.contentWidth
+      );
+      // 2) 좌정렬: 왼쪽 오프셋 비교
+      const leftX = avgW > 0
+        ? Math.abs(offsetAx - offsetBx) / avgW
+        : Infinity;
+      // 3) 가운데정렬: 중앙 오프셋 비교
+      const centerAx = offsetAx + nodeWidthA / 2;
+      const centerBx = offsetBx + nodeWidthB / 2;
+      const centerX = avgW > 0
+        ? Math.abs(centerAx - centerBx) / avgW
+        : Infinity;
+      // 4) 우정렬: 오른쪽 오프셋 비교
+      const rightAx = boxA.contentWidth - (offsetAx + nodeWidthA);
+      const rightBx = boxB.contentWidth - (offsetBx + nodeWidthB);
+      const rightX = avgW > 0
+        ? Math.abs(rightAx - rightBx) / avgW
+        : Infinity;
 
-    if (dx <= 0.1 && dy <= 0.1) {
-      return true;
+      const minDiffX = Math.min(propX, leftX, centerX, rightX);
+
+      // --- Y축: 4가지 비교 ---
+      const offsetAy = boxA.nodeY - boxA.contentY;
+      const offsetBy = boxB.nodeY - boxB.contentY;
+      const nodeHeightA = boxA.nodeHeight;
+      const nodeHeightB = boxB.nodeHeight;
+      const avgH = (boxA.contentHeight + boxB.contentHeight) / 2;
+
+      // 1) 비례 배치
+      const propY = Math.abs(
+        offsetAy / boxA.contentHeight - offsetBy / boxB.contentHeight
+      );
+      // 2) 상단정렬
+      const topY = avgH > 0
+        ? Math.abs(offsetAy - offsetBy) / avgH
+        : Infinity;
+      // 3) 가운데정렬
+      const middleAy = offsetAy + nodeHeightA / 2;
+      const middleBy = offsetBy + nodeHeightB / 2;
+      const middleY = avgH > 0
+        ? Math.abs(middleAy - middleBy) / avgH
+        : Infinity;
+      // 4) 하단정렬
+      const bottomAy = boxA.contentHeight - (offsetAy + nodeHeightA);
+      const bottomBy = boxB.contentHeight - (offsetBy + nodeHeightB);
+      const bottomY = avgH > 0
+        ? Math.abs(bottomAy - bottomBy) / avgH
+        : Infinity;
+
+      const minDiffY = Math.min(propY, topY, middleY, bottomY);
+
+      if (minDiffX <= 0.1 && minDiffY <= 0.1) {
+        return true;
+      }
     }
 
     // Fallback: root 높이 비율이 극단적으로 다르면 root 기준 상대 좌표로 비교
@@ -135,84 +197,6 @@ export class NodeMatcher {
   }
 
   /**
-   * 노드의 정규화된 위치 계산 (원본 variant 루트의 content box 기준)
-   *
-   * root의 padding을 제거한 content box 크기로 정규화한다.
-   * padding이 다른 variant(예: Tight=True/False)에서도 동일한 정규화 값이 나온다.
-   */
-  private getNormalizedPosition(
-    node: InternalNode
-  ): { x: number; y: number } | null {
-    if (!node.bounds || !node.mergedNodes || node.mergedNodes.length === 0) {
-      return null;
-    }
-
-    // mergedNodes[0]으로 먼저 시도, 범위 밖이면 다른 mergedNode로 재시도
-    const result = this.calcNormalizedForMergedNode(node.mergedNodes[0].id);
-    if (result && result.x >= 0 && result.x <= 1 && result.y >= 0 && result.y <= 1) {
-      return result;
-    }
-
-    // 첫 번째가 범위 밖 (hidden/collapsed variant) → 다른 mergedNode 시도
-    for (let i = 1; i < node.mergedNodes.length; i++) {
-      const alt = this.calcNormalizedForMergedNode(node.mergedNodes[i].id);
-      if (alt && alt.x >= 0 && alt.x <= 1 && alt.y >= 0 && alt.y <= 1) {
-        return alt;
-      }
-    }
-
-    // 모두 범위 밖이면 첫 번째 결과라도 반환
-    return result;
-  }
-
-  /**
-   * 특정 mergedNode ID로 정규화된 위치 계산
-   */
-  private calcNormalizedForMergedNode(
-    nodeId: string
-  ): { x: number; y: number } | null {
-    const variantRoot = this.findOriginalVariantRoot(nodeId);
-    if (!variantRoot) return null;
-
-    const { node: originalNode } = this.dataManager.getById(nodeId);
-    if (!originalNode) return null;
-
-    const nodeBounds = (originalNode as any).absoluteBoundingBox as
-      | { x: number; y: number }
-      | undefined;
-    if (!nodeBounds) return null;
-
-    const rootBounds = (variantRoot as any).absoluteBoundingBox as
-      | { x: number; y: number; width: number; height: number }
-      | undefined;
-
-    if (!rootBounds || rootBounds.width === 0 || rootBounds.height === 0) {
-      return null;
-    }
-
-    // padding을 제거한 content box 기준으로 정규화
-    const paddingLeft: number = (variantRoot as any).paddingLeft ?? 0;
-    const paddingRight: number = (variantRoot as any).paddingRight ?? 0;
-    const paddingTop: number = (variantRoot as any).paddingTop ?? 0;
-    const paddingBottom: number = (variantRoot as any).paddingBottom ?? 0;
-
-    const contentX = rootBounds.x + paddingLeft;
-    const contentY = rootBounds.y + paddingTop;
-    const contentWidth = rootBounds.width - paddingLeft - paddingRight;
-    const contentHeight = rootBounds.height - paddingTop - paddingBottom;
-
-    const baseX = contentWidth > 0 ? contentX : rootBounds.x;
-    const baseY = contentHeight > 0 ? contentY : rootBounds.y;
-    const normWidth = contentWidth > 0 ? contentWidth : rootBounds.width;
-    const normHeight = contentHeight > 0 ? contentHeight : rootBounds.height;
-
-    return {
-      x: (nodeBounds.x - baseX) / normWidth,
-      y: (nodeBounds.y - baseY) / normHeight,
-    };
-  }
-
-  /**
    * 노드가 속한 variant root의 bounds 조회
    */
   private getVariantRootBounds(
@@ -226,6 +210,74 @@ export class NodeMatcher {
       | { x: number; y: number; width: number; height: number }
       | undefined;
     return bounds && bounds.width > 0 && bounds.height > 0 ? bounds : null;
+  }
+
+  /**
+   * 노드의 contentBox 정보 조회 (4가지 비교에 필요한 값들)
+   * mergedNodes를 순회하여 유효한 contentBox를 찾는다.
+   */
+  private getContentBoxInfo(
+    node: InternalNode
+  ): {
+    nodeX: number; nodeY: number; nodeWidth: number; nodeHeight: number;
+    contentX: number; contentY: number; contentWidth: number; contentHeight: number;
+  } | null {
+    if (!node.mergedNodes || node.mergedNodes.length === 0) return null;
+
+    for (const merged of node.mergedNodes) {
+      const result = this.calcContentBoxForMergedNode(merged.id);
+      if (result) return result;
+    }
+    return null;
+  }
+
+  /**
+   * 특정 mergedNode ID로 contentBox 정보 계산
+   */
+  private calcContentBoxForMergedNode(
+    nodeId: string
+  ): {
+    nodeX: number; nodeY: number; nodeWidth: number; nodeHeight: number;
+    contentX: number; contentY: number; contentWidth: number; contentHeight: number;
+  } | null {
+    const variantRoot = this.findOriginalVariantRoot(nodeId);
+    if (!variantRoot) return null;
+
+    const { node: originalNode } = this.dataManager.getById(nodeId);
+    if (!originalNode) return null;
+
+    const nodeBounds = (originalNode as any).absoluteBoundingBox as
+      | { x: number; y: number; width: number; height: number }
+      | undefined;
+    if (!nodeBounds) return null;
+
+    const rootBounds = (variantRoot as any).absoluteBoundingBox as
+      | { x: number; y: number; width: number; height: number }
+      | undefined;
+    if (!rootBounds || rootBounds.width === 0 || rootBounds.height === 0) {
+      return null;
+    }
+
+    const paddingLeft: number = (variantRoot as any).paddingLeft ?? 0;
+    const paddingRight: number = (variantRoot as any).paddingRight ?? 0;
+    const paddingTop: number = (variantRoot as any).paddingTop ?? 0;
+    const paddingBottom: number = (variantRoot as any).paddingBottom ?? 0;
+
+    const contentWidth = rootBounds.width - paddingLeft - paddingRight;
+    const contentHeight = rootBounds.height - paddingTop - paddingBottom;
+
+    if (contentWidth <= 0 || contentHeight <= 0) return null;
+
+    return {
+      nodeX: nodeBounds.x,
+      nodeY: nodeBounds.y,
+      nodeWidth: nodeBounds.width ?? 0,
+      nodeHeight: nodeBounds.height ?? 0,
+      contentX: rootBounds.x + paddingLeft,
+      contentY: rootBounds.y + paddingTop,
+      contentWidth,
+      contentHeight,
+    };
   }
 
   /**
@@ -264,7 +316,10 @@ export class NodeMatcher {
    *    - 같은 componentSetId에 속하면 → 같은 노드 (variant 병합)
    *    - 다른 componentSetId이면 → 다른 노드
    * 2. componentPropertyReferences.visible이 같으면 같은 노드로 판단
-   * (visible ref가 없는 INSTANCE는 위치 매칭에 의존)
+   *
+   * 주의: 같은 componentId는 여기서 매칭하지 않음.
+   * 같은 컴포넌트가 여러 위치에 사용될 수 있으므로 (예: leftIcon, rightIcon)
+   * 위치 비교(Step 4)에 의존해야 함.
    */
   private isSameInstanceNode(
     nodeA: InternalNode,
