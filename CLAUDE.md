@@ -50,24 +50,25 @@ npm run format:check   # Prettier check
    - Entry: `main.tsx`, `App.tsx`
    - Builds to: `dist/index.html` (single-file bundle)
 
-### Code Generator Pipeline (`src/frontend/ui/domain/code-generator/`)
+### Code Generator Pipeline (`src/frontend/ui/domain/code-generator2/layers/`)
 
 **3-Layer Pipeline**:
 ```
-FigmaNodeData → DataPreparer → PreparedDesignData → TreeBuilder → DesignTree → CodeEmitter → Code
+FigmaNodeData → DataPreparer → PreparedDesignData → TreeBuilder → UITree → CodeEmitter → Code
 ```
 
 ```
-core/
-├── data-preparer/               # Layer 1: Data preparation
+layers/
+├── data-manager/                # Layer 1: Data preparation
 │   └── DataPreparer.ts
-├── tree-builder/                # Layer 2: IR generation (heuristic-based)
-│   ├── TreeBuilder.ts
-│   ├── workers/                 # Processor modules
-│   └── heuristics/              # Score-based component matching
+├── tree-manager/                # Layer 2: IR generation (heuristic-based)
+│   ├── tree-builder/
+│   │   ├── TreeBuilder.ts       # Returns UITree
+│   │   ├── processors/          # Processor modules
+│   │   └── heuristics/          # Score-based component matching
 └── code-emitter/                # Layer 3: Code generation
     ├── ReactEmitter.ts          # ICodeEmitter implementation
-    ├── generators/              # DesignTree generators
+    ├── generators/              # UITree → code generators
     └── style-strategy/          # Emotion/Tailwind strategies
 ```
 
