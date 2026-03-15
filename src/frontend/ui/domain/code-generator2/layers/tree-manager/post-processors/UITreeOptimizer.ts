@@ -11,8 +11,8 @@
  * 어떤 emitter(React/Vue/Svelte)를 사용하든 동일한 최적화가 적용된다.
  */
 
-import type { UITree, UINode, ConditionNode } from "../../../types/types";
-import { DynamicStyleDecomposer, type VariantInconsistency } from "../../code-emitter/react/style-strategy/DynamicStyleDecomposer";
+import type { UITree, UINode, ConditionNode, PseudoClass } from "../../../types/types";
+import { DynamicStyleDecomposer, type DecomposedResult, type VariantInconsistency } from "../../code-emitter/react/style-strategy/DynamicStyleDecomposer";
 
 export class UITreeOptimizer {
   /**
@@ -227,8 +227,8 @@ export class UITreeOptimizer {
    * Before: AND(size=L, leftIcon=T, rightIcon=F) → {padding:"8px"} (9 entries)
    * After:  eq(size, "Large") → {padding:"8px"} (3 entries)
    *
-   * DynamicStyleDecomposer의 FD 분석을 UITree 레벨에서 1회 실행하여,
-   * code-emitter에서 중복 계산을 방지한다.
+   * DynamicStyleDecomposer가 pseudo 데이터를 네이티브로 분배하므로,
+   * 별도의 pseudo 재부착 로직 없이 decomposer 결과를 직접 사용.
    */
   private decomposeDynamicStyles(node: UINode, diagnostics?: VariantInconsistency[]): void {
     if (node.styles?.dynamic && node.styles.dynamic.length > 0) {
@@ -257,22 +257,23 @@ export class UITreeOptimizer {
   /**
    * DynamicStyleDecomposer 결과 Map을 다시 dynamic Array로 역변환.
    *
-   * Map<propName, Map<propValue, style>> → Array<{condition, style}>
+   * Map<propName, Map<propValue, DecomposedValue>> → Array<{condition, style, pseudo?}>
    */
   private rebuildDynamicFromDecomposed(
-    decomposed: Map<string, Map<string, Record<string, string | number>>>
-  ): Array<{ condition: ConditionNode; style: Record<string, string | number> }> {
+    decomposed: DecomposedResult
+  ): Array<{ condition: ConditionNode; style: Record<string, string | number>; pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>> }> {
     const result: Array<{
       condition: ConditionNode;
       style: Record<string, string | number>;
+      pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
     }> = [];
 
     for (const [propName, valueMap] of decomposed) {
       if (propName.includes("+")) {
         // compound prop: "size+tone" → AND(eq(size, s), eq(tone, t))
         const parts = propName.split("+");
-        for (const [compoundValue, style] of valueMap) {
-          if (Object.keys(style).length === 0) continue;
+        for (const [compoundValue, { style, pseudo }] of valueMap) {
+          if (Object.keys(style).length === 0 && !pseudo) continue;
           const values = compoundValue.split("+");
           const conditions = parts.map((p, i) =>
             this.createConditionFromPropValue(p, values[i])
@@ -283,15 +284,17 @@ export class UITreeOptimizer {
                 ? conditions[0]
                 : { type: "and", conditions },
             style,
+            ...(pseudo && { pseudo }),
           });
         }
       } else {
         // 단일 prop
-        for (const [propValue, style] of valueMap) {
-          if (Object.keys(style).length === 0) continue;
+        for (const [propValue, { style, pseudo }] of valueMap) {
+          if (Object.keys(style).length === 0 && !pseudo) continue;
           result.push({
             condition: this.createConditionFromPropValue(propName, propValue),
             style,
+            ...(pseudo && { pseudo }),
           });
         }
       }
@@ -361,7 +364,11 @@ export class UITreeOptimizer {
             const key = JSON.stringify({ c: newCondition, s: entry.style });
             if (!seen.has(key)) {
               seen.add(key);
-              newDynamic.push({ condition: newCondition, style: entry.style });
+              newDynamic.push({
+                condition: newCondition,
+                style: entry.style,
+                ...(entry.pseudo && { pseudo: entry.pseudo }),
+              });
             }
           }
         }

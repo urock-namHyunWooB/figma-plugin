@@ -75,8 +75,8 @@ describe("DynamicStyleDecomposer", () => {
 
       const result = DynamicStyleDecomposer.decompose(dynamic);
       expect(result.size).toBe(1);
-      expect(result.get("size")?.get("Large")).toEqual({ width: 200, padding: 16 });
-      expect(result.get("size")?.get("Small")).toEqual({ width: 100, padding: 8 });
+      expect(result.get("size")?.get("Large")?.style).toEqual({ width: 200, padding: 16 });
+      expect(result.get("size")?.get("Small")?.style).toEqual({ width: 100, padding: 8 });
     });
 
     it("단일 truthy 조건 처리", () => {
@@ -96,8 +96,8 @@ describe("DynamicStyleDecomposer", () => {
 
       const result = DynamicStyleDecomposer.decompose(dynamic);
       expect(result.size).toBe(1);
-      expect(result.get("active")?.get("true")).toEqual({ backgroundColor: "blue" });
-      expect(result.get("active")?.get("false")).toEqual({ backgroundColor: "gray" });
+      expect(result.get("active")?.get("true")?.style).toEqual({ backgroundColor: "blue" });
+      expect(result.get("active")?.get("false")?.style).toEqual({ backgroundColor: "gray" });
     });
   });
 
@@ -149,12 +149,12 @@ describe("DynamicStyleDecomposer", () => {
       const result = DynamicStyleDecomposer.decompose(dynamic);
 
       // size는 padding만 제어
-      expect(result.get("size")?.get("M")).toEqual({ padding: 8 });
-      expect(result.get("size")?.get("L")).toEqual({ padding: 16 });
+      expect(result.get("size")?.get("M")?.style).toEqual({ padding: 8 });
+      expect(result.get("size")?.get("L")?.style).toEqual({ padding: 16 });
 
       // active는 backgroundColor만 제어
-      expect(result.get("active")?.get("true")).toEqual({ backgroundColor: "blue" });
-      expect(result.get("active")?.get("false")).toEqual({ backgroundColor: "gray" });
+      expect(result.get("active")?.get("true")?.style).toEqual({ backgroundColor: "blue" });
+      expect(result.get("active")?.get("false")?.style).toEqual({ backgroundColor: "gray" });
     });
 
     it("AND(size, variant): 두 eq prop 간 분리", () => {
@@ -203,10 +203,10 @@ describe("DynamicStyleDecomposer", () => {
 
       const result = DynamicStyleDecomposer.decompose(dynamic);
 
-      expect(result.get("size")?.get("small")).toEqual({ padding: 4 });
-      expect(result.get("size")?.get("large")).toEqual({ padding: 12 });
-      expect(result.get("variant")?.get("primary")).toEqual({ backgroundColor: "blue" });
-      expect(result.get("variant")?.get("secondary")).toEqual({ backgroundColor: "gray" });
+      expect(result.get("size")?.get("small")?.style).toEqual({ padding: 4 });
+      expect(result.get("size")?.get("large")?.style).toEqual({ padding: 12 });
+      expect(result.get("variant")?.get("primary")?.style).toEqual({ backgroundColor: "blue" });
+      expect(result.get("variant")?.get("secondary")?.style).toEqual({ backgroundColor: "gray" });
     });
 
     it("3차원 AND(size, variant, icon): 각 CSS 속성이 제어 prop에만 배치", () => {
@@ -304,17 +304,17 @@ describe("DynamicStyleDecomposer", () => {
       const result = DynamicStyleDecomposer.decompose(dynamic);
 
       // padding은 size에 의해 제어
-      expect(result.get("size")?.get("S")?.padding).toBe(4);
-      expect(result.get("size")?.get("L")?.padding).toBe(12);
+      expect(result.get("size")?.get("S")?.style.padding).toBe(4);
+      expect(result.get("size")?.get("L")?.style.padding).toBe(12);
 
       // backgroundColor는 variant에 의해 제어
-      expect(result.get("variant")?.get("primary")).toEqual(expect.objectContaining({ backgroundColor: "blue" }));
-      expect(result.get("variant")?.get("danger")).toEqual(expect.objectContaining({ backgroundColor: "red" }));
+      expect(result.get("variant")?.get("primary")?.style).toEqual(expect.objectContaining({ backgroundColor: "blue" }));
+      expect(result.get("variant")?.get("danger")?.style).toEqual(expect.objectContaining({ backgroundColor: "red" }));
 
       // gap은 size와 icon 양쪽에 의존 → fallback으로 size에 할당되지만
       // merge 후 모든 size 값에서 동일(0)이므로 uniform 제거됨
-      expect(result.get("size")?.get("S")?.gap).toBeUndefined();
-      expect(result.get("size")?.get("L")?.gap).toBeUndefined();
+      expect(result.get("size")?.get("S")?.style.gap).toBeUndefined();
+      expect(result.get("size")?.get("L")?.style.gap).toBeUndefined();
     });
 
     it("단일 prop + AND 혼합 처리", () => {
@@ -350,13 +350,13 @@ describe("DynamicStyleDecomposer", () => {
       const result = DynamicStyleDecomposer.decompose(dynamic);
 
       // fontSize는 단일 prop에서 온 것
-      expect(result.get("size")?.get("Large")).toEqual(
+      expect(result.get("size")?.get("Large")?.style).toEqual(
         expect.objectContaining({ fontSize: 18 })
       );
 
       // fontWeight, letterSpacing은 bold에 의해 제어
-      expect(result.get("bold")?.get("true")).toEqual({ fontWeight: 700, letterSpacing: 2 });
-      expect(result.get("bold")?.get("false")).toEqual({ fontWeight: 400, letterSpacing: 0 });
+      expect(result.get("bold")?.get("true")?.style).toEqual({ fontWeight: 700, letterSpacing: 2 });
+      expect(result.get("bold")?.get("false")?.style).toEqual({ fontWeight: 400, letterSpacing: 0 });
     });
   });
 
@@ -404,14 +404,14 @@ describe("DynamicStyleDecomposer", () => {
       const result = DynamicStyleDecomposer.decompose(dynamic);
 
       // padding은 size가 제어 (M→8, L→16)
-      expect(result.get("size")?.get("M")).toEqual(expect.objectContaining({ padding: 8 }));
-      expect(result.get("size")?.get("L")).toEqual(expect.objectContaining({ padding: 16 }));
+      expect(result.get("size")?.get("M")?.style).toEqual(expect.objectContaining({ padding: 8 }));
+      expect(result.get("size")?.get("L")?.style).toEqual(expect.objectContaining({ padding: 16 }));
 
       // borderColor는 variant가 제어 (primary→blue, danger→red)
-      expect(result.get("variant")?.get("primary")).toEqual(
+      expect(result.get("variant")?.get("primary")?.style).toEqual(
         expect.objectContaining({ borderColor: "blue" })
       );
-      expect(result.get("variant")?.get("danger")).toEqual(
+      expect(result.get("variant")?.get("danger")?.style).toEqual(
         expect.objectContaining({ borderColor: "red" })
       );
     });
@@ -485,14 +485,14 @@ describe("DynamicStyleDecomposer", () => {
       const result = DynamicStyleDecomposer.decompose(dynamic);
 
       // justifyContent는 active가 제어 (true일 때만 존재)
-      expect(result.get("active")?.get("true")).toEqual(
+      expect(result.get("active")?.get("true")?.style).toEqual(
         expect.objectContaining({ justifyContent: "flex-end" })
       );
-      expect(result.get("active")?.get("false")).not.toHaveProperty("justifyContent");
+      expect(result.get("active")?.get("false")?.style).not.toHaveProperty("justifyContent");
 
       // padding은 size가 제어
-      expect(result.get("size")?.get("M")).toEqual(expect.objectContaining({ padding: 4 }));
-      expect(result.get("size")?.get("L")).toEqual(expect.objectContaining({ padding: 8 }));
+      expect(result.get("size")?.get("M")?.style).toEqual(expect.objectContaining({ padding: 4 }));
+      expect(result.get("size")?.get("L")?.style).toEqual(expect.objectContaining({ padding: 8 }));
     });
 
     it("일부 CSS 속성만 동일하면 해당 속성만 제거", () => {
@@ -510,8 +510,8 @@ describe("DynamicStyleDecomposer", () => {
       const result = DynamicStyleDecomposer.decompose(dynamic);
 
       // padding은 다름 → 유지
-      expect(result.get("size")?.get("S")).toEqual({ padding: 4 });
-      expect(result.get("size")?.get("L")).toEqual({ padding: 12 });
+      expect(result.get("size")?.get("S")?.style).toEqual({ padding: 4 });
+      expect(result.get("size")?.get("L")?.style).toEqual({ padding: 12 });
     });
   });
 
@@ -543,10 +543,10 @@ describe("DynamicStyleDecomposer", () => {
 
       expect(diagnostics).toEqual([]);
       // 기존 분류도 정상 동작
-      expect(result.get("color")?.get("cyan")?.background).toBe("#aef2f6");
-      expect(result.get("color")?.get("red")?.background).toBe("#ffb9b9");
-      expect(result.get("size")?.get("small")?.padding).toBe("2px");
-      expect(result.get("size")?.get("large")?.padding).toBe("4px");
+      expect(result.get("color")?.get("cyan")?.style.background).toBe("#aef2f6");
+      expect(result.get("color")?.get("red")?.style.background).toBe("#ffb9b9");
+      expect(result.get("size")?.get("small")?.style.padding).toBe("2px");
+      expect(result.get("size")?.get("large")?.style.padding).toBe("4px");
     });
 
     it("한 variant만 다른 값 → 해당 그룹을 지목하는 diagnostic (다수결 expectedValue)", () => {
@@ -659,9 +659,9 @@ describe("DynamicStyleDecomposer", () => {
       expect(diagnostics.length).toBeGreaterThan(0);
 
       // background는 여전히 color 축에 배치 (size보다 color가 더 일관적)
-      expect(result.get("color")?.get("cyan")?.background).toBe("#aef2f6");
+      expect(result.get("color")?.get("cyan")?.style.background).toBe("#aef2f6");
       // padding은 size 축
-      expect(result.get("size")?.get("small")?.padding).toBe("2px");
+      expect(result.get("size")?.get("small")?.style.padding).toBe("2px");
     });
   });
 });

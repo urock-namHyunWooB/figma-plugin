@@ -24,7 +24,7 @@
 
 import type { StyleObject, PseudoClass, ConditionNode } from "../../../../types/types";
 import type { IStyleStrategy, StyleResult, JsxStyleAttribute } from "./IStyleStrategy";
-import { DynamicStyleDecomposer } from "./DynamicStyleDecomposer";
+import { DynamicStyleDecomposer, type DecomposedResult, type DecomposedValue } from "./DynamicStyleDecomposer";
 
 export class EmotionStrategy implements IStyleStrategy {
   readonly name = "emotion";
@@ -108,15 +108,20 @@ export class EmotionStrategy implements IStyleStrategy {
 
   private generateDynamicCode(
     baseVarName: string,
-    dynamic?: Array<{ condition: ConditionNode; style: Record<string, string | number> }>,
+    dynamic?: Array<{
+      condition: ConditionNode;
+      style: Record<string, string | number>;
+      pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
+    }>,
     base?: Record<string, string | number>
   ): { code: string; hasContent: boolean } {
     if (!dynamic || dynamic.length === 0) {
       return { code: "", hasContent: false };
     }
 
-    // variant prop별로 그룹화
+    // decomposer가 pseudo를 네이티브로 분배하므로 별도 분리 불필요
     const groups = this.groupByVariantProp(dynamic, base);
+
     if (groups.size === 0) return { code: "", hasContent: false };
 
     // 각 그룹을 코드로 변환
@@ -176,19 +181,34 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
   }
 
   private groupByVariantProp(
-    dynamic: Array<{ condition: ConditionNode; style: Record<string, string | number> }>,
+    dynamic: Array<{
+      condition: ConditionNode;
+      style: Record<string, string | number>;
+      pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
+    }>,
     base?: Record<string, string | number>
-  ): Map<string, Map<string, Record<string, string | number>>> {
+  ): DecomposedResult {
     return DynamicStyleDecomposer.decompose(dynamic, base);
   }
 
   private buildVariantEntries(
-    valueMap: Map<string, Record<string, string | number>>
+    valueMap: Map<string, DecomposedValue>
   ): string[] {
     const entries: string[] = [];
 
-    for (const [value, style] of valueMap) {
-      const styleStr = this.objectToStyleString(style);
+    for (const [value, { style, pseudo }] of valueMap) {
+      let styleStr = this.objectToStyleString(style);
+
+      // per-group pseudo 데이터 출력 (&:hover { ... } 등)
+      if (pseudo) {
+        for (const [selector, pseudoStyle] of Object.entries(pseudo)) {
+          const pStr = this.objectToStyleString(pseudoStyle as Record<string, string | number>);
+          if (pStr) {
+            styleStr += `\n\n&${selector} {\n${this.indent(pStr, 2)}\n}`;
+          }
+        }
+      }
+
       if (styleStr) {
         const keyStr = this.needsQuoting(value) ? `"${value}"` : value;
         entries.push(`  ${keyStr}: css\`\n${this.indent(styleStr, 4)}\n  \`,`);
@@ -200,19 +220,6 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
 
   private needsQuoting(key: string): boolean {
     return /[^a-zA-Z0-9_$]/.test(key) || /^\d/.test(key);
-  }
-
-  private extractAllVariantProps(
-    condition: ConditionNode
-  ): Array<{ propName: string; propValue: string }> {
-    return DynamicStyleDecomposer.extractAllPropInfos(condition);
-  }
-
-  private extractVariantProp(
-    condition: ConditionNode
-  ): { propName: string; propValue: string } | null {
-    const results = this.extractAllVariantProps(condition);
-    return results.length > 0 ? results[0] : null;
   }
 
   private getDiffStyles(

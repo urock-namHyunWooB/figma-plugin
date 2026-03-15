@@ -7,7 +7,7 @@
 
 import type { StyleObject, PseudoClass } from "../../../../types/types";
 import type { IStyleStrategy, StyleResult, JsxStyleAttribute } from "./IStyleStrategy";
-import { DynamicStyleDecomposer } from "./DynamicStyleDecomposer";
+import { DynamicStyleDecomposer, type DecomposedValue } from "./DynamicStyleDecomposer";
 
 /**
  * CSS 속성+값 → Tailwind 클래스 매핑
@@ -242,12 +242,23 @@ export class TailwindStrategy implements IStyleStrategy {
       return { code: "", hasContent: false };
     }
 
-    // variant prop별로 그룹화 (CSS 속성별 소유권 분석)
+    // decomposer가 pseudo를 네이티브로 분배하므로 별도 분리 불필요
     const variantGroups = DynamicStyleDecomposer.decompose(style.dynamic, style.base);
 
     if (variantGroups.size === 0) {
       return { code: "", hasContent: false };
     }
+
+    // pseudo selector → Tailwind variant prefix 매핑
+    const pseudoToTwPrefix: Record<string, string> = {
+      ":hover": "hover",
+      ":active": "active",
+      ":focus": "focus",
+      ":disabled": "disabled",
+      ":focus-visible": "focus-visible",
+      ":checked": "checked",
+      ":visited": "visited",
+    };
 
     // 각 variant prop → cva variants 블록 내부 코드
     const variantParts: string[] = [];
@@ -255,8 +266,21 @@ export class TailwindStrategy implements IStyleStrategy {
     for (const [propName, valueMap] of variantGroups) {
       const entries: string[] = [];
 
-      for (const [value, dynStyle] of valueMap) {
+      for (const [value, { style: dynStyle, pseudo }] of valueMap) {
         const classes = this.cssObjectToTailwind(dynStyle);
+
+        // per-group pseudo → Tailwind variant prefix 적용
+        if (pseudo) {
+          for (const [selector, pseudoStyle] of Object.entries(pseudo)) {
+            const prefix = pseudoToTwPrefix[selector];
+            if (!prefix) continue;
+            const pseudoClasses = this.cssObjectToTailwind(pseudoStyle as Record<string, string | number>);
+            for (const cls of pseudoClasses) {
+              classes.push(`${prefix}:${cls}`);
+            }
+          }
+        }
+
         if (classes.length > 0) {
           const key = this.needsQuoting(value) ? `"${value}"` : value;
           const classStr = classes.join(" ");

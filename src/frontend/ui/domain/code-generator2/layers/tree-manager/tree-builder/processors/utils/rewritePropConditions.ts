@@ -109,6 +109,7 @@ function rewriteCondition(
 type DynEntry = {
   condition: ConditionNode;
   style: Record<string, string | number>;
+  pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
 };
 
 interface ParsedStateEntry {
@@ -538,22 +539,39 @@ function processPseudoGroup(
     [...stateVaryingKeys].filter(k => compoundProps.has(k))
   );
 
-  if (compoundVaryingKeys.size > 0) {
-    // default + pseudo entries → keptEntries (전체 스타일로 대칭 유지)
-    if (defaultEntry) {
-      const cond: ConditionNode = { type: "eq", prop: removedProp, value: defaultEntry.stateValue };
-      const fullCond = defaultEntry.nonStateCondition
-        ? { type: "and" as const, conditions: [cond, defaultEntry.nonStateCondition] }
-        : cond;
-      keptEntries.push({ condition: fullCond, style: { ...defaultEntry.style } });
+  if (compoundVaryingKeys.size > 0 && defaultEntry.nonStateCondition) {
+    // compound-varying CSS → per-group pseudo entry로 변환
+    // state 조건을 제거하고, nonStateCondition 조건에 pseudo를 중첩
+    const compoundBase: Record<string, string | number> = {};
+    for (const key of compoundVaryingKeys) {
+      if (key in defaultEntry.style) {
+        compoundBase[key] = defaultEntry.style[key];
+      }
     }
+
+    const compoundPseudo: Partial<Record<PseudoClass, Record<string, string | number>>> = {};
     for (const pe of pseudoEntries) {
-      const cond: ConditionNode = { type: "eq", prop: removedProp, value: pe.stateValue };
-      const fullCond = pe.nonStateCondition
-        ? { type: "and" as const, conditions: [cond, pe.nonStateCondition] }
-        : cond;
-      keptEntries.push({ condition: fullCond, style: { ...pe.style } });
+      const pseudo = pseudoMap[pe.stateValue];
+      if (!pseudo) continue;
+      const pseudoStyle: Record<string, string | number> = {};
+      for (const key of compoundVaryingKeys) {
+        if (key in pe.style) {
+          pseudoStyle[key] = pe.style[key];
+        }
+      }
+      if (Object.keys(pseudoStyle).length > 0) {
+        compoundPseudo[pseudo] = { ...(compoundPseudo[pseudo] || {}), ...pseudoStyle };
+      }
     }
+
+    const entry: DynEntry = {
+      condition: defaultEntry.nonStateCondition,
+      style: compoundBase,
+    };
+    if (Object.keys(compoundPseudo).length > 0) {
+      entry.pseudo = compoundPseudo;
+    }
+    keptEntries.push(entry);
   }
 
   // c. default의 state-varying CSS → base에 병합 (compound 제외)

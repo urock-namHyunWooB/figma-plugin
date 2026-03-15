@@ -1,0 +1,683 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`urockButton rendering review > should compile urockButton with emotion strategy 1`] = `
+{
+  "code": "import React from "react";
+import { css } from "@emotion/react";
+
+export interface BtnProps {
+  text?: string; // default: "button"
+  iconLeft?: React.ReactNode; // default: null
+  iconRight?: React.ReactNode; // default: null
+  size?: "L" | "M" | "S"; // default: "L"
+  customType?:
+    | "filled"
+    | "outlined_black"
+    | "outlined_blue"
+    | "text"
+    | "text-black"
+    | "outlined_red"
+    | "filled-red"
+    | "icon-filled"
+    | "icon-filled-red"
+    | "icon-outlined-black"
+    | "icon-outlined-blue"
+    | "icon-outlined-red"; // default: "filled"
+  states?: "active" | "default" | "disable" | "hover" | "loading"; // default: "default"
+}
+
+const btnCss = css\`
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+  backdrop-filter: blur(20px);
+
+  &:active {
+    opacity: 0.8;
+  }
+
+  &:hover {
+    opacity: 0.7;
+  }
+\`;
+
+const btnCss_customTypeStyles: Record<string, any> = {
+  "icon-filled": css\`
+    background: var(--Color-primary-01, #628cf5);
+    box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+      rgba(98, 140, 245, 0.16);
+  \`,
+  "icon-filled-red": css\`
+    background: var(--Color-state-error, #ff8484);
+    box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+      rgba(248, 177, 177, 0.16);
+  \`,
+  "icon-outlined-black": css\`
+    border: 2px solid var(--Color-line-01, #ededed);
+    background: var(--Color-bg-00, #fff);
+    box-shadow:
+      0 10px var(--Number-scope-Blur-blur-6, 6px) 0 rgba(0, 0, 0, 0.01),
+      0 4px var(--Number-scope-Blur-blur-4, 4px) 0 rgba(0, 0, 0, 0.02),
+      0 1px var(--Number-scope-Blur-blur-2, 2px) 0 rgba(0, 0, 0, 0.02);
+    backdrop-filter: blur(20px);
+  \`,
+  "icon-outlined-blue": css\`
+    border: 2px solid var(--Color-line-03, #93b0f8);
+    background: var(--Color-bg-03, #f7f9fe);
+    box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+      rgba(98, 140, 245, 0.16);
+  \`,
+  "icon-outlined-red": css\`
+    border: 2px solid var(--Color-state-error, #ff8484);
+    background: var(--Color-bg-00, #fff);
+    box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+      rgba(248, 177, 177, 0.16);
+  \`,
+  filled: css\`
+    background: var(--Color-bg-00, #fff);
+    box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+      rgba(98, 140, 245, 0.16);
+    border: 2px solid var(--Color-line-03, #93b0f8);
+
+    &:hover {
+      background: var(--Color-secondary-01, #93b0f8);
+      box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+        rgba(98, 140, 245, 0.16);
+    }
+
+    &:active {
+      background: var(--Color-blue-09, #4663ae);
+      box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+        rgba(98, 140, 245, 0.16);
+    }
+
+    &:disabled {
+      background: var(--Color-bg-02, #e6e6e6);
+    }
+  \`,
+  "filled-red": css\`
+    background: var(--Color-bg-00, #fff);
+    box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+      rgba(248, 177, 177, 0.16);
+    border: 2px solid var(--Color-state-error, #ff8484);
+
+    &:hover {
+      background: var(--Color-bg-error, #ffb9b9);
+      box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+        rgba(248, 177, 177, 0.16);
+    }
+
+    &:active {
+      background: var(--Color-state-error, #ff8484);
+      box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+        rgba(248, 177, 177, 0.16);
+    }
+
+    &:disabled {
+      background: var(--Color-bg-02, #e6e6e6);
+    }
+  \`,
+  outlined_black: css\`
+    border: 2px solid var(--Color-line-01, #ededed);
+    background: var(--Color-bg-00, #fff);
+    box-shadow:
+      0 10px var(--Number-scope-Blur-blur-6, 6px) 0 rgba(0, 0, 0, 0.01),
+      0 4px var(--Number-scope-Blur-blur-4, 4px) 0 rgba(0, 0, 0, 0.02),
+      0 1px var(--Number-scope-Blur-blur-2, 2px) 0 rgba(0, 0, 0, 0.02);
+    backdrop-filter: blur(20px);
+
+    &:hover {
+      border: 2px solid var(--Color-line-02, #e9ebf8);
+      background: var(--Color-bg-03, #f7f9fe);
+      box-shadow:
+        0 10px var(--Number-scope-Blur-blur-6, 6px) 0 rgba(0, 0, 0, 0.01),
+        0 4px var(--Number-scope-Blur-blur-4, 4px) 0 rgba(0, 0, 0, 0.02),
+        0 1px var(--Number-scope-Blur-blur-2, 2px) 0 rgba(0, 0, 0, 0.02);
+    }
+
+    &:active {
+      border: 2px solid var(--Color-line-02, #e9ebf8);
+      background: var(--Color-bg-04, #e6edff);
+      box-shadow:
+        0 10px var(--Number-scope-Blur-blur-6, 6px) 0 rgba(0, 0, 0, 0.01),
+        0 4px var(--Number-scope-Blur-blur-4, 4px) 0 rgba(0, 0, 0, 0.02),
+        0 1px var(--Number-scope-Blur-blur-2, 2px) 0 rgba(0, 0, 0, 0.02);
+    }
+
+    &:disabled {
+      background: var(--Color-bg-02, #e6e6e6);
+    }
+  \`,
+  outlined_blue: css\`
+    background: var(--Color-bg-00, #fff);
+    border: 2px solid var(--Color-line-01, #ededed);
+    box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+      rgba(98, 140, 245, 0.16);
+
+    &:hover {
+      background: var(--Color-blue-03, #cedbfc);
+      border: 2px solid var(--Color-line-03, #93b0f8);
+      box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+        rgba(98, 140, 245, 0.16);
+    }
+
+    &:active {
+      background: var(--Color-blue-05-icon-sub, #96b2f8);
+      border: 2px solid var(--Color-line-03, #93b0f8);
+      box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+        rgba(98, 140, 245, 0.16);
+    }
+
+    &:disabled {
+      background: var(--Color-bg-02, #e6e6e6);
+    }
+  \`,
+  outlined_red: css\`
+    background: var(--Color-bg-00, #fff);
+    border: 2px solid var(--Color-line-01, #ededed);
+    box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+      rgba(248, 177, 177, 0.16);
+
+    &:hover {
+      background: var(--Color-bg-error, #ffb9b9);
+      border: 2px solid var(--Color-state-error, #ff8484);
+      box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+        rgba(248, 177, 177, 0.16);
+    }
+
+    &:active {
+      background: var(--Color-bg-error, #ffb9b9);
+      border: 2px solid var(--Color-state-error, #ff8484);
+      box-shadow: -1px 5px var(--Number-scope-Blur-blur-14, 14px) 0
+        rgba(248, 177, 177, 0.16);
+    }
+
+    &:disabled {
+      background: var(--Color-bg-02, #e6e6e6);
+    }
+  \`,
+};
+
+const btnCss_sizeStyles: Record<string, any> = {
+  L: css\`
+    height: 56px;
+    padding: 16px 28px;
+    gap: 4px;
+    border-radius: 12px;
+  \`,
+  M: css\`
+    height: 40px;
+    padding: 8px 12px;
+    gap: 2px;
+    border-radius: 10px;
+  \`,
+  S: css\`
+    height: 28px;
+    padding: 4px 8px;
+    border-radius: 8px;
+  \`,
+};
+
+const btnDeleteCss = css\`\`;
+
+const btnDeleteCss_sizeStyles: Record<string, any> = {
+  M: css\`
+    width: 20px;
+    height: 20px;
+  \`,
+  S: css\`
+    width: 16px;
+    height: 16px;
+  \`,
+};
+
+const btnButtonCss = css\`
+  text-align: center;
+  font-style: normal;
+
+  &:hover {
+    font-family: var(--Typography-Font-Famaily-pretendard-text, Pretendard);
+    font-weight: var(--Typography-Font-Weight-semibold-600, 600);
+    letter-spacing: var(
+      --Typography-Letter-Spacing-latterSpacing-neg0_5px,
+      -0.5px
+    );
+  }
+
+  &:active {
+    font-family: var(--Typography-Font-Famaily-pretendard-text, Pretendard);
+    font-weight: var(--Typography-Font-Weight-semibold-600, 600);
+    letter-spacing: var(
+      --Typography-Letter-Spacing-latterSpacing-neg0_5px,
+      -0.5px
+    );
+  }
+
+  &:disabled {
+    font-family: var(--Typography-Font-Famaily-pretendard-text, Pretendard);
+    font-weight: var(--Typography-Font-Weight-semibold-600, 600);
+    letter-spacing: var(
+      --Typography-Letter-Spacing-latterSpacing-neg0_5px,
+      -0.5px
+    );
+  }
+\`;
+
+const btnButtonCss_sizeStyles: Record<string, any> = {
+  L: css\`
+    font-family: var(--Typography-Font-Famaily-pretendard-text, Pretendard);
+    font-weight: var(--Typography-Font-Weight-semibold-600, 600);
+    letter-spacing: var(
+      --Typography-Letter-Spacing-latterSpacing-neg0_5px,
+      -0.5px
+    );
+    font-size: var(--Typography-Font-Size-fontSize-18px, 18px);
+    line-height: 136% /* 24.48px */;
+  \`,
+  M: css\`
+    font-family: var(--Typography-Font-Famaily-pretendard-text, Pretendard);
+    font-weight: var(--Typography-Font-Weight-semibold-600, 600);
+    letter-spacing: var(
+      --Typography-Letter-Spacing-latterSpacing-neg0_5px,
+      -0.5px
+    );
+    font-size: var(--Typography-Font-Size-fontSize-16px, 16px);
+    line-height: 148% /* 23.68px */;
+  \`,
+  S: css\`
+    font-family: var(--Typography-Font-Famaily-pretendard-text, Pretendard);
+    font-weight: var(--Typography-Font-Weight-semibold-600, 600);
+    letter-spacing: var(
+      --Typography-Letter-Spacing-latterSpacing-neg0_5px,
+      -0.5px
+    );
+    font-size: var(--Typography-Font-Size-fontSize-14px, 14px);
+    line-height: 140% /* 19.6px */;
+  \`,
+};
+
+const btnButtonCss_customTypeStyles: Record<string, any> = {
+  filled: css\`
+    color: var(--Color-text-04-primary, #4978eb);
+  \`,
+  "filled-red": css\`
+    color: var(--Color-text-error, #ee4c54);
+  \`,
+  outlined_black: css\`
+    color: var(--Color-text-03-high, #1a1a1a);
+  \`,
+  outlined_blue: css\`
+    color: var(--Color-text-04-primary, #4978eb);
+  \`,
+  outlined_red: css\`
+    color: var(--Color-text-error, #ee4c54);
+  \`,
+};
+
+const btnArrowCss = css\`
+  &:hover {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:active {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:disabled {
+    width: 16px;
+    height: 16px;
+  }
+\`;
+
+const btnArrowCss_sizeStyles: Record<string, any> = {
+  L: css\`
+    width: 24px;
+    height: 24px;
+  \`,
+  M: css\`
+    width: 20px;
+    height: 20px;
+  \`,
+  S: css\`
+    width: 16px;
+    height: 16px;
+  \`,
+};
+
+export default function Btn(props: BtnProps) {
+  const {
+    text = "button",
+    iconLeft = null,
+    iconRight = null,
+    size = "L",
+    customType = "filled",
+    states = "default",
+    ...restProps
+  } = props;
+
+  return (
+    <button
+      css={[
+        btnCss,
+        btnCss_customTypeStyles?.[String(customType)],
+        btnCss_sizeStyles?.[String(size)],
+      ]}
+      {...restProps}
+    >
+      {iconLeft && (
+        <div
+          css={[btnDeleteCss, btnDeleteCss_sizeStyles?.[String(size)]]}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {iconLeft}
+        </div>
+      )}
+      {text && (
+        <div
+          css={[
+            btnButtonCss,
+            btnButtonCss_sizeStyles?.[String(size)],
+            btnButtonCss_customTypeStyles?.[String(customType)],
+          ]}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {text}
+        </div>
+      )}
+      {iconRight && (
+        <div
+          css={[btnArrowCss, btnArrowCss_sizeStyles?.[String(size)]]}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {iconRight}
+        </div>
+      )}
+    </button>
+  );
+}
+",
+  "diagnostics": [
+    {
+      "cssProperty": "background",
+      "expectedValue": null,
+      "propName": "customType",
+      "propValue": "filled",
+      "variants": [
+        {
+          "props": {
+            "customType": "filled",
+            "size": "L",
+          },
+          "value": "#628CF5",
+        },
+        {
+          "props": {
+            "customType": "filled",
+            "size": "M",
+          },
+          "value": "#628CF5",
+        },
+        {
+          "props": {
+            "customType": "filled",
+            "size": "S",
+          },
+          "value": "#628CF5",
+        },
+        {
+          "props": {
+            "customType": "filled",
+            "size": "L",
+            "states": "loading",
+          },
+          "value": "#FFF",
+        },
+        {
+          "props": {
+            "customType": "filled",
+            "size": "M",
+            "states": "loading",
+          },
+          "value": "#FFF",
+        },
+        {
+          "props": {
+            "customType": "filled",
+            "size": "S",
+            "states": "loading",
+          },
+          "value": "#FFF",
+        },
+      ],
+    },
+    {
+      "cssProperty": "background",
+      "expectedValue": null,
+      "propName": "customType",
+      "propValue": "filled-red",
+      "variants": [
+        {
+          "props": {
+            "customType": "filled-red",
+            "size": "L",
+          },
+          "value": "#FF8484",
+        },
+        {
+          "props": {
+            "customType": "filled-red",
+            "size": "M",
+          },
+          "value": "#FF8484",
+        },
+        {
+          "props": {
+            "customType": "filled-red",
+            "size": "S",
+          },
+          "value": "#FF8484",
+        },
+        {
+          "props": {
+            "customType": "filled-red",
+            "size": "L",
+            "states": "loading",
+          },
+          "value": "#FFF",
+        },
+        {
+          "props": {
+            "customType": "filled-red",
+            "size": "M",
+            "states": "loading",
+          },
+          "value": "#FFF",
+        },
+        {
+          "props": {
+            "customType": "filled-red",
+            "size": "S",
+            "states": "loading",
+          },
+          "value": "#FFF",
+        },
+      ],
+    },
+    {
+      "cssProperty": "background",
+      "expectedValue": null,
+      "propName": "customType",
+      "propValue": "outlined_blue",
+      "variants": [
+        {
+          "props": {
+            "customType": "outlined_blue",
+            "size": "L",
+          },
+          "value": "#F7F9FE",
+        },
+        {
+          "props": {
+            "customType": "outlined_blue",
+            "size": "M",
+          },
+          "value": "#F7F9FE",
+        },
+        {
+          "props": {
+            "customType": "outlined_blue",
+            "size": "S",
+          },
+          "value": "#F7F9FE",
+        },
+        {
+          "props": {
+            "customType": "outlined_blue",
+            "size": "L",
+            "states": "loading",
+          },
+          "value": "#FFF",
+        },
+        {
+          "props": {
+            "customType": "outlined_blue",
+            "size": "M",
+            "states": "loading",
+          },
+          "value": "#FFF",
+        },
+        {
+          "props": {
+            "customType": "outlined_blue",
+            "size": "S",
+            "states": "loading",
+          },
+          "value": "#FFF",
+        },
+      ],
+    },
+    {
+      "cssProperty": "border",
+      "expectedValue": null,
+      "propName": "customType",
+      "propValue": "outlined_blue",
+      "variants": [
+        {
+          "props": {
+            "customType": "outlined_blue",
+            "size": "L",
+          },
+          "value": "2px solid var(--Color-line-03, #93B0F8)",
+        },
+        {
+          "props": {
+            "customType": "outlined_blue",
+            "size": "M",
+          },
+          "value": "2px solid var(--Color-line-03, #93B0F8)",
+        },
+        {
+          "props": {
+            "customType": "outlined_blue",
+            "size": "S",
+          },
+          "value": "2px solid var(--Color-line-03, #93B0F8)",
+        },
+        {
+          "props": {
+            "customType": "outlined_blue",
+            "size": "L",
+            "states": "loading",
+          },
+          "value": "2px solid var(--Color-line-01, #EDEDED)",
+        },
+        {
+          "props": {
+            "customType": "outlined_blue",
+            "size": "M",
+            "states": "loading",
+          },
+          "value": "2px solid var(--Color-line-01, #EDEDED)",
+        },
+        {
+          "props": {
+            "customType": "outlined_blue",
+            "size": "S",
+            "states": "loading",
+          },
+          "value": "2px solid var(--Color-line-01, #EDEDED)",
+        },
+      ],
+    },
+    {
+      "cssProperty": "border",
+      "expectedValue": null,
+      "propName": "customType",
+      "propValue": "outlined_red",
+      "variants": [
+        {
+          "props": {
+            "customType": "outlined_red",
+            "size": "L",
+          },
+          "value": "2px solid var(--Color-state-error, #FF8484)",
+        },
+        {
+          "props": {
+            "customType": "outlined_red",
+            "size": "M",
+          },
+          "value": "2px solid var(--Color-state-error, #FF8484)",
+        },
+        {
+          "props": {
+            "customType": "outlined_red",
+            "size": "S",
+          },
+          "value": "2px solid var(--Color-state-error, #FF8484)",
+        },
+        {
+          "props": {
+            "customType": "outlined_red",
+            "size": "L",
+            "states": "loading",
+          },
+          "value": "2px solid var(--Color-line-01, #EDEDED)",
+        },
+        {
+          "props": {
+            "customType": "outlined_red",
+            "size": "M",
+            "states": "loading",
+          },
+          "value": "2px solid var(--Color-line-01, #EDEDED)",
+        },
+        {
+          "props": {
+            "customType": "outlined_red",
+            "size": "S",
+            "states": "loading",
+          },
+          "value": "2px solid var(--Color-line-01, #EDEDED)",
+        },
+      ],
+    },
+  ],
+  "diagnosticsCount": 5,
+}
+`;

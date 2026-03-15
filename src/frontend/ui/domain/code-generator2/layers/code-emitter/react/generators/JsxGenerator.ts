@@ -1047,9 +1047,9 @@ ${indentStr}</${tag}>`;
         if (!this.availableVarNames.has(propName)) continue;
       }
 
-      // 최소 하나의 value에 실제 CSS 속성이 있는 경우만 포함
+      // 최소 하나의 value에 실제 CSS 속성 또는 pseudo가 있는 경우만 포함
       const hasContent = [...valueMap.values()].some(
-        (s) => Object.keys(s).length > 0
+        (dv) => Object.keys(dv.style).length > 0 || !!dv.pseudo
       );
       if (hasContent) {
         propNames.push(propName);

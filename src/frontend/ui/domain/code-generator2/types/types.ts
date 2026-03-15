@@ -75,6 +75,8 @@ export type StyleObject = {
   dynamic: Array<{
     condition: ConditionNode;
     style: Record<string, string | number>;
+    /** compound-varying CSS의 조건부 pseudo (per-group pseudo-class 스타일) */
+    pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
   }>;
   pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
   mediaQueries?: Array<{

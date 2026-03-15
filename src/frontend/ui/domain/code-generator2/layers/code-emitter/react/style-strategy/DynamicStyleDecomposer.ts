@@ -8,9 +8,11 @@
  *
  * 이 모듈은 각 CSS 속성이 어떤 prop에 의해 제어되는지 일관성 체크로 분석하여,
  * 해당 prop 그룹에만 배치한다.
+ *
+ * pseudo-class 데이터도 동일한 cssKeyOwner 매핑을 따라 올바른 prop 그룹에 배치된다.
  */
 
-import type { ConditionNode } from "../../../../types/types";
+import type { ConditionNode, PseudoClass } from "../../../../types/types";
 
 /**
  * CSS variable의 fallback 값을 추출하여 비교용 정규화 문자열 반환.
@@ -39,9 +41,26 @@ export interface VariantInconsistency {
   expectedValue: string | null;
 }
 
+/** Decompose 결과의 개별 값 (style + optional pseudo) */
+export type DecomposedValue = {
+  style: Record<string, string | number>;
+  pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
+};
+
+/** Decompose 결과: Map<propName, Map<propValue, DecomposedValue>> */
+export type DecomposedResult = Map<string, Map<string, DecomposedValue>>;
+
+/** dynamic entry 입력 타입 */
+interface DynamicEntry {
+  condition: ConditionNode;
+  style: Record<string, string | number>;
+  pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
+}
+
 interface MatrixEntry {
   propValues: Map<string, string>;
   style: Record<string, string | number>;
+  pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
 }
 
 interface PropGroup {
@@ -56,14 +75,12 @@ export class DynamicStyleDecomposer {
    *
    * 단일 prop 조건: 기존 동작 유지 (전체 스타일을 해당 prop에 할당).
    * AND 조건: CSS 속성별 소유권 분석 후 제어 prop에만 할당.
+   * pseudo-class 데이터도 동일한 cssKeyOwner 매핑을 따라 분배.
    */
   static decompose(
-    dynamic: Array<{
-      condition: ConditionNode;
-      style: Record<string, string | number>;
-    }>,
+    dynamic: DynamicEntry[],
     base?: Record<string, string | number>
-  ): Map<string, Map<string, Record<string, string | number>>> {
+  ): DecomposedResult {
     return this.decomposeInternal(dynamic, base);
   }
 
@@ -74,13 +91,10 @@ export class DynamicStyleDecomposer {
    * 가장 적합한 축(best-fit)에 배치하고 불일치 그룹을 diagnostics로 보고한다.
    */
   static decomposeWithDiagnostics(
-    dynamic: Array<{
-      condition: ConditionNode;
-      style: Record<string, string | number>;
-    }>,
+    dynamic: DynamicEntry[],
     base?: Record<string, string | number>
   ): {
-    result: Map<string, Map<string, Record<string, string | number>>>;
+    result: DecomposedResult;
     diagnostics: VariantInconsistency[];
   } {
     const diagnostics: VariantInconsistency[] = [];
@@ -89,27 +103,15 @@ export class DynamicStyleDecomposer {
   }
 
   private static decomposeInternal(
-    dynamic: Array<{
-      condition: ConditionNode;
-      style: Record<string, string | number>;
-    }>,
+    dynamic: DynamicEntry[],
     base?: Record<string, string | number>,
     diagnostics?: VariantInconsistency[]
-  ): Map<string, Map<string, Record<string, string | number>>> {
-    const result = new Map<
-      string,
-      Map<string, Record<string, string | number>>
-    >();
+  ): DecomposedResult {
+    const result: DecomposedResult = new Map();
 
     // 단일 prop vs 다중 prop 분리
-    const singlePropEntries: Array<{
-      condition: ConditionNode;
-      style: Record<string, string | number>;
-    }> = [];
-    const multiPropEntries: Array<{
-      condition: ConditionNode;
-      style: Record<string, string | number>;
-    }> = [];
+    const singlePropEntries: DynamicEntry[] = [];
+    const multiPropEntries: DynamicEntry[] = [];
 
     for (const entry of dynamic) {
       const propInfos = this.extractAllPropInfos(entry.condition);
@@ -121,21 +123,28 @@ export class DynamicStyleDecomposer {
     }
 
     // 단일 prop: 같은 condition이면 스타일 병합
-    for (const { condition, style } of singlePropEntries) {
+    for (const { condition, style, pseudo } of singlePropEntries) {
       const propInfos = this.extractAllPropInfos(condition);
       for (const { propName, propValue } of propInfos) {
         if (!result.has(propName)) {
           result.set(propName, new Map());
         }
         if (!result.get(propName)!.has(propValue)) {
-          result.get(propName)!.set(propValue, { ...style });
+          result.get(propName)!.set(propValue, {
+            style: { ...style },
+            ...(pseudo && { pseudo: this.clonePseudo(pseudo) }),
+          });
         } else {
           // 기존 속성 보존, 새 속성만 추가 (first-write per property)
           const existing = result.get(propName)!.get(propValue)!;
           for (const [k, v] of Object.entries(style)) {
-            if (!(k in existing)) {
-              existing[k] = v;
+            if (!(k in existing.style)) {
+              existing.style[k] = v;
             }
+          }
+          // pseudo 병합
+          if (pseudo) {
+            this.mergePseudoInto(existing, pseudo);
           }
         }
       }
@@ -198,6 +207,40 @@ export class DynamicStyleDecomposer {
   // ===========================================================================
 
   /**
+   * pseudo 데이터를 기존 DecomposedValue에 병합.
+   */
+  private static mergePseudoInto(
+    existing: DecomposedValue,
+    pseudo: Partial<Record<PseudoClass, Record<string, string | number>>>
+  ): void {
+    if (!existing.pseudo) {
+      existing.pseudo = this.clonePseudo(pseudo);
+    } else {
+      for (const [pc, pcStyle] of Object.entries(pseudo)) {
+        const pcKey = pc as PseudoClass;
+        if (!existing.pseudo[pcKey]) {
+          existing.pseudo[pcKey] = { ...pcStyle };
+        } else {
+          Object.assign(existing.pseudo[pcKey]!, pcStyle);
+        }
+      }
+    }
+  }
+
+  /**
+   * pseudo 데이터 얕은 복제 (원본 변형 방지).
+   */
+  private static clonePseudo(
+    pseudo: Partial<Record<PseudoClass, Record<string, string | number>>>
+  ): Partial<Record<PseudoClass, Record<string, string | number>>> {
+    const clone: Partial<Record<PseudoClass, Record<string, string | number>>> = {};
+    for (const [pc, pcStyle] of Object.entries(pseudo)) {
+      clone[pc as PseudoClass] = { ...pcStyle };
+    }
+    return clone;
+  }
+
+  /**
    * 모든 variant 값에서 동일한 CSS 속성을 제거.
    *
    * 예: activeStyles = { true: { opacity: 0.43 }, false: { opacity: 0.43 } }
@@ -205,7 +248,7 @@ export class DynamicStyleDecomposer {
    * 결과적으로 빈 스타일 객체가 되면 해당 prop 그룹 전체 제거.
    */
   private static removeUniformProperties(
-    result: Map<string, Map<string, Record<string, string | number>>>,
+    result: DecomposedResult,
     base?: Record<string, string | number>
   ): void {
     for (const [propName, valueMap] of result) {
@@ -213,8 +256,8 @@ export class DynamicStyleDecomposer {
 
       // 모든 CSS 키 수집
       const allCssKeys = new Set<string>();
-      for (const style of valueMap.values()) {
-        for (const key of Object.keys(style)) {
+      for (const dv of valueMap.values()) {
+        for (const key of Object.keys(dv.style)) {
           allCssKeys.add(key);
         }
       }
@@ -225,12 +268,12 @@ export class DynamicStyleDecomposer {
       for (const cssKey of allCssKeys) {
         const values = new Set<string>();
         let allPresent = true;
-        for (const style of valueMap.values()) {
-          if (!(cssKey in style)) {
+        for (const dv of valueMap.values()) {
+          if (!(cssKey in dv.style)) {
             allPresent = false;
             break;
           }
-          values.add(String(style[cssKey]));
+          values.add(String(dv.style[cssKey]));
         }
         if (allPresent && values.size === 1) {
           // base에 해당 속성이 없으면: 유일한 source → 유지
@@ -239,15 +282,15 @@ export class DynamicStyleDecomposer {
           }
           // base에 있거나 base 없음 → uniform이므로 제거
           // (base가 default 제공, 다른 dimension이 override 담당)
-          for (const style of valueMap.values()) {
-            delete style[cssKey];
+          for (const dv of valueMap.values()) {
+            delete dv.style[cssKey];
           }
         }
       }
 
-      // 빈 스타일 객체만 남은 prop 그룹 제거
+      // 빈 스타일 객체 + pseudo 없음인 prop 그룹 제거
       const allEmpty = [...valueMap.values()].every(
-        (s) => Object.keys(s).length === 0
+        (dv) => Object.keys(dv.style).length === 0 && !dv.pseudo
       );
       if (allEmpty) {
         result.delete(propName);
@@ -257,19 +300,18 @@ export class DynamicStyleDecomposer {
 
   /**
    * AND 조건 엔트리들을 CSS 속성별로 제어 prop에 분배.
+   * pseudo-class CSS 키도 동일한 cssKeyOwner 매핑을 따라 분배.
    */
   private static decomposeMultiProp(
-    entries: Array<{
-      condition: ConditionNode;
-      style: Record<string, string | number>;
-    }>,
-    result: Map<string, Map<string, Record<string, string | number>>>,
+    entries: DynamicEntry[],
+    result: DecomposedResult,
     diagnostics?: VariantInconsistency[]
   ): void {
     // Step 1: matrix 구성 — 각 엔트리의 prop→value 매핑과 스타일
     const matrix: MatrixEntry[] = entries.map((entry) => ({
       propValues: this.extractPropValueMap(entry.condition),
       style: entry.style,
+      ...(entry.pseudo && { pseudo: entry.pseudo }),
     }));
 
     // Step 2: 모든 prop 이름 수집 (순서 유지)
@@ -300,6 +342,48 @@ export class DynamicStyleDecomposer {
       cssKeyOwner.set(cssKey, owner);
       }
 
+    // pseudo에만 존재하는 CSS 키도 cssKeyOwner에 추가
+    // (style에 같은 CSS 키가 있으면 그 owner를 따름, 없으면 별도 분석)
+    const pseudoCssKeys = new Set<string>();
+    for (const entry of matrix) {
+      if (!entry.pseudo) continue;
+      for (const pcStyle of Object.values(entry.pseudo)) {
+        for (const key of Object.keys(pcStyle as Record<string, string | number>)) {
+          if (!cssKeyOwner.has(key)) {
+            pseudoCssKeys.add(key);
+          }
+        }
+      }
+    }
+    // pseudo-only CSS 키: style의 같은 키가 이미 owner를 가지면 그것을 사용,
+    // 없으면 findControllingProp으로 분석 (pseudo 값을 style처럼 취급)
+    for (const cssKey of pseudoCssKeys) {
+      // pseudo 값을 matrix의 style로 임시 투영하여 controlling prop 분석
+      const pseudoMatrix: MatrixEntry[] = matrix
+        .filter((e) => {
+          if (!e.pseudo) return false;
+          for (const pcStyle of Object.values(e.pseudo)) {
+            if (cssKey in (pcStyle as Record<string, string | number>)) return true;
+          }
+          return false;
+        })
+        .map((e) => {
+          // pseudo에서 해당 CSS 키의 값을 style로 투영
+          let val: string | number = "";
+          for (const pcStyle of Object.values(e.pseudo!)) {
+            if (cssKey in (pcStyle as Record<string, string | number>)) {
+              val = (pcStyle as Record<string, string | number>)[cssKey];
+              break;
+            }
+          }
+          return { propValues: e.propValues, style: { [cssKey]: val } };
+        });
+      if (pseudoMatrix.length > 0) {
+        const owner = this.findControllingProp(cssKey, pseudoMatrix, allProps);
+        cssKeyOwner.set(cssKey, owner);
+      }
+    }
+
     // Step 5: 결과 맵 구성 — 각 엔트리에서 소유 prop에 해당하는 CSS 속성만 배치
     for (const entry of matrix) {
       for (const [propName, propValue] of entry.propValues) {
@@ -311,7 +395,22 @@ export class DynamicStyleDecomposer {
           }
         }
 
-        if (Object.keys(ownedStyle).length === 0) continue;
+        // pseudo CSS 키도 cssKeyOwner에 따라 분배
+        let ownedPseudo: Partial<Record<PseudoClass, Record<string, string | number>>> | undefined;
+        if (entry.pseudo) {
+          for (const [pc, pcStyle] of Object.entries(entry.pseudo)) {
+            for (const [cssKey, cssValue] of Object.entries(pcStyle as Record<string, string | number>)) {
+              if (cssKeyOwner.get(cssKey) === propName) {
+                if (!ownedPseudo) ownedPseudo = {};
+                const pcKey = pc as PseudoClass;
+                if (!ownedPseudo[pcKey]) ownedPseudo[pcKey] = {};
+                ownedPseudo[pcKey]![cssKey] = cssValue;
+              }
+            }
+          }
+        }
+
+        if (Object.keys(ownedStyle).length === 0 && !ownedPseudo) continue;
 
         if (!result.has(propName)) {
           result.set(propName, new Map());
@@ -319,10 +418,17 @@ export class DynamicStyleDecomposer {
         const propMap = result.get(propName)!;
 
         if (!propMap.has(propValue)) {
-          propMap.set(propValue, ownedStyle);
+          propMap.set(propValue, {
+            style: ownedStyle,
+            ...(ownedPseudo && { pseudo: ownedPseudo }),
+          });
         } else {
           // 이미 존재하면 merge (단일 prop 엔트리가 먼저 들어갔을 수 있음)
-          Object.assign(propMap.get(propValue)!, ownedStyle);
+          const existing = propMap.get(propValue)!;
+          Object.assign(existing.style, ownedStyle);
+          if (ownedPseudo) {
+            this.mergePseudoInto(existing, ownedPseudo);
+          }
         }
       }
     }
@@ -347,14 +453,36 @@ export class DynamicStyleDecomposer {
             ownedStyle[cssKey] = cssValue;
           }
         }
-        if (Object.keys(ownedStyle).length === 0) continue;
+
+        // compound owner의 pseudo 분배
+        let ownedPseudo: Partial<Record<PseudoClass, Record<string, string | number>>> | undefined;
+        if (entry.pseudo) {
+          for (const [pc, pcStyle] of Object.entries(entry.pseudo)) {
+            for (const [cssKey, cssValue] of Object.entries(pcStyle as Record<string, string | number>)) {
+              if (cssKeyOwner.get(cssKey) === owner) {
+                if (!ownedPseudo) ownedPseudo = {};
+                const pcKey = pc as PseudoClass;
+                if (!ownedPseudo[pcKey]) ownedPseudo[pcKey] = {};
+                ownedPseudo[pcKey]![cssKey] = cssValue;
+              }
+            }
+          }
+        }
+
+        if (Object.keys(ownedStyle).length === 0 && !ownedPseudo) continue;
 
         if (!propMap.has(compoundValue)) {
-          propMap.set(compoundValue, ownedStyle);
+          propMap.set(compoundValue, {
+            style: ownedStyle,
+            ...(ownedPseudo && { pseudo: ownedPseudo }),
+          });
         } else {
           const existing = propMap.get(compoundValue)!;
           for (const [k, v] of Object.entries(ownedStyle)) {
-            if (!(k in existing)) existing[k] = v;
+            if (!(k in existing.style)) existing.style[k] = v;
+          }
+          if (ownedPseudo) {
+            this.mergePseudoInto(existing, ownedPseudo);
           }
         }
       }
