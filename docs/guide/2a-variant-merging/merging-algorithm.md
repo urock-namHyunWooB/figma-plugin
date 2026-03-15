@@ -167,20 +167,20 @@ function mergeVariants(variants: SceneNode[]): InternalTree {
   // 2. Variant 그래프 구축 (1-prop 차이 기반)
   const graph = buildVariantGraph(variants);
 
-  // 3. 병합 순서 결정 (BFS)
-  const mergeOrder = determineMergeOrder(graph);
+  // 2. 그래프: variant 그래프 구축 및 순서 결정
+  const { graph, mergeOrder } = buildGraphAndOrder(variants);
 
-  // 4. 순서대로 병합
+  // 3. 병합: 순서대로 트리 병합
   const merged = mergeTreesInOrder(graph, mergeOrder);
 
-  // 4.5. Cross-depth squash (IoU 기반 후처리)
+  // 3.5. Cross-depth squash (IoU 기반 후처리)
   const squasher = new UpdateSquashByIou(dataManager, nodeToVariantRoot);
   squasher.execute(merged, variantTrees);
 
-  // 5. Children x 좌표 기준 정렬
+  // 4. 정렬: children x 좌표 기준 정렬
   sortChildrenByPosition(merged);
 
-  // 6. 루트 이름 설정
+  // 5. 완료: 루트 이름 설정
   merged.name = componentSetName;
 
   return merged;

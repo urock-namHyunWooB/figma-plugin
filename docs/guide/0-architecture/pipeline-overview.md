@@ -290,9 +290,19 @@ COMPONENT_SET에서 특정 UX 패턴을 **점수 기반**으로 감지하는 시
 #### 인터페이스
 
 ```typescript
+interface HeuristicContext {
+  tree: InternalTree;
+  dataManager: DataManager;
+  componentName: string;
+  propDefs: PropDefinition[];
+  props: Map<string, PropDefinition>;
+}
+
 interface IHeuristic {
-  score(tree: InternalTree, dataManager: DataManager, props: PropDefinition[]): number;
-  apply(tree: InternalTree, dataManager: DataManager, props: PropDefinition[]): HeuristicResult;
+  readonly name: string;
+  readonly componentType: ComponentType;
+  score(ctx: HeuristicContext): number;
+  apply(ctx: HeuristicContext): HeuristicResult;
 }
 ```
 
@@ -556,8 +566,8 @@ utils/
 | 메서드 | 출력 | 설명 |
 |--------|------|------|
 | `generate()` | `GeneratedResult` | 메인 + 의존성 개별 파일 |
-| `compile()` | `string` | 단일 번들 파일 |
-| `compileWithDiagnostics()` | `BundledResult` | 번들 + 진단 정보 |
+| `compile()` | `string \| null` | 단일 번들 파일 |
+| `compileWithDiagnostics()` | `CompileResult` | 번들 + 진단 정보 (`{ code: string \| null, diagnostics }`) |
 | `buildUITree()` | `{main, deps}` | 디버그: 코드 생성 없이 UITree만 |
 | `getPropsDefinition()` | `PropDefinition[]` | UI 컨트롤러용 props 메타데이터 |
 
@@ -588,7 +598,7 @@ src/frontend/ui/domain/code-generator2/
 │   │       ├── TreeBuilder.ts          # 2-Phase 파이프라인
 │   │       ├── UINodeConverter.ts
 │   │       │
-│   │       ├── heuristics/             # 17개 컴포넌트 패턴 감지기
+│   │       ├── heuristics/             # 14개 컴포넌트 패턴 감지기 + 폴백/모듈
 │   │       │   ├── IHeuristic.ts
 │   │       │   ├── HeuristicsRunner.ts
 │   │       │   ├── GenericHeuristic.ts
@@ -692,7 +702,7 @@ const { main, dependencies } = generator.buildUITree();
 
 ### Variant Merging
 COMPONENT_SET의 여러 variant (예: Size=Large/Small, State=Default/Hover)를 단일 InternalTree로 병합합니다.
-노드는 IoU (Intersection over Union) 위치 기반 유사도로 매칭됩니다 — 같은 위치 ≥ 0.8 IoU = 동일 노드.
+노드는 4-Way Position Comparison (비례·좌·가운데·우 정렬)으로 매칭됩니다 — 최소 오차 ≤ 0.1이면 동일 노드. 병합 후 Cross-Depth Squash (IoU ≥ 0.5)로 다른 depth의 중복 노드를 통합합니다.
 
 ### Props 변환 규칙
 - `State` prop → CSS pseudo-class (`:hover`, `:active`, `:disabled`)

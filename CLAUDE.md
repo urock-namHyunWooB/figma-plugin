@@ -139,7 +139,7 @@ Use these subagents proactively when conditions are met:
 
 **browser-validator**: Use when verifying compiled component rendering, comparing with Figma original, checking style values, or testing on `/test` route. Always scroll to capture full content.
 
-**compiler-debugger**: Use when compilation fails, AST tree analysis is needed, 6-phase pipeline tracing is required, or investigating slot/props/SuperTree issues.
+**compiler-debugger**: Use when compilation fails, AST tree analysis is needed, 2-phase 11-step pipeline tracing is required, or investigating slot/props/InternalTree issues.
 
 **issue-closer**: Use when a compiler issue is resolved and needs documentation with regression tests.
 
