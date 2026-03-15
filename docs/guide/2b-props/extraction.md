@@ -174,4 +174,4 @@ Boolean variant(`Left Icon = True/False`)이 실제로는 INSTANCE 노드의 가
 
 ## 관련 타입
 
-타입 정의(PropDefinition, ConditionNode, StyleObject 등)는 [파이프라인 개요](../architecture/pipeline-overview.md#타입-시스템)를 참조하세요.
+타입 정의(PropDefinition, ConditionNode, StyleObject 등)는 [파이프라인 개요](../0-architecture/pipeline-overview.md#타입-시스템)를 참조하세요.

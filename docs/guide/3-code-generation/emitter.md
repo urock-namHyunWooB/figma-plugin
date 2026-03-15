@@ -1,6 +1,6 @@
 # Layer 3: CodeEmitter
 
-> 전체 파이프라인 개요는 [아키텍처 문서](../architecture/pipeline-overview.md)를 참조하세요.
+> 전체 파이프라인 개요는 [아키텍처 문서](../0-architecture/pipeline-overview.md)를 참조하세요.
 
 ### ICodeEmitter 인터페이스
 

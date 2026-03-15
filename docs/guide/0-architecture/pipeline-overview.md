@@ -335,7 +335,7 @@ interface IHeuristic {
 | Post-Processor | 역할 |
 |----------------|------|
 | **ComponentPropsLinker** | INSTANCE override → 의존성 컴포넌트 props 연결, 바인딩 전파 |
-| **UITreeOptimizer** | 항상-true 동적 스타일 → base로 병합, 의존성 루트 유연화 (px → %), 미사용 props 제거 |
+| **UITreeOptimizer** | FD 분해 (DynamicStyleDecomposer 실행 + diagnostics 수집), 항상-true 동적 스타일 → base로 병합, 의존성 루트 유연화 (px → %), 미사용 props 제거 |
 
 ### 디렉토리 구조
 
@@ -420,7 +420,7 @@ Phase 1: 모든 variant에서 같은 값 → base, 다르면 → dynamic
 Phase 2: 모든 variant에 적용되는 dynamic → base로 승격
 ```
 
-> Layer 3 (CodeEmitter)의 상세 내용은 [코드 생성 가이드](../code-generation/emitter.md)를 참조하세요.
+> Layer 3 (CodeEmitter)의 상세 내용은 [코드 생성 가이드](../3-code-generation/emitter.md)를 참조하세요.
 
 ---
 

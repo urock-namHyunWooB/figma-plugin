@@ -54,40 +54,37 @@ npm run format:check   # Prettier check
 
 **3-Layer Pipeline**:
 ```
-FigmaNodeData → DataPreparer → PreparedDesignData → TreeBuilder → UITree → CodeEmitter → Code
+FigmaNodeData → DataManager → TreeManager → CodeEmitter → React Code
+                 (Layer 1)     (Layer 2)     (Layer 3)
 ```
 
 ```
 layers/
-├── data-manager/                # Layer 1: Data preparation
-│   └── DataPreparer.ts
-├── tree-manager/                # Layer 2: IR generation (heuristic-based)
+├── data-manager/                # Layer 1: 데이터 접근 (HashMap O(1) lookup)
+│   └── DataManager.ts
+├── tree-manager/                # Layer 2: IR 생성 (heuristic-based)
+│   ├── TreeManager.ts           # Layer 2 오케스트레이터
 │   ├── tree-builder/
 │   │   ├── TreeBuilder.ts       # Returns UITree
-│   │   ├── processors/          # Processor modules
-│   │   └── heuristics/          # Score-based component matching
-└── code-emitter/                # Layer 3: Code generation
-    ├── ReactEmitter.ts          # ICodeEmitter implementation
-    ├── generators/              # UITree → code generators
-    └── style-strategy/          # Emotion/Tailwind strategies
-```
-
-### Key Manager Classes
-
-```
-manager/
-├── SpecDataManager.ts           # Data access layer (HashMap for O(1) lookup)
-├── PropsManager.ts              # Props extraction/formatting
-├── PropsExtractor.ts            # Extract props from componentPropertyDefinitions
-├── InstanceOverrideManager.ts   # INSTANCE override merging
-├── VariantEnrichManager.ts      # Variant data enrichment
-└── DependencyManager.ts         # External component compilation
+│   │   ├── processors/          # VariantMerger, NodeMatcher, PropsExtractor, SlotProcessor 등
+│   │   └── heuristics/          # 점수 기반 컴포넌트 매칭 (17개 휴리스틱)
+│   └── post-processors/         # UITree 후처리
+│       ├── ComponentPropsLinker.ts  # 외부 컴포넌트 props 연결
+│       └── UITreeOptimizer.ts      # FD 분해, 동적 스타일 병합, 미사용 props 제거
+└── code-emitter/                # Layer 3: 코드 생성
+    ├── react/
+    │   ├── ReactEmitter.ts      # ICodeEmitter 구현
+    │   ├── generators/          # UITree → JSX/Props/Style 생성
+    │   └── style-strategy/      # Emotion/Tailwind 전략 + DynamicStyleDecomposer
+    └── ICodeEmitter.ts
 ```
 
 ## Key Concepts
 
 ### Variant Merging
-COMPONENT_SET with multiple variants (e.g., Size=Large/Small, State=Default/Hover) gets merged into a single SuperTree. Nodes are matched across variants using IoU (Intersection over Union) position-based similarity - same position ≥0.8 IoU = same node.
+COMPONENT_SET with multiple variants (e.g., Size=Large/Small, State=Default/Hover) gets merged into a single InternalTree. Node matching uses:
+- **4-Way Position Comparison**: 비례·좌·가운데·우 기준점 비교 (±0.1 threshold)
+- **Cross-Depth Squash**: 병합 후 IoU ≥ 0.5 기반으로 다른 depth의 중복 노드 통합 (UpdateSquashByIou)
 
 ### INSTANCE Override IDs
 INSTANCE children have compound IDs like `I704:56;704:29;692:1613`. The last segment (`692:1613`) is the original component's node ID.
@@ -118,14 +115,14 @@ INSTANCE children have compound IDs like `I704:56;704:29;692:1613`. The last seg
 ## Documentation
 
 Detailed technical docs in `docs/guide/`:
-- `architecture/pipeline-overview.md` - 파이프라인 아키텍처 (Layer 1-2, 타입, 디렉토리)
-- `code-generation/emitter.md` - 코드 생성 레이어 (ReactEmitter, Generators, StyleStrategy)
-- `props/extraction.md` - Props 추출 (Stage 1-2)
-- `props/heuristics.md` - 컴포넌트 Heuristics (Stage 3, 15개 상세)
-- `props/style-decomposition.md` - 스타일 분해 (Stage 4-5, DynamicStyleDecomposer)
-- `variant-merging/merging-algorithm.md` - 변형병합 알고리즘
-- `variant-merging/node-matching.md` - 노드 매칭 원리
-- `deployment/pipeline.md` - 배포 파이프라인
+- `0-architecture/pipeline-overview.md` - 파이프라인 아키텍처 (Layer 1-2, 타입, 디렉토리)
+- `2a-variant-merging/merging-algorithm.md` - 변형병합 알고리즘
+- `2a-variant-merging/node-matching.md` - 노드 매칭 원리 (4-Way Comparison)
+- `2b-props/extraction.md` - Props 추출 (Stage 1-2)
+- `2b-props/heuristics.md` - 컴포넌트 Heuristics (Stage 3, 15개 상세)
+- `2b-props/style-decomposition.md` - 스타일 분해 (Stage 4-5, DynamicStyleDecomposer)
+- `3-code-generation/emitter.md` - 코드 생성 레이어 (ReactEmitter, Generators, StyleStrategy)
+- `9-deployment/pipeline.md` - 배포 파이프라인
 
 ## Workflow Guidelines
 
@@ -148,15 +145,10 @@ Use these subagents proactively when conditions are met:
 
 ## Refactoring Status
 
-All 5 phases of the new architecture are complete:
-- ✅ Phase 1: Type definitions (`types/architecture.ts`)
-- ✅ Phase 2: DependencyAnalyzer
-- ✅ Phase 3: DataPreparer
-- ✅ Phase 4: TreeBuilder
-- ✅ Phase 5: CodeEmitter
-
-**Completed Milestones**:
-- ✅ Engine.ts → NewEngine.ts 마이그레이션 완료
-- ✅ FigmaCodeGenerator 새 파이프라인 사용
-- ✅ 레거시 폴더 제거 (react-generator/, super-tree/, ast-tree/)
-- ✅ 휴리스틱 중심 아키텍처 구현 (점수 기반 매칭)
+3-Layer 파이프라인 마이그레이션 완료. 레거시 코드 전량 제거됨.
+- ✅ DataManager (Layer 1) + TreeManager (Layer 2) + CodeEmitter (Layer 3)
+- ✅ 휴리스틱 중심 아키텍처 (17개 점수 기반 컴포넌트 매칭)
+- ✅ DynamicStyleDecomposer pseudo-class 네이티브 분배
+- ✅ UITreeOptimizer FD 분해 + diagnostics 수집기 주입
+- ✅ 4-Way Position Comparison (NodeMatcher)
+- ✅ Cross-Depth Squash (UpdateSquashByIou)
