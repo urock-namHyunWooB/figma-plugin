@@ -91,6 +91,10 @@ export class NodeMatcher {
 
     // 4. 정규화된 위치 비교
     if (this.isSamePosition(nodeA, nodeB)) {
+      // Shape 타입은 크기 유사도도 검증 (중심점이 같은 동심원 오매칭 방지)
+      if (NodeMatcher.SHAPE_TYPES.has(nodeA.type) && NodeMatcher.SHAPE_TYPES.has(nodeB.type)) {
+        if (!this.isSimilarSize(nodeA, nodeB)) return false;
+      }
       return true;
     }
 
@@ -219,6 +223,24 @@ export class NodeMatcher {
     }
 
     return false;
+  }
+
+  /**
+   * Shape 노드의 크기 유사도 검증 (비율 1.3 이내)
+   * 중심점이 동일한 동심원(22x22 vs 16x16)이 같은 노드로 매칭되는 것을 방지
+   */
+  private isSimilarSize(nodeA: InternalNode, nodeB: InternalNode): boolean {
+    const boxA = this.getContentBoxInfo(nodeA);
+    const boxB = this.getContentBoxInfo(nodeB);
+    if (!boxA || !boxB) return true; // 정보 없으면 통과
+
+    const minW = Math.min(boxA.nodeWidth, boxB.nodeWidth);
+    const minH = Math.min(boxA.nodeHeight, boxB.nodeHeight);
+    if (minW <= 0 || minH <= 0) return true;
+
+    const wRatio = Math.max(boxA.nodeWidth, boxB.nodeWidth) / minW;
+    const hRatio = Math.max(boxA.nodeHeight, boxB.nodeHeight) / minH;
+    return wRatio <= 1.3 && hRatio <= 1.3;
   }
 
   /**
