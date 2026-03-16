@@ -1069,10 +1069,16 @@ ${indentStr}</${tag}>`;
       const safeName = parts
         .map((p, i) => (i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)))
         .join("");
-      const lookupParts = parts.map((p) => `\${${p}}`).join("+");
+      // slot prop(React.ReactNode)은 truthy/falsy → "true"/"false" 문자열로 변환
+      const lookupParts = parts.map((p) =>
+        this.slotProps.has(p) ? `\${${p} ? "true" : "false"}` : `\${${p}}`
+      ).join("+");
       return `${styleVarName}_${safeName}Styles?.[\`${lookupParts}\`]`;
     }
     const safeProp = prop.replace(/[\x00-\x1f\x7f]/g, "");
+    if (this.slotProps.has(safeProp)) {
+      return `${styleVarName}_${safeProp}Styles?.[${safeProp} ? "true" : "false"]`;
+    }
     return `${styleVarName}_${safeProp}Styles?.[String(${safeProp})]`;
   }
 
