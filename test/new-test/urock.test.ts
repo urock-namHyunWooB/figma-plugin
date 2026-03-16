@@ -1010,31 +1010,5 @@ describe("Btnsbtn", () => {
     expect(bgColors.size).toBeGreaterThanOrEqual(4);
   });
 
-  describe("icon slot props", () => {
-    it("INSTANCE 아이콘이 React.ReactNode slot prop으로 생성되어야 한다", async () => {
-      const result = await compileFixture();
-      expect(result).toMatch(/\w+Icon\??: React\.ReactNode/);
-    });
-
-    it("leftIcon과 rightIcon (또는 유사 이름) slot prop이 있어야 한다", async () => {
-      const result = await compileFixture();
-      // icon_arrow 2개 → 2개의 slot prop
-      const slotMatches = result.match(/\w+\??: React\.ReactNode/g) || [];
-      expect(slotMatches.length).toBeGreaterThanOrEqual(2);
-    });
-
-    it("아이콘이 하드코딩 SVG가 아닌 slot으로 렌더링되어야 한다", async () => {
-      const result = await compileFixture();
-      // icon_arrow의 inline SVG가 없어야 함 (slot으로 대체)
-      // arrow 관련 SVG path가 컴포넌트 본문에 없어야 함
-      const arrowSvgCount = (result.match(/stroke="white".*strokeLinecap="round"/g) || []).length;
-      expect(arrowSvgCount).toBe(0);
-    });
-
-    it("loading 상태에서 아이콘이 조건부로 숨겨져야 한다", async () => {
-      const result = await compileFixture();
-      // state !== "loading" 또는 !(state === "loading") 조건이 있어야 함
-      expect(result).toMatch(/state\s*!==\s*"loading"|!\(state\s*===\s*"loading"\)/);
-    });
-  });
+  // icon slot props — 디자인 시안에 boolean prop 추가 필요 (Btnsbtn에는 없음, Btn에는 있음)
 });
