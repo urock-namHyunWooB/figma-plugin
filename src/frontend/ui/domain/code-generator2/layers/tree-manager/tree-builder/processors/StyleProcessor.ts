@@ -412,15 +412,15 @@ export class StyleProcessor {
     // dynamic 스타일 계산
     const dynamic = this.extractDynamicStyles(baseVariants, base, includeStateInConditions);
 
-    // pseudo variant → state 조건 dynamic 엔트리로 변환
-    // 각 pseudo-class에 해당하는 모든 variant의 "공통 diff" (base 대비)만 추출.
-    // customType/size 등으로 달라지는 속성은 제외 → 순수 state-varying CSS만 포함.
-    const stateDynamic = this.extractStateDynamicEntries(pseudoVariants, base);
-    dynamic.push(...stateDynamic);
+    // pseudo variant → CSS pseudo-class 스타일로 변환
+    // STATE_TO_PSEUDO에 매핑된 값(Hover→:hover, Disabled→:disabled 등)은
+    // 컴포넌트 종류와 무관하게 항상 CSS pseudo-class이므로 범용 처리.
+    const pseudo = this.extractPseudoStyles(pseudoVariants, base);
 
     return {
       base,
       dynamic,
+      ...(Object.keys(pseudo).length > 0 ? { pseudo } : {}),
     };
   }
 
@@ -721,6 +721,47 @@ export class StyleProcessor {
     ]);
 
     return nativeProps.has(propName);
+  }
+
+  /**
+   * pseudo variant → CSS pseudo-class 스타일 변환
+   *
+   * STATE_TO_PSEUDO 매핑을 사용하여 Hover→:hover, Disabled→:disabled 등
+   * CSS pseudo-class 스타일 객체를 생성한다.
+   * 같은 state 값의 모든 variant에서 base 대비 공통 diff만 추출.
+   */
+  private extractPseudoStyles(
+    pseudoVariants: Array<{
+      variantName: string;
+      state: string;
+      cssStyle: Record<string, string>;
+    }>,
+    base: Record<string, string | number>
+  ): Record<string, Record<string, string | number>> {
+    const result: Record<string, Record<string, string | number>> = {};
+
+    // state 값별 그룹핑
+    const stateGroups = new Map<string, Array<Record<string, string>>>();
+    for (const variant of pseudoVariants) {
+      if (!stateGroups.has(variant.state)) {
+        stateGroups.set(variant.state, []);
+      }
+      stateGroups.get(variant.state)!.push(variant.cssStyle);
+    }
+
+    for (const [stateValue, cssList] of stateGroups) {
+      const pseudoClass = StyleProcessor.STATE_TO_PSEUDO[stateValue];
+      if (!pseudoClass) continue;
+
+      const diffs = cssList.map((css) => this.getDifferentStyles(css, base));
+      const commonDiff = this.extractCommonStyles(diffs as Array<Record<string, string>>);
+
+      if (Object.keys(commonDiff).length > 0) {
+        result[pseudoClass] = { ...result[pseudoClass], ...commonDiff };
+      }
+    }
+
+    return result;
   }
 
   /**

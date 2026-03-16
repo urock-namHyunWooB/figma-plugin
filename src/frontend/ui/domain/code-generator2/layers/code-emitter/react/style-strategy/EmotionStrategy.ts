@@ -29,6 +29,13 @@ import { groupDynamicByProp, type DecomposedResult, type DecomposedValue } from 
 export class EmotionStrategy implements IStyleStrategy {
   readonly name = "emotion";
 
+  /** 숫자값에 px 단위를 붙이지 않는 CSS 속성 */
+  private static readonly UNITLESS_PROPERTIES = new Set([
+    "opacity", "z-index", "flex-grow", "flex-shrink", "flex",
+    "order", "font-weight", "line-height", "orphans", "widows",
+    "columns", "column-count", "fill-opacity", "stroke-opacity",
+  ]);
+
   /**
    * import 문 생성
    */
@@ -380,7 +387,9 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
         // __raw 키: 값을 그대로 출력 (중첩 선택자 등)
         if (key === "__raw") return String(value);
         const cssKey = this.camelToKebab(key);
-        const cssValue = typeof value === "number" ? `${value}px` : value;
+        const cssValue = typeof value === "number"
+          ? (EmotionStrategy.UNITLESS_PROPERTIES.has(cssKey) ? `${value}` : `${value}px`)
+          : value;
         return `${cssKey}: ${cssValue};`;
       })
       .join("\n");
