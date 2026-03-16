@@ -15,7 +15,7 @@
  * - Disable=True 변형의 opacity:0.43 → :disabled pseudo-class
  */
 
-import type { ComponentType, InternalNode, ConditionNode, VariantPropDefinition } from "../../../../types/types";
+import type { ComponentType, InternalNode, ConditionNode, VariantPropDefinition, PseudoClass } from "../../../../types/types";
 import type {
   IHeuristic,
   HeuristicContext,
@@ -23,6 +23,7 @@ import type {
 } from "./IHeuristic";
 import { rewritePropConditions, rewriteStateDynamicStyles } from "../processors/utils/rewritePropConditions";
 import { isCheckedProp, isDisableProp, isStateProp } from "../processors/utils/propPatterns";
+import { StyleProcessor } from "../processors/StyleProcessor";
 
 /** variant 값에서 "checked" 상태를 감지하는 패턴 */
 const CHECKED_VALUE_PATTERNS = /^(checked|active|selected|on)$/i;
@@ -51,6 +52,7 @@ export class RadioHeuristic implements IHeuristic {
     }};
     this.addDisabledOpacity(ctx); // Disable=True 변형의 opacity:0.43 → :disabled pseudo-class
     this.fixStateCheckedSizeConflict(ctx, removedProp); // AND(state=Checked, size=*) → Checked 스타일에서 size 담당 속성 제거
+    this.undoCheckedPseudoStyles(ctx.tree, checkedValues); // Active→:active 등 잘못된 pseudo 변환 되돌리기
 
     // dot 아이콘 slot → boolean prop 조건부 렌더링으로 변환
     // interactionNormal slot 제거
@@ -261,6 +263,48 @@ export class RadioHeuristic implements IHeuristic {
       ...ctx.tree.styles.pseudo[":disabled"],
       opacity: 0.43,
     };
+  }
+
+  /**
+   * StyleProcessor가 checked 상태 값(Active 등)을 CSS pseudo-class(:active)로
+   * 변환한 것을 되돌린다. Radio에서 "Active"는 :active가 아니라 "선택됨" 상태.
+   *
+   * - visibleCondition이 있는 노드(checked-only): pseudo → base로 이동
+   * - visibleCondition이 없는 노드(항상 표시): pseudo → dynamic(truthy(checked))으로 이동
+   */
+  private undoCheckedPseudoStyles(tree: InternalNode, checkedValues: string[]): void {
+    const pseudosToUndo = new Set<PseudoClass>();
+    for (const val of checkedValues) {
+      const pseudo = StyleProcessor.STATE_TO_PSEUDO[val];
+      if (pseudo) pseudosToUndo.add(pseudo);
+    }
+    if (pseudosToUndo.size === 0) return;
+    this.movePseudoToChecked(tree, pseudosToUndo);
+  }
+
+  private movePseudoToChecked(node: InternalNode, pseudos: Set<PseudoClass>): void {
+    if (node.styles?.pseudo) {
+      for (const pseudo of pseudos) {
+        const styles = node.styles.pseudo[pseudo];
+        if (styles && Object.keys(styles).length > 0) {
+          if (node.visibleCondition) {
+            // checked-only 노드: 이미 조건부 렌더링이므로 base에 병합
+            node.styles.base = { ...node.styles.base, ...styles };
+          } else {
+            // 항상 보이는 노드: checked 조건부 dynamic으로 이동
+            if (!node.styles.dynamic) node.styles.dynamic = [];
+            node.styles.dynamic.push({
+              condition: { type: "truthy", prop: "checked" },
+              style: { ...styles },
+            });
+          }
+          delete node.styles.pseudo[pseudo];
+        }
+      }
+    }
+    for (const child of node.children || []) {
+      this.movePseudoToChecked(child, pseudos);
+    }
   }
 
   /**
