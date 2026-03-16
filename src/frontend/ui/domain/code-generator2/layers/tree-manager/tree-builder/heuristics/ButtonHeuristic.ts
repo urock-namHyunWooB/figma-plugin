@@ -263,11 +263,17 @@ export class ButtonHeuristic implements IHeuristic {
       ":active": ":active:not(:disabled)",
       ":focus": ":focus:not(:disabled)",
     };
+    const INTERACTION_KEYS = new Set(Object.keys(GUARD_MAP));
 
-    this.renamePseudosInTree(ctx.tree, GUARD_MAP);
+    // 루트: :hover → :hover:not(:disabled) (button 요소에 :disabled가 적용됨)
+    this.renamePseudosOnNode(ctx.tree, GUARD_MAP);
+    // 자식: :hover/:active/:focus 제거 (div 등에 :not(:disabled)가 무의미)
+    for (const child of ctx.tree.children || []) {
+      this.removePseudosFromTree(child, INTERACTION_KEYS);
+    }
   }
 
-  private renamePseudosInTree(
+  private renamePseudosOnNode(
     node: InternalNode,
     map: Record<string, PseudoClass>
   ): void {
@@ -290,8 +296,27 @@ export class ButtonHeuristic implements IHeuristic {
         }
       }
     }
+  }
+
+  private removePseudosFromTree(
+    node: InternalNode,
+    keysToRemove: Set<string>
+  ): void {
+    if (node.styles?.pseudo) {
+      for (const key of keysToRemove) {
+        delete node.styles.pseudo[key as PseudoClass];
+      }
+    }
+    if (node.styles?.dynamic) {
+      for (const entry of node.styles.dynamic) {
+        if (!entry.pseudo) continue;
+        for (const key of keysToRemove) {
+          delete (entry.pseudo as any)[key];
+        }
+      }
+    }
     for (const child of node.children || []) {
-      this.renamePseudosInTree(child, map);
+      this.removePseudosFromTree(child, keysToRemove);
     }
   }
 
