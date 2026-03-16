@@ -16,20 +16,24 @@ describe("Radio 컴포넌트 코드 생성", () => {
     code = (await compiler.compile())!;
   });
 
-  test("status prop이 생성되지 않아야 한다", () => {
-    expect(code).not.toMatch(/status\?\s*:/);
-    expect(code).not.toMatch(/"Normal"\s*\|\s*"Hover\/Pressed"/);
-  });
+  test("RadioProps에 정확한 props만 생성되어야 한다", () => {
+    // 인터페이스 블록 추출
+    const interfaceBlock = code.match(
+      /export interface RadioProps \{([\s\S]*?)\}/
+    )?.[1];
+    expect(interfaceBlock).toBeDefined();
 
-  test("text?: string prop이 생성되어야 한다", () => {
-    expect(code).toMatch(/text\?\s*:\s*string/);
-  });
+    // prop 이름 추출 (줄 시작의 prop 선언만)
+    const propNames = [...interfaceBlock!.matchAll(/^\s+(\w+)\??:/gm)].map(m => m[1]);
 
-  test("checked?: boolean prop이 생성되어야 한다", () => {
-    expect(code).toMatch(/checked\?\s*:\s*boolean/);
-  });
+    // 정확히 이 props만 존재해야 한다
+    expect(propNames).toEqual(
+      expect.arrayContaining(["checked", "onChange", "disable", "text"])
+    );
+    expect(propNames).toHaveLength(4);
 
-  test("disable?: boolean prop이 생성되어야 한다", () => {
-    expect(code).toMatch(/disable\?\s*:\s*boolean/);
+    // 생성되면 안 되는 props
+    expect(propNames).not.toContain("check");
+    expect(propNames).not.toContain("status");
   });
 });

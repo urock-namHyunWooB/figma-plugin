@@ -115,6 +115,17 @@ export class RadioHeuristic implements IHeuristic {
     const existing = ctx.props.find((p) => isCheckedProp(p.name));
     if (existing) return existing.name;
 
+    // "check" 같은 boolean variant를 "checked"로 rename
+    const checkVariant = ctx.props.find(
+      (p) => p.type === "boolean" && /^check$/i.test(p.name)
+    );
+    if (checkVariant) {
+      const oldName = checkVariant.name;
+      checkVariant.name = "checked";
+      this.renamePropInTree(ctx.tree, oldName, "checked");
+      return "checked";
+    }
+
     const name = "checked";
     ctx.props.push({
       type: "boolean",
@@ -124,6 +135,36 @@ export class RadioHeuristic implements IHeuristic {
       sourceKey: "",
     });
     return name;
+  }
+
+  private renamePropInTree(node: InternalNode, oldName: string, newName: string): void {
+    // visibleCondition
+    if (node.visibleCondition) {
+      this.renamePropInCondition(node.visibleCondition, oldName, newName);
+    }
+    // dynamic styles
+    if (node.styles?.dynamic) {
+      for (const entry of node.styles.dynamic) {
+        this.renamePropInCondition(entry.condition, oldName, newName);
+      }
+    }
+    for (const child of node.children || []) {
+      this.renamePropInTree(child, oldName, newName);
+    }
+  }
+
+  private renamePropInCondition(cond: ConditionNode, oldName: string, newName: string): void {
+    if ("prop" in cond && cond.prop === oldName) {
+      cond.prop = newName;
+    }
+    if (cond.type === "and" && cond.conditions) {
+      for (const c of cond.conditions) {
+        this.renamePropInCondition(c, oldName, newName);
+      }
+    }
+    if (cond.type === "not" && (cond as any).condition) {
+      this.renamePropInCondition((cond as any).condition, oldName, newName);
+    }
   }
 
   private addOnChangeProp(ctx: HeuristicContext): string {
