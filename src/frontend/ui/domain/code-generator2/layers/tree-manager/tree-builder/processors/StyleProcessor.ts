@@ -442,15 +442,18 @@ export class StyleProcessor {
       // getCSSAsync가 flex cross-axis "HUG" 치수를 누락하는 경우 bbox에서 보충
       // 단, flex main axis(column→height, row→width)는 자식이 결정하므로 보충하지 않음
       // cssStyle이 비어있어도 bbox에서 width/height를 보충 (INSTANCE 노드 등)
+      // layoutSizing이 "HUG"이면 콘텐츠 기반 사이징이므로 고정 크기 보충 스킵
       const bbox = (node as any)?.absoluteBoundingBox;
       const isText = (node as any)?.type === "TEXT";
+      const isHugW = (node as any)?.layoutSizingHorizontal === "HUG";
+      const isHugH = (node as any)?.layoutSizingVertical === "HUG";
       if (bbox && !cssStyle.flex) {
         const isFlex = cssStyle.display?.includes("flex");
         const isColumn = cssStyle["flex-direction"] === "column";
-        if (!cssStyle.width && !(isFlex && !isColumn)) {
+        if (!cssStyle.width && !(isFlex && !isColumn) && !isHugW) {
           cssStyle.width = `${Math.round(bbox.width)}px`;
         }
-        if (!cssStyle.height && !(isFlex && isColumn) && !isText) {
+        if (!cssStyle.height && !(isFlex && isColumn) && !isText && !isHugH) {
           cssStyle.height = `${Math.round(bbox.height)}px`;
         }
       }

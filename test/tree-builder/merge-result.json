@@ -125,7 +125,7 @@
       "variantName": "Size=large, Variant=secondary, Icon=true"
     }
   ],
-  "childrenCount": 3,
+  "childrenCount": 2,
   "children": [
     {
       "name": "Icon",
@@ -205,7 +205,7 @@
       "name": "Label",
       "type": "TEXT",
       "id": "15:45",
-      "mergedNodesCount": 21,
+      "mergedNodesCount": 24,
       "mergedNodes": [
         {
           "id": "15:45",
@@ -273,6 +273,11 @@
           "variantName": "Size=large, Variant=danger, Icon=false"
         },
         {
+          "id": "711:13878",
+          "name": "Secondary",
+          "variantName": "Size=default, Variant=secondary, Icon=true"
+        },
+        {
           "id": "711:13953",
           "name": "Secondary",
           "variantName": "Size=small, Variant=secondary, Icon=false"
@@ -311,21 +316,6 @@
           "id": "711:14138",
           "name": "Label",
           "variantName": "Size=large, Variant=danger, Icon=true"
-        }
-      ],
-      "childrenCount": 0,
-      "firstChild": null
-    },
-    {
-      "name": "Secondary",
-      "type": "TEXT",
-      "id": "711:13878",
-      "mergedNodesCount": 3,
-      "mergedNodes": [
-        {
-          "id": "711:13878",
-          "name": "Secondary",
-          "variantName": "Size=default, Variant=secondary, Icon=true"
         },
         {
           "id": "716:530",

@@ -36,7 +36,8 @@
           ]
         },
         "style": {
-          "padding": "8px"
+          "padding": "8px",
+          "width": "106px"
         }
       },
       {
@@ -62,7 +63,8 @@
           ]
         },
         "style": {
-          "padding": "8px"
+          "padding": "8px",
+          "width": "106px"
         }
       },
       {
@@ -88,7 +90,8 @@
           ]
         },
         "style": {
-          "padding": "8px"
+          "padding": "8px",
+          "width": "106px"
         }
       },
       {
@@ -117,7 +120,8 @@
           ]
         },
         "style": {
-          "padding": "7px 8px"
+          "padding": "7px 8px",
+          "width": "98px"
         }
       },
       {
@@ -146,7 +150,8 @@
           ]
         },
         "style": {
-          "padding": "3px 4px"
+          "padding": "3px 4px",
+          "width": "62px"
         }
       },
       {
@@ -172,7 +177,8 @@
           ]
         },
         "style": {
-          "padding": "7px 8px"
+          "padding": "7px 8px",
+          "width": "98px"
         }
       },
       {
@@ -198,7 +204,8 @@
           ]
         },
         "style": {
-          "padding": "3px 4px"
+          "padding": "3px 4px",
+          "width": "62px"
         }
       },
       {
@@ -224,7 +231,8 @@
           ]
         },
         "style": {
-          "padding": "7px 8px"
+          "padding": "7px 8px",
+          "width": "98px"
         }
       },
       {
@@ -250,22 +258,26 @@
           ]
         },
         "style": {
-          "padding": "3px 4px"
+          "padding": "3px 4px",
+          "width": "62px"
         }
       }
     ],
     "pseudo": {
       ":disabled": {
         "background": "var(--Primary-300, #B0EBEC)",
-        "padding": "3px 4px"
+        "padding": "3px 4px",
+        "width": "62px"
       },
-      ":active": {
-        "background": "var(--Primary-700, #00ABB6)",
-        "padding": "3px 4px"
-      },
-      ":hover": {
+      ":hover:not(:disabled)": {
         "background": "var(--Primary-500, #47CFD6)",
-        "padding": "3px 4px"
+        "padding": "3px 4px",
+        "width": "62px"
+      },
+      ":active:not(:disabled)": {
+        "background": "var(--Primary-700, #00ABB6)",
+        "padding": "3px 4px",
+        "width": "62px"
       }
     }
   },
@@ -279,10 +291,8 @@
         "gap",
         "flex-direction"
       ],
-      "dynamicCount": 4,
-      "pseudoKeys": [
-        ":hover"
-      ]
+      "dynamicCount": 12,
+      "pseudoKeys": []
     }
   ]
 }
