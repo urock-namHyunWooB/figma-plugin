@@ -162,6 +162,23 @@ export class StyleProcessor {
       };
     }
 
+    // TEXT 노드: text-box-trim 적용
+    // Figma는 글리프 visual bounds 기준 정렬, CSS는 line-height 박스 기준 정렬
+    // text-box-trim으로 leading을 제거하여 Figma와 동일한 정렬 결과를 얻음
+    if (node.type === "text") {
+      if (!styles) {
+        styles = { base: {} };
+      }
+      styles = {
+        ...styles,
+        base: {
+          ...(styles.base || {}),
+          "text-box-trim": "trim-both",
+          "text-box-edge": "cap alphabetic",
+        },
+      };
+    }
+
     // strokeAlign: INSIDE → box-sizing: border-box 적용
     // getCSSAsync()가 이미 올바른 padding 값을 반환하므로 padding 보정 불필요
     if (styles && this.hasBorderInStyles(styles)) {
@@ -426,13 +443,14 @@ export class StyleProcessor {
       // 단, flex main axis(column→height, row→width)는 자식이 결정하므로 보충하지 않음
       // cssStyle이 비어있어도 bbox에서 width/height를 보충 (INSTANCE 노드 등)
       const bbox = (node as any)?.absoluteBoundingBox;
+      const isText = (node as any)?.type === "TEXT";
       if (bbox && !cssStyle.flex) {
         const isFlex = cssStyle.display?.includes("flex");
         const isColumn = cssStyle["flex-direction"] === "column";
         if (!cssStyle.width && !(isFlex && !isColumn)) {
           cssStyle.width = `${Math.round(bbox.width)}px`;
         }
-        if (!cssStyle.height && !(isFlex && isColumn)) {
+        if (!cssStyle.height && !(isFlex && isColumn) && !isText) {
           cssStyle.height = `${Math.round(bbox.height)}px`;
         }
       }

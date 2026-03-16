@@ -46,10 +46,15 @@ function createSlotMockup(prop: PropDefinition): React.ReactNode {
   const slotInfo = prop.slotInfo;
 
   if (slotInfo?.mockupSvg) {
-    return React.createElement("div", {
+    // SVG를 wrapper 크기에 맞춤 (Figma SCALE constraints 반영)
+    const scaledSvg = slotInfo.mockupSvg.replace(
+      /^<svg\s+width="[^"]*"\s+height="[^"]*"/,
+      '<svg width="100%" height="100%"'
+    );
+    return React.createElement("span", {
       key: `slot-mockup-${prop.name}`,
-      dangerouslySetInnerHTML: { __html: slotInfo.mockupSvg },
-      style: { display: "inline-flex" },
+      dangerouslySetInnerHTML: { __html: scaledSvg },
+      style: { display: "flex" },
     });
   }
 

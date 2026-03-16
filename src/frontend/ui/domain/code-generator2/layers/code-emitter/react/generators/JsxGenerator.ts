@@ -667,7 +667,7 @@ ${indentStr})}` : jsx;
       // INSTANCE/COMPONENT 크기가 다르면 scale 적용
       const scale = (node as any).instanceScale as number | undefined;
 
-      return `${indentStr}<div ${wrapperAttrs} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+      return `${indentStr}<div ${wrapperAttrs}>
 ${indentStr}  <${componentName}${componentAttrs}${scale ? ` style={{ transform: "scale(${scale.toFixed(3)})" }}` : ""} />
 ${indentStr}</div>`;
     }
@@ -1102,14 +1102,11 @@ ${indentStr}</${tag}>`;
   ): string {
     const indentStr = " ".repeat(indent);
     const styleVarName = this.nodeStyleMap.get(node.id);
+    const tag = node.type === "text" ? "span" : "div";
 
     // 스타일이 없으면 조건부로 slot만 렌더링
-    // 80자 초과하도록 하여 Prettier가 줄바꿈과 괄호를 유지하도록 함
     if (!styleVarName || !node.styles || !this.hasNonEmptyStyles(node.styles)) {
-      const inlineAttr = styleStrategy.name === "emotion"
-        ? `css={{ display: "contents", alignItems: "center", justifyContent: "center" }}`
-        : `style={{ display: "contents", alignItems: "center", justifyContent: "center" }}`;
-      return `${indentStr}{${slotProp} && (\n${indentStr}  <div ${inlineAttr}>\n${indentStr}    {${slotProp}}\n${indentStr}  </div>\n${indentStr})}`;
+      return `${indentStr}{${slotProp} && (\n${indentStr}  <${tag}>{${slotProp}}</${tag}>\n${indentStr})}`;
     }
 
     const dynamicProps = this.extractDynamicProps(node.styles);
@@ -1132,6 +1129,6 @@ ${indentStr}</${tag}>`;
       wrapperAttrs = `${styleAttr.attributeName}=${styleAttr.valueCode}`;
     }
 
-    return `${indentStr}{${slotProp} && (\n${indentStr}  <div ${wrapperAttrs} style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>{${slotProp}}</div>\n${indentStr})}`;
+    return `${indentStr}{${slotProp} && (\n${indentStr}  <${tag} ${wrapperAttrs}>{${slotProp}}</${tag}>\n${indentStr})}`;
   }
 }
