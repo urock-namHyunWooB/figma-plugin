@@ -166,6 +166,9 @@ export class ButtonHeuristic implements IHeuristic {
     // State prop 제거 (버튼은 CSS pseudo-class로 처리)
     this.removeStateProp(ctx);
 
+    // :disabled pseudo-class가 작동하도록 disabled HTML 속성 바인딩 추가
+    this.addDisabledBinding(ctx);
+
     // Slot-bound INSTANCE 정리:
     // 1. 동일 slot prop에 바인딩된 중복 INSTANCE 노드 제거 (variant 간 위치 차이로 생긴 중복)
     // 2. Slot으로 렌더링될 INSTANCE의 children 비우기 (불필요한 CSS 변수 생성 방지)
@@ -213,18 +216,56 @@ export class ButtonHeuristic implements IHeuristic {
     }
     rewritePropConditions(ctx.tree, removedProp, conditionMap);
 
-    // 모든 옵션이 CSS 변환 가능하면 prop 완전 제거
+    // interaction pseudo(:hover, :active, :focus)와 default 상태는 props에서 제거
+    // user-controlled 상태(disable, loading 등)만 유지
+    const INTERACTION_PSEUDOS = new Set([":hover", ":active", ":focus", ":focus-visible"]);
+    const DEFAULT_STATES = new Set(["default", "normal", "enabled", "rest", "idle"]);
+
     if (stateProp.type === "variant" && stateProp.options && stateProp.options.length > 0) {
-      const allConvertible = stateProp.options.every(
-        (opt) => ButtonHeuristic.CSS_CONVERTIBLE_STATES.has(opt.toLowerCase())
-      );
-      if (allConvertible) {
+      const filteredOptions = stateProp.options.filter((opt) => {
+        const lower = opt.toLowerCase();
+        if (DEFAULT_STATES.has(lower)) return false;
+        const pseudo = StyleProcessor.STATE_TO_PSEUDO[opt] || StyleProcessor.STATE_TO_PSEUDO[lower];
+        if (pseudo && INTERACTION_PSEUDOS.has(pseudo)) return false;
+        return true;
+      });
+
+      if (filteredOptions.length === 0) {
         ctx.props.splice(stateIndex, 1);
+      } else {
+        stateProp.options = filteredOptions;
       }
-      // 일부만 변환 가능: prop 유지 (loading 등 non-CSS 값은 사용자가 제어)
     } else {
       ctx.props.splice(stateIndex, 1);
     }
+  }
+
+  /**
+   * :disabled CSS pseudo-class가 작동하도록 <button disabled={...}> 바인딩 추가.
+   *
+   * state prop이 유지된 경우(loading 등 non-CSS 값 존재), disable 값일 때
+   * HTML disabled 속성을 설정해야 &:disabled CSS가 적용됨.
+   */
+  private addDisabledBinding(ctx: HeuristicContext): void {
+    const stateProp = ctx.props.find(
+      (p) =>
+        p.sourceKey.toLowerCase() === "state" ||
+        p.sourceKey.toLowerCase() === "states"
+    );
+    if (!stateProp || stateProp.type !== "variant" || !stateProp.options) return;
+
+    // disable 값 찾기
+    const disableValue = stateProp.options.find((opt) =>
+      /^disable[d]?$|^inactive$/i.test(opt)
+    );
+    if (!disableValue) return;
+
+    // 루트 노드에 disabled 바인딩 추가
+    if (!ctx.tree.bindings) ctx.tree.bindings = {};
+    if (!ctx.tree.bindings.attrs) ctx.tree.bindings.attrs = {};
+    ctx.tree.bindings.attrs.disabled = {
+      expr: `${stateProp.name} === "${disableValue}"`,
+    };
   }
 
   /**

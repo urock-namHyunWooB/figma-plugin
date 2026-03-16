@@ -348,16 +348,28 @@ export function convertStateDynamicToPseudo(
   pseudoConvertWalk(tree, removedProp, pseudoMap);
 }
 
+// :disabled, :checked 등은 form 요소 전용 — 자식 div에는 적용 안 됨
+const NON_CASCADING_PSEUDOS = new Set([":disabled"]);
+
 function pseudoConvertWalk(
   node: InternalNode,
   removedProp: string,
-  pseudoMap: Record<string, PseudoClass>
+  pseudoMap: Record<string, PseudoClass>,
+  isRoot: boolean = true
 ): void {
   if (node.styles?.dynamic && node.styles.dynamic.length > 0) {
-    pseudoConvertNode(node, removedProp, pseudoMap);
+    // 자식 노드는 :disabled 등 non-cascading pseudo 제외
+    const effectiveMap = isRoot
+      ? pseudoMap
+      : Object.fromEntries(
+          Object.entries(pseudoMap).filter(
+            ([, pseudo]) => !NON_CASCADING_PSEUDOS.has(pseudo)
+          )
+        );
+    pseudoConvertNode(node, removedProp, effectiveMap);
   }
   for (const child of node.children || []) {
-    pseudoConvertWalk(child, removedProp, pseudoMap);
+    pseudoConvertWalk(child, removedProp, pseudoMap, false);
   }
 }
 

@@ -208,6 +208,9 @@ class TreeBuilder {
     // name은 normalized (camelCase) — condition.prop과 일치
     const removedProp = stateProp.name;
 
+    // 휴리스틱이 이미 state를 처리한 경우 (disabled 바인딩 등) → fallback 스킵
+    if (this.hasBindingRef(tree, removedProp)) return;
+
     const CSS_CONVERTIBLE = StyleProcessor.CSS_CONVERTIBLE_STATES;
 
     // 항상 변환 가능한 state 값은 pseudo로 변환 (나머지는 dynamic 유지)
@@ -235,6 +238,23 @@ class TreeBuilder {
     } else {
       props.splice(stateIdx, 1);
     }
+  }
+
+  /** 트리에서 propName을 참조하는 expr 바인딩이 있는지 확인 */
+  private hasBindingRef(tree: InternalTree, propName: string): boolean {
+    const re = new RegExp(`\\b${propName}\\b`);
+    const walk = (node: InternalTree): boolean => {
+      if (node.bindings?.attrs) {
+        for (const b of Object.values(node.bindings.attrs)) {
+          if ("expr" in b && re.test(b.expr)) return true;
+        }
+      }
+      for (const child of node.children || []) {
+        if (walk(child)) return true;
+      }
+      return false;
+    };
+    return walk(tree);
   }
 
   /**

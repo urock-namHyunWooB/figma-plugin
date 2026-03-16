@@ -17,15 +17,16 @@ describe("TreeBuilder Full Build", () => {
     expect(uiTree.props).toBeDefined();
     expect(Array.isArray(uiTree.props)).toBe(true);
 
-    // Props 확인 (State 제외, Size + Left Icon + Right Icon = 3개)
+    // Props 확인: Size + State(Disabled만 유지) + Left Icon + Right Icon = 4개
+    // State는 interaction pseudo(hover/active)와 default가 제거되고 Disabled만 남음
     // TEXT slot은 추가되지 않음 (모든 variant에서 동일한 "Text" 내용이므로)
-    expect(uiTree.props.length).toBe(3);
+    expect(uiTree.props.length).toBe(4);
 
     const propNames = uiTree.props.map((p) => p.name);
     expect(propNames).toContain("size");
+    expect(propNames).toContain("state");
     expect(propNames).toContain("leftIcon");
     expect(propNames).toContain("rightIcon");
-    expect(propNames).not.toContain("state");
     expect(propNames).not.toContain("text"); // TEXT slot 불포함 확인
 
     // Size prop 상세 확인

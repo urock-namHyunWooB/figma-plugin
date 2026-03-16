@@ -183,6 +183,10 @@ export class UITreeOptimizer {
       if (attrs) {
         for (const binding of Object.values(attrs)) {
           if ("prop" in binding) usedProps.add(binding.prop);
+          if ("expr" in binding && typeof binding.expr === "string") {
+            const identifiers = binding.expr.match(/\b[a-zA-Z_][a-zA-Z0-9_]*\b/g) ?? [];
+            for (const ident of identifiers) usedProps.add(ident);
+          }
         }
       }
       if (content && "prop" in content) usedProps.add(content.prop);
