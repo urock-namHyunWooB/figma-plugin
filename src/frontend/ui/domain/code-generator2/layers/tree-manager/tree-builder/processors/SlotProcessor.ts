@@ -61,11 +61,16 @@ export class SlotProcessor {
     // 2. VARIANT True/False 패턴 방식
     this.collectVariantVisibilitySlots(tree, props, slotInfo, nodeToSlotProp);
 
-    // 3. INSTANCE 노드에 bindings 설정
+    // 3. mergedNodes 기반: 일부 variant에만 존재하는 INSTANCE → slot
+    const newSlotProps = this.detectMergedNodesSlots(tree, slotInfo, nodeToSlotProp);
+    props = [...props, ...newSlotProps];
+
+    // 4. INSTANCE 노드에 bindings 설정
     this.applySlotBindings(tree, propMap, slotInfo, nodeToSlotProp);
     this.applyVariantSlotBindings(tree, props, slotInfo, nodeToSlotProp);
+    this.applyMergedNodesSlotBindings(tree, nodeToSlotProp);
 
-    // 4. boolean prop → slot으로 업그레이드 (컴포넌트 관계 정보 포함)
+    // 5. boolean prop → slot으로 업그레이드 (컴포넌트 관계 정보 포함)
     return props.map((prop) => {
       if (slotInfo.has(prop.name)) {
         const info = slotInfo.get(prop.name)!;
@@ -465,5 +470,86 @@ export class SlotProcessor {
     return str
       .replace(/[^a-zA-Z0-9]+(.)/g, (_, char) => char.toUpperCase())
       .replace(/^[A-Z]/, (char) => char.toLowerCase());
+  }
+
+  // ==========================================================================
+  // mergedNodes 기반 Slot 감지
+  // ==========================================================================
+
+  /**
+   * 일부 variant에만 존재하는 INSTANCE를 slot으로 감지.
+   *
+   * componentPropertyReferences.visible이 없고, boolean VARIANT prop도 없지만
+   * mergedNodes.length < totalVariants인 INSTANCE → slot 후보.
+   * 이름 기반으로 propName 생성 (icon_arrow → iconArrow).
+   * 동명 INSTANCE가 여러 개면 순번 추가 (iconArrow, iconArrow2).
+   */
+  private detectMergedNodesSlots(
+    tree: InternalTree,
+    slotInfo: Map<string, { sourceKey: string; nodeIds: Set<string> }>,
+    nodeToSlotProp: Map<string, string>
+  ): PropDefinition[] {
+    const totalVariants = tree.mergedNodes?.length || 0;
+    if (totalVariants === 0) return [];
+
+    const newProps: PropDefinition[] = [];
+    const nameCounter = new Map<string, number>();
+
+    // 이미 slot으로 감지된 노드 ID
+    const alreadySlotted = new Set(nodeToSlotProp.keys());
+
+    for (const child of tree.children) {
+      if (child.type !== "INSTANCE") continue;
+      if (alreadySlotted.has(child.id)) continue;
+      if (!this.isSlotPattern(child.name)) continue;
+
+      const mn = child.mergedNodes?.length || 0;
+      if (mn === 0 || mn >= totalVariants) continue;
+
+      // 일부 variant에만 존재하는 slot 패턴 INSTANCE → slot 후보
+      const baseName = this.toCamelCase(child.name);
+      const count = (nameCounter.get(baseName) || 0) + 1;
+      nameCounter.set(baseName, count);
+      const propName = count === 1 ? baseName : `${baseName}${count}`;
+
+      // slotInfo에 등록
+      slotInfo.set(propName, {
+        sourceKey: propName,
+        nodeIds: new Set([child.id]),
+      });
+      nodeToSlotProp.set(child.id, propName);
+
+      // 컴포넌트 정보 해석
+      const componentInfo = this.resolveSlotComponentInfo(child.id);
+
+      newProps.push({
+        name: propName,
+        type: "slot",
+        required: false,
+        sourceKey: propName,
+        defaultValue: null,
+        ...componentInfo,
+        nodeId: child.id,
+      } as SlotPropDefinition);
+    }
+
+    return newProps;
+  }
+
+  /**
+   * mergedNodes 기반으로 감지된 slot 노드에 content binding 설정.
+   */
+  private applyMergedNodesSlotBindings(
+    tree: InternalTree,
+    nodeToSlotProp: Map<string, string>
+  ): void {
+    for (const child of tree.children) {
+      const slotProp = nodeToSlotProp.get(child.id);
+      if (!slotProp) continue;
+      if (child.bindings?.content) continue; // 이미 바인딩됨
+
+      if (!child.bindings) child.bindings = {};
+      child.bindings.content = { prop: slotProp };
+    }
   }
 }
