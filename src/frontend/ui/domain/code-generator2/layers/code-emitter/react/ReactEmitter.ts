@@ -25,7 +25,7 @@
  * └─────────────────────────────────────────────────────────────────┘
  */
 
-import type { UITree } from "../../../types/types";
+import type { UITree, SlotPropDefinition } from "../../../types/types";
 import type {
   ICodeEmitter,
   EmittedCode,
@@ -129,9 +129,11 @@ export class ReactEmitter implements ICodeEmitter {
     main: UITree,
     deps: Map<string, UITree>
   ): Promise<BundledResult> {
-    const result = await this.emitAll(main, deps);
+    const filteredDeps = this.filterSlotDependencies(main, deps);
+    const result = await this.emitAll(main, filteredDeps);
     const depArray = Array.from(result.dependencies.values());
-    const code = this.bundler.bundle(result.main, depArray);
+    const rawCode = this.bundler.bundle(result.main, depArray);
+    const code = await this.formatCode(rawCode);
 
     // 모든 컴포넌트의 diagnostics 합산
     const diagnostics: VariantInconsistency[] = [
@@ -142,6 +144,34 @@ export class ReactEmitter implements ICodeEmitter {
     }
 
     return { code, diagnostics };
+  }
+
+  /**
+   * Slot prop으로 변환된 INSTANCE의 원본 dependency 컴포넌트를 번들에서 제외.
+   * slot은 외부에서 주입받으므로 dependency 코드가 불필요.
+   */
+  private filterSlotDependencies(
+    main: UITree,
+    deps: Map<string, UITree>
+  ): Map<string, UITree> {
+    const slotTrees = new Set<UITree>();
+    for (const prop of main.props) {
+      if (prop.type === "slot") {
+        const componentId = (prop as SlotPropDefinition).componentId;
+        if (componentId) {
+          const tree = deps.get(componentId);
+          if (tree) slotTrees.add(tree);
+        }
+      }
+    }
+
+    if (slotTrees.size === 0) return deps;
+
+    const filtered = new Map<string, UITree>();
+    for (const [id, tree] of deps) {
+      if (!slotTrees.has(tree)) filtered.set(id, tree);
+    }
+    return filtered;
   }
 
   /**
@@ -228,10 +258,11 @@ export class ReactEmitter implements ICodeEmitter {
     try {
       const prettier = await import("prettier");
       const parserTypescript = await import("prettier/plugins/typescript");
+      const parserEstree = await import("prettier/plugins/estree");
 
       return await prettier.format(code, {
         parser: "typescript",
-        plugins: [parserTypescript.default],
+        plugins: [parserTypescript.default, parserEstree.default],
         semi: true,
         singleQuote: false,
         tabWidth: 2,
