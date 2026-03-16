@@ -50,8 +50,11 @@ export type ConditionNode =
  */
 export type PseudoClass =
   | ":hover"
+  | ":hover:not(:disabled)"
   | ":active"
+  | ":active:not(:disabled)"
   | ":focus"
+  | ":focus:not(:disabled)"
   | ":disabled"
   | ":focus-visible"
   | ":checked"

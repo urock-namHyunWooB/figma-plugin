@@ -14,7 +14,7 @@
  * - INSTANCE/VECTOR (작은 크기): "icon"
  */
 
-import type { ComponentType, ConditionNode, InternalNode } from "../../../../types/types";
+import type { ComponentType, ConditionNode, InternalNode, PseudoClass } from "../../../../types/types";
 import type {
   IHeuristic,
   HeuristicContext,
@@ -169,6 +169,9 @@ export class ButtonHeuristic implements IHeuristic {
     // :disabled pseudo-class가 작동하도록 disabled HTML 속성 바인딩 추가
     this.addDisabledBinding(ctx);
 
+    // disable 상태가 있으면 :hover/:active를 :hover:not(:disabled) 등으로 교체
+    this.guardInteractionPseudos(ctx);
+
     // Slot-bound INSTANCE 정리:
     // 1. 동일 slot prop에 바인딩된 중복 INSTANCE 노드 제거 (variant 간 위치 차이로 생긴 중복)
     // 2. Slot으로 렌더링될 INSTANCE의 children 비우기 (불필요한 CSS 변수 생성 방지)
@@ -242,6 +245,53 @@ export class ButtonHeuristic implements IHeuristic {
       }
     } else {
       ctx.props.splice(stateIndex, 1);
+    }
+  }
+
+  /**
+   * disable 상태가 있으면 :hover/:active pseudo를 :not(:disabled) 조건부로 교체.
+   * disabled 버튼에서 hover/active 스타일이 적용되지 않도록 방지.
+   */
+  private guardInteractionPseudos(ctx: HeuristicContext): void {
+    const stateProp = ctx.props.find(
+      (p) => p.sourceKey.toLowerCase() === "state" || p.sourceKey.toLowerCase() === "states"
+    );
+    if (!stateProp?.options?.some((opt) => /^disable[d]?$|^inactive$/i.test(opt))) return;
+
+    const GUARD_MAP: Record<string, PseudoClass> = {
+      ":hover": ":hover:not(:disabled)",
+      ":active": ":active:not(:disabled)",
+      ":focus": ":focus:not(:disabled)",
+    };
+
+    this.renamePseudosInTree(ctx.tree, GUARD_MAP);
+  }
+
+  private renamePseudosInTree(
+    node: InternalNode,
+    map: Record<string, PseudoClass>
+  ): void {
+    if (node.styles?.pseudo) {
+      for (const [from, to] of Object.entries(map)) {
+        if (from in node.styles.pseudo) {
+          node.styles.pseudo[to as PseudoClass] = node.styles.pseudo[from as PseudoClass]!;
+          delete node.styles.pseudo[from as PseudoClass];
+        }
+      }
+    }
+    if (node.styles?.dynamic) {
+      for (const entry of node.styles.dynamic) {
+        if (!entry.pseudo) continue;
+        for (const [from, to] of Object.entries(map)) {
+          if (from in entry.pseudo) {
+            (entry.pseudo as any)[to] = (entry.pseudo as any)[from];
+            delete (entry.pseudo as any)[from];
+          }
+        }
+      }
+    }
+    for (const child of node.children || []) {
+      this.renamePseudosInTree(child, map);
     }
   }
 

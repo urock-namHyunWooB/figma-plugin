@@ -252,8 +252,11 @@ export class TailwindStrategy implements IStyleStrategy {
     // pseudo selector → Tailwind variant prefix 매핑
     const pseudoToTwPrefix: Record<string, string> = {
       ":hover": "hover",
+      ":hover:not(:disabled)": "hover",
       ":active": "active",
+      ":active:not(:disabled)": "active",
       ":focus": "focus",
+      ":focus:not(:disabled)": "focus",
       ":disabled": "disabled",
       ":focus-visible": "focus-visible",
       ":checked": "checked",
