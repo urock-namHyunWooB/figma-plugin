@@ -949,7 +949,7 @@ ${indentStr}</${tag}>`;
         return `(${condition.conditions.map((c) => this.conditionToCode(c)).join(" || ")})`;
 
       case "not":
-        return `!${this.conditionToCode(condition.condition)}`;
+        return `!(${this.conditionToCode(condition.condition)})`;
 
       default:
         return "true";

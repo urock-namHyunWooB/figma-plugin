@@ -208,14 +208,27 @@ export class ButtonHeuristic implements IHeuristic {
     // state dynamic → CSS pseudo-class 변환 (변환 가능한 값만, 나머지는 dynamic 유지)
     convertStateDynamicToPseudo(ctx.tree, removedProp, StyleProcessor.STATE_TO_PSEUDO);
 
-    // visibility 조건: CSS-convertible 값은 제거, non-convertible 값은 보존
-    const conditionMap: Record<string, ConditionNode> = {};
+    // visibility 조건: non-convertible 값은 보존, convertible 값은 "항상 참"으로 축소
+    const nonConvertibleValues: string[] = [];
     if (stateProp.type === "variant" && stateProp.options && stateProp.options.length > 0) {
       for (const opt of stateProp.options) {
         if (!ButtonHeuristic.CSS_CONVERTIBLE_STATES.has(opt.toLowerCase())) {
-          conditionMap[opt] = { type: "eq", prop: removedProp, value: opt };
+          nonConvertibleValues.push(opt);
         }
       }
+    }
+
+    // non-convertible 값이 있으면: visibility 조건을 neq(state, value)로 변환
+    // 예: OR(state=default, state=hover, ..., state=disable) → neq(state, "loading")
+    // non-convertible 값이 없으면: 모든 state가 CSS → 조건 불필요 → 기존 로직 유지
+    if (nonConvertibleValues.length > 0) {
+      this.rewriteVisibilityForState(ctx.tree, removedProp, nonConvertibleValues);
+    }
+
+    // dynamic style 조건: non-convertible만 매핑, convertible은 제거 (기존 동작)
+    const conditionMap: Record<string, ConditionNode> = {};
+    for (const val of nonConvertibleValues) {
+      conditionMap[val] = { type: "eq", prop: removedProp, value: val };
     }
     rewritePropConditions(ctx.tree, removedProp, conditionMap);
 
@@ -246,6 +259,88 @@ export class ButtonHeuristic implements IHeuristic {
     } else {
       ctx.props.splice(stateIndex, 1);
     }
+  }
+
+  /**
+   * state prop의 visibleCondition을 rewrite.
+   *
+   * VisibilityProcessor가 생성한 OR(state=default, state=hover, ...) 조건을
+   * non-convertible 값의 부정(neq)으로 변환.
+   * 예: OR(default, hover, active, disable) → neq(state, "loading")
+   *
+   * rewritePropConditions는 convertible 값을 "제거"로 처리하여 조건 전체가 사라지므로,
+   * visibility 조건은 별도로 처리해야 함.
+   */
+  private rewriteVisibilityForState(
+    node: InternalNode,
+    stateProp: string,
+    nonConvertibleValues: string[]
+  ): void {
+    if (node.visibleCondition) {
+      node.visibleCondition = this.rewriteVisibilityCondition(
+        node.visibleCondition, stateProp, nonConvertibleValues
+      );
+      if (!node.visibleCondition) {
+        delete node.visibleCondition;
+      }
+    }
+    for (const child of node.children || []) {
+      this.rewriteVisibilityForState(child, stateProp, nonConvertibleValues);
+    }
+  }
+
+  private rewriteVisibilityCondition(
+    cond: ConditionNode,
+    stateProp: string,
+    nonConvertibleValues: string[]
+  ): ConditionNode | undefined {
+    // eq(state, value): convertible이면 "항상 참"(undefined → 부모에서 제거), non-convertible이면 유지
+    if (cond.type === "eq" && cond.prop === stateProp) {
+      if (nonConvertibleValues.includes(cond.value as string)) {
+        return cond; // loading 등 → 유지
+      }
+      return undefined; // default, hover 등 → 항상 참 → 제거
+    }
+
+    // OR: 자식 중 convertible은 제거. 전부 제거되면 "항상 참"
+    if (cond.type === "or") {
+      const remaining = cond.conditions
+        .map(c => this.rewriteVisibilityCondition(c, stateProp, nonConvertibleValues))
+        .filter((c): c is ConditionNode => c !== undefined);
+
+      // convertible 값이 제거됨 → "non-convertible이 아닐 때 보임" → neq 변환
+      if (remaining.length < cond.conditions.length) {
+        // convertible 값이 제거됨 = 이 OR은 "non-convertible이 아닌 모든 state"
+        // → non-convertible의 부정 조건으로 변환
+        if (nonConvertibleValues.length === 1) {
+          return { type: "neq", prop: stateProp, value: nonConvertibleValues[0] };
+        }
+        // 여러 non-convertible: AND(neq(state, v1), neq(state, v2))
+        return {
+          type: "and",
+          conditions: nonConvertibleValues.map(v => ({
+            type: "neq" as const, prop: stateProp, value: v
+          })),
+        };
+      }
+
+      // 제거된 게 없으면 원래 OR 유지
+      if (remaining.length === 1) return remaining[0];
+      return { type: "or", conditions: remaining };
+    }
+
+    // AND: 자식 재귀
+    if (cond.type === "and") {
+      const remaining = cond.conditions
+        .map(c => this.rewriteVisibilityCondition(c, stateProp, nonConvertibleValues))
+        .filter((c): c is ConditionNode => c !== undefined);
+      if (remaining.length === 0) return undefined;
+      if (remaining.length === 1) return remaining[0];
+      return { type: "and", conditions: remaining };
+    }
+
+    // not, neq 등 → 그대로 유지
+    return cond;
   }
 
   /**
