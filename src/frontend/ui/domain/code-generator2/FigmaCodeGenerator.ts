@@ -47,13 +47,13 @@ import type {
   GeneratedResult,
   BundledResult,
 } from "./layers/code-emitter/ICodeEmitter";
-import type { VariantInconsistency } from "./layers/code-emitter/react/style-strategy/DynamicStyleDecomposer";
+import type { VariantInconsistency } from "./types/types";
 import { ReactEmitter } from "./layers/code-emitter/react/ReactEmitter";
 import { toComponentName } from "./utils/nameUtils";
 import { toPublicProps } from "./adapters/PropsAdapter";
 
 export type { GeneratedResult, BundledResult } from "./layers/code-emitter/ICodeEmitter";
-export type { VariantInconsistency } from "./layers/code-emitter/react/style-strategy/DynamicStyleDecomposer";
+export type { VariantInconsistency } from "./types/types";
 
 /** compile() 반환 타입: 코드 + 진단 */
 export interface CompileResult {

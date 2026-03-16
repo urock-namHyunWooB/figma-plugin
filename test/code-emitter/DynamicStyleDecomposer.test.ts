@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { DynamicStyleDecomposer } from "../../src/frontend/ui/domain/code-generator2/layers/code-emitter/react/style-strategy/DynamicStyleDecomposer";
-import type { ConditionNode } from "../../src/frontend/ui/domain/code-generator2/types/types";
-import type { VariantInconsistency } from "../../src/frontend/ui/domain/code-generator2/layers/code-emitter/react/style-strategy/DynamicStyleDecomposer";
+import { DynamicStyleDecomposer } from "../../src/frontend/ui/domain/code-generator2/layers/tree-manager/post-processors/DynamicStyleDecomposer";
+import type { ConditionNode, VariantInconsistency } from "../../src/frontend/ui/domain/code-generator2/types/types";
 
 describe("DynamicStyleDecomposer", () => {
   describe("extractAllPropInfos", () => {

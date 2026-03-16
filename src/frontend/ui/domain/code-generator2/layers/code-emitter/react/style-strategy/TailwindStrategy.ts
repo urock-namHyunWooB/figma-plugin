@@ -7,7 +7,8 @@
 
 import type { StyleObject, PseudoClass } from "../../../../types/types";
 import type { IStyleStrategy, StyleResult, JsxStyleAttribute } from "./IStyleStrategy";
-import { DynamicStyleDecomposer, type DecomposedValue } from "./DynamicStyleDecomposer";
+import { groupDynamicByProp, type DecomposedValue } from "./groupDynamicByProp";
+import { extractAllPropInfos } from "../../../../types/conditionUtils";
 
 /**
  * CSS 속성+값 → Tailwind 클래스 매핑
@@ -242,8 +243,7 @@ export class TailwindStrategy implements IStyleStrategy {
       return { code: "", hasContent: false };
     }
 
-    // decomposer가 pseudo를 네이티브로 분배하므로 별도 분리 불필요
-    const variantGroups = DynamicStyleDecomposer.decomposeAuto(style.dynamic, style.base);
+    const variantGroups = groupDynamicByProp(style.dynamic);
 
     if (variantGroups.size === 0) {
       return { code: "", hasContent: false };
@@ -311,7 +311,7 @@ export class TailwindStrategy implements IStyleStrategy {
   private extractAllVariantProps(
     condition: import("../../../../types/types").ConditionNode
   ): Array<{ propName: string; propValue: string }> {
-    return DynamicStyleDecomposer.extractAllPropInfos(condition);
+    return extractAllPropInfos(condition);
   }
 
   /**

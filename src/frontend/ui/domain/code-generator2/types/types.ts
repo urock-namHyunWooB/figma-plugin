@@ -57,6 +57,18 @@ export type PseudoClass =
   | ":checked"
   | ":visited";
 
+/** variant 불일치 진단 정보 */
+export interface VariantInconsistency {
+  cssProperty: string;
+  propName: string;
+  propValue: string;
+  variants: Array<{
+    props: Record<string, string>;
+    value: string;
+  }>;
+  expectedValue: string | null;
+}
+
 /**
  * 노드 가시성
  * variant 병합 시 각 노드의 보임/숨김 조건 표현

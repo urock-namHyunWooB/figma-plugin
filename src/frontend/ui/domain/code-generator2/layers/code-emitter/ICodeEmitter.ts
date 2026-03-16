@@ -18,8 +18,7 @@
  * └─────────────────────────────────────────────────────────────────┘
  */
 
-import type { UITree } from "../../types/types";
-import type { VariantInconsistency } from "./react/style-strategy/DynamicStyleDecomposer";
+import type { UITree, VariantInconsistency } from "../../types/types";
 
 /** 코드 생성 결과 (단일 컴포넌트) */
 export interface EmittedCode {

@@ -24,7 +24,7 @@
 
 import type { StyleObject, PseudoClass, ConditionNode } from "../../../../types/types";
 import type { IStyleStrategy, StyleResult, JsxStyleAttribute } from "./IStyleStrategy";
-import { DynamicStyleDecomposer, type DecomposedResult, type DecomposedValue } from "./DynamicStyleDecomposer";
+import { groupDynamicByProp, type DecomposedResult, type DecomposedValue } from "./groupDynamicByProp";
 
 export class EmotionStrategy implements IStyleStrategy {
   readonly name = "emotion";
@@ -188,7 +188,7 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
     }>,
     base?: Record<string, string | number>
   ): DecomposedResult {
-    return DynamicStyleDecomposer.decomposeAuto(dynamic, base);
+    return groupDynamicByProp(dynamic);
   }
 
   private buildVariantEntries(

@@ -37,7 +37,7 @@ import { ImportsGenerator } from "./generators/ImportsGenerator";
 import { PropsGenerator } from "./generators/PropsGenerator";
 import { StylesGenerator } from "./generators/StylesGenerator";
 import { JsxGenerator, type JsxGenerateResult } from "./generators/JsxGenerator";
-import type { VariantInconsistency } from "./style-strategy/DynamicStyleDecomposer";
+import type { VariantInconsistency } from "../../../types/types";
 import { EmotionStrategy } from "./style-strategy/EmotionStrategy";
 import { TailwindStrategy } from "./style-strategy/TailwindStrategy";
 import type { IStyleStrategy } from "./style-strategy/IStyleStrategy";

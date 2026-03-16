@@ -1,5 +1,4 @@
-import { UITree } from "../../types/types";
-import type { VariantInconsistency } from "../code-emitter/react/style-strategy/DynamicStyleDecomposer";
+import type { UITree, VariantInconsistency } from "../../types/types";
 import DataManager from "../data-manager/DataManager";
 import TreeBuilder from "./tree-builder/TreeBuilder";
 import { ComponentPropsLinker } from "./post-processors/ComponentPropsLinker";

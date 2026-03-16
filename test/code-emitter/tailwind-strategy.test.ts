@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import DataManager from "@frontend/ui/domain/code-generator2/layers/data-manager/DataManager";
-import TreeBuilder from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/TreeBuilder";
+import TreeManager from "@frontend/ui/domain/code-generator2/layers/tree-manager/TreeManager";
 import { CodeEmitter } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/ReactEmitter";
+// TreeBuilder 직접 호출 대신 TreeManager.build()로 UITreeOptimizer 포함 (decompose 필요)
 
 import taptapButton from "../fixtures/button/taptapButton.json";
 import airtableButton from "../fixtures/any-component-set/airtable-button.json";
@@ -9,8 +10,8 @@ import airtableButton from "../fixtures/any-component-set/airtable-button.json";
 describe("TailwindStrategy", () => {
   it("should generate Tailwind classes from taptapButton", async () => {
     const dataManager = new DataManager(taptapButton as any);
-    const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build((taptapButton as any).info.document);
+    const treeManager = new TreeManager(dataManager);
+    const { main: uiTree } = treeManager.build();
 
     const emitter = new CodeEmitter({ styleStrategy: "tailwind" });
     const result = await emitter.emit(uiTree);
@@ -28,8 +29,8 @@ describe("TailwindStrategy", () => {
 
   it("should generate Tailwind classes from airtableButton", async () => {
     const dataManager = new DataManager(airtableButton as any);
-    const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build((airtableButton as any).info.document);
+    const treeManager = new TreeManager(dataManager);
+    const { main: uiTree } = treeManager.build();
 
     const emitter = new CodeEmitter({ styleStrategy: "tailwind" });
     const result = await emitter.emit(uiTree);
@@ -43,8 +44,8 @@ describe("TailwindStrategy", () => {
 
   it("should use standard Tailwind classes when possible", async () => {
     const dataManager = new DataManager(airtableButton as any);
-    const treeBuilder = new TreeBuilder(dataManager);
-    const uiTree = treeBuilder.build((airtableButton as any).info.document);
+    const treeManager = new TreeManager(dataManager);
+    const { main: uiTree } = treeManager.build();
 
     const emitter = new CodeEmitter({ styleStrategy: "tailwind" });
     const result = await emitter.emit(uiTree);

@@ -12,7 +12,8 @@
  * pseudo-class 데이터도 동일한 cssKeyOwner 매핑을 따라 올바른 prop 그룹에 배치된다.
  */
 
-import type { ConditionNode, PseudoClass } from "../../../../types/types";
+import type { ConditionNode, PseudoClass, VariantInconsistency } from "../../../types/types";
+import { extractAllPropInfos, type PropInfo } from "../../../types/conditionUtils";
 
 /**
  * CSS variable의 fallback 값을 추출하여 비교용 정규화 문자열 반환.
@@ -24,22 +25,9 @@ function normalizeCssValue(value: string): string {
   return match ? match[1].trim() : value;
 }
 
-export interface PropInfo {
-  propName: string;
-  propValue: string;
-}
-
-/** variant 불일치 진단 정보 */
-export interface VariantInconsistency {
-  cssProperty: string;
-  propName: string;
-  propValue: string;
-  variants: Array<{
-    props: Record<string, string>;
-    value: string;
-  }>;
-  expectedValue: string | null;
-}
+// PropInfo, VariantInconsistency는 types/에서 import
+export type { PropInfo } from "../../../types/conditionUtils";
+export type { VariantInconsistency } from "../../../types/types";
 
 /** Decompose 결과의 개별 값 (style + optional pseudo) */
 export type DecomposedValue = {
@@ -124,7 +112,7 @@ export class DynamicStyleDecomposer {
     let hasMulti = false;
     const propSets = new Set<string>();
     for (const entry of dynamic) {
-      const infos = this.extractAllPropInfos(entry.condition);
+      const infos = extractAllPropInfos(entry.condition);
       if (infos.length <= 1) {
         hasSingle = true;
       } else {
@@ -154,7 +142,7 @@ export class DynamicStyleDecomposer {
     const result: DecomposedResult = new Map();
 
     for (const { condition, style, pseudo } of dynamic) {
-      const propInfos = this.extractAllPropInfos(condition);
+      const propInfos = extractAllPropInfos(condition);
       if (propInfos.length === 0) continue;
 
       const propName = propInfos.length === 1
@@ -217,7 +205,7 @@ export class DynamicStyleDecomposer {
     const multiPropEntries: DynamicEntry[] = [];
 
     for (const entry of dynamic) {
-      const propInfos = this.extractAllPropInfos(entry.condition);
+      const propInfos = extractAllPropInfos(entry.condition);
       if (propInfos.length <= 1) {
         singlePropEntries.push(entry);
       } else {
@@ -227,7 +215,7 @@ export class DynamicStyleDecomposer {
 
     // 단일 prop: 같은 condition이면 스타일 병합
     for (const { condition, style, pseudo } of singlePropEntries) {
-      const propInfos = this.extractAllPropInfos(condition);
+      const propInfos = extractAllPropInfos(condition);
       for (const { propName, propValue } of propInfos) {
         if (!result.has(propName)) {
           result.set(propName, new Map());
@@ -268,41 +256,14 @@ export class DynamicStyleDecomposer {
    * ConditionNode에서 모든 prop 이름 추출 (JsxGenerator용).
    * truthy, not(truthy), eq, and 조건 모두 처리.
    */
+  /** @deprecated conditionUtils.extractAllPropNames 사용 */
   static extractAllPropNames(condition: ConditionNode): string[] {
-    return this.extractAllPropInfos(condition).map((p) => p.propName);
+    return extractAllPropInfos(condition).map((p) => p.propName);
   }
 
-  /**
-   * ConditionNode에서 모든 prop name+value 쌍 추출.
-   * eq → propValue = value
-   * truthy → propValue = "true"
-   * not(truthy) → propValue = "false"
-   */
+  /** @deprecated conditionUtils.extractAllPropInfos 사용 */
   static extractAllPropInfos(condition: ConditionNode): PropInfo[] {
-    if (condition.type === "eq" && (typeof condition.value === "string" || typeof condition.value === "boolean" || typeof condition.value === "number")) {
-      return [{ propName: condition.prop, propValue: String(condition.value) }];
-    }
-
-    if (condition.type === "truthy") {
-      return [{ propName: condition.prop, propValue: "true" }];
-    }
-
-    if (
-      condition.type === "not" &&
-      condition.condition.type === "truthy"
-    ) {
-      return [{ propName: condition.condition.prop, propValue: "false" }];
-    }
-
-    if (condition.type === "and") {
-      const results: PropInfo[] = [];
-      for (const sub of condition.conditions) {
-        results.push(...this.extractAllPropInfos(sub));
-      }
-      return results;
-    }
-
-    return [];
+    return extractAllPropInfos(condition);
   }
 
   // ===========================================================================
@@ -415,7 +376,7 @@ export class DynamicStyleDecomposer {
     // 동일 prop set끼리 독립 분석하여 cross-dimension 오염 방지.
     const propSetGroups = new Map<string, DynamicEntry[]>();
     for (const entry of entries) {
-      const propInfos = this.extractAllPropInfos(entry.condition);
+      const propInfos = extractAllPropInfos(entry.condition);
       const key = propInfos.map((p) => p.propName).sort().join("+");
       if (!propSetGroups.has(key)) propSetGroups.set(key, []);
       propSetGroups.get(key)!.push(entry);
@@ -923,7 +884,7 @@ export class DynamicStyleDecomposer {
     condition: ConditionNode
   ): Map<string, string> {
     const map = new Map<string, string>();
-    const infos = this.extractAllPropInfos(condition);
+    const infos = extractAllPropInfos(condition);
     for (const { propName, propValue } of infos) {
       map.set(propName, propValue);
     }

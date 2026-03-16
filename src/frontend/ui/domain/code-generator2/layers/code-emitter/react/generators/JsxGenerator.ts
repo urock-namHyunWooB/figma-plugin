@@ -6,7 +6,9 @@
 
 import type { UITree, UINode, ContainerNode, ButtonNode, InputNode, LinkNode, ComponentNode, ConditionNode, StyleObject, ArraySlotInfo } from "../../../../types/types";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
-import { DynamicStyleDecomposer, type VariantInconsistency } from "../style-strategy/DynamicStyleDecomposer";
+import { groupDynamicByProp } from "../style-strategy/groupDynamicByProp";
+import { extractAllPropNames } from "../../../../types/conditionUtils";
+import type { VariantInconsistency } from "../../../../types/types";
 import { toComponentName } from "../../../../utils/nameUtils";
 
 export interface JsxGenerateResult {
@@ -1031,10 +1033,7 @@ ${indentStr}</${tag}>`;
 
     // decomposer 결과 기반으로 실제 스타일이 있는 prop만 반환
     // (JSX에서 빈 스타일 변수 참조 방지)
-    const { result: groups, diagnostics } = DynamicStyleDecomposer.decomposeAutoWithDiagnostics(styles.dynamic, styles.base);
-    if (diagnostics.length > 0) {
-      this.collectedDiagnostics.push(...diagnostics);
-    }
+    const groups = groupDynamicByProp(styles.dynamic);
     const propNames: string[] = [];
 
     for (const [propName, valueMap] of groups) {
@@ -1082,7 +1081,7 @@ ${indentStr}</${tag}>`;
    * and 조건의 경우 각 eq 조건의 prop을 모두 반환
    */
   private static extractAllVariantPropNames(condition: ConditionNode): string[] {
-    return DynamicStyleDecomposer.extractAllPropNames(condition);
+    return extractAllPropNames(condition);
   }
 
   /**

@@ -11,8 +11,8 @@
  * 어떤 emitter(React/Vue/Svelte)를 사용하든 동일한 최적화가 적용된다.
  */
 
-import type { UITree, UINode, ConditionNode, PseudoClass } from "../../../types/types";
-import { DynamicStyleDecomposer, type DecomposedResult, type VariantInconsistency } from "../../code-emitter/react/style-strategy/DynamicStyleDecomposer";
+import type { UITree, UINode, ConditionNode, PseudoClass, VariantInconsistency } from "../../../types/types";
+import { DynamicStyleDecomposer, type DecomposedResult } from "./DynamicStyleDecomposer";
 
 export class UITreeOptimizer {
   /**
