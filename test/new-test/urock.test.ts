@@ -957,3 +957,56 @@ describe("Profile", () => {
     expect(result).toMatch(/backgroundImage.*imageSrc.*url/);
   });
 });
+
+/**
+ * Btnsbtn 리그레션 테스트
+ *
+ * 522c5d3 이후 convertStateDynamicToPseudo가 state를 pseudo로 변환하면서
+ * compound CSS(background)와 nonStateVarying CSS(height)가 분리되어
+ * decomposer의 FD 역추론 실패 → 색상 소실 + 크기 비정상 확대.
+ */
+describe("Btnsbtn", () => {
+  const fixturePath = path.join(
+    process.cwd(),
+    "test/fixtures/failing/Btnsbtn.json"
+  );
+
+  const compileFixture = async () => {
+    const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
+    const compiler = new FigmaCodeGenerator(fixture);
+    return (await compiler.compile()) as unknown as string;
+  };
+
+  it("sizeStyles에 height가 있어야 한다 (size만으로 결정되는 CSS)", async () => {
+    const result = await compileFixture();
+    const sizeStylesMatch = result.match(/sizeStyles[^=]*=\s*\{([\s\S]*?)\n\};/);
+    expect(sizeStylesMatch).toBeTruthy();
+    expect(sizeStylesMatch![1]).toContain("height");
+  });
+
+  it("filled+blue 배경색(#628cf5)이 background에 있어야 한다", async () => {
+    const result = await compileFixture();
+    const bgLines = result.split("\n").filter(
+      (l: string) => l.includes("background") && l.includes("628cf5")
+    );
+    expect(bgLines.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("filled+red 배경색(#ff8484)이 background에 있어야 한다", async () => {
+    const result = await compileFixture();
+    const bgLines = result.split("\n").filter(
+      (l: string) => l.includes("background") && l.includes("ff8484")
+    );
+    expect(bgLines.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("background가 4가지 이상의 색상을 포함해야 한다", async () => {
+    const result = await compileFixture();
+    const bgColors = new Set<string>();
+    for (const line of result.split("\n")) {
+      const match = line.match(/background:.*#([0-9a-fA-F]{6})/);
+      if (match) bgColors.add(match[1].toLowerCase());
+    }
+    expect(bgColors.size).toBeGreaterThanOrEqual(4);
+  });
+});
