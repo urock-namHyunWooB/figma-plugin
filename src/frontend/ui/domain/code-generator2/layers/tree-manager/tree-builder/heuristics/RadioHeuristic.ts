@@ -56,6 +56,9 @@ export class RadioHeuristic implements IHeuristic {
     // interactionNormal slot 제거
     this.convertIconSlots(ctx);
 
+    // TEXT 노드를 text prop으로 바인딩
+    this.addTextProp(ctx);
+
     // 제거된 prop이 있으면 트리 전체의 조건 참조를 boolean prop으로 치환
     if (removedProp) {
       // variant 값에서 동적으로 conditionMap 생성
@@ -217,6 +220,37 @@ export class RadioHeuristic implements IHeuristic {
       ...ctx.tree.styles.pseudo[":disabled"],
       opacity: 0.43,
     };
+  }
+
+  /**
+   * 트리 내 TEXT 노드를 찾아 text?: string prop으로 바인딩
+   */
+  private addTextProp(ctx: HeuristicContext): void {
+    const textNode = this.findTextNode(ctx.tree);
+    if (!textNode) return;
+    if (ctx.props.some((p) => p.name === "text")) return;
+
+    ctx.props.push({
+      type: "string",
+      name: "text",
+      defaultValue: textNode.text || textNode.name || "",
+      required: false,
+      sourceKey: "",
+    });
+
+    textNode.bindings = {
+      ...textNode.bindings,
+      content: { prop: "text" },
+    };
+  }
+
+  private findTextNode(node: InternalNode): InternalNode | null {
+    if (node.type === "TEXT") return node;
+    for (const child of node.children || []) {
+      const found = this.findTextNode(child);
+      if (found) return found;
+    }
+    return null;
   }
 
   /**

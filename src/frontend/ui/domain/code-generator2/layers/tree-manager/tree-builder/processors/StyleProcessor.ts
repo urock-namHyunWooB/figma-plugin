@@ -517,17 +517,20 @@ export class StyleProcessor {
    * "Size=Large, State=Hover, ..." → "Hover"
    */
   private extractStateFromVariantName(variantName: string): string | null {
-    const stateMatch = variantName.match(/State=([^,]+)/i);
-    if (stateMatch) {
-      return stateMatch[1].trim();
+    const stateMatch = variantName.match(/(?:states?|status)=([^,]+)/i);
+    if (!stateMatch) return null;
+
+    const raw = stateMatch[1].trim();
+
+    // "Hover/Pressed" 같은 복합값 → 개별 분리 후 첫 매칭 반환
+    if (raw.includes("/")) {
+      for (const part of raw.split("/")) {
+        const trimmed = part.trim();
+        if (StyleProcessor.STATE_TO_PSEUDO[trimmed]) return trimmed;
+      }
     }
 
-    const statesMatch = variantName.match(/states=([^,]+)/i);
-    if (statesMatch) {
-      return statesMatch[1].trim();
-    }
-
-    return null;
+    return raw;
   }
 
   /**

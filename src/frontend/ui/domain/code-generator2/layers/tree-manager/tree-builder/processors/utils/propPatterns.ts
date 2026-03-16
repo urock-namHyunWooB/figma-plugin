@@ -5,9 +5,9 @@
  * (disable / disabled / isDisabled 등) 유연한 매칭이 필요하다.
  */
 
-/** state, states 등 */
+/** state, states, status 등 */
 export function isStateProp(name: string): boolean {
-  return /^states?$/i.test(name);
+  return /^(states?|status)$/i.test(name);
 }
 
 /** disable, disabled, isDisabled 등 */
