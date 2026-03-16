@@ -1031,7 +1031,7 @@ ${indentStr}</${tag}>`;
 
     // decomposer 결과 기반으로 실제 스타일이 있는 prop만 반환
     // (JSX에서 빈 스타일 변수 참조 방지)
-    const { result: groups, diagnostics } = DynamicStyleDecomposer.decomposeWithDiagnostics(styles.dynamic, styles.base);
+    const { result: groups, diagnostics } = DynamicStyleDecomposer.decomposeAutoWithDiagnostics(styles.dynamic, styles.base);
     if (diagnostics.length > 0) {
       this.collectedDiagnostics.push(...diagnostics);
     }

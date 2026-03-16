@@ -85,6 +85,109 @@ export class DynamicStyleDecomposer {
   }
 
   /**
+   * 자동 판별: UITreeOptimizer가 이미 decompose한 entries면 직접 변환,
+   * 아니면 기존 분석 기반 decompose.
+   *
+   * 판별 기준: multi-prop entries 중 서로 다른 prop set이 존재하면 pre-decomposed.
+   */
+  static decomposeAuto(
+    dynamic: DynamicEntry[],
+    base?: Record<string, string | number>
+  ): DecomposedResult {
+    if (this.isPreDecomposed(dynamic)) {
+      return this.fromPreDecomposed(dynamic, base);
+    }
+    return this.decompose(dynamic, base);
+  }
+
+  static decomposeAutoWithDiagnostics(
+    dynamic: DynamicEntry[],
+    base?: Record<string, string | number>
+  ): { result: DecomposedResult; diagnostics: VariantInconsistency[] } {
+    if (this.isPreDecomposed(dynamic)) {
+      return { result: this.fromPreDecomposed(dynamic, base), diagnostics: [] };
+    }
+    return this.decomposeWithDiagnostics(dynamic, base);
+  }
+
+  /**
+   * UITreeOptimizer가 이미 decompose한 entries인지 판별.
+   *
+   * UITreeOptimizer decompose 후 rebuild된 entries의 특징:
+   * - single-prop(eq) entries와 multi-prop(AND) entries가 공존
+   * - multi-prop entries의 prop set이 2종류 이상일 수 있음
+   *
+   * Normal AND-exploded data는 모든 entries가 동일한 multi-prop AND 조건.
+   */
+  private static isPreDecomposed(dynamic: DynamicEntry[]): boolean {
+    let hasSingle = false;
+    let hasMulti = false;
+    const propSets = new Set<string>();
+    for (const entry of dynamic) {
+      const infos = this.extractAllPropInfos(entry.condition);
+      if (infos.length <= 1) {
+        hasSingle = true;
+      } else {
+        hasMulti = true;
+        propSets.add(infos.map((p) => p.propName).sort().join("+"));
+      }
+    }
+    // single + multi 공존 → UITreeOptimizer가 decompose한 결과
+    if (hasSingle && hasMulti) return true;
+    // multi-prop의 prop set이 2종류 이상
+    if (propSets.size > 1) return true;
+    return false;
+  }
+
+  /**
+   * UITreeOptimizer가 이미 decompose한 dynamic entries를 직접 DecomposedResult로 변환.
+   *
+   * 단일 prop 조건 → result[propName][propValue]
+   * 다중 prop AND 조건 → result[prop1+prop2+...][val1+val2+...]
+   *
+   * 재분석하지 않으므로 compound 탐지 실패 문제가 없다.
+   */
+  static fromPreDecomposed(
+    dynamic: DynamicEntry[],
+    base?: Record<string, string | number>
+  ): DecomposedResult {
+    const result: DecomposedResult = new Map();
+
+    for (const { condition, style, pseudo } of dynamic) {
+      const propInfos = this.extractAllPropInfos(condition);
+      if (propInfos.length === 0) continue;
+
+      const propName = propInfos.length === 1
+        ? propInfos[0].propName
+        : propInfos.map((p) => p.propName).join("+");
+      const propValue = propInfos.length === 1
+        ? propInfos[0].propValue
+        : propInfos.map((p) => p.propValue).join("+");
+
+      if (!result.has(propName)) result.set(propName, new Map());
+      const propMap = result.get(propName)!;
+
+      if (!propMap.has(propValue)) {
+        propMap.set(propValue, {
+          style: { ...style },
+          ...(pseudo && { pseudo: this.clonePseudo(pseudo) }),
+        });
+      } else {
+        const existing = propMap.get(propValue)!;
+        for (const [k, v] of Object.entries(style)) {
+          if (!(k in existing.style)) existing.style[k] = v;
+        }
+        if (pseudo) this.mergePseudoInto(existing, pseudo);
+      }
+    }
+
+    // 후처리: 모든 variant 값이 동일한 CSS 속성 제거
+    this.removeUniformProperties(result, base);
+
+    return result;
+  }
+
+  /**
    * decompose + variant 불일치 진단 정보 반환.
    *
    * AND 조건에서 어떤 prop도 CSS 속성을 완전히 제어하지 못할 때,
@@ -307,8 +410,61 @@ export class DynamicStyleDecomposer {
     result: DecomposedResult,
     diagnostics?: VariantInconsistency[]
   ): void {
+    // Step 0: prop set별로 분리 — convertStateDynamicToPseudo가 state를 제거한
+    // entries(3-prop)와 loading entries(4-prop)가 혼재하면 compound 탐지 실패.
+    // 동일 prop set끼리 독립 분석하여 cross-dimension 오염 방지.
+    const propSetGroups = new Map<string, DynamicEntry[]>();
+    for (const entry of entries) {
+      const propInfos = this.extractAllPropInfos(entry.condition);
+      const key = propInfos.map((p) => p.propName).sort().join("+");
+      if (!propSetGroups.has(key)) propSetGroups.set(key, []);
+      propSetGroups.get(key)!.push(entry);
+    }
+    if (propSetGroups.size > 1) {
+      for (const groupEntries of propSetGroups.values()) {
+        this.decomposeMultiProp(groupEntries, result, diagnostics);
+      }
+      return;
+    }
+
+    // Step 0.5: 같은 prop set 내에서 CSS key set이 다른 entries 병합.
+    // convertStateDynamicToPseudo가 compound(background)와 nonStateVarying(height)를
+    // 별도 entries로 분리하면 decomposer에서 absent 오염 발생.
+    // 같은 condition의 entries를 하나로 병합하여 absent를 제거.
+    let mergedEntries = entries;
+    if (entries.length >= 2) {
+      const conditionMap = new Map<string, DynamicEntry>();
+      let hasMerges = false;
+      for (const entry of entries) {
+        const condKey = JSON.stringify(entry.condition);
+        if (conditionMap.has(condKey)) {
+          const existing = conditionMap.get(condKey)!;
+          Object.assign(existing.style, entry.style);
+          if (entry.pseudo) {
+            if (!existing.pseudo) {
+              existing.pseudo = entry.pseudo;
+            } else {
+              for (const [pc, pcStyle] of Object.entries(entry.pseudo)) {
+                (existing.pseudo as any)[pc] = { ...((existing.pseudo as any)[pc] || {}), ...(pcStyle as any) };
+              }
+            }
+          }
+          hasMerges = true;
+        } else {
+          conditionMap.set(condKey, {
+            condition: entry.condition,
+            style: { ...entry.style },
+            ...(entry.pseudo && { pseudo: JSON.parse(JSON.stringify(entry.pseudo)) }),
+          });
+        }
+      }
+      if (hasMerges) {
+        mergedEntries = [...conditionMap.values()];
+      }
+    }
+
     // Step 1: matrix 구성 — 각 엔트리의 prop→value 매핑과 스타일
-    const matrix: MatrixEntry[] = entries.map((entry) => ({
+    const matrix: MatrixEntry[] = mergedEntries.map((entry) => ({
       propValues: this.extractPropValueMap(entry.condition),
       style: entry.style,
       ...(entry.pseudo && { pseudo: entry.pseudo }),
@@ -695,6 +851,7 @@ export class DynamicStyleDecomposer {
     }
     return true;
   }
+
 
   /** best-fit prop의 불일치 그룹에 대한 진단 정보 수집 */
   private static collectDiagnostics(

@@ -188,7 +188,7 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
     }>,
     base?: Record<string, string | number>
   ): DecomposedResult {
-    return DynamicStyleDecomposer.decompose(dynamic, base);
+    return DynamicStyleDecomposer.decomposeAuto(dynamic, base);
   }
 
   private buildVariantEntries(

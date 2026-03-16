@@ -243,7 +243,7 @@ export class TailwindStrategy implements IStyleStrategy {
     }
 
     // decomposer가 pseudo를 네이티브로 분배하므로 별도 분리 불필요
-    const variantGroups = DynamicStyleDecomposer.decompose(style.dynamic, style.base);
+    const variantGroups = DynamicStyleDecomposer.decomposeAuto(style.dynamic, style.base);
 
     if (variantGroups.size === 0) {
       return { code: "", hasContent: false };

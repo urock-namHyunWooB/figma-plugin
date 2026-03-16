@@ -216,15 +216,20 @@ export class ButtonHeuristic implements IHeuristic {
     }
     rewritePropConditions(ctx.tree, removedProp, conditionMap);
 
-    // interaction pseudo(:hover, :active, :focus)와 default 상태는 props에서 제거
-    // user-controlled 상태(disable, loading 등)만 유지
+    // interaction pseudo(:hover, :active, :focus)는 props에서 제거
+    // default 상태: non-convertible state(loading 등)가 있으면 유지 (compound 스타일의 기본값)
     const INTERACTION_PSEUDOS = new Set([":hover", ":active", ":focus", ":focus-visible"]);
     const DEFAULT_STATES = new Set(["default", "normal", "enabled", "rest", "idle"]);
 
     if (stateProp.type === "variant" && stateProp.options && stateProp.options.length > 0) {
+      const hasNonConvertible = stateProp.options.some(
+        (opt) => !ButtonHeuristic.CSS_CONVERTIBLE_STATES.has(opt.toLowerCase())
+          && !DEFAULT_STATES.has(opt.toLowerCase())
+      );
+
       const filteredOptions = stateProp.options.filter((opt) => {
         const lower = opt.toLowerCase();
-        if (DEFAULT_STATES.has(lower)) return false;
+        if (DEFAULT_STATES.has(lower)) return hasNonConvertible;
         const pseudo = StyleProcessor.STATE_TO_PSEUDO[opt] || StyleProcessor.STATE_TO_PSEUDO[lower];
         if (pseudo && INTERACTION_PSEUDOS.has(pseudo)) return false;
         return true;
