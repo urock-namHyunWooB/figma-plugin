@@ -136,9 +136,11 @@ describe("NodeMatcher Stage 5.5 — Auto Layout 왼쪽 컨텍스트 보정", () 
         ["parent-b", parentB],
       ]);
 
+      const nodeToVariantRoot = new Map<string, string>([
+        ["a-div1", "parent-a"],
+        ["b-div1", "parent-b"],
+      ]);
       const dataManager = createMockDataManager(nodeMap);
-      const nodeToVariantRoot = new Map<string, string>();
-
       const matcher = new NodeMatcher(dataManager, nodeToVariantRoot);
 
       // InternalNode 생성
@@ -215,8 +217,12 @@ describe("NodeMatcher Stage 5.5 — Auto Layout 왼쪽 컨텍스트 보정", () 
         ["parent-b", parentB],
       ]);
 
+      const nodeToVariantRoot = new Map<string, string>([
+        ["a-badge", "parent-a"],
+        ["b-badge", "parent-b"],
+      ]);
       const dataManager = createMockDataManager(nodeMap);
-      const matcher = new NodeMatcher(dataManager, new Map());
+      const matcher = new NodeMatcher(dataManager, nodeToVariantRoot);
 
       const parentIntA = makeInternalNode(
         "parent-merged",
@@ -294,8 +300,12 @@ describe("NodeMatcher Stage 5.5 — Auto Layout 왼쪽 컨텍스트 보정", () 
         ["parent-b", parentB],
       ]);
 
+      const nodeToVariantRoot = new Map<string, string>([
+        ["a-content", "parent-a"],
+        ["b-content", "parent-b"],
+      ]);
       const dataManager = createMockDataManager(nodeMap);
-      const matcher = new NodeMatcher(dataManager, new Map());
+      const matcher = new NodeMatcher(dataManager, nodeToVariantRoot);
 
       const parentIntA = makeInternalNode(
         "parent-merged",
@@ -444,8 +454,12 @@ describe("NodeMatcher Stage 5.5 — Auto Layout 왼쪽 컨텍스트 보정", () 
         ["parent-b", parentB],
       ]);
 
+      const nodeToVariantRoot = new Map<string, string>([
+        ["a-x", "parent-a"],
+        ["b-x", "parent-b"],
+      ]);
       const dataManager = createMockDataManager(nodeMap);
-      const matcher = new NodeMatcher(dataManager, new Map());
+      const matcher = new NodeMatcher(dataManager, nodeToVariantRoot);
 
       const parentIntA = makeInternalNode(
         "parent-merged",
@@ -659,8 +673,12 @@ describe("NodeMatcher Stage 5.5 — Auto Layout 왼쪽 컨텍스트 보정", () 
         ["parent-b", parentB],
       ]);
 
+      const nodeToVariantRoot = new Map<string, string>([
+        ["a-target", "parent-a"],
+        ["b-target", "parent-b"],
+      ]);
       const dataManager = createMockDataManager(nodeMap);
-      const matcher = new NodeMatcher(dataManager, new Map());
+      const matcher = new NodeMatcher(dataManager, nodeToVariantRoot);
 
       const parentIntA = makeInternalNode(
         "parent-merged",

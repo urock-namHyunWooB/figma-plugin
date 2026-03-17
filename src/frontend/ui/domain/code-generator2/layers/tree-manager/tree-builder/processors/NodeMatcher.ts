@@ -89,24 +89,20 @@ export class NodeMatcher {
       return true;
     }
 
-    // 4. 정규화된 위치 비교
-    if (this.isSamePosition(nodeA, nodeB)) {
+    // 4. 정규화된 위치 비교 (Auto Layout 보정 선적용 후 4-way)
+    const shift = this.computeAutoLayoutShift(nodeA, nodeB);
+    if (this.isSamePosition(nodeA, nodeB, shift ?? undefined)) {
       // Shape 타입은 크기 유사도도 검증 (중심점이 같은 동심원 오매칭 방지)
       if (NodeMatcher.SHAPE_TYPES.has(nodeA.type) && NodeMatcher.SHAPE_TYPES.has(nodeB.type)) {
         if (!this.isSimilarSize(nodeA, nodeB)) return false;
       }
+      // AL 보정이 적용된 경우 크기도 유사해야 함 (위치만 보정된 다른 노드 오매칭 방지)
+      if (shift && !this.isSimilarSize(nodeA, nodeB)) return false;
       return true;
     }
 
     // 5. TEXT 노드 특별 매칭
     if (this.isSameTextNode(nodeA, nodeB)) {
-      return true;
-    }
-
-    // 5.5. Auto Layout 왼쪽 컨텍스트 보정 매칭
-    // 부모가 Auto Layout이면, 왼쪽 형제의 type+size를 비교하여
-    // extra 요소에 의한 위치 시프트를 보정한 뒤 매칭
-    if (this.isSameAutoLayoutChild(nodeA, nodeB)) {
       return true;
     }
 
@@ -131,20 +127,28 @@ export class NodeMatcher {
    *
    * Fallback: 위 매칭 실패 시 heightRatio ≥ 2이면 상대 좌표 ±10px 비교.
    */
-  private isSamePosition(nodeA: InternalNode, nodeB: InternalNode): boolean {
+  private isSamePosition(
+    nodeA: InternalNode,
+    nodeB: InternalNode,
+    shift?: { axis: "x" | "y"; shiftA: number; shiftB: number }
+  ): boolean {
     // 양쪽 노드의 contentBox 정보 조회
     const boxA = this.getContentBoxInfo(nodeA);
     const boxB = this.getContentBoxInfo(nodeB);
 
     if (boxA && boxB) {
-      // --- X축: 4가지 비교 ---
-      const offsetAx = boxA.nodeX - boxA.contentX;
-      const offsetBx = boxB.nodeX - boxB.contentX;
+      // --- X축: 4가지 비교 (Auto Layout 보정 적용) ---
+      let offsetAx = boxA.nodeX - boxA.contentX;
+      let offsetBx = boxB.nodeX - boxB.contentX;
+      if (shift?.axis === "x") {
+        offsetAx -= shift.shiftA;
+        offsetBx -= shift.shiftB;
+      }
       const nodeWidthA = boxA.nodeWidth;
       const nodeWidthB = boxB.nodeWidth;
       const avgW = (boxA.contentWidth + boxB.contentWidth) / 2;
 
-      // 1) 비례 배치 (각자 contentWidth로 정규화)
+      // 1) 비례 배치
       const propX = Math.abs(
         offsetAx / boxA.contentWidth - offsetBx / boxB.contentWidth
       );
@@ -167,9 +171,13 @@ export class NodeMatcher {
 
       const minDiffX = Math.min(propX, leftX, centerX, rightX);
 
-      // --- Y축: 4가지 비교 ---
-      const offsetAy = boxA.nodeY - boxA.contentY;
-      const offsetBy = boxB.nodeY - boxB.contentY;
+      // --- Y축: 4가지 비교 (Auto Layout 보정 적용) ---
+      let offsetAy = boxA.nodeY - boxA.contentY;
+      let offsetBy = boxB.nodeY - boxB.contentY;
+      if (shift?.axis === "y") {
+        offsetAy -= shift.shiftA;
+        offsetBy -= shift.shiftB;
+      }
       const nodeHeightA = boxA.nodeHeight;
       const nodeHeightB = boxB.nodeHeight;
       const avgH = (boxA.contentHeight + boxB.contentHeight) / 2;
@@ -416,30 +424,50 @@ export class NodeMatcher {
     return componentInfo?.componentSetId;
   }
 
-  // ─── Stage 5.5: Auto Layout 왼쪽 컨텍스트 보정 매칭 ───
+  // ─── Auto Layout 위치 보정 ───
 
   /**
-   * Auto Layout 부모의 자식 노드를 왼쪽 컨텍스트 보정으로 매칭
+   * Auto Layout 보정량 계산
    *
-   * Auto Layout에서 요소 추가/제거 시 후속 노드가 밀려서 위치 매칭이 실패하는 문제를 해결.
-   * 왼쪽(위쪽) 형제의 type+size를 비교하여 extra 요소에 의한 시프트를 보정한다.
+   * 부모가 Auto Layout이면 왼쪽 형제 컨텍스트를 분석하여 variant간 위치 시프트 보정량을 반환.
+   * isSamePosition에 주입하여 4-way 비교 전에 offset을 보정한다.
    */
-  private isSameAutoLayoutChild(
+  private computeAutoLayoutShift(
     nodeA: InternalNode,
     nodeB: InternalNode
-  ): boolean {
-    // 1. 타입 일치 확인 (Stage 1에서 shape 호환성은 이미 통과)
-    if (nodeA.type !== nodeB.type) return false;
-
-    // 2. 부모가 Auto Layout인지 확인
+  ): { axis: "x" | "y"; shiftA: number; shiftB: number } | null {
     const layoutInfo = this.getParentAutoLayoutInfo(nodeA, nodeB);
-    if (!layoutInfo) return false;
+    if (!layoutInfo) return null;
 
-    // 3. 크기 유사성 확인
-    if (!this.isSimilarSize(nodeA, nodeB)) return false;
+    const { axis, spacing: gap } = layoutInfo;
+    const leftA = this.getOriginalLeftSiblings(nodeA, axis);
+    const leftB = this.getOriginalLeftSiblings(nodeB, axis);
+    if (!leftA || !leftB) return null;
 
-    // 4. 왼쪽 컨텍스트 비교로 위치 보정 후 매칭
-    return this.matchByAdjustedPosition(nodeA, nodeB, layoutInfo);
+    const { extraA, extraB } = this.matchLeftContexts(leftA, leftB);
+
+    const sharedCount = leftA.length - extraA.length;
+    if (sharedCount === 0) {
+      const childrenA = this.getOriginalParentChildren(nodeA);
+      const childrenB = this.getOriginalParentChildren(nodeB);
+      if (!childrenA || !childrenB) return null;
+      if (childrenA.length === childrenB.length) return null;
+    }
+
+    const sizeKey = axis === "x" ? "width" : "height";
+    const shiftA = extraA.reduce(
+      (sum, n) => sum + ((n as any).absoluteBoundingBox?.[sizeKey] ?? 0) + gap,
+      0
+    );
+    const shiftB = extraB.reduce(
+      (sum, n) => sum + ((n as any).absoluteBoundingBox?.[sizeKey] ?? 0) + gap,
+      0
+    );
+
+    // 보정량이 없으면 null 반환 (불필요한 계산 회피)
+    if (shiftA === 0 && shiftB === 0) return null;
+
+    return { axis, shiftA, shiftB };
   }
 
   /**
@@ -496,68 +524,6 @@ export class NodeMatcher {
       Math.abs(nodeA.bounds.width - nodeB.bounds.width) <= tolerance &&
       Math.abs(nodeA.bounds.height - nodeB.bounds.height) <= tolerance
     );
-  }
-
-  /**
-   * 왼쪽 컨텍스트를 보정하여 위치 매칭
-   *
-   * 1. 원본 variant 데이터에서 양쪽 노드의 왼쪽 형제를 수집
-   * 2. type+size로 왼쪽 형제를 매칭하여 공유/extra 요소 식별
-   * 3. extra 요소의 크기 + gap을 보정량으로 계산
-   * 4. 보정된 위치로 최종 비교
-   */
-  private matchByAdjustedPosition(
-    nodeA: InternalNode,
-    nodeB: InternalNode,
-    layoutInfo: AutoLayoutInfo
-  ): boolean {
-    const { axis, spacing: gap } = layoutInfo;
-
-    // 원본 variant 데이터에서 왼쪽 형제 조회
-    const leftA = this.getOriginalLeftSiblings(nodeA, axis);
-    const leftB = this.getOriginalLeftSiblings(nodeB, axis);
-    if (!leftA || !leftB) return false;
-
-    // 왼쪽 형제를 type+size로 매칭하여 extra 요소 식별
-    const { extraA, extraB } = this.matchLeftContexts(leftA, leftB);
-
-    // 공유 컨텍스트가 없으면: 부모 자식 수가 다를 때만 허용
-    // 자식 수가 같으면 단순 재배치(LeftIcon↔RightIcon)일 가능성 → 거부
-    // 자식 수가 다르면 요소 추가/제거로 인한 시프트 → 허용
-    const sharedCount = leftA.length - extraA.length;
-    if (sharedCount === 0) {
-      const childrenA = this.getOriginalParentChildren(nodeA);
-      const childrenB = this.getOriginalParentChildren(nodeB);
-      if (!childrenA || !childrenB) return false;
-      if (childrenA.length === childrenB.length) return false;
-    }
-
-    // extra 요소의 크기 + gap 합산 → 보정량
-    const sizeKey = axis === "x" ? "width" : "height";
-    const shiftA = extraA.reduce(
-      (sum, n) =>
-        sum + ((n as any).absoluteBoundingBox?.[sizeKey] ?? 0) + gap,
-      0
-    );
-    const shiftB = extraB.reduce(
-      (sum, n) =>
-        sum + ((n as any).absoluteBoundingBox?.[sizeKey] ?? 0) + gap,
-      0
-    );
-
-    // 원본 절대좌표에서 보정 후 비교
-    const nodeAId = nodeA.mergedNodes?.[0]?.id ?? nodeA.id;
-    const nodeBId = nodeB.mergedNodes?.[0]?.id ?? nodeB.id;
-    const { node: origA } = this.dataManager.getById(nodeAId);
-    const { node: origB } = this.dataManager.getById(nodeBId);
-    if (!origA || !origB) return false;
-
-    const posA =
-      ((origA as any).absoluteBoundingBox?.[axis] ?? 0) - shiftA;
-    const posB =
-      ((origB as any).absoluteBoundingBox?.[axis] ?? 0) - shiftB;
-
-    return Math.abs(posA - posB) <= 10;
   }
 
   /**
