@@ -252,7 +252,11 @@ Props 변경 없음.
     → dot 이름 → bindings.content 삭제, visibleCondition = truthy(checked)
     → interaction 이름 → bindings + slot prop 삭제
 
-10. rewritePropConditions() + rewriteStateDynamicStyles()
+10. addTextProp()
+    → TEXT 노드가 있으면 text prop에 bindings.content 연결
+    → TEXT 노드가 없어도 text?: string prop 추가 (라디오는 관례적으로 라벨 필요)
+
+11. rewritePropConditions() + rewriteStateDynamicStyles()
     → 제거된 state 참조를 checked 조건으로 재작성
 ```
 

@@ -304,13 +304,13 @@ Phase 2: 스타일 + 후처리 (구조 잠금)
 | **VariantMerger** | IoU 기반 노드 매칭으로 COMPONENT_SET variants 병합 |
 | **VariantGraphBuilder** | variant 병합 순서 결정 (의존성 그래프) |
 | **NodeMatcher** | 위치/ID/타입 기반 노드 매칭 |
-| **PropsExtractor** | componentPropertyDefinitions → PropDefinition[] |
+| **PropsExtractor** | componentPropertyDefinitions → PropDefinition[] (플랫폼 독립 — HTML rename 없음) |
 | **SlotProcessor** | 통합 슬롯 감지 (개별 + 배열 + 텍스트) |
 | **InstanceSlotProcessor** | INSTANCE 슬롯 바인딩 처리 |
 | **ArraySlotProcessor** | 반복 INSTANCE → 배열 슬롯 |
 | **TextProcessor** | TEXT 노드 콘텐츠 추출 + 바인딩 |
 | **VisibilityProcessor** | variant 조건 파싱 + 중복 조건 최적화 |
-| **StyleProcessor** | variant 스타일 → CSS (base/dynamic/pseudo/mediaQuery) |
+| **StyleProcessor** | variant 스타일 → CSS (base/dynamic/pseudo/mediaQuery) + CSS 노이즈 정규화 |
 | **ExternalRefsProcessor** | INSTANCE 외부 참조 + 벡터 SVG 병합 |
 
 ### Processor 유틸리티

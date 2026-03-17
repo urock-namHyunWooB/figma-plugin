@@ -213,15 +213,19 @@ nodeToVariantRoot = {
 #### 왜 그래프가 필요한가?
 
 4개 variant를 병합할 때, 아무 순서로 합쳐도 최종 트리 구조는 같습니다.
-하지만 **생성되는 조건 코드의 품질이 달라집니다.**
+하지만 **노드 매칭 정확도가 달라집니다.**
+
+비슷한 variant(1-prop 차이)끼리 먼저 병합하면 노드 위치·구조 차이가 작아서 `isSameNode()`가 올바르게 매칭할 가능성이 높아집니다. 반대로 차이가 큰 variant를 먼저 합치면 매칭 실패 → 같은 역할의 노드가 별개 노드로 분리될 위험이 있습니다.
 
 ```
 나쁜 순서: Size=Large/State=Default + Size=Small/State=Hover (2개 prop 동시 변경)
-→ "이 스타일 변화가 Size 때문인지 State 때문인지 모름"
+→ 크기·상태가 동시에 달라 노드 위치 차이가 커짐 → isSameNode 실패율 증가
 
 좋은 순서: Size=Large/State=Default + Size=Small/State=Default (Size 1개만 변경)
-→ "Size가 바뀌면 이 스타일이 달라진다"는 인과관계가 명확
+→ 상태가 같으므로 구조적 차이가 최소화 → 노드 매칭 안정적
 ```
+
+> **참고**: `propDiff`가 `mergeTwoTrees()`에 전달되지만 현재 구현에서는 실제로 참조되지 않습니다 (dead parameter). 스타일 소유권 분석은 병합 완료 후 `StyleProcessor`와 `DynamicStyleDecomposer`가 `mergedNodes` 전체를 보고 독립적으로 수행합니다.
 
 **목표: 매번 prop 1개만 달라지는 순서를 찾는 것.**
 
@@ -316,12 +320,12 @@ for (i = 0; i < N; i++)
 
 이 순서로 병합하면:
 ```
-0 + 1: Size만 다름 ✓ → "Size가 바뀌면 이 스타일이 변한다"
-(0+1) + 2: State만 다름 ✓ → "State가 바뀌면 이 스타일이 변한다"
+0 + 1: Size만 다름 ✓ → 구조 차이 최소 → 노드 매칭 안정적
+(0+1) + 2: State만 다름 ✓ → 마찬가지
 (0+1+2) + 3: State만 다름 ✓
 ```
 
-**매번 1개 prop만 달라지므로 prop↔스타일 인과관계가 명확해집니다.**
+**매번 1개 prop만 달라지므로 각 병합 단계에서 노드 매칭 오차가 최소화됩니다.**
 
 #### 2-4. Disconnected 처리
 

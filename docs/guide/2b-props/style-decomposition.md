@@ -23,6 +23,8 @@ applyStyles(node)
 │
 ├── applyVariantStyles(node)
 │   ├── collectVariantStyles(mergedNodes)      → [{variantName, cssStyle}, ...]
+│   │     └── normalizeCssNoise(cssStyle)      → near-zero rotation 제거
+│   ├── normalizeAcrossVariants(variantStyles) → flex 자식 ≤1 variant의 gap 통일
 │   ├── separateStateVariants(variantStyles)   → baseVariants / pseudoVariants 분리
 │   ├── extractCommonStyles(baseVariants)      → base (모든 variant 공통)
 │   ├── extractDynamicStyles(baseVariants, base) → dynamic (variant별 차이)
@@ -31,6 +33,13 @@ applyStyles(node)
 └── applyPositionStyles(node)
     └── 자식에 position:absolute + left/top 계산
 ```
+
+#### CSS 노이즈 정규화
+
+Figma의 `getCSSAsync()`가 렌더링에 무의미한 CSS 값을 반환하는 경우가 있다. StyleProcessor는 variant 간 비교 전에 이를 정규화한다:
+
+1. **normalizeCssNoise** (per-variant): `|angle| < 0.01deg` rotation 제거 (TEXT 노드의 부동소수점 노이즈)
+2. **normalizeAcrossVariants** (cross-variant): flex 자식 ≤1인 variant의 gap을 자식 ≥2인 variant의 대표값으로 통일. gap은 자식 간 간격이므로 자식 1개 이하면 어떤 값이든 렌더링 결과가 같다.
 
 #### State 감지 및 분리
 
@@ -231,18 +240,83 @@ keptEntries(loading 등)가 존재하면, **default 엔트리도 state 조건을
 
 **가장 복잡한 단계.** AND 조건(`size=M AND style=filled`)으로 묶인 CSS에서 각 속성의 "주인"을 찾는다.
 
+#### 핵심 개념: 함수 종속성(Functional Dependency)
+
+이 알고리즘의 이론적 토대는 데이터베이스의 **함수 종속성(FD)** 개념이다.
+
+> **FD 정의**: prop P → CSS C
+> "P의 값이 결정되면 C의 값도 유일하게 결정된다"
+
+```
+size → fontSize   ✓  (size=M이면 fontSize는 항상 14px)
+size → background ✗  (size=M이어도 background는 style에 따라 다름)
+```
+
+단일 prop이 CSS를 결정하지 못하는 경우, **복합 FD(Compound FD)**가 성립할 수 있다:
+
+```
+(style, tone) → background  ✓
+  filled+blue  → "blue"
+  outlined+blue → "transparent"
+  filled+red   → "red"
+  → style과 tone의 조합이 결정되면 background가 유일하게 결정됨
+```
+
+DynamicStyleDecomposer는 각 CSS 속성에 대해 어떤 prop (또는 prop 조합)이 FD를 성립시키는지 역추론한다. 이것이 "소유권(ownership) 결정"의 의미다.
+
 #### 핵심 개념: 일관성(Consistency)
+
+일관성은 **FD가 성립하는지 검증하는 수단**이다.
 
 > prop P가 CSS 속성 C를 "제어"한다 = P의 같은 값 그룹 내에서 C의 값이 항상 동일하다.
 
 ```
 size=M인 모든 variant에서 fontSize가 항상 "14px"
 size=L인 모든 variant에서 fontSize가 항상 "16px"
-→ "size"가 fontSize를 제어 ✓
+→ "size"가 fontSize를 제어 ✓  (size → fontSize FD 성립)
 
 size=M인 variant에서 background가 "blue" 또는 "transparent" (style에 따라 다름)
-→ "size"는 background를 제어하지 않음 ✗
+→ "size"는 background를 제어하지 않음 ✗  (size → background FD 불성립)
 ```
+
+일관성이 깨지면 → FD가 성립하지 않음 → 해당 prop은 소유자가 아님.
+
+#### 논리 구조 — 소유권 판정 예시
+
+```
+질문: "border-color는 어떤 prop이 제어하는가?"
+
+size=L 그룹: [#0066FF, #0066FF] → 내부 일관 ✓
+size=M 그룹: [#FF0000, #FF0000] → 내부 일관 ✓
+그룹 간 차이: {#0066FF, #FF0000} → 다름 ✓
+→ size → border-color FD 성립 → size가 소유한다
+
+active=T 그룹: [#0066FF, #FF0000] → 내부 불일치 ✗
+→ active → border-color FD 불성립 → active는 소유자가 아님
+```
+
+두 조건이 **동시에** 충족되어야 FD가 성립한다:
+1. 같은 prop 값끼리 묶은 그룹의 내부 CSS 값이 모두 동일 (그룹 내 일관성)
+2. 서로 다른 그룹 간에 CSS 값이 다름 (그룹 간 차이)
+
+> **FD가 성립하지 않는 경우**: 1차(단일 prop) → 2차(compound prop) → 3차(best-fit 강제 할당) 순서로 탐색한다. Best-fit은 완전한 FD가 없을 때의 근사치이며, 진단(diagnostics)으로 기록된다.
+
+#### 3단계 소유권 탐색 우선순위
+
+| 단계 | 방법 | 조건 |
+|------|------|------|
+| 1차 | 단일 prop 일관성 검증 | 위 두 조건 모두 충족 시 즉시 채택 |
+| 2차 | Compound prop (2–3개 조합) | 1차 실패 + bestSingleRatio ≤ 50% 일 때만 |
+| 3차 | Best-fit 강제 할당 | 그래도 결정 안 되면 일관 그룹이 가장 많은 prop 선택 |
+
+#### 거짓 양성 방지책
+
+| 규칙 | 이유 |
+|------|------|
+| Compound는 "모든 그룹이 엔트리 1개씩"이면 스킵 | 단순 열거(모든 조합이 유일)와 공동 소유권을 구분 |
+| Single 일관성 > 50%면 compound 시도 안 함 | 단일 prop으로 충분히 설명되면 compound는 과적합 |
+| CSS 변수는 fallback 값으로 정규화 후 비교 | `var(--Color, #F9F9F9)` → `#F9F9F9` (변수명 차이로 오판 방지) |
+| present와 absent가 섞인 그룹은 불일치로 판정 | CSS 속성이 어떤 variant엔 있고 없는 것도 불일치 |
 
 #### decompose() 전체 흐름
 

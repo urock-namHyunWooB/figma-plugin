@@ -73,14 +73,27 @@ interface BundledResult {
 #### 책임
 
 - UITree를 React TypeScript 코드로 변환
+- Native HTML prop 충돌 rename (UITree 복사본에서 element별 처리)
 - 4개 Generator 조합으로 코드 생성
 - Prettier 포맷팅 적용
 - 미사용 import 필터링
+
+#### Native Prop Rename
+
+UITree는 플랫폼 독립 IR이므로 원본 prop 이름(`type`, `disabled` 등)을 유지한다.
+ReactEmitter는 `emit()` 진입 시 UITree 복사본을 만들어 root element별 충돌 prop을 rename한다:
+
+- `<button>`: `type` → `customType`, `disabled` → `customDisabled` 등
+- `<input>`: `placeholder` → `customPlaceholder`, `value` → `customValue` 등
+- `<a>`: `href` → `customHref` 등
+- `<div>` (container): rename 없음
 
 #### 코드 생성 파이프라인
 
 ```
 UITree
+  │
+  ├── 0. renameNativeProps()                 element별 HTML prop 충돌 rename (복사본)
   │
   ├── 1. toComponentName(root.name)          컴포넌트 이름 결정
   │
@@ -189,7 +202,7 @@ export default ButtonComponent;
 - 배열 슬롯: `{items.map((item, index) => <Item key={index} {...item} />)}`
 - SVG → JSX 변환 (kebab-case → camelCase, class → className)
 - 텍스트 세그먼트 스타일 분리, `\n` → `<br />`
-- Slot wrapper: TEXT 바인딩은 `<span>` (inline), 그 외는 `<div>` 사용
+- Slot wrapper: TEXT 바인딩과 icon semanticType은 `<span>` (inline), 그 외는 `<div>` 사용
 - Slot mockup SVG: wrapper 크기에 맞춤 (width/height: 100%)
 
 ### StyleStrategy 패턴
