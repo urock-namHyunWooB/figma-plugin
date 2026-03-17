@@ -18,7 +18,7 @@ export class FigmaPlugin {
    */
   async initialize(): Promise<void> {
     // UI 표시
-    figma.showUI(__html__, { width: 400, height: 1000 });
+    figma.showUI(__html__, { width: 500, height: 1000 });
 
     figma.ui.onmessage = async (msg) => {
       await this.handleMessage(msg);
