@@ -1102,7 +1102,8 @@ ${indentStr}</${tag}>`;
   ): string {
     const indentStr = " ".repeat(indent);
     const styleVarName = this.nodeStyleMap.get(node.id);
-    const tag = node.type === "text" ? "span" : "div";
+    const isInline = node.type === "text" || node.semanticType === "icon" || node.semanticType === "icon-wrapper";
+    const tag = isInline ? "span" : "div";
 
     // 스타일이 없으면 조건부로 slot만 렌더링
     if (!styleVarName || !node.styles || !this.hasNonEmptyStyles(node.styles)) {
