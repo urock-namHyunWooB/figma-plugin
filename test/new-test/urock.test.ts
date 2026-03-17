@@ -770,11 +770,12 @@ describe("Frame", () => {
     expect(childrenIdx).toBeLessThan(cardBgIdx);
   });
 
-  it("variant props(color, stroke, customType)가 정상 생성되어야 한다", async () => {
+  it("variant props(color, stroke, type)가 정상 생성되어야 한다", async () => {
     const result = await compileFixture();
     expect(result).toMatch(/color\?:/);
     expect(result).toMatch(/stroke\?:/);
-    expect(result).toMatch(/customType\?:/);
+    // Frame은 div root → type은 HTML 충돌 아님 → rename 안 함
+    expect(result).toMatch(/\btype\?:/);
   });
 });
 

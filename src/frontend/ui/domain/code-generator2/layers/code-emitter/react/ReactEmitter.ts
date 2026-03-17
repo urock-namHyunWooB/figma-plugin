@@ -43,6 +43,13 @@ import { TailwindStrategy } from "./style-strategy/TailwindStrategy";
 import type { IStyleStrategy } from "./style-strategy/IStyleStrategy";
 import { toComponentName } from "../../../utils/nameUtils";
 
+/** element별 충돌하는 native HTML attribute */
+const NATIVE_ATTRS_BY_ELEMENT: Record<string, Set<string>> = {
+  button: new Set(["type", "name", "value", "disabled"]),
+  input: new Set(["type", "name", "value", "disabled", "placeholder", "checked", "required"]),
+  link: new Set(["href", "name", "type"]),
+};
+
 /** 스타일 전략 타입 */
 export type StyleStrategyType = "emotion" | "tailwind";
 
@@ -83,11 +90,14 @@ export class ReactEmitter implements ICodeEmitter {
    * 3. 섹션 조합 및 포맷팅
    */
   async emit(uiTree: UITree): Promise<EmittedCode> {
+    // Step 0: native HTML prop 충돌 rename (UITree 복사본에 적용)
+    const renamedTree = this.renameNativeProps(uiTree);
+
     // Step 1: 컴포넌트명 생성
-    const componentName = toComponentName(uiTree.root.name);
+    const componentName = toComponentName(renamedTree.root.name);
 
     // Step 2: 각 섹션 생성 (독립적으로 병렬 가능)
-    const sections = this.generateAllSections(uiTree, componentName);
+    const sections = this.generateAllSections(renamedTree, componentName);
 
     // Step 3: 조합 및 포맷팅
     const code = await this.assembleAndFormat(sections);
@@ -273,6 +283,41 @@ export class ReactEmitter implements ICodeEmitter {
       console.warn("Prettier formatting failed:", error);
       return code;
     }
+  }
+
+  /**
+   * UITree 복사본을 만들어 native HTML prop 충돌 이름을 일괄 rename.
+   * 원본 UITree(Layer 2 출력)는 변경하지 않음.
+   *
+   * rename 대상: rootNodeType이 native element(button, input, a)일 때
+   * 해당 element의 native attributes와 이름이 겹치는 props.
+   */
+  private renameNativeProps(uiTree: UITree): UITree {
+    const rootType = (uiTree.root as any).type as string;
+    const nativeAttrs = NATIVE_ATTRS_BY_ELEMENT[rootType];
+    if (!nativeAttrs) return uiTree;
+
+    // rename 대상 prop 수집
+    const renameMap = new Map<string, string>();
+    for (const prop of uiTree.props) {
+      if (nativeAttrs.has(prop.name)) {
+        renameMap.set(prop.name, "custom" + prop.name.charAt(0).toUpperCase() + prop.name.slice(1));
+      }
+    }
+    if (renameMap.size === 0) return uiTree;
+
+    // deep copy + prop 이름 일괄 치환
+    const json = JSON.stringify(uiTree);
+    let renamed = json;
+
+    for (const [original, newName] of renameMap) {
+      // "prop":"type" → "prop":"customType" (ConditionNode, Bindings 등)
+      renamed = renamed.replaceAll(`"prop":"${original}"`, `"prop":"${newName}"`);
+      // "name":"type" (PropDefinition.name)
+      renamed = renamed.replaceAll(`"name":"${original}"`, `"name":"${newName}"`);
+    }
+
+    return JSON.parse(renamed);
   }
 }
 

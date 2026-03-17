@@ -503,13 +503,9 @@ export class PropsExtractor {
       propName = "_" + propName;
     }
 
-    // 3. Native HTML prop과 충돌하는 이름은 custom 접두사 추가
-    if (this.isNativePropConflict(propName)) {
-      propName =
-        "custom" + propName.charAt(0).toUpperCase() + propName.slice(1);
-    }
-
-    // 4. JavaScript 예약어 충돌 방지
+    // 3. JavaScript 예약어 충돌 방지
+    // NOTE: Native HTML prop 충돌 rename은 Layer 3(ReactEmitter)에서 처리.
+    //       UITree는 플랫폼 독립 IR이므로 여기서 HTML 종속 변환을 하지 않는다.
     if (this.isJsReservedWord(propName)) {
       propName = "is" + propName.charAt(0).toUpperCase() + propName.slice(1);
     }
@@ -532,24 +528,4 @@ export class PropsExtractor {
     return reservedWords.has(propName.toLowerCase());
   }
 
-  /**
-   * Native HTML prop과 충돌하는 이름인지 확인
-   */
-  private isNativePropConflict(propName: string): boolean {
-    // button/input 등의 native HTML attributes
-    const nativeProps = new Set([
-      "type", // button type
-      "name", // form element name
-      "value", // input value
-      "checked", // checkbox checked
-      "disabled", // disabled state (보통 State prop으로 처리되어 제외됨)
-      "required", // required attribute
-      "placeholder", // input placeholder
-      "href", // anchor href
-      "src", // image src
-      "alt", // image alt
-    ]);
-
-    return nativeProps.has(propName);
-  }
 }
