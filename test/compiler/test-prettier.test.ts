@@ -4,7 +4,7 @@ import fs from "fs";
 
 describe("Prettier formatting", () => {
   it("should format bundled code with Prettier", async () => {
-    const data = JSON.parse(fs.readFileSync("test/fixtures/failing/Button.json", "utf8"));
+    const data = JSON.parse(fs.readFileSync("test/fixtures/button/Button.json", "utf8"));
     const gen = new FigmaCodeGenerator(data, { styleStrategy: "emotion" });
     const result = await gen.compileWithDiagnostics();
     
