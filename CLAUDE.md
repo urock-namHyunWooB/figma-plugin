@@ -134,15 +134,16 @@ Detailed technical docs in `docs/guide/`:
 4. **Issue Documentation**: Record resolved issues in markdown (problem, cause, solution, related files)
 5. **Add Regression Tests**: Write tests for the resolved issue
 
-### Subagent Usage (Mandatory)
+### Subagent Usage
 
 Use these subagents proactively when conditions are met:
 
-**browser-validator**: Use when verifying compiled component rendering, comparing with Figma original, checking style values, or testing on `/test` route. Always scroll to capture full content.
-
-**compiler-debugger**: Use when compilation fails, AST tree analysis is needed, 2-phase 11-step pipeline tracing is required, or investigating slot/props/InternalTree issues.
-
 **issue-closer**: Use when a compiler issue is resolved and needs documentation with regression tests.
+
+### Git Workflow
+
+- 실험적 변경은 반드시 worktree에서 작업할 것. main repo 파일을 피처 작업 용도로 직접 수정하지 말 것.
+- worktree 생성: `git worktree add .claude/worktrees/<name> -b <branch>`
 
 ## Refactoring Status
 
