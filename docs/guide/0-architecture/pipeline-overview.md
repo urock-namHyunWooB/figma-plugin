@@ -15,9 +15,9 @@ Figma와 React는 근본적으로 다른 모델을 사용한다.
 
 1. **Variant 병합**: 48개의 독립된 트리를 하나의 트리로 합치면서, 어떤 노드가 "같은 노드"인지 판별해야 한다. (위치도, 크기도, 심지어 타입도 variant마다 다를 수 있다)
 
-2. **의미 부여**: FRAME+TEXT 구조만으로는 이것이 Button인지 Dropdown인지 알 수 없다. 시각적 구조에서 UX 패턴을 추론해야 한다.
+2. **의미 부여**: FRAME+TEXT 구조만으로는 이것이 Button인지 Dropdown인지 알 수 없다. 시각적 구조에서 UX 패턴을 추론해야 한다. (→ [Heuristics 시스템](#heuristics-시스템))
 
-3. **스타일 소유권 결정**: `fontSize: 14px`가 size prop 때문인지 style prop 때문인지 — 48개 variant의 CSS를 비교해서 각 속성의 "주인"을 찾아야 한다.
+3. **스타일 소유권 결정**: `fontSize: 14px`가 size prop 때문인지 style prop 때문인지 — 48개 variant의 CSS를 비교해서 각 속성의 "주인"을 찾아야 한다. (→ [스타일 분해 가이드](../2b-props/style-decomposition.md))
 
 ## 3-Layer 아키텍처가 필요한 이유
 
@@ -185,7 +185,7 @@ Layer 2는 "시각적 노드 → 의미 있는 컴포넌트"로의 변환을 담
 
 **난제 2: Slot과 Props 추출** — Figma의 `componentPropertyDefinitions`에서 props를 추출하되, boolean visibility prop은 React의 `React.ReactNode` slot으로 변환해야 한다. variant 간 텍스트가 다르면 string prop으로 노출한다. (→ PropsExtractor, SlotProcessor)
 
-**난제 3: 의미 부여** — FRAME 안에 TEXT와 INSTANCE가 있다. 이게 Button인지 Checkbox인지 Input인지는 Figma 데이터에 없다. 이름 패턴, 구조적 특성, prop 유형을 분석해서 점수 기반으로 가장 적합한 UX 패턴을 선택한다. (→ HeuristicsRunner)
+**난제 3: 의미 부여** — Figma의 FRAME+TEXT+INSTANCE 구조에는 "이것은 Button이다"라는 정보가 없다. 점수 기반 Heuristic으로 UX 패턴을 추론한다. (→ [Heuristics 시스템](#heuristics-시스템))
 
 이 세 난제를 풀고 나면 **UITree**(플랫폼 독립 IR)가 완성되고, Layer 3이 이를 코드로 출력한다.
 
@@ -328,15 +328,9 @@ processors/utils/
 
 #### 왜 필요한가
 
-Figma에서 Button과 Checkbox는 구조적으로 거의 동일하다 — 둘 다 FRAME 안에 INSTANCE(아이콘)와 TEXT(라벨)가 있다. 하지만 React에서는 완전히 다른 컴포넌트다:
+Figma 데이터에는 "이것은 Button이다"라는 시맨틱 정보가 없다. 모든 컴포넌트가 FRAME+TEXT+INSTANCE 조합일 뿐이다. Heuristic은 이름 패턴, prop 구조, 자식 구성을 분석해서 가장 적합한 UX 패턴을 추론하고, 그에 맞게 트리를 변환한다.
 
-- Button → `<button>` 태그, State prop을 `:hover`/`:active` pseudo-class로 변환
-- Checkbox → `<div>` + checked boolean prop, `onCheckedChange` 이벤트 바인딩
-- Dropdown → 내부 `useState(open)`, 리스트 조건부 렌더링, 배열 슬롯
-
-이 "의미 부여"를 하나의 거대한 if-else로 처리하면 유지보수가 불가능하다. 대신 각 UX 패턴을 **독립된 Heuristic 클래스**로 분리하고, 점수 기반으로 경쟁시킨다. 새 패턴이 필요하면 Heuristic 하나를 추가하면 된다.
-
-> 상세한 각 Heuristic의 동작은 [Props Heuristics 가이드](../2b-props/heuristics.md)를 참조하세요.
+> Heuristic이 풀어야 하는 문제와 각 Heuristic의 상세 동작은 [Props Heuristics 가이드](../2b-props/heuristics.md)를 참조하세요.
 
 #### 설계 원칙
 
