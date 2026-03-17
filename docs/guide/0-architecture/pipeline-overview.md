@@ -310,7 +310,7 @@ Phase 2: 스타일 + 후처리 (구조 잠금)
 | **ArraySlotProcessor** | 반복 INSTANCE → 배열 슬롯 |
 | **TextProcessor** | TEXT 노드 콘텐츠 추출 + 바인딩 |
 | **VisibilityProcessor** | variant 조건 파싱 + 중복 조건 최적화 |
-| **StyleProcessor** | variant 스타일 → CSS (base/dynamic/pseudo/mediaQuery) + CSS 노이즈 정규화 |
+| **StyleProcessor** | variant 스타일 → CSS (base/dynamic/pseudo/mediaQuery) + CSS 노이즈 정규화 + prop 이름 정규화 (rename 없음 — native HTML prop 충돌 rename은 Layer 3 ReactEmitter가 담당) |
 | **ExternalRefsProcessor** | INSTANCE 외부 참조 + 벡터 SVG 병합 |
 
 ### Processor 유틸리티

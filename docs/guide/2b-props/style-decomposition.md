@@ -7,7 +7,7 @@
 3개 모듈이 순차적으로 동작한다:
 
 ```
-StyleProcessor      → variant CSS를 base/dynamic/pseudo로 분류
+StyleProcessor      → variant CSS를 base/dynamic/pseudo로 분류 + prop 이름 정규화 (rename 없음)
 rewritePropConditions → State 조건을 pseudo-class로 변환 + compound 감지
 DynamicStyleDecomposer → AND 조건 dynamic에서 CSS 속성별 소유 prop 결정
 ```
@@ -240,9 +240,33 @@ keptEntries(loading 등)가 존재하면, **default 엔트리도 state 조건을
 
 **가장 복잡한 단계.** AND 조건(`size=M AND style=filled`)으로 묶인 CSS에서 각 속성의 "주인"을 찾는다.
 
+#### 핵심 개념: 다변수 함수 역추론
+
+Figma의 COMPONENT_SET은 본질적으로 **다변수 함수의 정의역**이다:
+
+```
+Figma variant = Style × Tone × Size × State 의 카르테시안 곱
+
+순방향 (Figma가 이미 알고 있음):
+  f(size, style, tone, state) = { fontSize, background, padding, ... }
+
+역추론 문제 (우리가 풀어야 하는 것):
+  각 CSS 출력마다 "어떤 변수의 최소 부분집합이 이 값을 결정하는가?"
+```
+
+각 CSS 속성은 아래 세 가지 중 하나에 해당한다:
+
+```
+fontSize:    f(size) = fontSize          → 단변수 함수  → "size"가 소유
+background:  f(style, tone) = background → 2변수 함수   → "style+tone"이 소유
+padding:     모든 variant에서 동일        → 상수 함수    → base로 이동
+```
+
+이 역추론이 "소유권(ownership) 결정"의 의미다. 수학적으로는 전체 다변수 함수에서 각 CSS 출력에 대해 **유효 변수(effective variable)의 최소 부분집합**을 찾는 문제다.
+
 #### 핵심 개념: 함수 종속성(Functional Dependency)
 
-이 알고리즘의 이론적 토대는 데이터베이스의 **함수 종속성(FD)** 개념이다.
+FD는 역추론의 **검증 도구**다. 단변수 함수 `f(P) = C`가 성립하는지 집합론으로 표현하면:
 
 > **FD 정의**: prop P → CSS C
 > "P의 값이 결정되면 C의 값도 유일하게 결정된다"
@@ -252,17 +276,17 @@ size → fontSize   ✓  (size=M이면 fontSize는 항상 14px)
 size → background ✗  (size=M이어도 background는 style에 따라 다름)
 ```
 
-단일 prop이 CSS를 결정하지 못하는 경우, **복합 FD(Compound FD)**가 성립할 수 있다:
+단일 변수로 결정되지 않으면 **2변수 함수(Compound FD)**를 시도한다:
 
 ```
-(style, tone) → background  ✓
-  filled+blue  → "blue"
-  outlined+blue → "transparent"
-  filled+red   → "red"
-  → style과 tone의 조합이 결정되면 background가 유일하게 결정됨
+f(style, tone) = background  ✓
+  (filled, blue)    → "blue"
+  (outlined, blue)  → "transparent"
+  (filled, red)     → "red"
+  → dom(style) × dom(tone) 카르테시안 곱이 background를 유일하게 결정
 ```
 
-DynamicStyleDecomposer는 각 CSS 속성에 대해 어떤 prop (또는 prop 조합)이 FD를 성립시키는지 역추론한다. 이것이 "소유권(ownership) 결정"의 의미다.
+DynamicStyleDecomposer는 각 CSS 속성에 대해 어떤 prop (또는 prop 조합)이 FD를 성립시키는지 역추론한다.
 
 #### 핵심 개념: 일관성(Consistency)
 
@@ -745,7 +769,7 @@ function Button(props: ButtonProps) {
 | `heuristics/ProfileHeuristic.ts` | 3 | imageSrc + hover overlay 이중 렌더링 |
 | `heuristics/FrameHeuristic.ts` | 3 | children slot 설정 |
 | `heuristics/GenericHeuristic.ts` | 3 | 범용 슬롯 감지 (폴백) |
-| `processors/StyleProcessor.ts` | 4 | variant 스타일 → base/dynamic/pseudo 분류 |
+| `processors/StyleProcessor.ts` | 4 | variant 스타일 → base/dynamic/pseudo 분류 + prop 이름 정규화 (native HTML rename 없음 — Layer 3 담당) |
 | `processors/utils/rewritePropConditions.ts` | 3-4 | State → pseudo-class 변환 + compound 감지 |
 | `post-processors/DynamicStyleDecomposer.ts` | 4 | prop별 CSS 소유권 분석 + 균일 속성 제거 |
 | `generators/PropsGenerator.ts` | 5 | TypeScript interface 생성 |
