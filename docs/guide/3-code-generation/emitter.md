@@ -152,6 +152,8 @@ export default ButtonComponent;
 - 배열 슬롯: `{items.map((item, index) => <Item key={index} {...item} />)}`
 - SVG → JSX 변환 (kebab-case → camelCase, class → className)
 - 텍스트 세그먼트 스타일 분리, `\n` → `<br />`
+- Slot wrapper: TEXT 바인딩은 `<span>` (inline), 그 외는 `<div>` 사용
+- Slot mockup SVG: wrapper 크기에 맞춤 (width/height: 100%)
 
 ### StyleStrategy 패턴
 
@@ -210,6 +212,8 @@ className={buttonClasses({ size, disabled })}
 
 ### DynamicStyleDecomposer
 
+> **위치**: `layers/tree-manager/post-processors/DynamicStyleDecomposer.ts` (Layer 2→3 순환 의존성 해결을 위해 code-emitter에서 이동됨)
+
 복합 AND 조건(`size=M AND active=true`)에서 각 CSS 속성의 "소유 prop"을 결정합니다.
 
 ```
@@ -226,6 +230,17 @@ Step 5: 균일 속성 제거 (모든 variant 동일 = 비제어)
 **진단 출력**: variant 그룹 내 CSS 속성 불일치 시 `VariantInconsistency` 보고
 → UI에서 "디자인 불일치: Button color가 size=M에서 일관되지 않음" 표시 가능
 
+### Slot Dependency 필터링
+
+`emitBundled()` 호출 시, 번들링 전에 slot dependency를 제외합니다.
+
+```
+filterSlotDependencies(main, deps):
+  1. main UITree의 모든 prop에서 slot 타입 → componentId 추출
+  2. 해당 componentId를 가진 dependency를 제외 목록에 추가
+  3. 이유: slot props는 외부에서 주입받으므로 dependency 코드 불필요
+```
+
 ### ReactBundler
 
 멀티 컴포넌트를 단일 `.tsx` 파일로 번들링합니다.
@@ -233,7 +248,7 @@ Step 5: 균일 속성 제거 (모든 variant 동일 = 비제어)
 #### 번들링 파이프라인
 
 ```
-Map<id, EmittedCode>
+Map<id, EmittedCode>  (filterSlotDependencies 적용 후)
   │
   ├── 1. 이름 중복 제거 (deduplicateByName)
   ├── 2. 미참조 의존성 필터링 (filterReferencedDependencies)
@@ -273,5 +288,8 @@ layers/code-emitter/
         ├── IStyleStrategy.ts        # 스타일 전략 인터페이스
         ├── EmotionStrategy.ts       # Emotion CSS-in-JS
         ├── TailwindStrategy.ts      # Tailwind CSS + CVA
-        └── DynamicStyleDecomposer.ts # 다중 prop 스타일 분해 + 진단
+        └── groupDynamicByProp.ts    # dynamic → prop별 그룹핑
+
+※ DynamicStyleDecomposer는 tree-manager/post-processors/로 이동됨
+  (Layer 2→3 순환 의존성 해결)
 ```

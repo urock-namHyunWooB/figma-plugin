@@ -203,6 +203,11 @@ Props 변경 없음.
 
  5. addDisableProp() → disable: boolean 추가
 
+ 5.5. undoCheckedPseudoStyles()
+      → StyleProcessor가 Active/Selected를 :active/:visited pseudo로 변환한 것 되돌리기
+      → visibleCondition이 있는 노드: pseudo → base로 이동 (checked-only 렌더링)
+      → visibleCondition이 없는 노드: pseudo → dynamic(truthy(checked))으로 이동
+
  6. Root bindings 설정
     → attrs.onClick = () => onChange?.(!checked)
     → attrs.disabled = {prop: "disable"}

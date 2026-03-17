@@ -42,6 +42,7 @@ FigmaCodeGenerator는 Figma 디자인 데이터를 React 컴포넌트 코드로 
 │  │  ┌───────────────────────────────────────────────────────┐ │ │
 │  │  │  Post-Processors                                       │ │ │
 │  │  │  ComponentPropsLinker → UITreeOptimizer                │ │ │
+│  │  │  DynamicStyleDecomposer (FD 분해)                      │ │ │
 │  │  └───────────────────────────────────────────────────────┘ │ │
 │  └────────────────────────────────────────────────────────────┘ │
 │                               │                                  │
@@ -346,7 +347,8 @@ interface IHeuristic {
 | Post-Processor | 역할 |
 |----------------|------|
 | **ComponentPropsLinker** | INSTANCE override → 의존성 컴포넌트 props 연결, 바인딩 전파 |
-| **UITreeOptimizer** | FD 분해 (DynamicStyleDecomposer 실행 + diagnostics 수집), 항상-true 동적 스타일 → base로 병합, 의존성 루트 유연화 (px → %), 미사용 props 제거 |
+| **DynamicStyleDecomposer** | AND 조건 dynamic에서 CSS 속성별 소유 prop 결정 + diagnostics 수집 |
+| **UITreeOptimizer** | FD 분해 (DynamicStyleDecomposer 호출), 항상-true 동적 스타일 → base로 병합, 의존성 루트 유연화 (px → %), 미사용 props 제거 |
 
 ### 디렉토리 구조
 
@@ -356,6 +358,7 @@ layers/tree-manager/
 │
 ├── post-processors/
 │   ├── ComponentPropsLinker.ts      # INSTANCE override props 연결
+│   ├── DynamicStyleDecomposer.ts    # 다중 prop 스타일 분해 + 진단
 │   └── UITreeOptimizer.ts           # 트리 최적화
 │
 └── tree-builder/
@@ -592,6 +595,7 @@ src/frontend/ui/domain/code-generator2/
 │   │   │
 │   │   ├── post-processors/
 │   │   │   ├── ComponentPropsLinker.ts
+│   │   │   ├── DynamicStyleDecomposer.ts  # 다중 prop 스타일 분해 + 진단
 │   │   │   └── UITreeOptimizer.ts
 │   │   │
 │   │   └── tree-builder/
@@ -656,7 +660,7 @@ src/frontend/ui/domain/code-generator2/
 │               ├── IStyleStrategy.ts
 │               ├── EmotionStrategy.ts
 │               ├── TailwindStrategy.ts
-│               └── DynamicStyleDecomposer.ts
+│               └── groupDynamicByProp.ts
 │
 ├── types/
 │   ├── types.ts                        # 내부 타입

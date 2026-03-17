@@ -76,7 +76,7 @@ Tailwind cva에서는 compound prop을 `flatMap(split("+"))`으로 개별 prop �
 - `layers/tree-manager/tree-builder/processors/StyleProcessor.ts`
 - `layers/tree-manager/tree-builder/processors/VisibilityProcessor.ts`
 - `layers/tree-manager/tree-builder/processors/utils/rewritePropConditions.ts`
-- `layers/code-emitter/react/style-strategy/DynamicStyleDecomposer.ts`
+- `layers/tree-manager/post-processors/DynamicStyleDecomposer.ts`
 - `layers/code-emitter/react/generators/JsxGenerator.ts`
 - `layers/tree-manager/tree-builder/heuristics/ButtonHeuristic.ts`
 - `layers/tree-manager/tree-builder/processors/SlotProcessor.ts`

@@ -26,7 +26,7 @@ applyStyles(node)
 │   ├── separateStateVariants(variantStyles)   → baseVariants / pseudoVariants 분리
 │   ├── extractCommonStyles(baseVariants)      → base (모든 variant 공통)
 │   ├── extractDynamicStyles(baseVariants, base) → dynamic (variant별 차이)
-│   └── extractStateDynamicEntries(pseudoVariants, base) → state 조건 엔트리
+│   └── extractPseudoStyles(pseudoVariants, base) → pseudo (CSS pseudo-class 직접 배치)
 │
 └── applyPositionStyles(node)
     └── 자식에 position:absolute + left/top 계산
@@ -34,7 +34,8 @@ applyStyles(node)
 
 #### State 감지 및 분리
 
-variant 이름에서 State 값을 추출하여 `baseVariants`와 `pseudoVariants`로 분리한다:
+variant 이름에서 State 값을 추출하여 `baseVariants`와 `pseudoVariants`로 분리한다.
+**pseudoVariants는 CSS pseudo-class로 직접 변환**되어 `styles.pseudo`에 배치된다 (dynamic을 거치지 않음).
 
 ```
 extractStateFromVariantName("Size=Large, State=Hover")
@@ -44,8 +45,9 @@ extractStateFromVariantName("Size=Large, State=Hover")
 separateStateVariants(variantStyles):
   각 variant:
     state 추출 → STATE_TO_PSEUDO[state] 존재?
-    ├── 예 → pseudoVariants (Hover, Active 등)
-    └── 아니오 → baseVariants (Normal, Loading 등)
+    ├── 예 → pseudoVariants → styles.pseudo (직접 CSS pseudo-class)
+    │         Hover → :hover, Active → :active, Disabled → :disabled
+    └── 아니오 → baseVariants (Normal, Loading 등) → dynamic (조건부 스타일)
 ```
 
 #### CSS 변환 가능한 State 값 (20개)
@@ -77,17 +79,17 @@ pseudo-class로 변환:
 
 매핑되지 않은 state(Loading, Error 등)는 baseVariants로 처리된다.
 
-#### extractStateDynamicEntries — 공통 diff vs 비공통 diff
+#### extractPseudoStyles — 공통 diff → CSS pseudo-class
 
-pseudo 변환 대상 variant(Hover, Active 등)의 스타일을 base 대비 diff로 분리한다:
+pseudo 변환 대상 variant(Hover, Active 등)의 스타일을 base 대비 diff로 분리하여 **공통 diff만** CSS pseudo-class에 직접 배치한다:
 
 ```
-extractStateDynamicEntries(pseudoVariants, base):
+extractPseudoStyles(pseudoVariants, base):
 │
 ├── [1] state 값별 그룹핑
 │   "Hover" → [
-│     { variantName: "Size=Large, State=Hover", cssStyle: {...} },
-│     { variantName: "Size=Small, State=Hover", cssStyle: {...} }
+│     { cssStyle: {...} },  // Size=Large, State=Hover
+│     { cssStyle: {...} }   // Size=Small, State=Hover
 │   ]
 │
 ├── [2] 각 state 그룹에 대해:
@@ -101,24 +103,17 @@ extractStateDynamicEntries(pseudoVariants, base):
 │   ├── [2-2] 공통 diff 추출
 │   │   commonDiff = { backgroundColor: "#F00" }  ← 모든 variant에 공통
 │   │
-│   ├── [2-3] 공통 diff → 단일 state 조건 엔트리
-│   │   { condition: eq(states, "Hover"), style: { backgroundColor: "#F00" } }
-│   │
-│   └── [2-4] 비공통 diff → per-variant 엔트리
-│       variant "Size=Large, State=Hover":
-│         nonCommonDiff = { color: "#FFF" }  (commonDiff 키 제거)
-│         condition = AND(eq(size, "Large"), eq(states, "Hover"))
-│                                            ↑ state 조건 포함 강제
+│   └── [2-3] 공통 diff → pseudo-class에 직접 배치
+│       styles.pseudo[":hover"] = { backgroundColor: "#F00" }
 │
-└── 결과 dynamic:
-    [
-      { condition: eq(states, "Hover"), style: { backgroundColor: "#F00" } },
-      { condition: AND(eq(size, "Large"), eq(states, "Hover")), style: { color: "#FFF" } },
-      { condition: AND(eq(size, "Small"), eq(states, "Hover")), style: { color: "#000" } }
-    ]
+└── 결과 pseudo:
+    { ":hover": { backgroundColor: "#F00" }, ":disabled": { ... } }
+
+※ 비공통 diff(color: 위 예시에서 Size별로 다름)는 이 단계에서 버려짐.
+  이 부분은 Heuristic의 convertStateDynamicToPseudo()가 compound-varying CSS로 처리.
 ```
 
-**비공통 diff 보존이 핵심**: 이를 버리면 `size+state`가 공동 제어하는 CSS(`color`)가 소실된다.
+**이전 방식과의 차이**: 이전에는 `extractStateDynamicEntries()`가 비공통 diff를 per-variant AND 조건 엔트리로 dynamic에 추가했으나, 현재는 `extractPseudoStyles()`가 공통 diff만 pseudo에 직접 배치하고, 비공통 diff 처리는 Heuristic 단계의 `convertStateDynamicToPseudo()`에 위임한다.
 
 ---
 
@@ -678,7 +673,7 @@ function Button(props: ButtonProps) {
 | `heuristics/GenericHeuristic.ts` | 3 | 범용 슬롯 감지 (폴백) |
 | `processors/StyleProcessor.ts` | 4 | variant 스타일 → base/dynamic/pseudo 분류 |
 | `processors/utils/rewritePropConditions.ts` | 3-4 | State → pseudo-class 변환 + compound 감지 |
-| `style-strategy/DynamicStyleDecomposer.ts` | 4 | prop별 CSS 소유권 분석 + 균일 속성 제거 |
+| `post-processors/DynamicStyleDecomposer.ts` | 4 | prop별 CSS 소유권 분석 + 균일 속성 제거 |
 | `generators/PropsGenerator.ts` | 5 | TypeScript interface 생성 |
 | `generators/JsxGenerator.ts` | 5 | JSX 렌더링 + props 사용 |
 | `post-processors/ComponentPropsLinker.ts` | Post | INSTANCE override → 의존성 props 연결 |
