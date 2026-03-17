@@ -308,25 +308,28 @@ export class RadioHeuristic implements IHeuristic {
   }
 
   /**
-   * 트리 내 TEXT 노드를 찾아 text?: string prop으로 바인딩
+   * 트리 내 TEXT 노드를 찾아 text?: string prop으로 바인딩.
+   * TEXT 노드가 없어도 text prop을 추가한다 — 라디오 버튼은 관례적으로 라벨이 필요.
    */
   private addTextProp(ctx: HeuristicContext): void {
-    const textNode = this.findTextNode(ctx.tree);
-    if (!textNode) return;
     if (ctx.props.some((p) => p.name === "text")) return;
+
+    const textNode = this.findTextNode(ctx.tree);
 
     ctx.props.push({
       type: "string",
       name: "text",
-      defaultValue: textNode.text || textNode.name || "",
+      defaultValue: textNode?.text || textNode?.name || "",
       required: false,
       sourceKey: "",
     });
 
-    textNode.bindings = {
-      ...textNode.bindings,
-      content: { prop: "text" },
-    };
+    if (textNode) {
+      textNode.bindings = {
+        ...textNode.bindings,
+        content: { prop: "text" },
+      };
+    }
   }
 
   private findTextNode(node: InternalNode): InternalNode | null {

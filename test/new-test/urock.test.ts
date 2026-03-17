@@ -128,8 +128,8 @@ describe("urock-button", () => {
     // {iconLeft && ( ... )} 패턴이 있어야 함
     expect(result).toMatch(/\{iconLeft\s*&&\s*\(/);
 
-    // iconLeft wrapper div가 조건부로 렌더링되어야 함
-    const iconLeftPattern = /\{iconLeft\s*&&\s*\(\s*<div[\s\S]*?\{iconLeft\}[\s\S]*?<\/div>\s*\)\}/;
+    // iconLeft wrapper가 조건부로 렌더링되어야 함 (icon은 인라인 요소이므로 span)
+    const iconLeftPattern = /\{iconLeft\s*&&\s*\(\s*<span[\s\S]*?\{iconLeft\}[\s\S]*?<\/span>\s*\)\}/;
     expect(result).toMatch(iconLeftPattern);
   });
 
@@ -139,8 +139,8 @@ describe("urock-button", () => {
     // {iconRight && ( ... )} 패턴이 있어야 함
     expect(result).toMatch(/\{iconRight\s*&&\s*\(/);
 
-    // iconRight wrapper div가 조건부로 렌더링되어야 함
-    const iconRightPattern = /\{iconRight\s*&&\s*\(\s*<div[\s\S]*?\{iconRight\}[\s\S]*?<\/div>\s*\)\}/;
+    // iconRight wrapper가 조건부로 렌더링되어야 함 (icon은 인라인 요소이므로 span)
+    const iconRightPattern = /\{iconRight\s*&&\s*\(\s*<span[\s\S]*?\{iconRight\}[\s\S]*?<\/span>\s*\)\}/;
     expect(result).toMatch(iconRightPattern);
   });
 
