@@ -158,6 +158,9 @@ export class InputHeuristic implements IHeuristic {
     // Label/HelperText 감지 및 string prop 변환
     this.detectLabelAndHelperText(ctx);
 
+    // Placeholder boolean → placeholder/value/onChange string props 변환
+    this.transformPlaceholderProp(ctx);
+
     return {
       componentType: this.componentType,
       rootNodeType: "input",
@@ -294,6 +297,127 @@ export class InputHeuristic implements IHeuristic {
       }
     }
 
+    return null;
+  }
+
+  // ===========================================================================
+  // Placeholder → string prop 변환
+  // ===========================================================================
+
+  /**
+   * semanticType === "placeholder" TEXT 노드 기반으로 input props 변환
+   *
+   * 트리거: placeholder TEXT 노드 존재 여부 (prop 유무와 무관)
+   *
+   * 변환:
+   * - placeholder를 제어하는 기존 prop이 있으면 제거
+   * - placeholder?: string, value?: string, onChange?: function 추가
+   * - TEXT 노드에 bindings.content 설정
+   */
+  private transformPlaceholderProp(ctx: HeuristicContext): void {
+    // 1. semanticType === "placeholder" TEXT 노드 찾기 — 없으면 스킵
+    const placeholderNode = this.findNodeBySemantic(ctx.tree, "placeholder");
+    if (!placeholderNode) return;
+
+    // 2. TEXT 내용 추출 (기본값으로 사용)
+    const { node: spec } = ctx.dataManager.getById(placeholderNode.id);
+    const defaultText = ((spec as any)?.characters || "").trim();
+
+    // 3. placeholder boolean/variant prop이 있으면 제거 (string으로 교체하므로)
+    const propIndex = ctx.props.findIndex(
+      (p) => p.name === "placeholder" && (p.type === "boolean" || p.type === "variant")
+    );
+    let sourceKey = "Placeholder";
+    if (propIndex !== -1) {
+      const removedPropName = ctx.props[propIndex].name;
+      sourceKey = ctx.props[propIndex].sourceKey;
+      ctx.props.splice(propIndex, 1);
+
+      // 제거된 prop을 참조하는 dynamic styles 정리
+      this.removeDynamicStylesForProp(ctx.tree, removedPropName);
+    }
+
+    // 4. placeholder, value, onChange props 추가 (이미 있으면 스킵)
+    if (!ctx.props.some((p) => p.name === "placeholder")) {
+      ctx.props.push({
+        type: "string",
+        name: "placeholder",
+        sourceKey,
+        required: false,
+        defaultValue: defaultText || "Placeholder",
+        nativeAttribute: true,
+      });
+    }
+    if (!ctx.props.some((p) => p.name === "value")) {
+      ctx.props.push({
+        type: "string",
+        name: "value",
+        sourceKey: "",
+        required: false,
+        nativeAttribute: true,
+      });
+    }
+    if (!ctx.props.some((p) => p.name === "onChange")) {
+      ctx.props.push({
+        type: "function",
+        name: "onChange",
+        sourceKey: "",
+        required: false,
+        functionSignature: "(value: string) => void",
+      });
+    }
+
+    // 5. placeholder 노드에 bindings 설정 → JsxGenerator가 <input> 태그로 렌더링
+    if (!placeholderNode.bindings) {
+      placeholderNode.bindings = {};
+    }
+    placeholderNode.bindings.content = { prop: "placeholder" };
+    if (!placeholderNode.bindings.attrs) {
+      placeholderNode.bindings.attrs = {};
+    }
+    placeholderNode.bindings.attrs.value = { prop: "value" };
+    placeholderNode.bindings.attrs.onChange = { expr: "(e) => onChange?.(e.target.value)" };
+  }
+
+  /**
+   * 특정 prop을 참조하는 dynamic styles 제거 (재귀)
+   */
+  private removeDynamicStylesForProp(node: InternalNode, propName: string): void {
+    if (node.styles?.dynamic) {
+      node.styles.dynamic = node.styles.dynamic.filter(
+        (entry) => !this.conditionReferencesProp(entry.condition, propName)
+      );
+    }
+    for (const child of node.children || []) {
+      this.removeDynamicStylesForProp(child, propName);
+    }
+  }
+
+  /**
+   * condition이 특정 prop을 참조하는지 확인 (중첩 condition 포함)
+   */
+  private conditionReferencesProp(condition: any, propName: string): boolean {
+    if (!condition) return false;
+    if (condition.prop === propName) return true;
+    // "not" 래핑
+    if (condition.condition) return this.conditionReferencesProp(condition.condition, propName);
+    // "and"/"or" 래핑
+    if (condition.conditions) return condition.conditions.some((c: any) => this.conditionReferencesProp(c, propName));
+    return false;
+  }
+
+  /**
+   * semanticType으로 노드 찾기 (재귀)
+   */
+  private findNodeBySemantic(
+    node: InternalNode,
+    semanticType: string
+  ): InternalNode | null {
+    if (node.semanticType === semanticType) return node;
+    for (const child of node.children || []) {
+      const found = this.findNodeBySemantic(child, semanticType);
+      if (found) return found;
+    }
     return null;
   }
 

@@ -297,10 +297,10 @@ export class ReactEmitter implements ICodeEmitter {
     const nativeAttrs = NATIVE_ATTRS_BY_ELEMENT[rootType];
     if (!nativeAttrs) return uiTree;
 
-    // rename 대상 prop 수집
+    // rename 대상 prop 수집 (nativeAttribute 플래그가 있으면 의도적 사용이므로 스킵)
     const renameMap = new Map<string, string>();
     for (const prop of uiTree.props) {
-      if (nativeAttrs.has(prop.name)) {
+      if (nativeAttrs.has(prop.name) && !prop.nativeAttribute) {
         renameMap.set(prop.name, "custom" + prop.name.charAt(0).toUpperCase() + prop.name.slice(1));
       }
     }

@@ -169,8 +169,13 @@ export default ${componentName}`;
     const indentStr = " ".repeat(indent);
 
     // Slot binding이 있으면 slot prop 렌더링 (styles가 있으면 wrapper div 적용)
+    // 단, placeholder + attrs 바인딩이 있으면 <input> 태그로 렌더링하므로 스킵
     const slotBinding = node.bindings?.content;
-    if (slotBinding && "prop" in slotBinding) {
+    if (
+      slotBinding &&
+      "prop" in slotBinding &&
+      !(node.semanticType === "placeholder" && node.bindings?.attrs)
+    ) {
       return this.generateSlotWrapper(node, slotBinding.prop, styleStrategy, indent);
     }
 
@@ -228,9 +233,12 @@ export default ${componentName}`;
     indent: number,
     isRoot: boolean = false
   ): string {
-    // semanticType 우선 처리
-    if (node.semanticType === "search-input") {
-      return this.generateSearchInputNode(node, styleStrategy, options, indent);
+    // semanticType 우선 처리: search-input 또는 input 내부의 placeholder → <input> 태그
+    if (
+      node.semanticType === "search-input" ||
+      (node.semanticType === "placeholder" && node.bindings?.attrs)
+    ) {
+      return this.generateInputElement(node, styleStrategy, options, indent);
     }
 
     switch (node.type) {
@@ -508,10 +516,9 @@ ${indentStr})}` : jsx;
   }
 
   /**
-   * SearchField input 노드 생성
-   * semanticType: "search-input" → <span> 대신 <input placeholder={prop}>으로 렌더링
+   * <input> 요소 생성 (search-input, placeholder semanticType 공용)
    */
-  private static generateSearchInputNode(
+  private static generateInputElement(
     node: UINode,
     styleStrategy: IStyleStrategy,
     options: JsxGeneratorOptions,
@@ -525,13 +532,17 @@ ${indentStr})}` : jsx;
         ? node.bindings.content.prop
         : "text";
 
-    // onChange 바인딩이 있으면 사용, 없으면 fallback
-    const onChangeBinding = node.bindings?.attrs?.["onChange"];
-    const onChangeAttr = onChangeBinding && "expr" in onChangeBinding
-      ? `onChange={${onChangeBinding.expr}}`
+    // bindings.attrs에 onChange가 없으면 fallback 추가
+    const hasOnChange = node.bindings?.attrs?.["onChange"];
+    const onChangeFallback = hasOnChange
+      ? ""
       : `onChange={(e) => onChange?.(e.target.value)}`;
 
-    return `${indentStr}<input${attrs} placeholder={${placeholderProp}} ${onChangeAttr} />`;
+    const inputAttrs = [attrs, `placeholder={${placeholderProp}}`, onChangeFallback]
+      .filter(Boolean)
+      .join(" ");
+
+    return `${indentStr}<input ${inputAttrs} />`;
   }
 
   /**

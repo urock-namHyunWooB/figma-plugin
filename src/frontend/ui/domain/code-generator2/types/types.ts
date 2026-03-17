@@ -148,6 +148,8 @@ interface PropBase {
   required: boolean;
   /** Figma componentPropertyDefinitions 키 — DataPreparer 질의용 */
   sourceKey: string;
+  /** 의도적으로 native HTML attribute와 동일한 이름 — rename 스킵 */
+  nativeAttribute?: boolean;
 }
 
 export interface VariantPropDefinition extends PropBase {
