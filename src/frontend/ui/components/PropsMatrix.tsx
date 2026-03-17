@@ -37,6 +37,7 @@ function buildTableData(
     .sort((a, b) => (b.variantOptions?.length ?? 0) - (a.variantOptions?.length ?? 0));
 
   const booleanProps = propDefs.filter((p) => p.type === "BOOLEAN");
+  const slotProps = propDefs.filter((p) => p.type === "SLOT");
 
   const allAxes: Axis[] = [
     ...variantProps.map((vp) => ({
@@ -48,7 +49,26 @@ function buildTableData(
       if (bp.extraValues) vals.push(...bp.extraValues);
       return { name: bp.name, values: vals };
     }),
+    ...slotProps.map((sp) => ({
+      name: sp.name,
+      values: [true, false] as (string | boolean)[],
+    })),
   ];
+
+  // 축에 포함된 SLOT prop의 mockup 값 보존 (true→mockup, false→undefined)
+  const slotMockups: Record<string, any> = {};
+  for (const sp of slotProps) {
+    if (fixedProps[sp.name] !== undefined) {
+      slotMockups[sp.name] = fixedProps[sp.name];
+    }
+  }
+
+  // 축에 포함된 prop을 fixedProps에서 제거
+  const axisNames = new Set(allAxes.map((a) => a.name));
+  const filteredFixed = { ...fixedProps };
+  for (const key of axisNames) {
+    delete filteredFixed[key];
+  }
 
   // 축이 없으면 단일 셀
   if (allAxes.length === 0) {
@@ -57,6 +77,7 @@ function buildTableData(
       colAxis: null,
       extraAxes: [] as Axis[],
       fixedProps,
+      slotMockups,
     };
   }
 
@@ -66,7 +87,8 @@ function buildTableData(
       rowAxis: null,
       colAxis: allAxes[0],
       extraAxes: [] as Axis[],
-      fixedProps,
+      fixedProps: filteredFixed,
+      slotMockups,
     };
   }
 
@@ -75,7 +97,8 @@ function buildTableData(
     rowAxis: allAxes[0],
     colAxis: allAxes[1],
     extraAxes: allAxes.slice(2),
-    fixedProps,
+    fixedProps: filteredFixed,
+    slotMockups,
   };
 }
 
@@ -254,17 +277,17 @@ const warningBadgeStyle = css`
 `;
 
 const warningTooltipStyle = css`
-  position: absolute;
-  bottom: calc(100% + 4px);
-  right: 0;
+  position: fixed;
   background: #1f2937;
   color: #fff;
   font-size: 11px;
   padding: 6px 8px;
   border-radius: 4px;
   white-space: pre;
-  z-index: 10;
+  z-index: 9999;
   pointer-events: none;
+  max-width: 360px;
+  overflow-wrap: break-word;
 
   &::after {
     content: "";
@@ -277,18 +300,20 @@ const warningTooltipStyle = css`
 `;
 
 /**
- * 셀의 prop 조합이 진단의 outlier variant와 매치되는지 확인
+ * 셀의 prop 조합이 진단의 outlier variant와 매치되는지 확인.
+ * axisNames: 매트릭스 축 prop 이름만 비교 (slot/string 등 fixedProps 제외)
  */
 function findCellWarnings(
   cellProps: Record<string, any>,
-  warnings: VariantInconsistency[]
+  warnings: VariantInconsistency[],
+  axisNames: Set<string>
 ): VariantInconsistency[] {
   if (!warnings.length) return [];
 
   return warnings.filter((w) =>
     w.variants.some((v) =>
       Object.entries(v.props).every(
-        ([key, val]) => String(cellProps[key]) === val
+        ([key, val]) => !axisNames.has(key) || !(key in cellProps) || String(cellProps[key]) === val
       )
     )
   );
@@ -305,37 +330,104 @@ function WarningOverlay({
   onSelectNode?: (nodeId: string) => void;
 }) {
   const [showTooltip, setShowTooltip] = React.useState(false);
+  const [pinned, setPinned] = React.useState(false);
+  const badgeRef = React.useRef<HTMLSpanElement>(null);
+  const [tooltipPos, setTooltipPos] = React.useState<{ top: number; right: number } | null>(null);
+
+  // pinned 상태에서 외부 클릭 시 닫기
+  React.useEffect(() => {
+    if (!pinned) return;
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (badgeRef.current && !badgeRef.current.contains(e.target as Node)) {
+        setPinned(false);
+        setShowTooltip(false);
+      }
+    };
+    document.addEventListener("click", handleOutsideClick, true);
+    return () => document.removeEventListener("click", handleOutsideClick, true);
+  }, [pinned]);
 
   if (cellWarnings.length === 0) return null;
 
-  const tooltipLines = cellWarnings.map((w) => {
-    const variantDetails = w.variants.map((v) => {
-      // 현재 셀의 축(propName) 외 다른 prop만 표시
-      const otherProps = Object.entries(v.props)
-        .filter(([k]) => k !== w.propName)
-        .map(([k, val]) => `${k}=${val}`)
-        .join(", ");
-      return `  ${otherProps || "default"}: ${v.value}`;
-    });
-    const expected = w.expectedValue ? `\n  (기대값: ${w.expectedValue})` : "";
-    return `${w.cssProperty} 값 불일치:\n${variantDetails.join("\n")}${expected}`;
-  });
+  const updatePos = () => {
+    if (badgeRef.current) {
+      const rect = badgeRef.current.getBoundingClientRect();
+      setTooltipPos({
+        top: rect.top - 4,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  };
+
+  const handleMouseEnter = () => {
+    updatePos();
+    setShowTooltip(true);
+  };
+
+  const handleMouseLeave = () => {
+    if (!pinned) setShowTooltip(false);
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (pinned) {
+      setPinned(false);
+      setShowTooltip(false);
+    } else {
+      updatePos();
+      setPinned(true);
+      setShowTooltip(true);
+    }
+  };
+
+  const isVisible = showTooltip || pinned;
 
   return (
     <>
       <span
+        ref={badgeRef}
         css={warningBadgeStyle}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-        title={tooltipLines.join("\n")}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
       >
         ⚠️
       </span>
-      {showTooltip && (
-        <div css={warningTooltipStyle}>
-          {tooltipLines.map((line, i) => (
-            <div key={i}>{line}</div>
+      {isVisible && tooltipPos && (
+        <div
+          css={warningTooltipStyle}
+          style={{ top: tooltipPos.top, right: tooltipPos.right, transform: "translateY(-100%)" }}
+        >
+          {cellWarnings.map((w, wi) => (
+            <div key={wi} style={{ marginBottom: wi < cellWarnings.length - 1 ? 6 : 0 }}>
+              <div style={{ fontWeight: 600, marginBottom: 2 }}>
+                {w.nodeName && <span style={{ color: "#93c5fd" }}>[{w.nodeName}]</span>}{" "}
+                {w.cssProperty} 값 불일치 ({w.propName}={w.propValue}):
+              </div>
+              {w.variants.map((v, vi) => {
+                const otherProps = Object.entries(v.props)
+                  .filter(([k]) => k !== w.propName)
+                  .map(([k, val]) => `${k}=${val}`)
+                  .join(", ");
+                const isOutlier = w.expectedValue != null && v.value !== w.expectedValue;
+                return (
+                  <div key={vi} style={{ paddingLeft: 8, color: isOutlier ? "#f87171" : "#d1d5db" }}>
+                    {otherProps || "default"}: {v.value}
+                  </div>
+                );
+              })}
+              {w.expectedValue && (
+                <div style={{ paddingLeft: 8, marginTop: 2, color: "#9ca3af", fontSize: 10 }}>
+                  기대값: {w.expectedValue}
+                </div>
+              )}
+            </div>
           ))}
+          {pinned && (
+            <div style={{ marginTop: 4, fontSize: 10, color: "#6b7280", textAlign: "right" }}>
+              click to close
+            </div>
+          )}
         </div>
       )}
     </>
@@ -362,6 +454,15 @@ export function PropsMatrix({
     [tableData.extraAxes]
   );
 
+  // 축 이름 집합 (diagnostic 매칭에서 축 prop만 비교하기 위해)
+  const axisNames = useMemo(() => {
+    const names = new Set<string>();
+    if (tableData.colAxis) names.add(tableData.colAxis.name);
+    if (tableData.rowAxis) names.add(tableData.rowAxis.name);
+    for (const ax of tableData.extraAxes) names.add(ax.name);
+    return names;
+  }, [tableData.rowAxis, tableData.colAxis, tableData.extraAxes]);
+
   if (isLoading) {
     return <div css={emptyStyle}>Loading...</div>;
   }
@@ -378,7 +479,18 @@ export function PropsMatrix({
     return <div css={emptyStyle}>Select a component in Figma to preview</div>;
   }
 
-  const { rowAxis, colAxis } = tableData;
+  const { rowAxis, colAxis, slotMockups, fixedProps: tableFixedProps } = tableData;
+
+  // SLOT 축 값 변환: true → mockup 값, false → undefined
+  const resolveSlotAxes = (props: Record<string, any>) => {
+    const resolved = { ...props };
+    for (const [name, mockup] of Object.entries(slotMockups)) {
+      if (name in resolved) {
+        resolved[name] = resolved[name] ? mockup : undefined;
+      }
+    }
+    return resolved;
+  };
 
   // 축이 아예 없으면 단일 프리뷰
   if (!colAxis) {
@@ -412,7 +524,7 @@ export function PropsMatrix({
         <div css={singleAxisGridStyle}>
           {colAxis.values.map((colVal) =>
             extraCombos.map((extra, ei) => {
-              const props = { ...fixedProps, [colAxis.name]: colVal, ...extra };
+              const props = resolveSlotAxes({ ...tableFixedProps, [colAxis.name]: colVal, ...extra });
               const extraLabel = Object.entries(extra)
                 .map(([k, v]) => `${k}=${String(v)}`)
                 .join(", ");
@@ -471,11 +583,11 @@ export function PropsMatrix({
                 <td css={rowHeaderStyle}>{String(rowVal)}</td>
                 {colAxis.values.map((colVal) => {
                   const cellProps = {
-                    ...fixedProps,
+                    ...tableFixedProps,
                     [rowAxis.name]: rowVal,
                     [colAxis.name]: colVal,
                   };
-                  const cellWarnings = findCellWarnings(cellProps, warnings);
+                  const cellWarnings = findCellWarnings(cellProps, warnings, axisNames);
                   return (
                     <td
                       key={String(colVal)}
@@ -487,7 +599,7 @@ export function PropsMatrix({
                       )}
                       <div css={cellInnerStyle}>
                         {extraCombos.map((extra, ei) => {
-                          const props = { ...cellProps, ...extra };
+                          const props = resolveSlotAxes({ ...cellProps, ...extra });
                           const extraLabel = Object.entries(extra)
                             .map(([k, v]) => `${k}=${String(v)}`)
                             .join(", ");

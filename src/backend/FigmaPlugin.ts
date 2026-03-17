@@ -21,12 +21,29 @@ export class FigmaPlugin {
     figma.showUI(__html__, { width: 500, height: 1000 });
 
     figma.ui.onmessage = async (msg) => {
+      if (msg.type === MESSAGE_TYPES.REQUEST_REFRESH) {
+        const selection = figma.currentPage.selection;
+        if (selection.length === 0) return;
+        const target = selection[0];
+        const componentSet =
+          target.type === "COMPONENT_SET"
+            ? target
+            : target.parent?.type === "COMPONENT_SET"
+              ? target.parent
+              : null;
+        const nodes = componentSet ? [componentSet as SceneNode] : [...selection];
+        const data = await this.getNodeData(nodes);
+        figma.ui.postMessage({
+          type: MESSAGE_TYPES.ON_SELECTION_CHANGE,
+          data,
+        });
+        return;
+      }
       await this.handleMessage(msg);
     };
 
     figma.on("selectionchange", async () => {
       const data = await this.getNodeData([...figma.currentPage.selection]);
-
       figma.ui.postMessage({
         type: MESSAGE_TYPES.ON_SELECTION_CHANGE,
         data,

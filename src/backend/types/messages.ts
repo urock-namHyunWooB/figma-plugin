@@ -26,6 +26,9 @@ export const MESSAGE_TYPES = {
 
   // 노드 선택
   SELECT_NODE: "select-node",  // UI → Plugin: Figma 캔버스에서 노드 선택
+
+  // 새로고침 요청
+  REQUEST_REFRESH: "request-refresh",  // UI → Plugin: 현재 선택 데이터 재전송
 } as const;
 
 export interface OnSelectionChangeMessage {

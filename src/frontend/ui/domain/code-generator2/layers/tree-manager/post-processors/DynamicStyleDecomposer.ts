@@ -626,37 +626,23 @@ export class DynamicStyleDecomposer {
     }
 
     // 2차: 복합 prop — N-prop 조합이 일관적인지 확인 (2-prop → 3-prop 순)
-    // 단, 단일 prop으로 과반수 초과 그룹이 일관적이면 compound보다 single+diagnostic 선호
     if (allProps.length >= 2) {
-      let bestSingleRatio = 0;
-      for (const propName of allProps) {
-        const groups = this.buildPropGroups(propName, cssKey, matrix);
-        if (groups.size <= 1) continue;
-        let consistent = 0;
-        for (const group of groups.values()) {
-          if (this.isGroupConsistent(group)) consistent++;
-        }
-        bestSingleRatio = Math.max(bestSingleRatio, consistent / groups.size);
-      }
-
-      if (bestSingleRatio <= 0.5) {
-        // 2-prop compound
-        const n = allProps.length;
-        for (let i = 0; i < n; i++) {
-          for (let j = i + 1; j < n; j++) {
-            if (this.isCompoundConsistent([allProps[i], allProps[j]], cssKey, matrix)) {
-              return `${allProps[i]}+${allProps[j]}`;
-            }
+      // 2-prop compound
+      const n = allProps.length;
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          if (this.isCompoundConsistent([allProps[i], allProps[j]], cssKey, matrix)) {
+            return `${allProps[i]}+${allProps[j]}`;
           }
         }
-        // 3-prop compound
-        if (n >= 3) {
-          for (let i = 0; i < n; i++) {
-            for (let j = i + 1; j < n; j++) {
-              for (let k = j + 1; k < n; k++) {
-                if (this.isCompoundConsistent([allProps[i], allProps[j], allProps[k]], cssKey, matrix)) {
-                  return `${allProps[i]}+${allProps[j]}+${allProps[k]}`;
-                }
+      }
+      // 3-prop compound
+      if (n >= 3) {
+        for (let i = 0; i < n; i++) {
+          for (let j = i + 1; j < n; j++) {
+            for (let k = j + 1; k < n; k++) {
+              if (this.isCompoundConsistent([allProps[i], allProps[j], allProps[k]], cssKey, matrix)) {
+                return `${allProps[i]}+${allProps[j]}+${allProps[k]}`;
               }
             }
           }
@@ -665,8 +651,8 @@ export class DynamicStyleDecomposer {
     }
 
     // 3차: best-fit — 일관적 그룹이 가장 많은 prop 선택
-    let bestProp = allProps[0];
     let bestConsistent = -1;
+    const tiedProps: string[] = [];
 
     for (const propName of allProps) {
       const groups = this.buildPropGroups(propName, cssKey, matrix);
@@ -678,13 +664,20 @@ export class DynamicStyleDecomposer {
       }
       if (consistentCount > bestConsistent) {
         bestConsistent = consistentCount;
-        bestProp = propName;
+        tiedProps.length = 0;
+        tiedProps.push(propName);
+      } else if (consistentCount === bestConsistent) {
+        tiedProps.push(propName);
       }
     }
 
-    // diagnostics 수집: bestProp의 불일치 그룹 보고
+    const bestProp = tiedProps[0] ?? allProps[0];
+
+    // diagnostics 수집: 동률인 모든 prop의 불일치 그룹 보고
     if (diagnostics) {
-      this.collectDiagnostics(cssKey, bestProp, matrix, diagnostics);
+      for (const prop of tiedProps) {
+        this.collectDiagnostics(cssKey, prop, matrix, diagnostics);
+      }
     }
 
     return bestProp;

@@ -65,6 +65,7 @@ export interface VariantInconsistency {
   cssProperty: string;
   propName: string;
   propValue: string;
+  nodeName?: string;
   variants: Array<{
     props: Record<string, string>;
     value: string;
