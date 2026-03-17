@@ -30,6 +30,16 @@ describe("Button (airtable) Tailwind lint", () => {
     expect(allTransforms).toHaveLength(0);
   });
 
+  it("icon slot wrapper는 span이어야 한다 (인라인 요소)", async () => {
+    const gen = new FigmaCodeGenerator(ButtonFixture as any, { styleStrategy: "emotion" });
+    const result = await gen.compileWithDiagnostics();
+
+    // icon wrapper가 <span>이어야 함 (div 아님)
+    // 멀티라인 JSX이므로 dotAll 플래그 사용
+    expect(result.code).toMatch(/<span[\s\S]*?>\s*\{icon\}\s*<\/span>/);
+    expect(result.code).not.toMatch(/<div[\s\S]*?>\s*\{icon\}\s*<\/div>/);
+  });
+
   it("Tailwind CVA 출력에 size 중복이나 icon 혼입이 없어야 한다", async () => {
     const gen = new FigmaCodeGenerator(ButtonFixture as any, { styleStrategy: "tailwind" });
     const result = await gen.compileWithDiagnostics();
