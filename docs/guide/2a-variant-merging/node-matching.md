@@ -1,8 +1,17 @@
 # Variant 노드 매칭 원리
 
-TreeBuilder에서 여러 Variant의 노드를 동일 노드로 판별하는 알고리즘을 설명합니다.
-
 - 구현: `src/frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/processors/NodeMatcher.ts`
+
+## 왜 노드 매칭이 어려운가
+
+Figma의 COMPONENT_SET에서 variant를 병합하려면, **"이 노드와 저 노드가 같은 노드인가?"**를 판별해야 한다. 사람 눈에는 자명하지만, 알고리즘으로 풀기 어려운 이유가 있다:
+
+1. **위치가 다르다** — variant마다 root 크기, padding, 자식 배치가 다르므로 절대 좌표를 직접 비교할 수 없다
+2. **크기가 다르다** — Size=L과 Size=S에서 같은 아이콘이 24px과 16px일 수 있다
+3. **타입이 다를 수 있다** — 같은 도형이 RECTANGLE인 variant와 VECTOR인 variant가 있다. GROUP과 FRAME도 교환될 수 있다
+4. **요소가 추가/제거된다** — hasIcon=true인 variant에만 아이콘이 있으면, 나머지 자식 노드의 위치가 밀린다
+
+NodeMatcher는 이 모든 변동을 허용하면서도 **false positive(다른 노드를 같다고 판정)를 최소화**해야 한다. 아래 흐름도에서 각 단계가 어떤 변동을 처리하는지 표시했다.
 
 ---
 

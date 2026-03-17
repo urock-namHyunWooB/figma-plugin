@@ -2,6 +2,43 @@
 
 > 전체 파이프라인 개요는 [아키텍처 문서](../0-architecture/pipeline-overview.md)를 참조하세요.
 
+## 이 레이어가 하는 일
+
+Layer 2(TreeManager)가 Figma 데이터를 분석해서 **UITree**(플랫폼 독립 IR)를 만들면, Layer 3이 이를 **실제 코드**로 출력한다.
+
+UITree에는 이미 모든 정보가 들어 있다 — 어떤 노드가 `<button>`인지, 어떤 prop이 어떤 CSS를 제어하는지, 조건부 가시성은 어떤 조건인지. Layer 3은 이 정보를 코드 문자열로 **조립**하는 역할이다.
+
+### 왜 4개 Generator로 분리했는가
+
+React 컴포넌트 파일은 4개 섹션으로 구성된다:
+
+```typescript
+// 1. Imports — 어떤 라이브러리/컴포넌트를 쓰는가
+import React from "react";
+import { css } from "@emotion/react";
+
+// 2. Props interface — 어떤 props를 받는가
+export interface ButtonProps { size?: "S" | "M"; }
+
+// 3. Styles — CSS 선언
+const buttonCss = css`display: flex;`;
+
+// 4. JSX — 컴포넌트 함수 본문
+function Button(props: ButtonProps) { return <button>...</button>; }
+```
+
+각 섹션은 UITree의 다른 측면을 소비한다. Imports는 의존성 목록을, Props는 PropDefinition[]을, Styles는 StyleObject를, JSX는 UINode 트리를 본다. 이들은 **독립적으로 생성 가능**하고, 나중에 하나의 파일로 조합된다.
+
+### 왜 StyleStrategy 패턴인가
+
+같은 UITree에서 Emotion CSS-in-JS를 출력할 수도, Tailwind CSS를 출력할 수도 있다. 차이는 **스타일을 어떤 형식으로 선언하고 JSX에 어떻게 바인딩하는가**뿐이다. Strategy 패턴으로 이 부분만 교체 가능하게 했다.
+
+### 왜 Bundler가 필요한가
+
+Figma 컴포넌트는 다른 컴포넌트를 INSTANCE로 참조한다 (예: Button 안의 Icon). `emit()`은 하나의 UITree만 코드로 변환하지만, 실제로는 메인 + 의존성 컴포넌트를 **단일 파일로 번들링**해야 사용자가 바로 복사-붙여넣기할 수 있다. ReactBundler가 import 통합, CSS 변수 충돌 방지, 미참조 의존성 제거를 담당한다.
+
+---
+
 ### ICodeEmitter 인터페이스
 
 ```typescript
