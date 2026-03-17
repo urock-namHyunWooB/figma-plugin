@@ -391,6 +391,9 @@ export class StyleProcessor {
       return undefined;
     }
 
+    // 전체 variant 대상 CSS 노이즈 정규화
+    this.normalizeAcrossVariants(node.mergedNodes, variantStyles);
+
     // State 기반 스타일 분리
     const { baseVariants, pseudoVariants } =
       this.separateStateVariants(variantStyles);
@@ -458,6 +461,9 @@ export class StyleProcessor {
         }
       }
 
+      // per-variant 노이즈 정규화: near-zero rotation 등
+      this.normalizeCssNoise(cssStyle);
+
       if (Object.keys(cssStyle).length > 0) {
         result.push({
           variantName: merged.variantName || merged.name,
@@ -467,6 +473,98 @@ export class StyleProcessor {
     }
 
     return result;
+  }
+
+  /**
+   * per-variant CSS 노이즈 정규화.
+   * 개별 variant의 CSS에서 렌더링에 무의미한 값을 제거한다.
+   *
+   * - near-zero transform: rotate → 부동소수점 노이즈 (Figma TEXT rotation ≈ 0)
+   */
+  private normalizeCssNoise(cssStyle: Record<string, string>): void {
+    if (cssStyle.transform) {
+      const match = cssStyle.transform.match(/rotate\(([^)]+)deg\)/);
+      if (match) {
+        const angle = parseFloat(match[1]);
+        if (!isNaN(angle) && Math.abs(angle) < 0.01) {
+          const stripped = cssStyle.transform
+            .replace(/rotate\([^)]*\)\s*/g, "")
+            .trim();
+          if (stripped) {
+            cssStyle.transform = stripped;
+          } else {
+            delete cssStyle.transform;
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * 전체 variant를 비교하여 렌더링에 무의미한 CSS 차이를 정규화한다.
+   *
+   * gap 정규화:
+   *   flex 컨테이너에서 자식이 1개 이하인 variant의 gap은 렌더링에 무의미하다.
+   *   (자식 간 간격이 존재하지 않으므로 어떤 값이든 결과가 같다)
+   *   이런 variant의 gap 값을 자식이 2개 이상인 variant의 gap으로 통일하면,
+   *   불필요한 compound 조건(AND(size, icon))이 생성되지 않는다.
+   */
+  private normalizeAcrossVariants(
+    mergedNodes: VariantOrigin[],
+    variantStyles: Array<{ variantName: string; cssStyle: Record<string, string> }>
+  ): void {
+    // gap이 있는 variant가 하나라도 있는지 확인
+    const hasGap = variantStyles.some((v) => v.cssStyle.gap);
+    if (!hasGap) return;
+
+    // 각 variant의 visible 자식 수 수집
+    const childCounts = new Map<string, number>();
+    for (const merged of mergedNodes) {
+      const { node } = this.dataManager.getById(merged.id);
+      const n = node as Record<string, unknown> | undefined;
+      const children = n?.children as Array<Record<string, unknown>> | undefined;
+      const visibleCount = children
+        ? children.filter((c) => c.visible !== false).length
+        : 0;
+      childCounts.set(merged.variantName || (merged as any).name, visibleCount);
+    }
+
+    // 자식 ≥2인 variant들의 gap 값 수집 (의미 있는 gap)
+    const meaningfulGaps = new Map<string, string>();
+    for (const v of variantStyles) {
+      const count = childCounts.get(v.variantName) ?? 0;
+      if (count >= 2 && v.cssStyle.gap) {
+        meaningfulGaps.set(v.variantName, v.cssStyle.gap);
+      }
+    }
+
+    if (meaningfulGaps.size === 0) {
+      // 모든 variant가 자식 ≤1 → gap 자체가 무의미 → 전부 제거
+      for (const v of variantStyles) {
+        delete v.cssStyle.gap;
+        delete v.cssStyle["row-gap"];
+        delete v.cssStyle["column-gap"];
+      }
+      return;
+    }
+
+    // 자식 ≤1인 variant의 gap을 "의미 있는 gap의 대표값"으로 교체
+    // → extractCommonStyles에서 공통 gap으로 취급되거나, size 단독 dynamic이 됨
+    const representativeGap = meaningfulGaps.values().next().value as string;
+    for (const v of variantStyles) {
+      const count = childCounts.get(v.variantName) ?? 0;
+      if (count <= 1) {
+        if (v.cssStyle.gap) {
+          v.cssStyle.gap = representativeGap;
+        }
+        if (v.cssStyle["row-gap"]) {
+          v.cssStyle["row-gap"] = representativeGap;
+        }
+        if (v.cssStyle["column-gap"]) {
+          v.cssStyle["column-gap"] = representativeGap;
+        }
+      }
+    }
   }
 
   /**
