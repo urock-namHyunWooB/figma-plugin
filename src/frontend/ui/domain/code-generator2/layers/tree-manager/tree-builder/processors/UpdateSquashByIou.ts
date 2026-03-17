@@ -3,7 +3,8 @@ import DataManager from "../../../data-manager/DataManager";
 
 type Rect = { x1: number; y1: number; x2: number; y2: number };
 type BoundingBox = { x: number; y: number; width: number; height: number };
-type SiblingGraph = Map<string, InternalNode[]>;
+type SiblingEntry = { next: InternalNode | null; prev: InternalNode | null };
+type SiblingGraph = Map<string, SiblingEntry[]>;
 
 /**
  * IoU 기반 post-merge squash
@@ -257,9 +258,10 @@ export class UpdateSquashByIou {
         const key = `${node.type}|${node.id}`;
         if (!graph.has(key)) graph.set(key, []);
 
-        const nextSibling = parent?.children[index + 1];
-        if (nextSibling) {
-          graph.get(key)!.push(nextSibling);
+        const next = parent?.children[index + 1] ?? null;
+        const prev = index > 0 ? (parent?.children[index - 1] ?? null) : null;
+        if (next || prev) {
+          graph.get(key)!.push({ next, prev });
         }
       });
     }
@@ -290,9 +292,9 @@ export class UpdateSquashByIou {
   // ============================================================
 
   /**
-   * v1 squashNodeByTopoSort 충실 포팅:
-   * 양방향(A→B, B→A) 검증. deep clone해서 가상 squash 후 sibling 순서 검사.
-   * 한쪽만 유효하면 실행, 양쪽 모두 valid/invalid이면 스킵.
+   * 2단계 sibling 검증:
+   * 1단계 next-only로 방향 결정. one-valid이면 바로 실행, both-invalid이면 스킵.
+   * both-valid일 때만 2단계 next+prev 검증으로 tiebreak 시도.
    */
   private squashByTopoSort(
     mergedTree: InternalNode,
@@ -300,76 +302,97 @@ export class UpdateSquashByIou {
     nodeB: InternalNode,
     siblingGraph: SiblingGraph
   ): void {
-    // 양방향 검증
-    const canSquashAIntoB = this.validateSquashDirection(
+    // 1단계: next-only (기존 v1 로직)
+    const canAtoB_next = this.validateSquashDirection(
       mergedTree,
-      nodeB, // target
-      nodeA, // source (A가 사라짐)
-      siblingGraph
+      nodeB,
+      nodeA,
+      siblingGraph,
+      false
     );
-    const canSquashBIntoA = this.validateSquashDirection(
+    const canBtoA_next = this.validateSquashDirection(
       mergedTree,
-      nodeA, // target
-      nodeB, // source (B가 사라짐)
-      siblingGraph
+      nodeA,
+      nodeB,
+      siblingGraph,
+      false
     );
 
-    const bothValid = canSquashAIntoB && canSquashBIntoA;
-    const bothInvalid = !canSquashAIntoB && !canSquashBIntoA;
+    if (!canAtoB_next && !canBtoA_next) return; // both-invalid
 
-    if (bothValid || bothInvalid) {
+    if (canAtoB_next !== canBtoA_next) {
+      // one-valid → 바로 실행
+      if (canAtoB_next) {
+        this.performSquash(nodeB, nodeA);
+      } else {
+        this.performSquash(nodeA, nodeB);
+      }
       return;
     }
 
-    // 유효한 방향으로 실행
-    if (canSquashAIntoB) {
+    // 2단계: both-valid → next+prev로 tiebreak
+    const canAtoB_full = this.validateSquashDirection(
+      mergedTree,
+      nodeB,
+      nodeA,
+      siblingGraph,
+      true
+    );
+    const canBtoA_full = this.validateSquashDirection(
+      mergedTree,
+      nodeA,
+      nodeB,
+      siblingGraph,
+      true
+    );
+
+    if (canAtoB_full && !canBtoA_full) {
       this.performSquash(nodeB, nodeA);
-    } else {
+    } else if (!canAtoB_full && canBtoA_full) {
       this.performSquash(nodeA, nodeB);
     }
+    // 여전히 both-valid 또는 both-invalid → 스킵
   }
 
   /**
-   * v1 validateSquashDirection 충실 포팅:
-   * 1. 트리를 deep clone
-   * 2. clone에서 target 찾아 가상으로 mergedNodes 합침
-   * 3. target 노드부터 BFS하며 mergedNode의 sibling 순서 검증
+   * deep clone해서 가상 squash 후 sibling 순서 검증.
+   * checkPrev=false면 next만 검사 (1단계), true면 prev도 검사 (2단계).
    */
   private validateSquashDirection(
     mergedTree: InternalNode,
     targetNode: InternalNode,
     sourceNode: InternalNode,
-    siblingGraph: SiblingGraph
+    siblingGraph: SiblingGraph,
+    checkPrev: boolean
   ): boolean {
     const clonedTree = this.deepCloneTree(mergedTree);
     const clonedTarget = this.findNodeById(clonedTree, targetNode.id);
 
     if (!clonedTarget) return false;
 
-    // 가상으로 mergedNodes 합침
     clonedTarget.mergedNodes = [
       ...(targetNode.mergedNodes || []),
       ...(sourceNode.mergedNodes || []),
     ];
 
-    // v1: clonedTarget부터 BFS (target 노드와 그 하위만 검증)
-    return this.validateTopologicalOrder(clonedTarget, siblingGraph);
+    return this.validateTopologicalOrder(clonedTarget, siblingGraph, checkPrev);
   }
 
   /**
-   * v1 validateTopologicalOrder 충실 포팅:
-   * target 노드부터 BFS하며 모든 mergedNode의 sibling 순서 위반을 검사
+   * target 노드부터 순회하며 모든 mergedNode의 sibling 순서 위반을 검사.
+   * checkPrev가 validateTopologicalOrder → checkSiblingViolation으로 전달됨.
    */
   private validateTopologicalOrder(
     tree: InternalNode,
-    siblingGraph: SiblingGraph
+    siblingGraph: SiblingGraph,
+    checkPrev: boolean
   ): boolean {
     let valid = true;
 
     const traverse = (node: InternalNode) => {
       if (!valid) return;
       for (const merged of node.mergedNodes || []) {
-        if (this.checkSiblingViolation(node, merged, siblingGraph)) {
+        if (this.checkSiblingViolation(node, merged, siblingGraph, checkPrev)) {
           valid = false;
           return;
         }
@@ -384,26 +407,34 @@ export class UpdateSquashByIou {
   }
 
   /**
-   * v1 checkSiblingViolation 충실 포팅:
-   * 원본 sibling graph에서 저장된 next sibling과 실제 next sibling 비교
+   * 원본 sibling graph의 next/prev와 실제 sibling 비교.
+   * checkPrev=false면 next만 검사 (1단계), true면 prev도 검사 (2단계 tiebreaker).
    */
   private checkSiblingViolation(
     node: InternalNode,
     merged: VariantOrigin,
-    siblingGraph: SiblingGraph
+    siblingGraph: SiblingGraph,
+    checkPrev: boolean
   ): boolean {
     const key = this.buildNodeKeyById(merged.id);
-    const savedSiblings = siblingGraph.get(key);
-    if (!savedSiblings?.length) return false;
+    const entries = siblingGraph.get(key);
+    if (!entries?.length) return false;
 
-    const savedNext = savedSiblings[0];
     const actualNext = this.getNextSibling(node);
+    const actualPrev = checkPrev ? this.getPrevSibling(node) : null;
 
-    // 원래 다음 형제가 있었는데 현재는 없으면 위반
-    if (!actualNext) return true;
-
-    const savedType = this.getNodeType(savedNext.id);
-    if (savedType !== actualNext.type) return true;
+    for (const entry of entries) {
+      // next는 항상 검사
+      if (entry.next) {
+        if (!actualNext) return true;
+        if (this.getNodeType(entry.next.id) !== actualNext.type) return true;
+      }
+      // prev는 checkPrev=true일 때만 검사
+      if (checkPrev && entry.prev) {
+        if (!actualPrev) return true;
+        if (this.getNodeType(entry.prev.id) !== actualPrev.type) return true;
+      }
+    }
 
     return false;
   }
@@ -467,6 +498,14 @@ export class UpdateSquashByIou {
     const idx = siblings.indexOf(node);
     if (idx === -1 || idx >= siblings.length - 1) return null;
     return siblings[idx + 1];
+  }
+
+  private getPrevSibling(node: InternalNode): InternalNode | null {
+    if (!node.parent) return null;
+    const siblings = node.parent.children;
+    const idx = siblings.indexOf(node);
+    if (idx <= 0) return null;
+    return siblings[idx - 1];
   }
 
   private getNodeDepth(node: InternalNode): number {

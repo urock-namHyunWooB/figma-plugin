@@ -442,7 +442,7 @@ Button
 1. groupNodesByType    — BFS로 타입별 노드 수집
 2. findSquashGroups    — 같은 이름 + 다른 depth + IoU ≥ 0.5인 쌍 찾기
 3. isValidSquashGroup  — mask, INSTANCE 호환성, 조상-자손 관계 검증
-4. squashByTopoSort    — 양방향 topological validation으로 안전한 방향 결정
+4. squashByTopoSort    — 2단계 sibling 검증으로 안전한 방향 결정
 5. performSquash       — mergedNodes 합치기 + source 노드 제거
 ```
 
@@ -473,28 +473,34 @@ if (depthA === depthB) continue;
 // 다른 depth → cross-depth 잔여 중복 → squash 후보
 ```
 
-#### Topological Validation (양방향 검증)
+#### Topological Validation (2단계 sibling 검증)
 
-squash가 트리의 sibling 순서를 깨뜨리지 않는지 검증합니다.
+squash가 트리의 sibling 순서를 깨뜨리지 않는지 2단계로 검증합니다.
 
 ```
 원본 variant trees에서 sibling graph 구축:
-  A의 다음 형제 = B (type: FRAME)
-  B의 다음 형제 = C (type: TEXT)
+  각 노드의 next sibling과 prev sibling을 기록
 
-방향 A→B 검증 (A를 B에 합침, A 제거):
+방향 검증 (A→B: A를 B에 합침, A 제거):
   1. merged tree를 deep clone
   2. clone에서 B를 찾아 A+B의 mergedNodes를 합침
-  3. B부터 BFS하며 모든 mergedNode의 sibling 순서 위반 검사
-     → 원본에서 A의 다음 형제가 FRAME이었는데 실제 다음이 TEXT면 위반
+  3. B부터 순회하며 모든 mergedNode의 sibling 순서 위반 검사
+     → 원본에서의 next/prev sibling 타입과 현재 실제 sibling 타입 비교
 
-방향 B→A 검증 (B를 A에 합침, B 제거):
-  → 같은 방식으로 검증
+1단계 — next-only 검증:
+  next sibling만으로 양방향(A→B, B→A) 검증
+  - one-valid  → 바로 실행
+  - both-invalid → 스킵
 
-결과:
-  - 한쪽만 valid → 해당 방향으로 squash 실행
-  - 양쪽 모두 valid 또는 invalid → 스킵 (ambiguous)
+  both-valid → 2단계로 진행
+
+2단계 — next+prev tiebreaker:
+  prev sibling도 추가로 검사하여 방향을 결정
+  - one-valid → 실행
+  - 여전히 both-valid 또는 both-invalid → 스킵
 ```
+
+prev를 1단계가 아닌 2단계에서만 검사하는 이유: cross-depth squash는 depth가 다른 노드를 합치므로 parent가 다르고, sibling도 구조적으로 다를 수밖에 없습니다. prev를 항상 검사하면 정당한 squash까지 차단됩니다 (예: Icon 유무에 따라 wrapper Frame이 추가되어 depth가 달라진 버튼 레이블). prev는 both-valid 상황에서 방향을 결정하는 tiebreaker로만 사용합니다.
 
 #### Squash 후 결과
 
@@ -512,7 +518,7 @@ Button
 
 - 구현: `src/.../processors/UpdateSquashByIou.ts`
 - 호출 위치: `VariantMerger.mergeVariants()` Step 3→4 사이
-- v1 포팅: `squashNodeByTopoSort` 알고리즘을 v2 타입(InternalNode, DataManager)에 맞게 이식
+- v1에서 포팅 후 2단계 prev tiebreaker 추가: next-only에서 both-valid인 케이스를 prev 검사로 해소
 
 ---
 
