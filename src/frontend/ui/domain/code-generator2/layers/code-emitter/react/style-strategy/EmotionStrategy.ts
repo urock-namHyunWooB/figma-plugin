@@ -40,7 +40,10 @@ export class EmotionStrategy implements IStyleStrategy {
    * import 문 생성
    */
   getImports(): string[] {
-    return ['import { css } from "@emotion/react";'];
+    return [
+      'import type { SerializedStyles } from "@emotion/react";',
+      'import { css } from "@emotion/react";',
+    ];
   }
 
   /**
@@ -142,10 +145,10 @@ export class EmotionStrategy implements IStyleStrategy {
         .replace(/\+(\w)/g, (_, c: string) => c.toUpperCase());
       const varName = `${baseVarName}_${safePropName}Styles`;
       if (entries.length > 0) {
-        codeParts.push(`const ${varName}: Record<string, any> = {\n${entries.join("\n")}\n};`);
+        codeParts.push(`const ${varName}: Record<string, SerializedStyles> = {\n${entries.join("\n")}\n};`);
       } else {
         // 빈 맵이라도 생성 (JSX에서 참조 시 ReferenceError 방지)
-        codeParts.push(`const ${varName}: Record<string, any> = {};`);
+        codeParts.push(`const ${varName}: Record<string, SerializedStyles> = {};`);
       }
     }
 
