@@ -319,7 +319,7 @@ export class RadioHeuristic implements IHeuristic {
     ctx.props.push({
       type: "string",
       name: "text",
-      defaultValue: textNode?.text || textNode?.name || "",
+      defaultValue: (textNode ? (ctx.dataManager.getById(textNode.id)?.node as any)?.characters : undefined) || textNode?.name || "",
       required: false,
       sourceKey: "",
     });
