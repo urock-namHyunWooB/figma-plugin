@@ -3,14 +3,40 @@
 > 이 문서는 FigmaCodeGenerator의 현재 아키텍처를 정의합니다.
 > 레거시 파이프라인은 완전히 제거되었으며, 이 문서는 현재 운영 중인 유일한 파이프라인을 설명합니다.
 
-## Overview
+## 풀어야 하는 문제
 
-FigmaCodeGenerator는 Figma 디자인 데이터를 React 컴포넌트 코드로 변환합니다.
+Figma와 React는 근본적으로 다른 모델을 사용한다.
+
+**Figma**: 시각적 노드 트리. 하나의 버튼 컴포넌트가 48개 variant(Size×Style×Tone×State)로 존재하며, 각 variant는 **독립된 트리**다. 의미 정보 없이 FRAME, TEXT, INSTANCE 같은 시각적 타입만 존재한다.
+
+**React**: 하나의 함수 컴포넌트에 props로 변형을 제어한다. `<Button size="M" style="filled">` 하나로 48개 variant를 모두 표현해야 한다. `<button>`, `<input>` 같은 시맨틱 태그가 필요하고, CSS는 prop별로 분류되어야 한다.
+
+이 갭을 메우려면 세 가지 핵심 문제를 풀어야 한다:
+
+1. **Variant 병합**: 48개의 독립된 트리를 하나의 트리로 합치면서, 어떤 노드가 "같은 노드"인지 판별해야 한다. (위치도, 크기도, 심지어 타입도 variant마다 다를 수 있다)
+
+2. **의미 부여**: FRAME+TEXT 구조만으로는 이것이 Button인지 Dropdown인지 알 수 없다. 시각적 구조에서 UX 패턴을 추론해야 한다.
+
+3. **스타일 소유권 결정**: `fontSize: 14px`가 size prop 때문인지 style prop 때문인지 — 48개 variant의 CSS를 비교해서 각 속성의 "주인"을 찾아야 한다.
+
+## 3-Layer 아키텍처가 필요한 이유
+
+이 세 문제는 **서로 다른 관심사**다. 하나의 모듈에서 다 처리하면 어떤 문제를 수정할 때 나머지가 깨진다. 그래서 각 관심사를 레이어로 분리했다:
+
+| Layer | 관심사 | 핵심 질문 |
+|-------|--------|----------|
+| **1. DataManager** | 데이터 접근 | "이 노드의 스타일/이미지/SVG를 빠르게 찾으려면?" |
+| **2. TreeManager** | 의미 추론 | "48개 variant를 어떻게 하나의 typed 컴포넌트로?" |
+| **3. CodeEmitter** | 코드 생성 | "UITree를 어떤 프레임워크/스타일 전략으로 출력할까?" |
+
+**Layer 2가 가장 복잡하다.** variant 병합, 노드 매칭, 슬롯 감지, 휴리스틱 패턴 인식, 스타일 분류가 모두 여기서 일어난다. Layer 1과 3은 상대적으로 기계적이다.
+
+**Layer 2의 출력(UITree)은 플랫폼 독립적 IR이다.** 같은 UITree로 React/Emotion을 생성할 수도 있고, React/Tailwind를 생성할 수도 있다. 미래에 Vue나 Svelte를 지원하려면 Layer 3만 추가하면 된다.
 
 ### 설계 원칙
 
 1. **레이어 분리**: 각 레이어는 명확한 단일 책임을 가짐
-2. **단방향 의존성**: 상위 레이어만 하위 레이어를 참조
+2. **단방향 의존성**: 상위 레이어만 하위 레이어를 참조 (Layer 3 → 2 → 1)
 3. **플랫폼 독립적 IR**: TreeBuilder까지는 플랫폼에 독립적 (UITree)
 4. **휴리스틱 기반 컴포넌트 감지**: 점수 기반 매칭으로 UX 패턴 자동 인식
 5. **Strategy 패턴**: 스타일 전략 (Emotion/Tailwind)을 교체 가능
@@ -76,6 +102,12 @@ FigmaCodeGenerator는 Figma 디자인 데이터를 React 컴포넌트 코드로 
 ---
 
 ## Layer 1: DataManager
+
+### 왜 필요한가
+
+Figma에서 받는 원본 데이터(`FigmaNodeData`)는 깊게 중첩된 JSON 트리다. 이 상태로 작업하면 특정 노드를 찾을 때마다 트리를 순회해야 하고, 의존성 컴포넌트의 이미지나 SVG를 가져오려면 여러 경로를 탐색해야 한다.
+
+DataManager는 이 원본 데이터를 **한 번** 파싱해서 HashMap으로 평탄화한다. 이후 모든 레이어는 ID 하나로 O(1)에 원하는 데이터를 가져온다. 생성 시점에 모든 구조를 구축하고, 이후에는 불변(immutable)이다.
 
 ### 책임
 
@@ -145,6 +177,18 @@ layers/data-manager/
 
 ## Layer 2: TreeManager + TreeBuilder
 
+### 왜 가장 복잡한 레이어인가
+
+Layer 2는 "시각적 노드 → 의미 있는 컴포넌트"로의 변환을 담당한다. 세 가지 난제를 순차적으로 풀어야 한다:
+
+**난제 1: Variant 병합** — Figma의 Button이 Size(S/M/L) × State(Normal/Hover/Disabled) = 9개 variant라면, 9개의 독립된 트리를 하나로 합쳐야 한다. 각 variant의 `Label` TEXT 노드가 "같은 노드"라는 것을 위치, 타입, 이름 등으로 추론한다. (→ VariantMerger, NodeMatcher)
+
+**난제 2: Slot과 Props 추출** — Figma의 `componentPropertyDefinitions`에서 props를 추출하되, boolean visibility prop은 React의 `React.ReactNode` slot으로 변환해야 한다. variant 간 텍스트가 다르면 string prop으로 노출한다. (→ PropsExtractor, SlotProcessor)
+
+**난제 3: 의미 부여** — FRAME 안에 TEXT와 INSTANCE가 있다. 이게 Button인지 Checkbox인지 Input인지는 Figma 데이터에 없다. 이름 패턴, 구조적 특성, prop 유형을 분석해서 점수 기반으로 가장 적합한 UX 패턴을 선택한다. (→ HeuristicsRunner)
+
+이 세 난제를 풀고 나면 **UITree**(플랫폼 독립 IR)가 완성되고, Layer 3이 이를 코드로 출력한다.
+
 ### TreeManager
 
 #### 책임
@@ -195,6 +239,8 @@ Output: UITree { root: UINode, props, arraySlots, derivedVars, stateVars }
 ```
 
 #### 2-Phase 파이프라인
+
+**왜 2-Phase인가?** — 스타일 처리(Phase 2)는 트리 구조가 확정되어야 정확하다. variant 병합 중에 스타일을 건드리면, 아직 매칭되지 않은 노드의 스타일이 잘못 분류된다. 그래서 **Phase 1에서 구조를 완전히 확정한 뒤**, Phase 2에서 스타일과 의미를 입힌다.
 
 ```
 SceneNode
@@ -280,13 +326,23 @@ processors/utils/
 
 ### Heuristics 시스템
 
-COMPONENT_SET에서 특정 UX 패턴을 **점수 기반**으로 감지하는 시스템.
+#### 왜 필요한가
+
+Figma에서 Button과 Checkbox는 구조적으로 거의 동일하다 — 둘 다 FRAME 안에 INSTANCE(아이콘)와 TEXT(라벨)가 있다. 하지만 React에서는 완전히 다른 컴포넌트다:
+
+- Button → `<button>` 태그, State prop을 `:hover`/`:active` pseudo-class로 변환
+- Checkbox → `<div>` + checked boolean prop, `onCheckedChange` 이벤트 바인딩
+- Dropdown → 내부 `useState(open)`, 리스트 조건부 렌더링, 배열 슬롯
+
+이 "의미 부여"를 하나의 거대한 if-else로 처리하면 유지보수가 불가능하다. 대신 각 UX 패턴을 **독립된 Heuristic 클래스**로 분리하고, 점수 기반으로 경쟁시킨다. 새 패턴이 필요하면 Heuristic 하나를 추가하면 된다.
+
+> 상세한 각 Heuristic의 동작은 [Props Heuristics 가이드](../2b-props/heuristics.md)를 참조하세요.
 
 #### 설계 원칙
 
 1. **점수 기반 매칭**: 각 Heuristic이 `score()`로 점수 반환, 최고 점수 ≥ 10이면 선택
-2. **score() + apply() 분리**: 판별과 처리를 분리
-3. **GenericHeuristic 폴백**: 매칭 실패 시 범용 처리 (score: 0)
+2. **score() + apply() 분리**: 판별과 처리를 분리 — score()는 부작용 없이 판별만, apply()에서 트리 변환
+3. **GenericHeuristic 폴백**: 매칭 실패 시 범용 처리 (score: 0) — 어떤 컴포넌트든 최소한의 슬롯 감지는 수행
 
 #### 인터페이스
 
@@ -343,6 +399,8 @@ interface IHeuristic {
 ```
 
 ### Post-Processors
+
+TreeBuilder가 개별 컴포넌트 트리를 완성한 뒤, Post-Processor가 **컴포넌트 간 관계**를 처리한다. TreeBuilder는 하나의 컴포넌트만 보지만, Post-Processor는 메인 + 모든 의존성을 함께 본다.
 
 | Post-Processor | 역할 |
 |----------------|------|

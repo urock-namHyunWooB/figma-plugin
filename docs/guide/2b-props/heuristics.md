@@ -2,29 +2,56 @@
 
 > Stage 1-2는 [Props 추출 가이드](extraction.md), Stage 4-5는 [스타일 분해 가이드](style-decomposition.md)를 참조하세요.
 
-점수 기반 매칭(threshold >= 10)으로 선택된 Heuristic이 컴포넌트 의미에 맞게 props를 재구성한다. 현재 14개 Heuristic이 등록되어 있다 (+ GenericHeuristic 폴백, ModuleHeuristic 별도 호출).
+## Heuristic이 풀어야 하는 문제
 
-### 공통 메커니즘
+Stage 1-2까지 완료되면, 컴포넌트의 **구조**(어떤 노드들이 있고 variant별로 어떻게 다른지)는 확정된다. 하지만 이 시점의 트리는 아직 "Figma의 시각적 구조"일 뿐이다.
 
-모든 Heuristic의 apply()는 3가지 변환 유형의 조합이다:
+**문제**: Figma에서 Button, Checkbox, Dropdown은 모두 "FRAME 안에 INSTANCE와 TEXT가 있는 것"이다. 하지만 React에서 이 셋은 완전히 다르다:
 
-| 유형 | 설명 | 예시 |
-|------|------|------|
-| **Prop 재구성** | Figma variant prop을 React 의미에 맞는 prop으로 교체 | State variant → 제거, checked/onChange 추가 |
-| **트리 변환** | 노드에 semanticType, bindings, visibility 설정 | TEXT → `<input>`, INSTANCE → slot |
-| **스타일 이동** | dynamic/pseudo 스타일 재배치 | state=hover → `:hover`, active → `open` 조건 |
+```
+Figma (동일한 구조):             React (완전히 다른 의미):
+┌─ FRAME ──────────┐
+│ [INSTANCE] [TEXT] │  → Button?    → <button onClick={...}> + :hover/:active pseudo
+│                   │  → Checkbox?  → checked boolean + onCheckedChange + SVG fill 변환
+│                   │  → Dropdown?  → useState(open) + 배열 슬롯 + position:absolute
+└───────────────────┘
+```
+
+Heuristic은 이 **의미의 갭**을 메운다. 컴포넌트 이름, prop 구조, 자식 패턴을 분석해서 가장 적합한 UX 패턴을 선택하고, 그에 맞게 트리를 변환한다.
+
+## 점수 기반 매칭
+
+14개 Heuristic이 등록되어 있고 (+ GenericHeuristic 폴백, ModuleHeuristic 별도 호출), 각 Heuristic이 `score()`로 점수를 매긴다. **최고 점수 ≥ 10**이면 해당 Heuristic이 선택되어 `apply()`를 실행한다.
+
+왜 점수 기반인가? — 컴포넌트 이름만으로는 판별이 모호한 경우가 있다. "ActionButton"이 Button인지 FAB인지, "SelectField"가 Dropdown인지 Input인지. 여러 신호(이름 패턴, State prop 유무, 자식 구조)를 합산해서 가장 적합한 패턴을 선택한다.
+
+## 공통 변환 패턴
+
+모든 Heuristic의 apply()는 세 가지 변환 유형의 조합이다:
+
+| 유형 | 하는 일 | 왜 필요한가 |
+|------|--------|------------|
+| **Prop 재구성** | Figma variant prop을 React 의미에 맞는 prop으로 교체 | Figma의 `State = ["Normal", "Hover"]`는 React에서 prop이 아니라 CSS pseudo-class여야 함 |
+| **트리 변환** | 노드에 semanticType, bindings, visibility 설정 | FRAME이 `<button>`이 되려면 semanticType을 부여해야 함 |
+| **스타일 이동** | dynamic/pseudo 스타일 재배치 | State=Hover의 스타일을 `:hover` pseudo-class로 옮겨야 CSS가 자연스러움 |
 
 공통 실행 패턴:
 ```
 1. 기존 variant prop 제거 (ctx.props.splice)
+   — State prop은 React prop이 아니라 CSS pseudo로 처리되므로 제거
 2. 조건 맵 구축: variant 옵션 → 새 조건
+   — "Hover" → :hover, "Disabled" → :disabled 등 매핑 테이블 생성
 3. 트리 전체 조건 재작성 (rewritePropConditions, rewriteStateDynamicStyles)
+   — 제거한 prop을 참조하던 모든 조건을 새 조건으로 치환
 4. 새 prop 추가 (ctx.props.push)
+   — checked, onChange 등 React 의미에 맞는 prop 추가
 ```
 
 ---
 
 ### 상호작용 컴포넌트
+
+이 그룹의 공통 문제: Figma에서 State variant(Normal/Hover/Active/Disabled)로 표현된 시각적 상태를 React에서는 CSS pseudo-class(`:hover`, `:active`, `:disabled`)로 처리해야 한다. 사용자가 State를 prop으로 전달하는 게 아니라, 브라우저가 자동으로 적용한다.
 
 #### ButtonHeuristic
 
@@ -127,6 +154,8 @@ Props 변경 없음.
 ---
 
 ### 토글/선택 컴포넌트
+
+이 그룹의 공통 문제: Figma에서 체크/선택 상태는 variant(State=Checked/Unchecked)로 표현되지만, React에서는 `checked` boolean prop + `onChange` 이벤트 핸들러로 제어해야 한다. 또한 체크 표시 아이콘(dot, checkmark)은 `checked` 조건에 따라 가시성이 바뀌어야 한다.
 
 #### CheckboxHeuristic
 
@@ -260,6 +289,8 @@ Props 변경 없음.
 ---
 
 ### 입력 컴포넌트
+
+이 그룹의 공통 문제: Figma에서 입력 필드의 label이나 helperText는 boolean prop(`ShowLabel=True/False`)으로 가시성을 제어한다. 하지만 React에서는 `label="이메일"`처럼 **string prop**으로 전달하는 게 자연스럽다 — 문자열이 있으면 보이고, 없으면 안 보이는 것이다.
 
 #### InputHeuristic
 
@@ -462,6 +493,8 @@ Props 변경 없음.
 
 ### 표시 컴포넌트
 
+이 그룹은 상태 변환이 거의 없다. 대신 **슬롯 감지**(어떤 부분이 외부에서 주입 가능한 콘텐츠인지)와 **override 정규화**(Figma의 INSTANCE override를 React prop으로 변환)가 주 관심사다.
+
 #### ChipHeuristic
 
 **핵심: 경량 슬롯 감지**
@@ -584,7 +617,7 @@ Props 변경 없음.
 
 ### GenericHeuristic (폴백)
 
-다른 Heuristic에 매칭되지 않을 때 사용. **기존 props를 제거하지 않고** 슬롯만 추가한다.
+어떤 Heuristic도 threshold(10)을 넘지 못하면 GenericHeuristic이 사용된다. 이 폴백이 있기 때문에 등록되지 않은 컴포넌트 패턴이라도 **최소한의 슬롯 감지와 props 노출**은 보장된다. 기존 props를 제거하지 않고 슬롯만 추가한다.
 
 **apply() 실행 순서:**
 
