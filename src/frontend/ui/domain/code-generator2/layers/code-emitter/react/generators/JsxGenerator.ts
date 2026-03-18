@@ -372,16 +372,37 @@ ${indentStr}))}`;
       return `${indentStr}{/* No template node for loop */}`;
     }
 
+    // 템플릿 서브트리에 itemVariant 스타일이 있는지 확인
+    const hasItemVariant = this.templateHasItemVariant(templateNode);
+
     // 템플릿 렌더링 (루프 컨텍스트에서)
     const templateJsx = this.generateNodeInLoop(templateNode, styleStrategy, options, indent + 4, itemVar, keyField);
 
-    // isActive 변수 포함 (선택 상태 추적용)
-    return `${indentStr}{${dataProp}.map((${itemVar}) => {
-${indentStr}  const isActive = ${itemVar}.value === selectedValue;
+    // isActive 선언은 itemVariant가 있을 때만
+    const isActiveDecl = hasItemVariant
+      ? `\n${indentStr}  const isActive = ${itemVar}.${keyField} === selectedValue;`
+      : "";
+
+    return `${indentStr}{${dataProp}.map((${itemVar}) => {${isActiveDecl}
 ${indentStr}  return (
 ${templateJsx}
 ${indentStr}  );
 ${indentStr}})}`;
+  }
+
+  /**
+   * 템플릿 서브트리에 itemVariant 스타일이 있는지 확인
+   */
+  private static templateHasItemVariant(node: UINode): boolean {
+    if ("styles" in node && node.styles?.itemVariant) {
+      return true;
+    }
+    if ("children" in node && node.children) {
+      for (const child of node.children) {
+        if (this.templateHasItemVariant(child)) return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -478,16 +499,11 @@ ${indentStr})}` : jsx;
     keyField: string,
     isRoot: boolean
   ): string {
-    let attrs = this.generateAttributes(node, styleStrategy, options, { skipBindingAttrs: true });
+    let attrs = this.generateAttributes(node, styleStrategy, options, { skipBindingAttrs: true, inLoopContext: true });
 
     // 루트 노드에만 key 추가
     if (isRoot && !attrs.includes("key=")) {
       attrs = ` key={${itemVar}.${keyField}}` + attrs;
-    }
-
-    // 루트 노드에 isActive 기반 조건부 스타일 추가 (선택된 탭 강조)
-    if (isRoot) {
-      attrs += ` style={isActive ? { background: "white", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", borderRadius: "8px" } : undefined}`;
     }
 
     // Loop item 바인딩 처리 (bindings에서 item.xxx 참조 치환)
@@ -848,7 +864,7 @@ ${indentStr}</${tag}>`;
     node: UINode,
     styleStrategy: IStyleStrategy,
     options: JsxGeneratorOptions,
-    opts?: { skipBindingAttrs?: boolean }
+    opts?: { skipBindingAttrs?: boolean; inLoopContext?: boolean }
   ): string {
     const attrs: string[] = [];
 
@@ -857,15 +873,18 @@ ${indentStr}</${tag}>`;
       const styleVarName = this.toStyleVariableName(node.id, node.name);
       const dynamicProps = this.extractDynamicProps(node.styles);
 
-      if (dynamicProps.length > 0) {
+      // itemVariant ternary (loop 컨텍스트에서만)
+      const itemVariantRef = (opts?.inLoopContext && node.styles.itemVariant)
+        ? `isActive ? ${styleVarName}_activeCss : ${styleVarName}_inactiveCss`
+        : "";
+
+      if (dynamicProps.length > 0 || itemVariantRef) {
         if (styleStrategy.name === "emotion") {
-          // Emotion: css prop 배열
-          const dynamicStyleRefs = dynamicProps.map(
-            (prop) => this.buildDynamicStyleRef(styleVarName, prop)
-          );
-          attrs.push(`css={[${styleVarName}, ${dynamicStyleRefs.join(", ")}]}`);
+          const refs = [styleVarName];
+          if (itemVariantRef) refs.push(itemVariantRef);
+          refs.push(...dynamicProps.map((prop) => this.buildDynamicStyleRef(styleVarName, prop)));
+          attrs.push(`css={[${refs.join(", ")}]}`);
         } else {
-          // Tailwind: cva 함수 호출
           const propArgs = dynamicProps.flatMap(
             (prop) => prop.split("+").map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
           );

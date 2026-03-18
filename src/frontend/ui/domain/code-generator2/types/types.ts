@@ -101,6 +101,11 @@ export type StyleObject = {
     query: string;
     style: Record<string, string | number>;
   }>;
+  /** loop 아이템의 boolean variant 스타일 (dependency COMPONENT_SET 기반) */
+  itemVariant?: {
+    true: Record<string, string | number>;
+    false: Record<string, string | number>;
+  };
 };
 
 /**

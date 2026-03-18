@@ -66,8 +66,11 @@ export class EmotionStrategy implements IStyleStrategy {
     // Step 3: dynamic 스타일 생성 (variant별 조건부 스타일)
     const dynamicCode = this.generateDynamicCode(variableName, style.dynamic, style.base);
 
-    // Step 4: 결과 조합
-    return this.combineResults(variableName, baseCode, pseudoCode, dynamicCode);
+    // Step 4: itemVariant 스타일 생성 (loop 아이템 boolean variant)
+    const itemVariantCode = this.generateItemVariantCode(variableName, style.itemVariant);
+
+    // Step 5: 결과 조합
+    return this.combineResults(variableName, baseCode, pseudoCode, dynamicCode, itemVariantCode);
   }
 
   private generateBaseCode(
@@ -162,32 +165,66 @@ export class EmotionStrategy implements IStyleStrategy {
     variableName: string,
     baseResult: { code: string; hasContent: boolean },
     pseudoResult: { code: string; hasContent: boolean },
-    dynamicResult: { code: string; hasContent: boolean }
+    dynamicResult: { code: string; hasContent: boolean },
+    itemVariantResult?: { code: string; hasContent: boolean }
   ): StyleResult {
-    // 빈 스타일 체크
-    if (!baseResult.hasContent && !pseudoResult.hasContent && !dynamicResult.hasContent) {
+    const hasAny = baseResult.hasContent || pseudoResult.hasContent ||
+      dynamicResult.hasContent || !!itemVariantResult?.hasContent;
+    if (!hasAny) {
       return { variableName, code: "", isEmpty: true };
     }
 
     const codeParts: string[] = [];
 
-    // base + pseudo → css``
-    // dynamic styles만 있는 경우에도 base 변수 정의 (slot wrapper div에서 참조 가능)
     if (baseResult.hasContent || pseudoResult.hasContent) {
       codeParts.push(`const ${variableName} = css\`
 ${this.indent(baseResult.code, 2)}
 ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
 \`;`);
-    } else if (dynamicResult.hasContent) {
+    } else if (dynamicResult.hasContent || itemVariantResult?.hasContent) {
       codeParts.push(`const ${variableName} = css\`\`;`);
     }
 
-    // dynamic → { variant: css`` }
     if (dynamicResult.hasContent) {
       codeParts.push(dynamicResult.code);
     }
 
+    if (itemVariantResult?.hasContent) {
+      codeParts.push(itemVariantResult.code);
+    }
+
     return { variableName, code: codeParts.join("\n\n"), isEmpty: false };
+  }
+
+  /**
+   * itemVariant 스타일 코드 생성
+   */
+  /** 이미 생성된 itemVariant CSS 변수명 추적 (중복 방지) */
+  private generatedItemVariantNames = new Set<string>();
+
+  private generateItemVariantCode(
+    variableName: string,
+    itemVariant?: StyleObject["itemVariant"]
+  ): { code: string; hasContent: boolean } {
+    if (!itemVariant) return { code: "", hasContent: false };
+    if (this.generatedItemVariantNames.has(variableName)) {
+      return { code: "", hasContent: false };
+    }
+    this.generatedItemVariantNames.add(variableName);
+
+    const trueStyle = this.objectToStyleString(itemVariant.true);
+    const falseStyle = this.objectToStyleString(itemVariant.false);
+    if (!trueStyle && !falseStyle) return { code: "", hasContent: false };
+
+    const parts: string[] = [];
+    if (trueStyle) {
+      parts.push(`const ${variableName}_activeCss = css\`\n${this.indent(trueStyle, 2)}\n\`;`);
+    }
+    if (falseStyle) {
+      parts.push(`const ${variableName}_inactiveCss = css\`\n${this.indent(falseStyle, 2)}\n\`;`);
+    }
+
+    return { code: parts.join("\n\n"), hasContent: true };
   }
 
   private groupByVariantProp(

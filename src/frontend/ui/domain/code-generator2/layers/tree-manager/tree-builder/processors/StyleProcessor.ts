@@ -914,6 +914,222 @@ export class StyleProcessor {
     return result;
   }
 
+  // ===========================================================================
+  // itemVariant 스타일 (loop 컨텍스트에서만 호출)
+  // ===========================================================================
+
+  /**
+   * loop 컨테이너의 템플릿 노드에 itemVariant 스타일 적용
+   *
+   * 노드의 원본 INSTANCE componentId를 조회하여
+   * dependency COMPONENT_SET의 boolean variant 스타일 차이를 추출
+   *
+   * TreeBuilder에서 loop 설정 후 호출
+   */
+  public applyLoopItemVariant(node: InternalNode): InternalNode | null {
+    const { node: figmaNode } = this.dataManager.getById(node.id);
+    const componentId = (figmaNode as any)?.componentId as string | undefined;
+    if (!componentId) return null;
+
+    const currentDep = this.dataManager.getAllDependencies().get(componentId);
+    if (!currentDep) return null;
+    const componentSetId = ((currentDep.info as any).components?.[componentId] as any)?.componentSetId;
+    if (!componentSetId) return null;
+
+    // COMPONENT_SET의 boolean variant 속성 찾기
+    const booleanProp = this.findBooleanVariantProp(componentSetId);
+    if (!booleanProp) return null;
+
+    const currentName = currentDep.info?.document?.name as string | undefined;
+    if (!currentName) return null;
+    const currentProps = this.parseItemVariantProps(currentName);
+    const currentValue = currentProps[booleanProp];
+    if (!currentValue) return null;
+
+    // 반대 variant 찾기
+    const oppositeDep = this.findOppositeVariant(componentId, componentSetId, booleanProp, currentProps);
+    if (!oppositeDep) return null;
+
+    const currentStyleTree = currentDep.styleTree;
+    const oppositeStyleTree = oppositeDep.styleTree;
+    if (!currentStyleTree || !oppositeStyleTree) return null;
+
+    // true/false 매핑
+    const isCurrentTrue = currentValue.toLowerCase() === "true";
+    const trueStyleTree = isCurrentTrue ? currentStyleTree : oppositeStyleTree;
+    const falseStyleTree = isCurrentTrue ? oppositeStyleTree : currentStyleTree;
+
+    // root 스타일 diff
+    const rootVariant = this.computeItemVariantDiff(
+      falseStyleTree.cssStyle || {},
+      trueStyleTree.cssStyle || {}
+    );
+
+    let styles = node.styles;
+    if (rootVariant) {
+      if (!styles) styles = { base: {}, dynamic: [] };
+      styles = { ...styles, itemVariant: rootVariant };
+    }
+
+    // children 스타일 diff (TEXT 노드 등)
+    const updatedChildren = this.applyChildItemVariantDiff(
+      node.children,
+      falseStyleTree.children || [],
+      trueStyleTree.children || []
+    );
+
+    if (!rootVariant && updatedChildren === node.children) return null;
+
+    return { ...node, styles, children: updatedChildren };
+  }
+
+  /**
+   * COMPONENT_SET에서 boolean variant 속성 찾기 (true/false 값 쌍)
+   */
+  private findBooleanVariantProp(componentSetId: string): string | null {
+    const grouped = this.dataManager.getDependenciesGroupedByComponentSet();
+    const group = grouped[componentSetId];
+    if (!group || group.variants.length < 2) return null;
+
+    const allProps: Array<Record<string, string>> = [];
+    for (const variant of group.variants) {
+      const name = variant.info?.document?.name as string | undefined;
+      if (!name) continue;
+      allProps.push(this.parseItemVariantProps(name));
+    }
+    if (allProps.length === 0) return null;
+
+    for (const propName of Object.keys(allProps[0])) {
+      const distinctValues = new Set(allProps.map((p) => p[propName]));
+      if (distinctValues.size === 2) {
+        const vals = [...distinctValues].map((v) => v.toLowerCase());
+        if (vals.includes("true") && vals.includes("false")) {
+          return propName;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 반대 variant 찾기 (boolean prop만 다르고 나머지 동일)
+   */
+  private findOppositeVariant(
+    currentComponentId: string,
+    componentSetId: string,
+    booleanProp: string,
+    currentProps: Record<string, string>
+  ): any | null {
+    const deps = this.dataManager.getAllDependencies();
+    for (const [depId, depData] of deps) {
+      if (depId === currentComponentId) continue;
+      const depSetId = ((depData.info as any).components?.[depId] as any)?.componentSetId;
+      if (depSetId !== componentSetId) continue;
+
+      const depName = depData.info?.document?.name as string | undefined;
+      if (!depName) continue;
+      const depProps = this.parseItemVariantProps(depName);
+
+      if (depProps[booleanProp] === currentProps[booleanProp]) continue;
+
+      let allOthersMatch = true;
+      for (const key of Object.keys(currentProps)) {
+        if (key === booleanProp) continue;
+        if (depProps[key] !== currentProps[key]) { allOthersMatch = false; break; }
+      }
+      if (allOthersMatch) return depData;
+    }
+    return null;
+  }
+
+  /**
+   * 두 CSS의 차이 → { true, false } 스타일 객체
+   */
+  private computeItemVariantDiff(
+    falseCss: Record<string, string>,
+    trueCss: Record<string, string>
+  ): { true: Record<string, string | number>; false: Record<string, string | number> } | null {
+    const allKeys = new Set([...Object.keys(falseCss), ...Object.keys(trueCss)]);
+    const falseStyle: Record<string, string> = {};
+    const trueStyle: Record<string, string> = {};
+
+    for (const key of allKeys) {
+      if (falseCss[key] === trueCss[key]) continue;
+      falseStyle[key] = falseCss[key] || this.getItemVariantResetValue(key);
+      trueStyle[key] = trueCss[key] || this.getItemVariantResetValue(key);
+    }
+
+    if (Object.keys(trueStyle).length === 0) return null;
+
+    return { true: trueStyle, false: falseStyle };
+  }
+
+  private getItemVariantResetValue(prop: string): string {
+    if (prop === "background") return "transparent";
+    if (prop === "box-shadow") return "none";
+    return "initial";
+  }
+
+  /**
+   * children의 itemVariant 스타일 diff 적용 (재귀)
+   */
+  private applyChildItemVariantDiff(
+    children: InternalNode[],
+    falseStyleChildren: any[],
+    trueStyleChildren: any[]
+  ): InternalNode[] {
+    let changed = false;
+    const result = children.map((child, idx) => {
+      const falseChild = falseStyleChildren[idx];
+      const trueChild = trueStyleChildren[idx];
+      if (!falseChild && !trueChild) return child;
+
+      const variant = this.computeItemVariantDiff(
+        falseChild?.cssStyle || {},
+        trueChild?.cssStyle || {}
+      );
+
+      let updatedChild = child;
+      if (variant) {
+        changed = true;
+        let styles = child.styles;
+        if (!styles) styles = { base: {}, dynamic: [] };
+        styles = { ...styles, itemVariant: variant };
+        updatedChild = { ...child, styles };
+      }
+
+      if (updatedChild.children.length > 0) {
+        const deepChildren = this.applyChildItemVariantDiff(
+          updatedChild.children,
+          falseChild?.children || [],
+          trueChild?.children || []
+        );
+        if (deepChildren !== updatedChild.children) {
+          changed = true;
+          updatedChild = { ...updatedChild, children: deepChildren };
+        }
+      }
+
+      return updatedChild;
+    });
+
+    return changed ? result : children;
+  }
+
+  /**
+   * variant 이름 파싱
+   */
+  private parseItemVariantProps(name: string): Record<string, string> {
+    const result: Record<string, string> = {};
+    for (const part of name.split(", ")) {
+      const eqIdx = part.indexOf("=");
+      if (eqIdx !== -1) {
+        result[part.slice(0, eqIdx).trim()] = part.slice(eqIdx + 1).trim();
+      }
+    }
+    return result;
+  }
+
   /**
    * 스타일에 border 관련 속성이 있는지 확인 (base + dynamic)
    */

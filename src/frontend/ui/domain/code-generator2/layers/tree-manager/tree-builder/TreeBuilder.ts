@@ -151,6 +151,9 @@ class TreeBuilder {
       componentContext
     );
 
+    // Step 10.5: loop 컨테이너의 템플릿에 itemVariant 스타일 적용
+    this.applyLoopItemVariants(tree);
+
     // Step 11: State fallback — 휴리스틱이 처리하지 않은 state dynamic → pseudo 자동 변환
     this.fallbackStateToPseudo(tree, props);
 
@@ -187,6 +190,25 @@ class TreeBuilder {
         ? { stateVars: heuristicsResult.stateVars }
         : {}),
     };
+  }
+
+  /**
+   * loop 컨테이너의 템플릿 노드에 itemVariant 스타일 적용 (재귀)
+   *
+   * loop가 설정된 컨테이너의 첫 번째 자식(템플릿)에 대해
+   * dependency boolean variant 스타일 차이를 추출
+   */
+  private applyLoopItemVariants(node: InternalTree): void {
+    if (node.loop && node.children.length > 0) {
+      const template = node.children[0];
+      const result = this.styleProcessor.applyLoopItemVariant(template);
+      if (result) {
+        node.children[0] = result;
+      }
+    }
+    for (const child of node.children) {
+      this.applyLoopItemVariants(child);
+    }
   }
 
   /**
