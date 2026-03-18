@@ -412,15 +412,13 @@ describe("Segmented Control/Segmented Control", () => {
     expect(isActiveUsedInStyle).toBe(true);
   });
 
-  it("selectedValue 기본값이 options의 첫번째 값이어야 한다", async () => {
+  it("selectedValue는 기본값 없이 외부 제어되어야 한다", async () => {
     const result = await compileFixture();
 
-    // selectedValue = options?.[0]?.value 또는 유사한 패턴
-    const hasDefaultFromOptions = /selectedValue\s*(?:=|:)\s*options\?\.\[0\]\.?(?:\?\.)?value/.test(result) ||
-                                   /selectedValue\s*(?:=|:|\?\?)\s*options\?\.\[0\]/.test(result) ||
-                                   /selectedValue\s*\?\?\s*options\?\.\[0\]\.value/.test(result);
-
-    expect(hasDefaultFromOptions).toBe(true);
+    // selectedValue는 기본값 없이 destructuring만 되어야 함
+    // selectedValue = options?.[0]?.value 같은 자동 기본값은 없어야 함
+    const hasAutoDefault = /selectedValue\s*=\s*options\?\.\[0\]/.test(result);
+    expect(hasAutoDefault).toBe(false);
   });
 
   // ========================================

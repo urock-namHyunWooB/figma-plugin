@@ -139,7 +139,7 @@ class UINodeConverter {
         : {}),
       ...(node.bindings ? { bindings: node.bindings } : {}),
       ...(node.semanticType ? { semanticType: node.semanticType } : {}),
-      ...(!opts.isRoot && node.loop ? { loop: node.loop } : {}),
+      ...(node.loop ? { loop: node.loop } : {}),
       ...(node.childrenSlot ? { childrenSlot: node.childrenSlot } : {}),
       ...(nodeType === "component" && node.refId ? { refId: node.refId } : {}),
       ...(nodeType === "vector" && finalVectorSvg ? { vectorSvg: finalVectorSvg } : {}),

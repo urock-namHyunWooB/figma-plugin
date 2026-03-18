@@ -107,10 +107,6 @@ export default ${componentName}`;
       if (p.type === "slot" && arraySlotNames.has(p.name)) {
         return `${p.name} = []`;
       }
-      // selectedValue는 options의 첫번째 값을 기본값으로 사용
-      if (p.name === "selectedValue") {
-        return `${p.name} = options?.[0]?.value`;
-      }
       // 기본값이 있으면 destructuring에 포함
       if (p.defaultValue !== undefined) {
         const defaultVal = this.formatDefaultValue(p.defaultValue);
@@ -482,7 +478,7 @@ ${indentStr})}` : jsx;
     keyField: string,
     isRoot: boolean
   ): string {
-    let attrs = this.generateAttributes(node, styleStrategy, options);
+    let attrs = this.generateAttributes(node, styleStrategy, options, { skipBindingAttrs: true });
 
     // 루트 노드에만 key 추가
     if (isRoot && !attrs.includes("key=")) {
@@ -851,7 +847,8 @@ ${indentStr}</${tag}>`;
   private static generateAttributes(
     node: UINode,
     styleStrategy: IStyleStrategy,
-    options: JsxGeneratorOptions
+    options: JsxGeneratorOptions,
+    opts?: { skipBindingAttrs?: boolean }
   ): string {
     const attrs: string[] = [];
 
@@ -885,8 +882,8 @@ ${indentStr}</${tag}>`;
       attrs.push(`data-figma-id="${node.id}"`);
     }
 
-    // bindings에서 attrs 처리
-    if (node.bindings?.attrs) {
+    // bindings에서 attrs 처리 (loop 컨텍스트에서는 generateAttributesInLoop이 처리)
+    if (node.bindings?.attrs && !opts?.skipBindingAttrs) {
       for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
         if ("prop" in source) {
           attrs.push(`${attrName}={${source.prop}}`);
