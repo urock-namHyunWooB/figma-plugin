@@ -15,7 +15,7 @@
  * - INSTANCE (icon): "icon"
  */
 
-import type { ComponentType, InternalNode } from "../../../../types/types";
+import type { ComponentType, ConditionNode, InternalNode } from "../../../../types/types";
 import type {
   IHeuristic,
   HeuristicContext,
@@ -333,7 +333,10 @@ export class InputHeuristic implements IHeuristic {
       sourceKey = ctx.props[propIndex].sourceKey;
       ctx.props.splice(propIndex, 1);
 
-      // 제거된 prop을 참조하는 dynamic styles 정리
+      // placeholder 노드의 color를 분리: value색 → base, placeholder색 → ::placeholder
+      this.splitPlaceholderColors(placeholderNode, removedPropName);
+
+      // 제거된 prop을 참조하는 dynamic styles 정리 (compound 조건에서 해당 prop만 strip)
       this.removeDynamicStylesForProp(ctx.tree, removedPropName);
     }
 
@@ -380,13 +383,32 @@ export class InputHeuristic implements IHeuristic {
   }
 
   /**
-   * 특정 prop을 참조하는 dynamic styles 제거 (재귀)
+   * 특정 prop을 dynamic 조건에서 strip (재귀).
+   * compound 조건(AND/OR)에서 해당 prop 부분만 제거하고 나머지는 보존.
+   * strip 후 동일 조건으로 합쳐진 엔트리들의 style을 병합.
    */
   private removeDynamicStylesForProp(node: InternalNode, propName: string): void {
-    if (node.styles?.dynamic) {
-      node.styles.dynamic = node.styles.dynamic.filter(
-        (entry) => !this.conditionReferencesProp(entry.condition, propName)
-      );
+    if (node.styles?.dynamic?.length) {
+      const stripped: typeof node.styles.dynamic = [];
+      for (const entry of node.styles.dynamic) {
+        const cond = this.stripPropFromCondition(entry.condition, propName);
+        if (cond === null) continue; // 조건이 순수 해당 prop만 → 삭제
+        stripped.push({ ...entry, condition: cond });
+      }
+      // 동일 조건 엔트리 병합 (첫 번째 값 우선)
+      const mergeMap = new Map<string, (typeof stripped)[number]>();
+      for (const entry of stripped) {
+        const key = JSON.stringify(entry.condition);
+        const existing = mergeMap.get(key);
+        if (existing) {
+          for (const [prop, val] of Object.entries(entry.style)) {
+            if (!(prop in existing.style)) existing.style[prop] = val;
+          }
+        } else {
+          mergeMap.set(key, { ...entry, style: { ...entry.style } });
+        }
+      }
+      node.styles.dynamic = Array.from(mergeMap.values());
     }
     for (const child of node.children || []) {
       this.removeDynamicStylesForProp(child, propName);
@@ -394,16 +416,91 @@ export class InputHeuristic implements IHeuristic {
   }
 
   /**
-   * condition이 특정 prop을 참조하는지 확인 (중첩 condition 포함)
+   * condition에서 특정 prop 참조를 제거.
+   * - 단일 prop 조건 → null (삭제)
+   * - AND/OR 내부 → 해당 sub-condition만 제거, 나머지 보존
+   * - not 래핑 → 내부 strip 후 null이면 null
    */
-  private conditionReferencesProp(condition: any, propName: string): boolean {
-    if (!condition) return false;
-    if (condition.prop === propName) return true;
-    // "not" 래핑
-    if (condition.condition) return this.conditionReferencesProp(condition.condition, propName);
-    // "and"/"or" 래핑
-    if (condition.conditions) return condition.conditions.some((c: any) => this.conditionReferencesProp(c, propName));
-    return false;
+  private stripPropFromCondition(condition: ConditionNode, propName: string): ConditionNode | null {
+    if (!condition) return null;
+
+    // 단일 prop 참조 (eq, neq, truthy)
+    if ("prop" in condition && condition.prop === propName) return null;
+
+    // not 래핑
+    if (condition.type === "not") {
+      const inner = this.stripPropFromCondition(condition.condition, propName);
+      return inner === null ? null : { type: "not", condition: inner };
+    }
+
+    // and/or — sub-condition 중 해당 prop만 제거
+    if (condition.type === "and" || condition.type === "or") {
+      const remaining = condition.conditions
+        .map((c) => this.stripPropFromCondition(c, propName))
+        .filter((c): c is ConditionNode => c !== null);
+      if (remaining.length === 0) return null;
+      if (remaining.length === 1) return remaining[0];
+      return { type: condition.type, conditions: remaining };
+    }
+
+    // 해당 prop과 무관 → 그대로 유지
+    return condition;
+  }
+
+  /**
+   * placeholder 노드의 color를 분리:
+   * - placeholder=false(value) 색 → base color
+   * - placeholder=true 색 → ::placeholder pseudo
+   * strip 전에 호출해야 원본 compound 조건에서 truthy/falsy 판별 가능.
+   */
+  private splitPlaceholderColors(node: InternalNode, propName: string): void {
+    if (!node.styles?.dynamic?.length) return;
+
+    let placeholderColor: string | null = null;
+    let valueColor: string | null = null;
+
+    for (const entry of node.styles.dynamic) {
+      if (entry.style.color === undefined) continue;
+      const truthy = this.isConditionTruthyForProp(entry.condition, propName);
+      if (truthy === true && !placeholderColor) placeholderColor = String(entry.style.color);
+      if (truthy === false && !valueColor) valueColor = String(entry.style.color);
+      delete entry.style.color;
+    }
+
+    // 빈 style 엔트리 제거
+    node.styles.dynamic = node.styles.dynamic.filter(
+      (e) => Object.keys(e.style).length > 0
+    );
+
+    if (valueColor) {
+      if (!node.styles.base) node.styles.base = {};
+      node.styles.base.color = valueColor;
+    }
+    if (placeholderColor) {
+      if (!node.styles.pseudo) node.styles.pseudo = {};
+      node.styles.pseudo["::placeholder"] = { color: placeholderColor };
+    }
+  }
+
+  /**
+   * condition 내에서 특정 prop이 truthy 위치인지 falsy(NOT) 위치인지 판별.
+   * compound AND/OR 내부를 재귀 탐색. 해당 prop이 없으면 null.
+   */
+  private isConditionTruthyForProp(condition: ConditionNode, propName: string): boolean | null {
+    if ("prop" in condition && condition.prop === propName) {
+      return condition.type === "truthy" || (condition.type === "eq" && condition.value === true);
+    }
+    if (condition.type === "not") {
+      const inner = this.isConditionTruthyForProp(condition.condition, propName);
+      return inner !== null ? !inner : null;
+    }
+    if (condition.type === "and" || condition.type === "or") {
+      for (const sub of condition.conditions) {
+        const result = this.isConditionTruthyForProp(sub, propName);
+        if (result !== null) return result;
+      }
+    }
+    return null;
   }
 
   /**

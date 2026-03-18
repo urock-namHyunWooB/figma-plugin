@@ -58,7 +58,8 @@ export type PseudoClass =
   | ":disabled"
   | ":focus-visible"
   | ":checked"
-  | ":visited";
+  | ":visited"
+  | "::placeholder";
 
 /** variant 불일치 진단 정보 */
 export interface VariantInconsistency {

@@ -49,4 +49,23 @@ describe("Input 컴포넌트 코드 생성", () => {
     // (value: string) => void 또는 유사한 함수 시그니처
     expect(code).toMatch(/onChange\??:\s*\(/);
   });
+
+  test("size prop에 의한 동적 스타일이 생성되어야 한다", () => {
+    // size별 padding (root)
+    expect(code).toMatch(/padding:\s*0\s+10px/); // default
+    expect(code).toMatch(/padding:\s*0\s+8px/);  // small
+    expect(code).toMatch(/padding:\s*0\s+12px/); // large
+
+    // size별 height (input)
+    expect(code).toMatch(/height:\s*32px/); // default
+    expect(code).toMatch(/height:\s*28px/); // small
+    expect(code).toMatch(/height:\s*36px/); // large
+  });
+
+  test("value 텍스트 색상과 ::placeholder 색상이 분리되어야 한다", () => {
+    // value 텍스트: dark color (base)
+    expect(code).toMatch(/color:\s*var\(--Dark-gray-2,\s*#424242\)/);
+    // placeholder 텍스트: ::placeholder pseudo
+    expect(code).toMatch(/&::placeholder\s*\{[^}]*color:\s*var\(--Light,\s*#757575\)/);
+  });
 });
