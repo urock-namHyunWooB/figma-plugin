@@ -18,6 +18,7 @@ const TYPE_MAP: Record<string, PropDefinition["type"]> = {
   boolean: "BOOLEAN",
   slot: "SLOT",
   function: "function",
+  array: "array",
 };
 
 /**

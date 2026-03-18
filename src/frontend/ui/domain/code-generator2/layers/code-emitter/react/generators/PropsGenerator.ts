@@ -91,6 +91,10 @@ ${propLines.join("\n")}
         return prop.functionSignature || "(...args: any[]) => void";
       }
 
+      case "array": {
+        return prop.itemType || "any[]";
+      }
+
       default:
         return "unknown";
     }

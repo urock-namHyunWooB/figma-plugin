@@ -287,12 +287,15 @@ export class SegmentedControlHeuristic implements IHeuristic {
       template.type = "FRAME";
     }
 
-    // onClick 바인딩 추가
+    // onClick 바인딩 + cursor: pointer 추가
     if (!template.bindings) template.bindings = {};
     template.bindings.attrs = {
       ...(template.bindings.attrs || {}),
       onClick: { expr: `() => ${onChangeName}?.(item.value)` },
     };
+    if (template.styles?.base) {
+      (template.styles.base as Record<string, unknown>).cursor = "pointer";
+    }
 
     // 루프 템플릿용 스타일 정규화
     this.normalizeTemplateStyles(template);
@@ -393,12 +396,12 @@ export class SegmentedControlHeuristic implements IHeuristic {
    */
   private addOptionsArrayProp(ctx: HeuristicContext): void {
     ctx.props.push({
-      type: "function",
+      type: "array",
       name: "options",
       defaultValue: [],
       required: false,
       sourceKey: "",
-      functionSignature:
+      itemType:
         "Array<{ label: string; value: string; icon?: React.ReactNode }>",
     });
   }

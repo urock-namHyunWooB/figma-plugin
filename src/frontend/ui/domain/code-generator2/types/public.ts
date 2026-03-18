@@ -21,7 +21,7 @@ export interface SlotInfo {
 
 export interface PropDefinition {
   name: string;
-  type: "VARIANT" | "TEXT" | "BOOLEAN" | "SLOT" | "function";
+  type: "VARIANT" | "TEXT" | "BOOLEAN" | "SLOT" | "function" | "array";
   defaultValue: any;
   variantOptions?: string[];
   slotInfo?: SlotInfo;

@@ -954,15 +954,16 @@ export class StyleProcessor {
     const oppositeStyleTree = oppositeDep.styleTree;
     if (!currentStyleTree || !oppositeStyleTree) return null;
 
-    // true/false 매핑
-    const isCurrentTrue = currentValue.toLowerCase() === "true";
-    const trueStyleTree = isCurrentTrue ? currentStyleTree : oppositeStyleTree;
-    const falseStyleTree = isCurrentTrue ? oppositeStyleTree : currentStyleTree;
+    // 매핑: boolean variant에서 "false" 값 = 선택됨/강조 상태 (isActive=true)
+    // Figma에서 Selected/Active=false는 강조된 1개 탭, true는 나머지 비선택 탭
+    const isCurrentFalse = currentValue.toLowerCase() === "false";
+    const activeStyleTree = isCurrentFalse ? currentStyleTree : oppositeStyleTree;
+    const inactiveStyleTree = isCurrentFalse ? oppositeStyleTree : currentStyleTree;
 
     // root 스타일 diff
     const rootVariant = this.computeItemVariantDiff(
-      falseStyleTree.cssStyle || {},
-      trueStyleTree.cssStyle || {}
+      inactiveStyleTree.cssStyle || {},
+      activeStyleTree.cssStyle || {}
     );
 
     let styles = node.styles;
@@ -974,8 +975,8 @@ export class StyleProcessor {
     // children 스타일 diff (TEXT 노드 등)
     const updatedChildren = this.applyChildItemVariantDiff(
       node.children,
-      falseStyleTree.children || [],
-      trueStyleTree.children || []
+      inactiveStyleTree.children || [],
+      activeStyleTree.children || []
     );
 
     if (!rootVariant && updatedChildren === node.children) return null;

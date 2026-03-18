@@ -146,7 +146,7 @@ export type ComponentId = string;
 // Prop Types
 // ============================================================================
 
-export type PropType = "variant" | "boolean" | "slot" | "string" | "function";
+export type PropType = "variant" | "boolean" | "slot" | "string" | "function" | "array";
 
 interface PropBase {
   name: string;
@@ -191,12 +191,19 @@ export interface FunctionPropDefinition extends PropBase {
   functionSignature?: string; // e.g., "(value: string) => void"
 }
 
+export interface ArrayPropDefinition extends PropBase {
+  type: "array";
+  /** TypeScript 타입 문자열 (e.g., "Array<{ label: string; value: string }>") */
+  itemType?: string;
+}
+
 export type PropDefinition =
   | VariantPropDefinition
   | BooleanPropDefinition
   | SlotPropDefinition
   | StringPropDefinition
-  | FunctionPropDefinition;
+  | FunctionPropDefinition
+  | ArrayPropDefinition;
 
 // ============================================================================
 // Array Slot Types

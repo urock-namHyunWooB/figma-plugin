@@ -314,6 +314,15 @@ export function PropController({
         );
       }
 
+      case "array":
+        return (
+          <JsonArrayTextarea
+            value={value}
+            onParsed={(parsed) => onPropChange(prop.name, parsed)}
+            placeholder={`[{"label": "Tab 1", "value": "tab1"}, ...]`}
+          />
+        );
+
       default:
         return (
           <input
