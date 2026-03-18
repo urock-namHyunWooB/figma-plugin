@@ -285,6 +285,9 @@ Phase 2: 스타일 + 후처리 (구조 잠금)
     ├── 10. HeuristicsRunner.run()
     │       점수 기반 컴포넌트 타입 감지 (threshold: 10)
     │
+    ├── 10.5. Loop ItemVariant 스타일
+    │         loop 컨테이너 템플릿의 dependency boolean variant 스타일 추출
+    │
     ├── 11. State → Pseudo 변환
     │       미처리 State props → :hover, :active 등 의사 클래스
     │
@@ -307,10 +310,9 @@ Phase 2: 스타일 + 후처리 (구조 잠금)
 | **PropsExtractor** | componentPropertyDefinitions → PropDefinition[] (플랫폼 독립 — HTML rename 없음) |
 | **SlotProcessor** | 통합 슬롯 감지 (개별 + 배열 + 텍스트) |
 | **InstanceSlotProcessor** | INSTANCE 슬롯 바인딩 처리 |
-| **ArraySlotProcessor** | 반복 INSTANCE → 배열 슬롯 |
 | **TextProcessor** | TEXT 노드 콘텐츠 추출 + 바인딩 |
 | **VisibilityProcessor** | variant 조건 파싱 + 중복 조건 최적화 |
-| **StyleProcessor** | variant 스타일 → CSS (base/dynamic/pseudo/mediaQuery) + CSS 노이즈 정규화 + prop 이름 정규화 (rename 없음 — native HTML prop 충돌 rename은 Layer 3 ReactEmitter가 담당) |
+| **StyleProcessor** | variant 스타일 → CSS (base/dynamic/pseudo/mediaQuery) + CSS 노이즈 정규화 + prop 이름 정규화 (rename 없음 — native HTML prop 충돌 rename은 Layer 3 ReactEmitter가 담당) + loop 템플릿의 dependency boolean variant 스타일 추출 (itemVariant) |
 | **ExternalRefsProcessor** | INSTANCE 외부 참조 + 벡터 SVG 병합 |
 
 ### Processor 유틸리티
@@ -537,6 +539,10 @@ interface StyleObject {
   dynamic: DynamicStyleEntry[];                               // 조건부 스타일
   pseudo: Record<PseudoClass, Record<string, string | number>>; // :hover, :active, ::placeholder 등
   mediaQueries?: MediaQueryEntry[];                           // @media 반응형
+  itemVariant?: {                                              // loop 아이템 boolean variant
+    true: Record<string, string | number>;                     //   active 스타일
+    false: Record<string, string | number>;                    //   inactive 스타일
+  };
 }
 ```
 
@@ -676,14 +682,13 @@ src/frontend/ui/domain/code-generator2/
 │   │       │       ├── ModuleHeuristic.ts
 │   │       │       └── ResponsiveProcessor.ts
 │   │       │
-│   │       └── processors/             # 11개 데이터 변환 프로세서
+│   │       └── processors/             # 10개 데이터 변환 프로세서
 │   │           ├── VariantMerger.ts
 │   │           ├── VariantGraphBuilder.ts
 │   │           ├── NodeMatcher.ts
 │   │           ├── PropsExtractor.ts
 │   │           ├── SlotProcessor.ts
 │   │           ├── InstanceSlotProcessor.ts
-│   │           ├── ArraySlotProcessor.ts
 │   │           ├── TextProcessor.ts
 │   │           ├── VisibilityProcessor.ts
 │   │           ├── StyleProcessor.ts
