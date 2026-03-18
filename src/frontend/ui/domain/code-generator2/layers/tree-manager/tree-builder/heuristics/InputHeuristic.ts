@@ -357,6 +357,7 @@ export class InputHeuristic implements IHeuristic {
         name: "value",
         sourceKey: "",
         required: false,
+        defaultValue: "",
         nativeAttribute: true,
       });
     }

@@ -98,7 +98,7 @@ const CSS_TO_PREFIX: Record<string, string> = {
 /**
  * Pseudo-class → Tailwind prefix
  */
-const PSEUDO_TO_PREFIX: Record<PseudoClass, string> = {
+const PSEUDO_TO_PREFIX: Partial<Record<PseudoClass, string>> = {
   ":hover": "hover:",
   ":active": "active:",
   ":focus": "focus:",
@@ -106,6 +106,7 @@ const PSEUDO_TO_PREFIX: Record<PseudoClass, string> = {
   ":focus-visible": "focus-visible:",
   ":checked": "checked:",
   ":visited": "visited:",
+  "::placeholder": "placeholder:",
 };
 
 export interface TailwindStrategyOptions {
@@ -261,6 +262,7 @@ export class TailwindStrategy implements IStyleStrategy {
       ":focus-visible": "focus-visible",
       ":checked": "checked",
       ":visited": "visited",
+      "::placeholder": "placeholder",
     };
 
     // 각 variant prop → cva variants 블록 내부 코드
