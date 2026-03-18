@@ -535,7 +535,7 @@ type ConditionNode =
 interface StyleObject {
   base: Record<string, string | number>;                      // 공통 스타일
   dynamic: DynamicStyleEntry[];                               // 조건부 스타일
-  pseudo: Record<PseudoClass, Record<string, string | number>>; // :hover, :active 등
+  pseudo: Record<PseudoClass, Record<string, string | number>>; // :hover, :active, ::placeholder 등
   mediaQueries?: MediaQueryEntry[];                           // @media 반응형
 }
 ```

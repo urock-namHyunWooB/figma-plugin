@@ -336,21 +336,28 @@ Props 변경 없음.
    semanticType="placeholder"인 TEXT 노드를 기반으로 placeholder prop 변환.
 
    대상 감지:
-     boolean prop 또는 variant prop 중 sourceKey가 /placeholder/i인 prop 검색
+     semanticType === "placeholder"인 TEXT 노드 존재 여부로 판별
+     boolean prop 또는 variant prop 중 name === "placeholder"인 prop 검색
 
    변환:
      기존 boolean/variant placeholder prop 제거
-     → string "placeholder" prop 추가 (defaultValue: TEXT 내용)
-     → string "value" prop 추가
+     → string "placeholder" prop 추가 (defaultValue: TEXT 내용, nativeAttribute: true)
+     → string "value" prop 추가 (nativeAttribute: true)
      → function "onChange" prop 추가 ((value: string) => void)
-     → TEXT.bindings.attrs = { placeholder: {prop: "placeholder"}, value: {prop: "value"}, onChange: "(e) => onChange?.(e.target.value)" }
-       (JsxGenerator가 attrs 설정을 감지하여 <input> 태그로 렌더링)
-     → TEXT.semanticType = "search-input" (→ <input> 렌더링 트리거)
+     → TEXT.bindings.content = {prop: "placeholder"}
+     → TEXT.bindings.attrs = { value: {prop: "value"}, onChange: {expr: "(e) => onChange?.(e.target.value)"} }
+       (JsxGenerator가 semanticType="placeholder" + bindings.attrs를 감지하여 <input> 태그로 렌더링)
 
-   스타일 정리:
-     제거된 prop을 참조하는 dynamic styles도 정리
-     → conditionReferencesProp()으로 중첩 조건(AND/OR) 내부의 참조까지 탐색
-     → 해당 prop이 nativeAttribute: true로 설정되어 ReactEmitter의 renameNativeProps()에서 rename 스킵
+   색상 분리 (splitPlaceholderColors):
+     strip 전에 placeholder 노드의 color를 truthy/falsy 분기별로 분리
+     → placeholder=false(value) 색상 → base color (입력 텍스트)
+     → placeholder=true 색상 → styles.pseudo["::placeholder"] (placeholder 텍스트)
+
+   동적 스타일 정리 (removeDynamicStylesForProp):
+     compound 조건(AND/OR)에서 해당 prop 부분만 strip, 나머지 보존
+     → stripPropFromCondition()으로 조건에서 placeholder 참조만 제거
+     → strip 후 동일 조건 엔트리 병합 (size 등 다른 prop 동적 스타일 보존)
+     → nativeAttribute: true로 설정되어 ReactEmitter의 renameNativeProps()에서 rename 스킵
 ```
 
 ---
