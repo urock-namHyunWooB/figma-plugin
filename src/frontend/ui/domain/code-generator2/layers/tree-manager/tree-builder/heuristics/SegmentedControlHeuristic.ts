@@ -294,6 +294,9 @@ export class SegmentedControlHeuristic implements IHeuristic {
       onClick: { expr: `() => ${onChangeName}?.(item.value)` },
     };
 
+    // 루프 템플릿용 스타일 정규화
+    this.normalizeTemplateStyles(template);
+
     // Label TEXT 노드를 찾아서 item.label 바인딩 추가
     this.bindLabelText(template);
 
@@ -312,6 +315,16 @@ export class SegmentedControlHeuristic implements IHeuristic {
     if (node.type === "TEXT") {
       if (!node.bindings) node.bindings = {};
       node.bindings.content = { ref: "item.label" };
+
+      // 고정 width 제거 (텍스트 길이에 따라 유동적이어야 함)
+      if (node.styles?.base) {
+        delete (node.styles.base as Record<string, unknown>).width;
+      }
+      if (node.styles?.dynamic) {
+        for (const entry of node.styles.dynamic) {
+          delete (entry.style as Record<string, unknown>).width;
+        }
+      }
       return true;
     }
 
@@ -319,6 +332,44 @@ export class SegmentedControlHeuristic implements IHeuristic {
       if (this.bindLabelText(child)) return true;
     }
     return false;
+  }
+
+  /**
+   * 루프 템플릿용 스타일 정규화
+   *
+   * 첫 번째 INSTANCE의 절대 위치 기반 스타일을 루프에 적합하게 변환:
+   * - 비대칭 padding → 상하 padding만 유지
+   * - justify-content: flex-end → center
+   */
+  private normalizeTemplateStyles(node: InternalNode): void {
+    const base = node.styles?.base as Record<string, unknown> | undefined;
+    if (base) {
+      if (base["justify-content"] === "flex-end") {
+        base["justify-content"] = "center";
+      }
+      this.normalizePadding(base);
+    }
+
+    if (node.styles?.dynamic) {
+      for (const entry of node.styles.dynamic) {
+        this.normalizePadding(entry.style as Record<string, unknown>);
+      }
+    }
+  }
+
+  /**
+   * 비대칭 padding을 상하만 유지하도록 정규화
+   * "4px 0 4px 37px" → "4px 0"
+   */
+  private normalizePadding(style: Record<string, unknown>): void {
+    const padding = style.padding as string | undefined;
+    if (!padding) return;
+
+    const parts = padding.split(/\s+/);
+    if (parts.length === 4) {
+      // top right bottom left → 상하만 유지
+      style.padding = `${parts[0]} 0`;
+    }
   }
 
   /**

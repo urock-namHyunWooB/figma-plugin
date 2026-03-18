@@ -195,7 +195,7 @@ describe("Segmented Control/Segmented Control", () => {
 
     // Content div/element가 있어야 함
     // map 내부에서 여러 레이어 구조를 가져야 함
-    const hasNestedStructure = result.includes("options?.map") &&
+    const hasNestedStructure = (result.includes("options.map") || result.includes("options?.map")) &&
       (result.match(/<div/g) || []).length > 2; // 최소 2개 이상의 div (tab + content)
 
     expect(hasNestedStructure).toBe(true);
@@ -282,8 +282,8 @@ describe("Segmented Control/Segmented Control", () => {
     // Tab > Background/Content > Icons/Text
     // 블록 형식: options?.map((option) => { ... return (...); })
     // 또는 즉시 반환: options?.map((option) => (...))
-    const blockFormMatch = result.match(/options\?\.map\([^)]+\)\s*=>\s*\{([\s\S]*?)\n\s*\}\)/);
-    const arrowFormMatch = result.match(/options\?\.map\([^)]+\)\s*=>\s*\(([\s\S]*?)\n\s*\)\)/);
+    const blockFormMatch = result.match(/options\??\.map\([^)]+\)\s*=>\s*\{([\s\S]*?)\n\s*\}\)/);
+    const arrowFormMatch = result.match(/options\??\.map\([^)]+\)\s*=>\s*\(([\s\S]*?)\n\s*\)\)/);
     const mapContent = blockFormMatch || arrowFormMatch;
 
     if (mapContent) {
@@ -313,8 +313,8 @@ describe("Segmented Control/Segmented Control", () => {
   it("options가 없을 때 안전하게 처리되어야 한다", async () => {
     const result = await compileFixture();
 
-    // options?.map 사용 (optional chaining)
-    expect(result).toMatch(/options\?\./);
+    // options.map 사용 (기본값 []이 있으므로 optional chaining 불필요)
+    expect(result).toMatch(/options\??\.map/);
   });
 
   it("selectedValue prop이 optional이어야 한다", async () => {

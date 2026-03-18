@@ -102,10 +102,14 @@ ${propLines.join("\n")}
   private static getDefaultValueComment(prop: PropDefinition): string {
     if (prop.defaultValue === undefined) return "";
 
-    const value =
-      typeof prop.defaultValue === "string"
-        ? `"${prop.defaultValue}"`
-        : prop.defaultValue;
+    let value;
+    if (typeof prop.defaultValue === "string") {
+      value = `"${prop.defaultValue}"`;
+    } else if (Array.isArray(prop.defaultValue) || typeof prop.defaultValue === "object") {
+      value = JSON.stringify(prop.defaultValue);
+    } else {
+      value = prop.defaultValue;
+    }
 
     return ` // default: ${value}`;
   }

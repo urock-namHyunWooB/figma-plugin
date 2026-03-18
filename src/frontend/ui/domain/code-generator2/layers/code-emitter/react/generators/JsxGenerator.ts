@@ -376,7 +376,7 @@ ${indentStr}))}`;
     const templateJsx = this.generateNodeInLoop(templateNode, styleStrategy, options, indent + 4, itemVar, keyField);
 
     // isActive 변수 포함 (선택 상태 추적용)
-    return `${indentStr}{${dataProp}?.map((${itemVar}) => {
+    return `${indentStr}{${dataProp}.map((${itemVar}) => {
 ${indentStr}  const isActive = ${itemVar}.value === selectedValue;
 ${indentStr}  return (
 ${templateJsx}
