@@ -12,6 +12,7 @@
  */
 
 import type { UITree, UINode, ConditionNode, PseudoClass, VariantInconsistency } from "../../../types/types";
+import { extractAllPropNames } from "../../../types/conditionUtils";
 import { DynamicStyleDecomposer, type DecomposedResult } from "./DynamicStyleDecomposer";
 
 export class UITreeOptimizer {
@@ -19,6 +20,7 @@ export class UITreeOptimizer {
    * 메인 트리 최적화 (dynamic styles 병합 → FD 분해)
    */
   optimizeMain(tree: UITree, diagnostics?: VariantInconsistency[]): void {
+    this.removeVariantOnlySlots(tree);
     this.mergeRedundantDynamicStyles(tree.root);
     this.decomposeDynamicStyles(tree.root, diagnostics);
   }
@@ -38,6 +40,106 @@ export class UITreeOptimizer {
    */
   pruneUnusedProps(tree: UITree): void {
     this._pruneUnusedProps(tree);
+  }
+
+  // ─── removeVariantOnlySlots ───────────────────────────────
+
+  /**
+   * variant prop만으로 visibility가 결정되는 slot props를 내부 렌더링으로 전환
+   *
+   * 예: Tagreview에서 state별로 다른 아이콘 INSTANCE가 slot으로 노출되는 경우
+   * → slot binding 제거, slot prop 제거 → 내부 조건부 렌더링으로 유지
+   */
+  /**
+   * 같은 variant prop 값에 배타적으로 매핑된 slot 그룹 제거
+   *
+   * 예: state="Rejected" → forbid, state="Approved" → success ...
+   * 3개 이상의 slot이 같은 variant prop의 다른 값에 1:1 매핑되면
+   * 외부 주입이 아닌 내부 렌더링으로 판단
+   */
+  private removeVariantOnlySlots(tree: UITree): void {
+    const variantPropNames = new Set(
+      tree.props.filter((p) => p.type === "variant").map((p) => p.name)
+    );
+    if (variantPropNames.size === 0) return;
+
+    // slot binding 노드들의 variant 조건 수집
+    // key: variant prop name, value: slot prop names
+    const variantSlotGroups = new Map<string, Set<string>>();
+    const slotNodes: Array<{ node: UINode; slotPropName: string }> = [];
+
+    const walk = (node: UINode): void => {
+      if (
+        node.bindings?.content &&
+        "prop" in node.bindings.content &&
+        node.visibleCondition
+      ) {
+        const slotPropName = node.bindings.content.prop;
+        const isSlotProp = tree.props.some(
+          (p) => p.name === slotPropName && p.type === "slot"
+        );
+
+        if (isSlotProp) {
+          // eq 조건에서 variant prop 추출
+          const variantProp = this.extractSingleVariantEq(
+            node.visibleCondition,
+            variantPropNames
+          );
+          if (variantProp) {
+            if (!variantSlotGroups.has(variantProp)) {
+              variantSlotGroups.set(variantProp, new Set());
+            }
+            variantSlotGroups.get(variantProp)!.add(slotPropName);
+            slotNodes.push({ node, slotPropName });
+          }
+        }
+      }
+
+      if ("children" in node && node.children) {
+        for (const child of node.children) walk(child);
+      }
+    };
+    walk(tree.root);
+
+    // 3개 이상 배타적 slot이 있는 그룹만 제거
+    const slotsToRemove = new Set<string>();
+    for (const [, slots] of variantSlotGroups) {
+      if (slots.size >= 3) {
+        for (const s of slots) slotsToRemove.add(s);
+      }
+    }
+
+    if (slotsToRemove.size === 0) return;
+
+    // binding 제거
+    for (const { node, slotPropName } of slotNodes) {
+      if (slotsToRemove.has(slotPropName)) {
+        delete node.bindings!.content;
+      }
+    }
+
+    // prop 제거
+    tree.props = tree.props.filter((p) => !slotsToRemove.has(p.name));
+  }
+
+  /**
+   * visibleCondition에서 단일 variant prop의 eq 조건을 추출
+   * 복합 조건(AND)이어도 variant eq가 포함되면 해당 prop 반환
+   */
+  private extractSingleVariantEq(
+    condition: ConditionNode,
+    variantProps: Set<string>
+  ): string | null {
+    if (condition.type === "eq" && variantProps.has(condition.prop)) {
+      return condition.prop;
+    }
+    if (condition.type === "and") {
+      for (const sub of condition.conditions) {
+        const result = this.extractSingleVariantEq(sub, variantProps);
+        if (result) return result;
+      }
+    }
+    return null;
   }
 
   // ─── makeRootFlexible ─────────────────────────────────────
