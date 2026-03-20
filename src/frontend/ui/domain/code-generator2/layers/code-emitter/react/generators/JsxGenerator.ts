@@ -172,7 +172,11 @@ export default ${componentName}`;
       "prop" in slotBinding &&
       !(node.semanticType === "placeholder" && node.bindings?.attrs)
     ) {
-      return this.generateSlotWrapper(node, slotBinding.prop, styleStrategy, indent);
+      // visibleCondition이 slot prop이 아닌 다른 prop을 참조할 때만 조건 추가
+      const extraCondition = (node.visibleCondition && !this.getSlotPropFromCondition(node.visibleCondition))
+        ? this.conditionToCode(node.visibleCondition)
+        : undefined;
+      return this.generateSlotWrapper(node, slotBinding.prop, styleStrategy, indent, extraCondition);
     }
 
     // 조건부 렌더링
@@ -1125,16 +1129,18 @@ ${indentStr}</${tag}>`;
     node: UINode,
     slotProp: string,
     styleStrategy: IStyleStrategy,
-    indent: number
+    indent: number,
+    extraCondition?: string
   ): string {
     const indentStr = " ".repeat(indent);
     const styleVarName = this.nodeStyleMap.get(node.id);
     const isInline = node.type === "text" || node.semanticType === "icon" || node.semanticType === "icon-wrapper";
     const tag = isInline ? "span" : "div";
+    const condPrefix = extraCondition ? `${extraCondition} && ` : "";
 
     // 스타일이 없으면 조건부로 slot만 렌더링
     if (!styleVarName || !node.styles || !this.hasNonEmptyStyles(node.styles)) {
-      return `${indentStr}{${slotProp} && (\n${indentStr}  <${tag}>{${slotProp}}</${tag}>\n${indentStr})}`;
+      return `${indentStr}{${condPrefix}${slotProp} && (\n${indentStr}  <${tag}>{${slotProp}}</${tag}>\n${indentStr})}`;
     }
 
     const dynamicProps = this.extractDynamicProps(node.styles);
@@ -1157,6 +1163,6 @@ ${indentStr}</${tag}>`;
       wrapperAttrs = `${styleAttr.attributeName}=${styleAttr.valueCode}`;
     }
 
-    return `${indentStr}{${slotProp} && (\n${indentStr}  <${tag} ${wrapperAttrs}>{${slotProp}}</${tag}>\n${indentStr})}`;
+    return `${indentStr}{${condPrefix}${slotProp} && (\n${indentStr}  <${tag} ${wrapperAttrs}>{${slotProp}}</${tag}>\n${indentStr})}`;
   }
 }

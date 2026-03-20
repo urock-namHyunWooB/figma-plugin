@@ -96,6 +96,12 @@ export class NodeMatcher {
       if (NodeMatcher.SHAPE_TYPES.has(nodeA.type) && NodeMatcher.SHAPE_TYPES.has(nodeB.type)) {
         if (!this.isSimilarSize(nodeA, nodeB)) return false;
       }
+      // GROUP↔FRAME 교차 매칭 시 크기 검증 (구조적으로 다른 노드 오매칭 방지)
+      if (nodeA.type !== nodeB.type &&
+          NodeMatcher.CONTAINER_TYPES.has(nodeA.type) &&
+          NodeMatcher.CONTAINER_TYPES.has(nodeB.type)) {
+        if (!this.isSimilarSize(nodeA, nodeB)) return false;
+      }
       // AL 보정이 적용된 경우 크기도 유사해야 함 (위치만 보정된 다른 노드 오매칭 방지)
       if (shift && !this.isSimilarSize(nodeA, nodeB)) return false;
       return true;
