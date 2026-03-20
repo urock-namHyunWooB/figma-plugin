@@ -111,12 +111,20 @@ export class UITreeOptimizer {
 
     if (slotsToRemove.size === 0) return;
 
-    // binding 제거
-    for (const { node, slotPropName } of slotNodes) {
-      if (slotsToRemove.has(slotPropName)) {
-        delete node.bindings!.content;
+    // 제거 대상 slot을 참조하는 모든 binding 제거 (자식 포함)
+    const removeBindings = (node: UINode): void => {
+      if (
+        node.bindings?.content &&
+        "prop" in node.bindings.content &&
+        slotsToRemove.has(node.bindings.content.prop)
+      ) {
+        delete node.bindings.content;
       }
-    }
+      if ("children" in node && node.children) {
+        for (const child of node.children) removeBindings(child);
+      }
+    };
+    removeBindings(tree.root);
 
     // prop 제거
     tree.props = tree.props.filter((p) => !slotsToRemove.has(p.name));
