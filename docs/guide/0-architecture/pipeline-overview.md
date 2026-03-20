@@ -763,7 +763,7 @@ const { main, dependencies } = generator.buildUITree();
 
 ### Variant Merging
 COMPONENT_SET의 여러 variant (예: Size=Large/Small, State=Default/Hover)를 단일 InternalTree로 병합합니다.
-노드는 4-Way Position Comparison (비례·좌·가운데·우 정렬)으로 매칭됩니다 — 최소 오차 ≤ 0.1이면 동일 노드. 병합 후 Cross-Depth Squash (IoU ≥ 0.5)로 다른 depth의 중복 노드를 통합합니다.
+노드는 3-Way Position Comparison (좌·가운데·우 정렬)으로 매칭됩니다 — 최소 오차 ≤ 0.1이면 동일 노드. 병합 후 Cross-Depth Squash (IoU ≥ 0.5)로 다른 depth의 중복 노드를 통합합니다.
 
 ### Props 변환 규칙
 - `State` prop → CSS pseudo-class (`:hover`, `:active`, `:disabled`)

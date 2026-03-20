@@ -9,8 +9,8 @@ import TreeBuilder from "@frontend/ui/domain/code-generator2/layers/tree-manager
  *
  * 핵심 설계:
  * - Extra 요소는 RECTANGLE 타입 → FRAME 타겟과 Stage 1 타입 불일치로 거부
- * - 타겟 위아래 모두 Extra 배치 → 4-way 비교의 bottom-alignment도 실패
- * - Stage 4가 모든 정렬 모드(비례/좌/중/우)에서 실패한 뒤
+ * - 타겟 위아래 모두 Extra 배치 → 3-way 비교의 bottom-alignment도 실패
+ * - Stage 4가 모든 정렬 모드(좌/중/우)에서 실패한 뒤
  *   Stage 5.5 왼쪽 컨텍스트 보정으로 올바르게 매칭
  */
 
@@ -61,9 +61,8 @@ function styleEntry(id: string, name: string, children: any[] = []): any {
  *     └─ Content (FRAME      300x60,  y=50)
  *   Height=110
  *
- * 4-way 비교 (Content):
+ * 3-way 비교 (Content):
  *   avgH = (260+110)/2 = 185
- *   prop: |160/260 - 50/110| = 0.161 > 0.1 ❌
  *   top:  |160-50|/185 = 0.595 > 0.1 ❌
  *   center: 0.595 > 0.1 ❌
  *   bottom: |40-0|/185 = 0.216 > 0.1 ❌  (Deco가 아래에 있어서!)
@@ -171,9 +170,8 @@ function createMiddleRemovalFixture(): any {
  *     └─ Tag     (RECTANGLE  300x20,  y=250)  ← B에만 있음
  *   Height=270
  *
- * 4-way 비교 (Body):
+ * 3-way 비교 (Body):
  *   avgH = (130+270)/2 = 200
- *   prop: |50/130 - 160/270| = 0.208 > 0.1 ❌
  *   top:  |50-160|/200 = 0.55 > 0.1 ❌
  *   center: 0.55 > 0.1 ❌
  *   bottom: |0-30|/200 = 0.15 > 0.1 ❌  (Tag가 아래에 있어서!)

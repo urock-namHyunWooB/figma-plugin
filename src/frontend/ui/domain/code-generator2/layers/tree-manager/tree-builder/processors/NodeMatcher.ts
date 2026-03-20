@@ -89,7 +89,7 @@ export class NodeMatcher {
       return true;
     }
 
-    // 4. 정규화된 위치 비교 (Auto Layout 보정 선적용 후 4-way)
+    // 4. 정규화된 위치 비교 (Auto Layout 보정 선적용 후 3-way)
     const shift = this.computeAutoLayoutShift(nodeA, nodeB);
     if (this.isSamePosition(nodeA, nodeB, shift ?? undefined)) {
       // Shape 타입은 크기 유사도도 검증 (중심점이 같은 동심원 오매칭 방지)
@@ -123,13 +123,12 @@ export class NodeMatcher {
   /**
    * 정규화된 위치가 같은지 확인 (±0.1 오차 허용)
    *
-   * 4가지 비교를 동시에 수행하여 최소 오차로 판단:
-   *  1) 비례 배치: 각자 contentWidth로 정규화 (현행)
-   *  2) 좌정렬 기준: 왼쪽 오프셋을 avgWidth로 정규화
-   *  3) 가운데정렬 기준: 중앙 오프셋을 avgWidth로 정규화
-   *  4) 우정렬 기준: 오른쪽 오프셋을 avgWidth로 정규화
+   * 3가지 비교를 동시에 수행하여 최소 오차로 판단:
+   *  1) 좌정렬 기준: 왼쪽 오프셋을 avgWidth로 정규화
+   *  2) 가운데정렬 기준: 중앙 오프셋을 avgWidth로 정규화
+   *  3) 우정렬 기준: 오른쪽 오프셋을 avgWidth로 정규화
    *
-   * X축·Y축 각각 4가지 중 최소 오차를 취하여 둘 다 ≤ 0.1이면 매칭.
+   * X축·Y축 각각 3가지 중 최소 오차를 취하여 둘 다 ≤ 0.1이면 매칭.
    *
    * Fallback: 위 매칭 실패 시 heightRatio ≥ 2이면 상대 좌표 ±10px 비교.
    */
@@ -143,7 +142,7 @@ export class NodeMatcher {
     const boxB = this.getContentBoxInfo(nodeB);
 
     if (boxA && boxB) {
-      // --- X축: 4가지 비교 (Auto Layout 보정 적용) ---
+      // --- X축: 3가지 비교 (Auto Layout 보정 적용) ---
       let offsetAx = boxA.nodeX - boxA.contentX;
       let offsetBx = boxB.nodeX - boxB.contentX;
       if (shift?.axis === "x") {
@@ -154,30 +153,26 @@ export class NodeMatcher {
       const nodeWidthB = boxB.nodeWidth;
       const avgW = (boxA.contentWidth + boxB.contentWidth) / 2;
 
-      // 1) 비례 배치
-      const propX = Math.abs(
-        offsetAx / boxA.contentWidth - offsetBx / boxB.contentWidth
-      );
-      // 2) 좌정렬: 왼쪽 오프셋 비교
+      // 1) 좌정렬: 왼쪽 오프셋 비교
       const leftX = avgW > 0
         ? Math.abs(offsetAx - offsetBx) / avgW
         : Infinity;
-      // 3) 가운데정렬: 중앙 오프셋 비교
+      // 2) 가운데정렬: 중앙 오프셋 비교
       const centerAx = offsetAx + nodeWidthA / 2;
       const centerBx = offsetBx + nodeWidthB / 2;
       const centerX = avgW > 0
         ? Math.abs(centerAx - centerBx) / avgW
         : Infinity;
-      // 4) 우정렬: 오른쪽 오프셋 비교
+      // 3) 우정렬: 오른쪽 오프셋 비교
       const rightAx = boxA.contentWidth - (offsetAx + nodeWidthA);
       const rightBx = boxB.contentWidth - (offsetBx + nodeWidthB);
       const rightX = avgW > 0
         ? Math.abs(rightAx - rightBx) / avgW
         : Infinity;
 
-      const minDiffX = Math.min(propX, leftX, centerX, rightX);
+      const minDiffX = Math.min(leftX, centerX, rightX);
 
-      // --- Y축: 4가지 비교 (Auto Layout 보정 적용) ---
+      // --- Y축: 3가지 비교 (Auto Layout 보정 적용) ---
       let offsetAy = boxA.nodeY - boxA.contentY;
       let offsetBy = boxB.nodeY - boxB.contentY;
       if (shift?.axis === "y") {
@@ -188,28 +183,24 @@ export class NodeMatcher {
       const nodeHeightB = boxB.nodeHeight;
       const avgH = (boxA.contentHeight + boxB.contentHeight) / 2;
 
-      // 1) 비례 배치
-      const propY = Math.abs(
-        offsetAy / boxA.contentHeight - offsetBy / boxB.contentHeight
-      );
-      // 2) 상단정렬
+      // 1) 상단정렬
       const topY = avgH > 0
         ? Math.abs(offsetAy - offsetBy) / avgH
         : Infinity;
-      // 3) 가운데정렬
+      // 2) 가운데정렬
       const middleAy = offsetAy + nodeHeightA / 2;
       const middleBy = offsetBy + nodeHeightB / 2;
       const middleY = avgH > 0
         ? Math.abs(middleAy - middleBy) / avgH
         : Infinity;
-      // 4) 하단정렬
+      // 3) 하단정렬
       const bottomAy = boxA.contentHeight - (offsetAy + nodeHeightA);
       const bottomBy = boxB.contentHeight - (offsetBy + nodeHeightB);
       const bottomY = avgH > 0
         ? Math.abs(bottomAy - bottomBy) / avgH
         : Infinity;
 
-      const minDiffY = Math.min(propY, topY, middleY, bottomY);
+      const minDiffY = Math.min(topY, middleY, bottomY);
 
       if (minDiffX <= 0.1 && minDiffY <= 0.1) {
         return true;
@@ -274,7 +265,7 @@ export class NodeMatcher {
   }
 
   /**
-   * 노드의 contentBox 정보 조회 (4가지 비교에 필요한 값들)
+   * 노드의 contentBox 정보 조회 (3가지 비교에 필요한 값들)
    * mergedNodes를 순회하여 유효한 contentBox를 찾는다.
    */
   private getContentBoxInfo(
@@ -436,7 +427,7 @@ export class NodeMatcher {
    * Auto Layout 보정량 계산
    *
    * 부모가 Auto Layout이면 왼쪽 형제 컨텍스트를 분석하여 variant간 위치 시프트 보정량을 반환.
-   * isSamePosition에 주입하여 4-way 비교 전에 offset을 보정한다.
+   * isSamePosition에 주입하여 3-way 비교 전에 offset을 보정한다.
    */
   private computeAutoLayoutShift(
     nodeA: InternalNode,

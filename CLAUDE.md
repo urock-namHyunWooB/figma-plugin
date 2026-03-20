@@ -83,7 +83,7 @@ layers/
 
 ### Variant Merging
 COMPONENT_SET with multiple variants (e.g., Size=Large/Small, State=Default/Hover) gets merged into a single InternalTree. Node matching uses:
-- **4-Way Position Comparison**: 비례·좌·가운데·우 기준점 비교 (±0.1 threshold)
+- **3-Way Position Comparison**: 좌·가운데·우 기준점 비교 (±0.1 threshold)
 - **Auto Layout Context Matching**: 왼쪽 형제 type+size 비교로 위치 시프트 보정 (Stage 5.5)
 - **Cross-Depth Squash**: 병합 후 IoU ≥ 0.5 기반으로 다른 depth의 중복 노드 통합 (UpdateSquashByIou)
 
@@ -118,7 +118,7 @@ INSTANCE children have compound IDs like `I704:56;704:29;692:1613`. The last seg
 Detailed technical docs in `docs/guide/`:
 - `0-architecture/pipeline-overview.md` - 파이프라인 아키텍처 (Layer 1-2, 타입, 디렉토리)
 - `2a-variant-merging/merging-algorithm.md` - 변형병합 알고리즘
-- `2a-variant-merging/node-matching.md` - 노드 매칭 원리 (4-Way Comparison)
+- `2a-variant-merging/node-matching.md` - 노드 매칭 원리 (3-Way Comparison)
 - `2b-props/extraction.md` - Props 추출 (Stage 1-2)
 - `2b-props/heuristics.md` - 컴포넌트 Heuristics (Stage 3, 14개 상세)
 - `2b-props/style-decomposition.md` - 스타일 분해 (Stage 4-5, DynamicStyleDecomposer)
@@ -152,6 +152,6 @@ Use these subagents proactively when conditions are met:
 - ✅ 휴리스틱 중심 아키텍처 (14개 점수 기반 컴포넌트 매칭 + GenericHeuristic 폴백)
 - ✅ DynamicStyleDecomposer pseudo-class 네이티브 분배
 - ✅ UITreeOptimizer FD 분해 + diagnostics 수집기 주입
-- ✅ 4-Way Position Comparison (NodeMatcher)
+- ✅ 3-Way Position Comparison (NodeMatcher)
 - ✅ Auto Layout Context Matching — Stage 5.5 왼쪽 컨텍스트 보정 (NodeMatcher)
 - ✅ Cross-Depth Squash (UpdateSquashByIou)

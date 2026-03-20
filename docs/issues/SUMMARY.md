@@ -17,7 +17,7 @@
 | **016** | ArraySlot parentId가 병합 후 root ID와 불일치 | 원본 variant ID 저장 → 병합 시 대표 ID로 변경 | children ID로 폴백 매칭 |
 | **033** | 병합 후 자식 순서가 Figma와 다름 | 자식을 단순 concat하여 순서 뒤섞임 | 평균 x좌표 기준 정렬 |
 | **033** | 병합 시 FRAME의 layoutMode(HORIZONTAL) 소실 | 자식 평탄화 시 부모 속성 유실 | `inheritedLayoutMode` 필드 추가 |
-| — | 동심원(22x22 vs 16x16)이 위치 동일해 같은 노드로 오매칭 | 4-way comparison이 크기 무시 | Shape 타입에 크기 비율 1.3x 초과 시 매칭 거부 |
+| — | 동심원(22x22 vs 16x16)이 위치 동일해 같은 노드로 오매칭 | 3-way comparison이 크기 무시 | Shape 타입에 크기 비율 1.3x 초과 시 매칭 거부 |
 | — | GROUP↔FRAME 타입 차이로 variant 병합 실패 | NodeMatcher가 컨테이너 타입 호환 미지원 | CONTAINER_TYPES(GROUP, FRAME) 추가 |
 | — | hidden/overflow 노드가 정규화 기준이 되어 위치 왜곡 | mergedNodes[0]이 root 밖이면 정규화 값 오류 | 다른 mergedNode로 재시도 + 임계값 10px 완화 |
 | — | visibility toggle 시 root 높이 2배 차이로 정규화 왜곡 | 높이 비율 극단 시 정규화 무의미 | root 기준 상대좌표(±5px) fallback 추가 |
