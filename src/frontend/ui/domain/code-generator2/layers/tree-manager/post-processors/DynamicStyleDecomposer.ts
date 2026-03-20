@@ -650,8 +650,8 @@ export class DynamicStyleDecomposer {
       }
     }
 
-    // 3차: best-fit — 일관적 그룹이 가장 많은 prop 선택
-    let bestConsistent = -1;
+    // 3차: best-fit — 일관적 그룹 비율이 가장 높은 prop 선택
+    let bestRatio = -1;
     const tiedProps: string[] = [];
 
     for (const propName of allProps) {
@@ -662,11 +662,12 @@ export class DynamicStyleDecomposer {
       for (const group of groups.values()) {
         if (this.isGroupConsistent(group)) consistentCount++;
       }
-      if (consistentCount > bestConsistent) {
-        bestConsistent = consistentCount;
+      const ratio = consistentCount / groups.size;
+      if (ratio > bestRatio) {
+        bestRatio = ratio;
         tiedProps.length = 0;
         tiedProps.push(propName);
-      } else if (consistentCount === bestConsistent) {
+      } else if (ratio === bestRatio) {
         tiedProps.push(propName);
       }
     }
