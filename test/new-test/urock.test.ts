@@ -191,14 +191,14 @@ describe("Chips", () => {
     expect(result).toMatch(/colorStyles\?\.\[String\(color\)\]/);
   });
 
-  it("text prop이 string 타입으로 있어야 한다", async () => {
+  it("label prop이 string 타입으로 있어야 한다", async () => {
     const result = await compileFixture();
-    expect(result).toMatch(/text\?:\s*string/);
+    expect(result).toMatch(/label\?:\s*string/);
   });
 
   it("텍스트가 하드코딩이 아닌 prop으로 렌더링되어야 한다", async () => {
     const result = await compileFixture();
-    expect(result).toMatch(/\{text\}/);
+    expect(result).toMatch(/\{label\}/);
   });
 
   it("colorStyles에 background가 포함되어야 한다 (color별 배경색 변경)", async () => {

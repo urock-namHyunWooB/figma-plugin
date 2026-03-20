@@ -50,5 +50,13 @@ describe("Tagreview 컴포넌트 코드 생성", () => {
     expect(interfaceBody).not.toMatch(/\bsuccess\b.*React\.ReactNode/);
   });
 
-  // TODO: rejectedText → label 범용 rename (별도 이슈)
+  test("텍스트 prop은 label이어야 한다", () => {
+    expect(code).toMatch(/label\?:\s*string/);
+    // variant 종속 이름(rejectedText 등)이 아닌 범용 이름
+    const interfaceMatch = code.match(
+      /export interface \w+Props \{([\s\S]*?)\}/
+    );
+    expect(interfaceMatch).toBeTruthy();
+    expect(interfaceMatch![1]).not.toMatch(/rejectedText/);
+  });
 });

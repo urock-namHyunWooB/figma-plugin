@@ -55,9 +55,9 @@ describe("Chips 컴파일 테스트", () => {
       }
     });
 
-    it("text prop이 string 타입으로 있어야 한다", async () => {
+    it("label prop이 string 타입으로 있어야 한다", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/text\?:\s*string/);
+      expect(code).toMatch(/label\?:\s*string/);
     });
   });
 
@@ -86,8 +86,8 @@ describe("Chips 컴파일 테스트", () => {
   describe("Text 주입", () => {
     it("텍스트가 하드코딩이 아닌 prop으로 렌더링되어야 한다", async () => {
       const code = await getCompiledCode();
-      // "Text" 하드코딩이 아닌 {text} prop 바인딩이어야 함
-      expect(code).toMatch(/\{text\}/);
+      // "Text" 하드코딩이 아닌 {label} prop 바인딩이어야 함
+      expect(code).toMatch(/\{label\}/);
     });
   });
 });

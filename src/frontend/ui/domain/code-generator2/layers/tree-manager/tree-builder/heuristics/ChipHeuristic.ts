@@ -84,25 +84,26 @@ export class ChipHeuristic implements IHeuristic {
         }
       }
 
-      // 2. variant 간 텍스트 차이 → slot
+      // 2. variant 간 텍스트 차이 → label prop
       const slotInfo = extractTextSlotInfo(node, totalVariantCount, ctx.dataManager);
       if (slotInfo) {
-        if (!ctx.props.some(p => p.name === slotInfo.propName)) {
+        const propName = "label";
+        if (!ctx.props.some(p => p.name === propName)) {
           ctx.props.push({
             type: "string",
-            name: slotInfo.propName,
+            name: propName,
             defaultValue: slotInfo.defaultValue,
             required: false,
             sourceKey: "",
           });
         }
         node.bindings ??= {};
-        node.bindings.content = { prop: slotInfo.propName };
+        node.bindings.content = { prop: propName };
       } else if (node.mergedNodes && node.mergedNodes.length > 0) {
-        // 3. 플레이스홀더 텍스트 → string prop
+        // 3. 플레이스홀더 텍스트 → label prop
         const textContent = getTextCharacters(node.mergedNodes[0].id, ctx.dataManager);
         if (textContent && isPlaceholderText(textContent, node.name)) {
-          const propName = generateTextSlotPropName(node.name);
+          const propName = "label";
           if (!ctx.props.some(p => p.name === propName)) {
             ctx.props.push({
               type: "string",
