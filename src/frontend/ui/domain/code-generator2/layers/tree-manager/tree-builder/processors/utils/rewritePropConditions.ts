@@ -73,9 +73,17 @@ function rewriteCondition(
 
   // and / or: 자식 재귀 치환
   if (cond.type === "and" || cond.type === "or") {
-    const rewritten = cond.conditions
-      .map((c) => rewriteCondition(c, removedProp, conditionMap))
-      .filter((c): c is ConditionNode => c !== undefined);
+    const results = cond.conditions.map((c) =>
+      rewriteCondition(c, removedProp, conditionMap)
+    );
+    const hasUndefined = results.some((c) => c === undefined);
+
+    // OR에서 undefined = "항상 참인 분기" → OR 전체가 항상 참
+    if (cond.type === "or" && hasUndefined) return undefined;
+
+    const rewritten = results.filter(
+      (c): c is ConditionNode => c !== undefined
+    );
     if (rewritten.length === 0) return undefined;
     if (rewritten.length === 1) return rewritten[0];
     return { type: cond.type, conditions: rewritten };

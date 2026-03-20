@@ -67,6 +67,25 @@ export class StyleProcessor {
     visited: ":visited",
   };
 
+  /**
+   * StyleProcessor가 조기 분리해도 안전한 pseudo-class 매핑.
+   *
+   * active/pressed는 Button에서는 CSS :active이지만
+   * Checkbox/Radio/Switch에서는 "선택됨" 상태를 의미하므로 제외.
+   * 이들은 dynamic 엔트리에 남겨서 각 heuristic이 판단하도록 위임.
+   */
+  private static readonly EAGER_PSEUDO: Record<string, PseudoClass> = {
+    Hover: ":hover",
+    hover: ":hover",
+    Focus: ":focus",
+    focus: ":focus",
+    Disabled: ":disabled",
+    disabled: ":disabled",
+    disable: ":disabled",
+    Visited: ":visited",
+    visited: ":visited",
+  };
+
   constructor(dataManager: DataManager) {
     this.dataManager = dataManager;
   }
@@ -594,7 +613,7 @@ export class StyleProcessor {
     for (const variant of variantStyles) {
       const state = this.extractStateFromVariantName(variant.variantName);
 
-      if (state && StyleProcessor.STATE_TO_PSEUDO[state]) {
+      if (state && StyleProcessor.EAGER_PSEUDO[state]) {
         pseudoVariants.push({
           ...variant,
           state,
@@ -621,7 +640,7 @@ export class StyleProcessor {
     if (raw.includes("/")) {
       for (const part of raw.split("/")) {
         const trimmed = part.trim();
-        if (StyleProcessor.STATE_TO_PSEUDO[trimmed]) return trimmed;
+        if (StyleProcessor.EAGER_PSEUDO[trimmed]) return trimmed;
       }
     }
 
