@@ -47,6 +47,23 @@ Stage 5: 코드 생성      — TypeScript interface + JSX
 
 ### Figma가 제공하는 원본 데이터
 
+#### Figma Plugin API 주요 속성
+
+| 속성 | 노드 | 설명 |
+|------|------|------|
+| `componentPropertyDefinitions` | COMPONENT_SET | 이 COMPONENT_SET에 존재하는 prop 정의. 어떤 prop이 있고 각 옵션이 뭔지 정의함. 예: Style=["filled","outlined"], Size=["S","M","L"] |
+| `componentProperties` | COMPONENT (개별 variant) | 해당 variant의 prop 현재 값 |
+| `componentPropertyReferences` | 노드(서브레이어) | 이 노드의 어떤 속성이 어떤 prop에 바인딩되었는지. 값은 `componentPropertyDefinitions`의 prop 이름 참조 |
+
+`componentPropertyReferences` 타입: `{ visible?: string, characters?: string, mainComponent?: string }`
+
+```
+{ visible: "Left Icon#89:6", characters: "Label#89:7" }
+→ 이 노드의 visible이 "Left Icon" prop에, 텍스트가 "Label" prop에 바인딩됨
+```
+
+> 참조: [Figma Plugin API — ComponentNode](https://developers.figma.com/docs/plugins/api/ComponentNode/)
+
 ```typescript
 componentPropertyDefinitions: {
   "Style":     { type: "VARIANT", variantOptions: ["filled", "outlined", "ghost"] },
