@@ -136,6 +136,8 @@ export class SwitchHeuristic implements IHeuristic {
     const disableProp = ctx.props.find((p) => isDisableProp(p.name));
     const attrBindings: Record<string, { prop: string } | { expr: string }> = {
       ...ctx.tree.bindings?.attrs,
+      role: { expr: '"switch"' },
+      'aria-checked': { prop: activeName },
       onClick: { expr: `() => ${onChangeName}?.(!${activeName})` },
     };
     if (disableProp) {

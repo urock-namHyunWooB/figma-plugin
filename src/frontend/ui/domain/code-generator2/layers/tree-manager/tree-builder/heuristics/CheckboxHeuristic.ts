@@ -83,9 +83,11 @@ export class CheckboxHeuristic implements IHeuristic {
     const onChangeName = this.addOnCheckedChangeProp(ctx, hasIndeterminate);
     const disableName = this.addDisableProp(ctx);
 
-    // 4. 루트에 onClick + disabled 바인딩
+    // 4. 루트에 onClick + disabled + ARIA 바인딩
     ctx.tree.bindings = { ...ctx.tree.bindings, attrs: {
       ...ctx.tree.bindings?.attrs,
+      role: { expr: '"checkbox"' },
+      'aria-checked': { prop: 'checked' },
       onClick: { expr: `() => ${onChangeName}?.(!checked)` },
       disabled: { prop: disableName },
     }};

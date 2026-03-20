@@ -44,9 +44,11 @@ export class RadioHeuristic implements IHeuristic {
     const onChangeName = this.addOnChangeProp(ctx);
     const disableName = this.addDisableProp(ctx);
 
-    // 루트에 onClick + disabled 바인딩
+    // 루트에 onClick + disabled + ARIA 바인딩
     ctx.tree.bindings = { ...ctx.tree.bindings, attrs: {
       ...ctx.tree.bindings?.attrs,
+      role: { expr: '"radio"' },
+      'aria-checked': { prop: checkedName },
       onClick: { expr: `() => ${onChangeName}?.(!${checkedName})` },
       disabled: { prop: disableName },
     }};
