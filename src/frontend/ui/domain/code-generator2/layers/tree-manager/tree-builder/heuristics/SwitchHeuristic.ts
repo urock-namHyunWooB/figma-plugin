@@ -13,7 +13,7 @@
  * - onClick 핸들러 추가
  */
 
-import type { ComponentType } from "../../../../types/types";
+import type { ComponentType, InternalNode } from "../../../../types/types";
 import type {
   IHeuristic,
   HeuristicContext,
@@ -145,8 +145,14 @@ export class SwitchHeuristic implements IHeuristic {
     }
     ctx.tree.bindings = { ...ctx.tree.bindings, attrs: attrBindings };
 
-    // Active 상태 기반 CSS 생성
-    this.addActiveDynamicStyles(ctx.tree);
+    // 노브(토글 원) 중복 통합
+    this.mergeKnobNodes(ctx.tree);
+
+    // spacer 프레임 제거
+    this.removeSpacerNodes(ctx.tree);
+
+    // Active 상태 기반 justify-content 동적 스타일
+    this.addJustifyContentStyle(ctx.tree, activeName);
 
     // Disable 상태 기반 CSS 생성 (disable prop이 있는 경우만)
     this.addDisableDynamicStyles(ctx.tree, ctx.props);
@@ -226,32 +232,83 @@ export class SwitchHeuristic implements IHeuristic {
   }
 
   /**
-   * Active 상태 기반 동적 CSS 추가
+   * 같은 이름의 RECTANGLE 노브 노드들을 1개로 통합
    *
-   * Figma에서 Active=False와 Active=True variant의 스타일 차이를 계산해서
-   * CSS dynamic condition으로 변환
+   * variant 병합 시 checked 상태에 따라 노브 위치가 다르면
+   * NodeMatcher가 같은 노드로 인식 못 해 중복 생성됨.
+   * 모든 노브의 mergedNodes를 합치고 중복 제거.
    */
-  private addActiveDynamicStyles(node: any): void {
-    if (!node || !node.mergedNodes) return;
+  private mergeKnobNodes(tree: InternalNode): void {
+    const knobGroups = new Map<string, InternalNode[]>();
 
-    // mergedNodes에서 Active=False와 Active=True 버전 찾기
-    const falseVariant = node.mergedNodes.find((m: any) =>
-      m.variantName && m.variantName.includes("Active=False")
-    );
-    const trueVariant = node.mergedNodes.find((m: any) =>
-      m.variantName && m.variantName.includes("Active=True")
-    );
-
-    if (!falseVariant || !trueVariant) {
-      return; // Active variant가 없으면 처리하지 않음
+    for (const child of tree.children) {
+      if (child.type === "RECTANGLE") {
+        const key = child.name;
+        if (!knobGroups.has(key)) knobGroups.set(key, []);
+        knobGroups.get(key)!.push(child);
+      }
     }
 
-    // TODO: mergedNodes의 스타일 차이를 계산해서
-    // dynamic CSS로 추가하는 로직 구현
-    // 현재는 StyleProcessor에서 이미 variant별 스타일을 수집하므로
-    // 그 정보를 활용해야 함
+    for (const [, knobs] of knobGroups) {
+      if (knobs.length <= 1) continue;
 
-    // 임시로 StyleProcessor가 처리하도록 위임
+      // 첫 번째 노브에 나머지의 mergedNodes 합치기
+      const primary = knobs[0];
+      for (let i = 1; i < knobs.length; i++) {
+        if (knobs[i].mergedNodes) {
+          primary.mergedNodes = [
+            ...(primary.mergedNodes || []),
+            ...knobs[i].mergedNodes,
+          ];
+        }
+      }
+
+      // visibleCondition 제거 (항상 보여야 함)
+      delete (primary as any).visibleCondition;
+
+      // 중복 노브를 children에서 제거
+      const knobSet = new Set(knobs.slice(1));
+      tree.children = tree.children.filter((c) => !knobSet.has(c));
+    }
+  }
+
+  /**
+   * spacer 프레임 제거 (재귀)
+   *
+   * Figma에서 간격 조절용으로 쓴 spacer 프레임은 CSS gap으로 처리되므로 불필요.
+   */
+  private removeSpacerNodes(node: InternalNode): void {
+    node.children = node.children.filter(
+      (child) => !child.name.toLowerCase().includes("spacer")
+    );
+    for (const child of node.children) {
+      this.removeSpacerNodes(child);
+    }
+  }
+
+  /**
+   * checked 상태에 따른 justify-content 동적 스타일 추가
+   *
+   * Figma에서 checked=true일 때 primaryAxisAlignItems: "MAX" (노브 오른쪽),
+   * checked=false일 때 기본 (노브 왼쪽). CSS로 justify-content를 제어.
+   */
+  private addJustifyContentStyle(tree: InternalNode, activeName: string): void {
+    if (!tree.styles) return;
+
+    if (!tree.styles.dynamic) {
+      tree.styles.dynamic = [];
+    }
+
+    // checked=true → justify-content: flex-end (노브 오른쪽)
+    tree.styles.dynamic.push({
+      condition: { type: "truthy", prop: activeName },
+      style: { "justify-content": "flex-end" },
+    });
+
+    // base에 flex-start 설정 (checked=false 기본)
+    if (tree.styles.base) {
+      tree.styles.base["justify-content"] = "flex-start";
+    }
   }
 
   /**
