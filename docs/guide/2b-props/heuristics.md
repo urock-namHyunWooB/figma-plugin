@@ -538,8 +538,9 @@ Props 변경 없음.
 2. traverseAndDetectTextSlots() (재귀)
    TEXT 슬롯 감지 3단계 우선순위:
      (1) componentPropertyReferences.characters → 기존 prop에 bindings.content 설정
-     (2) extractTextSlotInfo(): variant 간 텍스트 차이 → 새 string prop + binding
-     (3) placeholder 감지: 레이어 이름 === TEXT 내용 → 새 string prop + binding
+     (2) extractTextSlotInfo(): variant 간 텍스트 차이 → "label" prop + binding
+     (3) placeholder 감지: 레이어 이름 === TEXT 내용 → "label" prop + binding
+   ※ chip/tag의 텍스트는 역할이 항상 "label" — 레이어 이름 기반 이름 생성하지 않음
 
 3. traverseAndDetectInstanceSlots() (재귀)
    → shouldBeInstanceSlot(): variant 간 존재 차이 감지

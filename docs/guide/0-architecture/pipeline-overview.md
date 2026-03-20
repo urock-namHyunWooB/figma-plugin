@@ -402,7 +402,7 @@ TreeBuilder가 개별 컴포넌트 트리를 완성한 뒤, Post-Processor가 **
 |----------------|------|
 | **ComponentPropsLinker** | INSTANCE override → 의존성 컴포넌트 props 연결, 바인딩 전파 |
 | **DynamicStyleDecomposer** | AND 조건 dynamic에서 CSS 속성별 소유 prop 결정 + diagnostics 수집 |
-| **UITreeOptimizer** | FD 분해 (DynamicStyleDecomposer 호출), 항상-true 동적 스타일 → base로 병합, 의존성 루트 유연화 (px → %), 미사용 props 제거 |
+| **UITreeOptimizer** | variant-only slot 제거 (배타적 3+ slot → 내부 렌더링), FD 분해 (DynamicStyleDecomposer 호출), 항상-true 동적 스타일 → base로 병합, 의존성 루트 유연화 (px → %), 미사용 props 제거 |
 
 ### 디렉토리 구조
 
@@ -763,7 +763,7 @@ const { main, dependencies } = generator.buildUITree();
 
 ### Variant Merging
 COMPONENT_SET의 여러 variant (예: Size=Large/Small, State=Default/Hover)를 단일 InternalTree로 병합합니다.
-노드는 3-Way Position Comparison (좌·가운데·우 정렬)으로 매칭됩니다 — 최소 오차 ≤ 0.1이면 동일 노드. 병합 후 Cross-Depth Squash (IoU ≥ 0.5)로 다른 depth의 중복 노드를 통합합니다.
+노드는 4-Way Position Comparison (비례·좌·가운데·우 정렬)으로 매칭됩니다 — 최소 오차 ≤ 0.1이면 동일 노드. GROUP↔FRAME 교차 매칭 시 크기 유사도 검증 (1.3x 이내). 병합 후 Cross-Depth Squash (IoU ≥ 0.5 + variant 겹침 필수)로 다른 depth의 중복 노드를 통합합니다.
 
 ### Props 변환 규칙
 - `State` prop → CSS pseudo-class (`:hover`, `:active`, `:disabled`)

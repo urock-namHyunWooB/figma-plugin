@@ -24,7 +24,7 @@ applyStyles(node)
 ├── applyVariantStyles(node)
 │   ├── collectVariantStyles(mergedNodes)      → [{variantName, cssStyle}, ...]
 │   │     └── normalizeCssNoise(cssStyle)      → near-zero rotation 제거
-│   ├── normalizeAcrossVariants(variantStyles) → flex 자식 ≤1 variant의 gap 통일
+│   ├── normalizeAcrossVariants(variantStyles) → flex 자식 ≤1 variant의 gap 삭제 (렌더링에 무의미)
 │   ├── separateStateVariants(variantStyles)   → baseVariants / pseudoVariants 분리
 │   ├── extractCommonStyles(baseVariants)      → base (모든 variant 공통)
 │   ├── extractDynamicStyles(baseVariants, base) → dynamic (variant별 차이)
@@ -331,7 +331,7 @@ active=T 그룹: [#0066FF, #FF0000] → 내부 불일치 ✗
 |------|------|------|
 | 1차 | 단일 prop 일관성 검증 | 위 두 조건 모두 충족 시 즉시 채택 |
 | 2차 | Compound prop (2–3개 조합) | 1차 실패 + bestSingleRatio ≤ 50% 일 때만 |
-| 3차 | Best-fit 강제 할당 | 그래도 결정 안 되면 일관 그룹이 가장 많은 prop 선택 |
+| 3차 | Best-fit 강제 할당 | 그래도 결정 안 되면 일관 그룹 **비율**이 가장 높은 prop 선택 |
 
 #### 거짓 양성 방지책
 
@@ -340,7 +340,7 @@ active=T 그룹: [#0066FF, #FF0000] → 내부 불일치 ✗
 | Compound는 "모든 그룹이 엔트리 1개씩"이면 스킵 | 단순 열거(모든 조합이 유일)와 공동 소유권을 구분 |
 | Single 일관성 > 50%면 compound 시도 안 함 | 단일 prop으로 충분히 설명되면 compound는 과적합 |
 | CSS 변수는 fallback 값으로 정규화 후 비교 | `var(--Color, #F9F9F9)` → `#F9F9F9` (변수명 차이로 오판 방지) |
-| present와 absent가 섞인 그룹은 불일치로 판정 | CSS 속성이 어떤 variant엔 있고 없는 것도 불일치 |
+| absent는 무관으로 처리 (present 값끼리만 비교) | gap 등 렌더링에 무의미한 variant의 absent를 불일치로 오판하지 않음 |
 
 #### decompose() 전체 흐름
 
@@ -389,7 +389,7 @@ findControllingProp("background", matrix, allProps):
     → isCompoundConsistent() 통과 시 "propA+propB" 반환
 
 3차: Best-fit (폴백)
-    일관적 그룹 수가 가장 많은 prop 선택
+    일관적 그룹 비율이 가장 높은 prop 선택 (절대 수 아닌 비율)
     → 불일치 그룹은 collectDiagnostics()로 기록
 ```
 
@@ -399,10 +399,10 @@ prop의 특정 value에 해당하는 모든 entry의 CSS 값이 동일한지 검
 
 ```
 isGroupConsistent(group):
-  1. present + absent 혼합 → false (CSS가 있거나 없거나 불통일)
-  2. present 1개 이하 → true (자동 일관)
-  3. 모든 present 값 동일 (normalizeCssValue 적용) → true
-  4. 다른 값 존재 → false
+  1. present 1개 이하 → true (자동 일관)
+  2. 모든 present 값 동일 (normalizeCssValue 적용) → true
+  3. 다른 값 존재 → false
+  ※ absent는 "무관"으로 처리 — present 값끼리만 비교
 ```
 
 `normalizeCssValue`: CSS `var()` fallback 추출 등 정규화
