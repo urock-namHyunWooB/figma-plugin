@@ -573,7 +573,7 @@ function App() {
         {/* Variants Tab */}
         {activeTab === "variants" && (
           <div style={{ padding: 16 }}>
-            {!propDefinitions.some((p) => p.type === "VARIANT") ? (
+            {selectionNodeData?.info?.document?.type !== "COMPONENT_SET" ? (
               <div style={{
                 display: "flex",
                 flexDirection: "column",
