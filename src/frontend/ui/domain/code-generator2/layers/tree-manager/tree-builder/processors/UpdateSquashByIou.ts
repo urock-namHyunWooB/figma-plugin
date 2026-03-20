@@ -93,6 +93,8 @@ export class UpdateSquashByIou {
           const depthI = this.getNodeDepth(nodes[i]);
           const depthJ = this.getNodeDepth(nodes[j]);
           if (depthI === depthJ) continue;
+          // variant 겹침 확인: 겹치는 variant가 없으면 다른 맥락의 노드 → squash 방지
+          if (!this.hasVariantOverlap(nodes[i], nodes[j])) continue;
           const iou = this.getIou2(nodes[i], nodes[j]);
           if (iou !== null && iou >= UpdateSquashByIou.IOU_THRESHOLD) {
             groups.push([nodes[i], nodes[j]]);
@@ -102,6 +104,20 @@ export class UpdateSquashByIou {
     }
 
     return groups;
+  }
+
+  /**
+   * 두 노드의 mergedNodes에 겹치는 variant가 있는지 확인
+   * 겹침이 없으면 서로 다른 variant 그룹에 속하므로 squash 부적합
+   */
+  private hasVariantOverlap(nodeA: InternalNode, nodeB: InternalNode): boolean {
+    const variantsA = new Set(
+      (nodeA.mergedNodes || []).map((m) => m.variantName || m.name)
+    );
+    for (const m of nodeB.mergedNodes || []) {
+      if (variantsA.has(m.variantName || m.name)) return true;
+    }
+    return false;
   }
 
   // ============================================================

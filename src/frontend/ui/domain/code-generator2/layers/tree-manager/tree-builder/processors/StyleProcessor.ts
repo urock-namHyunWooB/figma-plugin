@@ -85,6 +85,9 @@ export class StyleProcessor {
     // 2단계: position 스타일 적용
     result = this.applyPositionStyles(result);
 
+    // 3단계: vector fill → currentColor 변환
+    result = this.normalizeVectorFills(result);
+
     return result;
   }
 
@@ -912,6 +915,60 @@ export class StyleProcessor {
     }
 
     return result;
+  }
+
+  // ===========================================================================
+  // vector fill → currentColor 변환
+  // ===========================================================================
+
+  /**
+   * 동적 fill 스타일이 있는 vector 노드의 SVG fill을 currentColor로 변환 (재귀)
+   *
+   * variant별로 fill 색상이 다른 ELLIPSE/VECTOR 노드에서:
+   * - SVG 내부 fill="..." → fill="currentColor"
+   * - CSS fill → color (currentColor가 color를 상속)
+   */
+  private normalizeVectorFills(node: InternalNode): InternalNode {
+    let currentNode = node;
+
+    if (StyleProcessor.VECTOR_TYPES.has(node.type) && node.styles?.dynamic) {
+      const hasDynamicFill = node.styles.dynamic.some(
+        (d) => "fill" in d.style
+      );
+
+      // SVG를 metadata 또는 DataManager에서 가져오기
+      const originalSvg = node.metadata?.vectorSvg
+        || this.dataManager.getVectorSvgByNodeId(node.id)
+        || this.dataManager.getVectorSvgByLastSegment(node.id);
+
+      if (hasDynamicFill && originalSvg) {
+        // SVG fill → currentColor
+        const fillPattern = /fill="(#[0-9A-Fa-f]{3,8})"/g;
+        const normalizedSvg = originalSvg.replace(
+          fillPattern,
+          'fill="currentColor"'
+        );
+
+        // CSS fill → color
+        const normalizedDynamic = node.styles.dynamic.map((d) => {
+          if (!("fill" in d.style)) return d;
+          const { fill, ...rest } = d.style;
+          return { ...d, style: { ...rest, color: fill } };
+        });
+
+        currentNode = {
+          ...node,
+          metadata: { ...(node.metadata || {}), vectorSvg: normalizedSvg },
+          styles: { ...node.styles, dynamic: normalizedDynamic },
+        };
+      }
+    }
+
+    const newChildren = currentNode.children.map((child) =>
+      this.normalizeVectorFills(child)
+    );
+
+    return { ...currentNode, children: newChildren };
   }
 
   // ===========================================================================
