@@ -795,9 +795,8 @@ export class DynamicStyleDecomposer {
     return signatures.size > 1;
   }
 
-  /** 그룹 내 CSS 값이 모두 동일한지 확인 */
+  /** 그룹 내 CSS 값이 모두 동일한지 확인 (absent는 무관으로 처리) */
   private static isGroupConsistent(group: PropGroup): boolean {
-    if (group.presentValues.length > 0 && group.absentCount > 0) return false;
     if (group.presentValues.length <= 1) return true;
 
     const first = normalizeCssValue(String(group.presentValues[0]));

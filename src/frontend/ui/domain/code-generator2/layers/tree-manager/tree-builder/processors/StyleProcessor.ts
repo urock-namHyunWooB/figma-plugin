@@ -551,21 +551,15 @@ export class StyleProcessor {
       return;
     }
 
-    // 자식 ≤1인 variant의 gap을 "의미 있는 gap의 대표값"으로 교체
-    // → extractCommonStyles에서 공통 gap으로 취급되거나, size 단독 dynamic이 됨
-    const representativeGap = meaningfulGaps.values().next().value as string;
+    // 자식 ≤1인 variant의 gap 제거 (렌더링에 무의미한 값)
+    // FD 분해의 isGroupConsistent가 absent를 "무관"으로 처리하므로
+    // 삭제해도 present 값끼리만 비교하여 올바른 prop에 할당됨
     for (const v of variantStyles) {
       const count = childCounts.get(v.variantName) ?? 0;
       if (count <= 1) {
-        if (v.cssStyle.gap) {
-          v.cssStyle.gap = representativeGap;
-        }
-        if (v.cssStyle["row-gap"]) {
-          v.cssStyle["row-gap"] = representativeGap;
-        }
-        if (v.cssStyle["column-gap"]) {
-          v.cssStyle["column-gap"] = representativeGap;
-        }
+        delete v.cssStyle.gap;
+        delete v.cssStyle["row-gap"];
+        delete v.cssStyle["column-gap"];
       }
     }
   }
