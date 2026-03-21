@@ -38,21 +38,37 @@ export class UpdateSquashByIou {
 
   /**
    * 진입점: merged tree에 대해 IoU 기반 squash 실행
+   *
+   * Pass 1: IoU ≥ 0.5 기반 (위치 유사성)
+   * Pass 2: variant origin 비겹침 기반 (같은 논리적 요소, 다른 variant에서 depth 차이)
    */
   public execute(
     mergedTree: InternalNode,
     variantTrees: InternalNode[]
   ): InternalNode {
     this.mergedTreeRoot = mergedTree;
-    const nodesByType = this.groupNodesByType(mergedTree);
-    const squashGroups = this.findSquashGroups(nodesByType);
-    const filteredGroups = squashGroups.filter((group) =>
+    const siblingGraph = this.createSiblingGraph(variantTrees);
+
+    // Pass 1: IoU 기반 squash
+    const nodesByType1 = this.groupNodesByType(mergedTree);
+    const squashGroups1 = this.findSquashGroups(nodesByType1);
+    const filteredGroups1 = squashGroups1.filter((group) =>
       this.isValidSquashGroup(group)
     );
-    const siblingGraph = this.createSiblingGraph(variantTrees);
-    for (const [nodeA, nodeB] of filteredGroups) {
+    for (const [nodeA, nodeB] of filteredGroups1) {
       this.squashByTopoSort(mergedTree, nodeA, nodeB, siblingGraph);
     }
+
+    // Pass 2: variant origin 비겹침 기반 squash
+    const nodesByType2 = this.groupNodesByType(mergedTree);
+    const complementGroups = this.findComplementarySquashGroups(nodesByType2);
+    const filteredGroups2 = complementGroups.filter((group) =>
+      this.isValidSquashGroup(group)
+    );
+    for (const [nodeA, nodeB] of filteredGroups2) {
+      this.squashByTopoSort(mergedTree, nodeA, nodeB, siblingGraph);
+    }
+
     return mergedTree;
   }
 
@@ -117,6 +133,99 @@ export class UpdateSquashByIou {
     for (const m of nodeB.mergedNodes || []) {
       if (variantsA.has(m.variantName || m.name)) return true;
     }
+    return false;
+  }
+
+  // ============================================================
+  // 2b. Find Complementary Squash Candidates (variant origin 비겹침)
+  // ============================================================
+
+  /**
+   * Pass 2용: IoU 대신 variant origin이 겹치지 않는 cross-depth 후보 찾기.
+   * 같은 type + 같은 name이지만 서로 다른 variant에서 온 노드 = 같은 논리적 요소.
+   * mergedNodes 많은 쪽 우선 정렬로 greedy 매칭.
+   */
+  private findComplementarySquashGroups(
+    nodesByType: Map<string, InternalNode[]>
+  ): [InternalNode, InternalNode][] {
+    const groups: [InternalNode, InternalNode][] = [];
+
+    for (const [, nodes] of nodesByType) {
+      // 이름별 그룹
+      const byName = new Map<string, InternalNode[]>();
+      for (const node of nodes) {
+        if (!byName.has(node.name)) byName.set(node.name, []);
+        byName.get(node.name)!.push(node);
+      }
+
+      for (const [, sameNameNodes] of byName) {
+        if (sameNameNodes.length < 2) continue;
+
+        // mergedNodes 많은 순으로 정렬 (주요 노드 우선)
+        const sorted = [...sameNameNodes].sort(
+          (a, b) => (b.mergedNodes?.length ?? 0) - (a.mergedNodes?.length ?? 0)
+        );
+
+        const consumed = new Set<string>();
+        for (let i = 0; i < sorted.length; i++) {
+          if (consumed.has(sorted[i].id)) continue;
+          for (let j = i + 1; j < sorted.length; j++) {
+            if (consumed.has(sorted[j].id)) continue;
+            const depthI = this.getNodeDepth(sorted[i]);
+            const depthJ = this.getNodeDepth(sorted[j]);
+            if (depthI === depthJ) continue;
+            if (this.hasOverlappingVariants(sorted[i], sorted[j])) continue;
+            if (!this.hasCompatibleParentContext(sorted[i], sorted[j])) continue;
+            groups.push([sorted[i], sorted[j]]);
+            consumed.add(sorted[j].id);
+          }
+        }
+      }
+    }
+
+    return groups;
+  }
+
+  /**
+   * 두 노드의 mergedNodes variant origin이 겹치는지 확인.
+   * variantId 기준으로 비교 — 하나라도 겹치면 true.
+   */
+  private hasOverlappingVariants(
+    nodeA: InternalNode,
+    nodeB: InternalNode
+  ): boolean {
+    const variantsA = new Set(
+      (nodeA.mergedNodes || []).map((m) => m.variantName ?? m.id)
+    );
+    for (const m of nodeB.mergedNodes || []) {
+      const key = m.variantName ?? m.id;
+      if (variantsA.has(key)) return true;
+    }
+    return false;
+  }
+
+  /**
+   * 두 노드의 부모 컨텍스트가 호환되는지 확인.
+   * 부모가 같은 노드이거나, 부모의 variant origin이 겹치지 않아야 함.
+   * 부모 컨텍스트가 다르면 (date 서브트리 vs search 서브트리) 합치면 안 됨.
+   */
+  private hasCompatibleParentContext(
+    nodeA: InternalNode,
+    nodeB: InternalNode
+  ): boolean {
+    const parentA = nodeA.parent;
+    const parentB = nodeB.parent;
+    if (!parentA || !parentB) return true;
+
+    // 같은 부모면 호환
+    if (parentA.id === parentB.id) return true;
+
+    // 부모가 같은 이름+타입이면 호환 (같은 역할의 부모)
+    if (parentA.name === parentB.name && parentA.type === parentB.type) {
+      return true;
+    }
+
+    // 부모가 다른 이름/타입이면 비호환 — 서로 다른 서브트리
     return false;
   }
 
@@ -311,6 +420,7 @@ export class UpdateSquashByIou {
    * 2단계 sibling 검증:
    * 1단계 next-only로 방향 결정. one-valid이면 바로 실행, both-invalid이면 스킵.
    * both-valid일 때만 2단계 next+prev 검증으로 tiebreak 시도.
+   * 2단계에서도 결정 불가 시, mergedNodes 수 기반 폴백 (많은 쪽으로 합침).
    */
   private squashByTopoSort(
     mergedTree: InternalNode,
@@ -334,7 +444,11 @@ export class UpdateSquashByIou {
       false
     );
 
-    if (!canAtoB_next && !canBtoA_next) return; // both-invalid
+    if (!canAtoB_next && !canBtoA_next) {
+      // both-invalid stage1 → mergedNodes 수 기반 폴백
+      this.squashByMergedNodeCount(nodeA, nodeB);
+      return;
+    }
 
     if (canAtoB_next !== canBtoA_next) {
       // one-valid → 바로 실행
@@ -366,8 +480,39 @@ export class UpdateSquashByIou {
       this.performSquash(nodeB, nodeA);
     } else if (!canAtoB_full && canBtoA_full) {
       this.performSquash(nodeA, nodeB);
+    } else {
+      // both-valid 또는 both-invalid stage2 → mergedNodes 수 기반 폴백
+      // 양쪽 다 stage1에서 valid했으므로, mergedNodes가 많은 노드(주요 노드)로 합침
+      this.squashByMergedNodeCount(nodeA, nodeB);
     }
-    // 여전히 both-valid 또는 both-invalid → 스킵
+  }
+
+  /**
+   * mergedNodes 수 기반 폴백 방향 결정.
+   * mergedNodes가 많은 노드 = 더 많은 variant에서 참조 = 주요 노드.
+   * 적은 쪽을 많은 쪽으로 합침. 동일하면 depth가 얕은 쪽을 target으로.
+   */
+  private squashByMergedNodeCount(
+    nodeA: InternalNode,
+    nodeB: InternalNode
+  ): void {
+    const countA = nodeA.mergedNodes?.length ?? 0;
+    const countB = nodeB.mergedNodes?.length ?? 0;
+
+    if (countA > countB) {
+      this.performSquash(nodeA, nodeB); // B를 A에 합침
+    } else if (countB > countA) {
+      this.performSquash(nodeB, nodeA); // A를 B에 합침
+    } else {
+      // mergedNodes 수도 같으면 depth가 얕은 쪽으로
+      const depthA = this.getNodeDepth(nodeA);
+      const depthB = this.getNodeDepth(nodeB);
+      if (depthA <= depthB) {
+        this.performSquash(nodeA, nodeB);
+      } else {
+        this.performSquash(nodeB, nodeA);
+      }
+    }
   }
 
   /**
