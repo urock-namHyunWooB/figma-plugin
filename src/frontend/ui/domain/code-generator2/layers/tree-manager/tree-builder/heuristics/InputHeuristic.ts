@@ -21,6 +21,7 @@ import type {
   HeuristicContext,
   HeuristicResult,
 } from "./IHeuristic";
+import { renamePropInConditions } from "../processors/utils/rewritePropConditions";
 
 export class InputHeuristic implements IHeuristic {
   readonly name = "InputHeuristic";
@@ -227,6 +228,8 @@ export class InputHeuristic implements IHeuristic {
     const textInfo = this.findTextContent(node, ctx);
     if (!textInfo) return;
 
+    const oldBoolPropName = boolProp.name;
+
     // 1. boolean prop 제거
     ctx.props.splice(propIndex, 1);
 
@@ -247,7 +250,13 @@ export class InputHeuristic implements IHeuristic {
     }
     textInfo.textNode.bindings.content = { prop: stringPropName };
 
-    // 4. visibleCondition 제거 (string prop이 있으면 항상 표시)
+    // 4. 트리 전체에서 제거된 boolean prop → 새 string prop으로 조건 이름 갱신
+    // (다른 노드가 동일한 boolean prop을 visibleCondition에서 참조할 수 있음)
+    if (oldBoolPropName !== stringPropName) {
+      renamePropInConditions(ctx.tree, oldBoolPropName, stringPropName);
+    }
+
+    // 5. visibleCondition 제거 (string prop이 있으면 항상 표시)
     node.visibleCondition = undefined;
   }
 

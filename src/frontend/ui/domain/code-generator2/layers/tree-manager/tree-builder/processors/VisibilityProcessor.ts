@@ -57,7 +57,8 @@ export class VisibilityProcessor {
     // 루트 variant의 prop별 value 분포 구축
     this.rootValueDistribution = this.buildValueDistribution(root.mergedNodes || []);
 
-    return this.applyVisibilityRecursive(root, totalVariants);
+    // 루트 노드는 모든 variant에 존재하므로 null 반환 불가
+    return this.applyVisibilityRecursive(root, totalVariants)!;
   }
 
   /**
@@ -70,7 +71,7 @@ export class VisibilityProcessor {
     node: InternalNode,
     totalVariants: number,
     guaranteedConditions: ConditionNode[] = []
-  ): InternalNode {
+  ): InternalNode | null {
     // visibleCondition 생성 (원래 값)
     const rawCondition = this.createVisibleCondition(node, totalVariants);
 
@@ -80,15 +81,25 @@ export class VisibilityProcessor {
       visibleCondition = this.removeGuaranteedSubconditions(rawCondition, guaranteedConditions);
     }
 
+    // 조상 조건과 모순되는 노드는 dead code → 제거
+    // 예: 조상이 customType==="date" 보장, 자식이 customType==="search" 요구 → 불가
+    if (visibleCondition && guaranteedConditions.length > 0) {
+      if (this.isContradictedByGuaranteed(visibleCondition, guaranteedConditions)) {
+        return null;
+      }
+    }
+
     // 자식에게 전달할 보장 조건: 현재 노드의 raw 조건을 flatten해서 추가
     const childGuaranteedConditions = rawCondition
       ? [...guaranteedConditions, ...this.flattenAndConditions(rawCondition)]
       : guaranteedConditions;
 
-    // children 재귀 처리
-    const children = node.children.map((child) =>
-      this.applyVisibilityRecursive(child, totalVariants, childGuaranteedConditions)
-    );
+    // children 재귀 처리 (null 반환 = dead code 제거)
+    const children = node.children
+      .map((child) =>
+        this.applyVisibilityRecursive(child, totalVariants, childGuaranteedConditions)
+      )
+      .filter((child): child is InternalNode => child !== null);
 
     return {
       ...node,
@@ -156,6 +167,54 @@ export class VisibilityProcessor {
           a.conditions.length === b.conditions.length &&
           a.conditions.every((c, i) => this.conditionEquals(c, b.conditions[i]))
         );
+    }
+  }
+
+  /**
+   * 조건이 보장된 조상 조건과 모순되는지 판별.
+   * 조상이 prop===X를 보장하는데, 자식이 prop===Y(X≠Y)를 요구하면 절대 true 불가.
+   *
+   * - eq: 같은 prop에 다른 value → 모순
+   * - and: 하위 조건 중 하나라도 모순 → 전체 모순
+   * - or: 모든 분기가 모순 → 전체 모순
+   */
+  private isContradictedByGuaranteed(
+    condition: ConditionNode,
+    guaranteed: ConditionNode[]
+  ): boolean {
+    // 보장된 eq 조건을 prop → value 맵으로 구축
+    const guaranteedEqs = new Map<string, string>();
+    for (const g of guaranteed) {
+      if (g.type === "eq") {
+        guaranteedEqs.set(g.prop, g.value);
+      }
+    }
+    if (guaranteedEqs.size === 0) return false;
+
+    return this.isImpossibleCondition(condition, guaranteedEqs);
+  }
+
+  private isImpossibleCondition(
+    condition: ConditionNode,
+    guaranteedEqs: Map<string, string>
+  ): boolean {
+    switch (condition.type) {
+      case "eq": {
+        const guaranteedVal = guaranteedEqs.get(condition.prop);
+        return guaranteedVal !== undefined && guaranteedVal !== condition.value;
+      }
+      case "and":
+        // AND의 하위 조건 중 하나라도 불가능 → 전체 불가능
+        return condition.conditions.some((c) =>
+          this.isImpossibleCondition(c, guaranteedEqs)
+        );
+      case "or":
+        // OR의 모든 분기가 불가능 → 전체 불가능
+        return condition.conditions.every((c) =>
+          this.isImpossibleCondition(c, guaranteedEqs)
+        );
+      default:
+        return false;
     }
   }
 
@@ -423,7 +482,8 @@ export class VisibilityProcessor {
    */
   private createCondition(key: string, value: string): ConditionNode {
     // variant key를 exact match로 PropDefinition 찾기
-    const propDef = this.propMap.get(key);
+    // → 못 찾으면 lowercase로 재시도 (variant 이름은 titlecase, sourceKey는 lowercase 가능)
+    const propDef = this.propMap.get(key) ?? this.propMap.get(key.toLowerCase());
 
     // PropDefinition이 있으면 name 사용, 없으면 normalize된 key 사용 (fallback)
     const propName = propDef ? propDef.name : this.normalizePropName(key);
@@ -468,6 +528,7 @@ export class VisibilityProcessor {
 
     // propMap에서 PropDefinition 찾기
     const propDef = this.propMap.get(sourceKey);
+
     if (!propDef) {
       // propMap에 없으면 normalize해서 사용 (fallback)
       const propName = this.normalizePropName(sourceKey);
@@ -481,6 +542,11 @@ export class VisibilityProcessor {
 
     // Slot prop이면 truthy 조건 (React.ReactNode 존재 여부)
     if (propDef.type === "slot") {
+      return { type: "truthy", prop: propDef.name };
+    }
+
+    // String prop이면 truthy 조건 (문자열 존재 여부로 컨테이너 가시성 제어)
+    if (propDef.type === "string") {
       return { type: "truthy", prop: propDef.name };
     }
 

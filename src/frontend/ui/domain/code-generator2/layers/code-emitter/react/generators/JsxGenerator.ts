@@ -308,6 +308,10 @@ export default ${componentName}`;
     const wrapperStyle = arrayItemNode.styles;
     const hasWrapper = wrapperStyle && Object.keys(wrapperStyle.base || {}).length > 0;
 
+    // itemProps와 contentProp이 모두 없으면 ReactNode 직접 렌더링
+    // (Array<React.ReactNode> 타입 — item 자체가 완전한 렌더 가능 요소)
+    const isDirectSlot = itemPropsMapping.length === 0 && !contentProp;
+
     if (hasWrapper) {
       // nodeStyleMap에서 래퍼 div의 CSS 변수명 조회 (StylesGenerator가 이미 생성)
       const wrapperCssName = this.nodeStyleMap.get(arrayItemNode.id) || `${componentName}ItemCss`;
@@ -334,6 +338,14 @@ ${indentStr}  </div>
 ${indentStr}))}`;
       }
 
+      if (isDirectSlot) {
+        return `${indentStr}{Array.isArray(${arraySlot.slotName}) && ${arraySlot.slotName}.map((item, index) => (
+${indentStr}  <div key={index} ${wrapperAttrStr}${onClickStr}>
+${indentStr}    {item}
+${indentStr}  </div>
+${indentStr}))}`;
+      }
+
       return `${indentStr}{Array.isArray(${arraySlot.slotName}) && ${arraySlot.slotName}.map((item, index) => (
 ${indentStr}  <div key={index} ${wrapperAttrStr}${onClickStr}>
 ${indentStr}    <${componentName}${propsStr} />
@@ -344,6 +356,12 @@ ${indentStr}))}`;
     if (contentProp) {
       return `${indentStr}{Array.isArray(${arraySlot.slotName}) && ${arraySlot.slotName}.map((item, index) => (
 ${indentStr}  <${componentName} key={index}${propsStr}${onClickStr}>{item.content}</${componentName}>
+${indentStr}))}`;
+    }
+
+    if (isDirectSlot) {
+      return `${indentStr}{Array.isArray(${arraySlot.slotName}) && ${arraySlot.slotName}.map((item, index) => (
+${indentStr}  <React.Fragment key={index}>{item}</React.Fragment>
 ${indentStr}))}`;
     }
 
