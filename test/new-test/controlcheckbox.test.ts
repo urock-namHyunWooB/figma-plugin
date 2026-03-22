@@ -76,6 +76,26 @@ describe("Controlcheckbox", () => {
     });
   });
 
+  describe("WAI-ARIA 접근성", () => {
+    it('role="checkbox"가 있어야 한다', async () => {
+      const result = await compileFixture();
+      expect(result).toMatch(/role=\{?"checkbox"\}?/);
+    });
+
+    it("aria-checked가 checked prop에 바인딩되어야 한다", async () => {
+      const result = await compileFixture();
+      expect(result).toMatch(/aria-checked=\{checked\}/);
+    });
+  });
+
+  describe("Pseudo-class 변환", () => {
+    it("active/pressed가 CSS :active로 조기 변환되면 안 된다", async () => {
+      // Checkbox에서 active/pressed는 "선택됨" 상태이지 CSS :active가 아님
+      const result = await compileFixture();
+      expect(result).not.toMatch(/:active/);
+    });
+  });
+
   describe("JSX 렌더링", () => {
     it("checked 아이콘이 checked === true 조건으로 렌더링되어야 한다", async () => {
       const result = await compileFixture();

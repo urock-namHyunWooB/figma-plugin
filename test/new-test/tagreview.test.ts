@@ -102,4 +102,13 @@ describe("Tagreview 컴포넌트 코드 생성", () => {
     // StateComponent가 JSX에서 사용됨
     expect(code).toMatch(/<\w+Component/);
   });
+
+  // ========================================
+  // wrapper 컴포넌트 참조 (instanceScale 제거)
+  // ========================================
+
+  test("서브 컴포넌트에 transform: scale이 없어야 한다", () => {
+    // wrapper가 크기를 제어하므로 instanceScale(transform: scale)은 이중 축소
+    expect(code).not.toMatch(/transform:\s*["']?scale/);
+  });
 });

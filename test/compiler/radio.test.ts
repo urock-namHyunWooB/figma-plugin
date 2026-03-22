@@ -36,4 +36,14 @@ describe("Radio 컴포넌트 코드 생성", () => {
     expect(propNames).not.toContain("check");
     expect(propNames).not.toContain("status");
   });
+
+  describe("WAI-ARIA 접근성", () => {
+    test('role="radio"가 있어야 한다', () => {
+      expect(code).toMatch(/role=\{?"radio"\}?/);
+    });
+
+    test("aria-checked가 checked prop에 바인딩되어야 한다", () => {
+      expect(code).toMatch(/aria-checked=\{checked\}/);
+    });
+  });
 });
