@@ -22,6 +22,14 @@ interface JsxGeneratorOptions {
   nodeStyleMap?: Map<string, string>;
 }
 
+/** 같은 prop의 eq 조건으로 분기되는 component 노드 그룹 */
+interface ComponentMapGroup {
+  propName: string;
+  entries: Array<{ value: string; node: UINode }>;
+  /** 모든 엔트리가 동일한 wrapper 스타일을 가지면 true */
+  hasSharedWrapper: boolean;
+}
+
 export class JsxGenerator {
   /** 진단 정보 수집기 (generate() 호출 동안 유효) */
   private static collectedDiagnostics: VariantInconsistency[] = [];
@@ -62,6 +70,9 @@ export class JsxGenerator {
       ...(uiTree.stateVars || []).map((sv) => sv.name),
     ]);
 
+    // 조건부 컴포넌트 map 선언 초기화
+    this.componentMapDeclarations = [];
+
     // Props destructuring (별도 줄에서 수행)
     const propsDestructuring = this.generatePropsDestructuring(uiTree);
 
@@ -78,9 +89,14 @@ export class JsxGenerator {
     // JSX body (루트 노드는 isRoot=true로 restProps 전파)
     const jsxBody = this.generateNode(uiTree.root, styleStrategy, options, 2, true);
 
+    // 조건부 컴포넌트 map 선언 (JSX 생성 후 수집됨)
+    const componentMapCode = this.componentMapDeclarations.length
+      ? this.componentMapDeclarations.join("\n") + "\n"
+      : "";
+
     const code = `function ${componentName}(props: ${componentName}Props) {
   const ${propsDestructuring} = props;
-${stateVarsCode}${derivedVarsCode}
+${stateVarsCode}${derivedVarsCode}${componentMapCode}
   return (
 ${jsxBody}
   );
@@ -151,6 +167,9 @@ export default ${componentName}`;
 
   // 컴포넌트의 실제 props 이름 + 파생 변수 이름 (JSX에서 참조 가능한 변수)
   private static availableVarNames: Set<string> = new Set();
+
+  // 조건부 컴포넌트 map 변수 선언 (return 이전에 삽입)
+  private static componentMapDeclarations: string[] = [];
 
   /**
    * UINode를 JSX로 변환
@@ -835,12 +854,41 @@ ${indentStr}</${tag}>`;
       // Array Slot이 있으면 .map() 렌더링
       parts.push(this.generateArraySlotMap(arraySlot, node, styleStrategy, options, indent + 2));
     } else if ("children" in node && node.children && node.children.length > 0) {
-      // 일반 children 렌더링 (isRoot는 전파하지 않음)
-      parts.push(
-        node.children
-          .map((child) => this.generateNode(child, styleStrategy, options, indent + 2, false))
-          .join("\n")
-      );
+      // 조건부 컴포넌트 map 패턴 감지
+      const mapGroups = this.detectComponentMapGroups(node.children);
+      if (mapGroups.length > 0) {
+        // map 그룹에 속하는 자식 ID 추적
+        const mappedChildIds = new Set<string>();
+        const firstChildOfGroup = new Map<string, ComponentMapGroup>();
+        for (const group of mapGroups) {
+          for (const entry of group.entries) {
+            mappedChildIds.add(entry.node.id);
+          }
+          firstChildOfGroup.set(group.entries[0].node.id, group);
+        }
+
+        // 자식 렌더링: map 그룹은 첫 번째 자식 위치에서 일괄 렌더링
+        const childParts: string[] = [];
+        for (const child of node.children) {
+          if (mappedChildIds.has(child.id)) {
+            const group = firstChildOfGroup.get(child.id);
+            if (group) {
+              childParts.push(this.generateComponentMapJsx(group, styleStrategy, options, indent + 2));
+            }
+            // 나머지 그룹 멤버는 스킵
+          } else {
+            childParts.push(this.generateNode(child, styleStrategy, options, indent + 2, false));
+          }
+        }
+        parts.push(childParts.join("\n"));
+      } else {
+        // 일반 children 렌더링 (isRoot는 전파하지 않음)
+        parts.push(
+          node.children
+            .map((child) => this.generateNode(child, styleStrategy, options, indent + 2, false))
+            .join("\n")
+        );
+      }
     }
 
     const childrenJsx = parts.join("\n");
@@ -1182,5 +1230,146 @@ ${indentStr}</${tag}>`;
     }
 
     return `${indentStr}{${condPrefix}${slotProp} && (\n${indentStr}  <${tag} ${wrapperAttrs}>{${slotProp}}</${tag}>\n${indentStr})}`;
+  }
+
+  // ============================================================
+  // 조건부 컴포넌트 Map 패턴
+  // ============================================================
+
+  /**
+   * 형제 노드 중 같은 prop의 eq 조건으로 분기되는 component 노드 그룹을 감지.
+   *
+   * 감지 조건:
+   * - visibleCondition.type === "eq", 같은 prop, 다른 value
+   * - type === "component"
+   * - wrapper 스타일 없음 (간결한 map 생성을 위해)
+   * - 3개 이상 (2개는 if/else로 충분)
+   */
+  private static detectComponentMapGroups(children: UINode[]): ComponentMapGroup[] {
+    const byProp = new Map<string, Array<{ value: string; node: UINode }>>();
+
+    for (const child of children) {
+      if (!child.visibleCondition) continue;
+      if (child.visibleCondition.type !== "eq") continue;
+      if (child.type !== "component") continue;
+      if (typeof child.visibleCondition.value !== "string") continue;
+      // override props가 있으면 스킵 (각 컴포넌트에 다른 props 전달)
+      if ("overrideProps" in child && child.overrideProps && Object.keys(child.overrideProps).length > 0) continue;
+      // bindings.attrs가 있으면 스킵
+      if (child.bindings?.attrs && Object.keys(child.bindings.attrs).length > 0) continue;
+
+      const prop = child.visibleCondition.prop;
+      const value = child.visibleCondition.value as string;
+
+      if (!byProp.has(prop)) byProp.set(prop, []);
+      byProp.get(prop)!.push({ value, node: child });
+    }
+
+    return Array.from(byProp.entries())
+      .filter(([, entries]) => entries.length >= 3)
+      .map(([propName, entries]) => {
+        // wrapper 스타일이 모든 엔트리에서 동일한지 확인
+        const hasSharedWrapper = this.hasIdenticalWrapperStyles(entries.map((e) => e.node));
+        return { propName, entries, hasSharedWrapper };
+      });
+  }
+
+  /**
+   * 모든 노드의 wrapper 스타일이 동일한지 확인.
+   * StylesGenerator가 생성한 변수명의 base CSS 내용을 비교.
+   */
+  private static hasIdenticalWrapperStyles(nodes: UINode[]): boolean {
+    const styleKeys = nodes.map((node) => {
+      if (!node.styles || !this.hasNonEmptyStyles(node.styles)) return "";
+      // base + dynamic 구조를 JSON 직렬화해서 비교
+      return JSON.stringify({
+        base: node.styles.base,
+        dynamic: node.styles.dynamic,
+      });
+    });
+
+    // 모두 스타일 없음 → 동일 (wrapper 없음)
+    if (styleKeys.every((k) => k === "")) return true;
+    // 모두 같은 스타일 → 동일 (공유 wrapper)
+    return styleKeys.every((k) => k === styleKeys[0]);
+  }
+
+  /**
+   * 감지된 map 그룹을 JSX로 생성.
+   *
+   * 생성 패턴 (wrapper 없음):
+   *   const StateComponent = { "Approved": Success, ... }[state];
+   *   {StateComponent && <StateComponent />}
+   *
+   * 생성 패턴 (shared wrapper):
+   *   const StateComponent = { "Approved": Success, ... }[state];
+   *   {StateComponent && (
+   *     <div css={[wrapperCss, wrapperCss_sizeStyles?.[size]]}>
+   *       <StateComponent style={{ transform: "scale(0.681)" }} />
+   *     </div>
+   *   )}
+   */
+  private static generateComponentMapJsx(
+    group: ComponentMapGroup,
+    styleStrategy: IStyleStrategy,
+    _options: JsxGeneratorOptions,
+    indent: number
+  ): string {
+    const indentStr = " ".repeat(indent);
+    const propCode = this.resolvePropName(group.propName);
+
+    // 변수명: prop 이름의 PascalCase + "Component" (예: state → StateComponent)
+    const varName = group.propName.charAt(0).toUpperCase() + group.propName.slice(1) + "Component";
+
+    // map entries: { "Approved": Success, "Rejected": Forbid, ... }
+    const mapEntries = group.entries
+      .map((e) => `${JSON.stringify(e.value)}: ${toComponentName(e.node.name)}`)
+      .join(", ");
+
+    // 변수 선언을 수집 (generate()에서 return 이전에 삽입)
+    this.componentMapDeclarations.push(
+      `  const ${varName} = { ${mapEntries} }[${propCode}];`
+    );
+
+    // shared wrapper가 있으면 wrapper div로 감싸기
+    if (group.hasSharedWrapper) {
+      const refNode = group.entries[0].node;
+      if (refNode.styles && this.hasNonEmptyStyles(refNode.styles)) {
+        const componentName = toComponentName(refNode.name);
+        const wrapperStyleVarName = this.nodeStyleMap.get(refNode.id) || `_${componentName}_wrapperCss`;
+        const dynamicProps = this.extractDynamicProps(refNode.styles);
+
+        let wrapperAttrs: string;
+        if (dynamicProps.length > 0) {
+          if (styleStrategy.name === "emotion") {
+            const dynamicStyleRefs = dynamicProps.map(
+              (prop) => this.buildDynamicStyleRef(wrapperStyleVarName, prop)
+            );
+            wrapperAttrs = `css={[${wrapperStyleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
+          } else {
+            const propArgs = dynamicProps.flatMap(
+              (prop) => prop.split("+").map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
+            );
+            wrapperAttrs = `className={${wrapperStyleVarName}({ ${propArgs.join(", ")} })}`;
+          }
+        } else {
+          const styleAttr = styleStrategy.getJsxStyleAttribute(wrapperStyleVarName, false);
+          wrapperAttrs = `${styleAttr.attributeName}=${styleAttr.valueCode}`;
+        }
+
+        const scale = (refNode as any).instanceScale as number | undefined;
+        const scaleStyle = scale ? ` style={{ transform: "scale(${scale.toFixed(3)})" }}` : "";
+
+        return [
+          `${indentStr}{${varName} && (`,
+          `${indentStr}  <div ${wrapperAttrs}${scaleStyle}>`,
+          `${indentStr}    <${varName} />`,
+          `${indentStr}  </div>`,
+          `${indentStr})}`,
+        ].join("\n");
+      }
+    }
+
+    return `${indentStr}{${varName} && <${varName} />}`;
   }
 }

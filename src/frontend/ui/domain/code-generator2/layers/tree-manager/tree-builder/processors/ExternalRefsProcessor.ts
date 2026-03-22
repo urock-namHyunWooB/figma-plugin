@@ -36,29 +36,12 @@ export class ExternalRefsProcessor {
   public resolveStructure(node: InternalNode, isRoot: boolean = true): InternalNode {
     const refId = this.extractRefId(node);
 
-    // Vector-only 의존성: wrapper 구조 변환 + colorMap metadata 저장
+    // Vector-only 의존성: colorMap만 추출 (refId 유지 → 컴포넌트 참조로 렌더링)
+    let extraMetadata: Record<string, unknown> | undefined;
     if (refId && !isRoot && this.isVectorOnlyDependency(refId)) {
       const mergeResult = this.tryMergeInstanceVectorsWithColorMap(node);
-      if (mergeResult) {
-        const { svg, colorMap } = mergeResult;
-
-        return {
-          ...node,
-          // refId 없음 → container로 렌더링
-          metadata: {
-            ...node.metadata,
-            ...(colorMap.size > 0 ? { vectorColorMap: Object.fromEntries(colorMap) } : {}),
-          },
-          children: [{
-            id: `${node.id}_merged_vector`,
-            name: "Merged Vector",
-            type: "VECTOR",
-            parent: node,
-            children: [],
-            metadata: { vectorSvg: svg },
-            styles: { base: { width: "100%", height: "100%" }, dynamic: [] },
-          }],
-        };
+      if (mergeResult && mergeResult.colorMap.size > 0) {
+        extraMetadata = { vectorColorMap: Object.fromEntries(mergeResult.colorMap) };
       }
     }
 
@@ -88,6 +71,7 @@ export class ExternalRefsProcessor {
       ...node,
       name,
       ...(refId ? { refId } : {}),
+      ...(extraMetadata ? { metadata: { ...node.metadata, ...extraMetadata } } : {}),
       children,
     };
   }

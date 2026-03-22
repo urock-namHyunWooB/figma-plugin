@@ -24,6 +24,8 @@ export class UpdateSquashByIou {
   private readonly dataManager: DataManager;
   private readonly nodeToVariantRoot: Map<string, string>;
   private mergedTreeRoot: InternalNode | null = null;
+  /** squash로 자식이 제거된 부모 노드 ID 추적 */
+  private readonly affectedParentIds = new Set<string>();
 
   constructor(
     dataManager: DataManager,
@@ -54,6 +56,9 @@ export class UpdateSquashByIou {
     for (const [nodeA, nodeB] of filteredGroups1) {
       this.squashByTopoSort(mergedTree, nodeA, nodeB, siblingGraph);
     }
+
+    // squash 후 빈 컨테이너 제거
+    this.pruneEmptyContainers(mergedTree);
 
     return mergedTree;
   }
@@ -652,11 +657,32 @@ export class UpdateSquashByIou {
     this.removeNodeFromTree(this.mergedTreeRoot!, sourceNode.id);
   }
 
+  /**
+   * squash로 자식이 모두 빠져나간 빈 컨테이너만 재귀적으로 제거.
+   * affectedParentIds에 있는 노드만 대상 — 원래 children이 없던 leaf FRAME은 보존.
+   */
+  private pruneEmptyContainers(node: InternalNode): void {
+    // 자식부터 재귀 (bottom-up)
+    for (const child of [...node.children]) {
+      this.pruneEmptyContainers(child);
+    }
+
+    // squash로 자식이 제거된 부모 중 빈 컨테이너만 제거
+    node.children = node.children.filter((child) => {
+      if (child.children.length > 0) return true;
+      // squash 영향을 받지 않은 노드는 무조건 유지
+      if (!this.affectedParentIds.has(child.id)) return true;
+      // squash로 비워진 컨테이너 → 제거
+      return false;
+    });
+  }
+
   /** merged tree 전체를 순회하며 특정 ID의 자식 노드를 제거 */
   private removeNodeFromTree(node: InternalNode, targetId: string): boolean {
     const idx = node.children.findIndex((child) => child.id === targetId);
     if (idx !== -1) {
       node.children.splice(idx, 1);
+      this.affectedParentIds.add(node.id);
       return true;
     }
     for (const child of node.children) {
