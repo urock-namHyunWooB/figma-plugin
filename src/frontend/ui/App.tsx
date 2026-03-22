@@ -276,6 +276,15 @@ function App() {
     resizePluginUI(size.width, size.height);
   }, []);
 
+  // DEV: localhost에서 자동으로 Input.json fixture 로드
+  useEffect(() => {
+    if (typeof __DEV_BUILD__ !== "undefined" && __DEV_BUILD__ && !selectionNodeData) {
+      import("@fixtures/failing/Input.json").then((m) => {
+        setSelectionNodeData(m.default as any);
+      }).catch(() => {});
+    }
+  }, []);
+
   // Figma 데이터에서 원본 크기 추출
   useEffect(() => {
     if (selectionNodeData?.info?.document?.absoluteBoundingBox) {

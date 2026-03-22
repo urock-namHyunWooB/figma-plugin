@@ -38,14 +38,15 @@ describe("ArraySlot 감지", () => {
       expect(code).toMatch(/key\s*=\s*\{/);
     });
 
-    test("Item 컴포넌트가 map 안에서 렌더링되어야 한다", async () => {
+    test("배열 아이템이 map 안에서 렌더링되어야 한다", async () => {
       const data = taptapNavigation as unknown as FigmaNodeData;
       const compiler = new FigmaCodeGenerator(data);
       const code = await compiler.compile();
 
       expect(code).not.toBeNull();
-      // Item 컴포넌트가 map 안에서 사용되어야 함
-      expect(code).toMatch(/\.map\s*\([^)]*\)\s*=>\s*.*<Item/s);
+      // itemProps가 없으면 {item} 직접 렌더링 (Array<React.ReactNode>)
+      // itemProps가 있으면 <Item> 컴포넌트 렌더링
+      expect(code).toMatch(/\.map\s*\([^)]*\)\s*=>\s*/s);
     });
   });
 

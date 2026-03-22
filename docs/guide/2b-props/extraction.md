@@ -180,12 +180,36 @@ Boolean variant(`Left Icon = True/False`)이 실제로는 INSTANCE 노드의 가
 (a)→(b)는 종속 단계: 공통 prop이 있어야 부분 커버리지를 검사한다.
 (c)는 (a)가 없을 때의 폴백이다.
 
-**조건 최적화**: 부모가 보장하는 조건을 자식에서 제거한다.
+**조건 최적화**: 부모가 보장하는 조건(guaranteed conditions)을 자식에서 제거한다.
 ```
 부모: eq(state, "loading")
 자식: AND(eq(state, "loading"), eq(size, "M"))
 → 최적화 후: eq(size, "M")
 ```
+
+**Dead Code Elimination**: 조상 조건과 모순되는 자식 노드를 트리에서 제거한다.
+```
+조상이 보장: eq(customType, "date")
+자식이 요구: eq(customType, "search")
+→ 모순 → 자식 노드 제거 (dead code)
+```
+
+판정 로직 (`isContradictedByGuaranteed`):
+- `eq`: 같은 prop에 다른 value → 모순
+- `and`: 하위 조건 중 하나라도 모순 → 전체 모순
+- `or`: 모든 분기가 모순 → 전체 모순
+
+**OR Branch Simplification**: OR 조건의 일부 분기만 불가능한 경우, 해당 분기를 제거하고 유효한 분기만 남긴다. TypeScript의 TS2367 (불가능한 타입 비교) 에러를 방지한다.
+```
+조상이 보장: OR(eq(customType, "text"), eq(customType, "number"), eq(customType, "password"))
+→ 허용 값 집합: customType ∈ {text, number, password}
+
+자식 조건: OR(eq(customType, "search"), eq(customType, "text"))
+→ "search"는 허용 집합에 없음 → 제거
+→ 단순화 결과: eq(customType, "text")
+```
+
+`buildAllowedValues`가 guaranteed 조건에서 prop별 허용 값 집합을 추출하고, `simplifyRecursive`가 OR/AND/eq를 재귀적으로 단순화한다.
 
 ---
 

@@ -87,6 +87,14 @@ export class VisibilityProcessor {
       if (this.isContradictedByGuaranteed(visibleCondition, guaranteedConditions)) {
         return null;
       }
+      // OR 분기 중 불가능한 분기만 제거 (TS2367 방지)
+      // 예: OR(customType=search, customType=text) → 조상이 text|number|password 보장
+      //     → search 분기 제거 → customType=text만 남음
+      visibleCondition = this.simplifyConditionAgainstGuaranteed(
+        visibleCondition,
+        guaranteedConditions
+      );
+      if (!visibleCondition) return null;
     }
 
     // 자식에게 전달할 보장 조건: 현재 노드의 raw 조건을 flatten해서 추가
@@ -192,6 +200,112 @@ export class VisibilityProcessor {
     if (guaranteedEqs.size === 0) return false;
 
     return this.isImpossibleCondition(condition, guaranteedEqs);
+  }
+
+  /**
+   * 보장된 조건으로부터 prop별 허용 값 집합을 추출.
+   *
+   * - eq(prop, val) → prop ∈ {val}
+   * - OR(eq(prop, v1), eq(prop, v2)) → prop ∈ {v1, v2}
+   *
+   * 반환: prop → Set<allowed values>
+   */
+  private buildAllowedValues(
+    guaranteed: ConditionNode[]
+  ): Map<string, Set<string>> {
+    const allowed = new Map<string, Set<string>>();
+
+    for (const g of guaranteed) {
+      if (g.type === "eq") {
+        // 단일 eq → 정확히 하나의 값만 허용
+        allowed.set(g.prop, new Set([g.value]));
+      } else if (g.type === "or") {
+        // OR의 모든 분기가 같은 prop의 eq인 경우 → 허용 값 집합
+        const props = new Set<string>();
+        const values: string[] = [];
+        let allEq = true;
+        for (const c of g.conditions) {
+          if (c.type === "eq") {
+            props.add(c.prop);
+            values.push(c.value);
+          } else {
+            allEq = false;
+            break;
+          }
+        }
+        if (allEq && props.size === 1) {
+          const prop = [...props][0];
+          // 기존에 더 제한적인 값이 있으면 intersection
+          const existing = allowed.get(prop);
+          if (existing) {
+            const intersection = new Set(
+              values.filter((v) => existing.has(v))
+            );
+            allowed.set(prop, intersection);
+          } else {
+            allowed.set(prop, new Set(values));
+          }
+        }
+      }
+    }
+
+    return allowed;
+  }
+
+  /**
+   * 조건 트리에서 보장된 조건에 의해 불가능한 분기를 제거/단순화.
+   *
+   * - OR: 불가능 분기 제거 후 남은 분기만 유지
+   * - AND: 각 자식 단순화
+   * - eq: 허용 값 집합에 없으면 undefined (제거 대상)
+   */
+  private simplifyConditionAgainstGuaranteed(
+    condition: ConditionNode,
+    guaranteed: ConditionNode[]
+  ): ConditionNode | undefined {
+    const allowedValues = this.buildAllowedValues(guaranteed);
+    if (allowedValues.size === 0) return condition;
+
+    return this.simplifyRecursive(condition, allowedValues);
+  }
+
+  private simplifyRecursive(
+    condition: ConditionNode,
+    allowedValues: Map<string, Set<string>>
+  ): ConditionNode | undefined {
+    switch (condition.type) {
+      case "eq": {
+        const allowed = allowedValues.get(condition.prop);
+        if (allowed && !allowed.has(condition.value)) {
+          return undefined; // 불가능한 값
+        }
+        return condition;
+      }
+      case "or": {
+        const simplified = condition.conditions
+          .map((c) => this.simplifyRecursive(c, allowedValues))
+          .filter((c): c is ConditionNode => c !== undefined);
+        if (simplified.length === 0) return undefined;
+        if (simplified.length === 1) return simplified[0];
+        return { type: "or", conditions: simplified };
+      }
+      case "and": {
+        const simplified = condition.conditions
+          .map((c) => this.simplifyRecursive(c, allowedValues))
+          .filter((c): c is ConditionNode => c !== undefined);
+        if (simplified.length === 0) return undefined;
+        // AND에서 하나라도 제거되면 전체가 불가능할 수 있음 — 아닌 경우도 있음
+        // 여기서는 보수적으로: 제거된 조건은 "항상 false"이므로 AND 전체 false
+        if (simplified.length < condition.conditions.length) {
+          // 제거된 분기가 있다는 것은 해당 eq가 불가능 → AND 전체 불가능
+          return undefined;
+        }
+        if (simplified.length === 1) return simplified[0];
+        return { type: "and", conditions: simplified };
+      }
+      default:
+        return condition;
+    }
   }
 
   private isImpossibleCondition(

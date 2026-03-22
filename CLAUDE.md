@@ -154,4 +154,5 @@ Use these subagents proactively when conditions are met:
 - ✅ UITreeOptimizer FD 분해 + diagnostics 수집기 주입
 - ✅ 3-Way Position Comparison (NodeMatcher)
 - ✅ Auto Layout Context Matching — Stage 5.5 왼쪽 컨텍스트 보정 (NodeMatcher)
-- ✅ Cross-Depth Squash (UpdateSquashByIou)
+- ✅ Cross-Depth Squash (UpdateSquashByIou) — IoU ≥ 0.5 위치 기반 단일 Pass
+- ✅ VisibilityProcessor Dead Code Elimination — 조상 조건 모순 제거 + OR branch simplification

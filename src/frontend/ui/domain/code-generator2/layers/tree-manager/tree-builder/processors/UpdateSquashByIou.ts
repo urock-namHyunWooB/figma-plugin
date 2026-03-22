@@ -7,13 +7,12 @@ type SiblingEntry = { next: InternalNode | null; prev: InternalNode | null };
 type SiblingGraph = Map<string, SiblingEntry[]>;
 
 /**
- * IoU 기반 post-merge squash
+ * IoU 기반 cross-depth squash
  *
- * v1 UpdateSquashByIou 충실 포팅.
  * 머지 후 같은 타입의 노드가 서로 다른 depth에 남아 있을 때,
- * variant root 기준 IoU ≥ 0.5이면 하나로 합침.
+ * variant root 기준 정규화 좌표로 IoU ≥ 0.5이면 하나로 합침.
  *
- * 핵심 알고리즘 (v1 동일):
+ * 알고리즘:
  * 1. groupNodesByType: BFS로 타입별 그룹핑
  * 2. findSquashGroups: IoU ≥ 0.5 + 같은 이름인 후보 찾기
  * 3. isValidSquashGroup: mask, instance children, ancestor-descendant 검증
@@ -37,10 +36,9 @@ export class UpdateSquashByIou {
   }
 
   /**
-   * 진입점: merged tree에 대해 IoU 기반 squash 실행
+   * 진입점: merged tree에 대해 IoU 기반 cross-depth squash 실행
    *
-   * Pass 1: IoU ≥ 0.5 기반 (위치 유사성)
-   * Pass 2: variant origin 비겹침 기반 (같은 논리적 요소, 다른 variant에서 depth 차이)
+   * variant root 기준 정규화 후 IoU ≥ 0.5인 같은 타입/이름 노드를 합침
    */
   public execute(
     mergedTree: InternalNode,
@@ -56,16 +54,6 @@ export class UpdateSquashByIou {
       this.isValidSquashGroup(group)
     );
     for (const [nodeA, nodeB] of filteredGroups1) {
-      this.squashByTopoSort(mergedTree, nodeA, nodeB, siblingGraph);
-    }
-
-    // Pass 2: variant origin 비겹침 기반 squash
-    const nodesByType2 = this.groupNodesByType(mergedTree);
-    const complementGroups = this.findComplementarySquashGroups(nodesByType2);
-    const filteredGroups2 = complementGroups.filter((group) =>
-      this.isValidSquashGroup(group)
-    );
-    for (const [nodeA, nodeB] of filteredGroups2) {
       this.squashByTopoSort(mergedTree, nodeA, nodeB, siblingGraph);
     }
 
@@ -137,98 +125,6 @@ export class UpdateSquashByIou {
   }
 
   // ============================================================
-  // 2b. Find Complementary Squash Candidates (variant origin 비겹침)
-  // ============================================================
-
-  /**
-   * Pass 2용: IoU 대신 variant origin이 겹치지 않는 cross-depth 후보 찾기.
-   * 같은 type + 같은 name이지만 서로 다른 variant에서 온 노드 = 같은 논리적 요소.
-   * mergedNodes 많은 쪽 우선 정렬로 greedy 매칭.
-   */
-  private findComplementarySquashGroups(
-    nodesByType: Map<string, InternalNode[]>
-  ): [InternalNode, InternalNode][] {
-    const groups: [InternalNode, InternalNode][] = [];
-
-    for (const [, nodes] of nodesByType) {
-      // 이름별 그룹
-      const byName = new Map<string, InternalNode[]>();
-      for (const node of nodes) {
-        if (!byName.has(node.name)) byName.set(node.name, []);
-        byName.get(node.name)!.push(node);
-      }
-
-      for (const [, sameNameNodes] of byName) {
-        if (sameNameNodes.length < 2) continue;
-
-        // mergedNodes 많은 순으로 정렬 (주요 노드 우선)
-        const sorted = [...sameNameNodes].sort(
-          (a, b) => (b.mergedNodes?.length ?? 0) - (a.mergedNodes?.length ?? 0)
-        );
-
-        const consumed = new Set<string>();
-        for (let i = 0; i < sorted.length; i++) {
-          if (consumed.has(sorted[i].id)) continue;
-          for (let j = i + 1; j < sorted.length; j++) {
-            if (consumed.has(sorted[j].id)) continue;
-            const depthI = this.getNodeDepth(sorted[i]);
-            const depthJ = this.getNodeDepth(sorted[j]);
-            if (depthI === depthJ) continue;
-            if (this.hasOverlappingVariants(sorted[i], sorted[j])) continue;
-            if (!this.hasCompatibleParentContext(sorted[i], sorted[j])) continue;
-            groups.push([sorted[i], sorted[j]]);
-            consumed.add(sorted[j].id);
-          }
-        }
-      }
-    }
-
-    return groups;
-  }
-
-  /**
-   * 두 노드의 mergedNodes variant origin이 겹치는지 확인.
-   * variantId 기준으로 비교 — 하나라도 겹치면 true.
-   */
-  private hasOverlappingVariants(
-    nodeA: InternalNode,
-    nodeB: InternalNode
-  ): boolean {
-    const variantsA = new Set(
-      (nodeA.mergedNodes || []).map((m) => m.variantName ?? m.id)
-    );
-    for (const m of nodeB.mergedNodes || []) {
-      const key = m.variantName ?? m.id;
-      if (variantsA.has(key)) return true;
-    }
-    return false;
-  }
-
-  /**
-   * 두 노드의 부모 컨텍스트가 호환되는지 확인.
-   * 부모가 같은 노드이거나, 부모의 variant origin이 겹치지 않아야 함.
-   * 부모 컨텍스트가 다르면 (date 서브트리 vs search 서브트리) 합치면 안 됨.
-   */
-  private hasCompatibleParentContext(
-    nodeA: InternalNode,
-    nodeB: InternalNode
-  ): boolean {
-    const parentA = nodeA.parent;
-    const parentB = nodeB.parent;
-    if (!parentA || !parentB) return true;
-
-    // 같은 부모면 호환
-    if (parentA.id === parentB.id) return true;
-
-    // 부모가 같은 이름+타입이면 호환 (같은 역할의 부모)
-    if (parentA.name === parentB.name && parentA.type === parentB.type) {
-      return true;
-    }
-
-    // 부모가 다른 이름/타입이면 비호환 — 서로 다른 서브트리
-    return false;
-  }
-
   // ============================================================
   // 3. IoU Calculation (각 노드를 자기 variant root 기준 정규화)
   // ============================================================
