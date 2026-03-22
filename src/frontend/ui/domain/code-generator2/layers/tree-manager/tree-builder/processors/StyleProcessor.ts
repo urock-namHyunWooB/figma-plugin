@@ -178,6 +178,13 @@ export class StyleProcessor {
         correctedBounds = { x: bx, y: by, width: w, height: h };
       }
 
+      // VECTOR 치수 보충: getCSSAsync가 width/height를 반환하지 않고
+      // collectVariantStyles의 bbox supplement도 cssStyle.flex로 스킵된 경우 대비
+      if (node.bounds && !filteredBase["width"] && !filteredBase["height"]) {
+        filteredBase["width"] = `${Math.round(node.bounds.width * 1000) / 1000}px`;
+        filteredBase["height"] = `${Math.round(node.bounds.height * 1000) / 1000}px`;
+      }
+
       styles = {
         ...styles,
         base: filteredBase,
@@ -470,9 +477,11 @@ export class StyleProcessor {
       // layoutSizing이 "HUG"이면 콘텐츠 기반 사이징이므로 고정 크기 보충 스킵
       const bbox = (node as any)?.absoluteBoundingBox;
       const isText = (node as any)?.type === "TEXT";
+      const isVector = StyleProcessor.VECTOR_TYPES.has((node as any)?.type);
       const isHugW = (node as any)?.layoutSizingHorizontal === "HUG";
       const isHugH = (node as any)?.layoutSizingVertical === "HUG";
-      if (bbox && !cssStyle.flex) {
+      // VECTOR 타입은 flex 레이아웃에 참여하지 않으므로 cssStyle.flex 가드 무시
+      if (bbox && (!cssStyle.flex || isVector)) {
         const isFlex = cssStyle.display?.includes("flex");
         const isColumn = cssStyle["flex-direction"] === "column";
         if (!cssStyle.width && !(isFlex && !isColumn) && !isHugW) {

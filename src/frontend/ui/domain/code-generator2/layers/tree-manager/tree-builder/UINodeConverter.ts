@@ -93,7 +93,9 @@ class UINodeConverter {
     // VECTOR + SVG 처리:
     // 1. SVG width/height를 100%로 → CSS 컨테이너에 맞춰 자동 스케일
     //    (INSTANCE 스케일 SVG도 COMPONENT 스케일 컨테이너에 맞춰짐)
-    // 2. pseudo/dynamic에서 width/height 제거 (viewBox 고정이므로 크기 변경 시 왜곡)
+    // 2. pseudo에서 width/height 제거 (hover/active 시 크기 변경은 viewBox 왜곡 유발)
+    //    dynamic은 유지: variant별 크기 차이(Size=Large vs Medium 등)는
+    //    CSS 컨테이너 크기로 반영되어야 하며, SVG 100% 스케일이 비례 축소/확대 처리
     if (vectorSvg && node.styles) {
       if (node.styles.pseudo) {
         const cleanedPseudo: typeof node.styles.pseudo = {};
@@ -102,13 +104,6 @@ class UINodeConverter {
           cleanedPseudo[key as keyof typeof cleanedPseudo] = rest as Record<string, string | number>;
         }
         node = { ...node, styles: { ...node.styles, pseudo: cleanedPseudo } };
-      }
-      if (node.styles.dynamic) {
-        const cleanedDynamic = node.styles.dynamic.map((entry) => {
-          const { width, height, ...rest } = entry.style as Record<string, unknown>;
-          return { ...entry, style: rest as Record<string, string | number> };
-        });
-        node = { ...node, styles: { ...node.styles, dynamic: cleanedDynamic } };
       }
     }
 
