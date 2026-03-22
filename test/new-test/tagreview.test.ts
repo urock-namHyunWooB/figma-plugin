@@ -59,4 +59,47 @@ describe("Tagreview 컴포넌트 코드 생성", () => {
     expect(interfaceMatch).toBeTruthy();
     expect(interfaceMatch![1]).not.toMatch(/rejectedText/);
   });
+
+  // ========================================
+  // cross-depth squash 후 레이아웃 보존
+  // Small variant의 Frame 2 wrapper가 prune된 후에도
+  // 레이아웃 속성(flex-direction, gap)이 올바르게 override되어야 함
+  // ========================================
+
+  test("Small variant에 flex-direction: row가 있어야 한다", () => {
+    // Small Root는 원래 VERTICAL이지만, prune된 Frame 2의 HORIZONTAL이 override됨
+    const sizeStylesMatch = code.match(
+      /sizeStyles[^{]*\{([\s\S]*?)\n\};/
+    );
+    expect(sizeStylesMatch).toBeTruthy();
+    const sizeStyles = sizeStylesMatch![1];
+    // Small 블록에 flex-direction: row가 있어야 함
+    const smallBlock = sizeStyles.match(/Small:\s*css`([\s\S]*?)`/);
+    expect(smallBlock).toBeTruthy();
+    expect(smallBlock![1]).toMatch(/flex-direction:\s*row/);
+  });
+
+  test("Small variant에 gap이 있어야 한다", () => {
+    // prune된 Frame 2의 itemSpacing: 4가 gap으로 보존되어야 함
+    const sizeStylesMatch = code.match(
+      /sizeStyles[^{]*\{([\s\S]*?)\n\};/
+    );
+    expect(sizeStylesMatch).toBeTruthy();
+    const sizeStyles = sizeStylesMatch![1];
+    const smallBlock = sizeStyles.match(/Small:\s*css`([\s\S]*?)`/);
+    expect(smallBlock).toBeTruthy();
+    expect(smallBlock![1]).toMatch(/gap:\s*\d+px/);
+  });
+
+  test("아이콘 컴포넌트 맵이 있어야 한다", () => {
+    // state별 아이콘이 component map 패턴으로 렌더링
+    expect(code).toMatch(/const\s+\w+\s*=\s*\{/);
+    expect(code).toMatch(/Approved:\s*\w+/);
+    expect(code).toMatch(/Rejected:\s*\w+/);
+  });
+
+  test("아이콘이 JSX에서 렌더링되어야 한다", () => {
+    // StateComponent가 JSX에서 사용됨
+    expect(code).toMatch(/<\w+Component/);
+  });
 });
