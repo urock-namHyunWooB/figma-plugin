@@ -319,6 +319,8 @@ export interface InternalNode extends UINodeBase {
     instanceOverrides?: InstanceOverride[];
     /** Vector-only 의존성의 variant별 색상 맵 (ExternalRefsProcessor → StyleProcessor 간 전달) */
     vectorColorMap?: Record<string, string>;
+    /** squash prune 시 제거된 wrapper의 레이아웃 오버라이드 (variantName → CSS property map) */
+    layoutOverrides?: Record<string, Record<string, string>>;
   };
   /** 루프 설정 (Heuristic이 설정, UINode로 전달) */
   loop?: { dataProp: string; keyField?: string };

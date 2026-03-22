@@ -47,13 +47,13 @@ export class UpdateSquashByIou {
     this.mergedTreeRoot = mergedTree;
     const siblingGraph = this.createSiblingGraph(variantTrees);
 
-    // Pass 1: IoU 기반 squash
-    const nodesByType1 = this.groupNodesByType(mergedTree);
-    const squashGroups1 = this.findSquashGroups(nodesByType1);
-    const filteredGroups1 = squashGroups1.filter((group) =>
-      this.isValidSquashGroup(group)
-    );
-    for (const [nodeA, nodeB] of filteredGroups1) {
+    // 개별 cross-depth squash
+    for (;;) {
+      const nodesByType = this.groupNodesByType(mergedTree);
+      const squashGroups = this.findSquashGroups(nodesByType);
+      const filtered = squashGroups.filter((g) => this.isValidSquashGroup(g));
+      if (filtered.length === 0) break;
+      const [nodeA, nodeB] = filtered[0];
       this.squashByTopoSort(mergedTree, nodeA, nodeB, siblingGraph);
     }
 
@@ -94,8 +94,13 @@ export class UpdateSquashByIou {
     for (const [, nodes] of nodesByType) {
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
-          // 같은 이름인 경우만 squash 후보
-          if (nodes[i].name !== nodes[j].name) continue;
+          // 이름 비교: TEXT는 내용이 이름이라 variant마다 다를 수 있으므로
+          // 부모의 자식 타입 시퀀스로 구조적 동등성 확인
+          if (nodes[i].name !== nodes[j].name) {
+            if (nodes[i].type !== "TEXT" || !this.hasSameParentStructure(nodes[i], nodes[j])) {
+              continue;
+            }
+          }
           // cross-depth만 squash 대상: 같은 depth의 노드는 variant 머지가 의도적으로 분리한 것
           const depthI = this.getNodeDepth(nodes[i]);
           const depthJ = this.getNodeDepth(nodes[j]);
@@ -371,6 +376,18 @@ export class UpdateSquashByIou {
     nodeB: InternalNode,
     siblingGraph: SiblingGraph
   ): void {
+    // mergedNodes 수가 크게 차이나면 sibling 검증 스킵.
+    // 소수파는 sibling 제약이 느슨해서 검증을 쉽게 통과하므로,
+    // 다수파를 소수파로 합치는 잘못된 방향이 선택될 수 있다.
+    const countA = nodeA.mergedNodes?.length ?? 0;
+    const countB = nodeB.mergedNodes?.length ?? 0;
+    const minCount = Math.min(countA, countB);
+    const maxCount = Math.max(countA, countB);
+    if (maxCount >= 3 * minCount) {
+      this.squashByMergedNodeCount(nodeA, nodeB);
+      return;
+    }
+
     // 1단계: next-only (기존 v1 로직)
     const canAtoB_next = this.validateSquashDirection(
       mergedTree,
@@ -612,6 +629,22 @@ export class UpdateSquashByIou {
     return siblings[idx - 1];
   }
 
+  /**
+   * 두 노드의 부모가 같은 자식 타입 시퀀스를 갖는지 확인.
+   * 예: 부모A의 children이 [TEXT, FRAME]이고 부모B도 [TEXT, FRAME]이면 true.
+   * TEXT처럼 이름이 다르지만 같은 구조적 위치에 있는 노드를 squash 허용하는 데 사용.
+   */
+  private hasSameParentStructure(
+    nodeA: InternalNode,
+    nodeB: InternalNode
+  ): boolean {
+    if (!nodeA.parent || !nodeB.parent) return false;
+    const typesA = nodeA.parent.children.map((c) => c.type);
+    const typesB = nodeB.parent.children.map((c) => c.type);
+    if (typesA.length !== typesB.length) return false;
+    return typesA.every((t, i) => t === typesB[i]);
+  }
+
   private getNodeDepth(node: InternalNode): number {
     let depth = 0;
     let current = node.parent;
@@ -654,7 +687,43 @@ export class UpdateSquashByIou {
       ...(targetNode.mergedNodes || []),
     ];
 
+    // source의 children을 target으로 병합 (내용물도 함께 옮기기)
+    this.mergeChildrenInto(targetNode, sourceNode);
+
     this.removeNodeFromTree(this.mergedTreeRoot!, sourceNode.id);
+  }
+
+  /**
+   * source의 children을 target으로 재귀 병합.
+   * type+name이 일치하면 mergedNodes + children 재귀 병합,
+   * 일치하는 게 없으면 새 자식으로 추가.
+   */
+  private mergeChildrenInto(
+    target: InternalNode,
+    source: InternalNode
+  ): void {
+    const usedIndices = new Set<number>();
+
+    for (const srcChild of source.children) {
+      const matchIdx = target.children.findIndex(
+        (tgtChild, idx) =>
+          !usedIndices.has(idx) &&
+          tgtChild.type === srcChild.type &&
+          tgtChild.name === srcChild.name
+      );
+
+      if (matchIdx !== -1) {
+        usedIndices.add(matchIdx);
+        target.children[matchIdx].mergedNodes = [
+          ...(srcChild.mergedNodes || []),
+          ...(target.children[matchIdx].mergedNodes || []),
+        ];
+        this.mergeChildrenInto(target.children[matchIdx], srcChild);
+      } else {
+        srcChild.parent = target;
+        target.children.push(srcChild);
+      }
+    }
   }
 
   /**
@@ -672,9 +741,82 @@ export class UpdateSquashByIou {
       if (child.children.length > 0) return true;
       // squash 영향을 받지 않은 노드는 무조건 유지
       if (!this.affectedParentIds.has(child.id)) return true;
+      // 제거 전: wrapper의 레이아웃 속성을 부모에 기록
+      this.recordLayoutOverride(node, child);
       // squash로 비워진 컨테이너 → 제거
       return false;
     });
+  }
+
+  /**
+   * 제거되는 wrapper의 레이아웃 속성을 부모 노드에 기록.
+   * wrapper가 prune되면 부모의 원본 레이아웃 속성이 stale하므로,
+   * 스타일 프로세서가 해당 variant의 레이아웃을 교정할 수 있도록 함.
+   */
+  private recordLayoutOverride(
+    parent: InternalNode,
+    prunedChild: InternalNode
+  ): void {
+    if (!prunedChild.mergedNodes?.length) return;
+
+    for (const merged of prunedChild.mergedNodes) {
+      const { node: origNode } = this.dataManager.getById(merged.id);
+      if (!origNode) continue;
+      const raw = origNode as any;
+      if (!raw.layoutMode) continue;
+
+      const css: Record<string, string> = {};
+
+      // flex-direction
+      css["flex-direction"] = raw.layoutMode === "HORIZONTAL" ? "row" : "column";
+
+      // gap
+      if (raw.itemSpacing) {
+        css["gap"] = `${raw.itemSpacing}px`;
+      }
+
+      // padding
+      const pt = raw.paddingTop ?? 0;
+      const pr = raw.paddingRight ?? 0;
+      const pb = raw.paddingBottom ?? 0;
+      const pl = raw.paddingLeft ?? 0;
+      if (pt || pr || pb || pl) {
+        css["padding"] = `${pt}px ${pr}px ${pb}px ${pl}px`;
+      }
+
+      // justify-content
+      const justifyMap: Record<string, string> = {
+        MIN: "flex-start",
+        CENTER: "center",
+        MAX: "flex-end",
+        SPACE_BETWEEN: "space-between",
+      };
+      if (raw.primaryAxisAlignItems && justifyMap[raw.primaryAxisAlignItems]) {
+        css["justify-content"] = justifyMap[raw.primaryAxisAlignItems];
+      }
+
+      // align-items
+      const alignMap: Record<string, string> = {
+        MIN: "flex-start",
+        CENTER: "center",
+        MAX: "flex-end",
+        STRETCH: "stretch",
+        BASELINE: "baseline",
+      };
+      if (raw.counterAxisAlignItems && alignMap[raw.counterAxisAlignItems]) {
+        css["align-items"] = alignMap[raw.counterAxisAlignItems];
+      }
+
+      // flex-wrap
+      if (raw.layoutWrap === "WRAP") {
+        css["flex-wrap"] = "wrap";
+      }
+
+      if (!parent.metadata) parent.metadata = {};
+      if (!parent.metadata.layoutOverrides)
+        parent.metadata.layoutOverrides = {};
+      parent.metadata.layoutOverrides[merged.variantName] = css;
+    }
   }
 
   /** merged tree 전체를 순회하며 특정 ID의 자식 노드를 제거 */

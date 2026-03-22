@@ -527,8 +527,19 @@ export class StyleProcessor {
       return undefined;
     }
 
-    // 전체 variant 대상 CSS 노이즈 정규화
+    // 전체 variant 대상 CSS 노이즈 정규화 (원본 스타일 기준)
     this.normalizeAcrossVariants(node.mergedNodes, variantStyles);
+
+    // squash prune으로 제거된 wrapper의 레이아웃 오버라이드 적용
+    // normalizeAcrossVariants 이후에 적용해야 원본 children 수 기반 gap 정리에 영향받지 않음
+    if (node.metadata?.layoutOverrides) {
+      for (const vs of variantStyles) {
+        const overrides = node.metadata.layoutOverrides[vs.variantName];
+        if (overrides) {
+          Object.assign(vs.cssStyle, overrides);
+        }
+      }
+    }
 
     // State 기반 스타일 분리
     const { baseVariants, pseudoVariants } =

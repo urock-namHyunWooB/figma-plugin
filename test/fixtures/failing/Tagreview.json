@@ -357,7 +357,7 @@
                 "height": 18
               },
               "constraints": {
-                "vertical": "CENTER",
+                "vertical": "TOP",
                 "horizontal": "LEFT"
               },
               "layoutAlign": "INHERIT",
@@ -775,7 +775,7 @@
                 "height": 18
               },
               "constraints": {
-                "vertical": "CENTER",
+                "vertical": "TOP",
                 "horizontal": "LEFT"
               },
               "layoutAlign": "INHERIT",
@@ -1087,7 +1087,7 @@
                 },
                 {
                   "id": "46:4008",
-                  "name": "Rejected",
+                  "name": "Approved",
                   "type": "TEXT",
                   "scrollBehavior": "SCROLLS",
                   "blendMode": "PASS_THROUGH",
@@ -1224,7 +1224,7 @@
                 "height": 24
               },
               "constraints": {
-                "vertical": "CENTER",
+                "vertical": "TOP",
                 "horizontal": "LEFT"
               },
               "layoutAlign": "INHERIT",
@@ -1633,7 +1633,7 @@
                 "height": 18
               },
               "constraints": {
-                "vertical": "CENTER",
+                "vertical": "TOP",
                 "horizontal": "LEFT"
               },
               "layoutAlign": "INHERIT",
@@ -6415,7 +6415,7 @@
               },
               {
                 "id": "46:4008",
-                "name": "Rejected",
+                "name": "Approved",
                 "cssStyle": {
                   "color": "var(--Success-600, #47B881)",
                   "text-align": "center",
@@ -7790,7 +7790,7 @@
     "46:4028": "<svg width=\"28\" height=\"28\" viewBox=\"0 0 28 28\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<circle cx=\"14\" cy=\"14\" r=\"14\" fill=\"#FFAD0D\"/>\n</svg>\n",
     "I46:4029;297:23487": "<svg width=\"15\" height=\"15\" viewBox=\"0 0 15 15\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M7.48611 14.9722C11.6206 14.9722 14.9722 11.6206 14.9722 7.48611C14.9722 3.35165 11.6206 0 7.48611 0C3.35165 0 0 3.35165 0 7.48611C0 11.6206 3.35165 14.9722 7.48611 14.9722ZM8.16667 6.80556H10.8889V8.16667H6.80556V2.72222H8.16667V6.80556Z\" fill=\"white\"/>\n</svg>\n",
     "46:4033": "<svg width=\"28\" height=\"28\" viewBox=\"0 0 28 28\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<circle cx=\"14\" cy=\"14\" r=\"14\" fill=\"#47B881\"/>\n</svg>\n",
-    "I46:4034;297:23483": "<svg width=\"15\" height=\"15\" viewBox=\"0 0 15 15\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M7.48611 14.9722C11.6206 14.9722 14.9722 11.6206 14.9722 7.48611C14.9722 3.35165 11.6206 0 7.48611 0C3.35165 0 0 3.35165 0 7.48611C0 11.6206 3.35165 14.9722 7.48611 14.9722ZM6.84401 10.5286L4.28267 7.96728L5.24512 7.00483L6.76713 8.52683L10.3722 4.32093L11.4056 5.20673L6.84401 10.5286Z\" fill=\"white\"/>\n</svg>\n",
+    "I46:4034;297:23483": "<svg width=\"15\" height=\"15\" viewBox=\"0 0 15 15\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M7.48611 14.9722C11.6206 14.9722 14.9722 11.6206 14.9722 7.48611C14.9722 3.35165 11.6206 0 7.48611 0C3.35165 0 0 3.35165 0 7.48611C0 11.6206 3.35165 14.9722 7.48611 14.9722ZM6.844 10.5286L4.28267 7.96728L5.24512 7.00483L6.76713 8.52683L10.3722 4.32093L11.4056 5.20673L6.844 10.5286Z\" fill=\"white\"/>\n</svg>\n",
     "46:4038": "<svg width=\"28\" height=\"28\" viewBox=\"0 0 28 28\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<circle cx=\"14\" cy=\"14\" r=\"14\" fill=\"#3B82F6\"/>\n</svg>\n",
     "I46:4039;297:23469": "<svg width=\"15\" height=\"15\" viewBox=\"0 0 15 15\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M14.9722 7.48611C14.9722 11.6206 11.6206 14.9722 7.48611 14.9722C3.35165 14.9722 0 11.6206 0 7.48611C0 3.35165 3.35165 0 7.48611 0C11.6206 0 14.9722 3.35165 14.9722 7.48611ZM8.16667 4.76389V3.40278H6.80556V4.76389H8.16667ZM8.16667 5.44444H6.80556V10.8889H8.16667V5.44444Z\" fill=\"white\"/>\n</svg>\n",
     "46:4043": "<svg width=\"28\" height=\"28\" viewBox=\"0 0 28 28\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<circle cx=\"14\" cy=\"14\" r=\"14\" fill=\"#CACACA\"/>\n</svg>\n",
@@ -7804,6 +7804,6 @@
     "46:4063": "<svg width=\"32\" height=\"32\" viewBox=\"0 0 32 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<circle cx=\"16\" cy=\"16\" r=\"16\" fill=\"#3B82F6\"/>\n</svg>\n",
     "I46:4064;297:23469": "<svg width=\"17\" height=\"17\" viewBox=\"0 0 17 17\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M16.7619 8.38095C16.7619 13.0096 13.0096 16.7619 8.38095 16.7619C3.75228 16.7619 0 13.0096 0 8.38095C0 3.75228 3.75228 0 8.38095 0C13.0096 0 16.7619 3.75228 16.7619 8.38095ZM9.14286 5.33333V3.80952H7.61905V5.33333H9.14286ZM9.14286 6.09524H7.61905V12.1905H9.14286V6.09524Z\" fill=\"white\"/>\n</svg>\n",
     "46:4068": "<svg width=\"32\" height=\"32\" viewBox=\"0 0 32 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<circle cx=\"16\" cy=\"16\" r=\"16\" fill=\"#CACACA\"/>\n</svg>\n",
-    "I46:4069;297:23479": "<svg width=\"17\" height=\"17\" viewBox=\"0 0 17 17\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M8.38095 16.7619C13.0096 16.7619 16.7619 13.0096 16.7619 8.38095C16.7619 3.75228 13.0096 0 8.38095 0C3.75228 0 0 3.75228 0 8.38095C0 13.0096 3.75228 16.7619 8.38095 16.7619ZM12.4021 11.2169L11.2169 12.4021L8.38095 9.5662L5.545 12.4021L4.35976 11.2169L7.1957 8.38095L4.35976 5.545L5.545 4.35976L8.38095 7.19571L11.2169 4.35976L12.4021 5.545L9.5662 8.38095L12.4021 11.2169Z\" fill=\"white\"/>\n</svg>\n"
+    "I46:4069;297:23479": "<svg width=\"17\" height=\"17\" viewBox=\"0 0 17 17\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M8.38095 16.7619C13.0096 16.7619 16.7619 13.0096 16.7619 8.38095C16.7619 3.75228 13.0096 0 8.38095 0C3.75228 0 0 3.75228 0 8.38095C0 13.0096 3.75228 16.7619 8.38095 16.7619ZM12.4021 11.2169L11.2169 12.4021L8.38095 9.5662L5.545 12.4021L4.35976 11.2169L7.19571 8.38095L4.35976 5.545L5.545 4.35976L8.38095 7.19571L11.2169 4.35976L12.4021 5.545L9.5662 8.38095L12.4021 11.2169Z\" fill=\"white\"/>\n</svg>\n"
   }
 }
