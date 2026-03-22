@@ -1,7 +1,6 @@
 import { InternalNode, VariantOrigin } from "../../../../types/types";
 import DataManager from "../../../data-manager/DataManager";
 
-type Rect = { x1: number; y1: number; x2: number; y2: number };
 type BoundingBox = { x: number; y: number; width: number; height: number };
 type SiblingEntry = { next: InternalNode | null; prev: InternalNode | null };
 type SiblingGraph = Map<string, SiblingEntry[]>;
@@ -20,7 +19,6 @@ type SiblingGraph = Map<string, SiblingEntry[]>;
  * 5. performSquash: mergedNodes 합치기 + source 제거
  */
 export class UpdateSquashByIou {
-  private static readonly IOU_THRESHOLD = 0.5;
   private static readonly INSTANCE_ID_PREFIX = "I";
 
   private readonly dataManager: DataManager;
@@ -91,16 +89,14 @@ export class UpdateSquashByIou {
     for (const [, nodes] of nodesByType) {
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
-          // 같은 이름인 경우만 squash 후보 (다른 역할의 노드 방지)
+          // 같은 이름인 경우만 squash 후보
           if (nodes[i].name !== nodes[j].name) continue;
           // cross-depth만 squash 대상: 같은 depth의 노드는 variant 머지가 의도적으로 분리한 것
           const depthI = this.getNodeDepth(nodes[i]);
           const depthJ = this.getNodeDepth(nodes[j]);
           if (depthI === depthJ) continue;
-          // variant 겹침 확인: 겹치는 variant가 없으면 다른 맥락의 노드 → squash 방지
-          if (!this.hasVariantOverlap(nodes[i], nodes[j])) continue;
-          const iou = this.getIou2(nodes[i], nodes[j]);
-          if (iou !== null && iou >= UpdateSquashByIou.IOU_THRESHOLD) {
+          // 위치 기반 매칭: 3-Way 비교 (같은 type은 groupNodesByType에서 보장)
+          if (this.isSamePosition3Way(nodes[i], nodes[j])) {
             groups.push([nodes[i], nodes[j]]);
           }
         }
@@ -110,94 +106,140 @@ export class UpdateSquashByIou {
     return groups;
   }
 
+  // ============================================================
+  // 3. 3-Way Position Comparison (NodeMatcher와 동일한 정규화)
+  // ============================================================
+
   /**
-   * 두 노드의 mergedNodes에 겹치는 variant가 있는지 확인
-   * 겹침이 없으면 서로 다른 variant 그룹에 속하므로 squash 부적합
+   * NodeMatcher의 3-Way 비교를 cross-depth용으로 적용.
+   * 각 노드를 자신의 variant root content box 기준으로 독립 정규화(0~1)한 뒤,
+   * 좌/중/우(상/중/하) 3가지 기준점 중 최소 오차가 ≤ 0.1이면 같은 위치.
+   *
+   * NodeMatcher와의 차이: NodeMatcher는 절대 오프셋 차이를 avgSize로 나누지만,
+   * cross-depth는 variant root 크기가 크게 다를 수 있으므로
+   * 각자의 content box 기준으로 독립 정규화한다.
    */
-  private hasVariantOverlap(nodeA: InternalNode, nodeB: InternalNode): boolean {
-    const variantsA = new Set(
-      (nodeA.mergedNodes || []).map((m) => m.variantName || m.name)
-    );
-    for (const m of nodeB.mergedNodes || []) {
-      if (variantsA.has(m.variantName || m.name)) return true;
+  private isSamePosition3Way(
+    nodeA: InternalNode,
+    nodeB: InternalNode
+  ): boolean {
+    if (!nodeA.parent || !nodeB.parent) return false;
+
+    const boxA = this.getContentBoxInfo(nodeA);
+    const boxB = this.getContentBoxInfo(nodeB);
+    if (!boxA || !boxB) return false;
+    if (boxA.contentWidth <= 0 || boxB.contentWidth <= 0) return false;
+    if (boxA.contentHeight <= 0 || boxB.contentHeight <= 0) return false;
+
+    // --- X축: 각자 content box 기준 독립 정규화 후 3-Way 비교 ---
+    const offAx = boxA.nodeX - boxA.contentX;
+    const offBx = boxB.nodeX - boxB.contentX;
+
+    // 1) 좌정렬: 왼쪽 오프셋 비율
+    const leftX = Math.abs(offAx / boxA.contentWidth - offBx / boxB.contentWidth);
+    // 2) 가운데정렬: 중심 오프셋 비율
+    const cenAx = (offAx + boxA.nodeWidth / 2) / boxA.contentWidth;
+    const cenBx = (offBx + boxB.nodeWidth / 2) / boxB.contentWidth;
+    const centerX = Math.abs(cenAx - cenBx);
+    // 3) 우정렬: 오른쪽 여백 비율
+    const rightAx = (boxA.contentWidth - offAx - boxA.nodeWidth) / boxA.contentWidth;
+    const rightBx = (boxB.contentWidth - offBx - boxB.nodeWidth) / boxB.contentWidth;
+    const rightX = Math.abs(rightAx - rightBx);
+
+    const minDiffX = Math.min(leftX, centerX, rightX);
+
+    // --- Y축: 각자 content box 기준 독립 정규화 후 3-Way 비교 ---
+    const offAy = boxA.nodeY - boxA.contentY;
+    const offBy = boxB.nodeY - boxB.contentY;
+
+    // 1) 상단정렬
+    const topY = Math.abs(offAy / boxA.contentHeight - offBy / boxB.contentHeight);
+    // 2) 가운데정렬
+    const midAy = (offAy + boxA.nodeHeight / 2) / boxA.contentHeight;
+    const midBy = (offBy + boxB.nodeHeight / 2) / boxB.contentHeight;
+    const middleY = Math.abs(midAy - midBy);
+    // 3) 하단정렬
+    const botAy = (boxA.contentHeight - offAy - boxA.nodeHeight) / boxA.contentHeight;
+    const botBy = (boxB.contentHeight - offBy - boxB.nodeHeight) / boxB.contentHeight;
+    const bottomY = Math.abs(botAy - botBy);
+
+    const minDiffY = Math.min(topY, middleY, bottomY);
+
+    return minDiffX <= 0.1 && minDiffY <= 0.1;
+  }
+
+  /**
+   * 노드의 content box 정보 조회.
+   * NodeMatcher.calcContentBoxForMergedNode과 동일한 로직.
+   */
+  private getContentBoxInfo(node: InternalNode): {
+    nodeX: number;
+    nodeY: number;
+    nodeWidth: number;
+    nodeHeight: number;
+    contentX: number;
+    contentY: number;
+    contentWidth: number;
+    contentHeight: number;
+  } | null {
+    if (!node.mergedNodes || node.mergedNodes.length === 0) return null;
+
+    for (const merged of node.mergedNodes) {
+      const result = this.calcContentBoxForMergedNode(merged.id);
+      if (result) return result;
     }
-    return false;
+    return null;
   }
 
-  // ============================================================
-  // ============================================================
-  // 3. IoU Calculation (각 노드를 자기 variant root 기준 정규화)
-  // ============================================================
-
-  /**
-   * v1의 getIou2 포팅
-   * 핵심: 각 노드를 자신의 원본 variant root 기준으로 정규화
-   * (v1에서 parent 참조가 업데이트되지 않아 자연스럽게 이렇게 동작)
-   */
-  private getIou2(nodeA: InternalNode, nodeB: InternalNode): number | null {
-    if (!nodeA.parent || !nodeB.parent) return null;
-
-    const rootBoundsA = this.getVariantRootBounds(nodeA);
-    const rootBoundsB = this.getVariantRootBounds(nodeB);
-    if (!rootBoundsA || !rootBoundsB) return null;
-
-    const boundsA = this.getOriginalBounds(nodeA);
-    const boundsB = this.getOriginalBounds(nodeB);
-    if (!boundsA || !boundsB) return null;
-
-    if (rootBoundsA.width === 0 || rootBoundsA.height === 0) return null;
-    if (rootBoundsB.width === 0 || rootBoundsB.height === 0) return null;
-
-    const rectA: Rect = {
-      x1: (boundsA.x - rootBoundsA.x) / rootBoundsA.width,
-      y1: (boundsA.y - rootBoundsA.y) / rootBoundsA.height,
-      x2:
-        (boundsA.x + boundsA.width - rootBoundsA.x) / rootBoundsA.width,
-      y2:
-        (boundsA.y + boundsA.height - rootBoundsA.y) / rootBoundsA.height,
-    };
-
-    const rectB: Rect = {
-      x1: (boundsB.x - rootBoundsB.x) / rootBoundsB.width,
-      y1: (boundsB.y - rootBoundsB.y) / rootBoundsB.height,
-      x2:
-        (boundsB.x + boundsB.width - rootBoundsB.x) / rootBoundsB.width,
-      y2:
-        (boundsB.y + boundsB.height - rootBoundsB.y) / rootBoundsB.height,
-    };
-
-    return this.calculateIoU(rectA, rectB);
-  }
-
-  private getOriginalBounds(node: InternalNode): BoundingBox | null {
-    if (!node.mergedNodes || node.mergedNodes.length === 0) return null;
-    const { node: orig } = this.dataManager.getById(node.mergedNodes[0].id);
-    return (orig?.absoluteBoundingBox as BoundingBox) ?? null;
-  }
-
-  private getVariantRootBounds(node: InternalNode): BoundingBox | null {
-    if (!node.mergedNodes || node.mergedNodes.length === 0) return null;
-    const variantRootId = this.nodeToVariantRoot.get(
-      node.mergedNodes[0].id
-    );
+  private calcContentBoxForMergedNode(nodeId: string): {
+    nodeX: number;
+    nodeY: number;
+    nodeWidth: number;
+    nodeHeight: number;
+    contentX: number;
+    contentY: number;
+    contentWidth: number;
+    contentHeight: number;
+  } | null {
+    const variantRootId = this.nodeToVariantRoot.get(nodeId);
     if (!variantRootId) return null;
-    const { node: rootNode } = this.dataManager.getById(variantRootId);
-    return (rootNode?.absoluteBoundingBox as BoundingBox) ?? null;
-  }
+    const { node: variantRoot } = this.dataManager.getById(variantRootId);
+    if (!variantRoot) return null;
 
-  private calculateIoU(a: Rect, b: Rect): number {
-    const ix1 = Math.max(a.x1, b.x1);
-    const iy1 = Math.max(a.y1, b.y1);
-    const ix2 = Math.min(a.x2, b.x2);
-    const iy2 = Math.min(a.y2, b.y2);
-    const iw = Math.max(0, ix2 - ix1);
-    const ih = Math.max(0, iy2 - iy1);
-    const inter = iw * ih;
+    const { node: originalNode } = this.dataManager.getById(nodeId);
+    if (!originalNode) return null;
 
-    const areaA = Math.max(0, a.x2 - a.x1) * Math.max(0, a.y2 - a.y1);
-    const areaB = Math.max(0, b.x2 - b.x1) * Math.max(0, b.y2 - b.y1);
-    const union = areaA + areaB - inter;
-    return union <= 0 ? 0 : inter / union;
+    const nodeBounds = (originalNode as any).absoluteBoundingBox as
+      | BoundingBox
+      | undefined;
+    if (!nodeBounds) return null;
+
+    const rootBounds = (variantRoot as any).absoluteBoundingBox as
+      | BoundingBox
+      | undefined;
+    if (!rootBounds || rootBounds.width === 0 || rootBounds.height === 0) {
+      return null;
+    }
+
+    const paddingLeft: number = (variantRoot as any).paddingLeft ?? 0;
+    const paddingRight: number = (variantRoot as any).paddingRight ?? 0;
+    const paddingTop: number = (variantRoot as any).paddingTop ?? 0;
+    const paddingBottom: number = (variantRoot as any).paddingBottom ?? 0;
+
+    const contentWidth = rootBounds.width - paddingLeft - paddingRight;
+    const contentHeight = rootBounds.height - paddingTop - paddingBottom;
+    if (contentWidth <= 0 || contentHeight <= 0) return null;
+
+    return {
+      nodeX: nodeBounds.x,
+      nodeY: nodeBounds.y,
+      nodeWidth: nodeBounds.width ?? 0,
+      nodeHeight: nodeBounds.height ?? 0,
+      contentX: rootBounds.x + paddingLeft,
+      contentY: rootBounds.y + paddingTop,
+      contentWidth,
+      contentHeight,
+    };
   }
 
   // ============================================================

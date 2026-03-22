@@ -436,18 +436,18 @@ Button
 
 두 Label은 같은 역할인데 depth가 달라서 매칭되지 못했습니다. 이 상태로 코드를 생성하면 `<span>` 태그가 중복됩니다.
 
-### 해결: IoU 기반 후처리 (UpdateSquashByIou)
+### 해결: 3-Way 위치 비교 + 독립 정규화 (UpdateSquashByIou)
 
-병합이 완료된 후, 같은 타입이면서 **다른 depth**에 있는 노드 쌍을 IoU(Intersection over Union)로 비교하여 같은 위치의 노드를 합칩니다.
+병합이 완료된 후, 같은 타입이면서 **다른 depth**에 있는 노드 쌍의 위치를 비교하여 같은 위치의 노드를 합칩니다.
 
 #### 알고리즘
 
 ```
-1. groupNodesByType    — BFS로 타입별 노드 수집
-2. findSquashGroups    — 같은 이름 + 다른 depth + IoU ≥ 0.5인 쌍 찾기
-3. isValidSquashGroup  — mask, INSTANCE 호환성, 조상-자손 관계 검증
-4. squashByTopoSort    — 2단계 sibling 검증으로 안전한 방향 결정
-5. performSquash       — mergedNodes 합치기 + source 노드 제거
+1. groupNodesByType       — BFS로 타입별 노드 수집
+2. findSquashGroups       — 같은 이름 + 다른 depth + 3-Way 위치 매칭인 쌍 찾기
+3. isValidSquashGroup     — mask, INSTANCE 호환성, 조상-자손 관계 검증
+4. squashByTopoSort       — 2단계 sibling 검증으로 안전한 방향 결정
+5. performSquash          — mergedNodes 합치기 + source 노드 제거
 ```
 
 #### Squash 판정 조건 요약
@@ -456,25 +456,44 @@ Button
 |------|------|
 | 같은 name + type | 같은 역할의 노드만 후보 |
 | 다른 depth | 같은 depth는 의도적 분리 (배열 등) |
-| IoU ≥ 0.5 | variant root 기준 정규화 좌표로 위치 유사성 판정 |
+| 3-Way 위치 매칭 (≤ 0.1) | 독립 정규화된 좌표로 위치 유사성 판정 |
 | 조상-자손 관계 아님 | 부모-자식을 합치면 트리 파괴 |
 | topo 검증 (sibling 순서) | 원본 variant의 형제 순서를 보존 |
 
-#### IoU 계산
+#### 3-Way 위치 비교 + 독립 정규화
 
-각 노드의 bounds를 **자신이 속한 variant root 기준**으로 정규화한 뒤, 겹치는 영역의 비율을 계산합니다.
+NodeMatcher와 동일한 3-Way 비교(좌·중·우, 상·중·하)를 사용하되, **정규화 방식이 다릅니다**.
+
+**NodeMatcher** (같은 depth 노드 비교):
+```
+diff = |offsetA - offsetB| / avgSize
+→ 절대 오프셋 차이를 평균 크기로 나눔
+→ 같은 depth에서는 variant root 크기가 비슷하므로 문제없음
+```
+
+**Cross-depth squash** (다른 depth 노드 비교):
+```
+normalizedA = offsetA / contentSizeA    → 0~1 비율
+normalizedB = offsetB / contentSizeB    → 0~1 비율
+diff = |normalizedA - normalizedB|
+→ 각자의 variant root content box 기준으로 독립 정규화
+→ variant root 크기가 크게 달라도 비율로 비교하므로 스케일링 차이 상쇄
+```
+
+**왜 독립 정규화가 필요한가:**
+
+cross-depth에서는 variant root 크기가 크게 다를 수 있습니다 (예: Small=23px, Large=32px). 같은 상대 위치에 있는 노드라도 절대 픽셀 오프셋이 다르고, 이를 평균 크기로 나누면 오차가 threshold를 넘을 수 있습니다.
 
 ```
-Variant A root (width=400, height=100):
-  Label bounds: x=50, y=10, w=300, h=30
-  → 정규화: (0.125, 0.1) ~ (0.875, 0.4)
+예: Tagreview의 Label 노드
+  Small (contentHeight=23px):  offsetY=3px  → 3/23 = 0.130 (13%)
+  Large (contentHeight=32px):  offsetY=4px  → 4/32 = 0.125 (12.5%)
 
-Variant B root (width=350, height=80):
-  Label bounds: x=40, y=8, w=270, h=25
-  → 정규화: (0.114, 0.1) ~ (0.886, 0.413)
-
-IoU = intersection / union = 0.85 ≥ 0.5 → squash 후보!
+  NodeMatcher 방식: |3 - 4| / 27.5 = 0.1304 → ❌ (> 0.1)
+  독립 정규화:      |0.130 - 0.125| = 0.005 → ✅ (≤ 0.1)
 ```
+
+각자의 content box에서 차지하는 **비율**로 비교하면 크기 스케일링 차이가 자연스럽게 상쇄됩니다.
 
 #### Cross-Depth 필터
 
@@ -536,6 +555,8 @@ Button
 - 구현: `src/.../processors/UpdateSquashByIou.ts`
 - 호출 위치: `VariantMerger.mergeVariants()` Step 3→4 사이
 - v1에서 포팅 후 확장:
+  - IoU → 3-Way 위치 비교: 면적 겹침 대신 좌/중/우 3기준점 비교로 크기 차이에 강건
+  - 독립 정규화: 각 노드를 자기 variant root content box 기준으로 0~1 비율 정규화
   - 2단계 prev tiebreaker: next-only에서 both-valid인 케이스를 prev 검사로 해소
   - both-valid/both-invalid fallback: mergedNodes 수 기반 방향 결정
 
