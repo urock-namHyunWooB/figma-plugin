@@ -251,7 +251,7 @@ Phase 1: 구조 확정 (스타일 접근 없음)
 ═══════════════════════════════════════════════════════
     │
     ├── 1. VariantMerger.merge()
-    │      COMPONENT_SET variants → InternalTree (IoU 기반 노드 매칭)
+    │      COMPONENT_SET variants → InternalTree (3-Way Position Comparison 기반 노드 매칭)
     │
     ├── 2. PropsExtractor.extract()
     │      componentPropertyDefinitions → PropDefinition[]
@@ -304,9 +304,10 @@ Phase 2: 스타일 + 후처리 (구조 잠금)
 
 | Processor | 역할 |
 |-----------|------|
-| **VariantMerger** | IoU 기반 노드 매칭으로 COMPONENT_SET variants 병합 |
+| **VariantMerger** | 3-Way Position Comparison 기반 노드 매칭으로 COMPONENT_SET variants 병합 |
 | **VariantGraphBuilder** | variant 병합 순서 결정 (의존성 그래프) |
 | **NodeMatcher** | 위치/ID/타입 기반 노드 매칭 |
+| **UpdateSquashByIou** | 병합 후 cross-depth 잔여 중복 노드 합침 (3-Way 독립 정규화 위치 비교 + sibling 검증) |
 | **PropsExtractor** | componentPropertyDefinitions → PropDefinition[] (플랫폼 독립 — HTML rename 없음) |
 | **SlotProcessor** | 통합 슬롯 감지 (개별 + 배열 + 텍스트) |
 | **InstanceSlotProcessor** | INSTANCE 슬롯 바인딩 처리 |
@@ -468,7 +469,7 @@ layers/tree-manager/
 ```
 1. VariantGraphBuilder → 병합 순서 그래프 구축
 2. 각 variant에 대해:
-   - 위치(IoU), ID, 타입으로 노드 매칭
+   - 위치(3-Way Position Comparison), ID, 타입으로 노드 매칭
    - 매칭된 노드 mergedNodes 배열에 추적
 3. 결과: 단일 InternalTree + 각 노드에 variant별 데이터
 ```
@@ -763,7 +764,7 @@ const { main, dependencies } = generator.buildUITree();
 
 ### Variant Merging
 COMPONENT_SET의 여러 variant (예: Size=Large/Small, State=Default/Hover)를 단일 InternalTree로 병합합니다.
-노드는 4-Way Position Comparison (비례·좌·가운데·우 정렬)으로 매칭됩니다 — 최소 오차 ≤ 0.1이면 동일 노드. GROUP↔FRAME 교차 매칭 시 크기 유사도 검증 (1.3x 이내). 병합 후 Cross-Depth Squash (IoU ≥ 0.5 + variant 겹침 필수)로 다른 depth의 중복 노드를 통합합니다.
+노드는 3-Way Position Comparison (좌·가운데·우 기준점 비교)으로 매칭됩니다 — 최소 오차 ≤ 0.1이면 동일 노드. GROUP↔FRAME 교차 매칭 시 크기 유사도 검증 (1.3x 이내). 병합 후 Cross-Depth Squash (3-Way 독립 정규화 위치 비교 + 2단계 sibling 검증)로 다른 depth의 중복 노드를 통합합니다.
 
 ### Props 변환 규칙
 - `State` prop → CSS pseudo-class (`:hover`, `:active`, `:disabled`)

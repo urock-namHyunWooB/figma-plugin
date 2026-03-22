@@ -25,6 +25,7 @@ applyStyles(node)
 │   ├── collectVariantStyles(mergedNodes)      → [{variantName, cssStyle}, ...]
 │   │     └── normalizeCssNoise(cssStyle)      → near-zero rotation 제거
 │   ├── normalizeAcrossVariants(variantStyles) → flex 자식 ≤1 variant의 gap 삭제 (렌더링에 무의미)
+│   ├── applyLayoutOverrides(variantStyles)    → squash prune된 wrapper의 레이아웃 속성 복원
 │   ├── separateStateVariants(variantStyles)   → baseVariants / pseudoVariants 분리
 │   ├── extractCommonStyles(baseVariants)      → base (모든 variant 공통)
 │   ├── extractDynamicStyles(baseVariants, base) → dynamic (variant별 차이)
@@ -39,7 +40,8 @@ applyStyles(node)
 Figma의 `getCSSAsync()`가 렌더링에 무의미한 CSS 값을 반환하는 경우가 있다. StyleProcessor는 variant 간 비교 전에 이를 정규화한다:
 
 1. **normalizeCssNoise** (per-variant): `|angle| < 0.01deg` rotation 제거 (TEXT 노드의 부동소수점 노이즈)
-2. **normalizeAcrossVariants** (cross-variant): flex 자식 ≤1인 variant의 gap을 자식 ≥2인 variant의 대표값으로 통일. gap은 자식 간 간격이므로 자식 1개 이하면 어떤 값이든 렌더링 결과가 같다.
+2. **normalizeAcrossVariants** (cross-variant): flex 자식 ≤1인 variant의 gap을 정리한다. 자식 ≥2인 variant가 있으면 그 대표값으로 통일하고, 모든 variant가 자식 ≤1이면 gap을 삭제한다. gap은 자식 간 간격이므로 자식 1개 이하면 어떤 값이든 렌더링 결과가 같다.
+3. **applyLayoutOverrides** (cross-variant): cross-depth squash에서 prune된 wrapper의 레이아웃 속성(flex-direction, gap, padding, justify-content, align-items, flex-wrap)을 해당 variant의 CSS에 복원한다. `normalizeAcrossVariants` **이후에** 적용하는 것이 중요하다 — normalizeAcrossVariants는 원본 노드의 children 수를 기준으로 gap을 정리하는데, 원본 노드에 wrapper가 있어서 children 수가 1개였을 수 있다. 그 상태에서 gap이 제거된 후 wrapper의 gap을 복원해야 한다.
 
 #### State 감지 및 분리
 
@@ -53,10 +55,11 @@ extractStateFromVariantName("Size=Large, State=Hover")
 
 separateStateVariants(variantStyles):
   각 variant:
-    state 추출 → STATE_TO_PSEUDO[state] 존재?
+    state 추출 → EAGER_PSEUDO[state] 존재?
     ├── 예 → pseudoVariants → styles.pseudo (직접 CSS pseudo-class)
-    │         Hover → :hover, Active → :active, Disabled → :disabled
-    └── 아니오 → baseVariants (Normal, Loading 등) → dynamic (조건부 스타일)
+    │         Hover → :hover, Focus → :focus, Disabled → :disabled, Visited → :visited
+    │         ※ Active/Pressed는 EAGER_PSEUDO에 없음 → baseVariants로 처리 (heuristic이 판단)
+    └── 아니오 → baseVariants (Normal, Active, Loading 등) → dynamic (조건부 스타일)
 ```
 
 #### CSS 변환 가능한 State 값 (20개)
