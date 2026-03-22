@@ -247,17 +247,21 @@ export class StyleProcessor {
 
       // 부모가 auto-layout이 아니면 position 적용
       if (this.shouldApplyAbsolutePosition(node, processedChild)) {
-        const positionStyles = this.calculatePositionStyles(node, processedChild);
-        if (positionStyles) {
+        // variant별 위치를 계산하여 base/dynamic 분리
+        const posResult = this.calculatePositionStylesPerVariant(node, processedChild);
+        if (posResult) {
           return {
             ...processedChild,
             styles: {
               ...processedChild.styles,
               base: {
                 ...(processedChild.styles?.base || {}),
-                ...positionStyles,
+                ...posResult.base,
               },
-              dynamic: processedChild.styles?.dynamic || [],
+              dynamic: [
+                ...(processedChild.styles?.dynamic || []),
+                ...posResult.dynamic,
+              ],
             },
           };
         }
@@ -325,16 +329,126 @@ export class StyleProcessor {
   }
 
   /**
-   * position 스타일 계산 (left, top)
+   * variant별 position 스타일 계산 → base/dynamic 분리.
    *
-   * variant 병합 후 parent와 child의 bounds가 서로 다른 variant의
-   * 절대 좌표일 수 있으므로, 같은 variant의 원본 bounds로 상대 좌표를 계산한다.
+   * 각 variant의 원본 bounds에서 parent 대비 상대 좌표를 계산하고,
+   * 공통 값은 base, variant별 차이는 dynamic으로 분리한다.
+   */
+  private calculatePositionStylesPerVariant(
+    parent: InternalNode,
+    child: InternalNode
+  ): { base: Record<string, string>; dynamic: Array<{ condition: ConditionNode; style: Record<string, string> }> } | null {
+    // variant별 위치 수집
+    const perVariant = this.collectPositionPerVariant(parent, child);
+
+    if (perVariant.length === 0) {
+      // fallback: 기존 단일 계산
+      const relPos = this.getRelativePositionFromVariant(parent, child);
+      if (relPos) {
+        return {
+          base: { position: "absolute", left: `${relPos.x}px`, top: `${relPos.y}px` },
+          dynamic: [],
+        };
+      }
+      const parentBounds = parent.bounds;
+      const childBounds = child.bounds;
+      if (!parentBounds || !childBounds) return null;
+      return {
+        base: {
+          position: "absolute",
+          left: `${Math.round(childBounds.x - parentBounds.x)}px`,
+          top: `${Math.round(childBounds.y - parentBounds.y)}px`,
+        },
+        dynamic: [],
+      };
+    }
+
+    // 공통 left/top 추출
+    const allLefts = perVariant.map((v) => v.left);
+    const allTops = perVariant.map((v) => v.top);
+    const commonLeft = allLefts.every((l) => l === allLefts[0]) ? allLefts[0] : null;
+    const commonTop = allTops.every((t) => t === allTops[0]) ? allTops[0] : null;
+
+    const base: Record<string, string> = { position: "absolute" };
+    if (commonLeft !== null) base.left = commonLeft;
+    if (commonTop !== null) base.top = commonTop;
+
+    // variant별 차이를 dynamic에 추가
+    const dynamic: Array<{ condition: ConditionNode; style: Record<string, string> }> = [];
+    if (commonLeft === null || commonTop === null) {
+      for (const v of perVariant) {
+        const style: Record<string, string> = {};
+        if (commonLeft === null && v.left !== allLefts[0]) style.left = v.left;
+        if (commonTop === null && v.top !== allTops[0]) style.top = v.top;
+        // 첫 번째 variant의 값은 base에 넣음
+        if (v === perVariant[0]) {
+          if (commonLeft === null) base.left = v.left;
+          if (commonTop === null) base.top = v.top;
+        } else if (Object.keys(style).length > 0) {
+          const condition = this.createConditionFromVariantName(v.variantName);
+          if (condition) {
+            dynamic.push({ condition, style });
+          }
+        }
+      }
+    }
+
+    return { base, dynamic };
+  }
+
+  /**
+   * 각 variant에서 parent 대비 child의 상대 좌표를 수집.
+   */
+  private collectPositionPerVariant(
+    parent: InternalNode,
+    child: InternalNode
+  ): Array<{ variantName: string; left: string; top: string }> {
+    if (!child.mergedNodes?.length || !parent.mergedNodes?.length) return [];
+
+    const result: Array<{ variantName: string; left: string; top: string }> = [];
+
+    for (const childMerged of child.mergedNodes) {
+      const childVariant = childMerged.variantName;
+      if (!childVariant) continue;
+
+      const { node: childOriginal } = this.dataManager.getById(childMerged.id);
+      if (!childOriginal) continue;
+      const childBounds = (childOriginal as any).absoluteBoundingBox as
+        | { x: number; y: number } | undefined;
+      if (!childBounds) continue;
+
+      // parent에서 같은 variant의 mergedNode 찾기
+      const parentSameVariant = parent.mergedNodes.find(
+        (m) => m.variantName === childVariant
+      );
+      if (!parentSameVariant) continue;
+
+      const { node: parentOriginal } = this.dataManager.getById(parentSameVariant.id);
+      if (!parentOriginal) continue;
+      const parentBounds = (parentOriginal as any).absoluteBoundingBox as
+        | { x: number; y: number } | undefined;
+      if (!parentBounds) continue;
+
+      const x = Math.round(childBounds.x - parentBounds.x);
+      const y = Math.round(childBounds.y - parentBounds.y);
+
+      result.push({
+        variantName: childVariant,
+        left: `${x}px`,
+        top: `${y}px`,
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * position 스타일 계산 (left, top) — 단일 variant용 fallback
    */
   private calculatePositionStyles(
     parent: InternalNode,
     child: InternalNode
   ): Record<string, string | number> | null {
-    // 같은 variant의 원본 bounds로 정확한 상대 좌표 계산 시도
     const relPos = this.getRelativePositionFromVariant(parent, child);
     if (relPos) {
       return {
@@ -344,21 +458,14 @@ export class StyleProcessor {
       };
     }
 
-    // fallback: node.bounds 직접 사용
     const parentBounds = parent.bounds;
     const childBounds = child.bounds;
-
-    if (!parentBounds || !childBounds) {
-      return null;
-    }
-
-    const left = Math.round(childBounds.x - parentBounds.x);
-    const top = Math.round(childBounds.y - parentBounds.y);
+    if (!parentBounds || !childBounds) return null;
 
     return {
       position: "absolute",
-      left: `${left}px`,
-      top: `${top}px`,
+      left: `${Math.round(childBounds.x - parentBounds.x)}px`,
+      top: `${Math.round(childBounds.y - parentBounds.y)}px`,
     };
   }
 

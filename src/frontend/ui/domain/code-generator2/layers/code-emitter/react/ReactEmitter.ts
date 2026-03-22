@@ -241,17 +241,54 @@ export class ReactEmitter implements ICodeEmitter {
     styles: string;
     jsx: string;
   }): Promise<string> {
+    // JSX에서 사용되지 않는 스타일 변수 선언 제거
+    const styles = this.filterUnusedStyles(sections.styles, sections.jsx);
+
     const rawCode = [
       sections.imports,
       "",
       sections.propsInterface,
       "",
-      sections.styles,
+      styles,
       "",
       sections.jsx,
     ].join("\n");
 
     return await this.formatCode(rawCode);
+  }
+
+  /**
+   * JSX 코드에서 참조되지 않는 스타일 변수 선언을 제거.
+   * `const varName = css\`...\`;` 및 `const varName: Record<...> = { ... };` 형태를 감지.
+   */
+  private filterUnusedStyles(stylesCode: string, jsxCode: string): string {
+    // `const `로 시작하는 선언 단위로 분리
+    const lines = stylesCode.split("\n");
+    const declarations: Array<{ varName: string; lines: string[] }> = [];
+    let current: { varName: string; lines: string[] } | null = null;
+
+    for (const line of lines) {
+      const constMatch = line.match(/^const (\w+)/);
+      if (constMatch) {
+        if (current) declarations.push(current);
+        current = { varName: constMatch[1], lines: [line] };
+      } else if (current) {
+        current.lines.push(line);
+      } else {
+        // const 이전의 코드 (없어야 하지만 안전)
+        declarations.push({ varName: "", lines: [line] });
+      }
+    }
+    if (current) declarations.push(current);
+
+    const usedDecls = declarations.filter((decl) => {
+      if (!decl.varName) return true;
+      // 파생 변수 (varName_xxxStyles)는 base 변수의 사용 여부를 따라감
+      const baseVarName = decl.varName.replace(/_\w+Styles$/, "");
+      return jsxCode.includes(baseVarName);
+    });
+
+    return usedDecls.map((d) => d.lines.join("\n")).join("\n");
   }
 
   private createStyleStrategy(): IStyleStrategy {

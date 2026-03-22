@@ -1358,11 +1358,22 @@ ${indentStr}</${tag}>`;
         }
 
         const scale = (refNode as any).instanceScale as number | undefined;
-        const scaleStyle = scale ? ` style={{ transform: "scale(${scale.toFixed(3)})" }}` : "";
+
+        if (scale) {
+          return [
+            `${indentStr}{${varName} && (`,
+            `${indentStr}  <div ${wrapperAttrs}>`,
+            `${indentStr}    <div style={{ transform: "scale(${scale.toFixed(3)})", width: "100%", height: "100%" }}>`,
+            `${indentStr}      <${varName} />`,
+            `${indentStr}    </div>`,
+            `${indentStr}  </div>`,
+            `${indentStr})}`,
+          ].join("\n");
+        }
 
         return [
           `${indentStr}{${varName} && (`,
-          `${indentStr}  <div ${wrapperAttrs}${scaleStyle}>`,
+          `${indentStr}  <div ${wrapperAttrs}>`,
           `${indentStr}    <${varName} />`,
           `${indentStr}  </div>`,
           `${indentStr})}`,
