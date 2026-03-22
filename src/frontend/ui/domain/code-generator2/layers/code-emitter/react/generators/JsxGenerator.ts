@@ -728,11 +728,10 @@ ${indentStr})}` : jsx;
         wrapperAttrs = `${styleAttr.attributeName}=${styleAttr.valueCode}`;
       }
 
-      // INSTANCE/COMPONENT 크기가 다르면 scale 적용
-      const scale = (node as any).instanceScale as number | undefined;
-
+      // wrapper CSS가 INSTANCE 크기를 제어하고, 서브 컴포넌트는
+      // width:100%/height:100%로 채우므로 instanceScale 불필요
       return `${indentStr}<div ${wrapperAttrs}>
-${indentStr}  <${componentName}${componentAttrs}${scale ? ` style={{ transform: "scale(${scale.toFixed(3)})" }}` : ""} />
+${indentStr}  <${componentName}${componentAttrs} />
 ${indentStr}</div>`;
     }
 
@@ -1357,20 +1356,8 @@ ${indentStr}</${tag}>`;
           wrapperAttrs = `${styleAttr.attributeName}=${styleAttr.valueCode}`;
         }
 
-        const scale = (refNode as any).instanceScale as number | undefined;
-
-        if (scale) {
-          return [
-            `${indentStr}{${varName} && (`,
-            `${indentStr}  <div ${wrapperAttrs}>`,
-            `${indentStr}    <div style={{ transform: "scale(${scale.toFixed(3)})", width: "100%", height: "100%" }}>`,
-            `${indentStr}      <${varName} />`,
-            `${indentStr}    </div>`,
-            `${indentStr}  </div>`,
-            `${indentStr})}`,
-          ].join("\n");
-        }
-
+        // wrapper CSS가 INSTANCE 크기를 제어하고, 서브 컴포넌트는
+        // width:100%/height:100%로 채우므로 instanceScale 불필요
         return [
           `${indentStr}{${varName} && (`,
           `${indentStr}  <div ${wrapperAttrs}>`,
