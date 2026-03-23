@@ -83,6 +83,7 @@ layers/
 
 ### Variant Merging
 COMPONENT_SET with multiple variants (e.g., Size=Large/Small, State=Default/Hover) gets merged into a single InternalTree. Node matching uses:
+- **2-Pass + Hungarian Matching**: Pass 1 ID 확정 매칭 → Pass 2 Hungarian algorithm 전역 최적 위치 매칭 (greedy 순서 의존성 제거)
 - **3-Way Position Comparison**: 좌·가운데·우 기준점 비교 (±0.1 threshold)
 - **Auto Layout Context Matching**: 왼쪽 형제 type+size 비교로 위치 시프트 보정 (Stage 5.5)
 - **Cross-Depth Squash**: 병합 후 3-Way 독립 정규화 위치 비교로 다른 depth의 중복 노드 통합 (UpdateSquashByIou)
@@ -152,6 +153,7 @@ Use these subagents proactively when conditions are met:
 - ✅ 휴리스틱 중심 아키텍처 (14개 점수 기반 컴포넌트 매칭 + GenericHeuristic 폴백)
 - ✅ DynamicStyleDecomposer pseudo-class 네이티브 분배
 - ✅ UITreeOptimizer FD 분해 + diagnostics 수집기 주입
+- ✅ 2-Pass + Hungarian Matching (VariantMerger) — ID 확정 + Hungarian 전역 최적 매칭
 - ✅ 3-Way Position Comparison (NodeMatcher)
 - ✅ Auto Layout Context Matching — Stage 5.5 왼쪽 컨텍스트 보정 (NodeMatcher)
 - ✅ Cross-Depth Squash (UpdateSquashByIou) — 3-Way 독립 정규화 위치 비교

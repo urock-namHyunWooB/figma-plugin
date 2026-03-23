@@ -209,7 +209,10 @@ export class VariantMerger {
   }
 
   /**
-   * children 배열 병합 (재귀)
+   * children 배열 병합 (2-Pass + Hungarian)
+   *
+   * Pass 1: 확정 매칭 (같은 ID, 같은 이름+타입 유일 쌍)
+   * Pass 2: 나머지를 Hungarian algorithm으로 최적 매칭
    */
   private mergeChildren(
     childrenA: InternalNode[],
@@ -217,36 +220,176 @@ export class VariantMerger {
     propDiff: PropDiffInfo
   ): InternalNode[] {
     const merged: InternalNode[] = [...childrenA];
-    const usedIndices = new Set<number>();
+    const usedA = new Set<number>();
+    const usedB = new Set<number>();
 
-    for (const childB of childrenB) {
-      const matchIdx = merged.findIndex(
-        (childA, idx) =>
-          !usedIndices.has(idx) && this.nodeMatcher!.isSameNode(childA, childB)
-      );
+    // === Pass 1: 확정 매칭 ===
+    // 1a. 같은 ID 매칭
+    for (let bi = 0; bi < childrenB.length; bi++) {
+      if (usedB.has(bi)) continue;
+      for (let ai = 0; ai < merged.length; ai++) {
+        if (usedA.has(ai)) continue;
+        if (this.nodeMatcher!.isDefiniteMatch(merged[ai], childrenB[bi])) {
+          usedA.add(ai);
+          usedB.add(bi);
+          merged[ai] = this.mergeMatchedNodes(merged[ai], childrenB[bi], propDiff);
+          break;
+        }
+      }
+    }
 
-      if (matchIdx !== -1) {
-        // 매칭 성공 → mergedNodes 병합 + children 재귀 병합
-        usedIndices.add(matchIdx);
-        merged[matchIdx] = {
-          ...merged[matchIdx],
-          mergedNodes: [
-            ...(merged[matchIdx].mergedNodes || []),
-            ...(childB.mergedNodes || []),
-          ],
-          children: this.mergeChildren(
-            merged[matchIdx].children,
-            childB.children,
-            propDiff
-          ),
-        };
-      } else {
-        // 매칭 실패 → 새 노드로 추가
-        merged.push(childB);
+    // === Pass 2: Hungarian algorithm으로 최적 매칭 ===
+    const freeA = merged.map((_, i) => i).filter(i => !usedA.has(i));
+    const freeB = childrenB.map((_, i) => i).filter(i => !usedB.has(i));
+
+    if (freeA.length > 0 && freeB.length > 0) {
+      // 비용 행렬 구성
+      const costMatrix: number[][] = [];
+      for (const bi of freeB) {
+        const row: number[] = [];
+        for (const ai of freeA) {
+          row.push(this.nodeMatcher!.getPositionCost(merged[ai], childrenB[bi]));
+        }
+        costMatrix.push(row);
+      }
+
+      // Hungarian algorithm 실행
+      const assignment = this.hungarian(costMatrix);
+
+      for (let ri = 0; ri < assignment.length; ri++) {
+        const ci = assignment[ri];
+        if (ci === -1) continue;
+        const cost = costMatrix[ri][ci];
+        if (cost > 0.1) continue; // threshold 초과 → 매칭 거부
+
+        const ai = freeA[ci];
+        const bi = freeB[ri];
+        usedA.add(ai);
+        usedB.add(bi);
+        merged[ai] = this.mergeMatchedNodes(merged[ai], childrenB[bi], propDiff);
+      }
+    }
+
+    // 매칭되지 않은 B 노드를 끝에 추가
+    for (let bi = 0; bi < childrenB.length; bi++) {
+      if (!usedB.has(bi)) {
+        merged.push(childrenB[bi]);
       }
     }
 
     return merged;
+  }
+
+  /**
+   * 매칭된 두 노드를 병합 (mergedNodes 합침 + children 재귀)
+   */
+  private mergeMatchedNodes(
+    nodeA: InternalNode,
+    nodeB: InternalNode,
+    propDiff: PropDiffInfo
+  ): InternalNode {
+    return {
+      ...nodeA,
+      mergedNodes: [
+        ...(nodeA.mergedNodes || []),
+        ...(nodeB.mergedNodes || []),
+      ],
+      children: this.mergeChildren(
+        nodeA.children,
+        nodeB.children,
+        propDiff
+      ),
+    };
+  }
+
+  /**
+   * Hungarian algorithm (Munkres assignment)
+   * 비용 행렬(rows × cols)에서 총 비용 최소인 행→열 매핑 반환
+   * 반환: assignment[row] = col (매칭 없으면 -1)
+   */
+  private hungarian(costMatrix: number[][]): number[] {
+    const rows = costMatrix.length;
+    const cols = costMatrix[0]?.length ?? 0;
+    if (rows === 0 || cols === 0) return [];
+
+    // 정방 행렬로 패딩 (Infinity로 채움)
+    const n = Math.max(rows, cols);
+    const C: number[][] = Array.from({ length: n }, (_, i) =>
+      Array.from({ length: n }, (_, j) =>
+        i < rows && j < cols ? costMatrix[i][j] : 0
+      )
+    );
+
+    // Infinity를 큰 유한값으로 대체
+    const BIG = 1e9;
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        if (!isFinite(C[i][j])) C[i][j] = BIG;
+      }
+    }
+
+    // u[i], v[j]: 잠재력(potential)
+    const u = new Float64Array(n + 1);
+    const v = new Float64Array(n + 1);
+    // p[j]: 열 j에 할당된 행 (0-indexed, -1이면 미할당)
+    const p = new Int32Array(n + 1).fill(-1);
+    // way[j]: 최단 경로에서 열 j의 이전 열
+    const way = new Int32Array(n + 1);
+
+    for (let i = 0; i < n; i++) {
+      // 새 행 i를 할당
+      p[0] = i;
+      let j0 = 0;
+      const minv = new Float64Array(n + 1).fill(Infinity);
+      const used = new Uint8Array(n + 1);
+
+      do {
+        used[j0] = 1;
+        const i0 = p[j0];
+        let delta = Infinity;
+        let j1 = -1;
+
+        for (let j = 1; j <= n; j++) {
+          if (used[j]) continue;
+          const cur = C[i0][j - 1] - u[i0] - v[j];
+          if (cur < minv[j]) {
+            minv[j] = cur;
+            way[j] = j0;
+          }
+          if (minv[j] < delta) {
+            delta = minv[j];
+            j1 = j;
+          }
+        }
+
+        for (let j = 0; j <= n; j++) {
+          if (used[j]) {
+            u[p[j]] += delta;
+            v[j] -= delta;
+          } else {
+            minv[j] -= delta;
+          }
+        }
+
+        j0 = j1;
+      } while (p[j0] !== -1);
+
+      // 경로 역추적으로 할당 갱신
+      do {
+        const j1 = way[j0];
+        p[j0] = p[j1];
+        j0 = j1;
+      } while (j0 !== 0);
+    }
+
+    // 결과: 원래 행(rows) × 원래 열(cols) 범위만 반환
+    const result = new Array<number>(rows).fill(-1);
+    for (let j = 1; j <= n; j++) {
+      if (p[j] < rows && j - 1 < cols) {
+        result[p[j]] = j - 1;
+      }
+    }
+    return result;
   }
 
   // ===========================================================================

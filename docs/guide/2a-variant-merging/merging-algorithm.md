@@ -364,46 +364,61 @@ function mergeTreesInOrder(graph, mergeOrder): InternalTree {
 }
 ```
 
-### 5단계: Children 병합 (재귀)
+### 5단계: Children 병합 (2-Pass + Hungarian)
+
+두 트리의 같은 depth children을 매칭할 때, 2-Pass 전략으로 확정 매칭과 최적 매칭을 분리합니다.
+
+#### Pass 1: 확정 매칭 (ID 일치)
+
+같은 ID를 가진 노드는 무조건 같은 노드이므로 위치 비교 없이 즉시 매칭합니다.
 
 ```typescript
-function mergeChildren(
-  childrenA: InternalNode[],
-  childrenB: InternalNode[]
-): InternalNode[] {
-  const merged = [...childrenA];
-  const usedIndices = new Set();
-
-  for (const childB of childrenB) {
-    // childrenA에서 매칭되는 노드 찾기
-    const matchIdx = merged.findIndex((childA, idx) =>
-      !usedIndices.has(idx) && isSameNode(childA, childB)
-    );
-
-    if (matchIdx !== -1) {
-      // 매칭 성공 → mergedNodes 병합
-      merged[matchIdx] = {
-        ...merged[matchIdx],
-        mergedNodes: [
-          ...merged[matchIdx].mergedNodes,
-          ...childB.mergedNodes
-        ],
-        // 재귀적으로 children도 병합
-        children: mergeChildren(
-          merged[matchIdx].children,
-          childB.children
-        )
-      };
-      usedIndices.add(matchIdx);
-    } else {
-      // 매칭 실패 → 새 노드로 추가
-      merged.push(childB);
-    }
-  }
-
-  return merged;
-}
+// Pass 1: ID가 같으면 확정 매칭
+for (childB of childrenB)
+  for (childA of merged)
+    if (isDefiniteMatch(childA, childB))  // 같은 ID
+      merge(childA, childB)
+      break
 ```
+
+#### Pass 2: Hungarian algorithm (최적 매칭)
+
+Pass 1에서 매칭되지 않은 나머지 노드들은 **비용 행렬 + Hungarian algorithm**으로 전역 최적 매칭을 수행합니다.
+
+```typescript
+// Pass 2: 남은 노드의 모든 쌍에 대해 위치 비용 계산
+costMatrix[i][j] = getPositionCost(freeA[j], freeB[i])
+// 타입 비호환이면 Infinity, 위치 차이를 0~1 범위로 반환
+
+// Hungarian algorithm으로 총 비용 최소인 매칭 산출
+assignment = hungarian(costMatrix)
+
+// 비용이 threshold(0.1) 이하인 쌍만 매칭 확정
+for (row, col) in assignment:
+  if costMatrix[row][col] <= 0.1:
+    merge(freeA[col], freeB[row])
+  else:
+    // threshold 초과 → 매칭 거부, 새 노드로 추가
+```
+
+매칭되지 않은 B 노드는 배열 끝에 새 노드로 추가됩니다 (나중에 `visibleCondition` 부여).
+
+#### 왜 greedy가 아닌 Hungarian인가
+
+기존 greedy 방식은 B를 순서대로 순회하며 첫 번째 매칭을 채택했습니다. 이 방식은 **순회 순서에 따라 결과가 달라지는** 문제가 있습니다.
+
+```
+예: A=[icon1, icon2], B=[iconX, iconY]
+
+Greedy: B[0]=iconX가 A[0]=icon1과 먼저 매칭 → 고정
+        B[1]=iconY는 A[1]=icon2와 매칭
+
+Hungarian: 4개 쌍의 위치 비용을 모두 계산
+           총합이 최소인 조합 선택
+           → iconX↔icon2, iconY↔icon1이 더 가까우면 그쪽으로 매칭
+```
+
+Hungarian은 O(n³)이지만, children 수가 보통 20개 이내이므로 성능 문제 없습니다.
 
 ---
 

@@ -121,6 +121,154 @@ export class NodeMatcher {
   }
 
   /**
+   * Pass 1용: 확정 매칭 (ID 일치 또는 같은 이름+타입 유일 쌍)
+   * 위치 비교 없이 결정적으로 매칭 가능한 쌍을 판별
+   */
+  public isDefiniteMatch(nodeA: InternalNode, nodeB: InternalNode): boolean {
+    // 타입 호환성 체크
+    if (nodeA.type !== nodeB.type) {
+      const bothShapes =
+        NodeMatcher.SHAPE_TYPES.has(nodeA.type) &&
+        NodeMatcher.SHAPE_TYPES.has(nodeB.type);
+      const bothContainers =
+        NodeMatcher.CONTAINER_TYPES.has(nodeA.type) &&
+        NodeMatcher.CONTAINER_TYPES.has(nodeB.type);
+      if (!bothShapes && !bothContainers) return false;
+    }
+
+    // 같은 ID면 확정 매칭
+    if (nodeA.id === nodeB.id) return true;
+
+    return false;
+  }
+
+  /**
+   * Pass 2용: 위치 기반 매칭 비용 반환 (0~1 범위, 낮을수록 유사)
+   * 매칭 불가하면 Infinity 반환
+   */
+  public getPositionCost(nodeA: InternalNode, nodeB: InternalNode): number {
+    // 타입 호환성 체크
+    if (nodeA.type !== nodeB.type) {
+      const bothShapes =
+        NodeMatcher.SHAPE_TYPES.has(nodeA.type) &&
+        NodeMatcher.SHAPE_TYPES.has(nodeB.type);
+      const bothContainers =
+        NodeMatcher.CONTAINER_TYPES.has(nodeA.type) &&
+        NodeMatcher.CONTAINER_TYPES.has(nodeB.type);
+      if (!bothShapes && !bothContainers) return Infinity;
+    }
+
+    // INSTANCE componentSetId 비호환 체크
+    if (nodeA.type === "INSTANCE" && nodeB.type === "INSTANCE") {
+      const compIdA = (nodeA as any).componentId;
+      const compIdB = (nodeB as any).componentId;
+      if (compIdA && compIdB && compIdA !== compIdB) {
+        const setIdA = this.getComponentSetId(compIdA);
+        const setIdB = this.getComponentSetId(compIdB);
+        if (!(setIdA && setIdB && setIdA === setIdB)) return Infinity;
+      }
+    }
+
+    // 루트끼리
+    if (!nodeA.parent && !nodeB.parent) return 0;
+
+    // 위치 비용 계산
+    const shift = this.computeAutoLayoutShift(nodeA, nodeB);
+    const posCost = this.calcPositionCost(nodeA, nodeB, shift ?? undefined);
+    if (posCost <= 0.1) {
+      // Shape/Container 크기 검증
+      if (NodeMatcher.SHAPE_TYPES.has(nodeA.type) && NodeMatcher.SHAPE_TYPES.has(nodeB.type)) {
+        if (!this.isSimilarSize(nodeA, nodeB)) return Infinity;
+      }
+      if (nodeA.type !== nodeB.type &&
+          NodeMatcher.CONTAINER_TYPES.has(nodeA.type) &&
+          NodeMatcher.CONTAINER_TYPES.has(nodeB.type)) {
+        if (!this.isSimilarSize(nodeA, nodeB)) return Infinity;
+      }
+      if (shift && !this.isSimilarSize(nodeA, nodeB)) return Infinity;
+      return posCost;
+    }
+
+    // TEXT 특별 매칭
+    if (this.isSameTextNode(nodeA, nodeB)) return 0.05;
+
+    // INSTANCE 특별 매칭
+    if (this.isSameInstanceNode(nodeA, nodeB)) return 0.05;
+
+    return Infinity;
+  }
+
+  /**
+   * 3-Way 위치 비용 계산 (max(minDiffX, minDiffY) 반환)
+   */
+  private calcPositionCost(
+    nodeA: InternalNode,
+    nodeB: InternalNode,
+    shift?: { axis: "x" | "y"; shiftA: number; shiftB: number }
+  ): number {
+    const boxA = this.getContentBoxInfo(nodeA);
+    const boxB = this.getContentBoxInfo(nodeB);
+
+    if (boxA && boxB) {
+      let offsetAx = boxA.nodeX - boxA.contentX;
+      let offsetBx = boxB.nodeX - boxB.contentX;
+      if (shift?.axis === "x") {
+        offsetAx -= shift.shiftA;
+        offsetBx -= shift.shiftB;
+      }
+      const avgW = (boxA.contentWidth + boxB.contentWidth) / 2;
+      const leftX = avgW > 0 ? Math.abs(offsetAx - offsetBx) / avgW : Infinity;
+      const centerAx = offsetAx + boxA.nodeWidth / 2;
+      const centerBx = offsetBx + boxB.nodeWidth / 2;
+      const centerX = avgW > 0 ? Math.abs(centerAx - centerBx) / avgW : Infinity;
+      const rightAx = boxA.contentWidth - (offsetAx + boxA.nodeWidth);
+      const rightBx = boxB.contentWidth - (offsetBx + boxB.nodeWidth);
+      const rightX = avgW > 0 ? Math.abs(rightAx - rightBx) / avgW : Infinity;
+      const minDiffX = Math.min(leftX, centerX, rightX);
+
+      let offsetAy = boxA.nodeY - boxA.contentY;
+      let offsetBy = boxB.nodeY - boxB.contentY;
+      if (shift?.axis === "y") {
+        offsetAy -= shift.shiftA;
+        offsetBy -= shift.shiftB;
+      }
+      const avgH = (boxA.contentHeight + boxB.contentHeight) / 2;
+      const topY = avgH > 0 ? Math.abs(offsetAy - offsetBy) / avgH : Infinity;
+      const midAy = offsetAy + boxA.nodeHeight / 2;
+      const midBy = offsetBy + boxB.nodeHeight / 2;
+      const middleY = avgH > 0 ? Math.abs(midAy - midBy) / avgH : Infinity;
+      const botAy = boxA.contentHeight - (offsetAy + boxA.nodeHeight);
+      const botBy = boxB.contentHeight - (offsetBy + boxB.nodeHeight);
+      const bottomY = avgH > 0 ? Math.abs(botAy - botBy) / avgH : Infinity;
+      const minDiffY = Math.min(topY, middleY, bottomY);
+
+      return Math.max(minDiffX, minDiffY);
+    }
+
+    // Fallback
+    if (nodeA.bounds && nodeB.bounds) {
+      const rootBoundsA = this.getVariantRootBounds(nodeA);
+      const rootBoundsB = this.getVariantRootBounds(nodeB);
+      if (rootBoundsA && rootBoundsB) {
+        const heightRatio = Math.max(rootBoundsA.height, rootBoundsB.height) /
+          Math.min(rootBoundsA.height, rootBoundsB.height);
+        if (heightRatio >= 2) {
+          const relAx = nodeA.bounds.x - rootBoundsA.x;
+          const relAy = nodeA.bounds.y - rootBoundsA.y;
+          const relBx = nodeB.bounds.x - rootBoundsB.x;
+          const relBy = nodeB.bounds.y - rootBoundsB.y;
+          if (Math.abs(relAx - relBx) <= 10 && Math.abs(relAy - relBy) <= 10) {
+            const maxDiff = Math.max(Math.abs(relAx - relBx), Math.abs(relAy - relBy));
+            return maxDiff / 10 * 0.1; // 0~0.1 범위로 정규화
+          }
+        }
+      }
+    }
+
+    return Infinity;
+  }
+
+  /**
    * 정규화된 위치가 같은지 확인 (±0.1 오차 허용)
    *
    * 3가지 비교를 동시에 수행하여 최소 오차로 판단:

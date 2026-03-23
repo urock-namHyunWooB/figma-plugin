@@ -251,7 +251,7 @@ Phase 1: 구조 확정 (스타일 접근 없음)
 ═══════════════════════════════════════════════════════
     │
     ├── 1. VariantMerger.merge()
-    │      COMPONENT_SET variants → InternalTree (3-Way Position Comparison 기반 노드 매칭)
+    │      COMPONENT_SET variants → InternalTree (2-Pass + Hungarian 최적 매칭)
     │
     ├── 2. PropsExtractor.extract()
     │      componentPropertyDefinitions → PropDefinition[]
@@ -304,7 +304,7 @@ Phase 2: 스타일 + 후처리 (구조 잠금)
 
 | Processor | 역할 |
 |-----------|------|
-| **VariantMerger** | 3-Way Position Comparison 기반 노드 매칭으로 COMPONENT_SET variants 병합 |
+| **VariantMerger** | 2-Pass(ID 확정 + Hungarian 최적) 매칭으로 COMPONENT_SET variants 병합 |
 | **VariantGraphBuilder** | variant 병합 순서 결정 (의존성 그래프) |
 | **NodeMatcher** | 위치/ID/타입 기반 노드 매칭 |
 | **UpdateSquashByIou** | 병합 후 cross-depth 잔여 중복 노드 합침 (3-Way 독립 정규화 위치 비교 + sibling 검증) |
