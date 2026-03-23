@@ -37,7 +37,7 @@ describe("SegmentedControl 컴포넌트 코드 생성", () => {
     expect(propNames).toContain("size");
     expect(propNames).toContain("options");
     expect(propNames).toContain("selectedValue");
-    expect(propNames).toContain("onChangeValue");
+    expect(propNames).toContain("onValueChange");
 
     // dead prop이 없어야 함
     expect(propNames).not.toContain("labelText");
@@ -55,7 +55,7 @@ describe("SegmentedControl 컴포넌트 코드 생성", () => {
   });
 
   test("onChange는 함수 타입이어야 한다", () => {
-    expect(code).toMatch(/onChangeValue\?\s*:\s*\(/);
+    expect(code).toMatch(/onValueChange\?\s*:\s*\(/);
   });
 
   test("options.map()으로 루프 렌더링해야 한다", () => {
@@ -68,7 +68,7 @@ describe("SegmentedControl 컴포넌트 코드 생성", () => {
   });
 
   test("onClick에서 onChange를 호출해야 한다", () => {
-    expect(code).toMatch(/onClick.*onChangeValue/s);
+    expect(code).toMatch(/onClick.*onValueChange/s);
   });
 
   test("size에 따른 동적 스타일이 보존되어야 한다", () => {
@@ -80,7 +80,7 @@ describe("SegmentedControl 컴포넌트 코드 생성", () => {
 
   test("onClick에서 선택된 option의 value가 onChange로 전달되어야 한다", () => {
     // onChange?.(option.value) 또는 onChange?.(item.value) 형태
-    expect(code).toMatch(/onChangeValue\?\.\(\s*\w+\.value\s*\)/);
+    expect(code).toMatch(/onValueChange\?\.\(\s*\w+\.value\s*\)/);
   });
 
   test("label의 원본 스타일이 보존되어야 한다", () => {

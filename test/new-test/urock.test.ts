@@ -665,7 +665,7 @@ describe("Radio", () => {
 
   it("onChange?: (checked: boolean) => void prop이 있어야 한다", async () => {
     const result = await compileFixture();
-    expect(result).toMatch(/onChangeValue\?/);
+    expect(result).toMatch(/onCheckedChange\?/);
   });
 
   it("disable?: boolean prop이 있어야 한다", async () => {
@@ -676,7 +676,7 @@ describe("Radio", () => {
 
   it("onClick={() => onChange?.(!checked)} 핸들러가 있어야 한다", async () => {
     const result = await compileFixture();
-    expect(result).toMatch(/onClick=\{.*onChangeValue.*checked/);
+    expect(result).toMatch(/onClick=\{.*onCheckedChange.*checked/);
   });
 
   it("disabled={disable} 속성이 있어야 한다", async () => {

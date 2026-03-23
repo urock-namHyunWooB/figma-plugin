@@ -9,12 +9,13 @@ import type { UITree, PropDefinition } from "../../../../types/types";
 /**
  * 컴포넌트 타입 → 네이티브 HTML 속성 타입 매핑
  *
- * 루트 요소가 해당 HTML 태그로 직접 렌더링되는 경우만 포함.
- * input은 루트가 <div>(wrapper)이고 내부에 <input>이 있으므로 제외 —
- * restProps가 <div>에 spread되어 네이티브 input 속성이 무효화됨.
+ * restProps가 해당 네이티브 요소로 전달되는 컴포넌트만 포함.
+ * - button/link: 루트가 네이티브 태그 → restProps 직접 전달
+ * - input: 루트는 <div> wrapper이지만 restProps는 내부 <input>에 전달
  */
 const NATIVE_ATTRS_TYPE: Record<string, string> = {
   button: "React.ButtonHTMLAttributes<HTMLButtonElement>",
+  input: "React.InputHTMLAttributes<HTMLInputElement>",
   link: "React.AnchorHTMLAttributes<HTMLAnchorElement>",
 };
 

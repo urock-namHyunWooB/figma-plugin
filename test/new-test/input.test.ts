@@ -31,7 +31,10 @@ describe("Input 컴포넌트 코드 생성", () => {
     expect(propNames).toContain("size");
     expect(propNames).toContain("placeholder");
     expect(propNames).toContain("value");
-    expect(propNames).toContain("onChangeValue");
+
+    // onChange는 OwnProps에 없어야 함 (native InputHTMLAttributes에서 상속)
+    expect(propNames).not.toContain("onChange");
+    expect(propNames).not.toContain("onChangeValue");
 
     // boolean으로 생성되면 안 됨
     expect(interfaceBlock).not.toMatch(/customPlaceholder\??\s*:\s*boolean/);
@@ -45,9 +48,10 @@ describe("Input 컴포넌트 코드 생성", () => {
     expect(code).toMatch(/value\??\s*:\s*string/);
   });
 
-  test("onChange는 함수 타입이어야 한다", () => {
-    // (value: string) => void 또는 유사한 함수 시그니처
-    expect(code).toMatch(/onChangeValue\??:\s*\(/);
+  test("onChange는 native restProps로 전달되어야 한다", () => {
+    // OwnProps에 custom onChange가 없고 restProps spread로 전달
+    expect(code).toMatch(/\{\.\.\.restProps\}/);
+    expect(code).not.toMatch(/onChangeValue\??:/);
   });
 
   test("size prop에 의한 동적 스타일이 생성되어야 한다", () => {

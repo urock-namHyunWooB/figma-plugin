@@ -109,10 +109,10 @@ describe("Searchfieldsearchfield 컴파일 테스트", () => {
       expect(code).toMatch(/\{cursor\s*&&/);
     });
 
-    it("onChangeValue prop이 string 콜백으로 정의되어야 한다", async () => {
+    it("onValueChange prop이 string 콜백으로 정의되어야 한다", async () => {
       const code = await getCompiledCode();
       // 검색어(string)를 받는 콜백이어야 함 — boolean 토글이 아님
-      expect(code).toMatch(/onChangeValue\?:\s*\(.*string.*\)\s*=>/);
+      expect(code).toMatch(/onValueChange\?:\s*\(.*string.*\)\s*=>/);
     });
 
     it("x 버튼(Buttoniconnormal)에 onClick 핸들러가 있어야 한다", async () => {

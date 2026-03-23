@@ -20,6 +20,8 @@ interface JsxGeneratorOptions {
   debug?: boolean;
   /** nodeId → styleVariableName 매핑 (StylesGenerator에서 생성) */
   nodeStyleMap?: Map<string, string>;
+  /** input 타입 루트의 자식 <input>에 restProps를 전달하기 위한 내부 플래그 */
+  _restPropsOnInput?: boolean;
 }
 
 /** 같은 prop의 eq 조건으로 분기되는 component 노드 그룹 */
@@ -586,12 +588,15 @@ ${indentStr})}` : jsx;
         : "text";
 
     // bindings.attrs에 onChange가 없으면 fallback 추가
+    // input 타입(restProps 전달)이면 native onChange가 restProps에 포함되므로 생략
     const hasOnChange = node.bindings?.attrs?.["onChange"];
-    const onChangeFallback = hasOnChange
+    const onChangeFallback = hasOnChange || options._restPropsOnInput
       ? ""
-      : `onChange={(e) => onChangeValue?.(e.target.value)}`;
+      : `onChange={(e) => onValueChange?.(e.target.value)}`;
 
-    const inputAttrs = [attrs, `placeholder={${placeholderProp}}`, onChangeFallback]
+    const restPropsSpread = options._restPropsOnInput ? "{...restProps}" : "";
+
+    const inputAttrs = [attrs, `placeholder={${placeholderProp}}`, onChangeFallback, restPropsSpread]
       .filter(Boolean)
       .join(" ");
 
@@ -816,9 +821,13 @@ ${indentStr}</div>`;
     const tag = this.getHtmlTag(node);
     let attrs = this.generateAttributes(node, styleStrategy, options);
 
-    // 루트 요소에 restProps 전파
-    if (isRoot) {
+    // 루트 요소에 restProps 전파 (input 타입은 내부 <input>에 전달하므로 스킵)
+    if (isRoot && node.type !== "input") {
       attrs += " {...restProps}";
+    }
+    // input 타입 루트: children에 restProps 전달 플래그 설정
+    if (isRoot && node.type === "input") {
+      options = { ...options, _restPropsOnInput: true };
     }
 
     // Void elements는 항상 self-closing (자식 가질 수 없음)

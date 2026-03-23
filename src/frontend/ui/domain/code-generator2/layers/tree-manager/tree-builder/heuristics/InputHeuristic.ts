@@ -370,15 +370,7 @@ export class InputHeuristic implements IHeuristic {
         nativeAttribute: true,
       });
     }
-    if (!ctx.props.some((p) => p.name === "onChangeValue")) {
-      ctx.props.push({
-        type: "function",
-        name: "onChangeValue",
-        sourceKey: "",
-        required: false,
-        functionSignature: "(value: string) => void",
-      });
-    }
+    // onChange는 native <input>에서 restProps로 전달되므로 별도 prop 불필요
 
     // 5. placeholder 노드에 bindings 설정 → JsxGenerator가 <input> 태그로 렌더링
     if (!placeholderNode.bindings) {

@@ -167,7 +167,7 @@ export class SwitchHeuristic implements IHeuristic {
    * onChange prop 추가
    */
   private addOnChangeProp(ctx: HeuristicContext): string {
-    const name = "onChangeValue";
+    const name = "onCheckedChange";
     if (!ctx.props.some((p) => p.name === name)) {
       ctx.props.push({
         type: "function",

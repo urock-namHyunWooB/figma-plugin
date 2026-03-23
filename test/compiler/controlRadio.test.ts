@@ -31,9 +31,9 @@ describe("Controlradio 컴파일 테스트", () => {
       expect(code).toMatch(/checked\?\s*:\s*boolean/);
     });
 
-    it("onChangeValue?: (checked: boolean) => void prop이 있어야 한다", async () => {
+    it("onCheckedChange?: (checked: boolean) => void prop이 있어야 한다", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/onChangeValue\?\s*:\s*\(checked:\s*boolean\)\s*=>\s*void/);
+      expect(code).toMatch(/onCheckedChange\?\s*:\s*\(checked:\s*boolean\)\s*=>\s*void/);
     });
 
     it("disable?: boolean prop이 있어야 한다", async () => {
@@ -88,9 +88,9 @@ describe("Controlradio 컴파일 테스트", () => {
       expect(code).toMatch(/return \(\s*<button/);
     });
 
-    it("onClick={() => onChangeValue?.(!checked)} 핸들러가 있어야 한다", async () => {
+    it("onClick={() => onCheckedChange?.(!checked)} 핸들러가 있어야 한다", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/onClick=\{.*onChangeValue\?\.\(!checked\).*\}/);
+      expect(code).toMatch(/onClick=\{.*onCheckedChange\?\.\(!checked\).*\}/);
     });
 
     it("disabled={disable} 속성이 있어야 한다", async () => {

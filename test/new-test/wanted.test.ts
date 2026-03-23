@@ -46,15 +46,15 @@ describe("Switch/Switch", () => {
   it("props에 onChange가 있어야 한다", async () => {
     const result = await compileFixture();
 
-    // onChangeValue prop이 있어야 함
-    expect(result).toMatch(/onChangeValue\?:/);
+    // onCheckedChange prop이 있어야 함
+    expect(result).toMatch(/onCheckedChange\?:/);
   });
 
   it("onChange는 boolean 파라미터를 받아야 한다 (현재 switch 상태)", async () => {
     const result = await compileFixture();
 
-    // onChangeValue?: (active: boolean) => void
-    expect(result).toMatch(/onChangeValue\?:\s*\(\s*active\s*:\s*boolean\s*\)\s*=>\s*void/);
+    // onCheckedChange?: (active: boolean) => void
+    expect(result).toMatch(/onCheckedChange\?:\s*\(\s*active\s*:\s*boolean\s*\)\s*=>\s*void/);
   });
 
   it("Switch 클릭 시 onChange가 호출되어야 한다", async () => {
@@ -63,15 +63,15 @@ describe("Switch/Switch", () => {
     // onClick 핸들러가 있어야 함
     expect(result).toMatch(/onClick/);
 
-    // onChangeValue 호출 (onChangeValue?.(...) 형태)
-    expect(result).toMatch(/onChangeValue\?\.\(/);
+    // onCheckedChange 호출 (onCheckedChange?.(...) 형태)
+    expect(result).toMatch(/onCheckedChange\?\.\(/);
   });
 
   it("active false에서 클릭하면 onChange(true)를 호출해야 한다", async () => {
     const result = await compileFixture();
 
-    // onChangeValue?.(!active) 또는 onChangeValue?.(true) 패턴
-    expect(result).toMatch(/onChangeValue\?\.\(\s*!active\s*\)|onChangeValue\?\.\(\s*true\s*\)/);
+    // onCheckedChange?.(!active) 또는 onCheckedChange?.(true) 패턴
+    expect(result).toMatch(/onCheckedChange\?\.\(\s*!active\s*\)|onCheckedChange\?\.\(\s*true\s*\)/);
   });
 });
 
@@ -98,7 +98,7 @@ describe("Segmented Control/Segmented Control", () => {
     // 필수 props
     expect(result).toMatch(/variant\?:/);
     expect(result).toMatch(/size\?:/);
-    expect(result).toMatch(/onChangeValue\?:/);
+    expect(result).toMatch(/onValueChange\?:/);
     expect(result).toMatch(/options\?:/);
 
     // 다른 불필요한 props가 없어야 함 (tab2, tab3 등)
@@ -161,8 +161,8 @@ describe("Segmented Control/Segmented Control", () => {
   it("onChange는 value 파라미터를 받아야 한다 (label 아님)", async () => {
     const result = await compileFixture();
 
-    // onChangeValue?: (value: string) => void
-    expect(result).toMatch(/onChangeValue\?:\s*\(\s*value\s*:\s*string\s*\)\s*=>\s*void/);
+    // onValueChange?: (value: string) => void
+    expect(result).toMatch(/onValueChange\?:\s*\(\s*value\s*:\s*string\s*\)\s*=>\s*void/);
   });
 
   it("options를 map으로 렌더링해야 한다", async () => {
@@ -178,8 +178,8 @@ describe("Segmented Control/Segmented Control", () => {
     // onClick 핸들러
     expect(result).toMatch(/onClick/);
 
-    // onChangeValue 호출 (onChangeValue?. 형태)
-    expect(result).toMatch(/onChangeValue\?\.\(/);
+    // onValueChange 호출 (onValueChange?. 형태)
+    expect(result).toMatch(/onValueChange\?\.\(/);
   });
 
   it("icon은 nullable이므로 조건부 렌더링되어야 한다", async () => {
@@ -353,9 +353,9 @@ describe("Segmented Control/Segmented Control", () => {
   it("onChange는 option.value를 전달해야 한다 (label 아님)", async () => {
     const result = await compileFixture();
 
-    // onChangeValue?.(option.value) 또는 onChangeValue(option.value)
-    // onChangeValue?.(option.label)은 안됨
-    const usesValueNotLabel = /onChangeValue\?\.\(\s*option\.value\s*\)/.test(result);
+    // onValueChange?.(option.value) 또는 onValueChange(option.value)
+    // onValueChange?.(option.label)은 안됨
+    const usesValueNotLabel = /onValueChange\?\.\(\s*option\.value\s*\)/.test(result);
 
     expect(usesValueNotLabel).toBe(true);
   });

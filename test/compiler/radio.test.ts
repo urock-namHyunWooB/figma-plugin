@@ -29,7 +29,7 @@ describe("Radio 컴포넌트 코드 생성", () => {
 
     // 정확히 이 props만 존재해야 한다
     expect(propNames).toEqual(
-      expect.arrayContaining(["checked", "onChangeValue", "disable", "text"])
+      expect.arrayContaining(["checked", "onCheckedChange", "disable", "text"])
     );
     expect(propNames).toHaveLength(4);
 
