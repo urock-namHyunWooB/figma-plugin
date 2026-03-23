@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeAll } from "vitest";
 import FigmaCodeGenerator from "@code-generator2";
 import type { FigmaNodeData } from "@code-generator2";
+import { typeCheckCode } from "@frontend/ui/services/typeChecker";
 import inputFixture from "../fixtures/any/Input.json";
 
 describe("Input 컴포넌트 코드 생성", () => {
@@ -71,5 +72,13 @@ describe("Input 컴포넌트 코드 생성", () => {
     expect(code).toMatch(/color:\s*var\(--Dark-gray-2,\s*#424242\)/);
     // placeholder 텍스트: ::placeholder pseudo
     expect(code).toMatch(/&::placeholder\s*\{[^}]*color:\s*var\(--Light,\s*#757575\)/);
+  });
+
+  test("타입 체커에서 implicit any 에러가 없어야 한다", () => {
+    const result = typeCheckCode(code, "Input.tsx");
+    const implicitAnyErrors = result.errors.filter(e =>
+      e.message.includes("implicitly has an 'any' type")
+    );
+    expect(implicitAnyErrors).toEqual([]);
   });
 });
