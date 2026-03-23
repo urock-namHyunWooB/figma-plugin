@@ -31,9 +31,9 @@ describe("Controlradio 컴파일 테스트", () => {
       expect(code).toMatch(/checked\?\s*:\s*boolean/);
     });
 
-    it("onChange?: (checked: boolean) => void prop이 있어야 한다", async () => {
+    it("onChangeValue?: (checked: boolean) => void prop이 있어야 한다", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/onChange\?\s*:\s*\(checked:\s*boolean\)\s*=>\s*void/);
+      expect(code).toMatch(/onChangeValue\?\s*:\s*\(checked:\s*boolean\)\s*=>\s*void/);
     });
 
     it("disable?: boolean prop이 있어야 한다", async () => {
@@ -43,21 +43,21 @@ describe("Controlradio 컴파일 테스트", () => {
 
     it("state prop이 외부 인터페이스에 없어야 한다", async () => {
       const code = await getCompiledCode();
-      const interfaceMatch = code.match(/interface ControlradioProps \{[^}]+\}/s);
+      const interfaceMatch = code.match(/interface ControlradioOwnProps \{[^}]+\}/s) || code.match(/interface ControlradioProps \{[^}]+\}/s);
       expect(interfaceMatch).not.toBeNull();
       expect(interfaceMatch![0]).not.toMatch(/state\s*\?/);
     });
 
     it("interactionNormal slot이 외부에 없어야 한다", async () => {
       const code = await getCompiledCode();
-      const interfaceMatch = code.match(/interface ControlradioProps \{[^}]+\}/s);
+      const interfaceMatch = code.match(/interface ControlradioOwnProps \{[^}]+\}/s) || code.match(/interface ControlradioProps \{[^}]+\}/s);
       expect(interfaceMatch).not.toBeNull();
       expect(interfaceMatch![0]).not.toMatch(/interactionNormal/);
     });
 
     it("iconNormalDot slot이 외부에 없어야 한다", async () => {
       const code = await getCompiledCode();
-      const interfaceMatch = code.match(/interface ControlradioProps \{[^}]+\}/s);
+      const interfaceMatch = code.match(/interface ControlradioOwnProps \{[^}]+\}/s) || code.match(/interface ControlradioProps \{[^}]+\}/s);
       expect(interfaceMatch).not.toBeNull();
       expect(interfaceMatch![0]).not.toMatch(/iconNormalDot/);
     });
@@ -88,9 +88,9 @@ describe("Controlradio 컴파일 테스트", () => {
       expect(code).toMatch(/return \(\s*<button/);
     });
 
-    it("onClick={() => onChange?.(!checked)} 핸들러가 있어야 한다", async () => {
+    it("onClick={() => onChangeValue?.(!checked)} 핸들러가 있어야 한다", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/onClick=\{.*onChange\?\.\(!checked\).*\}/);
+      expect(code).toMatch(/onClick=\{.*onChangeValue\?\.\(!checked\).*\}/);
     });
 
     it("disabled={disable} 속성이 있어야 한다", async () => {
@@ -107,7 +107,7 @@ describe("Controlradio 컴파일 테스트", () => {
   describe("코드 품질", () => {
     it("tight prop이 interface에 없어야 한다 (JSX 미사용 dead prop)", async () => {
       const code = await getCompiledCode();
-      const interfaceMatch = code.match(/interface ControlradioProps \{[^}]+\}/s);
+      const interfaceMatch = code.match(/interface ControlradioOwnProps \{[^}]+\}/s) || code.match(/interface ControlradioProps \{[^}]+\}/s);
       expect(interfaceMatch).not.toBeNull();
       expect(interfaceMatch![0]).not.toMatch(/tight\s*\?/);
     });

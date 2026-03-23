@@ -17,9 +17,10 @@ describe("Radio 컴포넌트 코드 생성", () => {
   });
 
   test("RadioProps에 정확한 props만 생성되어야 한다", () => {
-    // 인터페이스 블록 추출
-    const interfaceBlock = code.match(
-      /export interface RadioProps \{([\s\S]*?)\}/
+    // 인터페이스 블록 추출 (OwnProps 패턴 또는 기존 패턴)
+    const interfaceBlock = (
+      code.match(/interface RadioOwnProps \{([\s\S]*?)\}/) ||
+      code.match(/export interface RadioProps \{([\s\S]*?)\}/)
     )?.[1];
     expect(interfaceBlock).toBeDefined();
 
@@ -28,7 +29,7 @@ describe("Radio 컴포넌트 코드 생성", () => {
 
     // 정확히 이 props만 존재해야 한다
     expect(propNames).toEqual(
-      expect.arrayContaining(["checked", "onChange", "disable", "text"])
+      expect.arrayContaining(["checked", "onChangeValue", "disable", "text"])
     );
     expect(propNames).toHaveLength(4);
 

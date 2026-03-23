@@ -99,7 +99,7 @@ export class SearchFieldHeuristic implements IHeuristic {
    * 이미 있으면 기존 boolean 시그니처를 string으로 교체
    */
   private addOnChangeProp(ctx: HeuristicContext): string {
-    const name = "onChange";
+    const name = "onChangeValue";
     const existingIndex = ctx.props.findIndex((p) => p.name === name);
 
     const onChangeProp = {

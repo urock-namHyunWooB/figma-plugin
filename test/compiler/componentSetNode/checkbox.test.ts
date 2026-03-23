@@ -32,8 +32,8 @@ describe("Checkbox ComponentSet 컴파일 테스트", () => {
     const compiler = new FigmaCodeGenerator(data);
     const code = await compiler.compile("Checkbox");
 
-    // CheckboxProps 인터페이스에 withLabel이 있어야 함
-    expect(code).toMatch(/interface CheckboxProps.*\{[\s\S]*withLabel/);
+    // CheckboxOwnProps 또는 CheckboxProps 인터페이스에 withLabel이 있어야 함
+    expect(code).toMatch(/interface Checkbox(?:Own)?Props.*\{[\s\S]*withLabel/);
   });
 });
 

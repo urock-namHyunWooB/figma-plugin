@@ -57,7 +57,7 @@ describe("Controlcheckbox 컴파일 테스트", () => {
 
     it("state가 public props interface에 없어야 한다 (내부 파생 변수)", async () => {
       const code = await getCompiledCode();
-      const interfaceMatch = code.match(/interface ControlcheckboxProps\s*\{([^}]+)\}/s);
+      const interfaceMatch = code.match(/interface ControlcheckboxOwnProps\s*\{([^}]+)\}/s) || code.match(/interface ControlcheckboxProps\s*\{([^}]+)\}/s);
       expect(interfaceMatch).toBeTruthy();
       const interfaceBody = interfaceMatch![1];
       expect(interfaceBody).not.toMatch(/\bstate\?:/);
@@ -65,7 +65,7 @@ describe("Controlcheckbox 컴파일 테스트", () => {
 
     it("type prop이 없어야 한다 (checked로 통합)", async () => {
       const code = await getCompiledCode();
-      const interfaceMatch = code.match(/interface ControlcheckboxProps\s*\{([^}]+)\}/s);
+      const interfaceMatch = code.match(/interface ControlcheckboxOwnProps\s*\{([^}]+)\}/s) || code.match(/interface ControlcheckboxProps\s*\{([^}]+)\}/s);
       expect(interfaceMatch).toBeTruthy();
       const interfaceBody = interfaceMatch![1];
       expect(interfaceBody).not.toMatch(/\btype\?:/);

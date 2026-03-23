@@ -259,7 +259,7 @@ describe("Badgesicon", () => {
 
     // BadgesiconProps에 vectorBg, _12Bg 없어야 함
     const propsMatch = result.match(
-      /export interface BadgesiconProps\s*\{([^}]*)\}/s
+      /interface Badgesicon(?:Own)?Props\s*\{([^}]*)\}/s
     );
     expect(propsMatch).toBeTruthy();
     const propsBody = propsMatch![1];
@@ -464,7 +464,7 @@ describe("Dropdowngeneric", () => {
   it("list 1~6 개별 boolean prop이 노출되지 않아야 한다", async () => {
     const result = await compileFixture();
     const propsMatch = result.match(
-      /export interface \w+Props\s*\{([^}]*)\}/s
+      /interface \w+(?:Own)?Props\s*\{([^}]*)\}/s
     );
     expect(propsMatch).toBeTruthy();
     const propsBody = propsMatch![1];
@@ -510,7 +510,7 @@ describe("Dropdowngeneric", () => {
   it("states variant prop이 외부에 노출되지 않아야 한다", async () => {
     const result = await compileFixture();
     const propsMatch = result.match(
-      /export interface \w+Props\s*\{([^}]*)\}/s
+      /interface \w+(?:Own)?Props\s*\{([^}]*)\}/s
     );
     expect(propsMatch).toBeTruthy();
     const propsBody = propsMatch![1];
@@ -565,7 +565,7 @@ describe("Fab", () => {
     const result = await compileFixture();
 
     const propsMatch = result.match(
-      /export interface \w+Props\s*\{([^}]*)\}/s
+      /interface \w+(?:Own)?Props\s*\{([^}]*)\}/s
     );
     if (propsMatch) {
       expect(propsMatch[1]).not.toMatch(/\bstates\b/);
@@ -652,7 +652,7 @@ describe("Radio", () => {
   it("states variant prop이 외부에 노출되지 않아야 한다", async () => {
     const result = await compileFixture();
     const propsMatch = result.match(
-      /export interface \w+Props\s*\{([^}]*)\}/s
+      /interface \w+(?:Own)?Props\s*\{([^}]*)\}/s
     );
     expect(propsMatch).toBeTruthy();
     expect(propsMatch![1]).not.toMatch(/\bstates\b/);
@@ -665,7 +665,7 @@ describe("Radio", () => {
 
   it("onChange?: (checked: boolean) => void prop이 있어야 한다", async () => {
     const result = await compileFixture();
-    expect(result).toMatch(/onChange\?/);
+    expect(result).toMatch(/onChangeValue\?/);
   });
 
   it("disable?: boolean prop이 있어야 한다", async () => {
@@ -676,7 +676,7 @@ describe("Radio", () => {
 
   it("onClick={() => onChange?.(!checked)} 핸들러가 있어야 한다", async () => {
     const result = await compileFixture();
-    expect(result).toMatch(/onClick=\{.*onChange.*checked/);
+    expect(result).toMatch(/onClick=\{.*onChangeValue.*checked/);
   });
 
   it("disabled={disable} 속성이 있어야 한다", async () => {

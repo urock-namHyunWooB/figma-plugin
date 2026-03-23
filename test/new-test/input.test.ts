@@ -19,7 +19,7 @@ describe("Input 컴포넌트 코드 생성", () => {
 
   test("InputProps에 올바른 props가 생성되어야 한다", () => {
     const interfaceBlock = code.match(
-      /export interface InputProps \{([\s\S]*?)\}/
+      /interface Input(?:Own)?Props \{([\s\S]*?)\}/
     )?.[1];
     expect(interfaceBlock).toBeDefined();
 
@@ -31,7 +31,7 @@ describe("Input 컴포넌트 코드 생성", () => {
     expect(propNames).toContain("size");
     expect(propNames).toContain("placeholder");
     expect(propNames).toContain("value");
-    expect(propNames).toContain("onChange");
+    expect(propNames).toContain("onChangeValue");
 
     // boolean으로 생성되면 안 됨
     expect(interfaceBlock).not.toMatch(/customPlaceholder\??\s*:\s*boolean/);
@@ -47,7 +47,7 @@ describe("Input 컴포넌트 코드 생성", () => {
 
   test("onChange는 함수 타입이어야 한다", () => {
     // (value: string) => void 또는 유사한 함수 시그니처
-    expect(code).toMatch(/onChange\??:\s*\(/);
+    expect(code).toMatch(/onChangeValue\??:\s*\(/);
   });
 
   test("size prop에 의한 동적 스타일이 생성되어야 한다", () => {

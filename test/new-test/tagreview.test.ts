@@ -37,7 +37,7 @@ describe("Tagreview 컴포넌트 코드 생성", () => {
   test("아이콘 slot이 개별 prop으로 노출되면 안 된다", () => {
     // state별 아이콘은 state가 결정 — 외부 주입 불필요
     const interfaceMatch = code.match(
-      /export interface \w+Props \{([\s\S]*?)\}/
+      /interface \w+(?:Own)?Props \{([\s\S]*?)\}/
     );
     expect(interfaceMatch).toBeTruthy();
     const interfaceBody = interfaceMatch![1];
@@ -54,7 +54,7 @@ describe("Tagreview 컴포넌트 코드 생성", () => {
     expect(code).toMatch(/label\?:\s*string/);
     // variant 종속 이름(rejectedText 등)이 아닌 범용 이름
     const interfaceMatch = code.match(
-      /export interface \w+Props \{([\s\S]*?)\}/
+      /interface \w+(?:Own)?Props \{([\s\S]*?)\}/
     );
     expect(interfaceMatch).toBeTruthy();
     expect(interfaceMatch![1]).not.toMatch(/rejectedText/);

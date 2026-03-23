@@ -370,10 +370,10 @@ export class InputHeuristic implements IHeuristic {
         nativeAttribute: true,
       });
     }
-    if (!ctx.props.some((p) => p.name === "onChange")) {
+    if (!ctx.props.some((p) => p.name === "onChangeValue")) {
       ctx.props.push({
         type: "function",
-        name: "onChange",
+        name: "onChangeValue",
         sourceKey: "",
         required: false,
         functionSignature: "(value: string) => void",

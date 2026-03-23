@@ -19,7 +19,7 @@ describe("SegmentedControl 컴포넌트 코드 생성", () => {
 
   test("SegmentedControlProps에 올바른 props가 생성되어야 한다", () => {
     // interface 블록 추출 (중첩 브레이스 처리)
-    const interfaceStart = code.indexOf("export interface SegmentedControlProps {");
+    const interfaceStart = code.search(/interface SegmentedControl(?:Own)?Props \{/);
     expect(interfaceStart).toBeGreaterThan(-1);
     let depth = 0;
     let interfaceEnd = interfaceStart;
@@ -37,7 +37,7 @@ describe("SegmentedControl 컴포넌트 코드 생성", () => {
     expect(propNames).toContain("size");
     expect(propNames).toContain("options");
     expect(propNames).toContain("selectedValue");
-    expect(propNames).toContain("onChange");
+    expect(propNames).toContain("onChangeValue");
 
     // dead prop이 없어야 함
     expect(propNames).not.toContain("labelText");
@@ -55,7 +55,7 @@ describe("SegmentedControl 컴포넌트 코드 생성", () => {
   });
 
   test("onChange는 함수 타입이어야 한다", () => {
-    expect(code).toMatch(/onChange\?\s*:\s*\(/);
+    expect(code).toMatch(/onChangeValue\?\s*:\s*\(/);
   });
 
   test("options.map()으로 루프 렌더링해야 한다", () => {
@@ -68,7 +68,7 @@ describe("SegmentedControl 컴포넌트 코드 생성", () => {
   });
 
   test("onClick에서 onChange를 호출해야 한다", () => {
-    expect(code).toMatch(/onClick.*onChange/s);
+    expect(code).toMatch(/onClick.*onChangeValue/s);
   });
 
   test("size에 따른 동적 스타일이 보존되어야 한다", () => {
@@ -80,7 +80,7 @@ describe("SegmentedControl 컴포넌트 코드 생성", () => {
 
   test("onClick에서 선택된 option의 value가 onChange로 전달되어야 한다", () => {
     // onChange?.(option.value) 또는 onChange?.(item.value) 형태
-    expect(code).toMatch(/onChange\?\.\(\s*\w+\.value\s*\)/);
+    expect(code).toMatch(/onChangeValue\?\.\(\s*\w+\.value\s*\)/);
   });
 
   test("label의 원본 스타일이 보존되어야 한다", () => {

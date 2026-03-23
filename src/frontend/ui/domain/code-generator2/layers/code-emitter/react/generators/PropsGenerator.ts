@@ -6,14 +6,35 @@
 
 import type { UITree, PropDefinition } from "../../../../types/types";
 
+/**
+ * 컴포넌트 타입 → 네이티브 HTML 속성 타입 매핑
+ *
+ * 루트 요소가 해당 HTML 태그로 직접 렌더링되는 경우만 포함.
+ * input은 루트가 <div>(wrapper)이고 내부에 <input>이 있으므로 제외 —
+ * restProps가 <div>에 spread되어 네이티브 input 속성이 무효화됨.
+ */
+const NATIVE_ATTRS_TYPE: Record<string, string> = {
+  button: "React.ButtonHTMLAttributes<HTMLButtonElement>",
+  link: "React.AnchorHTMLAttributes<HTMLAnchorElement>",
+};
+
 export class PropsGenerator {
   /**
    * Props 인터페이스 생성
+   *
+   * 네이티브 HTML 요소를 감싸는 컴포넌트는 OwnProps + extends 패턴:
+   *   interface OwnProps { ... }
+   *   interface ComponentProps extends Omit<NativeAttrs, keyof OwnProps>, OwnProps {}
    */
   static generate(uiTree: UITree, componentName: string): string {
     const props = uiTree.props;
+    const rootType = (uiTree.root as any).type as string;
+    const nativeAttrsType = NATIVE_ATTRS_TYPE[rootType];
 
     if (props.length === 0) {
+      if (nativeAttrsType) {
+        return `export interface ${componentName}Props extends ${nativeAttrsType} {}`;
+      }
       return `export interface ${componentName}Props {}`;
     }
 
@@ -21,6 +42,15 @@ export class PropsGenerator {
     const arraySlotNames = new Set((uiTree.arraySlots || []).map((slot) => slot.slotName));
 
     const propLines = props.map((prop) => this.generatePropLine(prop, arraySlotNames, uiTree));
+
+    if (nativeAttrsType) {
+      const ownName = `${componentName}OwnProps`;
+      return `interface ${ownName} {
+${propLines.join("\n")}
+}
+
+export interface ${componentName}Props extends Omit<${nativeAttrsType}, keyof ${ownName}>, ${ownName} {}`;
+    }
 
     return `export interface ${componentName}Props {
 ${propLines.join("\n")}

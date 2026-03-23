@@ -268,6 +268,41 @@ declare namespace React {
   }
 
   type Ref<T> = { current: T | null } | ((instance: T | null) => void) | null;
+
+  interface ChangeEvent<T = Element> {
+    target: T & { value: string };
+    currentTarget: T & { value: string };
+    preventDefault(): void;
+    stopPropagation(): void;
+  }
+
+  interface InputHTMLAttributes<T = HTMLInputElement> extends HTMLAttributes<T> {
+    type?: string;
+    value?: string | number | readonly string[];
+    placeholder?: string;
+    checked?: boolean;
+    name?: string;
+    readOnly?: boolean;
+    required?: boolean;
+    onChange?: (e: ChangeEvent<T>) => void;
+    [key: string]: any;
+  }
+
+  interface ButtonHTMLAttributes<T = HTMLButtonElement> extends HTMLAttributes<T> {
+    type?: "button" | "submit" | "reset";
+    disabled?: boolean;
+    name?: string;
+    value?: string | readonly string[] | number;
+    [key: string]: any;
+  }
+
+  interface AnchorHTMLAttributes<T = HTMLAnchorElement> extends HTMLAttributes<T> {
+    href?: string;
+    target?: string;
+    rel?: string;
+    download?: any;
+    [key: string]: any;
+  }
 }
 
 declare namespace JSX {
@@ -277,9 +312,20 @@ declare namespace JSX {
     key: string | null;
   }
   interface IntrinsicElements {
+    input: React.InputHTMLAttributes<HTMLInputElement>;
+    button: React.ButtonHTMLAttributes<HTMLButtonElement>;
+    a: React.AnchorHTMLAttributes<HTMLAnchorElement>;
     [elemName: string]: any;
   }
 }
+
+declare interface HTMLInputElement extends Element {
+  value: string;
+  checked: boolean;
+  type: string;
+}
+declare interface HTMLButtonElement extends Element {}
+declare interface HTMLAnchorElement extends Element {}
 `;
 
 // ──────────────────────────────────────────────

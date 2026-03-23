@@ -410,7 +410,7 @@ export class SegmentedControlHeuristic implements IHeuristic {
    * onChange prop 추가
    */
   private addOnChangeProp(ctx: HeuristicContext): string {
-    const name = "onChange";
+    const name = "onChangeValue";
     if (!ctx.props.some((p) => p.name === name)) {
       ctx.props.push({
         type: "function",

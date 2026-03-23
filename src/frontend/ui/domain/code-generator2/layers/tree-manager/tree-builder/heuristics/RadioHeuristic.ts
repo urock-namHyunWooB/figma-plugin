@@ -172,7 +172,7 @@ export class RadioHeuristic implements IHeuristic {
   }
 
   private addOnChangeProp(ctx: HeuristicContext): string {
-    const name = "onChange";
+    const name = "onChangeValue";
     if (!ctx.props.some((p) => p.name === name)) {
       ctx.props.push({
         type: "function",

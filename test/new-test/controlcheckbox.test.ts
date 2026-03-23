@@ -50,7 +50,7 @@ describe("Controlcheckbox", () => {
     it("Props interface에 type prop이 없어야 한다 (checked로 통합)", async () => {
       const result = await compileFixture();
       const interfaceMatch = result.match(
-        /export interface ControlcheckboxProps\s*\{([^}]+)\}/s
+        /interface Controlcheckbox(?:Own)?Props\s*\{([^}]+)\}/s
       );
       expect(interfaceMatch).toBeTruthy();
       const interfaceBody = interfaceMatch![1];
