@@ -389,7 +389,6 @@ export class InputHeuristic implements IHeuristic {
       placeholderNode.bindings.attrs = {};
     }
     placeholderNode.bindings.attrs.value = { prop: "value" };
-    placeholderNode.bindings.attrs.onChange = { expr: "(e) => onChange?.(e.target.value)" };
   }
 
   /**

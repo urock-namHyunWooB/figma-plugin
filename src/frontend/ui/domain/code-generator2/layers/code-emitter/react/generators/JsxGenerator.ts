@@ -589,7 +589,7 @@ ${indentStr})}` : jsx;
     const hasOnChange = node.bindings?.attrs?.["onChange"];
     const onChangeFallback = hasOnChange
       ? ""
-      : `onChange={(e) => onChange?.(e.target.value)}`;
+      : `onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange?.(e.target.value)}`;
 
     const inputAttrs = [attrs, `placeholder={${placeholderProp}}`, onChangeFallback]
       .filter(Boolean)

@@ -57,7 +57,6 @@ export class SearchFieldHeuristic implements IHeuristic {
       node.semanticType = "search-input";
       node.bindings = { ...node.bindings, attrs: {
         ...node.bindings?.attrs,
-        onChange: { expr: `(e) => ${onChangeName}?.(e.target.value)` },
       }};
       return;
     }
