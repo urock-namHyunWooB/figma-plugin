@@ -72,8 +72,8 @@ export class ReactBundler {
       }
     }
 
-    // Step 1: 모든 코드에서 import 추출
-    const reactImports = new Set<string>();
+    // Step 1: 모든 코드에서 import 추출 (같은 모듈 경로는 병합)
+    const importsByKey = new Map<string, string>();
 
     for (const emitted of allCodes) {
       const importMatches = emitted.code.matchAll(
@@ -86,7 +86,17 @@ export class ReactBundler {
         const isInternalComponent =
           importPath.startsWith("./") || importPath.startsWith("../");
         if (!isInternalComponent) {
-          reactImports.add(importLine);
+          const isTypeOnly = /^import\s+type\s/.test(importLine);
+          const key = `${isTypeOnly ? "type:" : ""}${importPath}`;
+          const existing = importsByKey.get(key);
+          if (!existing) {
+            importsByKey.set(key, importLine);
+          } else {
+            importsByKey.set(
+              key,
+              this.mergeImportLines(existing, importLine)
+            );
+          }
         }
       }
     }
@@ -143,7 +153,7 @@ export class ReactBundler {
       : depCodesClean;
 
     // Step 4: 결합 (React imports + cn + dependencies + main)
-    const parts = [Array.from(reactImports).join("\n")];
+    const parts = [Array.from(importsByKey.values()).join("\n")];
     if (cnDeclaration) {
       parts.push("", cnDeclaration);
     }
@@ -396,6 +406,42 @@ export class ReactBundler {
     }
 
     return tag.slice(0, attrStart) + tag.slice(i + 1);
+  }
+
+  /**
+   * 같은 모듈의 import 두 줄을 병합 (default + named imports 합집합)
+   */
+  private mergeImportLines(a: string, b: string): string {
+    const extractNamed = (line: string): string[] => {
+      const match = line.match(/\{\s*([^}]+)\s*\}/);
+      if (!match) return [];
+      return match[1]
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+    };
+
+    const extractDefault = (line: string): string | null => {
+      const match = line.match(/^import\s+(\w+)[\s,]/);
+      return match && match[1] !== "type" ? match[1] : null;
+    };
+
+    const modulePath = a.match(/from\s+["']([^"']+)["']/)?.[1] ?? "";
+    const isType = /^import\s+type\s/.test(a);
+
+    const allNamed = [
+      ...new Set([...extractNamed(a), ...extractNamed(b)]),
+    ];
+    const defaultExport = extractDefault(a) || extractDefault(b);
+
+    const specifiers: string[] = [];
+    if (defaultExport) specifiers.push(defaultExport);
+    if (allNamed.length > 0) specifiers.push(`{ ${allNamed.join(", ")} }`);
+
+    if (specifiers.length === 0) return a;
+
+    const prefix = isType ? "import type" : "import";
+    return `${prefix} ${specifiers.join(", ")} from "${modulePath}";`;
   }
 
   private extractCnDeclaration(code: string): string {
