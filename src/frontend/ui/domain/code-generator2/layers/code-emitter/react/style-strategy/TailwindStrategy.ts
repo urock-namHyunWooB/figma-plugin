@@ -396,6 +396,21 @@ export class TailwindStrategy implements IStyleStrategy {
     const classes: string[] = [];
 
     for (const [key, value] of Object.entries(style)) {
+      // __nested: 중첩 셀렉터 → arbitrary variant 클래스 변환
+      if (key === "__nested" && typeof value === "object" && value !== null) {
+        const nested = value as Record<string, Record<string, string | number>>;
+        for (const [selector, nestedStyle] of Object.entries(nested)) {
+          const variant = this.selectorToArbitraryVariant(selector);
+          for (const [prop, val] of Object.entries(nestedStyle)) {
+            const twClass = this.cssPropertyToTailwind(prop, String(val));
+            if (twClass) {
+              classes.push(`${variant}:${twClass}`);
+            }
+          }
+        }
+        continue;
+      }
+
       const tailwindClass = this.cssPropertyToTailwind(key, String(value));
       if (tailwindClass) {
         classes.push(tailwindClass);
@@ -403,6 +418,21 @@ export class TailwindStrategy implements IStyleStrategy {
     }
 
     return classes;
+  }
+
+  /**
+   * CSS 셀렉터를 Tailwind arbitrary variant로 변환
+   * e.g., "svg path" → "[&_svg_path]", "& > div svg path" → "[&>div_svg_path]"
+   */
+  private selectorToArbitraryVariant(selector: string): string {
+    let s = selector.trim();
+    // &로 시작하지 않으면 자손 셀렉터로 & 추가
+    if (!s.startsWith("&")) {
+      s = "& " + s;
+    }
+    // 공백 → _ (Tailwind arbitrary variant 문법)
+    s = s.replace(/\s+/g, "_");
+    return `[${s}]`;
   }
 
   /**

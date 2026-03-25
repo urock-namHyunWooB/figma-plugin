@@ -83,6 +83,12 @@ export type VisibleValue =
   | { type: "condition"; condition: ConditionNode };
 
 /**
+ * 중첩 CSS 셀렉터 맵 (e.g., { "svg path": { fill: "#628CF5" } })
+ * Emotion → 중첩 CSS 블록, Tailwind → arbitrary variant 클래스로 변환
+ */
+export type NestedStyleMap = Record<string, Record<string, string | number>>;
+
+/**
  * 스타일 객체
  * base: 기본 스타일, dynamic: 조건부 스타일, pseudo: CSS pseudo-class 스타일
  * mediaQueries: @media 쿼리 스타일 (ResponsiveProcessor가 생성)

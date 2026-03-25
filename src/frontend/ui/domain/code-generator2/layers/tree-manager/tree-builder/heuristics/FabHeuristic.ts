@@ -175,7 +175,7 @@ export class FabHeuristic implements IHeuristic {
 
       const existing = root.styles.pseudo[pseudo] || {};
       // & > div: icon container만 타겟 (ELLIPSE는 <span>이라 매치 안 됨)
-      existing["__raw"] = `& > div svg path { stroke: ${color}; }`;
+      (existing as any).__nested = { "& > div svg path": { stroke: color } };
       root.styles.pseudo[pseudo] = existing;
     }
   }

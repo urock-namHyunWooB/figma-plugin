@@ -549,21 +549,22 @@ export class DropdownHeuristic implements IHeuristic {
     if (!trigger.styles) trigger.styles = { base: {}, dynamic: [] };
     if (!trigger.styles.pseudo) trigger.styles.pseudo = {};
     const hover = trigger.styles.pseudo[":hover"] || {};
-    hover["__raw"] = `svg path { fill: ${hoverFill}; }`;
+    const nestedFill = { "svg path": { fill: hoverFill } };
+    (hover as any).__nested = nestedFill;
     trigger.styles.pseudo[":hover"] = hover;
 
     // open(active) 상태에서도 아이콘 파란색 유지
-    // 기존 open 조건 dynamic style에 __raw 병합 (first-write-wins 회피)
+    // 기존 open 조건 dynamic style에 __nested 병합 (first-write-wins 회피)
     if (!trigger.styles.dynamic) trigger.styles.dynamic = [];
     const openEntry = trigger.styles.dynamic.find(
       (d) => d.condition.type === "truthy" && (d.condition as any).prop === "open"
     );
     if (openEntry) {
-      (openEntry.style as any).__raw = `svg path { fill: ${hoverFill}; }`;
+      (openEntry.style as any).__nested = nestedFill;
     } else {
       trigger.styles.dynamic.push({
         condition: { type: "truthy", prop: "open" },
-        style: { "__raw": `svg path { fill: ${hoverFill}; }` } as any,
+        style: { __nested: nestedFill } as any,
       });
     }
   }

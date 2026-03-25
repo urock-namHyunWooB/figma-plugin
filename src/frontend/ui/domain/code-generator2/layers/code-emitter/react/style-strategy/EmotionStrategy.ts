@@ -422,17 +422,35 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
   }
 
   private objectToStyleString(obj: Record<string, string | number>): string {
-    return Object.entries(obj)
-      .map(([key, value]) => {
-        // __raw 키: 값을 그대로 출력 (중첩 선택자 등)
-        if (key === "__raw") return String(value);
-        const cssKey = this.camelToKebab(key);
-        const cssValue = typeof value === "number"
-          ? (EmotionStrategy.UNITLESS_PROPERTIES.has(cssKey) ? `${value}` : `${value}px`)
-          : value;
-        return `${cssKey}: ${cssValue};`;
-      })
-      .join("\n");
+    const lines: string[] = [];
+
+    for (const [key, value] of Object.entries(obj)) {
+      // __nested: 중첩 셀렉터 블록 출력
+      if (key === "__nested" && typeof value === "object" && value !== null) {
+        const nested = value as Record<string, Record<string, string | number>>;
+        for (const [selector, nestedStyle] of Object.entries(nested)) {
+          const inner = Object.entries(nestedStyle)
+            .map(([k, v]) => {
+              const cssKey = this.camelToKebab(k);
+              const cssValue = typeof v === "number"
+                ? (EmotionStrategy.UNITLESS_PROPERTIES.has(cssKey) ? `${v}` : `${v}px`)
+                : v;
+              return `  ${cssKey}: ${cssValue};`;
+            })
+            .join("\n");
+          lines.push(`${selector} {\n${inner}\n}`);
+        }
+        continue;
+      }
+
+      const cssKey = this.camelToKebab(key);
+      const cssValue = typeof value === "number"
+        ? (EmotionStrategy.UNITLESS_PROPERTIES.has(cssKey) ? `${value}` : `${value}px`)
+        : value;
+      lines.push(`${cssKey}: ${cssValue};`);
+    }
+
+    return lines.join("\n");
   }
 
   private camelToKebab(str: string): string {

@@ -458,31 +458,26 @@ export class ProfileHeuristic implements IHeuristic {
   private addHoverEffect(node: InternalNode): void {
     if (!node.styles) node.styles = { base: {}, dynamic: [] };
 
-    // __raw로 nested selector 삽입
-    const hoverCss = [
-      // overlay pseudo-element (기본 숨김)
-      "&::after {",
-      "  content: '';",
-      "  position: absolute;",
-      "  inset: 0;",
-      "  border-radius: inherit;",
-      "  background: rgba(0, 0, 0, 0.25);",
-      "  opacity: 0;",
-      "  transition: opacity 0.15s;",
-      "  pointer-events: none;",
-      "  z-index: 1;",
-      "}",
-      // hover 시 overlay 표시
-      "&:hover::after {",
-      "  opacity: 1;",
-      "}",
-      // hover 시 text 표시
-      "&:hover > span {",
-      "  opacity: 1;",
-      "}",
-    ].join("\n");
-
-    node.styles.base["__raw"] = hoverCss;
+    // __nested로 중첩 셀렉터 삽입
+    (node.styles.base as any).__nested = {
+      "&::after": {
+        content: "''",
+        position: "absolute",
+        inset: "0",
+        borderRadius: "inherit",
+        background: "rgba(0, 0, 0, 0.25)",
+        opacity: "0",
+        transition: "opacity 0.15s",
+        pointerEvents: "none",
+        zIndex: "1",
+      },
+      "&:hover::after": {
+        opacity: "1",
+      },
+      "&:hover > span": {
+        opacity: "1",
+      },
+    };
   }
 
   // ===========================================================================
