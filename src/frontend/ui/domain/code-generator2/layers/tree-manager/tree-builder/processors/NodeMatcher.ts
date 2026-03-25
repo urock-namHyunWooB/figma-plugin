@@ -600,6 +600,28 @@ export class NodeMatcher {
     }
 
     const sizeKey = axis === "x" ? "width" : "height";
+
+    // 형제 수가 같고 매칭된 형제가 있으면: 전체 형제의 크기+gap 차이까지 보정
+    if (extraA.length === 0 && extraB.length === 0 && sharedCount > 0) {
+      const parentA = nodeA.parent;
+      const parentB = nodeB.parent;
+      const gapA = parentA ? this.checkAutoLayout(parentA).spacing : gap;
+      const gapB = parentB ? this.checkAutoLayout(parentB).spacing : gap;
+
+      const shiftA = leftA.reduce(
+        (sum, n) => sum + ((n as any).absoluteBoundingBox?.[sizeKey] ?? 0) + gapA,
+        0
+      );
+      const shiftB = leftB.reduce(
+        (sum, n) => sum + ((n as any).absoluteBoundingBox?.[sizeKey] ?? 0) + gapB,
+        0
+      );
+
+      if (shiftA === 0 && shiftB === 0) return null;
+      return { axis, shiftA, shiftB };
+    }
+
+    // 기존: extra 형제만으로 shift 계산
     const shiftA = extraA.reduce(
       (sum, n) => sum + ((n as any).absoluteBoundingBox?.[sizeKey] ?? 0) + gap,
       0
