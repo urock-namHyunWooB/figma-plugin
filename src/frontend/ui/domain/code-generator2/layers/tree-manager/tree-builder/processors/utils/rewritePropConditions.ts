@@ -533,8 +533,18 @@ function processPseudoGroup(
     for (const entry of pseudoEntries) {
       const pseudo = pseudoMap[entry.stateValue];
       if (!pseudo) continue;
-      const existing = pseudoAdditions.get(pseudo) || {};
-      pseudoAdditions.set(pseudo, { ...existing, ...entry.style });
+
+      if (entry.nonStateCondition) {
+        // nonStateCondition이 있으면 pseudo 귀속 시 조건이 소실됨
+        // → dynamic entry로 유지하여 DynamicStyleDecomposer가 올바른 축에 배치하도록 위임
+        keptEntries.push({
+          condition: entry.nonStateCondition,
+          style: entry.style,
+        });
+      } else {
+        const existing = pseudoAdditions.get(pseudo) || {};
+        pseudoAdditions.set(pseudo, { ...existing, ...entry.style });
+      }
     }
     return;
   }
