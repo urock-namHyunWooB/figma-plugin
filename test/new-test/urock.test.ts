@@ -293,9 +293,9 @@ describe("Dropdowngeneric", () => {
     "test/fixtures/urock/Dropdowngeneric.json"
   );
 
-  const compileFixture = async () => {
+  const compileFixture = async (styleStrategy: "emotion" | "tailwind" = "emotion") => {
     const fixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
-    const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
+    const compiler = new FigmaCodeGenerator(fixture, { styleStrategy });
     return (await compiler.compile()) as unknown as string;
   };
 
@@ -516,6 +516,79 @@ describe("Dropdowngeneric", () => {
     const propsBody = propsMatch![1];
     // states는 내부 동작(hover/:hover, active/open)으로 처리되어야 함
     expect(propsBody).not.toMatch(/\bstates\b/);
+  });
+
+  // ── 리그레션: import 중복 방지 ──
+
+  it("React import가 중복되지 않아야 한다", async () => {
+    const result = await compileFixture();
+    const reactImports = result
+      .split("\n")
+      .filter((l: string) => /^import .+ from ["']react["']/.test(l));
+    expect(reactImports.length).toBe(1);
+    expect(reactImports[0]).toMatch(/useState/);
+  });
+
+  // ── 리그레션: __raw/__nested Tailwind 출력 ──
+
+  it("Tailwind 출력에 __raw가 포함되지 않아야 한다", async () => {
+    const result = await compileFixture("tailwind");
+    expect(result).not.toMatch(/__raw/);
+  });
+
+  it("Tailwind hover에서 SVG fill이 arbitrary variant로 변환되어야 한다", async () => {
+    const result = await compileFixture("tailwind");
+    // hover:[&_svg_path]:fill-[...] 또는 [&_svg_path]:[fill:...] 패턴
+    expect(result).toMatch(/\[&_svg_path\]/);
+  });
+
+  // ── 리그레션: list 노드 병합 ──
+
+  it("list가 하나의 노드로 병합되어야 한다 (빈 div 중복 방지)", async () => {
+    const result = await compileFixture();
+    // list CSS 변수가 _2 suffix로 중복 생성되면 안 됨
+    expect(result).not.toMatch(/\bgenericListCss_2\b/);
+    expect(result).not.toMatch(/\bgenericListClasses_2\b/);
+  });
+
+  // ── 리그레션: list sizeStyles에 Default/Compact 모두 존재 ──
+
+  it("list sizeStyles에 Default와 Compact가 모두 있어야 한다", async () => {
+    const result = await compileFixture();
+    const listSizeMatch = result.match(
+      /genericListCss_sizeStyles[\s\S]*?\{([\s\S]*?)\n\};/
+    );
+    expect(listSizeMatch).toBeTruthy();
+    expect(listSizeMatch![1]).toMatch(/Default/);
+    expect(listSizeMatch![1]).toMatch(/Compact/);
+  });
+
+  it("list Compact 스타일이 openStyles가 아닌 sizeStyles에 있어야 한다", async () => {
+    const result = await compileFixture();
+    // openStyles에 padding/gap/border-radius가 없어야 함 (size 축 스타일)
+    const openMatch = result.match(
+      /genericListCss_openStyles[\s\S]*?\{([\s\S]*?)\n\};/
+    );
+    if (openMatch) {
+      expect(openMatch[1]).not.toMatch(/padding/);
+      expect(openMatch[1]).not.toMatch(/\bgap\b/);
+      expect(openMatch[1]).not.toMatch(/border-radius/);
+    }
+  });
+
+  // ── 리그레션: list 아이템 AL shift 매칭 ──
+
+  it("list 아이템에 font-size sizeStyles가 하나로 통합되어야 한다", async () => {
+    const result = await compileFixture();
+    // 아이템 래퍼가 하나의 CSS로 통합 (wrapper_2 중복 없음)
+    const wrapperDuplicates = result.match(
+      /dropdowngenericlistWrapperCss_2/g
+    );
+    // _2가 있더라도 sizeStyles로 존재하는 건 OK, 별도 base CSS로 존재하면 문제
+    const baseWrapper2 = result.match(
+      /const dropdowngenericlistWrapperCss_2\s*=/
+    );
+    expect(baseWrapper2).toBeNull();
   });
 });
 
