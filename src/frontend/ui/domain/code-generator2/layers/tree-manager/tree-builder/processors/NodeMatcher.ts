@@ -657,21 +657,6 @@ export class NodeMatcher {
   }
 
   /**
-   * 두 노드의 크기가 유사한지 확인 (±5px tolerance)
-   */
-  private isSimilarSize(
-    nodeA: InternalNode,
-    nodeB: InternalNode,
-    tolerance = 5
-  ): boolean {
-    if (!nodeA.bounds || !nodeB.bounds) return false;
-    return (
-      Math.abs(nodeA.bounds.width - nodeB.bounds.width) <= tolerance &&
-      Math.abs(nodeA.bounds.height - nodeB.bounds.height) <= tolerance
-    );
-  }
-
-  /**
    * 원본 variant 데이터에서 노드의 왼쪽(위쪽) 형제를 수집
    *
    * InternalNode.parent.children은 merge 과정에서 stale해질 수 있으므로,

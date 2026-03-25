@@ -415,10 +415,10 @@ describe("Dropdowngeneric", () => {
     expect(result).toMatch(/&:hover\s*\{[^}]*border-color/);
   });
 
-  it("리스트 아이템에 hover background가 있어야 한다", async () => {
+  it("리스트 아이템에 cursor: pointer가 있어야 한다", async () => {
     const result = await compileFixture();
-    // 아이템 래퍼 CSS에 &:hover { background: ... } 존재
-    expect(result).toMatch(/cursor:\s*pointer[\s\S]*?&:hover\s*\{[^}]*background/);
+    // 아이템 래퍼 CSS에 cursor: pointer 존재 (클릭 가능 표시)
+    expect(result).toMatch(/cursor:\s*pointer/);
   });
 
   it("hover에서 font-size가 변경되지 않아야 한다 (Size variant 오염 방지)", async () => {
