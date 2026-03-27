@@ -87,7 +87,9 @@ export class CheckboxHeuristic implements IHeuristic {
     ctx.tree.bindings = { ...ctx.tree.bindings, attrs: {
       ...ctx.tree.bindings?.attrs,
       role: { expr: '"checkbox"' },
-      'aria-checked': { prop: 'checked' },
+      'aria-checked': hasIndeterminate
+        ? { expr: 'checked === "indeterminate" ? "mixed" : checked' }
+        : { prop: 'checked' },
       onClick: { expr: `() => ${onChangeName}?.(!checked)` },
       disabled: { prop: disableName },
     }};
@@ -225,7 +227,14 @@ export class CheckboxHeuristic implements IHeuristic {
     ctx: HeuristicContext,
     hasIndeterminate: boolean
   ): void {
-    if (ctx.props.some((p) => p.name === "checked")) return;
+    const existing = ctx.props.find((p) => p.name === "checked");
+    if (existing) {
+      // 이미 PropsExtractor가 추가한 경우 — extraValues만 보강
+      if (hasIndeterminate && existing.type === "boolean" && !(existing as any).extraValues) {
+        (existing as any).extraValues = ["indeterminate"];
+      }
+      return;
+    }
     ctx.props.push({
       type: "boolean",
       name: "checked",

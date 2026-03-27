@@ -172,7 +172,7 @@ function detectFromRawChildren(
           ? (originalNode as any).visible
           : true;
       const childVisible =
-        rawChild.visible !== undefined ? rawChild.visible : true;
+        rawChild.visible !== undefined ? rawChild.visible : originalVisible;
 
       if (originalVisible !== childVisible) {
         const hasVisibleCondition = !!internalChild?.visibleCondition;

@@ -149,7 +149,17 @@ export class ReactBundler {
     // Step 3.8: <button> 중첩 방지 — dep의 <button> 루트를 <div>로 변환하여 루트 button에 위임
     const hasButtonRoot = /return\s*\(\s*<button[\s/>]/.test(mainCodeClean);
     const finalDepCodes = hasButtonRoot
-      ? depCodesClean.map((code) => this.neutralizeButtonRoot(code))
+      ? depCodesClean.map((code) => {
+          const neutralized = this.neutralizeButtonRoot(code);
+          // button → div 변환 시 props 타입도 동기화
+          if (neutralized !== code) {
+            return neutralized.replace(
+              /React\.ButtonHTMLAttributes<HTMLButtonElement>/g,
+              "React.HTMLAttributes<HTMLDivElement>"
+            );
+          }
+          return neutralized;
+        })
       : depCodesClean;
 
     // Step 4: 결합 (React imports + cn + dependencies + main)
@@ -197,7 +207,8 @@ export class ReactBundler {
    */
   private renameCssVariables(code: string, componentName: string): string {
     const prefix = componentName.replace(/\s+/g, "");
-    const styleVarPattern = /\b(\w+(?:Css|Styles|Classes)(?:_\d+)?)\b/g;
+    // const 선언에서만 스타일 변수명 수집 (타입 이름 SerializedStyles 등 오매칭 방지)
+    const styleVarPattern = /\bconst\s+(\w+(?:Css|Styles|Classes)(?:_\d+)?)\b/g;
     const foundVars = new Set<string>();
 
     let match;

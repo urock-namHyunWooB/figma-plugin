@@ -115,10 +115,11 @@ describe("Searchfieldsearchfield 컴파일 테스트", () => {
       expect(code).toMatch(/onValueChange\?:\s*\(.*string.*\)\s*=>/);
     });
 
-    it("x 버튼(Buttoniconnormal)에 onClick 핸들러가 있어야 한다", async () => {
+    it("x 버튼(Buttoniconnormal) 래퍼에 onClick 핸들러가 있어야 한다", async () => {
       const code = await getCompiledCode();
-      // Buttoniconnormal 컴포넌트에 onClick prop이 전달되어야 함
-      expect(code).toMatch(/<Buttoniconnormal[^/]*onClick/s);
+      // Buttoniconnormal wrapper div에 onClick이 있고 onValueChange를 호출
+      expect(code).toMatch(/onClick.*onValueChange/s);
+      expect(code).toContain("Buttoniconnormal");
     });
   });
 

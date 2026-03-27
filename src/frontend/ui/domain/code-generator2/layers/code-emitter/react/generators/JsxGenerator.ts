@@ -127,7 +127,11 @@ export default ${componentName}`;
       }
       // 기본값이 있으면 destructuring에 포함
       if (p.defaultValue !== undefined) {
-        const defaultVal = this.formatDefaultValue(p.defaultValue);
+        // boolean prop의 string "true"/"false" → boolean literal 변환
+        const effectiveDefault = (p.type === "boolean" && (p.defaultValue === "true" || p.defaultValue === "false"))
+          ? p.defaultValue === "true"
+          : p.defaultValue;
+        const defaultVal = this.formatDefaultValue(effectiveDefault);
         return `${p.name} = ${defaultVal}`;
       }
       return p.name;
@@ -694,17 +698,29 @@ ${indentStr})}` : jsx;
     let componentAttrs = "";
     if (node.type === "component" && "overrideProps" in node && node.overrideProps) {
       for (const [propName, value] of Object.entries(node.overrideProps)) {
-        componentAttrs += ` ${propName}="${value}"`;
+        // boolean 값은 JSX expression으로 출력
+        if (value === "true" || value === "false") {
+          componentAttrs += ` ${propName}={${value}}`;
+        } else {
+          componentAttrs += ` ${propName}="${value}"`;
+        }
       }
     }
 
     // bindings.attrs 처리 (prop 바인딩: active={active}, expr 바인딩 등)
+    // 이벤트 핸들러(on*)는 wrapper div로 이동 (dependency props에 없을 수 있음)
+    let wrapperEventAttrs = "";
     if (node.bindings?.attrs) {
       for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
+        const isEvent = /^on[A-Z]/.test(attrName);
         if ("prop" in source) {
           componentAttrs += ` ${attrName}={${source.prop}}`;
         } else if ("expr" in source) {
-          componentAttrs += ` ${attrName}={${source.expr}}`;
+          if (isEvent) {
+            wrapperEventAttrs += ` ${attrName}={${source.expr}}`;
+          } else {
+            componentAttrs += ` ${attrName}={${source.expr}}`;
+          }
         }
       }
     }
@@ -723,10 +739,14 @@ ${indentStr})}` : jsx;
           );
           wrapperAttrs = `css={[${wrapperStyleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
         } else {
-          const propArgs = dynamicProps.flatMap(
-            (prop) => prop.split("+").map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
+          const propArgs = [...new Set(dynamicProps
+            .filter((prop) => !prop.includes("+"))
+            .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
+          )];
+          const propArgStrs = propArgs.map((p) =>
+            this.slotProps.has(p) ? `${p}: !!${p}` : p
           );
-          wrapperAttrs = `className={${wrapperStyleVarName}({ ${propArgs.join(", ")} })}`;
+          wrapperAttrs = `className={${wrapperStyleVarName}({ ${propArgStrs.join(", ")} })}`;
         }
       } else {
         const styleAttr = styleStrategy.getJsxStyleAttribute(wrapperStyleVarName, false);
@@ -735,13 +755,13 @@ ${indentStr})}` : jsx;
 
       // wrapper CSS가 INSTANCE 크기를 제어하고, 서브 컴포넌트는
       // width:100%/height:100%로 채우므로 instanceScale 불필요
-      return `${indentStr}<div ${wrapperAttrs}>
+      return `${indentStr}<div ${wrapperAttrs}${wrapperEventAttrs}>
 ${indentStr}  <${componentName}${componentAttrs} />
 ${indentStr}</div>`;
     }
 
-    // styles가 없으면 직접 렌더링
-    return `${indentStr}<${componentName}${componentAttrs} />`;
+    // styles가 없으면 직접 렌더링 (이벤트도 component에 직접 전달)
+    return `${indentStr}<${componentName}${componentAttrs}${wrapperEventAttrs} />`;
   }
 
   /**
@@ -773,6 +793,8 @@ ${indentStr}</div>`;
    */
   private static convertSvgToJsx(svg: string): string {
     return svg
+      // foreignObject 내 XHTML xmlns는 React에서 불필요 (자동 처리)
+      .replace(/\s+xmlns="http:\/\/www\.w3\.org\/1999\/xhtml"/g, "")
       .replace(/\bfill-rule=/g, "fillRule=")
       .replace(/\bclip-rule=/g, "clipRule=")
       .replace(/\bstroke-width=/g, "strokeWidth=")
@@ -963,10 +985,16 @@ ${indentStr}</${tag}>`;
           refs.push(...dynamicProps.map((prop) => this.buildDynamicStyleRef(styleVarName, prop)));
           attrs.push(`css={[${refs.join(", ")}]}`);
         } else {
-          const propArgs = dynamicProps.flatMap(
-            (prop) => prop.split("+").map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
+          // compound prop("style+tone")は cva variants に含まれないため個別 prop のみ含める
+          const propArgs = [...new Set(dynamicProps
+            .filter((prop) => !prop.includes("+"))
+            .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
+          )];
+          // slot prop(ReactNode)은 boolean 변환 필요 (cva variant는 true/false)
+          const propArgStrs = propArgs.map((p) =>
+            this.slotProps.has(p) ? `${p}: !!${p}` : p
           );
-          attrs.push(`className={${styleVarName}({ ${propArgs.join(", ")} })}`);
+          attrs.push(`className={${styleVarName}({ ${propArgStrs.join(", ")} })}`);
         }
       } else {
         const styleAttr = styleStrategy.getJsxStyleAttribute(styleVarName, false);
@@ -1227,10 +1255,14 @@ ${indentStr}</${tag}>`;
         );
         wrapperAttrs = `css={[${styleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
       } else {
-        const propArgs = dynamicProps.flatMap(
-          (prop) => prop.split("+").map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
+        const propArgs = [...new Set(dynamicProps
+          .filter((prop) => !prop.includes("+"))
+          .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
+        )];
+        const propArgStrs = propArgs.map((p) =>
+          this.slotProps.has(p) ? `${p}: !!${p}` : p
         );
-        wrapperAttrs = `className={${styleVarName}({ ${propArgs.join(", ")} })}`;
+        wrapperAttrs = `className={${styleVarName}({ ${propArgStrs.join(", ")} })}`;
       }
     } else {
       const styleAttr = styleStrategy.getJsxStyleAttribute(styleVarName, false);
@@ -1355,10 +1387,14 @@ ${indentStr}</${tag}>`;
             );
             wrapperAttrs = `css={[${wrapperStyleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
           } else {
-            const propArgs = dynamicProps.flatMap(
-              (prop) => prop.split("+").map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
+            const propArgs = [...new Set(dynamicProps
+              .filter((prop) => !prop.includes("+"))
+              .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
+            )];
+            const propArgStrs = propArgs.map((p) =>
+              this.slotProps.has(p) ? `${p}: !!${p}` : p
             );
-            wrapperAttrs = `className={${wrapperStyleVarName}({ ${propArgs.join(", ")} })}`;
+            wrapperAttrs = `className={${wrapperStyleVarName}({ ${propArgStrs.join(", ")} })}`;
           }
         } else {
           const styleAttr = styleStrategy.getJsxStyleAttribute(wrapperStyleVarName, false);

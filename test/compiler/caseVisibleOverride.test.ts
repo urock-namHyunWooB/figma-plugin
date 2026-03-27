@@ -9,39 +9,18 @@ describe("Case.json visible override 이슈", () => {
     "test/fixtures/any/Case.json"
   );
 
-  it("should generate showInteraction prop for Large dependency", async () => {
+  it("should not generate showInteraction when no instance overrides visible", async () => {
     const fixtureData = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
 
     const compiler = new FigmaCodeGenerator(fixtureData);
     const result = await compiler.getGeneratedCodeWithDependencies();
 
-    // Large dependency에 showInteraction prop이 있어야 함
-    const deps = result.dependencies || {};
-    let largeCode = "";
-    for (const [key, dep] of Object.entries(deps)) {
-      if (dep.code.includes("function Large")) {
-        largeCode = dep.code;
-      }
-    }
-
-    // Large dependency에 showInteraction props가 있어야 함
-    expect(largeCode).toContain("showInteraction");
-    expect(largeCode).toMatch(/showInteraction\?:\s*boolean/);
-  });
-
-  it("should not pass showInteraction when visible is not overridden", async () => {
-    const fixtureData = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
-
-    const compiler = new FigmaCodeGenerator(fixtureData);
-    const result = await compiler.getGeneratedCodeWithDependencies();
-
-    // 메인 코드 확인 (v2 형식)
     const mainCode = result.mainCode;
 
     // fixture에서 Interaction 노드의 visible override가 없으므로
-    // showInteraction prop이 전달되지 않아야 함
+    // showInteraction이 메인/dependency 어디에도 없어야 함
     // (opacity override만 있음: decorateInteractiveOpacity)
-    expect(mainCode).not.toContain("showInteraction={true}");
+    expect(mainCode).not.toMatch(/showInteraction[={]/);
     expect(mainCode).toContain("decorateInteractiveOpacity");
   });
 

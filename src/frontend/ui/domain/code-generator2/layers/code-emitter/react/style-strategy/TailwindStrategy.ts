@@ -119,12 +119,21 @@ export interface TailwindStrategyOptions {
 export class TailwindStrategy implements IStyleStrategy {
   readonly name = "tailwind";
   private readonly options: TailwindStrategyOptions;
+  /** cva() 함수로 생성된 변수 이름 추적 (className 사용 시 호출 필요) */
+  readonly cvaVariables = new Set<string>();
+  /** variant prop별 전체 옵션 목록 (cva variants 완전성 보장) */
+  private variantOptions = new Map<string, string[]>();
 
   constructor(options: TailwindStrategyOptions = {}) {
     this.options = {
       inlineCn: options.inlineCn ?? true,
       cnImportPath: options.cnImportPath ?? "@/lib/cn",
     };
+  }
+
+  /** 현재 UITree의 variant prop 옵션을 설정 */
+  setVariantOptions(options: Map<string, string[]>): void {
+    this.variantOptions = options;
   }
 
   /**
@@ -205,6 +214,7 @@ export class TailwindStrategy implements IStyleStrategy {
     if (hasDynamicStyles) {
       // cva() 함수로 base + variants 통합
       code = `const ${variableName} = cva(${this.wrapClassString(baseStr)}, {\n  variants: {\n${dynamicResult.code}\n  },\n});`;
+      this.cvaVariables.add(variableName);
     } else {
       // dynamic 없으면 plain string
       code = `const ${variableName} = ${this.wrapClassString(baseStr)};`;
@@ -297,6 +307,19 @@ export class TailwindStrategy implements IStyleStrategy {
 
       // compound prop은 cva variants로 표현 불가 → 건너뜀
       if (propName.includes("+")) continue;
+
+      // variantOptions에서 빠진 값을 빈 문자열로 채움 (cva 타입 완전성 보장)
+      const allOptions = this.variantOptions.get(propName);
+      if (allOptions) {
+        const existingValues = new Set([...valueMap.keys()]);
+        for (const opt of allOptions) {
+          if (!existingValues.has(opt)) {
+            const key = this.needsQuoting(opt) ? `"${opt}"` : opt;
+            entries.push(`        ${key}: "",`);
+          }
+        }
+      }
+
       // Figma prop 이름에서 제어 문자 제거 (backspace 등)
       const safePropName = propName.replace(/[\x00-\x1f\x7f]/g, "");
       const propKey = this.needsQuoting(safePropName) ? `"${safePropName}"` : safePropName;
@@ -354,6 +377,14 @@ export class TailwindStrategy implements IStyleStrategy {
       return {
         attributeName: "className",
         valueCode: `{cn(${styleVariableName}, conditionalClasses)}`,
+      };
+    }
+
+    // cva() 함수 변수는 호출이 필요
+    if (this.cvaVariables.has(styleVariableName)) {
+      return {
+        attributeName: "className",
+        valueCode: `{${styleVariableName}()}`,
       };
     }
 

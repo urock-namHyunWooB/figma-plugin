@@ -25,7 +25,7 @@
  * └─────────────────────────────────────────────────────────────────┘
  */
 
-import type { UITree, SlotPropDefinition } from "../../../types/types";
+import type { UITree, UINode, SlotPropDefinition, VariantPropDefinition } from "../../../types/types";
 import type {
   ICodeEmitter,
   EmittedCode,
@@ -140,6 +140,13 @@ export class ReactEmitter implements ICodeEmitter {
     deps: Map<string, UITree>
   ): Promise<BundledResult> {
     const filteredDeps = this.filterSlotDependencies(main, deps);
+
+    // dependency의 variant prop options를 parent binding에 맞춰 확장
+    this.propagateVariantOptions(main, filteredDeps);
+
+    // dependency의 native prop rename을 parent binding에 반영
+    this.propagateNativeRenames(main, filteredDeps);
+
     const result = await this.emitAll(main, filteredDeps);
     const depArray = Array.from(result.dependencies.values());
     const rawCode = this.bundler.bundle(result.main, depArray);
@@ -160,6 +167,158 @@ export class ReactEmitter implements ICodeEmitter {
    * Slot prop으로 변환된 INSTANCE의 원본 dependency 컴포넌트를 번들에서 제외.
    * slot은 외부에서 주입받으므로 dependency 코드가 불필요.
    */
+  /**
+   * 부모의 variant prop options를 dependency에 전파.
+   * 부모가 state={"Error"|"Normal"|...}를 전달하는데 dependency가 {"Normal"|...}만 수용하면 타입 에러.
+   */
+  private propagateVariantOptions(
+    main: UITree,
+    deps: Map<string, UITree>
+  ): void {
+    // main의 prop name → 확장 정보 매핑
+    const mainPropInfo = new Map<string, { type: string; options?: Set<string>; extraValues?: string[] }>();
+    for (const p of main.props) {
+      if (p.type === "variant") {
+        mainPropInfo.set(p.name, { type: "variant", options: new Set((p as VariantPropDefinition).options) });
+      } else if (p.type === "boolean" && (p as any).extraValues?.length) {
+        mainPropInfo.set(p.name, { type: "boolean", extraValues: (p as any).extraValues });
+      }
+    }
+    if (mainPropInfo.size === 0) return;
+
+    // dep name → UITree 역매핑 (componentId가 없으면 name으로 매칭)
+    const depsByName = new Map<string, UITree[]>();
+    for (const [, dep] of deps) {
+      const name = dep.componentName ?? dep.root?.name ?? "";
+      if (!depsByName.has(name)) depsByName.set(name, []);
+      depsByName.get(name)!.push(dep);
+    }
+
+    // main tree에서 component 노드의 bindings 수집 → dep name별로 필요한 options
+    // dep name → { attrName → variant options to add } + { attrName → extraValues to add }
+    const depVariantExtensions = new Map<string, Map<string, Set<string>>>();
+    const depExtraValues = new Map<string, Map<string, string[]>>();
+
+    const walkNode = (node: UINode) => {
+      if (node.type === "component" && node.bindings?.attrs) {
+        const compName = node.name ?? "";
+        if (depsByName.has(compName)) {
+          for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
+            if ("prop" in source) {
+              const info = mainPropInfo.get(source.prop);
+              if (!info) continue;
+              if (info.type === "variant" && info.options) {
+                if (!depVariantExtensions.has(compName)) depVariantExtensions.set(compName, new Map());
+                const propMap = depVariantExtensions.get(compName)!;
+                if (!propMap.has(attrName)) propMap.set(attrName, new Set());
+                for (const v of info.options) propMap.get(attrName)!.add(v);
+              }
+              if (info.type === "boolean" && info.extraValues) {
+                if (!depExtraValues.has(compName)) depExtraValues.set(compName, new Map());
+                depExtraValues.get(compName)!.set(attrName, info.extraValues);
+              }
+            }
+          }
+        }
+      }
+      if ("children" in node && node.children) {
+        for (const child of node.children) walkNode(child);
+      }
+    };
+    walkNode(main.root);
+
+    // dependency props 확장
+    for (const [depName, propMap] of depVariantExtensions) {
+      const depTrees = depsByName.get(depName);
+      if (!depTrees) continue;
+      for (const dep of depTrees) {
+        for (const prop of dep.props) {
+          if (prop.type === "variant") {
+            const extensions = propMap.get(prop.name);
+            if (extensions) {
+              const variantProp = prop as VariantPropDefinition;
+              const existing = new Set(variantProp.options);
+              for (const v of extensions) {
+                if (!existing.has(v)) variantProp.options.push(v);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // boolean extraValues 전파
+    for (const [depName, extraMap] of depExtraValues) {
+      const depTrees = depsByName.get(depName);
+      if (!depTrees) continue;
+      for (const dep of depTrees) {
+        for (const prop of dep.props) {
+          if (prop.type === "boolean") {
+            const extras = extraMap.get(prop.name);
+            if (extras) {
+              const boolProp = prop as any;
+              if (!boolProp.extraValues) boolProp.extraValues = [];
+              for (const v of extras) {
+                if (!boolProp.extraValues.includes(v)) boolProp.extraValues.push(v);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * dependency의 native prop rename을 parent의 binding에 반영.
+   * 예: input dependency에서 checked→customChecked rename 시,
+   *     parent의 <Input checked={checked}> → <Input customChecked={checked}>
+   */
+  private propagateNativeRenames(
+    main: UITree,
+    deps: Map<string, UITree>
+  ): void {
+    // dep name → { originalProp → renamedProp } 매핑
+    const depRenameMap = new Map<string, Map<string, string>>();
+    for (const [, dep] of deps) {
+      const rootType = (dep.root as any)?.type as string;
+      const nativeAttrs = NATIVE_ATTRS_BY_ELEMENT[rootType];
+      if (!nativeAttrs) continue;
+
+      const renames = new Map<string, string>();
+      for (const prop of dep.props) {
+        if (nativeAttrs.has(prop.name) && !prop.nativeAttribute) {
+          const newName = "custom" + prop.name.charAt(0).toUpperCase() + prop.name.slice(1);
+          renames.set(prop.name, newName);
+        }
+      }
+      if (renames.size > 0) {
+        const depName = dep.componentName ?? dep.root?.name ?? "";
+        depRenameMap.set(depName, renames);
+      }
+    }
+    if (depRenameMap.size === 0) return;
+
+    // main tree의 component 노드 binding 업데이트
+    const walkNode = (node: UINode) => {
+      if (node.type === "component" && node.bindings?.attrs) {
+        const compName = node.name ?? "";
+        const renames = depRenameMap.get(compName);
+        if (renames) {
+          const newAttrs: Record<string, any> = {};
+          for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
+            const renamed = renames.get(attrName);
+            newAttrs[renamed ?? attrName] = source;
+          }
+          node.bindings.attrs = newAttrs;
+        }
+      }
+      if ("children" in node && node.children) {
+        for (const child of node.children) walkNode(child);
+      }
+    };
+    walkNode(main.root);
+  }
+
   private filterSlotDependencies(
     main: UITree,
     deps: Map<string, UITree>

@@ -34,6 +34,22 @@ export class StylesGenerator {
     // Step 1: 변수명 추적 초기화 (새 컴포넌트마다 리셋)
     this.usedNames.clear();
 
+    // Step 1.5: Tailwind variant options 설정 (cva 타입 완전성 보장)
+    if ("setVariantOptions" in styleStrategy) {
+      const variantOptions = new Map<string, string[]>();
+      for (const p of uiTree.props) {
+        if (p.type === "variant" && (p as any).options) {
+          variantOptions.set(p.name, (p as any).options);
+        } else if (p.type === "boolean") {
+          // boolean prop의 cva variants: true, false + extraValues
+          const opts = ["true", "false"];
+          if ((p as any).extraValues) opts.push(...(p as any).extraValues);
+          variantOptions.set(p.name, opts);
+        }
+      }
+      (styleStrategy as { setVariantOptions(m: Map<string, string[]>): void }).setVariantOptions(variantOptions);
+    }
+
     // Step 2: 트리 순회하며 스타일 수집
     const { styleResults, nodeStyleMap } = this.collectAllStyles(
       uiTree.root,
@@ -43,6 +59,17 @@ export class StylesGenerator {
 
     // Step 3: 변수명 고유성 보장 (충돌 감지 및 카운터 추가)
     this.ensureUniqueNames(styleResults, nodeStyleMap);
+
+    // Step 3.5: Tailwind cva 변수 추적 재구축 (리네임 후 이름 동기화)
+    if ("cvaVariables" in styleStrategy) {
+      const cvaSet = (styleStrategy as { cvaVariables: Set<string> }).cvaVariables;
+      cvaSet.clear();
+      for (const r of styleResults) {
+        if (!r.isEmpty && r.code?.includes("= cva(")) {
+          cvaSet.add(r.variableName);
+        }
+      }
+    }
 
     // Step 4: 빈 스타일 제거 및 코드 조합
     const nonEmptyResults = styleResults.filter((r) => !r.isEmpty && r.code);
