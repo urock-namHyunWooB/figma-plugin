@@ -52,6 +52,25 @@ export class JsxGenerator {
       uiTree.props.filter((p) => p.type === "slot").map((p) => p.name)
     );
 
+    // Boolean props 설정 (스타일 참조에서 삼항 변환용)
+    // extraValues가 있는 boolean prop (예: boolean | "indeterminate")은 값이 3개 이상이므로 Record + String() 유지
+    this.booleanProps = new Set([
+      ...uiTree.props
+        .filter((p) => p.type === "boolean" && !(p as any).extraValues?.length)
+        .map((p) => p.name),
+      // boolean stateVars (예: open from useState(false))
+      ...(uiTree.stateVars || [])
+        .filter((sv) => sv.initialValue === "false" || sv.initialValue === "true")
+        .map((sv) => sv.name),
+    ]);
+
+    // extraValues가 있는 boolean props (Record 인덱스 시 String() 필요)
+    this.booleanWithExtras = new Set(
+      uiTree.props
+        .filter((p) => p.type === "boolean" && (p as any).extraValues?.length)
+        .map((p) => p.name)
+    );
+
     // Prop rename 매핑 설정 (sourceKey → name)
     this.propRenameMap = new Map(
       uiTree.props.map((p) => [p.sourceKey, p.name])
@@ -161,6 +180,12 @@ export default ${componentName}`;
 
   // 현재 UITree의 slot props를 추적 (generate에서 설정)
   private static slotProps: Set<string> = new Set();
+
+  // 현재 UITree의 boolean props를 추적 (스타일 참조 삼항 변환용)
+  private static booleanProps: Set<string> = new Set();
+
+  // extraValues가 있는 boolean props (Record 인덱스 시 String() 필요)
+  private static booleanWithExtras: Set<string> = new Set();
 
   // sourceKey → name 매핑 (Figma prop 이름 → React prop 이름)
   private static propRenameMap: Map<string, string> = new Map();
@@ -1202,17 +1227,29 @@ ${indentStr}</${tag}>`;
       const safeName = parts
         .map((p, i) => (i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)))
         .join("");
-      // slot prop(React.ReactNode)은 truthy/falsy → "true"/"false" 문자열로 변환
+      // slot/boolean prop은 truthy/falsy → "true"/"false" 문자열로 변환
       const lookupParts = parts.map((p) =>
-        this.slotProps.has(p) ? `\${${p} ? "true" : "false"}` : `\${${p}}`
+        (this.slotProps.has(p) || this.booleanProps.has(p))
+          ? `\${${p} ? "true" : "false"}`
+          : `\${${p}}`
       ).join("+");
       return `${styleVarName}_${safeName}Styles?.[\`${lookupParts}\`]`;
     }
     const safeProp = prop.replace(/[\x00-\x1f\x7f]/g, "");
+    // slot prop → truthy/falsy 삼항
     if (this.slotProps.has(safeProp)) {
-      return `${styleVarName}_${safeProp}Styles?.[${safeProp} ? "true" : "false"]`;
+      return `${safeProp} ? ${styleVarName}_${safeProp}Styles?.["true"] : ${styleVarName}_${safeProp}Styles?.["false"]`;
     }
-    return `${styleVarName}_${safeProp}Styles?.[String(${safeProp})]`;
+    // pure boolean prop → 삼항
+    if (this.booleanProps.has(safeProp)) {
+      return `${safeProp} ? ${styleVarName}_${safeProp}Styles?.["true"] : ${styleVarName}_${safeProp}Styles?.["false"]`;
+    }
+    // boolean + extraValues 또는 boolean stateVar → String() 변환 필요
+    if (this.booleanWithExtras.has(safeProp)) {
+      return `${styleVarName}_${safeProp}Styles?.[String(${safeProp})]`;
+    }
+    // string variant prop → 직접 인덱스 (String() 불필요)
+    return `${styleVarName}_${safeProp}Styles?.[${safeProp}]`;
   }
 
   /**

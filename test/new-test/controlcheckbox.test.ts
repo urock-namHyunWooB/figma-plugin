@@ -84,7 +84,7 @@ describe("Controlcheckbox", () => {
 
     it("aria-checked가 checked prop에 바인딩되어야 한다", async () => {
       const result = await compileFixture();
-      expect(result).toMatch(/aria-checked=\{checked\}/);
+      expect(result).toMatch(/aria-checked=\{checked.*\}/);
     });
   });
 

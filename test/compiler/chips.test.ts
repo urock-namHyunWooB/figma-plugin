@@ -69,7 +69,7 @@ describe("Chips 컴파일 테스트", () => {
 
     it("color prop이 스타일 선택에 바인딩되어야 한다", async () => {
       const code = await getCompiledCode();
-      expect(code).toMatch(/colorStyles\?\.\[String\(color\)\]/);
+      expect(code).toMatch(/colorStyles\?\.\[color\]/);
     });
 
     it("colorStyles에 background가 포함되어야 한다 (color별 배경색 변경)", async () => {
