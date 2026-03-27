@@ -340,23 +340,19 @@ export class DynamicStyleDecomposer {
           values.add(String(dv.style[cssKey]));
         }
         if (allPresent && values.size === 1) {
+          const rawUniformValue = [...valueMap.values()][0].style[cssKey];
+
           if (base && !(cssKey in base)) {
-            // base에 없을 때: 다른 prop 그룹이 이 값을 커버하는지 확인
-            const uniformValue = normalizeCssValue(String([...values][0]));
-            const otherGroupValues = new Set<string>();
-            for (const [otherProp, otherMap] of result) {
-              if (otherProp === propName) continue;
-              for (const dv of otherMap.values()) {
-                if (cssKey in dv.style) {
-                  otherGroupValues.add(normalizeCssValue(String(dv.style[cssKey])));
-                }
-              }
-            }
-            // 다른 그룹에 이 CSS 키가 아예 없거나, uniform 값이 다른 그룹에 없으면 유지
-            // (제거 시 해당 값의 source가 사라짐)
-            if (otherGroupValues.size === 0 || !otherGroupValues.has(uniformValue)) {
-              continue;
-            }
+            // base에 없을 때: 다른 prop 그룹이 이 CSS 키를 소유하는지 확인
+            const ownedByOther = [...result.entries()].some(
+              ([otherProp, otherMap]) =>
+                otherProp !== propName &&
+                [...otherMap.values()].some((dv) => cssKey in dv.style)
+            );
+            if (!ownedByOther) continue; // 유일한 source → 유지
+
+            // uniform 값을 base에 추가 (compound 그룹에 빠진 조합의 fallback)
+            base[cssKey] = rawUniformValue;
           }
           // uniform이므로 제거
           for (const dv of valueMap.values()) {

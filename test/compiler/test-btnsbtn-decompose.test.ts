@@ -15,7 +15,7 @@ import FigmaCodeGenerator from "@code-generator2";
  * 3. 둘 다 동시에 올바르게 작동해야 함
  */
 function compileFixture(options = {}) {
-  const fixturePath = path.resolve(__dirname, "../fixtures/failing/Btnsbtn.json");
+  const fixturePath = path.resolve(__dirname, "../fixtures/button/Btnsbtn.json");
   const raw = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
   return new FigmaCodeGenerator(raw, options).compile();
 }
@@ -36,6 +36,12 @@ describe("Btnsbtn compound decomposition", () => {
       expect(sizeStylesMatch).toBeTruthy();
       expect(sizeStylesMatch![1]).toContain("height");
       expect(sizeStylesMatch![1]).toContain("padding");
+    });
+
+    it("sizeStyles에 background가 없어야 한다 (background는 state+style+tone에 귀속)", () => {
+      const sizeStylesMatch = code.match(/sizeStyles[^=]*=\s*\{([\s\S]*?)\n\};/);
+      expect(sizeStylesMatch).toBeTruthy();
+      expect(sizeStylesMatch![1]).not.toContain("background");
     });
 
     it("sizeStyles에 box-shadow가 없어야 한다 (box-shadow는 tone에 귀속)", () => {
