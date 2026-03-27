@@ -50,6 +50,27 @@ export class StylesGenerator {
       (styleStrategy as { setVariantOptions(m: Map<string, string[]>): void }).setVariantOptions(variantOptions);
     }
 
+    // Step 1.6: Emotion boolean/slot prop 이름 설정 (개별 True/False 변수 생성용)
+    if ("setBooleanNames" in styleStrategy) {
+      const boolNames = new Set<string>();
+      for (const p of uiTree.props) {
+        if (p.type === "boolean" && !(p as any).extraValues?.length) {
+          boolNames.add(p.name);
+        }
+        // slot prop도 truthy/falsy 패턴 동일
+        if (p.type === "slot") {
+          boolNames.add(p.name);
+        }
+      }
+      // boolean stateVars (예: open from useState(false))
+      for (const sv of uiTree.stateVars || []) {
+        if (sv.initialValue === "false" || sv.initialValue === "true") {
+          boolNames.add(sv.name);
+        }
+      }
+      (styleStrategy as { setBooleanNames(s: Set<string>): void }).setBooleanNames(boolNames);
+    }
+
     // Step 2: 트리 순회하며 스타일 수집
     const { styleResults, nodeStyleMap } = this.collectAllStyles(
       uiTree.root,
@@ -190,6 +211,13 @@ export class StylesGenerator {
     //    예: btnCss_sizeStyles → btnCss_2_sizeStyles
     code = code.replace(
       new RegExp(`\\b${escaped}(_\\w+Styles)\\b`, "g"),
+      `${newName}$1`
+    );
+
+    // 1b. Boolean 개별 변수 치환: oldName_xxxTrue/False → newName_xxxTrue/False
+    //     예: btnCss_disableTrue → btnCss_2_disableTrue
+    code = code.replace(
+      new RegExp(`\\b${escaped}(_\\w+(?:True|False))\\b`, "g"),
       `${newName}$1`
     );
 

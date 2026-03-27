@@ -1236,19 +1236,16 @@ ${indentStr}</${tag}>`;
       return `${styleVarName}_${safeName}Styles?.[\`${lookupParts}\`]`;
     }
     const safeProp = prop.replace(/[\x00-\x1f\x7f]/g, "");
-    // slot prop → truthy/falsy 삼항
-    if (this.slotProps.has(safeProp)) {
-      return `${safeProp} ? ${styleVarName}_${safeProp}Styles?.["true"] : ${styleVarName}_${safeProp}Styles?.["false"]`;
+    const capProp = safeProp.charAt(0).toUpperCase() + safeProp.slice(1);
+    // boolean prop / slot prop → 개별 변수 삼항 참조
+    if (this.booleanProps.has(safeProp) || this.slotProps.has(safeProp)) {
+      return `${safeProp} ? ${styleVarName}_${safeProp}True : ${styleVarName}_${safeProp}False`;
     }
-    // pure boolean prop → 삼항
-    if (this.booleanProps.has(safeProp)) {
-      return `${safeProp} ? ${styleVarName}_${safeProp}Styles?.["true"] : ${styleVarName}_${safeProp}Styles?.["false"]`;
-    }
-    // boolean + extraValues 또는 boolean stateVar → String() 변환 필요
+    // boolean + extraValues (예: boolean | "indeterminate") → String() 변환
     if (this.booleanWithExtras.has(safeProp)) {
       return `${styleVarName}_${safeProp}Styles?.[String(${safeProp})]`;
     }
-    // string variant prop → 직접 인덱스 (String() 불필요)
+    // string variant prop → 직접 인덱스
     return `${styleVarName}_${safeProp}Styles?.[${safeProp}]`;
   }
 

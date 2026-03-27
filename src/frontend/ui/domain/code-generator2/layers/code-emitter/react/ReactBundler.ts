@@ -208,7 +208,8 @@ export class ReactBundler {
   private renameCssVariables(code: string, componentName: string): string {
     const prefix = componentName.replace(/\s+/g, "");
     // const 선언에서만 스타일 변수명 수집 (타입 이름 SerializedStyles 등 오매칭 방지)
-    const styleVarPattern = /\bconst\s+(\w+(?:Css|Styles|Classes)(?:_\d+)?)\b/g;
+    // Css/Styles/Classes + 선택적 _N 접미사, 또는 Css_propTrue/False (boolean 개별 변수)
+    const styleVarPattern = /\bconst\s+(\w+(?:Css|Styles|Classes)(?:_\d+)?(?:_\w+(?:True|False))?)\b/g;
     const foundVars = new Set<string>();
 
     let match;

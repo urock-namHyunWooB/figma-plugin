@@ -453,10 +453,10 @@ describe("Dropdowngeneric", () => {
 
   it("open 상태일 때 root gap이 8px로 변경되어야 한다", async () => {
     const result = await compileFixture();
-    // openStyles가 정의되어야 함
-    expect(result).toMatch(/_openStyles/);
-    // JSX css 배열에서 openStyles가 참조되어야 함
-    expect(result).toMatch(/open\s*\?\s*.*_openStyles\?\.\["true"\]\s*:\s*.*_openStyles\?\.\["false"\]/s);
+    // open boolean 개별 변수가 정의되어야 함
+    expect(result).toMatch(/_openTrue/);
+    // JSX css 배열에서 삼항으로 참조되어야 함
+    expect(result).toMatch(/open\s*\?\s*.*_openTrue\s*:\s*.*_openFalse/s);
   });
 
   // ── 불필요 prop 미노출 ──
@@ -497,12 +497,12 @@ describe("Dropdowngeneric", () => {
   it("open 상태라면 삼각형 화살표는 파란색이 된다", async () => {
     const result = await compileFixture();
 
-    // 드롭다운 wrapper의 openStyles에서 svg path fill이 파란색(#628cf5)으로 변경
-    const openStylesMatch = result.match(
-      /DropdownCss_openStyles[^=]*=\s*\{([\s\S]*?)\n\};/
+    // 드롭다운 wrapper의 openTrue에서 svg path fill이 파란색(#628cf5)으로 변경
+    const openTrueMatch = result.match(
+      /DropdownCss_openTrue\s*=\s*css`([\s\S]*?)`;/
     );
-    expect(openStylesMatch).toBeTruthy();
-    expect(openStylesMatch![1]).toMatch(/svg path[\s\S]*?fill:\s*#628cf5/);
+    expect(openTrueMatch).toBeTruthy();
+    expect(openTrueMatch![1]).toMatch(/svg path[\s\S]*?fill:\s*#628cf5/);
   });
 
   // ── states variant prop 미노출 ──

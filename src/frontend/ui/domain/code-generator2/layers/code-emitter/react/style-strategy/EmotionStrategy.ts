@@ -28,6 +28,13 @@ import { groupDynamicByProp, type DecomposedResult, type DecomposedValue } from 
 
 export class EmotionStrategy implements IStyleStrategy {
   readonly name = "emotion";
+  /** boolean prop/stateVar 이름 (개별 변수 생성 + 삼항 참조용) */
+  private booleanNames = new Set<string>();
+
+  /** boolean prop/stateVar 이름 설정 */
+  setBooleanNames(names: Set<string>): void {
+    this.booleanNames = names;
+  }
 
   /** 숫자값에 px 단위를 붙이지 않는 CSS 속성 */
   private static readonly UNITLESS_PROPERTIES = new Set([
@@ -141,17 +148,35 @@ export class EmotionStrategy implements IStyleStrategy {
     const codeParts: string[] = [];
 
     for (const [propName, valueMap] of groups) {
-      const entries = this.buildVariantEntries(valueMap);
       // Figma prop 이름에서 제어 문자 제거 + compound prop 처리 ("style+tone" → "styleTone")
       const safePropName = propName
         .replace(/[\x00-\x1f\x7f]/g, "")
         .replace(/\+(\w)/g, (_, c: string) => c.toUpperCase());
-      const varName = `${baseVarName}_${safePropName}Styles`;
-      if (entries.length > 0) {
-        codeParts.push(`const ${varName}: Record<string, SerializedStyles> = {\n${entries.join("\n")}\n};`);
+
+      // boolean prop → 개별 변수 (삼항 참조용)
+      if (!propName.includes("+") && this.booleanNames.has(propName)) {
+        for (const boolVal of ["true", "false"]) {
+          const capBool = boolVal.charAt(0).toUpperCase() + boolVal.slice(1);
+          const varName = `${baseVarName}_${safePropName}${capBool}`;
+          const entry = valueMap.get(boolVal);
+          if (entry) {
+            const cssCode = this.buildSingleCssBlock(entry);
+            codeParts.push(cssCode
+              ? `const ${varName} = ${cssCode};`
+              : `const ${varName} = undefined;`);
+          } else {
+            codeParts.push(`const ${varName} = undefined;`);
+          }
+        }
       } else {
-        // 빈 맵이라도 생성 (JSX에서 참조 시 ReferenceError 방지)
-        codeParts.push(`const ${varName}: Record<string, SerializedStyles> = {};`);
+        // variant/compound prop → Record 방식
+        const entries = this.buildVariantEntries(valueMap);
+        const varName = `${baseVarName}_${safePropName}Styles`;
+        if (entries.length > 0) {
+          codeParts.push(`const ${varName}: Record<string, SerializedStyles> = {\n${entries.join("\n")}\n};`);
+        } else {
+          codeParts.push(`const ${varName}: Record<string, SerializedStyles> = {};`);
+        }
       }
     }
 
@@ -263,6 +288,21 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
     }
 
     return entries;
+  }
+
+  /** 단일 DecomposedValue → css`...` 문자열 */
+  private buildSingleCssBlock(entry: DecomposedValue): string | null {
+    let styleStr = this.objectToStyleString(entry.style);
+    if (entry.pseudo) {
+      for (const [selector, pseudoStyle] of Object.entries(entry.pseudo)) {
+        const pStr = this.objectToStyleString(pseudoStyle as Record<string, string | number>);
+        if (pStr) {
+          styleStr += `\n\n&${selector} {\n${this.indent(pStr, 2)}\n}`;
+        }
+      }
+    }
+    if (!styleStr) return null;
+    return `css\`\n${this.indent(styleStr, 4)}\n  \``;
   }
 
   private needsQuoting(key: string): boolean {
