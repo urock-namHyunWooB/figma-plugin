@@ -807,12 +807,13 @@ describe("Frame", () => {
 
   it("장식 노드(Card Background)가 children 뒤에 유지되어야 한다", async () => {
     const result = await compileFixture();
-    expect(result).toContain("Card Background");
-
-    // {children}이 Card Background보다 먼저 나와야 함
-    const childrenIdx = result.indexOf("{children}");
-    const cardBgIdx = result.indexOf("Card Background");
-    expect(childrenIdx).toBeLessThan(cardBgIdx);
+    // JSX return 블록 내에서 {children}이 장식 span보다 먼저 나와야 함
+    const jsxBlock = result.slice(result.lastIndexOf("return ("));
+    const childrenIdx = jsxBlock.indexOf("{children}");
+    const decorIdx = jsxBlock.indexOf("BackgroundCss");
+    expect(childrenIdx).toBeGreaterThan(-1);
+    expect(decorIdx).toBeGreaterThan(-1);
+    expect(childrenIdx).toBeLessThan(decorIdx);
   });
 
   it("variant props(color, stroke, type)가 정상 생성되어야 한다", async () => {

@@ -807,8 +807,8 @@ ${indentStr}</div>`;
       return `${indentStr}<span${attrs}>${jsxSvg}</span>`;
     }
 
-    // placeholder
-    return `${indentStr}<span${attrs}>{/* vector: ${node.name} */}</span>`;
+    // SVG 없는 VECTOR 노드 — CSS로만 표현 (self-closing)
+    return `${indentStr}<span${attrs} />`;
   }
 
   /**
