@@ -38,6 +38,12 @@ describe("Btnsbtn compound decomposition", () => {
       expect(sizeStylesMatch![1]).toContain("padding");
     });
 
+    it("sizeStyles에 box-shadow가 없어야 한다 (box-shadow는 tone에 귀속)", () => {
+      const sizeStylesMatch = code.match(/sizeStyles[^=]*=\s*\{([\s\S]*?)\n\};/);
+      expect(sizeStylesMatch).toBeTruthy();
+      expect(sizeStylesMatch![1]).not.toContain("box-shadow");
+    });
+
     it("sizeStyles에 L/M/S별 올바른 height가 있어야 한다", () => {
       expect(code).toMatch(/L:[\s\S]*?height:\s*56px/);
       expect(code).toMatch(/M:[\s\S]*?height:\s*40px/);

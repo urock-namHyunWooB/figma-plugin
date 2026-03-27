@@ -340,12 +340,25 @@ export class DynamicStyleDecomposer {
           values.add(String(dv.style[cssKey]));
         }
         if (allPresent && values.size === 1) {
-          // base에 해당 속성이 없으면: 유일한 source → 유지
           if (base && !(cssKey in base)) {
-            continue;
+            // base에 없을 때: 다른 prop 그룹이 이 값을 커버하는지 확인
+            const uniformValue = normalizeCssValue(String([...values][0]));
+            const otherGroupValues = new Set<string>();
+            for (const [otherProp, otherMap] of result) {
+              if (otherProp === propName) continue;
+              for (const dv of otherMap.values()) {
+                if (cssKey in dv.style) {
+                  otherGroupValues.add(normalizeCssValue(String(dv.style[cssKey])));
+                }
+              }
+            }
+            // 다른 그룹에 이 CSS 키가 아예 없거나, uniform 값이 다른 그룹에 없으면 유지
+            // (제거 시 해당 값의 source가 사라짐)
+            if (otherGroupValues.size === 0 || !otherGroupValues.has(uniformValue)) {
+              continue;
+            }
           }
-          // base에 있거나 base 없음 → uniform이므로 제거
-          // (base가 default 제공, 다른 dimension이 override 담당)
+          // uniform이므로 제거
           for (const dv of valueMap.values()) {
             delete dv.style[cssKey];
           }
