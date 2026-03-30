@@ -385,11 +385,12 @@ findControllingProp("background", matrix, allProps):
       └── 그룹 간 값 차이 필수 (모두 같으면 제어 X)
     → 첫 번째 일관적 prop 발견 시 즉시 반환
 
-2차: Compound prop 일관성 (bestSingleRatio ≤ 50% 일 때만)
-    bestSingleRatio = max(각 prop의 일관적 그룹 수 / 전체 그룹 수)
-    → 과반수 이하 시 compound 시도
+2차: Compound prop 일관성
     → 2-prop 조합 먼저, 3-prop 조합 순서
-    → isCompoundConsistent() 통과 시 "propA+propB" 반환
+    → 같은 prop 수에서 여러 compound가 consistent하면
+      min-groups 선택: 그룹 수가 가장 적은 compound를 반환
+      (불필요한 prop이 포함된 compound는 그룹이 더 많아짐)
+    → 최적 compound 반환
 
 3차: Best-fit (폴백)
     일관적 그룹 비율이 가장 높은 prop 선택 (절대 수 아닌 비율)
@@ -444,6 +445,24 @@ groups = {
 그룹 간 값: {"blue", "transparent", "red"} → 차이 존재 ✓
 → compound 일관적
 ```
+
+#### Min-Groups 선택 — 동일 prop 수 compound 간 우선순위
+
+같은 prop 수(예: 3-prop)에서 여러 compound가 `isCompoundConsistent`를 통과할 때,
+**생성하는 그룹 수가 가장 적은 compound를 선택**한다.
+
+```
+CSS 속성 "color"에 대해 3-prop compound 후보:
+  state+size+tone   → 13 groups (6 multi, 7 single)  ← 불필요한 size가 그룹을 쪼갬
+  state+style+tone  →  9 groups (5 multi, 4 single)  ← 실제 제어 구조 반영
+
+→ min-groups: state+style+tone 선택 ✓
+```
+
+**왜 그룹이 적은 게 정답인가**: 불필요한 prop이 compound에 포함되면 해당 prop의 값 수만큼 그룹이 추가로 분할된다.
+예를 들어 color가 `style+tone`에 의해 결정되고 `size`와 무관할 때, `size`를 포함하면 size=L/M/S로 3배 분할이 일어나지만 CSS 값은 동일 — 의미 없는 분할이다.
+
+**부작용이 없는 이유**: 불필요한 prop이 빠져도 isCompoundConsistent의 4가지 조건은 여전히 충족된다. 필요한 prop이 빠지면 그룹 내부 일관성이 깨져서 isCompoundConsistent가 실패한다. 따라서 min-groups가 선택하는 compound는 항상 유효하다.
 
 #### 결과 맵 구성
 

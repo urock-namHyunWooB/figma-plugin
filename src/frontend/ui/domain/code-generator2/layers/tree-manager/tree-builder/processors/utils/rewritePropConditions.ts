@@ -549,9 +549,10 @@ function processPseudoGroup(
     return;
   }
 
-  // b. state-varying CSS 키 계산 (default vs pseudo)
+  // b. state-varying CSS 키 계산 (default vs pseudo + kept)
   const stateVaryingKeys = new Set<string>();
-  for (const pe of pseudoEntries) {
+  const allStateEntriesToCompare = [...pseudoEntries, ...keptStateEntries];
+  for (const pe of allStateEntriesToCompare) {
     for (const key of Object.keys(pe.style)) {
       if (defaultEntry.style[key] !== pe.style[key]) {
         stateVaryingKeys.add(key);

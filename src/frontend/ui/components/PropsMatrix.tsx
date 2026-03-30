@@ -49,10 +49,7 @@ function buildTableData(
       if (bp.extraValues) vals.push(...bp.extraValues);
       return { name: bp.name, values: vals };
     }),
-    ...slotProps.map((sp) => ({
-      name: sp.name,
-      values: [true, false] as (string | boolean)[],
-    })),
+    // SLOT prop은 별도 토글로 제어하므로 variant 축에서 제외
   ];
 
   // 축에 포함된 SLOT prop의 mockup 값 보존 (true→mockup, false→undefined)

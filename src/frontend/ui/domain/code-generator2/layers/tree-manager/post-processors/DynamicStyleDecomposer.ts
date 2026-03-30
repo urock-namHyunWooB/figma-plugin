@@ -635,27 +635,43 @@ export class DynamicStyleDecomposer {
     }
 
     // 2차: 복합 prop — N-prop 조합이 일관적인지 확인 (2-prop → 3-prop 순)
+    // 같은 prop 수에서 여러 후보가 consistent하면 그룹 수가 최소인 것 선택
+    // (불필요한 prop이 포함된 compound는 그룹이 더 많아짐)
     if (allProps.length >= 2) {
-      // 2-prop compound
       const n = allProps.length;
+
+      // 2-prop compound
+      let best2: { name: string; groups: number } | null = null;
       for (let i = 0; i < n; i++) {
         for (let j = i + 1; j < n; j++) {
           if (this.isCompoundConsistent([allProps[i], allProps[j]], cssKey, matrix)) {
-            return `${allProps[i]}+${allProps[j]}`;
+            const groupCount = this.countCompoundGroups([allProps[i], allProps[j]], matrix);
+            const name = `${allProps[i]}+${allProps[j]}`;
+            if (!best2 || groupCount < best2.groups) {
+              best2 = { name, groups: groupCount };
+            }
           }
         }
       }
+      if (best2) return best2.name;
+
       // 3-prop compound
       if (n >= 3) {
+        let best3: { name: string; groups: number } | null = null;
         for (let i = 0; i < n; i++) {
           for (let j = i + 1; j < n; j++) {
             for (let k = j + 1; k < n; k++) {
               if (this.isCompoundConsistent([allProps[i], allProps[j], allProps[k]], cssKey, matrix)) {
-                return `${allProps[i]}+${allProps[j]}+${allProps[k]}`;
+                const groupCount = this.countCompoundGroups([allProps[i], allProps[j], allProps[k]], matrix);
+                const name = `${allProps[i]}+${allProps[j]}+${allProps[k]}`;
+                if (!best3 || groupCount < best3.groups) {
+                  best3 = { name, groups: groupCount };
+                }
               }
             }
           }
         }
+        if (best3) return best3.name;
       }
     }
 
@@ -802,6 +818,17 @@ export class DynamicStyleDecomposer {
     }
 
     return signatures.size > 1;
+  }
+
+  /** compound 조합이 생성하는 고유 그룹 수 계산 (min-groups 선택용) */
+  private static countCompoundGroups(props: string[], matrix: MatrixEntry[]): number {
+    const groups = new Set<string>();
+    for (const entry of matrix) {
+      const values = props.map((p) => entry.propValues.get(p));
+      if (values.some((v) => v === undefined)) continue;
+      groups.add(values.join("+"));
+    }
+    return groups.size;
   }
 
   /** 그룹 내 CSS 값이 모두 동일한지 확인 (absent는 무관으로 처리) */
