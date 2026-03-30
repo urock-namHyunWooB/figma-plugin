@@ -86,6 +86,46 @@ describe("Btnsbtn compound decomposition", () => {
       // 최소 filled+blue(628cf5), filled+red(ff8484), outlined+blue(f7f9fe), white(fff)
       expect(bgColors.size).toBeGreaterThanOrEqual(4);
     });
+
+    it("base 스타일에 #ff8484(filled+red 전용) 배경이 없어야 한다", () => {
+      // base에 특정 tone 전용 배경이 들어가면 다른 tone에서 빨간색이 노출됨
+      const baseMatch = code.match(/const btnCss = css`([\s\S]*?)`;/);
+      expect(baseMatch).toBeTruthy();
+      expect(baseMatch![1]).not.toContain("#ff8484");
+      expect(baseMatch![1]).not.toContain("#FF8484");
+    });
+
+    it("텍스트 color가 style을 포함하는 compound에 배치되어야 한다", () => {
+      // state+size+tone (style 누락) 대신 style이 포함된 compound에 배치
+      // style 없는 compound는 filled/outlined 구분 불가 → 색상 충돌
+      expect(code).not.toMatch(/stateSizeToneStyles/);
+      // style+tone 또는 state+style+tone에 텍스트 color가 있어야 함
+      const hasStyleTone = code.includes("styleToneStyles") || code.includes("stateStyleToneStyles");
+      expect(hasStyleTone).toBe(true);
+    });
+
+    it("default+filled+blue 텍스트는 흰색이어야 한다", () => {
+      // filled+blue → 흰색 텍스트, outlined+blue → 파란색 텍스트
+      // compound에 style이 없으면 이 구분이 안 됨
+      // styleToneStyles 또는 stateStyleToneStyles에서 filled+blue 텍스트 색상 확인
+      const textStyleMatch = code.match(/btnButtonCss_\w*[Ss]tyle\w*Styles[^=]*=\s*\{([\s\S]*?)\n\};/);
+      expect(textStyleMatch).toBeTruthy();
+      // filled+blue 또는 default+filled+blue 엔트리에 흰색이 있어야 함
+      const filledBlue = textStyleMatch![1].match(/"(?:default\+)?filled\+blue":\s*css`([\s\S]*?)`/);
+      expect(filledBlue).toBeTruthy();
+      expect(filledBlue![1]).toMatch(/color:.*#fff/i);
+    });
+
+    it("default+filled+red 배경은 compound에 있어야 한다 (base가 아님)", () => {
+      // stateStyleToneStyles에 default+filled+red 엔트리가 있어야 함
+      const compound = code.match(/stateStyleToneStyles[^=]*=\s*\{([\s\S]*?)\n\};/);
+      expect(compound).toBeTruthy();
+      expect(compound![1]).toContain("default+filled+red");
+      // 해당 엔트리에 background가 있어야 함
+      const entry = compound![1].match(/"default\+filled\+red":\s*css`([\s\S]*?)`/);
+      expect(entry).toBeTruthy();
+      expect(entry![1]).toMatch(/background:.*ff8484/i);
+    });
   });
 
   describe("Tailwind", () => {
