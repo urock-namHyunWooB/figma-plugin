@@ -160,6 +160,9 @@ export class ButtonHeuristic implements IHeuristic {
     // 자식 노드 semanticType 설정 + TEXT slot 감지
     this.applyChildSemanticTypes(ctx.tree, ctx);
 
+    // 아이콘 INSTANCE를 slot prop으로 변환 (TEXT 기준 좌/우 판별)
+    this.convertIconsToSlots(ctx);
+
     // TEXT slot 감지 및 props 추가
     this.detectAndAddTextSlots(ctx);
 
@@ -466,6 +469,63 @@ export class ButtonHeuristic implements IHeuristic {
       }
       return false;
     });
+  }
+
+  // ===========================================================================
+  // Icon Slot 변환
+  // ===========================================================================
+
+  /**
+   * 루트 직접 자식 중 아이콘 노드를 slot prop으로 변환
+   *
+   * TEXT 노드 위치를 기준으로 좌/우를 판별하여 leftIcon/rightIcon으로 이름.
+   * 같은 쪽에 여러 아이콘이 있으면(state별 다른 아이콘) 동일 slot prop을 부여하여
+   * cleanupSlotInstances에서 중복 제거.
+   */
+  private convertIconsToSlots(ctx: HeuristicContext): void {
+    const children = ctx.tree.children;
+    if (!children || children.length === 0) return;
+
+    // TEXT 노드의 인덱스 찾기
+    const textIndex = children.findIndex((c) => c.type === "TEXT");
+    if (textIndex === -1) return;
+
+    let hasLeft = false;
+    let hasRight = false;
+
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      if (child.semanticType !== "icon" && child.semanticType !== "icon-wrapper") continue;
+      // SlotProcessor가 이미 처리한 노드는 건너뜀 (visibility-controlled INSTANCE)
+      if (child.bindings?.content) continue;
+
+      const slotName = i < textIndex ? "leftIcon" : "rightIcon";
+      if (i < textIndex) hasLeft = true;
+      else hasRight = true;
+
+      if (!child.bindings) child.bindings = {};
+      child.bindings.content = { prop: slotName };
+    }
+
+    // slot prop 추가
+    if (hasLeft && !ctx.props.some((p) => p.name === "leftIcon")) {
+      ctx.props.push({
+        type: "slot",
+        name: "leftIcon",
+        defaultValue: null,
+        required: false,
+        sourceKey: "",
+      });
+    }
+    if (hasRight && !ctx.props.some((p) => p.name === "rightIcon")) {
+      ctx.props.push({
+        type: "slot",
+        name: "rightIcon",
+        defaultValue: null,
+        required: false,
+        sourceKey: "",
+      });
+    }
   }
 
   // ===========================================================================
