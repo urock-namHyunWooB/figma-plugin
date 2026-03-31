@@ -27,8 +27,9 @@ export class DynamicStyleOptimizer {
   ): DynamicEntry[] {
     let result = dynamic;
     result = this.removeRedundantPseudo(result);
-    // mergeIdenticalStyles: decomposer의 compound 선택이 입력 변화에 민감해서 비활성화.
-    // decomposer 안정성 개선 후 재활성화 필요.
+    // mergeIdenticalStyles: decomposer subset 체크 추가 후에도
+    // 실제 fixture(Btnsbtn, Controlcheckbox)에서 사이드 이펙트 발생.
+    // 더 깊은 조사 필요 — 별도 이슈로 다룸.
     result = this.removeEmptyEntries(result);
     return result;
   }
