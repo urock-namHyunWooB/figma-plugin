@@ -65,6 +65,23 @@ const CSS_TO_TAILWIND: Record<string, Record<string, string>> = {
     scroll: "overflow-scroll",
     visible: "overflow-visible",
   },
+  boxSizing: {
+    "border-box": "box-border",
+    "content-box": "box-content",
+  },
+  flexWrap: {
+    wrap: "flex-wrap",
+    nowrap: "flex-nowrap",
+    "wrap-reverse": "flex-wrap-reverse",
+  },
+  flexShrink: {
+    "0": "shrink-0",
+    "1": "shrink",
+  },
+  flexGrow: {
+    "0": "grow-0",
+    "1": "grow",
+  },
 };
 
 /**
@@ -93,6 +110,12 @@ const CSS_TO_PREFIX: Record<string, string> = {
   lineHeight: "leading",
   opacity: "opacity",
   zIndex: "z",
+  top: "top",
+  right: "right",
+  bottom: "bottom",
+  left: "left",
+  fontWeight: "font",
+  letterSpacing: "tracking",
 };
 
 /**
@@ -543,6 +566,13 @@ export class TailwindStrategy implements IStyleStrategy {
       if (camelProperty === "height") return "h-full";
     }
 
+    // backdrop-filter: blur(Npx) → backdrop-blur-[Npx]
+    if (camelProperty === "backdropFilter") {
+      const blurMatch = valueStr.match(/^blur\((.+)\)$/);
+      if (blurMatch) return `backdrop-blur-[${this.escapeArbitraryValue(blurMatch[1])}]`;
+      return `backdrop-blur-[${this.escapeArbitraryValue(valueStr)}]`;
+    }
+
     // 접두사 기반 변환
     const prefix = CSS_TO_PREFIX[camelProperty];
     if (prefix) {
@@ -553,20 +583,37 @@ export class TailwindStrategy implements IStyleStrategy {
       return `${prefix}-[${this.escapeArbitraryValue(valueStr)}]`;
     }
 
-    // 색상 관련
-    if (camelProperty === "color" || camelProperty === "fill") {
-      return `[${this.camelToKebab(camelProperty)}:${this.escapeArbitraryValue(valueStr)}]`;
-    }
+    // 색상: arbitrary property 사용
+    // bg-[var(...)]는 Tailwind가 background-image로 해석할 수 있으므로 [background-color:...] 사용
     if (camelProperty === "backgroundColor" || camelProperty === "background") {
       return `[background-color:${this.escapeArbitraryValue(valueStr)}]`;
     }
-
-    // font-family
-    if (camelProperty === "fontFamily") {
-      return `[font-family:${this.escapeArbitraryValue(valueStr)}]`;
+    if (camelProperty === "color") {
+      return `text-[${this.escapeArbitraryValue(valueStr)}]`;
+    }
+    if (camelProperty === "fill") {
+      return `fill-[${this.escapeArbitraryValue(valueStr)}]`;
     }
 
-    // 기타: arbitrary property
+    // border shorthand: border-[value]
+    if (camelProperty === "border") {
+      return `border-[${this.escapeArbitraryValue(valueStr)}]`;
+    }
+    if (camelProperty === "borderColor") {
+      return `border-[${this.escapeArbitraryValue(valueStr)}]`;
+    }
+
+    // font-family → font-[...]
+    if (camelProperty === "fontFamily") {
+      return `font-[${this.escapeArbitraryValue(valueStr)}]`;
+    }
+
+    // box-shadow → shadow-[...]
+    if (camelProperty === "boxShadow") {
+      return `shadow-[${this.escapeArbitraryValue(valueStr)}]`;
+    }
+
+    // 기타: arbitrary property fallback
     const cssKey = this.camelToKebab(camelProperty);
     return `[${cssKey}:${this.escapeArbitraryValue(valueStr)}]`;
   }

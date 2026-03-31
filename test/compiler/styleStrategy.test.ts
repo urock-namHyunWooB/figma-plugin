@@ -411,10 +411,10 @@ describe("TailwindStrategy CSS-to-Tailwind 변환 테스트", () => {
 
         if (!code) return;
 
-        // CSS 변수가 있는 경우 [background-color:var(...)] 형태로 변환되어야 함
+        // CSS 변수가 있는 경우 Tailwind 유틸리티 또는 arbitrary property로 변환되어야 함
         if (code.includes("var(--")) {
-          // background-color의 var()는 arbitrary property로 처리
-          expect(code).toMatch(/\[(background-color|color|fill):/);
+          // bg-[var(...)], text-[var(...)], fill-[var(...)] 또는 [property:var(...)] 형태
+          expect(code).toMatch(/(?:bg-\[|text-\[|fill-\[|\[(?:background-color|color|fill):)/);
         }
       }
     );
