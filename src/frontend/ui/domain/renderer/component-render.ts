@@ -231,10 +231,9 @@ export async function renderReactComponent(
 
       const injectArbitraryClasses = (classStr: string) => {
         // [property:value] 패턴의 Tailwind arbitrary class를 CSS rule로 변환
-        // 예: [color:var(--x,_#FFF)] → .\[color\:var\(--x\2c _\#FFF\)\] { color: var(--x, #FFF) }
-        // hover:[color:#FFF] → .hover\:\[color\:\#FFF\]:hover { color: #FFF }
         for (const token of classStr.split(/\s+/)) {
           if (!token.includes("[") || !token.includes("]")) continue;
+          if (injectedRules.has(token)) continue;
 
           let prefix = "";
           let arbitrary = token;
@@ -250,15 +249,13 @@ export async function renderReactComponent(
           const prop = match[1];
           const val = match[2].replace(/_/g, " ");
 
-          if (injectedRules.has(token)) continue;
           injectedRules.add(token);
 
-          const escaped = token
-            .replace(/\\/g, "\\\\")
-            .replace(/([[\]:(),#./%@+])/g, "\\$1");
+          // CSS.escape()로 정확한 이스케이프
+          const escaped = CSS.escape(token);
           const selector = prefix ? `.${escaped}:${prefix}` : `.${escaped}`;
           const rule = `${selector} { ${prop}: ${val}; }`;
-          try { styleEl.sheet?.insertRule(rule, styleEl.sheet.cssRules.length); } catch {}
+          try { styleEl.sheet?.insertRule(rule, styleEl.sheet.cssRules.length); } catch (e) { console.warn("CSS inject failed:", rule, e); }
         }
       };
 
