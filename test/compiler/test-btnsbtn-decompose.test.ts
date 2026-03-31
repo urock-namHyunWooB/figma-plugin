@@ -160,9 +160,35 @@ describe("Btnsbtn compound decomposition", () => {
   });
 
   describe("Tailwind", () => {
+    let twCode: string;
+
     it("컴파일 성공", async () => {
-      const code = await compileFixture({ styleStrategy: "tailwind" });
-      expect(code).toContain("function Btnsbtn");
+      twCode = (await compileFixture({ styleStrategy: "tailwind" })) ?? "";
+      expect(twCode).toContain("function Btnsbtn");
+    });
+
+    it("compoundVariants가 생성되어야 한다", () => {
+      expect(twCode).toContain("compoundVariants");
+    });
+
+    it("filled+blue에 background-color가 있어야 한다", () => {
+      // default+filled+blue compound variant에 파란 배경
+      expect(twCode).toMatch(/style:\s*"filled".*tone:\s*"blue".*628CF5/is);
+    });
+
+    it("filled+red에 background-color가 있어야 한다", () => {
+      expect(twCode).toMatch(/style:\s*"filled".*tone:\s*"red".*FF8484/is);
+    });
+
+    it("outlined+blue에 border가 있어야 한다", () => {
+      expect(twCode).toMatch(/style:\s*"outlined".*tone:\s*"blue".*border/is);
+    });
+
+    it("hover 스타일이 compound에 포함되어야 한다", () => {
+      // hover: prefix가 compoundVariants className에 존재
+      const compoundMatch = twCode.match(/compoundVariants:\s*\[([\s\S]*?)\]\s*,?\s*\}/);
+      expect(compoundMatch).toBeTruthy();
+      expect(compoundMatch![1]).toContain("hover:");
     });
   });
 });
