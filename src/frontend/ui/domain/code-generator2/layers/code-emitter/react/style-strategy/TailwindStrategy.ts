@@ -194,8 +194,24 @@ export class TailwindStrategy implements IStyleStrategy {
     // Step 1: 변수명 생성 (경로 기반 or ID 기반)
     const variableName = this.createVariableName(nodeId, nodeName, parentPath);
 
-    // base 스타일 → Tailwind 클래스
-    const baseClasses = this.cssObjectToTailwind(style.base);
+    // dynamic에서 사용되는 CSS property 수집 (base에서 충돌 방지)
+    const dynamicCssKeys = new Set<string>();
+    if (style.dynamic) {
+      for (const entry of style.dynamic) {
+        for (const key of Object.keys(entry.style)) {
+          dynamicCssKeys.add(key);
+        }
+      }
+    }
+
+    // base 스타일 → Tailwind 클래스 (dynamic에도 있는 property는 제외)
+    const filteredBase: Record<string, string | number> = {};
+    for (const [key, value] of Object.entries(style.base)) {
+      if (!dynamicCssKeys.has(key)) {
+        filteredBase[key] = value;
+      }
+    }
+    const baseClasses = this.cssObjectToTailwind(filteredBase);
     const hasBaseStyles = baseClasses.length > 0;
 
     // pseudo 스타일 → Tailwind 클래스 (prefix 붙임)
