@@ -549,14 +549,31 @@ export class ButtonHeuristic implements IHeuristic {
     if (!node.children || node.children.length === 0) return;
 
     // 1. 같은 slot prop을 가진 중복 INSTANCE 제거
+    //    조건 없는 노드를 우선 유지 (조건부 노드만 남으면 default에서 렌더링 안 됨)
+    const slotGroups = new Map<string, number[]>();
+    for (let i = 0; i < node.children.length; i++) {
+      const slotProp = (node.children[i].bindings as any)?.content?.prop;
+      if (typeof slotProp === "string") {
+        if (!slotGroups.has(slotProp)) slotGroups.set(slotProp, []);
+        slotGroups.get(slotProp)!.push(i);
+      }
+    }
+    // 각 slot group에서 유지할 인덱스 결정: visibleCondition 없는 노드 우선
+    const keepIndices = new Set<number>();
+    for (const indices of slotGroups.values()) {
+      const unconditional = indices.find((i) => !node.children[i].visibleCondition);
+      keepIndices.add(unconditional ?? indices[0]);
+    }
+
     const seenSlotProps = new Set<string>();
-    node.children = node.children.filter((child) => {
+    node.children = node.children.filter((child, idx) => {
       const slotProp = (child.bindings as any)?.content?.prop;
       if (typeof slotProp === "string") {
         if (seenSlotProps.has(slotProp)) {
-          return false;
+          return keepIndices.has(idx); // 선택된 노드만 유지
         }
         seenSlotProps.add(slotProp);
+        if (!keepIndices.has(idx)) return false; // 첫 번째지만 선택 안 된 경우
       }
       return true;
     });
