@@ -92,6 +92,10 @@ export class StylesGenerator {
       }
     }
 
+    // Step 3.7: 동일한 스타일 코드를 가진 변수 중복 제거
+    // 같은 code를 생성하는 노드는 첫 번째 변수를 재사용
+    this.deduplicateStyles(styleResults, nodeStyleMap);
+
     // Step 4: 빈 스타일 제거 및 코드 조합
     const nonEmptyResults = styleResults.filter((r) => !r.isEmpty && r.code);
 
@@ -124,6 +128,46 @@ export class StylesGenerator {
     this.collectStyles(root, styleStrategy, styleResults, nodeStyleMap, []);
 
     return { styleResults, nodeStyleMap };
+  }
+
+  /**
+   * 동일한 스타일 코드를 가진 변수 중복 제거.
+   * 같은 code를 생성하는 노드는 첫 번째 변수명을 재사용하고
+   * 중복 변수는 제거한다.
+   */
+  private static deduplicateStyles(
+    styleResults: StyleResult[],
+    nodeStyleMap: Map<string, string>
+  ): void {
+    // code → 첫 번째 변수명 매핑
+    const codeToFirstVar = new Map<string, string>();
+    // 제거할 인덱스
+    const removeIndices = new Set<number>();
+
+    for (let i = 0; i < styleResults.length; i++) {
+      const r = styleResults[i];
+      if (r.isEmpty || !r.code) continue;
+
+      // 변수명을 제외한 값만 비교 (const varName = VALUE → VALUE)
+      const codeValue = r.code.replace(/^const \S+ = /, "");
+      const existing = codeToFirstVar.get(codeValue);
+      if (existing) {
+        // 중복 → nodeStyleMap에서 이 변수명을 기존 변수명으로 치환
+        for (const [nodeId, varName] of nodeStyleMap) {
+          if (varName === r.variableName) {
+            nodeStyleMap.set(nodeId, existing);
+          }
+        }
+        removeIndices.add(i);
+      } else {
+        codeToFirstVar.set(codeValue, r.variableName);
+      }
+    }
+
+    // 뒤에서부터 제거 (인덱스 안정성)
+    for (const idx of [...removeIndices].sort((a, b) => b - a)) {
+      styleResults.splice(idx, 1);
+    }
   }
 
   /**
