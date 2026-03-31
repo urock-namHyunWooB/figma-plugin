@@ -14,6 +14,7 @@
 import type { UITree, UINode, ConditionNode, PseudoClass, VariantInconsistency } from "../../../types/types";
 import { extractAllPropNames } from "../../../types/conditionUtils";
 import { DynamicStyleDecomposer, type DecomposedResult } from "./DynamicStyleDecomposer";
+import { DynamicStyleOptimizer } from "./DynamicStyleOptimizer";
 
 export class UITreeOptimizer {
   /**
@@ -346,6 +347,12 @@ export class UITreeOptimizer {
    */
   private decomposeDynamicStyles(node: UINode, diagnostics?: VariantInconsistency[]): void {
     if (node.styles?.dynamic && node.styles.dynamic.length > 0) {
+      // Decomposer 전 최적화: pseudo 중복 제거, 빈 entry 제거
+      node.styles.dynamic = DynamicStyleOptimizer.optimize(
+        node.styles.dynamic,
+        node.styles.base
+      );
+
       const { result: decomposed, diagnostics: diag } =
         DynamicStyleDecomposer.decomposeWithDiagnostics(
           node.styles.dynamic,
