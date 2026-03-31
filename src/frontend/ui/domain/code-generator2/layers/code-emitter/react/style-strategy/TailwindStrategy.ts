@@ -194,22 +194,27 @@ export class TailwindStrategy implements IStyleStrategy {
     // Step 1: 변수명 생성 (경로 기반 or ID 기반)
     const variableName = this.createVariableName(nodeId, nodeName, parentPath);
 
-    // dynamic에서 사용되는 CSS property 수집 (base에서 충돌 방지)
-    const dynamicCssKeys = new Set<string>();
+    // dynamic의 모든 variant 값에 있는 CSS property만 base에서 제거 (충돌 방지)
+    // 일부 variant에만 있는 property는 base가 fallback이므로 유지
+    const dynamicCssKeyCounts = new Map<string, number>();
+    let dynamicEntryCount = 0;
     if (style.dynamic) {
+      dynamicEntryCount = style.dynamic.length;
       for (const entry of style.dynamic) {
         for (const key of Object.keys(entry.style)) {
-          dynamicCssKeys.add(key);
+          dynamicCssKeyCounts.set(key, (dynamicCssKeyCounts.get(key) || 0) + 1);
         }
       }
     }
 
-    // base 스타일 → Tailwind 클래스 (dynamic에도 있는 property는 제외)
     const filteredBase: Record<string, string | number> = {};
     for (const [key, value] of Object.entries(style.base)) {
-      if (!dynamicCssKeys.has(key)) {
-        filteredBase[key] = value;
+      // 모든 dynamic entry에 해당 property가 있을 때만 base에서 제거
+      const count = dynamicCssKeyCounts.get(key) || 0;
+      if (count > 0 && count >= dynamicEntryCount) {
+        continue; // 모든 variant가 override → base 불필요
       }
+      filteredBase[key] = value;
     }
     const baseClasses = this.cssObjectToTailwind(filteredBase);
     const hasBaseStyles = baseClasses.length > 0;
