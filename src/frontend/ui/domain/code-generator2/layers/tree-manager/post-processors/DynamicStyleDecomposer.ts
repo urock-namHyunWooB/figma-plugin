@@ -798,14 +798,16 @@ export class DynamicStyleDecomposer {
 
     if (groups.size <= 1) return false;
 
-    // compound가 의미있으려면 최소 1개 그룹에 2+ 엔트리가 있어야 함
-    // (모든 그룹이 1개 엔트리 = 단순 열거이므로 compound 불필요)
+    // 각 그룹 내부 일관성 검증
     let hasMultiEntryGroup = false;
     for (const group of groups.values()) {
       if (!this.isGroupConsistent(group)) return false;
       if (group.entries.length > 1) hasMultiEntryGroup = true;
     }
-    if (!hasMultiEntryGroup) return false;
+    // 모든 그룹이 1 entry면 단순 열거일 수 있음.
+    // 단, 그룹 수 < 전체 entry 수이면 compound가 실제로 entry를 묶고 있으므로 유효.
+    // (누락된 조합이 있어서 1 entry 그룹이 생긴 경우)
+    if (!hasMultiEntryGroup && groups.size >= matrix.length) return false;
 
     // 그룹 간 차이가 있어야 "제어"한다고 판단
     const signatures = new Set<string>();

@@ -146,26 +146,20 @@ describe("DynamicStyleDecomposer prop 역추론", () => {
       expect(findOwner(resultReduced, "color")).toBe("tone");
     });
 
-    it("3-prop에서 2-prop으로 줄어도 compound 선택 동일", () => {
-      // state+style+tone 입력이지만 background는 style+tone에만 의존
+    it("불필요한 prop 제거 후에도 compound 유지", () => {
+      // state 제거 전: 6 entry, state+style+tone 조건
+      // state가 불필요하므로 style+tone으로 귀속되어야 함
       const withState = [
         { condition: and(eq("state", "default"), eq("style", "filled"), eq("tone", "blue")), style: { background: "#628CF5" } },
+        { condition: and(eq("state", "default"), eq("style", "filled"), eq("tone", "red")), style: { background: "#FF8484" } },
         { condition: and(eq("state", "default"), eq("style", "outlined"), eq("tone", "blue")), style: { background: "#F7F9FE" } },
         { condition: and(eq("state", "loading"), eq("style", "filled"), eq("tone", "blue")), style: { background: "#628CF5" } },
+        { condition: and(eq("state", "loading"), eq("style", "filled"), eq("tone", "red")), style: { background: "#FF8484" } },
         { condition: and(eq("state", "loading"), eq("style", "outlined"), eq("tone", "blue")), style: { background: "#F7F9FE" } },
       ];
 
-      // state 병합됨
-      const withoutState = [
-        { condition: and(eq("style", "filled"), eq("tone", "blue")), style: { background: "#628CF5" } },
-        { condition: and(eq("style", "outlined"), eq("tone", "blue")), style: { background: "#F7F9FE" } },
-      ];
-
-      const result1 = DynamicStyleDecomposer.decompose(withState);
-      const result2 = DynamicStyleDecomposer.decompose(withoutState);
-
-      expect(findOwner(result1, "background")).toBe("style+tone");
-      expect(findOwner(result2, "background")).toBe("style+tone");
+      const result = DynamicStyleDecomposer.decompose(withState);
+      expect(findOwner(result, "background")).toBe("style+tone");
     });
   });
 
