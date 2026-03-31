@@ -213,7 +213,10 @@ export class TailwindStrategy implements IStyleStrategy {
     let code: string;
     if (hasDynamicStyles) {
       // cva() 함수로 base + variants 통합
-      code = `const ${variableName} = cva(${this.wrapClassString(baseStr)}, {\n  variants: {\n${dynamicResult.code}\n  },\n});`;
+      const variantsBlock = dynamicResult.code ? `  variants: {\n${dynamicResult.code}\n  },` : "";
+      const compoundBlock = dynamicResult.compoundCode || "";
+      const cvaBody = [variantsBlock, compoundBlock].filter(Boolean).join("\n");
+      code = `const ${variableName} = cva(${this.wrapClassString(baseStr)}, {\n${cvaBody}\n});`;
       this.cvaVariables.add(variableName);
     } else {
       // dynamic 없으면 plain string
@@ -277,6 +280,9 @@ export class TailwindStrategy implements IStyleStrategy {
 
     // 각 variant prop → cva variants 블록 내부 코드
     const variantParts: string[] = [];
+    const compoundEntries: string[] = [];
+    const compoundProps = new Set<string>(); // compoundVariants에서 참조하는 prop
+    const declaredVariants = new Set<string>(); // variants에 선언된 prop
 
     for (const [propName, valueMap] of variantGroups) {
       const entries: string[] = [];
@@ -305,8 +311,36 @@ export class TailwindStrategy implements IStyleStrategy {
 
       if (entries.length === 0) continue;
 
-      // compound prop은 cva variants로 표현 불가 → 건너뜀
-      if (propName.includes("+")) continue;
+      // compound prop → compoundVariants로 별도 수집
+      if (propName.includes("+")) {
+        const propNames = propName.split("+");
+        for (const p of propNames) compoundProps.add(p);
+        for (const [value, { style: dynStyle, pseudo }] of valueMap) {
+          const classes = this.cssObjectToTailwind(dynStyle);
+          if (pseudo) {
+            for (const [selector, pseudoStyle] of Object.entries(pseudo)) {
+              const prefix = pseudoToTwPrefix[selector];
+              if (!prefix) continue;
+              const pseudoClasses = this.cssObjectToTailwind(pseudoStyle as Record<string, string | number>);
+              for (const cls of pseudoClasses) {
+                classes.push(`${prefix}:${cls}`);
+              }
+            }
+          }
+          if (classes.length === 0) continue;
+          const values = value.split("+");
+          if (values.length !== propNames.length) continue;
+          const conditions = propNames.map((p, i) => {
+            const key = this.needsQuoting(p) ? `"${p}"` : p;
+            const val = values[i];
+            // boolean variant 값은 따옴표 없이 출력 (cva 타입 호환)
+            if (val === "true" || val === "false") return `${key}: ${val}`;
+            return `${key}: "${val}"`;
+          });
+          compoundEntries.push(`    { ${conditions.join(", ")}, className: ${this.wrapClassString(classes.join(" "))} },`);
+        }
+        continue;
+      }
 
       // variantOptions에서 빠진 값을 빈 문자열로 채움 (cva 타입 완전성 보장)
       const allOptions = this.variantOptions.get(propName);
@@ -324,11 +358,33 @@ export class TailwindStrategy implements IStyleStrategy {
       const safePropName = propName.replace(/[\x00-\x1f\x7f]/g, "");
       const propKey = this.needsQuoting(safePropName) ? `"${safePropName}"` : safePropName;
       variantParts.push(`    ${propKey}: {\n${entries.join("\n")}\n    },`);
+      declaredVariants.add(propName);
+    }
+
+    // compoundVariants에서 참조하지만 variants에 없는 prop → 빈 variant 추가
+    for (const p of compoundProps) {
+      if (declaredVariants.has(p)) continue;
+      const allOptions = this.variantOptions.get(p);
+      if (allOptions) {
+        const emptyEntries = [...allOptions].map((opt) => {
+          const key = this.needsQuoting(opt) ? `"${opt}"` : opt;
+          return `        ${key}: "",`;
+        });
+        const propKey = this.needsQuoting(p) ? `"${p}"` : p;
+        variantParts.push(`    ${propKey}: {\n${emptyEntries.join("\n")}\n    },`);
+      }
+    }
+
+    // compoundVariants가 있으면 추가
+    let compoundCode = "";
+    if (compoundEntries.length > 0) {
+      compoundCode = `  compoundVariants: [\n${compoundEntries.join("\n")}\n  ],`;
     }
 
     return {
       code: variantParts.join("\n"),
-      hasContent: variantParts.length > 0,
+      compoundCode,
+      hasContent: variantParts.length > 0 || compoundEntries.length > 0,
     };
   }
 
