@@ -114,7 +114,6 @@ const CSS_TO_PREFIX: Record<string, string> = {
   right: "right",
   bottom: "bottom",
   left: "left",
-  fontWeight: "font",
   letterSpacing: "tracking",
 };
 
@@ -595,17 +594,20 @@ export class TailwindStrategy implements IStyleStrategy {
       return `fill-[${this.escapeArbitraryValue(valueStr)}]`;
     }
 
-    // border shorthand: border-[value]
+    // border: arbitrary property (shorthand는 border- prefix가 지원 안 함)
     if (camelProperty === "border") {
-      return `border-[${this.escapeArbitraryValue(valueStr)}]`;
+      return `[border:${this.escapeArbitraryValue(valueStr)}]`;
     }
     if (camelProperty === "borderColor") {
       return `border-[${this.escapeArbitraryValue(valueStr)}]`;
     }
 
-    // font-family → font-[...]
+    // font-family / font-weight: 같은 font- prefix 충돌 방지
     if (camelProperty === "fontFamily") {
-      return `font-[${this.escapeArbitraryValue(valueStr)}]`;
+      return `[font-family:${this.escapeArbitraryValue(valueStr)}]`;
+    }
+    if (camelProperty === "fontWeight") {
+      return `[font-weight:${this.escapeArbitraryValue(valueStr)}]`;
     }
 
     // box-shadow → shadow-[...]
