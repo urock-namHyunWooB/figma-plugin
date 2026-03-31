@@ -216,7 +216,10 @@ export async function renderReactComponent(
       (window as any).cn = cnFunction;
 
       // cva (class-variance-authority) 경량 구현 — 렌더러 전용
-      const cvaFunction = (base: string, config?: { variants?: Record<string, Record<string, string>> }) => {
+      const cvaFunction = (base: string, config?: {
+        variants?: Record<string, Record<string, string>>;
+        compoundVariants?: Array<Record<string, any> & { className?: string; class?: string }>;
+      }) => {
         return (props?: Record<string, any>) => {
           const classes = [base];
           if (config?.variants && props) {
@@ -226,6 +229,17 @@ export async function renderReactComponent(
                 const cls = values[String(propVal)];
                 if (cls) classes.push(cls);
               }
+            }
+          }
+          if (config?.compoundVariants && props) {
+            for (const cv of config.compoundVariants) {
+              const cls = cv.className || cv.class;
+              if (!cls) continue;
+              const match = Object.entries(cv).every(([k, v]) => {
+                if (k === "className" || k === "class") return true;
+                return props[k] != null && String(props[k]) === String(v);
+              });
+              if (match) classes.push(cls);
             }
           }
           return classes.filter(Boolean).join(" ");
