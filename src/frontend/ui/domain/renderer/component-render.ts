@@ -296,9 +296,17 @@ export async function renderReactComponent(
           injectedRules.add(token);
 
           const escaped = CSS.escape(token);
-          const selector = prefix ? `.${escaped}:${prefix}` : `.${escaped}`;
-          const rule = `${selector} { ${prop}: ${val}; }`;
-          try { styleEl.sheet?.insertRule(rule, styleEl.sheet.cssRules.length); } catch (e) { console.warn("CSS inject failed:", rule, e); }
+          // disabled: prefix는 해당 요소 자체 + 부모 button:disabled의 자손에도 적용
+          if (prefix === "disabled") {
+            const selfRule = `.${escaped}:disabled { ${prop}: ${val}; }`;
+            const inheritRule = `button:disabled .${escaped} { ${prop}: ${val}; }`;
+            try { styleEl.sheet?.insertRule(selfRule, styleEl.sheet.cssRules.length); } catch {}
+            try { styleEl.sheet?.insertRule(inheritRule, styleEl.sheet.cssRules.length); } catch {}
+          } else {
+            const selector = prefix ? `.${escaped}:${prefix}` : `.${escaped}`;
+            const rule = `${selector} { ${prop}: ${val}; }`;
+            try { styleEl.sheet?.insertRule(rule, styleEl.sheet.cssRules.length); } catch (e) { console.warn("CSS inject failed:", rule, e); }
+          }
         }
       };
 

@@ -401,13 +401,9 @@ export class TailwindStrategy implements IStyleStrategy {
       declaredVariants.add(propName);
     }
 
-    // 같은 className을 가진 compound 조건 합침
-    // (공통 prop만 남기고 차이 나는 prop 제거)
-    const mergedConditions = this.mergeCompoundConditions(nodeCompoundConditions);
-
     return {
       code: variantParts.join("\n"),
-      compoundConditions: mergedConditions,
+      compoundConditions: nodeCompoundConditions,
       declaredVariants,
       hasContent: variantParts.length > 0 || mergedConditions.length > 0,
     };
@@ -649,13 +645,13 @@ export class TailwindStrategy implements IStyleStrategy {
       groups.get(c.className)!.push(c);
     }
 
-    const result: CompoundCondition[] = [];
+    // 1단계: 같은 className끼리 공통 prop으로 합침
+    const merged: CompoundCondition[] = [];
     for (const [className, group] of groups) {
       if (group.length === 1) {
-        result.push(group[0]);
+        merged.push(group[0]);
         continue;
       }
-      // 모든 조건에서 공통인 prop만 남김
       const commonProps: Record<string, string> = { ...group[0].props };
       for (let i = 1; i < group.length; i++) {
         for (const key of Object.keys(commonProps)) {
@@ -665,10 +661,34 @@ export class TailwindStrategy implements IStyleStrategy {
         }
       }
       if (Object.keys(commonProps).length > 0) {
-        result.push({ props: commonProps, className });
+        merged.push({ props: commonProps, className });
       } else {
-        // 공통 prop이 없으면 합칠 수 없음 — 원본 유지
-        result.push(...group);
+        merged.push(...group);
+      }
+    }
+
+    // 2단계: 합친 조건이 다른 조건의 부분집합이면 충돌 → 합침 취소
+    // A의 props가 B의 props의 부분집합이면, A와 B가 동시에 매칭되어 className 충돌
+    const result: CompoundCondition[] = [];
+    for (const cond of merged) {
+      const hasConflict = merged.some((other) => {
+        if (other === cond) return false;
+        if (other.className === cond.className) return false;
+        // cond의 props가 other의 props의 부분집합인지 확인
+        return Object.entries(cond.props).every(
+          ([k, v]) => other.props[k] === v
+        );
+      });
+      if (hasConflict) {
+        // 충돌 → 원본 조건으로 복원
+        const original = groups.get(cond.className);
+        if (original && original.length > 1) {
+          result.push(...original);
+        } else {
+          result.push(cond);
+        }
+      } else {
+        result.push(cond);
       }
     }
     return result;
