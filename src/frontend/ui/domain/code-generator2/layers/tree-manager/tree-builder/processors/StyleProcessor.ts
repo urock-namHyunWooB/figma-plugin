@@ -563,9 +563,11 @@ export class StyleProcessor {
     const dynamic = this.extractDynamicStyles(baseVariants, base, includeStateInConditions);
 
     // pseudo variant → CSS pseudo-class 스타일로 변환
-    // STATE_TO_PSEUDO에 매핑된 값(Hover→:hover, Disabled→:disabled 등)은
-    // 컴포넌트 종류와 무관하게 항상 CSS pseudo-class이므로 범용 처리.
+    // 공통 diff → pseudo에 직접 배치 (범용)
+    // 비공통 diff → dynamic에 추가하여 heuristic이 compound pseudo로 처리
     const pseudo = this.extractPseudoStyles(pseudoVariants, base);
+    const pseudoNonCommonDynamic = this.extractPseudoNonCommonDynamic(pseudoVariants, base);
+    dynamic.push(...pseudoNonCommonDynamic);
 
     return {
       base,
@@ -1034,6 +1036,65 @@ export class StyleProcessor {
 
       // 비공통 diff → per-variant 엔트리 (compound-varying CSS 보존)
       // tone/style에 따라 다른 background 등이 여기에 해당
+      for (let i = 0; i < variants.length; i++) {
+        const diff = diffs[i];
+        const nonCommonDiff: Record<string, string | number> = {};
+        for (const [key, val] of Object.entries(diff)) {
+          if (!(key in commonDiff)) {
+            nonCommonDiff[key] = val;
+          }
+        }
+        if (Object.keys(nonCommonDiff).length === 0) continue;
+
+        const condition = this.createConditionFromVariantName(
+          variants[i].variantName,
+          true // state 조건 포함
+        );
+        if (condition) {
+          result.push({ condition, style: nonCommonDiff });
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * pseudo variant의 비공통 diff만 dynamic 엔트리로 변환
+   *
+   * extractPseudoStyles가 공통 diff → pseudo에 배치한 뒤,
+   * 남은 비공통 diff(style+tone에 따라 다른 hover background 등)를
+   * per-variant AND 조건 엔트리로 생성하여 heuristic이 compound pseudo로 처리하도록 위임.
+   */
+  private extractPseudoNonCommonDynamic(
+    pseudoVariants: Array<{
+      variantName: string;
+      state: string;
+      cssStyle: Record<string, string>;
+    }>,
+    base: Record<string, string | number>
+  ): Array<{ condition: ConditionNode; style: Record<string, string | number> }> {
+    const stateGroups = new Map<string, Array<{variantName: string; cssStyle: Record<string, string>}>>();
+
+    for (const variant of pseudoVariants) {
+      if (!stateGroups.has(variant.state)) {
+        stateGroups.set(variant.state, []);
+      }
+      stateGroups.get(variant.state)!.push({
+        variantName: variant.variantName,
+        cssStyle: variant.cssStyle,
+      });
+    }
+
+    const result: Array<{ condition: ConditionNode; style: Record<string, string | number> }> = [];
+
+    for (const [, variants] of stateGroups) {
+      const diffs = variants.map((v) => this.getDifferentStyles(v.cssStyle, base));
+      const commonDiff = this.extractCommonStyles(
+        diffs as Array<Record<string, string>>
+      );
+
+      // 비공통 diff만 per-variant 엔트리로 생성
       for (let i = 0; i < variants.length; i++) {
         const diff = diffs[i];
         const nonCommonDiff: Record<string, string | number> = {};

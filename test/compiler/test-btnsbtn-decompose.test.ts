@@ -126,6 +126,37 @@ describe("Btnsbtn compound decomposition", () => {
       expect(entry).toBeTruthy();
       expect(entry![1]).toMatch(/background:.*ff8484/i);
     });
+
+    it(":hover pseudo-class가 생성되어야 한다", () => {
+      // hover는 style+tone에 따라 다른 background를 가짐 (compound-varying)
+      // extractPseudoStyles의 공통 diff만으로는 처리 불가 → 비공통 diff가 dynamic으로 전달되어야 함
+      const hoverMatches = code.match(/:hover/g) || [];
+      expect(hoverMatches.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it(":hover에 style+tone별 배경색이 있어야 한다", () => {
+      // filled+blue hover = #93b0f8, filled+red hover = #ffb9b9 등
+      const hoverBlocks = code.match(/&:hover[^{]*\{[^}]*background:[^}]*\}/g) || [];
+      expect(hoverBlocks.length).toBeGreaterThanOrEqual(2);
+
+      const hoverBgColors = new Set<string>();
+      for (const block of hoverBlocks) {
+        const match = block.match(/background:.*#([0-9a-fA-F]{3,6})/);
+        if (match) hoverBgColors.add(match[1].toLowerCase());
+      }
+      // 최소 2가지 이상 다른 hover 배경색이 있어야 함 (compound-varying 증거)
+      expect(hoverBgColors.size).toBeGreaterThanOrEqual(2);
+    });
+
+    it(":active pseudo-class가 생성되어야 한다", () => {
+      const activeMatches = code.match(/:active/g) || [];
+      expect(activeMatches.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it(":disabled pseudo-class가 생성되어야 한다", () => {
+      const disabledMatches = code.match(/:disabled/g) || [];
+      expect(disabledMatches.length).toBeGreaterThanOrEqual(1);
+    });
   });
 
   describe("Tailwind", () => {
