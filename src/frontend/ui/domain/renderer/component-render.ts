@@ -229,29 +229,67 @@ export async function renderReactComponent(
         return el;
       })();
 
+      // Tailwind prefix → CSS property 매핑
+      const TW_PREFIX_TO_CSS: Record<string, string> = {
+        "text": "color", "bg": "background-color", "fill": "fill",
+        "font": "font-weight", "tracking": "letter-spacing",
+        "shadow": "box-shadow", "backdrop-blur": "backdrop-filter",
+        "border": "border", "rounded": "border-radius",
+        "w": "width", "h": "height", "min-w": "min-width", "min-h": "min-height",
+        "max-w": "max-width", "max-h": "max-height",
+        "p": "padding", "pt": "padding-top", "pr": "padding-right",
+        "pb": "padding-bottom", "pl": "padding-left",
+        "m": "margin", "mt": "margin-top", "mr": "margin-right",
+        "mb": "margin-bottom", "ml": "margin-left",
+        "gap": "gap", "opacity": "opacity", "z": "z-index",
+        "top": "top", "right": "right", "bottom": "bottom", "left": "left",
+        "leading": "line-height",
+      };
+
       const injectArbitraryClasses = (classStr: string) => {
-        // [property:value] 패턴의 Tailwind arbitrary class를 CSS rule로 변환
         for (const token of classStr.split(/\s+/)) {
           if (!token.includes("[") || !token.includes("]")) continue;
           if (injectedRules.has(token)) continue;
 
           let prefix = "";
-          let arbitrary = token;
-          const prefixMatch = token.match(/^(hover|active|focus|disabled|checked):(.+)$/);
-          if (prefixMatch) {
-            prefix = prefixMatch[1];
-            arbitrary = prefixMatch[2];
+          let core = token;
+          const pseudoMatch = token.match(/^(hover|active|focus|disabled|checked):(.+)$/);
+          if (pseudoMatch) {
+            prefix = pseudoMatch[1];
+            core = pseudoMatch[2];
           }
 
-          const match = arbitrary.match(/^\[([^:]+):(.+)\]$/);
-          if (!match) continue;
+          let prop = "";
+          let val = "";
 
-          const prop = match[1];
-          const val = match[2].replace(/_/g, " ");
+          // 1) [property:value] — arbitrary property
+          const arbPropMatch = core.match(/^\[([^:]+):(.+)\]$/);
+          if (arbPropMatch) {
+            prop = arbPropMatch[1];
+            val = arbPropMatch[2].replace(/_/g, " ");
+          } else {
+            // 2) prefix-[value] — Tailwind utility with arbitrary value
+            const utilMatch = core.match(/^(.+?)-\[(.+)\]$/);
+            if (utilMatch) {
+              const twPrefix = utilMatch[1];
+              const cssProp = TW_PREFIX_TO_CSS[twPrefix];
+              if (!cssProp) continue;
+              prop = cssProp;
+              val = utilMatch[2].replace(/_/g, " ");
+              // backdrop-blur-[20px] → backdrop-filter: blur(20px)
+              if (twPrefix === "backdrop-blur") val = `blur(${val})`;
+              // text-[length:val] → font-size (타입 힌트 처리)
+              if (twPrefix === "text" && val.startsWith("length:")) {
+                prop = "font-size";
+                val = val.replace("length:", "");
+              }
+            } else {
+              continue;
+            }
+          }
 
           injectedRules.add(token);
 
-          // CSS.escape()로 정확한 이스케이프
           const escaped = CSS.escape(token);
           const selector = prefix ? `.${escaped}:${prefix}` : `.${escaped}`;
           const rule = `${selector} { ${prop}: ${val}; }`;
