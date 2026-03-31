@@ -216,10 +216,72 @@ export async function renderReactComponent(
       (window as any).cn = cnFunction;
 
       // cva (class-variance-authority) 경량 구현 — 렌더러 전용
+      // Tailwind arbitrary class를 CSS로 변환하여 <style>에 주입
+      const injectedRules = new Set<string>();
+      const styleEl = (() => {
+        const id = "cva-polyfill-styles";
+        let el = document.getElementById(id) as HTMLStyleElement | null;
+        if (!el) {
+          el = document.createElement("style");
+          el.id = id;
+          document.head.appendChild(el);
+        }
+        return el;
+      })();
+
+      const injectArbitraryClasses = (classStr: string) => {
+        // [property:value] 패턴의 Tailwind arbitrary class를 CSS rule로 변환
+        // 예: [color:var(--x,_#FFF)] → .\[color\:var\(--x\2c _\#FFF\)\] { color: var(--x, #FFF) }
+        // hover:[color:#FFF] → .hover\:\[color\:\#FFF\]:hover { color: #FFF }
+        for (const token of classStr.split(/\s+/)) {
+          if (!token.includes("[") || !token.includes("]")) continue;
+
+          let prefix = "";
+          let arbitrary = token;
+          const prefixMatch = token.match(/^(hover|active|focus|disabled|checked):(.+)$/);
+          if (prefixMatch) {
+            prefix = prefixMatch[1];
+            arbitrary = prefixMatch[2];
+          }
+
+          const match = arbitrary.match(/^\[([^:]+):(.+)\]$/);
+          if (!match) continue;
+
+          const prop = match[1];
+          const val = match[2].replace(/_/g, " ");
+
+          if (injectedRules.has(token)) continue;
+          injectedRules.add(token);
+
+          const escaped = token
+            .replace(/\\/g, "\\\\")
+            .replace(/([[\]:(),#./%@+])/g, "\\$1");
+          const selector = prefix ? `.${escaped}:${prefix}` : `.${escaped}`;
+          const rule = `${selector} { ${prop}: ${val}; }`;
+          try { styleEl.sheet?.insertRule(rule, styleEl.sheet.cssRules.length); } catch {}
+        }
+      };
+
       const cvaFunction = (base: string, config?: {
         variants?: Record<string, Record<string, string>>;
         compoundVariants?: Array<Record<string, any> & { className?: string; class?: string }>;
       }) => {
+        // base + 모든 variant/compound 클래스의 CSS를 사전 주입
+        injectArbitraryClasses(base);
+        if (config?.variants) {
+          for (const values of Object.values(config.variants)) {
+            for (const cls of Object.values(values)) {
+              if (cls) injectArbitraryClasses(cls);
+            }
+          }
+        }
+        if (config?.compoundVariants) {
+          for (const cv of config.compoundVariants) {
+            const cls = cv.className || cv.class;
+            if (cls) injectArbitraryClasses(cls);
+          }
+        }
+
         return (props?: Record<string, any>) => {
           const classes = [base];
           if (config?.variants && props) {
