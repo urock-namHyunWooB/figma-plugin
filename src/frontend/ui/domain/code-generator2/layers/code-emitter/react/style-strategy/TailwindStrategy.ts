@@ -328,14 +328,17 @@ export class TailwindStrategy implements IStyleStrategy {
       for (const [value, { style: dynStyle, pseudo }] of valueMap) {
         const classes = this.cssObjectToTailwind(dynStyle);
 
-        // per-group pseudo → Tailwind variant prefix 적용
+        // per-group pseudo → Tailwind variant prefix 적용 (base와 동일한 pseudo는 제거)
         if (pseudo) {
+          const baseClassSet = new Set(classes);
           for (const [selector, pseudoStyle] of Object.entries(pseudo)) {
             const prefix = pseudoToTwPrefix[selector];
             if (!prefix) continue;
             const pseudoClasses = this.cssObjectToTailwind(pseudoStyle as Record<string, string | number>);
             for (const cls of pseudoClasses) {
-              classes.push(`${prefix}:${cls}`);
+              if (!baseClassSet.has(cls)) {
+                classes.push(`${prefix}:${cls}`);
+              }
             }
           }
         }
@@ -355,12 +358,15 @@ export class TailwindStrategy implements IStyleStrategy {
         for (const [value, { style: dynStyle, pseudo }] of valueMap) {
           const classes = this.cssObjectToTailwind(dynStyle);
           if (pseudo) {
+            const baseClassSet = new Set(classes);
             for (const [selector, pseudoStyle] of Object.entries(pseudo)) {
               const prefix = pseudoToTwPrefix[selector];
               if (!prefix) continue;
               const pseudoClasses = this.cssObjectToTailwind(pseudoStyle as Record<string, string | number>);
               for (const cls of pseudoClasses) {
-                classes.push(`${prefix}:${cls}`);
+                if (!baseClassSet.has(cls)) {
+                  classes.push(`${prefix}:${cls}`);
+                }
               }
             }
           }
@@ -395,11 +401,15 @@ export class TailwindStrategy implements IStyleStrategy {
       declaredVariants.add(propName);
     }
 
+    // 같은 className을 가진 compound 조건 합침
+    // (공통 prop만 남기고 차이 나는 prop 제거)
+    const mergedConditions = this.mergeCompoundConditions(nodeCompoundConditions);
+
     return {
       code: variantParts.join("\n"),
-      compoundConditions: nodeCompoundConditions,
+      compoundConditions: mergedConditions,
       declaredVariants,
-      hasContent: variantParts.length > 0 || nodeCompoundConditions.length > 0,
+      hasContent: variantParts.length > 0 || mergedConditions.length > 0,
     };
   }
 
@@ -627,6 +637,43 @@ export class TailwindStrategy implements IStyleStrategy {
   /**
    * Arbitrary value 이스케이프
    */
+  /**
+   * 같은 className을 가진 compound 조건을 합침.
+   * 공통 prop만 남기고, 차이 나는 prop은 제거.
+   */
+  private mergeCompoundConditions(conditions: CompoundCondition[]): CompoundCondition[] {
+    // className → 조건 그룹
+    const groups = new Map<string, CompoundCondition[]>();
+    for (const c of conditions) {
+      if (!groups.has(c.className)) groups.set(c.className, []);
+      groups.get(c.className)!.push(c);
+    }
+
+    const result: CompoundCondition[] = [];
+    for (const [className, group] of groups) {
+      if (group.length === 1) {
+        result.push(group[0]);
+        continue;
+      }
+      // 모든 조건에서 공통인 prop만 남김
+      const commonProps: Record<string, string> = { ...group[0].props };
+      for (let i = 1; i < group.length; i++) {
+        for (const key of Object.keys(commonProps)) {
+          if (group[i].props[key] !== commonProps[key]) {
+            delete commonProps[key];
+          }
+        }
+      }
+      if (Object.keys(commonProps).length > 0) {
+        result.push({ props: commonProps, className });
+      } else {
+        // 공통 prop이 없으면 합칠 수 없음 — 원본 유지
+        result.push(...group);
+      }
+    }
+    return result;
+  }
+
   private escapeArbitraryValue(value: string): string {
     return value
       .trim()
