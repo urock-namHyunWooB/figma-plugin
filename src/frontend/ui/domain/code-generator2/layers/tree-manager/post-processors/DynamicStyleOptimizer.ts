@@ -27,8 +27,8 @@ export class DynamicStyleOptimizer {
   ): DynamicEntry[] {
     let result = dynamic;
     result = this.removeRedundantPseudo(result);
-    // mergeIdenticalStyles는 decomposer 결과에 영향을 줘서 비활성화
-    // TODO: decomposer 이후에 조건 단순화하는 방식으로 재구현
+    // mergeIdenticalStyles: decomposer의 compound 선택이 입력 변화에 민감해서 비활성화.
+    // decomposer 안정성 개선 후 재활성화 필요.
     result = this.removeEmptyEntries(result);
     return result;
   }
@@ -116,17 +116,21 @@ export class DynamicStyleOptimizer {
         continue;
       }
 
-      // 공통 prop 찾기 (모든 entry에서 같은 값)
+      // 공통/차이 prop 분석
       const commonProps = new Map<string, string>();
+      const differingProps = new Set<string>();
       const firstMap = condMaps[0]!;
       for (const [prop, val] of firstMap) {
         if (condMaps.every((m) => m!.get(prop) === val)) {
           commonProps.set(prop, val);
+        } else {
+          differingProps.add(prop);
         }
       }
 
-      // 공통 prop만으로 조건 재구성 (차이 나는 prop 제거)
-      if (commonProps.size > 0 && commonProps.size < firstMap.size) {
+      // 정확히 1개 prop만 다를 때만 병합 (보수적)
+      // 여러 prop이 다르면 decomposer 입력이 크게 바뀔 수 있음
+      if (differingProps.size === 1 && commonProps.size > 0) {
         const newConditions: ConditionNode[] = [...commonProps.entries()].map(
           ([prop, value]) => ({ type: "eq" as const, prop, value })
         );

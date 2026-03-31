@@ -816,8 +816,20 @@ export class DynamicStyleDecomposer {
         signatures.add("__absent__");
       }
     }
+    if (signatures.size <= 1) return false;
 
-    return signatures.size > 1;
+    // 모든 prop이 필수인지 검증: 각 prop을 제거해도 consistent하면 불필요한 prop
+    // 불필요한 prop이 있으면 이 compound는 과도하게 넓음 → 거부
+    if (props.length >= 2) {
+      for (let i = 0; i < props.length; i++) {
+        const subset = [...props.slice(0, i), ...props.slice(i + 1)];
+        if (subset.length >= 1 && this.isCompoundConsistent(subset, cssKey, matrix)) {
+          return false; // subset만으로 충분 → 현재 compound는 불필요한 prop 포함
+        }
+      }
+    }
+
+    return true;
   }
 
   /** compound 조합이 생성하는 고유 그룹 수 계산 (min-groups 선택용) */
