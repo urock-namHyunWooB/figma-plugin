@@ -765,7 +765,7 @@ ${indentStr})}` : jsx;
           wrapperAttrs = `css={[${wrapperStyleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
         } else {
           const propArgs = [...new Set(dynamicProps
-            .filter((prop) => !prop.includes("+"))
+            .flatMap((prop) => prop.includes("+") ? prop.split("+") : [prop])
             .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
           )];
           const propArgStrs = propArgs.map((p) =>
@@ -1010,9 +1010,9 @@ ${indentStr}</${tag}>`;
           refs.push(...dynamicProps.map((prop) => this.buildDynamicStyleRef(styleVarName, prop)));
           attrs.push(`css={[${refs.join(", ")}]}`);
         } else {
-          // compound prop("style+tone")は cva variants に含まれないため個別 prop のみ含める
+          // compound prop("style+tone")を個別 prop に分解して含める
           const propArgs = [...new Set(dynamicProps
-            .filter((prop) => !prop.includes("+"))
+            .flatMap((prop) => prop.includes("+") ? prop.split("+") : [prop])
             .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
           )];
           // slot prop(ReactNode)은 boolean 변환 필요 (cva variant는 true/false)
@@ -1290,7 +1290,7 @@ ${indentStr}</${tag}>`;
         wrapperAttrs = `css={[${styleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
       } else {
         const propArgs = [...new Set(dynamicProps
-          .filter((prop) => !prop.includes("+"))
+          .flatMap((prop) => prop.includes("+") ? prop.split("+") : [prop])
           .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
         )];
         const propArgStrs = propArgs.map((p) =>
@@ -1422,7 +1422,7 @@ ${indentStr}</${tag}>`;
             wrapperAttrs = `css={[${wrapperStyleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
           } else {
             const propArgs = [...new Set(dynamicProps
-              .filter((prop) => !prop.includes("+"))
+              .flatMap((prop) => prop.includes("+") ? prop.split("+") : [prop])
               .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
             )];
             const propArgStrs = propArgs.map((p) =>
