@@ -167,28 +167,30 @@ describe("Btnsbtn compound decomposition", () => {
       expect(twCode).toContain("function Btnsbtn");
     });
 
-    it("compoundVariants가 생성되어야 한다", () => {
-      expect(twCode).toContain("compoundVariants");
+    it("compound 스타일이 cn() 조건부 클래스로 출력되어야 한다", () => {
+      // compoundVariants 대신 cn() + 조건 표현식 사용
+      expect(twCode).toContain("cn(");
+      expect(twCode).not.toContain("compoundVariants");
     });
 
     it("filled+blue에 background-color가 있어야 한다", () => {
-      // default+filled+blue compound variant에 파란 배경
-      expect(twCode).toMatch(/style:\s*"filled".*tone:\s*"blue".*628CF5/is);
+      // cn() 내 조건: style === "filled" && tone === "blue" && "..."
+      expect(twCode).toMatch(/style\s*===\s*"filled".*tone\s*===\s*"blue".*628CF5/is);
     });
 
     it("filled+red에 background-color가 있어야 한다", () => {
-      expect(twCode).toMatch(/style:\s*"filled".*tone:\s*"red".*FF8484/is);
+      expect(twCode).toMatch(/style\s*===\s*"filled".*tone\s*===\s*"red".*FF8484/is);
     });
 
     it("outlined+blue에 border가 있어야 한다", () => {
-      expect(twCode).toMatch(/style:\s*"outlined".*tone:\s*"blue".*border/is);
+      expect(twCode).toMatch(/style\s*===\s*"outlined".*tone\s*===\s*"blue".*border/is);
     });
 
-    it("hover 스타일이 compound에 포함되어야 한다", () => {
-      // hover: prefix가 compoundVariants className에 존재
-      const compoundMatch = twCode.match(/compoundVariants:\s*\[([\s\S]*?)\]\s*,?\s*\}/);
-      expect(compoundMatch).toBeTruthy();
-      expect(compoundMatch![1]).toContain("hover:");
+    it("hover 스타일이 조건부 클래스에 포함되어야 한다", () => {
+      // cn() 내 조건에 hover: prefix 존재
+      const cnMatch = twCode.match(/cn\(([\s\S]*?)\)\s*\}/);
+      expect(cnMatch).toBeTruthy();
+      expect(cnMatch![1]).toContain("hover:");
     });
   });
 });

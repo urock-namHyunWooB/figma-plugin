@@ -206,12 +206,17 @@ export async function renderReactComponent(
       (window as any).css = cssFunction;
       (window as any).cx = cxFunction;
 
-      // Tailwind용 cn 함수 (clsx와 유사한 기능)
+      // Tailwind용 cn 함수 (clsx와 유사한 기능 + arbitrary class CSS 주입)
       const cnFunction = (...args: any[]): string => {
-        return args
+        const result = args
           .flat()
           .filter((x) => typeof x === "string" && x.trim())
           .join(" ");
+        // cn()에 전달된 조건부 클래스의 arbitrary class도 CSS로 주입
+        if (typeof injectArbitraryClasses === "function") {
+          injectArbitraryClasses(result);
+        }
+        return result;
       };
       (window as any).cn = cnFunction;
 
@@ -397,9 +402,13 @@ export async function renderReactComponent(
       // 전체 코드를 실행하고 컴포넌트 함수를 반환
       // 함수 선언은 hoisting되므로 실행 후 컴포넌트 이름으로 접근 가능
       
-      // 생성된 코드에 인라인 cn 함수가 있는지 확인 (const cn = ... 또는 var cn = ...)
       const transformedCode = transformedWithEmotion || transformed;
-      const hasInlineCn = transformedCode.includes("var cn") || transformedCode.includes("const cn");
+      // 생성된 코드의 인라인 cn 함수를 제거하고 window.cn 사용
+      // (window.cn은 arbitrary class CSS 주입 기능 포함)
+      const cleanedTransformed = transformedCode
+        .replace(/var cn\s*=\s*\([\s\S]*?\)[\s\S]*?\.join\([\s\S]*?\);?\s*/g, "")
+        .replace(/const cn\s*=\s*\([\s\S]*?\)[\s\S]*?\.join\([\s\S]*?\);?\s*/g, "");
+      const hasInlineCn = false;
       
       const evalCode = `
         'use strict';
@@ -412,7 +421,7 @@ export async function renderReactComponent(
         ${emotionStyled ? "var styled = window.styled;" : ""}
         ${emotionModule && emotionJsx ? "var jsx = window.jsx; var jsxs = window.jsxs;" : ""}
         
-        ${transformedWithEmotion || transformed}
+        ${cleanedTransformed}
         
         typeof ${componentName} !== 'undefined' ? ${componentName} : null
       `;

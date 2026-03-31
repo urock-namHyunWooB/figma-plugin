@@ -96,6 +96,17 @@ export class StylesGenerator {
     // 같은 code를 생성하는 노드는 첫 번째 변수를 재사용
     this.deduplicateStyles(styleResults, nodeStyleMap);
 
+    // Step 3.8: dedup 후 cva 변수 추적 재구축 (dedup으로 제거된 변수 동기화)
+    if ("cvaVariables" in styleStrategy) {
+      const cvaSet = (styleStrategy as { cvaVariables: Set<string> }).cvaVariables;
+      cvaSet.clear();
+      for (const r of styleResults) {
+        if (!r.isEmpty && r.code?.includes("= cva(")) {
+          cvaSet.add(r.variableName);
+        }
+      }
+    }
+
     // Step 4: 빈 스타일 제거 및 코드 조합
     const nonEmptyResults = styleResults.filter((r) => !r.isEmpty && r.code);
 
@@ -203,6 +214,12 @@ export class StylesGenerator {
     styleResults: StyleResult[]
   ): string {
     const parts: string[] = [];
+
+    // cn 함수 (compound 조건부 클래스 결합용)
+    if ("getCnFunction" in styleStrategy) {
+      const cnCode = (styleStrategy as { getCnFunction(): string }).getCnFunction();
+      if (cnCode) parts.push(cnCode);
+    }
 
     // 스타일 선언
     parts.push(...styleResults.map((r) => r.code));
