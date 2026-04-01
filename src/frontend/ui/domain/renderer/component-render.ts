@@ -350,21 +350,8 @@ export async function renderReactComponent(
         variants?: Record<string, Record<string, string>>;
         compoundVariants?: Array<Record<string, any> & { className?: string; class?: string }>;
       }) => {
-        // base + 모든 variant/compound 클래스의 CSS를 사전 주입
+        // base 클래스만 사전 주입 (variant는 runtime에 주입)
         injectArbitraryClasses(base);
-        if (config?.variants) {
-          for (const values of Object.values(config.variants)) {
-            for (const cls of Object.values(values)) {
-              if (cls) injectArbitraryClasses(cls);
-            }
-          }
-        }
-        if (config?.compoundVariants) {
-          for (const cv of config.compoundVariants) {
-            const cls = cv.className || cv.class;
-            if (cls) injectArbitraryClasses(cls);
-          }
-        }
 
         return (props?: Record<string, any>) => {
           const classes = [base];
@@ -388,7 +375,10 @@ export async function renderReactComponent(
               if (match) classes.push(cls);
             }
           }
-          return classes.filter(Boolean).join(" ");
+          const result = classes.filter(Boolean).join(" ");
+          // runtime에 실제 사용되는 클래스만 CSS 주입 (사전 주입 시 순서 충돌 방지)
+          injectArbitraryClasses(result);
+          return result;
         };
       };
       (window as any).cva = cvaFunction;

@@ -194,25 +194,24 @@ export class TailwindStrategy implements IStyleStrategy {
     // Step 1: 변수명 생성 (경로 기반 or ID 기반)
     const variableName = this.createVariableName(nodeId, nodeName, parentPath);
 
-    // dynamic의 모든 variant 값에 있는 CSS property만 base에서 제거 (충돌 방지)
-    // 일부 variant에만 있는 property는 base가 fallback이므로 유지
-    const dynamicCssKeyCounts = new Map<string, number>();
-    let dynamicEntryCount = 0;
+    // dynamic에서 사용되는 CSS property 수집 (variant별 값 포함)
+    // base와 동일한 값이 variant에 있으면 base에서 제거 (Tailwind class 충돌 방지)
+    const dynamicCssValues = new Map<string, Set<string>>();
     if (style.dynamic) {
-      dynamicEntryCount = style.dynamic.length;
       for (const entry of style.dynamic) {
-        for (const key of Object.keys(entry.style)) {
-          dynamicCssKeyCounts.set(key, (dynamicCssKeyCounts.get(key) || 0) + 1);
+        for (const [key, val] of Object.entries(entry.style)) {
+          if (!dynamicCssValues.has(key)) dynamicCssValues.set(key, new Set());
+          dynamicCssValues.get(key)!.add(String(val));
         }
       }
     }
 
     const filteredBase: Record<string, string | number> = {};
     for (const [key, value] of Object.entries(style.base)) {
-      // 모든 dynamic entry에 해당 property가 있을 때만 base에서 제거
-      const count = dynamicCssKeyCounts.get(key) || 0;
-      if (count > 0 && count >= dynamicEntryCount) {
-        continue; // 모든 variant가 override → base 불필요
+      const dynValues = dynamicCssValues.get(key);
+      if (dynValues && dynValues.has(String(value))) {
+        // base 값이 variant 중 하나와 동일 → Tailwind에서 class 충돌하므로 base에서 제거
+        continue;
       }
       filteredBase[key] = value;
     }
