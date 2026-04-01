@@ -245,4 +245,136 @@ describe("NodeMatcher", () => {
       expect(matcher.getPositionCost(nodeA, nodeB)).not.toBe(Infinity);
     });
   });
+
+  describe("같은 INSTANCE(같은 컴포넌트)는 size가 달라도 매칭되어야 한다", () => {
+    /**
+     * Chips 이슈: icon-star-filled이 size variant에 따라 12px/16px로 다름.
+     * 같은 컴포넌트 참조인데 isSimilarSize(ratio 1.33 > 1.3)로 매칭 실패
+     * → 2개 노드로 분리 → iconRight가 2번 렌더링
+     *
+     * Variant A (Small): [TEXT(27x20)] [icon-star-filled(12x12)]
+     * Variant B (Large): [TEXT(31x24)] [icon-star-filled(16x16)]
+     */
+    it("같은 INSTANCE는 size가 달라도 매칭되어야 한다 (isSameNode)", () => {
+      const gap = 2;
+
+      // Small: TEXT + icon 12x12
+      const aText = makeSceneNode("a-text", "TEXT", 0, 0, 27, 20);
+      const aIcon = makeSceneNode("a-icon", "INSTANCE", 29, 0, 12, 12, {
+        componentId: "comp-star",
+      });
+      const parentA = makeAutoLayoutParent(
+        "parent-a", "HORIZONTAL", gap,
+        [aText, aIcon],
+        { x: 0, y: 0, width: 43, height: 24 }
+      );
+
+      // Large: TEXT + icon 16x16
+      const bText = makeSceneNode("b-text", "TEXT", 0, 0, 31, 24);
+      const bIcon = makeSceneNode("b-icon", "INSTANCE", 33, 0, 16, 16, {
+        componentId: "comp-star",
+      });
+      const parentB = makeAutoLayoutParent(
+        "parent-b", "HORIZONTAL", gap,
+        [bText, bIcon],
+        { x: 0, y: 0, width: 51, height: 28 }
+      );
+
+      const nodeMap = new Map<string, any>([
+        ["a-text", aText], ["a-icon", aIcon], ["parent-a", parentA],
+        ["b-text", bText], ["b-icon", bIcon], ["parent-b", parentB],
+      ]);
+
+      const nodeToVariantRoot = new Map<string, string>([
+        ["a-icon", "parent-a"],
+        ["b-icon", "parent-b"],
+      ]);
+      const dataManager = createMockDataManager(nodeMap);
+      const matcher = new NodeMatcher(dataManager, nodeToVariantRoot);
+
+      const parentIntA = makeInternalNode(
+        "parent-merged", "FRAME",
+        { x: 0, y: 0, width: 43, height: 24 },
+        null, "parent-a"
+      );
+      const parentIntB = makeInternalNode(
+        "parent-b", "FRAME",
+        { x: 0, y: 0, width: 51, height: 28 },
+        null, "parent-b"
+      );
+
+      const nodeA = makeInternalNode(
+        "merged-icon", "INSTANCE",
+        { x: 29, y: 0, width: 12, height: 12 },
+        parentIntA, "a-icon"
+      );
+      const nodeB = makeInternalNode(
+        "b-icon", "INSTANCE",
+        { x: 33, y: 0, width: 16, height: 16 },
+        parentIntB, "b-icon"
+      );
+
+      expect(matcher.isSameNode(nodeA, nodeB)).toBe(true);
+    });
+
+    it("같은 INSTANCE는 size가 달라도 매칭되어야 한다 (getPositionCost)", () => {
+      const gap = 2;
+
+      const aText = makeSceneNode("a-text", "TEXT", 0, 0, 27, 20);
+      const aIcon = makeSceneNode("a-icon", "INSTANCE", 29, 0, 12, 12, {
+        componentId: "comp-star",
+      });
+      const parentA = makeAutoLayoutParent(
+        "parent-a", "HORIZONTAL", gap,
+        [aText, aIcon],
+        { x: 0, y: 0, width: 43, height: 24 }
+      );
+
+      const bText = makeSceneNode("b-text", "TEXT", 0, 0, 31, 24);
+      const bIcon = makeSceneNode("b-icon", "INSTANCE", 33, 0, 16, 16, {
+        componentId: "comp-star",
+      });
+      const parentB = makeAutoLayoutParent(
+        "parent-b", "HORIZONTAL", gap,
+        [bText, bIcon],
+        { x: 0, y: 0, width: 51, height: 28 }
+      );
+
+      const nodeMap = new Map<string, any>([
+        ["a-text", aText], ["a-icon", aIcon], ["parent-a", parentA],
+        ["b-text", bText], ["b-icon", bIcon], ["parent-b", parentB],
+      ]);
+
+      const nodeToVariantRoot = new Map<string, string>([
+        ["a-icon", "parent-a"],
+        ["b-icon", "parent-b"],
+      ]);
+      const dataManager = createMockDataManager(nodeMap);
+      const matcher = new NodeMatcher(dataManager, nodeToVariantRoot);
+
+      const parentIntA = makeInternalNode(
+        "parent-merged", "FRAME",
+        { x: 0, y: 0, width: 43, height: 24 },
+        null, "parent-a"
+      );
+      const parentIntB = makeInternalNode(
+        "parent-b", "FRAME",
+        { x: 0, y: 0, width: 51, height: 28 },
+        null, "parent-b"
+      );
+
+      const nodeA = makeInternalNode(
+        "merged-icon", "INSTANCE",
+        { x: 29, y: 0, width: 12, height: 12 },
+        parentIntA, "a-icon"
+      );
+      const nodeB = makeInternalNode(
+        "b-icon", "INSTANCE",
+        { x: 33, y: 0, width: 16, height: 16 },
+        parentIntB, "b-icon"
+      );
+
+      expect(matcher.getPositionCost(nodeA, nodeB)).not.toBe(Infinity);
+    });
+  });
 });
