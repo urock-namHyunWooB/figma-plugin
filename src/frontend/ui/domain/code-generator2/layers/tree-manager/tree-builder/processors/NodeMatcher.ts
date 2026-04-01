@@ -103,8 +103,8 @@ export class NodeMatcher {
         if (!this.isSimilarSize(nodeA, nodeB)) return false;
       }
       // AL 보정이 적용된 경우 크기도 유사해야 함 (위치만 보정된 다른 노드 오매칭 방지)
-      // TEXT는 내용 길이에 따라 width가 달라지므로 제외
-      if (shift && nodeA.type !== "TEXT" && !this.isSimilarSize(nodeA, nodeB)) return false;
+      // TEXT는 내용 길이에 따라, INSTANCE는 size variant에 따라 크기가 달라지므로 제외
+      if (shift && nodeA.type !== "TEXT" && nodeA.type !== "INSTANCE" && !this.isSimilarSize(nodeA, nodeB)) return false;
       return true;
     }
 
@@ -186,7 +186,7 @@ export class NodeMatcher {
           NodeMatcher.CONTAINER_TYPES.has(nodeB.type)) {
         if (!this.isSimilarSize(nodeA, nodeB)) return Infinity;
       }
-      if (shift && nodeA.type !== "TEXT" && !this.isSimilarSize(nodeA, nodeB)) return Infinity;
+      if (shift && nodeA.type !== "TEXT" && nodeA.type !== "INSTANCE" && !this.isSimilarSize(nodeA, nodeB)) return Infinity;
       return posCost;
     }
 
