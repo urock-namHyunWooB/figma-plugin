@@ -705,11 +705,12 @@ export class UpdateSquashByIou {
     const usedIndices = new Set<number>();
 
     for (const srcChild of source.children) {
+      // type + 위치 기반 매칭 (이름은 variant마다 다를 수 있음)
       const matchIdx = target.children.findIndex(
         (tgtChild, idx) =>
           !usedIndices.has(idx) &&
           tgtChild.type === srcChild.type &&
-          tgtChild.name === srcChild.name
+          this.isSamePosition3Way(tgtChild, srcChild)
       );
 
       if (matchIdx !== -1) {

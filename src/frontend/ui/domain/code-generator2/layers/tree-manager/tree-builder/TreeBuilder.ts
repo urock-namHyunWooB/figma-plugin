@@ -79,6 +79,9 @@ class TreeBuilder {
     // Step 1: 변형 병합
     let tree = this.variantMerger.merge(node);
 
+    // Step 1.5: 다른 componentId가 prop에 의해 제어되는 INSTANCE → 분리
+    this.splitMultiComponentInstances(tree);
+
     // Step 2: Props 추출/바인딩 (mergedNodes 전달하여 variant props 추출)
     let props = this.propsExtractor.extract(node, tree.mergedNodes);
 
@@ -277,6 +280,136 @@ class TreeBuilder {
       return false;
     };
     return walk(tree);
+  }
+
+  /**
+   * 합쳐진 INSTANCE에서 다른 componentId가 prop에 의해 제어되면 분리.
+   *
+   * 예: Tagreview에서 Forbid/Time/Success/Info/Error가 하나로 합쳐졌는데,
+   * state prop에 따라 다른 컴포넌트 → 분리하여 component map 패턴 유지.
+   *
+   * 반면 Chips에서 icon-checking/icon_checking은 size에 따른 같은 역할
+   * → 모든 variant가 같은 컴포넌트(이름만 다름)이므로 분리 안 함.
+   */
+  private splitMultiComponentInstances(tree: InternalNode): void {
+    for (let i = 0; i < tree.children.length; i++) {
+      const child = tree.children[i];
+
+      // 재귀
+      this.splitMultiComponentInstances(child);
+
+      if (child.type !== "INSTANCE") continue;
+      if (!child.mergedNodes || child.mergedNodes.length <= 1) continue;
+
+      // mergedNodes에서 variant별 componentId 수집
+      const variantCompMap = new Map<string, Set<string>>(); // componentName → variantNames
+      const compNameById = new Map<string, string>(); // componentId → componentName
+      for (const m of child.mergedNodes) {
+        const { node: origNode } = this.dataManager.getById(m.id);
+        const compId = (origNode as any)?.componentId;
+        if (!compId) continue;
+        const compName = (origNode as any)?.name || compId;
+        compNameById.set(compId, compName);
+        if (!variantCompMap.has(compName)) variantCompMap.set(compName, new Set());
+        variantCompMap.get(compName)!.add(m.variantName);
+      }
+
+      // 모든 variant가 같은 componentName이면 분리 불필요
+      if (variantCompMap.size <= 1) continue;
+
+      // 어떤 prop이 componentId를 제어하는지 찾기
+      const controllingProp = this.findControllingPropForComponent(child.mergedNodes, variantCompMap);
+      if (!controllingProp) continue;
+
+      // 분리: componentName별로 새 INSTANCE 노드 생성
+      const newNodes: InternalNode[] = [];
+      for (const [compName, variantNames] of variantCompMap) {
+        const filteredMerged = child.mergedNodes.filter((m) => {
+          const { node: n } = this.dataManager.getById(m.id);
+          return (n as any)?.name === compName;
+        });
+
+        // prop value 추출 (variant 이름에서)
+        const propValues = new Set<string>();
+        for (const vn of variantNames) {
+          const match = vn.match(new RegExp(`${controllingProp}=([^,]+)`, "i"));
+          if (match) propValues.add(match[1].trim());
+        }
+
+        const newNode: InternalNode = {
+          ...child,
+          id: child.id + "_" + compName,
+          name: compName,
+          mergedNodes: filteredMerged,
+          children: child.children.map((c) => ({ ...c })),
+          visibleCondition: propValues.size === 1
+            ? { type: "eq" as const, prop: controllingProp, value: [...propValues][0] }
+            : undefined,
+        };
+        newNode.parent = tree;
+        newNodes.push(newNode);
+      }
+
+      // 원본 child를 새 노드들로 교체
+      tree.children.splice(i, 1, ...newNodes);
+      i += newNodes.length - 1; // 인덱스 보정
+    }
+  }
+
+  /**
+   * mergedNodes에서 componentName 변화를 제어하는 prop 찾기.
+   * 특정 prop 값이 바뀔 때만 componentName이 바뀌면 그 prop이 제어.
+   */
+  private findControllingPropForComponent(
+    mergedNodes: Array<{ id: string; name: string; variantName: string; variantProps?: Record<string, string> }>,
+    variantCompMap: Map<string, Set<string>>
+  ): string | null {
+    // variant 이름에서 prop 추출
+    const allProps = new Map<string, Set<string>>();
+    for (const m of mergedNodes) {
+      const pairs = m.variantName.split(",").map((p) => p.trim().split("="));
+      for (const [key, val] of pairs) {
+        if (key && val) {
+          if (!allProps.has(key)) allProps.set(key, new Set());
+          allProps.get(key)!.add(val);
+        }
+      }
+    }
+
+    // 각 prop에 대해: prop 값이 같으면 componentName도 같은지 확인
+    for (const [propName, propValues] of allProps) {
+      if (propValues.size <= 1) continue;
+
+      let isControlling = true;
+      const propToComp = new Map<string, string>();
+
+      for (const m of mergedNodes) {
+        const match = m.variantName.match(new RegExp(`${propName}=([^,]+)`, "i"));
+        if (!match) { isControlling = false; break; }
+        const propVal = match[1].trim();
+
+        const { node: origNode } = this.dataManager.getById(m.id);
+        const compName = (origNode as any)?.name || "";
+
+        if (propToComp.has(propVal)) {
+          if (propToComp.get(propVal) !== compName) {
+            // 같은 prop 값인데 다른 componentName → 이 prop이 아님
+            isControlling = false;
+            break;
+          }
+        } else {
+          propToComp.set(propVal, compName);
+        }
+      }
+
+      // prop 값 → componentName이 1:1 매핑이면 제어 prop
+      if (isControlling && propToComp.size === propValues.size) {
+        const compNames = new Set(propToComp.values());
+        if (compNames.size > 1) return propName;
+      }
+    }
+
+    return null;
   }
 
   /**

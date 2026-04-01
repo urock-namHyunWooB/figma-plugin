@@ -67,22 +67,7 @@ export class NodeMatcher {
       return true;
     }
 
-    // 2.5. INSTANCE 노드는 componentId가 다르면 같은 componentSetId에 속하는지 확인
-    // (같은 componentSetId이면 variant 차이이므로 병합 가능)
-    if (nodeA.type === "INSTANCE" && nodeB.type === "INSTANCE") {
-      const compIdA = (nodeA as any).componentId;
-      const compIdB = (nodeB as any).componentId;
-      if (compIdA && compIdB && compIdA !== compIdB) {
-        // componentId가 다르면: 같은 componentSetId에 속하는지 확인
-        const setIdA = this.getComponentSetId(compIdA);
-        const setIdB = this.getComponentSetId(compIdB);
-        if (!(setIdA && setIdB && setIdA === setIdB)) {
-          // 다른 componentSetId이면 다른 노드
-          return false;
-        }
-        // 같은 componentSetId이면 계속 진행 (위치나 visible ref로 비교)
-      }
-    }
+    // INSTANCE는 componentId와 무관하게 위치 기반 매칭
 
     // 3. 부모가 없으면 (루트) → 루트끼리는 같음
     if (!nodeA.parent && !nodeB.parent) {
@@ -159,16 +144,7 @@ export class NodeMatcher {
       if (!bothShapes && !bothContainers) return Infinity;
     }
 
-    // INSTANCE componentSetId 비호환 체크
-    if (nodeA.type === "INSTANCE" && nodeB.type === "INSTANCE") {
-      const compIdA = (nodeA as any).componentId;
-      const compIdB = (nodeB as any).componentId;
-      if (compIdA && compIdB && compIdA !== compIdB) {
-        const setIdA = this.getComponentSetId(compIdA);
-        const setIdB = this.getComponentSetId(compIdB);
-        if (!(setIdA && setIdB && setIdA === setIdB)) return Infinity;
-      }
-    }
+    // INSTANCE는 componentId와 무관하게 위치 기반 매칭
 
     // 루트끼리
     if (!nodeA.parent && !nodeB.parent) return 0;
@@ -530,23 +506,7 @@ export class NodeMatcher {
       return false;
     }
 
-    // componentId 비교
-    const compIdA = (nodeA as any).componentId;
-    const compIdB = (nodeB as any).componentId;
-    if (compIdA && compIdB && compIdA !== compIdB) {
-      // componentId가 다르면: 같은 componentSetId에 속하는지 확인
-      const setIdA = this.getComponentSetId(compIdA);
-      const setIdB = this.getComponentSetId(compIdB);
-
-      // 같은 componentSetId이면 같은 노드로 판단 (variant 차이)
-      if (setIdA && setIdB && setIdA === setIdB) {
-        return true;
-      }
-
-      // 다른 componentSetId이면 다른 노드
-      return false;
-    }
-
+    // componentId 비교 없이 위치 기반 fallback
     const visRefA = nodeA.componentPropertyReferences?.visible;
     const visRefB = nodeB.componentPropertyReferences?.visible;
 
