@@ -251,10 +251,46 @@ export async function renderReactComponent(
         "leading": "line-height",
       };
 
+      // 표준 Tailwind 유틸리티 → CSS 매핑 (동적 코드에서 사용 시 Tailwind 스캔 불가)
+      const TW_STANDARD_UTILS: Record<string, string> = {
+        "relative": "position: relative", "absolute": "position: absolute",
+        "fixed": "position: fixed", "sticky": "position: sticky", "static": "position: static",
+        "flex": "display: flex", "inline-flex": "display: inline-flex",
+        "grid": "display: grid", "block": "display: block", "inline-block": "display: inline-block",
+        "hidden": "display: none", "inline": "display: inline",
+        "flex-row": "flex-direction: row", "flex-col": "flex-direction: column",
+        "flex-row-reverse": "flex-direction: row-reverse", "flex-col-reverse": "flex-direction: column-reverse",
+        "flex-wrap": "flex-wrap: wrap", "flex-nowrap": "flex-wrap: nowrap",
+        "items-center": "align-items: center", "items-start": "align-items: flex-start",
+        "items-end": "align-items: flex-end", "items-stretch": "align-items: stretch",
+        "items-baseline": "align-items: baseline",
+        "justify-center": "justify-content: center", "justify-start": "justify-content: flex-start",
+        "justify-end": "justify-content: flex-end", "justify-between": "justify-content: space-between",
+        "justify-around": "justify-content: space-around",
+        "text-center": "text-align: center", "text-left": "text-align: left", "text-right": "text-align: right",
+        "overflow-hidden": "overflow: hidden", "overflow-visible": "overflow: visible",
+        "overflow-auto": "overflow: auto", "overflow-scroll": "overflow: scroll",
+        "not-italic": "font-style: normal", "italic": "font-style: italic",
+        "shrink-0": "flex-shrink: 0", "shrink": "flex-shrink: 1",
+        "grow-0": "flex-grow: 0", "grow": "flex-grow: 1",
+        "w-full": "width: 100%", "h-full": "height: 100%",
+        "box-border": "box-sizing: border-box", "box-content": "box-sizing: content-box",
+      };
+
       const injectArbitraryClasses = (classStr: string) => {
         for (const token of classStr.split(/\s+/)) {
-          if (!token.includes("[") || !token.includes("]")) continue;
           if (injectedRules.has(token)) continue;
+
+          // 표준 Tailwind 유틸리티 처리
+          const stdCss = TW_STANDARD_UTILS[token];
+          if (stdCss) {
+            injectedRules.add(token);
+            const escaped = CSS.escape(token);
+            try { styleEl.sheet?.insertRule(`.${escaped} { ${stdCss}; }`, styleEl.sheet.cssRules.length); } catch {}
+            continue;
+          }
+
+          if (!token.includes("[") || !token.includes("]")) continue;
 
           let prefix = "";
           let core = token;
