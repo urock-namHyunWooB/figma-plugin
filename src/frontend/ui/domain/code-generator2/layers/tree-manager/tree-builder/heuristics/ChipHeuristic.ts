@@ -50,10 +50,61 @@ export class ChipHeuristic implements IHeuristic {
     // INSTANCE slot 감지
     this.traverseAndDetectInstanceSlots(ctx.tree, ctx, totalVariantCount, false);
 
+    // Slot-bound INSTANCE 중복 제거
+    this.cleanupSlotInstances(ctx.tree);
+
     return {
       componentType: this.componentType,
       rootNodeType: "button",
     };
+  }
+
+  /**
+   * 같은 slot prop의 중복 INSTANCE 제거.
+   * visibleCondition 없는 노드를 우선 유지.
+   */
+  private cleanupSlotInstances(node: InternalNode): void {
+    if (!node.children || node.children.length === 0) return;
+
+    // 같은 slot prop 그룹화
+    const slotGroups = new Map<string, number[]>();
+    for (let i = 0; i < node.children.length; i++) {
+      const slotProp = (node.children[i].bindings as any)?.content?.prop;
+      if (typeof slotProp === "string") {
+        if (!slotGroups.has(slotProp)) slotGroups.set(slotProp, []);
+        slotGroups.get(slotProp)!.push(i);
+      }
+    }
+
+    // 유지할 인덱스 결정: visibleCondition 없는 노드 우선
+    const keepIndices = new Set<number>();
+    for (const indices of slotGroups.values()) {
+      const unconditional = indices.find((i) => !node.children[i].visibleCondition);
+      keepIndices.add(unconditional ?? indices[0]);
+    }
+
+    const seenSlotProps = new Set<string>();
+    node.children = node.children.filter((child, idx) => {
+      const slotProp = (child.bindings as any)?.content?.prop;
+      if (typeof slotProp === "string") {
+        if (seenSlotProps.has(slotProp)) {
+          return keepIndices.has(idx);
+        }
+        seenSlotProps.add(slotProp);
+        if (!keepIndices.has(idx)) return false;
+      }
+      return true;
+    });
+
+    // Slot 노드의 children 비우기
+    for (const child of node.children) {
+      const slotProp = (child.bindings as any)?.content?.prop;
+      if (typeof slotProp === "string") {
+        child.children = [];
+      } else {
+        this.cleanupSlotInstances(child);
+      }
+    }
   }
 
   /**
