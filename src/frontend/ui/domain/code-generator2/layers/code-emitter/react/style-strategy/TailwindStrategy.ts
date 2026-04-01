@@ -175,11 +175,10 @@ export class TailwindStrategy implements IStyleStrategy {
   }
 
   /**
-   * cn 함수 생성 — compound 조건부 클래스 결합용
+   * cn 함수 생성
    */
   getCnFunction(): string {
-    if (this.compoundConditions.size === 0) return "";
-    return `const cn = (...args: (string | boolean | null | undefined)[]) => args.filter(Boolean).join(" ");`;
+    return "";
   }
 
   /**
@@ -264,19 +263,16 @@ export class TailwindStrategy implements IStyleStrategy {
 
     let code: string;
     if (hasDynamicStyles) {
-      // cva() 함수로 base + variants 통합 (compound는 JSX에서 cn()으로 처리)
-      if (dynamicResult.code) {
-        code = `const ${variableName} = cva(${this.wrapClassString(baseStr)}, {\n  variants: {\n${dynamicResult.code}\n  },\n});`;
+      // cva() 함수로 base + variants + compoundVariants 통합
+      const variantsBlock = dynamicResult.code ? `  variants: {\n${dynamicResult.code}\n  },` : "";
+      const compoundBlock = dynamicResult.compoundCode || "";
+      const cvaBody = [variantsBlock, compoundBlock].filter(Boolean).join("\n");
+      if (cvaBody) {
+        code = `const ${variableName} = cva(${this.wrapClassString(baseStr)}, {\n${cvaBody}\n});`;
+        this.cvaVariables.add(variableName);
       } else {
         code = `const ${variableName} = ${this.wrapClassString(baseStr)};`;
       }
-      if (dynamicResult.code) this.cvaVariables.add(variableName);
-      // compound 조건을 저장 → JsxGenerator가 cn()으로 출력
-      if (dynamicResult.compoundConditions.length > 0) {
-        this.compoundConditions.set(variableName, dynamicResult.compoundConditions);
-      }
-      // cva에 선언된 variant prop 이름 저장
-      this.declaredVariantProps.set(variableName, dynamicResult.declaredVariants);
     } else {
       // dynamic 없으면 plain string
       code = `const ${variableName} = ${this.wrapClassString(baseStr)};`;
@@ -339,8 +335,9 @@ export class TailwindStrategy implements IStyleStrategy {
 
     // 각 variant prop → cva variants 블록 내부 코드
     const variantParts: string[] = [];
-    const nodeCompoundConditions: CompoundCondition[] = [];
-    const declaredVariants = new Set<string>(); // variants에 선언된 prop
+    const compoundEntries: string[] = [];
+    const compoundProps = new Set<string>();
+    const declaredVariants = new Set<string>();
 
     for (const [propName, valueMap] of variantGroups) {
       const entries: string[] = [];
@@ -372,9 +369,10 @@ export class TailwindStrategy implements IStyleStrategy {
 
       if (entries.length === 0) continue;
 
-      // compound prop → 조건부 클래스로 별도 수집 (cn()에서 사용)
+      // compound prop → compoundVariants로 수집
       if (propName.includes("+")) {
         const propNames = propName.split("+");
+        for (const p of propNames) compoundProps.add(p);
         for (const [value, { style: dynStyle, pseudo }] of valueMap) {
           const classes = this.cssObjectToTailwind(dynStyle);
           if (pseudo) {
@@ -393,11 +391,13 @@ export class TailwindStrategy implements IStyleStrategy {
           if (classes.length === 0) continue;
           const values = value.split("+");
           if (values.length !== propNames.length) continue;
-          const props: Record<string, string> = {};
-          for (let i = 0; i < propNames.length; i++) {
-            props[propNames[i]] = values[i];
-          }
-          nodeCompoundConditions.push({ props, className: classes.join(" ") });
+          const conditions = propNames.map((p, i) => {
+            const key = this.needsQuoting(p) ? `"${p}"` : p;
+            const val = values[i];
+            if (val === "true" || val === "false") return `${key}: ${val}`;
+            return `${key}: "${val}"`;
+          });
+          compoundEntries.push(`    { ${conditions.join(", ")}, className: ${this.wrapClassString(classes.join(" "))} },`);
         }
         continue;
       }
@@ -421,11 +421,31 @@ export class TailwindStrategy implements IStyleStrategy {
       declaredVariants.add(propName);
     }
 
+    // compoundVariants에서 참조하지만 variants에 없는 prop → 빈 variant 추가
+    for (const p of compoundProps) {
+      if (declaredVariants.has(p)) continue;
+      const allOptions = this.variantOptions.get(p);
+      if (allOptions) {
+        const emptyEntries = [...allOptions].map((opt) => {
+          const key = this.needsQuoting(opt) ? `"${opt}"` : opt;
+          return `        ${key}: "",`;
+        });
+        const propKey = this.needsQuoting(p) ? `"${p}"` : p;
+        variantParts.push(`    ${propKey}: {\n${emptyEntries.join("\n")}\n    },`);
+      }
+    }
+
+    // compoundVariants 코드
+    let compoundCode = "";
+    if (compoundEntries.length > 0) {
+      compoundCode = `  compoundVariants: [\n${compoundEntries.join("\n")}\n  ],`;
+    }
+
     return {
       code: variantParts.join("\n"),
-      compoundConditions: nodeCompoundConditions,
+      compoundCode,
       declaredVariants,
-      hasContent: variantParts.length > 0 || mergedConditions.length > 0,
+      hasContent: variantParts.length > 0 || compoundEntries.length > 0,
     };
   }
 

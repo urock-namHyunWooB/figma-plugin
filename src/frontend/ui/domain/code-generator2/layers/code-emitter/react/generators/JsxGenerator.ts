@@ -764,32 +764,14 @@ ${indentStr})}` : jsx;
           );
           wrapperAttrs = `css={[${wrapperStyleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
         } else {
-          const declaredProps = (styleStrategy as any).declaredVariantProps?.get(wrapperStyleVarName) as Set<string> | undefined;
           const propArgs = [...new Set(dynamicProps
-            .filter((prop) => !prop.includes("+"))
+            .flatMap((prop) => prop.includes("+") ? prop.split("+") : [prop])
             .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
-            .filter((p) => !declaredProps || declaredProps.has(p))
           )];
           const propArgStrs = propArgs.map((p) =>
             this.slotProps.has(p) ? `${p}: !!${p}` : p
           );
-          const compoundConds = (styleStrategy as any).compoundConditions?.get(wrapperStyleVarName) as Array<{props: Record<string, string>; className: string}> | undefined;
-          if (compoundConds && compoundConds.length > 0) {
-            const condExprs = compoundConds.map((c) => {
-              const checks = Object.entries(c.props).map(([k, v]) => {
-                if (v === "true") return k;
-                if (v === "false") return `!${k}`;
-                return `${k} === "${v}"`;
-              }).join(" && ");
-              const cls = c.className.includes("\\") ? `String.raw\`${c.className}\`` : `"${c.className}"`;
-              return `${checks} && ${cls}`;
-            });
-            const isCva = (styleStrategy as any).cvaVariables?.has(wrapperStyleVarName);
-            const cvaCall = isCva ? `${wrapperStyleVarName}({ ${propArgStrs.join(", ")} })` : wrapperStyleVarName;
-            wrapperAttrs = `className={cn(${cvaCall}, ${condExprs.join(", ")})}`;
-          } else {
-            wrapperAttrs = `className={${wrapperStyleVarName}({ ${propArgStrs.join(", ")} })}`;
-          }
+          wrapperAttrs = `className={${wrapperStyleVarName}({ ${propArgStrs.join(", ")} })}`;
         }
       } else {
         const styleAttr = styleStrategy.getJsxStyleAttribute(wrapperStyleVarName, false);
@@ -1028,35 +1010,16 @@ ${indentStr}</${tag}>`;
           refs.push(...dynamicProps.map((prop) => this.buildDynamicStyleRef(styleVarName, prop)));
           attrs.push(`css={[${refs.join(", ")}]}`);
         } else {
-          // cva에 선언된 variant prop만 전달 (compound-only prop은 cn()에서 처리)
-          const declaredProps = (styleStrategy as any).declaredVariantProps?.get(styleVarName) as Set<string> | undefined;
+          // compound prop("style+tone")を個別 prop に分解して含める
           const propArgs = [...new Set(dynamicProps
-            .filter((prop) => !prop.includes("+"))
+            .flatMap((prop) => prop.includes("+") ? prop.split("+") : [prop])
             .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
-            .filter((p) => !declaredProps || declaredProps.has(p))
           )];
+          // slot prop(ReactNode)은 boolean 변환 필요 (cva variant는 true/false)
           const propArgStrs = propArgs.map((p) =>
             this.slotProps.has(p) ? `${p}: !!${p}` : p
           );
-          // compound 조건이 있으면 cn()으로 결합
-          const compoundConds = (styleStrategy as any).compoundConditions?.get(styleVarName) as Array<{props: Record<string, string>; className: string}> | undefined;
-          if (compoundConds && compoundConds.length > 0) {
-            const condExprs = compoundConds.map((c) => {
-              const checks = Object.entries(c.props).map(([k, v]) => {
-                // boolean 값은 따옴표 없이 비교
-                if (v === "true") return k;
-                if (v === "false") return `!${k}`;
-                return `${k} === "${v}"`;
-              }).join(" && ");
-              const cls = c.className.includes("\\") ? `String.raw\`${c.className}\`` : `"${c.className}"`;
-              return `${checks} && ${cls}`;
-            });
-            const isCva = (styleStrategy as any).cvaVariables?.has(styleVarName);
-            const cvaCall = isCva ? `${styleVarName}({ ${propArgStrs.join(", ")} })` : styleVarName;
-            attrs.push(`className={cn(${cvaCall}, ${condExprs.join(", ")})}`);
-          } else {
-            attrs.push(`className={${styleVarName}({ ${propArgStrs.join(", ")} })}`);
-          }
+          attrs.push(`className={${styleVarName}({ ${propArgStrs.join(", ")} })}`);
         }
       } else {
         const styleAttr = styleStrategy.getJsxStyleAttribute(styleVarName, false);
@@ -1326,32 +1289,14 @@ ${indentStr}</${tag}>`;
         );
         wrapperAttrs = `css={[${styleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
       } else {
-        const declaredProps = (styleStrategy as any).declaredVariantProps?.get(styleVarName) as Set<string> | undefined;
         const propArgs = [...new Set(dynamicProps
-          .filter((prop) => !prop.includes("+"))
+          .flatMap((prop) => prop.includes("+") ? prop.split("+") : [prop])
           .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
-          .filter((p) => !declaredProps || declaredProps.has(p))
         )];
         const propArgStrs = propArgs.map((p) =>
           this.slotProps.has(p) ? `${p}: !!${p}` : p
         );
-        const compoundConds = (styleStrategy as any).compoundConditions?.get(styleVarName) as Array<{props: Record<string, string>; className: string}> | undefined;
-        if (compoundConds && compoundConds.length > 0) {
-          const condExprs = compoundConds.map((c) => {
-            const checks = Object.entries(c.props).map(([k, v]) => {
-              if (v === "true") return k;
-              if (v === "false") return `!${k}`;
-              return `${k} === "${v}"`;
-            }).join(" && ");
-            const cls = c.className.includes("\\") ? `String.raw\`${c.className}\`` : `"${c.className}"`;
-            return `${checks} && ${cls}`;
-          });
-          const isCva = (styleStrategy as any).cvaVariables?.has(styleVarName);
-          const cvaCall = isCva ? `${styleVarName}({ ${propArgStrs.join(", ")} })` : styleVarName;
-          wrapperAttrs = `className={cn(${cvaCall}, ${condExprs.join(", ")})}`;
-        } else {
-          wrapperAttrs = `className={${styleVarName}({ ${propArgStrs.join(", ")} })}`;
-        }
+        wrapperAttrs = `className={${styleVarName}({ ${propArgStrs.join(", ")} })}`;
       }
     } else {
       const styleAttr = styleStrategy.getJsxStyleAttribute(styleVarName, false);
@@ -1476,32 +1421,14 @@ ${indentStr}</${tag}>`;
             );
             wrapperAttrs = `css={[${wrapperStyleVarName}, ${dynamicStyleRefs.join(", ")}]}`;
           } else {
-            const declaredProps = (styleStrategy as any).declaredVariantProps?.get(wrapperStyleVarName) as Set<string> | undefined;
             const propArgs = [...new Set(dynamicProps
-              .filter((prop) => !prop.includes("+"))
+              .flatMap((prop) => prop.includes("+") ? prop.split("+") : [prop])
               .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
-              .filter((p) => !declaredProps || declaredProps.has(p))
             )];
             const propArgStrs = propArgs.map((p) =>
               this.slotProps.has(p) ? `${p}: !!${p}` : p
             );
-            const compoundConds = (styleStrategy as any).compoundConditions?.get(wrapperStyleVarName) as Array<{props: Record<string, string>; className: string}> | undefined;
-            if (compoundConds && compoundConds.length > 0) {
-              const condExprs = compoundConds.map((c) => {
-                const checks = Object.entries(c.props).map(([k, v]) => {
-                  if (v === "true") return k;
-                  if (v === "false") return `!${k}`;
-                  return `${k} === "${v}"`;
-                }).join(" && ");
-                const cls = c.className.includes("\\") ? `String.raw\`${c.className}\`` : `"${c.className}"`;
-                return `${checks} && ${cls}`;
-              });
-              const isCva = (styleStrategy as any).cvaVariables?.has(wrapperStyleVarName);
-              const cvaCall = isCva ? `${wrapperStyleVarName}({ ${propArgStrs.join(", ")} })` : wrapperStyleVarName;
-              wrapperAttrs = `className={cn(${cvaCall}, ${condExprs.join(", ")})}`;
-            } else {
-              wrapperAttrs = `className={${wrapperStyleVarName}({ ${propArgStrs.join(", ")} })}`;
-            }
+            wrapperAttrs = `className={${wrapperStyleVarName}({ ${propArgStrs.join(", ")} })}`;
           }
         } else {
           const styleAttr = styleStrategy.getJsxStyleAttribute(wrapperStyleVarName, false);
