@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { NodeMatcher } from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/processors/NodeMatcher";
+import { LayoutNormalizer } from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/processors/LayoutNormalizer";
 import type { InternalNode } from "@frontend/ui/domain/code-generator2/types/types";
 
 // ─── Mock helpers ───
@@ -137,7 +138,7 @@ describe("NodeMatcher", () => {
         ["b-text", "parent-b"],
       ]);
       const dataManager = createMockDataManager(nodeMap);
-      const matcher = new NodeMatcher(dataManager, nodeToVariantRoot);
+      const matcher = new NodeMatcher(dataManager, nodeToVariantRoot, new LayoutNormalizer(dataManager));
 
       const parentIntA = makeInternalNode(
         "parent-merged",
@@ -209,7 +210,7 @@ describe("NodeMatcher", () => {
         ["b-text", "parent-b"],
       ]);
       const dataManager = createMockDataManager(nodeMap);
-      const matcher = new NodeMatcher(dataManager, nodeToVariantRoot);
+      const matcher = new NodeMatcher(dataManager, nodeToVariantRoot, new LayoutNormalizer(dataManager));
 
       const parentIntA = makeInternalNode(
         "parent-merged",
@@ -290,7 +291,7 @@ describe("NodeMatcher", () => {
         ["b-icon", "parent-b"],
       ]);
       const dataManager = createMockDataManager(nodeMap);
-      const matcher = new NodeMatcher(dataManager, nodeToVariantRoot);
+      const matcher = new NodeMatcher(dataManager, nodeToVariantRoot, new LayoutNormalizer(dataManager));
 
       const parentIntA = makeInternalNode(
         "parent-merged", "FRAME",
@@ -350,7 +351,7 @@ describe("NodeMatcher", () => {
         ["b-icon", "parent-b"],
       ]);
       const dataManager = createMockDataManager(nodeMap);
-      const matcher = new NodeMatcher(dataManager, nodeToVariantRoot);
+      const matcher = new NodeMatcher(dataManager, nodeToVariantRoot, new LayoutNormalizer(dataManager));
 
       const parentIntA = makeInternalNode(
         "parent-merged", "FRAME",

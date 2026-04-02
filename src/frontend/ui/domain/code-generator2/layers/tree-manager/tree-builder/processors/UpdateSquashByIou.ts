@@ -1,7 +1,7 @@
 import { InternalNode, VariantOrigin } from "../../../../types/types";
 import DataManager from "../../../data-manager/DataManager";
+import { LayoutNormalizer } from "./LayoutNormalizer";
 
-type BoundingBox = { x: number; y: number; width: number; height: number };
 type SiblingEntry = { next: InternalNode | null; prev: InternalNode | null };
 type SiblingGraph = Map<string, SiblingEntry[]>;
 
@@ -29,7 +29,8 @@ export class UpdateSquashByIou {
 
   constructor(
     dataManager: DataManager,
-    nodeToVariantRoot: Map<string, string>
+    nodeToVariantRoot: Map<string, string>,
+    private readonly layoutNormalizer: LayoutNormalizer
   ) {
     this.dataManager = dataManager;
     this.nodeToVariantRoot = nodeToVariantRoot;
@@ -114,139 +115,40 @@ export class UpdateSquashByIou {
   }
 
   // ============================================================
-  // 3. 3-Way Position Comparison (NodeMatcher와 동일한 정규화)
+  // 3. 3-Way Position Comparison (LayoutNormalizer 위임)
   // ============================================================
 
   /**
-   * NodeMatcher의 3-Way 비교를 cross-depth용으로 적용.
-   * 각 노드를 자신의 variant root content box 기준으로 독립 정규화(0~1)한 뒤,
-   * 좌/중/우(상/중/하) 3가지 기준점 중 최소 오차가 ≤ 0.1이면 같은 위치.
+   * cross-depth squash용 위치 비교.
+   * 각 노드를 자신의 variant root content box 기준으로 독립 정규화한 뒤,
+   * LayoutNormalizer.compare()로 3-Way 최소 오차를 계산한다.
    *
-   * NodeMatcher와의 차이: NodeMatcher는 절대 오프셋 차이를 avgSize로 나누지만,
-   * cross-depth는 variant root 크기가 크게 다를 수 있으므로
-   * 각자의 content box 기준으로 독립 정규화한다.
+   * NodeMatcher와의 차이: 직접 부모가 아닌 variant root를 reference로 사용.
+   * cross-depth에서는 노드들의 직접 부모가 서로 다를 수 있으므로
+   * 공통 기준인 variant root 기준으로 각자를 독립 정규화한다.
    */
   private isSamePosition3Way(
     nodeA: InternalNode,
     nodeB: InternalNode
   ): boolean {
-    if (!nodeA.parent || !nodeB.parent) return false;
+    if (!nodeA.mergedNodes?.[0] || !nodeB.mergedNodes?.[0]) return false;
 
-    const boxA = this.getContentBoxInfo(nodeA);
-    const boxB = this.getContentBoxInfo(nodeB);
-    if (!boxA || !boxB) return false;
-    if (boxA.contentWidth <= 0 || boxB.contentWidth <= 0) return false;
-    if (boxA.contentHeight <= 0 || boxB.contentHeight <= 0) return false;
+    const variantRootIdA = this.nodeToVariantRoot.get(nodeA.mergedNodes[0].id);
+    const variantRootIdB = this.nodeToVariantRoot.get(nodeB.mergedNodes[0].id);
+    if (!variantRootIdA || !variantRootIdB) return false;
 
-    // --- X축: 각자 content box 기준 독립 정규화 후 3-Way 비교 ---
-    const offAx = boxA.nodeX - boxA.contentX;
-    const offBx = boxB.nodeX - boxB.contentX;
+    const rootA = this.dataManager.getById(variantRootIdA)?.node;
+    const rootB = this.dataManager.getById(variantRootIdB)?.node;
+    const origA = this.dataManager.getById(nodeA.mergedNodes[0].id)?.node;
+    const origB = this.dataManager.getById(nodeB.mergedNodes[0].id)?.node;
 
-    // 1) 좌정렬: 왼쪽 오프셋 비율
-    const leftX = Math.abs(offAx / boxA.contentWidth - offBx / boxB.contentWidth);
-    // 2) 가운데정렬: 중심 오프셋 비율
-    const cenAx = (offAx + boxA.nodeWidth / 2) / boxA.contentWidth;
-    const cenBx = (offBx + boxB.nodeWidth / 2) / boxB.contentWidth;
-    const centerX = Math.abs(cenAx - cenBx);
-    // 3) 우정렬: 오른쪽 여백 비율
-    const rightAx = (boxA.contentWidth - offAx - boxA.nodeWidth) / boxA.contentWidth;
-    const rightBx = (boxB.contentWidth - offBx - boxB.nodeWidth) / boxB.contentWidth;
-    const rightX = Math.abs(rightAx - rightBx);
+    if (!rootA || !rootB || !origA || !origB) return false;
 
-    const minDiffX = Math.min(leftX, centerX, rightX);
+    const posA = this.layoutNormalizer.normalize(rootA, origA);
+    const posB = this.layoutNormalizer.normalize(rootB, origB);
+    if (!posA || !posB) return false;
 
-    // --- Y축: 각자 content box 기준 독립 정규화 후 3-Way 비교 ---
-    const offAy = boxA.nodeY - boxA.contentY;
-    const offBy = boxB.nodeY - boxB.contentY;
-
-    // 1) 상단정렬
-    const topY = Math.abs(offAy / boxA.contentHeight - offBy / boxB.contentHeight);
-    // 2) 가운데정렬
-    const midAy = (offAy + boxA.nodeHeight / 2) / boxA.contentHeight;
-    const midBy = (offBy + boxB.nodeHeight / 2) / boxB.contentHeight;
-    const middleY = Math.abs(midAy - midBy);
-    // 3) 하단정렬
-    const botAy = (boxA.contentHeight - offAy - boxA.nodeHeight) / boxA.contentHeight;
-    const botBy = (boxB.contentHeight - offBy - boxB.nodeHeight) / boxB.contentHeight;
-    const bottomY = Math.abs(botAy - botBy);
-
-    const minDiffY = Math.min(topY, middleY, bottomY);
-
-    return minDiffX <= 0.1 && minDiffY <= 0.1;
-  }
-
-  /**
-   * 노드의 content box 정보 조회.
-   * NodeMatcher.calcContentBoxForMergedNode과 동일한 로직.
-   */
-  private getContentBoxInfo(node: InternalNode): {
-    nodeX: number;
-    nodeY: number;
-    nodeWidth: number;
-    nodeHeight: number;
-    contentX: number;
-    contentY: number;
-    contentWidth: number;
-    contentHeight: number;
-  } | null {
-    if (!node.mergedNodes || node.mergedNodes.length === 0) return null;
-
-    for (const merged of node.mergedNodes) {
-      const result = this.calcContentBoxForMergedNode(merged.id);
-      if (result) return result;
-    }
-    return null;
-  }
-
-  private calcContentBoxForMergedNode(nodeId: string): {
-    nodeX: number;
-    nodeY: number;
-    nodeWidth: number;
-    nodeHeight: number;
-    contentX: number;
-    contentY: number;
-    contentWidth: number;
-    contentHeight: number;
-  } | null {
-    const variantRootId = this.nodeToVariantRoot.get(nodeId);
-    if (!variantRootId) return null;
-    const { node: variantRoot } = this.dataManager.getById(variantRootId);
-    if (!variantRoot) return null;
-
-    const { node: originalNode } = this.dataManager.getById(nodeId);
-    if (!originalNode) return null;
-
-    const nodeBounds = (originalNode as any).absoluteBoundingBox as
-      | BoundingBox
-      | undefined;
-    if (!nodeBounds) return null;
-
-    const rootBounds = (variantRoot as any).absoluteBoundingBox as
-      | BoundingBox
-      | undefined;
-    if (!rootBounds || rootBounds.width === 0 || rootBounds.height === 0) {
-      return null;
-    }
-
-    const paddingLeft: number = (variantRoot as any).paddingLeft ?? 0;
-    const paddingRight: number = (variantRoot as any).paddingRight ?? 0;
-    const paddingTop: number = (variantRoot as any).paddingTop ?? 0;
-    const paddingBottom: number = (variantRoot as any).paddingBottom ?? 0;
-
-    const contentWidth = rootBounds.width - paddingLeft - paddingRight;
-    const contentHeight = rootBounds.height - paddingTop - paddingBottom;
-    if (contentWidth <= 0 || contentHeight <= 0) return null;
-
-    return {
-      nodeX: nodeBounds.x,
-      nodeY: nodeBounds.y,
-      nodeWidth: nodeBounds.width ?? 0,
-      nodeHeight: nodeBounds.height ?? 0,
-      contentX: rootBounds.x + paddingLeft,
-      contentY: rootBounds.y + paddingTop,
-      contentWidth,
-      contentHeight,
-    };
+    return this.layoutNormalizer.compare(posA, posB) <= 0.1;
   }
 
   // ============================================================
@@ -646,19 +548,37 @@ export class UpdateSquashByIou {
    * squash용 크기 유사성 검사.
    * cross-depth squash에서 컨테이너와 리프 노드의 오매칭을 방지.
    * NodeMatcher보다 느슨한 threshold (2.0) 사용.
+   *
+   * relWidth/relHeight (variant root content box 기준 상대 크기)를 비교.
+   * 두 노드의 root 크기가 다를 수 있으므로 ratio 비교로 normalize.
    */
   private isSimilarSizeForSquash(
     nodeA: InternalNode,
     nodeB: InternalNode
   ): boolean {
-    const boxA = this.getContentBoxInfo(nodeA);
-    const boxB = this.getContentBoxInfo(nodeB);
-    if (!boxA || !boxB) return true;
-    const minW = Math.min(boxA.nodeWidth, boxB.nodeWidth);
-    const minH = Math.min(boxA.nodeHeight, boxB.nodeHeight);
+    if (!nodeA.mergedNodes?.[0] || !nodeB.mergedNodes?.[0]) return true;
+
+    const variantRootIdA = this.nodeToVariantRoot.get(nodeA.mergedNodes[0].id);
+    const variantRootIdB = this.nodeToVariantRoot.get(nodeB.mergedNodes[0].id);
+    if (!variantRootIdA || !variantRootIdB) return true;
+
+    const rootA = this.dataManager.getById(variantRootIdA)?.node;
+    const rootB = this.dataManager.getById(variantRootIdB)?.node;
+    const origA = this.dataManager.getById(nodeA.mergedNodes[0].id)?.node;
+    const origB = this.dataManager.getById(nodeB.mergedNodes[0].id)?.node;
+
+    if (!rootA || !rootB || !origA || !origB) return true;
+
+    const posA = this.layoutNormalizer.normalize(rootA, origA);
+    const posB = this.layoutNormalizer.normalize(rootB, origB);
+    if (!posA || !posB) return true;
+
+    const minW = Math.min(posA.relWidth, posB.relWidth);
+    const minH = Math.min(posA.relHeight, posB.relHeight);
     if (minW <= 0 || minH <= 0) return true;
-    const wRatio = Math.max(boxA.nodeWidth, boxB.nodeWidth) / minW;
-    const hRatio = Math.max(boxA.nodeHeight, boxB.nodeHeight) / minH;
+
+    const wRatio = Math.max(posA.relWidth, posB.relWidth) / minW;
+    const hRatio = Math.max(posA.relHeight, posB.relHeight) / minH;
     return wRatio <= 2.0 && hRatio <= 2.0;
   }
 

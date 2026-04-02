@@ -6,6 +6,7 @@ import {
 } from "../../../../types/types";
 import DataManager from "../../../data-manager/DataManager";
 import { NodeMatcher } from "./NodeMatcher";
+import { LayoutNormalizer } from "./LayoutNormalizer";
 import { VariantGraphBuilder } from "./VariantGraphBuilder";
 import { UpdateSquashByIou } from "./UpdateSquashByIou";
 
@@ -30,6 +31,9 @@ export class VariantMerger {
 
   /** 노드 매칭 로직 (병합 시점에 생성) */
   private nodeMatcher?: NodeMatcher;
+
+  /** 레이아웃 정규화 (Task 4에서 UpdateSquashByIou에도 전달) */
+  private layoutNormalizer?: LayoutNormalizer;
 
   constructor(dataManager: DataManager) {
     this.dataManager = dataManager;
@@ -72,7 +76,8 @@ export class VariantMerger {
     // 3.5. IoU 기반 cross-depth squash (v1 UpdateSquashByIou 포팅)
     const squasher = new UpdateSquashByIou(
       this.dataManager,
-      this.nodeToVariantRoot
+      this.nodeToVariantRoot,
+      this.layoutNormalizer!
     );
     const variantTrees = graph.nodes.map((n) => n.tree);
     squasher.execute(merged, variantTrees);
@@ -111,9 +116,11 @@ export class VariantMerger {
     }
 
     // NodeMatcher 생성
+    this.layoutNormalizer = new LayoutNormalizer(this.dataManager);
     this.nodeMatcher = new NodeMatcher(
       this.dataManager,
-      this.nodeToVariantRoot
+      this.nodeToVariantRoot,
+      this.layoutNormalizer
     );
   }
 
