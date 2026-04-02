@@ -94,18 +94,15 @@ export class UpdateSquashByIou {
     for (const [, nodes] of nodesByType) {
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
-          // 이름 비교: TEXT는 내용이 이름이라 variant마다 다를 수 있으므로
-          // 부모의 자식 타입 시퀀스로 구조적 동등성 확인
-          if (nodes[i].name !== nodes[j].name) {
-            if (nodes[i].type !== "TEXT" || !this.hasSameParentStructure(nodes[i], nodes[j])) {
-              continue;
-            }
-          }
           // cross-depth만 squash 대상: 같은 depth의 노드는 variant 머지가 의도적으로 분리한 것
           const depthI = this.getNodeDepth(nodes[i]);
           const depthJ = this.getNodeDepth(nodes[j]);
           if (depthI === depthJ) continue;
-          // 위치 기반 매칭: 3-Way 비교 (같은 type은 groupNodesByType에서 보장)
+          // 같은 variant에 동시 존재하면 같은 노드일 수 없음 → skip
+          if (this.hasOverlappingVariants(nodes[i], nodes[j])) continue;
+          // 크기가 크게 다르면 같은 노드가 아님 (컨테이너 vs 리프 오매칭 방지)
+          if (!this.isSimilarSizeForSquash(nodes[i], nodes[j])) continue;
+          // 위치 기반 매칭: 3-Way 비교 (같은 type은 groupNodesByType에서 보장, 이름 제약 없음)
           if (this.isSamePosition3Way(nodes[i], nodes[j])) {
             groups.push([nodes[i], nodes[j]]);
           }
@@ -643,6 +640,42 @@ export class UpdateSquashByIou {
     const typesB = nodeB.parent.children.map((c) => c.type);
     if (typesA.length !== typesB.length) return false;
     return typesA.every((t, i) => t === typesB[i]);
+  }
+
+  /**
+   * squash용 크기 유사성 검사.
+   * cross-depth squash에서 컨테이너와 리프 노드의 오매칭을 방지.
+   * NodeMatcher보다 느슨한 threshold (2.0) 사용.
+   */
+  private isSimilarSizeForSquash(
+    nodeA: InternalNode,
+    nodeB: InternalNode
+  ): boolean {
+    const boxA = this.getContentBoxInfo(nodeA);
+    const boxB = this.getContentBoxInfo(nodeB);
+    if (!boxA || !boxB) return true;
+    const minW = Math.min(boxA.nodeWidth, boxB.nodeWidth);
+    const minH = Math.min(boxA.nodeHeight, boxB.nodeHeight);
+    if (minW <= 0 || minH <= 0) return true;
+    const wRatio = Math.max(boxA.nodeWidth, boxB.nodeWidth) / minW;
+    const hRatio = Math.max(boxA.nodeHeight, boxB.nodeHeight) / minH;
+    return wRatio <= 2.0 && hRatio <= 2.0;
+  }
+
+  /**
+   * 두 노드가 같은 variant에 동시 존재하는지 확인.
+   * 같은 variant에 있으면 "같은 노드"일 수 없으므로 squash 불가.
+   */
+  private hasOverlappingVariants(
+    nodeA: InternalNode,
+    nodeB: InternalNode
+  ): boolean {
+    if (!nodeA.mergedNodes || !nodeB.mergedNodes) return false;
+    const variantsA = new Set(nodeA.mergedNodes.map((m) => m.variantName));
+    for (const m of nodeB.mergedNodes) {
+      if (variantsA.has(m.variantName)) return true;
+    }
+    return false;
   }
 
   private getNodeDepth(node: InternalNode): number {

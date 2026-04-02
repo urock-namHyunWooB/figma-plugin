@@ -144,6 +144,7 @@ export class NodeMatcher {
       if (!bothShapes && !bothContainers) return Infinity;
     }
 
+    // INSTANCE: 둘 다 componentSetId가 있는데 다르면 Infinity
     // INSTANCE는 componentId와 무관하게 위치 기반 매칭
 
     // 루트끼리
@@ -163,6 +164,21 @@ export class NodeMatcher {
         if (!this.isSimilarSize(nodeA, nodeB)) return Infinity;
       }
       if (shift && nodeA.type !== "TEXT" && nodeA.type !== "INSTANCE" && !this.isSimilarSize(nodeA, nodeB)) return Infinity;
+      // overflow 노드(부모보다 큰 터치 영역)와 normal 노드의 오매칭 방지
+      // variant root 크기가 비슷할 때만 적용 (크기가 많이 다르면 overflow 상태가 자연스럽게 달라짐)
+      if (NodeMatcher.CONTAINER_TYPES.has(nodeA.type) &&
+          NodeMatcher.CONTAINER_TYPES.has(nodeB.type)) {
+        const rootA = this.getVariantRootBounds(nodeA);
+        const rootB = this.getVariantRootBounds(nodeB);
+        const rootSimilar = rootA && rootB &&
+          Math.max(rootA.width, rootB.width) / Math.min(rootA.width, rootB.width) <= 1.5 &&
+          Math.max(rootA.height, rootB.height) / Math.min(rootA.height, rootB.height) <= 1.5;
+        if (rootSimilar) {
+          const overA = this.isOverflowNode(nodeA);
+          const overB = this.isOverflowNode(nodeB);
+          if (overA !== overB) return posCost + 0.5;
+        }
+      }
       return posCost;
     }
 
@@ -356,6 +372,16 @@ export class NodeMatcher {
   }
 
   /**
+   * 노드가 variant root content box보다 큰지 판정 (overflow = 터치 영역 오버레이).
+   * Figma에서 Interaction hit area는 부모보다 큰 FRAME으로 구현됨.
+   */
+  private isOverflowNode(node: InternalNode): boolean {
+    const box = this.getContentBoxInfo(node);
+    if (!box) return false;
+    return box.nodeWidth > box.contentWidth || box.nodeHeight > box.contentHeight;
+  }
+
+  /**
    * Shape 노드의 크기 유사도 검증 (비율 1.3 이내)
    * 중심점이 동일한 동심원(22x22 vs 16x16)이 같은 노드로 매칭되는 것을 방지
    */
@@ -506,7 +532,7 @@ export class NodeMatcher {
       return false;
     }
 
-    // componentId 비교 없이 위치 기반 fallback
+    // componentId 비교 없이 visible ref 기반 fallback
     const visRefA = nodeA.componentPropertyReferences?.visible;
     const visRefB = nodeB.componentPropertyReferences?.visible;
 
