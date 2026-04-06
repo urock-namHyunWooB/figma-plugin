@@ -280,7 +280,7 @@ const warningTooltipStyle = css`
   font-size: 11px;
   padding: 6px 8px;
   border-radius: 4px;
-  white-space: pre;
+  white-space: pre-wrap;
   z-index: 9999;
   pointer-events: none;
   max-width: 360px;
@@ -308,6 +308,7 @@ function findCellWarnings(
   if (!warnings.length) return [];
 
   return warnings.filter((w) =>
+    w.variants.length === 0 ||
     w.variants.some((v) =>
       Object.entries(v.props).every(
         ([key, val]) => !axisNames.has(key) || !(key in cellProps) || String(cellProps[key]) === val
@@ -399,7 +400,9 @@ function WarningOverlay({
             <div key={wi} style={{ marginBottom: wi < cellWarnings.length - 1 ? 6 : 0 }}>
               <div style={{ fontWeight: 600, marginBottom: 2 }}>
                 {w.nodeName && <span style={{ color: "#93c5fd" }}>[{w.nodeName}]</span>}{" "}
-                {w.cssProperty} 값 불일치 ({w.propName}={w.propValue}):
+                {w.propName
+                  ? `${w.cssProperty} 값 불일치 (${w.propName}=${w.propValue}):`
+                  : w.cssProperty}
               </div>
               {w.variants.map((v, vi) => {
                 const otherProps = Object.entries(v.props)

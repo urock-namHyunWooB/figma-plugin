@@ -27,7 +27,12 @@ export class VariantMerger {
   private readonly graphBuilder: VariantGraphBuilder;
 
   /** 노드 ID → 원본 variant 루트 ID 매핑 */
-  private nodeToVariantRoot: Map<string, string> = new Map();
+  private _nodeToVariantRoot: Map<string, string> = new Map();
+
+  /** nodeToVariantRoot 읽기 전용 접근 */
+  get nodeToVariantRoot(): Map<string, string> {
+    return this._nodeToVariantRoot;
+  }
 
   /** 노드 매칭 로직 (병합 시점에 생성) */
   private nodeMatcher?: NodeMatcher;

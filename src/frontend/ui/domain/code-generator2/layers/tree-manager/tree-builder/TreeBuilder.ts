@@ -321,6 +321,10 @@ class TreeBuilder {
       const controllingProp = this.findControllingPropForComponent(child.mergedNodes, variantCompMap);
       if (!controllingProp) continue;
 
+      // controlling prop이 variant root 크기도 변경하는 prop이면 분리하지 않음
+      // (예: size prop이 전체 크기를 바꾸면서 아이콘도 바뀌는 경우 → 같은 역할)
+      if (this.isPropChangingRootSize(child.mergedNodes, controllingProp)) continue;
+
       // 분리: componentName별로 새 INSTANCE 노드 생성
       const newNodes: InternalNode[] = [];
       for (const [compName, variantNames] of variantCompMap) {
@@ -410,6 +414,41 @@ class TreeBuilder {
     }
 
     return null;
+  }
+
+  /**
+   * controlling prop 값이 바뀌면 variant root 크기도 바뀌는지 확인.
+   * size prop처럼 전체 크기를 제어하는 prop이면 true → component 분리 불필요.
+   */
+  private isPropChangingRootSize(
+    mergedNodes: Array<{ id: string; variantName: string }>,
+    propName: string
+  ): boolean {
+    // 각 prop value별 height 집합 수집
+    const heightsByPropValue = new Map<string, Set<number>>();
+    for (const m of mergedNodes) {
+      const match = m.variantName.match(new RegExp(`${propName}=([^,]+)`, "i"));
+      if (!match) continue;
+      const propVal = match[1].trim();
+
+      const variantRootId = this.variantMerger.nodeToVariantRoot.get(m.id);
+      if (!variantRootId) continue;
+      const { node: root } = this.dataManager.getById(variantRootId);
+      const bounds = (root as any)?.absoluteBoundingBox;
+      if (!bounds) continue;
+
+      if (!heightsByPropValue.has(propVal)) heightsByPropValue.set(propVal, new Set());
+      heightsByPropValue.get(propVal)!.add(Math.round(bounds.height));
+    }
+
+    if (heightsByPropValue.size < 2) return false;
+
+    // 모든 prop value의 height 집합이 동일하면 → 이 prop은 height를 변경하지 않음
+    // (다른 prop, 예: Size가 height를 변경하는 것)
+    const sets = [...heightsByPropValue.values()];
+    const first = [...sets[0]].sort().join(",");
+    const allSame = sets.every(s => [...s].sort().join(",") === first);
+    return !allSame;
   }
 
   /**
