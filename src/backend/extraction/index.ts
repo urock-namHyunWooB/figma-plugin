@@ -6,6 +6,8 @@ import { SingleWalkExtractor } from "./SingleWalkExtractor";
 export interface ExtractionPipelineOptions {
   onResult: (data: FigmaNodeData) => void;
   onError: (err: Error) => void;
+  /** 캐시 미스로 walk가 실제로 시작될 때 호출. 캐시 히트는 호출 안 됨. */
+  onLoading?: () => void;
   /** 디바운스 지연 (ms). 기본 150. */
   debounceMs?: number;
   /** 캐시 LRU 상한. 기본 20. */
@@ -54,6 +56,8 @@ export function createExtractionPipeline(opts: ExtractionPipelineOptions): Extra
             return;
           }
         }
+        // 캐시 미스 — walk 시작 전에 로딩 신호
+        if (isCurrent()) opts.onLoading?.();
         const data = await extractor.extract(node);
         if (!isCurrent()) return; // 새 선택 도착 — 결과 폐기
         cache.set(node.id, data);

@@ -33,6 +33,11 @@ export class FigmaPlugin {
           error: err.message,
         });
       },
+      onLoading: () => {
+        figma.ui.postMessage({
+          type: MESSAGE_TYPES.EXTRACTION_LOADING,
+        });
+      },
     });
 
     figma.ui.onmessage = async (msg) => {

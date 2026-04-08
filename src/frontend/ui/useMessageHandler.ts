@@ -5,14 +5,21 @@ import type { FigmaNodeData } from "./domain/code-generator2";
 export default function useMessageHandler() {
   const [selectionNodeData, setSelectionNodeData] =
     useState<FigmaNodeData | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
 
   useLayoutEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
       const msg = event.data.pluginMessage;
       if (!msg) return;
 
+      if (msg.type === MESSAGE_TYPES.EXTRACTION_LOADING) {
+        setIsExtracting(true);
+        return;
+      }
+
       if (msg.type === MESSAGE_TYPES.ON_SELECTION_CHANGE) {
         setSelectionNodeData(msg.data);
+        setIsExtracting(false);
       }
     };
 
@@ -25,5 +32,6 @@ export default function useMessageHandler() {
   return {
     selectionNodeData,
     setSelectionNodeData,
+    isExtracting,
   };
 }
