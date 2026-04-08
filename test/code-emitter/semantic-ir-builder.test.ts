@@ -252,4 +252,121 @@ describe("SemanticIRBuilder", () => {
       expect(ir.props).toBe(uiTree.props);
     });
   });
+
+  describe("kind-specific pass-through fields", () => {
+    it("passes vectorSvg and variantSvgs on a vector node", () => {
+      const node = {
+        id: "v", name: "icon", type: "vector", children: [],
+        vectorSvg: "<svg>...</svg>",
+        variantSvgs: { Default: "<svg>a</svg>", Hover: "<svg>b</svg>" },
+      } as unknown as UINode;
+      const ir = SemanticIRBuilder.build(makeTree(node));
+      expect(ir.structure.vectorSvg).toBe("<svg>...</svg>");
+      expect(ir.structure.variantSvgs).toEqual({ Default: "<svg>a</svg>", Hover: "<svg>b</svg>" });
+    });
+
+    it("passes refId, overrideProps, overrideMeta, instanceScale on a component node", () => {
+      const node = {
+        id: "c", name: "Button", type: "component", children: [],
+        refId: "692:1613",
+        overrideProps: { label: "Click me" },
+        overrideMeta: [{ propName: "label", propType: "string", nodeId: "n", nodeName: "lbl", value: "Click me" }],
+        instanceScale: 0.5,
+      } as unknown as UINode;
+      const ir = SemanticIRBuilder.build(makeTree(node));
+      expect(ir.structure.refId).toBe("692:1613");
+      expect(ir.structure.overrideProps).toEqual({ label: "Click me" });
+      expect(ir.structure.overrideMeta).toHaveLength(1);
+      expect(ir.structure.instanceScale).toBe(0.5);
+    });
+
+    it("passes loop and childrenSlot on a container node", () => {
+      const node = {
+        id: "ct", name: "list", type: "container", children: [],
+        loop: { dataProp: "items", keyField: "id" },
+        childrenSlot: "children",
+      } as unknown as UINode;
+      const ir = SemanticIRBuilder.build(makeTree(node));
+      expect(ir.structure.loop).toEqual({ dataProp: "items", keyField: "id" });
+      expect(ir.structure.childrenSlot).toBe("children");
+    });
+
+    it("passes semanticType on any node", () => {
+      const node = {
+        id: "n", name: "x", type: "container", children: [],
+        semanticType: "search-input",
+      } as unknown as UINode;
+      const ir = SemanticIRBuilder.build(makeTree(node));
+      expect(ir.structure.semanticType).toBe("search-input");
+    });
+  });
+
+  describe("StyleObject subfields pass-through", () => {
+    it("passes a StyleObject with base, dynamic, pseudo, mediaQueries, itemVariant subfields", () => {
+      const styles = {
+        base: { color: "red", padding: "8px" },
+        dynamic: [
+          { condition: { type: "eq", prop: "size", value: "lg" }, style: { fontSize: "16px" } },
+        ],
+        pseudo: { ":hover": { color: "blue" } },
+        mediaQueries: [{ query: "(max-width: 767px)", style: { display: "none" } }],
+        itemVariant: { true: { fontWeight: "bold" }, false: { fontWeight: "normal" } },
+      } as any;
+      const node = { id: "n", name: "x", type: "container", children: [], styles } as unknown as UINode;
+      const ir = SemanticIRBuilder.build(makeTree(node));
+      expect(ir.structure.styles).toBe(styles);
+    });
+  });
+
+  describe("BindingSource variant pass-through", () => {
+    it("passes ref binding in attrs", () => {
+      const node = {
+        id: "n", name: "x", type: "container", children: [],
+        bindings: { attrs: { "data-x": { ref: "Constants.MAX" } } },
+      } as unknown as UINode;
+      const ir = SemanticIRBuilder.build(makeTree(node));
+      expect(ir.structure.attrs).toEqual({ "data-x": { ref: "Constants.MAX" } });
+    });
+
+    it("passes expr binding in attrs", () => {
+      const node = {
+        id: "n", name: "x", type: "container", children: [],
+        bindings: { attrs: { value: { expr: "checked && !disabled" } } },
+      } as unknown as UINode;
+      const ir = SemanticIRBuilder.build(makeTree(node));
+      expect(ir.structure.attrs).toEqual({ value: { expr: "checked && !disabled" } });
+    });
+  });
+
+  describe("ConditionNode variant pass-through", () => {
+    it("passes neq condition", () => {
+      const cond = { type: "neq", prop: "size", value: "lg" } as any;
+      const node = { id: "n", name: "x", type: "container", children: [], visibleCondition: cond } as unknown as UINode;
+      expect(SemanticIRBuilder.build(makeTree(node)).structure.visibleCondition).toBe(cond);
+    });
+
+    it("passes truthy condition", () => {
+      const cond = { type: "truthy", prop: "show" } as any;
+      const node = { id: "n", name: "x", type: "container", children: [], visibleCondition: cond } as unknown as UINode;
+      expect(SemanticIRBuilder.build(makeTree(node)).structure.visibleCondition).toBe(cond);
+    });
+
+    it("passes and condition", () => {
+      const cond = { type: "and", conditions: [{ type: "truthy", prop: "a" }, { type: "truthy", prop: "b" }] } as any;
+      const node = { id: "n", name: "x", type: "container", children: [], visibleCondition: cond } as unknown as UINode;
+      expect(SemanticIRBuilder.build(makeTree(node)).structure.visibleCondition).toBe(cond);
+    });
+
+    it("passes or condition", () => {
+      const cond = { type: "or", conditions: [{ type: "truthy", prop: "a" }, { type: "truthy", prop: "b" }] } as any;
+      const node = { id: "n", name: "x", type: "container", children: [], visibleCondition: cond } as unknown as UINode;
+      expect(SemanticIRBuilder.build(makeTree(node)).structure.visibleCondition).toBe(cond);
+    });
+
+    it("passes not condition", () => {
+      const cond = { type: "not", condition: { type: "truthy", prop: "disabled" } } as any;
+      const node = { id: "n", name: "x", type: "container", children: [], visibleCondition: cond } as unknown as UINode;
+      expect(SemanticIRBuilder.build(makeTree(node)).structure.visibleCondition).toBe(cond);
+    });
+  });
 });
