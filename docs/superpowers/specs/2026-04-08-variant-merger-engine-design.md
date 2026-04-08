@@ -61,7 +61,7 @@ Figma `COMPONENT_SET`을 단일 컴포넌트로 병합할 때 매칭 엔진이 *
 
 (견고함의 4가지 정의: 사용자 합의)
 
-1. **테스트 견고함** — 74건 회귀 후보 ≥ 90% 해결, 새 fixture 추가 시 회복력
+1. **테스트 견고함** — Phase 0 재측정 기준 명시 패턴(size-variant-reject 45 + variant-prop-position 16 = 61건) ≥ 90% 해결, unknown 1930건은 Phase 2 분류기 정교화 후 재평가, 새 fixture 추가 시 회복력
 2. **결정론적 견고함** — 같은 입력 → 같은 출력. 순서 의존성 제거. 매칭 결정 근거가 추적 가능
 3. **확장 가능한 견고함** — 새 엣지 케이스가 if-else가 아니라 신호 모듈 추가로 처리
 4. **알고리즘적 견고함** — 매칭과 squash가 같은 결정 모델을 사용 (현재는 분리)
@@ -163,12 +163,12 @@ matchDecision(A, B) = matchScore(A, B) ≥ threshold
 2. `MatchDecisionEngine` 클래스 — 신호 등록, 합산, 결정
 3. 신호 구현: `TypeCompatibility`, `IdMatch`, `NormalizedPosition`, `RelativeSize`
 4. NodeMatcher의 `isSameNode` / `getPositionCost`를 엔진 호출로 위임 (기존 동작과 호환)
-5. **검증**: 회귀 74건 중 isSimilarSize OFF가 풀어주는 65건이 같이 풀리는지 확인. Tagreview는 아직 깨지는 게 정상 (Phase 2에서 처리).
+5. **검증**: Phase 0 재측정 61건 중 size-variant-reject 45건 (isSimilarSize 완화로 해결 가능한 패턴)이 같이 풀리는지 확인. variant-prop-position 16건과 Tagreview wrapper 보존은 Phase 2에서 처리.
 
 ### Phase 2 — 패턴 처리 신호 (회귀 마무리 + Tagreview 보존)
 
 1. 신호 추가: `ParentShapeIdentity`, `WrapperRoleDistinction`, `VariantPropPosition`
-2. **검증**: 74건 회귀 ≥ 90% 해결 + Tagreview Small wrapper 보존 (단위 + 브라우저 테스트)
+2. **검증**: 명시 패턴 61건 ≥ 90% 해결 (45 size + 16 position) + Tagreview Small wrapper 보존 (단위 + 브라우저 테스트). Unknown 버킷은 이 단계의 타겟이 아님.
 3. UpdateSquashByIou의 isSimilarSizeForSquash를 같은 엔진 호출로 위임
 
 ### Phase 3 — 정리 / 회귀 안전망
@@ -191,7 +191,7 @@ matchDecision(A, B) = matchScore(A, B) ≥ threshold
 
 Phase 0에서 작성한 audit 스크립트를 **CI 회귀 테스트로 영구화**한다. 매 PR마다:
 - main + dependency 양쪽에서 매칭 → disjoint 검출 → 카운트 측정
-- 74 → 0 또는 ≤5 (위치 prop 패턴 잔존이면 OK)
+- 명시 패턴 61건 → ≤10 (위치 prop 패턴 일부 잔존이면 OK). Unknown 1930건 증가는 CI 실패로 간주하되 감소는 탐지기/분류기 개선 신호
 - **증가가 감지되면 CI 실패**
 
 ### 5.2 단위 + 브라우저 테스트
@@ -231,7 +231,7 @@ Phase 0에서 구축한 InternalTree + UITree 스냅샷으로 **의도하지 않
 3. **Tagreview wrapper 검출 메커니즘** — `WrapperRoleDistinction` 신호의 정확한 임계값은 Tagreview 케이스 + 다른 wrapper 케이스로 데이터 튜닝 필요.
 4. **VariantPropPosition 신호** — variant prop ↔ position correlation 학습 방식이 결정적이지 않을 수 있음. 단순 휴리스틱(boolean prop + cx만 다름)으로 시작 후 보강.
 5. **부트스트랩 스냅샷의 숨은 회귀** — Phase 0에서 "회귀 없음"으로 분류되어 스냅샷이 고정된 fixture에도 audit이 잡지 못한 매칭 회귀가 숨어 있을 수 있음. 엔진 작업 중 해당 스냅샷이 변경되면 "의도된 개선"인지 "부작용"인지 사용자 건별 판단 필요.
-6. **Audit 숫자 불일치** — 디자인 §1의 74건(86 fixture 기준)과 실제 리포의 84 fixture 재측정 결과가 다를 수 있음. Phase 0 검증 단계에서 §1 숫자를 재확정.
+6. **Audit 숫자 재측정 결과의 해석** — Phase 0 재측정에서 원본 74건과 1991건의 27배 차이가 확인됨 (§1 참조). 이 차이는 탐지기 기준 차이로 설명되며, Phase 1~2의 실질 타겟은 명시 패턴 61건이다. Unknown 1930건을 해소하려면 Phase 2 분류기 정교화 후 별도 pass 필요.
 
 ---
 
