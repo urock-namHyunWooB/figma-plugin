@@ -85,4 +85,30 @@ describe("TreeBuilder Full Build", () => {
     // props가 배열이어야 함 (빈 배열일 수도 있음)
     expect(Array.isArray(uiTree.props)).toBe(true);
   });
+
+  it("should build UITree from a single COMPONENT (not COMPONENT_SET)", () => {
+    // taptapButton의 첫 번째 variant(자식 COMPONENT)를 단독으로 입력
+    const componentSetDoc = (taptapButton as any).info.document;
+    const firstComponent = componentSetDoc.children[0];
+    expect(firstComponent.type).toBe("COMPONENT");
+
+    // FigmaNodeData 형태로 wrap (info.document만 교체)
+    const singleComponentData = {
+      ...(taptapButton as any),
+      info: {
+        ...(taptapButton as any).info,
+        document: firstComponent,
+      },
+    };
+
+    const dataManager = new DataManager(singleComponentData);
+    const treeBuilder = new TreeBuilder(dataManager);
+
+    // throw 없이 완료되어야 함
+    const uiTree = treeBuilder.build(firstComponent);
+
+    expect(uiTree.root).toBeDefined();
+    expect(uiTree.root.id).toBe(firstComponent.id);
+    expect(Array.isArray(uiTree.props)).toBe(true);
+  });
 });
