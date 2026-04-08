@@ -1,6 +1,12 @@
 import { InternalNode } from "../../../../types/types";
 import DataManager from "../../../data-manager/DataManager";
 import { LayoutNormalizer } from "./LayoutNormalizer";
+import {
+  createDefaultEngine,
+  defaultMatchingPolicy,
+  type MatchContext,
+  type MatchDecisionEngine,
+} from "./match-engine";
 
 /**
  * NodeMatcher
@@ -30,6 +36,9 @@ export class NodeMatcher {
     "GROUP", "FRAME",
   ]);
 
+  /** 매칭 결정 엔진 (Phase 1a 섀도 모드: legacy와 비교만, 반환값은 legacy 사용) */
+  private readonly engine: MatchDecisionEngine = createDefaultEngine();
+
   constructor(
     dataManager: DataManager,
     nodeToVariantRoot: Map<string, string>,
@@ -40,9 +49,37 @@ export class NodeMatcher {
   }
 
   /**
-   * 두 노드가 같은 역할을 하는지 판단
+   * 두 노드가 같은 역할을 하는지 판단.
+   *
+   * Phase 1a 섀도 모드: legacy 로직을 실행해 반환값으로 쓰되,
+   * globalThis.__SHADOW_MODE_COLLECTOR__가 설정돼 있으면 엔진도 돌려 비교.
+   * 불일치는 collector에 push되어 테스트가 검증한다.
    */
   public isSameNode(nodeA: InternalNode, nodeB: InternalNode): boolean {
+    const legacyResult = this.isSameNodeLegacy(nodeA, nodeB);
+
+    const collector = (globalThis as any).__SHADOW_MODE_COLLECTOR__ as
+      | Array<{ pair: [string, string]; old: boolean; engine: boolean }>
+      | undefined;
+    if (collector) {
+      const ctx: MatchContext = {
+        dataManager: this.dataManager,
+        layoutNormalizer: this.layoutNormalizer,
+        nodeToVariantRoot: this.nodeToVariantRoot,
+        policy: defaultMatchingPolicy,
+      };
+      const decision = this.engine.decide(nodeA, nodeB, ctx);
+      const engineResult = decision.decision === "match";
+      if (engineResult !== legacyResult) {
+        collector.push({ pair: [nodeA.id, nodeB.id], old: legacyResult, engine: engineResult });
+      }
+    }
+
+    return legacyResult;
+  }
+
+  /** 기존 isSameNode 로직 — 내부 전용, Phase 1c에서 제거 예정 */
+  private isSameNodeLegacy(nodeA: InternalNode, nodeB: InternalNode): boolean {
     // 1. 타입 호환성 체크 (shape 계열, 컨테이너 계열은 상호 호환)
     if (nodeA.type !== nodeB.type) {
       const bothShapes =
