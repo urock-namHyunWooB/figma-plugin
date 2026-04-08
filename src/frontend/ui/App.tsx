@@ -335,7 +335,7 @@ function App() {
     setErrorBoundaryKey((prev) => prev + 1);
     setGeneratedCode(null);
 
-    if (!selectionNodeData || selectionNodeData.info?.document?.type !== "COMPONENT_SET") {
+    if (!selectionNodeData) {
       setPropDefinitions([]);
       setPropValues({});
       setComponentName("");
