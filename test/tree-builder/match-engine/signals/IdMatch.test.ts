@@ -1,0 +1,44 @@
+import { describe, it, expect } from "vitest";
+import { IdMatch } from "@code-generator2/layers/tree-manager/tree-builder/processors/match-engine/signals/IdMatch";
+import type { InternalNode } from "@code-generator2/types/types";
+
+function node(id: string): InternalNode {
+  return { id, name: id, type: "FRAME", children: [] } as unknown as InternalNode;
+}
+
+describe("IdMatch signal", () => {
+  const signal = new IdMatch();
+
+  it("returns score 1 for identical ids", () => {
+    const r = signal.evaluate(node("x"), node("x"), {} as any);
+    expect(r).toEqual({ kind: "score", score: 1, reason: "id match: x" });
+  });
+
+  it("returns score 0 for different ids", () => {
+    const r = signal.evaluate(node("x"), node("y"), {} as any);
+    expect(r.kind).toBe("score");
+    if (r.kind === "score") expect(r.score).toBe(0);
+  });
+
+  it("property: reflexive (node matches itself)", () => {
+    const n = node("self");
+    const r = signal.evaluate(n, n, {} as any);
+    expect(r.kind).toBe("score");
+    if (r.kind === "score") expect(r.score).toBe(1);
+  });
+
+  it("property: symmetric", () => {
+    const r1 = signal.evaluate(node("a"), node("b"), {} as any);
+    const r2 = signal.evaluate(node("b"), node("a"), {} as any);
+    expect(r1.kind).toBe(r2.kind);
+  });
+
+  it("property: transitive on id equality", () => {
+    const a = node("same");
+    const b = node("same");
+    const c = node("same");
+    expect(signal.evaluate(a, b, {} as any).kind).toBe("score");
+    expect(signal.evaluate(b, c, {} as any).kind).toBe("score");
+    expect(signal.evaluate(a, c, {} as any).kind).toBe("score");
+  });
+});
