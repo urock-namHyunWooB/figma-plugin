@@ -153,7 +153,7 @@ function JsonArrayTextarea({
   const jsonStr = Array.isArray(value) ? JSON.stringify(value, null, 2) : "[]";
   const [text, setText] = useState(jsonStr);
   const [hasError, setHasError] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // 외부 value 변경 시 텍스트 동기화
   const prevJsonRef = useRef(jsonStr);

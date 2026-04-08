@@ -10,7 +10,6 @@ import { install, observe, stringify } from "@twind/core";
 import twindConfig from "./twind.config";
 
 // Vite의 import.meta.glob으로 모든 JSON 파일 동적 로드
-// @ts-expect-error - import.meta.glob is a Vite-specific feature
 const fixtureModules = import.meta.glob("../../../../test/fixtures/**/*.json", {
   eager: true,
   import: "default",

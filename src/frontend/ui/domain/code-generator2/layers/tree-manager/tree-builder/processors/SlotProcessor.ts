@@ -78,7 +78,7 @@ export class SlotProcessor {
           defaultValue: null,
           ...componentInfo,
           nodeId: representativeNodeId,
-        } as SlotPropDefinition;
+        } as unknown as SlotPropDefinition;
       }
       return prop;
     });

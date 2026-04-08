@@ -769,7 +769,9 @@ export class UpdateSquashByIou {
       if (!parent.metadata) parent.metadata = {};
       if (!parent.metadata.layoutOverrides)
         parent.metadata.layoutOverrides = {};
-      parent.metadata.layoutOverrides[merged.variantName] = css;
+      if (merged.variantName) {
+        parent.metadata.layoutOverrides[merged.variantName] = css;
+      }
     }
   }
 

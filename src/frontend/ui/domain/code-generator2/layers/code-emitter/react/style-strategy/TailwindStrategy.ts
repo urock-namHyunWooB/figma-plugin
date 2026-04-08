@@ -307,7 +307,7 @@ export class TailwindStrategy implements IStyleStrategy {
   private generateDynamicStyleCode(
     _baseVarName: string,
     style: StyleObject
-  ): { code: string; hasContent: boolean } {
+  ): { code: string; hasContent: boolean; compoundCode?: string; declaredVariants?: Set<string> } {
     if (!style.dynamic || style.dynamic.length === 0) {
       return { code: "", hasContent: false };
     }
