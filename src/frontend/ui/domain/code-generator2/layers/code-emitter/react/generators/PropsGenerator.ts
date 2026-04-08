@@ -1,10 +1,11 @@
 /**
  * PropsGenerator
  *
- * UITree.props에서 TypeScript Props 인터페이스 생성
+ * SemanticComponent.props에서 TypeScript Props 인터페이스 생성
  */
 
-import type { UITree, PropDefinition } from "../../../../types/types";
+import type { PropDefinition } from "../../../../types/types";
+import type { SemanticComponent } from "../../SemanticIR";
 
 /**
  * 컴포넌트 타입 → 네이티브 HTML 속성 타입 매핑
@@ -27,10 +28,10 @@ export class PropsGenerator {
    *   interface OwnProps { ... }
    *   interface ComponentProps extends Omit<NativeAttrs, keyof OwnProps>, OwnProps {}
    */
-  static generate(uiTree: UITree, componentName: string): string {
-    const props = uiTree.props;
-    const rootType = (uiTree.root as any).type as string;
-    const nativeAttrsType = NATIVE_ATTRS_TYPE[rootType];
+  static generate(ir: SemanticComponent, componentName: string): string {
+    const props = ir.props;
+    const rootKind = ir.structure.kind;
+    const nativeAttrsType = NATIVE_ATTRS_TYPE[rootKind];
 
     if (props.length === 0) {
       if (nativeAttrsType) {
@@ -40,9 +41,9 @@ export class PropsGenerator {
     }
 
     // Array Slot 이름 집합 생성 (빠른 조회용)
-    const arraySlotNames = new Set((uiTree.arraySlots || []).map((slot) => slot.slotName));
+    const arraySlotNames = new Set((ir.arraySlots || []).map((slot) => slot.slotName));
 
-    const propLines = props.map((prop) => this.generatePropLine(prop, arraySlotNames, uiTree));
+    const propLines = props.map((prop) => this.generatePropLine(prop, arraySlotNames, ir));
 
     if (nativeAttrsType) {
       const ownName = `${componentName}OwnProps`;
@@ -64,10 +65,10 @@ ${propLines.join("\n")}
   private static generatePropLine(
     prop: PropDefinition,
     arraySlotNames: Set<string>,
-    uiTree: UITree
+    ir: SemanticComponent
   ): string {
     const optional = prop.required ? "" : "?";
-    const type = this.getTypeString(prop, arraySlotNames, uiTree);
+    const type = this.getTypeString(prop, arraySlotNames, ir);
     const comment = this.getDefaultValueComment(prop);
 
     return `  ${prop.name}${optional}: ${type};${comment}`;
@@ -79,11 +80,11 @@ ${propLines.join("\n")}
   private static getTypeString(
     prop: PropDefinition,
     arraySlotNames: Set<string>,
-    uiTree: UITree
+    ir: SemanticComponent
   ): string {
     // Array Slot인 경우 Array 타입 생성
     if (prop.type === "slot" && arraySlotNames.has(prop.name)) {
-      const arraySlot = uiTree.arraySlots.find((slot) => slot.slotName === prop.name);
+      const arraySlot = (ir.arraySlots ?? []).find((slot) => slot.slotName === prop.name);
       if (arraySlot && arraySlot.itemProps && arraySlot.itemProps.length > 0) {
         // itemProps가 있으면 구체적인 타입 생성
         const itemPropsStr = arraySlot.itemProps

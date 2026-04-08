@@ -95,16 +95,14 @@ export class ReactEmitter implements ICodeEmitter {
     // Step 0: native HTML prop 충돌 rename (UITree 복사본에 적용)
     const renamedTree = this.renameNativeProps(uiTree);
 
-    // Phase 1 scaffold: build the IR alongside. Generators still consume renamedTree.
-    // Will become the only input once Phase 7-8 migrates generators and Phase 8 flips the signature.
+    // Phase 3 scaffold → Phase 7: IR is now consumed by generators.
     const ir: SemanticComponent = SemanticIRBuilder.build(renamedTree);
-    void ir;
 
     // Step 1: 컴포넌트명 생성
     const componentName = toComponentName(renamedTree.root.name);
 
     // Step 2: 각 섹션 생성 (독립적으로 병렬 가능)
-    const sections = this.generateAllSections(renamedTree, componentName);
+    const sections = this.generateAllSections(renamedTree, ir, componentName);
 
     // Step 3: 조합 및 포맷팅
     const code = await this.assembleAndFormat(sections);
@@ -355,6 +353,7 @@ export class ReactEmitter implements ICodeEmitter {
    */
   private generateAllSections(
     uiTree: UITree,
+    ir: SemanticComponent,
     componentName: string
   ): {
     imports: string;
@@ -363,7 +362,7 @@ export class ReactEmitter implements ICodeEmitter {
     jsx: string;
     diagnostics: VariantInconsistency[];
   } {
-    const propsInterface = PropsGenerator.generate(uiTree, componentName);
+    const propsInterface = PropsGenerator.generate(ir, componentName);
     const stylesResult = StylesGenerator.generate(uiTree, componentName, this.styleStrategy);
     const jsxResult = JsxGenerator.generate(uiTree, componentName, this.styleStrategy, {
       debug: this.options.debug,
