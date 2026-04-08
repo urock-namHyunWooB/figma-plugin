@@ -10,6 +10,7 @@ import { groupDynamicByProp } from "../style-strategy/groupDynamicByProp";
 import { extractAllPropNames } from "../../../../types/conditionUtils";
 import type { VariantInconsistency } from "../../../../types/types";
 import { toComponentName } from "../../../../utils/nameUtils";
+import { BindingRenderer } from "./BindingRenderer";
 
 export interface JsxGenerateResult {
   code: string;
@@ -613,7 +614,7 @@ ${indentStr})}` : jsx;
 
     const placeholderProp =
       node.bindings?.content && "prop" in node.bindings.content
-        ? node.bindings.content.prop
+        ? BindingRenderer.toExpression(node.bindings.content)
         : "text";
 
     // bindings.attrs에 onChange가 없으면 fallback 추가
@@ -652,10 +653,10 @@ ${indentStr})}` : jsx;
     let textContent: string;
     if (textBinding && "expr" in textBinding) {
       // expr 바인딩 (예: selectedValue || placeholder)
-      textContent = `{${textBinding.expr}}`;
+      textContent = `{${BindingRenderer.toExpression(textBinding)}}`;
     } else if (textBinding && "prop" in textBinding) {
       // prop 바인딩이 있으면 prop 사용
-      textContent = `{${textBinding.prop}}`;
+      textContent = `{${BindingRenderer.toExpression(textBinding)}}`;
     } else if (node.type === "text" && node.textSegments && node.textSegments.length > 0) {
       // textSegments가 있으면 실제 텍스트 렌더링
       // 스타일이 있는 segment는 개별 span으로 렌더링
@@ -739,12 +740,12 @@ ${indentStr})}` : jsx;
       for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
         const isEvent = /^on[A-Z]/.test(attrName);
         if ("prop" in source) {
-          componentAttrs += ` ${attrName}={${source.prop}}`;
+          componentAttrs += ` ${attrName}={${BindingRenderer.toExpression(source)}}`;
         } else if ("expr" in source) {
           if (isEvent) {
-            wrapperEventAttrs += ` ${attrName}={${source.expr}}`;
+            wrapperEventAttrs += ` ${attrName}={${BindingRenderer.toExpression(source)}}`;
           } else {
-            componentAttrs += ` ${attrName}={${source.expr}}`;
+            componentAttrs += ` ${attrName}={${BindingRenderer.toExpression(source)}}`;
           }
         }
       }
@@ -1036,9 +1037,9 @@ ${indentStr}</${tag}>`;
     if (node.bindings?.attrs && !opts?.skipBindingAttrs) {
       for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
         if ("prop" in source) {
-          attrs.push(`${attrName}={${source.prop}}`);
+          attrs.push(`${attrName}={${BindingRenderer.toExpression(source)}}`);
         } else if ("expr" in source) {
-          attrs.push(`${attrName}={${source.expr}}`);
+          attrs.push(`${attrName}={${BindingRenderer.toExpression(source)}}`);
         }
       }
     }
@@ -1048,9 +1049,9 @@ ${indentStr}</${tag}>`;
       const styleEntries: string[] = [];
       for (const [cssKey, source] of Object.entries(node.bindings.style)) {
         if ("expr" in source) {
-          styleEntries.push(`${cssKey}: ${source.expr}`);
+          styleEntries.push(`${cssKey}: ${BindingRenderer.toExpression(source)}`);
         } else if ("prop" in source) {
-          styleEntries.push(`${cssKey}: ${source.prop}`);
+          styleEntries.push(`${cssKey}: ${BindingRenderer.toExpression(source)}`);
         } else if ("ref" in source) {
           styleEntries.push(`${cssKey}: "${source.ref}"`);
         }
