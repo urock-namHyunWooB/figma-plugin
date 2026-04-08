@@ -1,0 +1,32 @@
+import type { InternalNode } from "../../../../../../types/types";
+import type { MatchSignal, SignalResult, MatchContext } from "../MatchSignal";
+
+/**
+ * TEXT 노드 특수 매칭 신호.
+ *
+ * 기존 NodeMatcher.isSameTextNode 재현:
+ * - 두 노드 모두 TEXT
+ * - 이름 일치
+ * - 부모 타입 일치
+ * → score 1 (같은 역할 TEXT)
+ *
+ * 그 외에는 score 0 (이 신호로는 판정 불가, 다른 신호에 맡김).
+ */
+export class TextSpecialMatch implements MatchSignal {
+  readonly name = "TextSpecialMatch";
+
+  evaluate(a: InternalNode, b: InternalNode, _ctx: MatchContext): SignalResult {
+    if (a.type !== "TEXT" || b.type !== "TEXT") {
+      return { kind: "score", score: 0, reason: "non-TEXT pair" };
+    }
+    if (a.name !== b.name) {
+      return { kind: "score", score: 0, reason: `name diff: ${a.name} ≠ ${b.name}` };
+    }
+    const parentAType = (a as any).parent?.type;
+    const parentBType = (b as any).parent?.type;
+    if (!parentAType || !parentBType || parentAType !== parentBType) {
+      return { kind: "score", score: 0, reason: "parent type diff or missing" };
+    }
+    return { kind: "score", score: 1, reason: `same TEXT role: ${a.name}` };
+  }
+}
