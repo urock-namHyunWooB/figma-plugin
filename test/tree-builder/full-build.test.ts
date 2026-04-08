@@ -85,4 +85,95 @@ describe("TreeBuilder Full Build", () => {
     // props가 배열이어야 함 (빈 배열일 수도 있음)
     expect(Array.isArray(uiTree.props)).toBe(true);
   });
+
+  it("should build UITree from a single COMPONENT (not COMPONENT_SET)", () => {
+    // taptapButton의 첫 번째 variant(자식 COMPONENT)를 단독으로 입력
+    const componentSetDoc = (taptapButton as any).info.document;
+    const firstComponent = componentSetDoc.children[0];
+    expect(firstComponent.type).toBe("COMPONENT");
+
+    // FigmaNodeData 형태로 wrap (info.document만 교체)
+    const singleComponentData = {
+      ...(taptapButton as any),
+      info: {
+        ...(taptapButton as any).info,
+        document: firstComponent,
+      },
+    };
+
+    const dataManager = new DataManager(singleComponentData);
+    const treeBuilder = new TreeBuilder(dataManager);
+
+    // throw 없이 완료되어야 함
+    const uiTree = treeBuilder.build(firstComponent);
+
+    expect(uiTree.root).toBeDefined();
+    expect(uiTree.root.id).toBe(firstComponent.id);
+    expect(Array.isArray(uiTree.props)).toBe(true);
+  });
+
+  it("should build UITree from a nested FRAME node (not COMPONENT_SET)", () => {
+    // 임의의 FRAME 자식 노드 탐색
+    const findFrame = (node: any): any => {
+      if (node.type === "FRAME") return node;
+      if (node.children) {
+        for (const c of node.children) {
+          const f = findFrame(c);
+          if (f) return f;
+        }
+      }
+      return null;
+    };
+
+    const frameNode = findFrame((taptapButton as any).info.document);
+    expect(frameNode).not.toBeNull();
+
+    const singleFrameData = {
+      ...(taptapButton as any),
+      info: {
+        ...(taptapButton as any).info,
+        document: frameNode,
+      },
+    };
+
+    const dataManager = new DataManager(singleFrameData);
+    const treeBuilder = new TreeBuilder(dataManager);
+
+    const uiTree = treeBuilder.build(frameNode);
+
+    expect(uiTree.root).toBeDefined();
+    expect(uiTree.root.id).toBe(frameNode.id);
+  });
+
+  it("should build UITree from a single TEXT node", () => {
+    const findText = (node: any): any => {
+      if (node.type === "TEXT") return node;
+      if (node.children) {
+        for (const c of node.children) {
+          const t = findText(c);
+          if (t) return t;
+        }
+      }
+      return null;
+    };
+
+    const textNode = findText((taptapButton as any).info.document);
+    expect(textNode).not.toBeNull();
+
+    const singleTextData = {
+      ...(taptapButton as any),
+      info: {
+        ...(taptapButton as any).info,
+        document: textNode,
+      },
+    };
+
+    const dataManager = new DataManager(singleTextData);
+    const treeBuilder = new TreeBuilder(dataManager);
+
+    const uiTree = treeBuilder.build(textNode);
+
+    expect(uiTree.root).toBeDefined();
+    expect(uiTree.root.id).toBe(textNode.id);
+  });
 });

@@ -38,17 +38,16 @@ export class FigmaPlugin {
     figma.ui.onmessage = async (msg) => {
       if (msg.type === MESSAGE_TYPES.REQUEST_REFRESH) {
         const selection = figma.currentPage.selection;
-        if (selection.length === 0) return;
-        const target = selection[0];
-        const componentSet =
-          target.type === "COMPONENT_SET"
-            ? target
-            : target.parent?.type === "COMPONENT_SET"
-              ? target.parent
-              : null;
-        const node = componentSet ?? target;
+        if (selection.length === 0) {
+          figma.ui.postMessage({
+            type: MESSAGE_TYPES.ON_SELECTION_CHANGE,
+            data: null,
+          });
+          return;
+        }
+        // 멀티 선택은 첫 노드만 사용 (자동 점프 제거)
         // 새로고침은 디바운스 우회 + 캐시 우회
-        this.pipeline.fireImmediate(node as SceneNode, true);
+        this.pipeline.fireImmediate(selection[0], true);
         return;
       }
       await this.handleMessage(msg);
@@ -56,7 +55,14 @@ export class FigmaPlugin {
 
     figma.on("selectionchange", () => {
       const selection = figma.currentPage.selection;
-      if (selection.length === 0) return;
+      if (selection.length === 0) {
+        figma.ui.postMessage({
+          type: MESSAGE_TYPES.ON_SELECTION_CHANGE,
+          data: null,
+        });
+        return;
+      }
+      // 멀티 선택은 첫 노드만 사용
       this.pipeline.schedule(selection[0]);
     });
   }

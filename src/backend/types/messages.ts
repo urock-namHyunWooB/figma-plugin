@@ -33,7 +33,7 @@ export const MESSAGE_TYPES = {
 
 export interface OnSelectionChangeMessage {
   type: typeof MESSAGE_TYPES.ON_SELECTION_CHANGE;
-  data: FigmaNodeData;
+  data: FigmaNodeData | null;
 }
 
 // 취소 메시지
