@@ -42,6 +42,8 @@ import { EmotionStrategy } from "./style-strategy/EmotionStrategy";
 import { TailwindStrategy } from "./style-strategy/TailwindStrategy";
 import type { IStyleStrategy } from "./style-strategy/IStyleStrategy";
 import { toComponentName } from "../../../utils/nameUtils";
+import { SemanticIRBuilder } from "../SemanticIRBuilder";
+import type { SemanticComponent } from "../SemanticIR";
 
 /** element별 충돌하는 native HTML attribute */
 const NATIVE_ATTRS_BY_ELEMENT: Record<string, Set<string>> = {
@@ -92,6 +94,11 @@ export class ReactEmitter implements ICodeEmitter {
   async emit(uiTree: UITree): Promise<EmittedCode> {
     // Step 0: native HTML prop 충돌 rename (UITree 복사본에 적용)
     const renamedTree = this.renameNativeProps(uiTree);
+
+    // Phase 1 scaffold: build the IR alongside. Generators still consume renamedTree.
+    // Will become the only input once Phase 7-8 migrates generators and Phase 8 flips the signature.
+    const ir: SemanticComponent = SemanticIRBuilder.build(renamedTree);
+    void ir;
 
     // Step 1: 컴포넌트명 생성
     const componentName = toComponentName(renamedTree.root.name);
