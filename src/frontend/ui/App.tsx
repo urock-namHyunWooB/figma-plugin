@@ -251,6 +251,17 @@ function App() {
   }, [setSelectionNodeData]);
 
   const [activeTab, setActiveTab] = useState<TabId>("preview");
+  const isComponentSet = selectionNodeData?.info?.document?.type === "COMPONENT_SET";
+  const visibleTabs = useMemo<TabId[]>(() => {
+    return isComponentSet
+      ? ["preview", "variants", "code", "publish", "release"]
+      : ["preview", "code", "publish", "release"];
+  }, [isComponentSet]);
+  useEffect(() => {
+    if (!isComponentSet && activeTab === "variants") {
+      setActiveTab("preview");
+    }
+  }, [isComponentSet, activeTab]);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [propDefinitions, setPropDefinitions] = useState<PropDefinition[]>([]);
   const [propValues, setPropValues] = useState<Record<string, any>>({});
@@ -526,7 +537,7 @@ function App() {
 
       {/* ─── Tab Bar ─── */}
       <div css={tabBarStyle}>
-        {(["preview", "variants", "code", "publish", "release"] as TabId[]).map((tab) => (
+        {visibleTabs.map((tab) => (
           <button
             key={tab}
             css={[tabStyle, activeTab === tab && tabActiveStyle]}
@@ -573,58 +584,34 @@ function App() {
         )}
 
         {/* Variants Tab */}
-        {activeTab === "variants" && (
+        {activeTab === "variants" && isComponentSet && (
           <div style={{ padding: 16 }}>
-            {selectionNodeData?.info?.document?.type !== "COMPONENT_SET" ? (
-              <div style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "48px 24px",
-                color: "#6b7280",
-                textAlign: "center",
-                gap: 12,
-              }}>
-                <span style={{ fontSize: 32 }}>&#x1F4CB;</span>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: "#374151" }}>
-                  COMPONENT_SET을 선택해주세요
-                </p>
-                <p style={{ margin: 0, fontSize: 12, lineHeight: 1.5 }}>
-                  Variants 탭은 여러 Variant를 가진 컴포넌트에서만 사용할 수 있습니다.<br />
-                  Figma에서 Component Set을 선택해주세요.
-                </p>
-              </div>
-            ) : (
-              <>
-                <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
-                  <button
-                    onClick={() => {
-                      parent.postMessage({ pluginMessage: { type: "request-refresh" } }, "*");
-                    }}
-                    style={{
-                      background: "none",
-                      border: "1px solid #d1d5db",
-                      borderRadius: 4,
-                      padding: "4px 10px",
-                      fontSize: 11,
-                      color: "#6b7280",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Refresh
-                  </button>
-                </div>
-                <PropsMatrix
-                  Component={Component}
-                  propDefinitions={propDefinitions}
-                  fixedProps={fixedProps}
-                  isLoading={isLoading}
-                  error={error}
-                  warnings={variantWarnings}
-                />
-              </>
-            )}
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+              <button
+                onClick={() => {
+                  parent.postMessage({ pluginMessage: { type: "request-refresh" } }, "*");
+                }}
+                style={{
+                  background: "none",
+                  border: "1px solid #d1d5db",
+                  borderRadius: 4,
+                  padding: "4px 10px",
+                  fontSize: 11,
+                  color: "#6b7280",
+                  cursor: "pointer",
+                }}
+              >
+                Refresh
+              </button>
+            </div>
+            <PropsMatrix
+              Component={Component}
+              propDefinitions={propDefinitions}
+              fixedProps={fixedProps}
+              isLoading={isLoading}
+              error={error}
+              warnings={variantWarnings}
+            />
           </div>
         )}
 
