@@ -9,6 +9,9 @@ export const MESSAGE_TYPES = {
 
   ON_SELECTION_CHANGE: "on-selection-change",
 
+  // 추출 로딩 신호 (Plugin → UI): 캐시 미스로 walk가 시작될 때 발사
+  EXTRACTION_LOADING: "extraction-loading",
+
   // 선택 이미지 내보내기
   EXPORT_SELECTION_IMAGE: "export-selection-image",  // UI → Plugin: 선택된 노드 이미지 요청
   SELECTION_IMAGE_RESULT: "selection-image-result",  // Plugin → UI: 이미지 결과
@@ -34,6 +37,11 @@ export const MESSAGE_TYPES = {
 export interface OnSelectionChangeMessage {
   type: typeof MESSAGE_TYPES.ON_SELECTION_CHANGE;
   data: FigmaNodeData | null;
+}
+
+// 추출 로딩 신호 (Plugin → UI): 캐시 미스로 walk가 시작될 때 발사
+export interface ExtractionLoadingMessage {
+  type: typeof MESSAGE_TYPES.EXTRACTION_LOADING;
 }
 
 // 취소 메시지
@@ -108,6 +116,7 @@ export interface SelectNodeMessage {
 export type PluginMessage =
   | CancelMessage
   | OnSelectionChangeMessage
+  | ExtractionLoadingMessage
   | ExportSelectionImageMessage
   | SelectionImageResultMessage
   | GitHubFetchRequestMessage

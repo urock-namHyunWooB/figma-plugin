@@ -212,6 +212,30 @@ const codeTabStyle = css`
   min-height: 0;
 `;
 
+// Extraction loading overlay (전체 화면, 검은 반투명 + 가운데 회전 스피너)
+const overlayStyle = css`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  pointer-events: all;
+`;
+
+const spinnerStyle = css`
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: extraction-spin 0.9s linear infinite;
+  @keyframes extraction-spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
 // Dev
 const saveButtonStyle = css`
   padding: 4px 10px;
@@ -231,7 +255,7 @@ const saveButtonStyle = css`
 
 function App() {
   const navigate = useNavigate();
-  const { selectionNodeData, setSelectionNodeData } = useMessageHandler();
+  const { selectionNodeData, setSelectionNodeData, isExtracting } = useMessageHandler();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImportJson = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -633,6 +657,13 @@ function App() {
           <ReleaseSection />
         </div>
       </div>
+
+      {/* 추출 중 전체 화면 오버레이 (캐시 미스 시에만) */}
+      {isExtracting && (
+        <div css={overlayStyle}>
+          <div css={spinnerStyle} />
+        </div>
+      )}
     </div>
   );
 }
