@@ -100,4 +100,33 @@ describe("MatchDecisionEngine", () => {
     expect(d.decision).toBe("veto");
     expect(s3Called).toBe(false);
   });
+
+  it("returns match immediately when a signal returns decisive-match", () => {
+    const engine = new MatchDecisionEngine(
+      [
+        fakeSignal("s1", { kind: "score", score: 0.1, reason: "" }),
+        fakeSignal("s2", { kind: "decisive-match", reason: "override" }),
+        fakeSignal("s3", { kind: "veto", reason: "would normally veto" }),
+      ],
+      defaultMatchingPolicy,
+    );
+    const d = engine.decide(n("a"), n("b"), ctx);
+    expect(d.decision).toBe("match");
+    expect(d.totalCost).toBe(0);
+  });
+
+  it("short-circuits on decisive-match (signals after are not evaluated)", () => {
+    let s3Called = false;
+    const engine = new MatchDecisionEngine(
+      [
+        fakeSignal("s1", { kind: "score", score: 0.5, reason: "" }),
+        fakeSignal("s2", { kind: "decisive-match", reason: "" }),
+        { name: "s3", evaluate: () => { s3Called = true; return { kind: "score", score: 1, reason: "" }; } },
+      ],
+      defaultMatchingPolicy,
+    );
+    const d = engine.decide(n("a"), n("b"), ctx);
+    expect(d.decision).toBe("match");
+    expect(s3Called).toBe(false);
+  });
 });

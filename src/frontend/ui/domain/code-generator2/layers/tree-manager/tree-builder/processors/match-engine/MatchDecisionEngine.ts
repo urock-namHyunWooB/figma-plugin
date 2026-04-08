@@ -46,6 +46,13 @@ export class MatchDecisionEngine {
           signalResults,
         };
       }
+      if (result.kind === "decisive-match") {
+        return {
+          decision: "match",
+          totalCost: 0,
+          signalResults,
+        };
+      }
     }
 
     let totalCost = 0;

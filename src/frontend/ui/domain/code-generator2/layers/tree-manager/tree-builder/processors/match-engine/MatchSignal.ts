@@ -19,12 +19,15 @@ export interface MatchContext {
  * discriminated union:
  * - kind="veto": 결정적 거부. 엔진은 즉시 match 불가로 결정.
  * - kind="score": 0~1 사이 점수. 1=완벽 일치, 0=전혀 맞지 않음.
+ * - kind="decisive-match": 결정적 수용. 엔진은 즉시 match로 결정 (다른 veto 무시).
+ *   VariantPropPosition처럼 "위치는 다르지만 같은 노드임이 명백한" 케이스에 사용.
  *
  * reason은 사람이 읽는 디버그 문자열 — reason log에 누적되어 결정 근거를 재구성할 수 있게 한다.
  */
 export type SignalResult =
   | { kind: "veto"; reason: string }
-  | { kind: "score"; score: number; reason: string };
+  | { kind: "score"; score: number; reason: string }
+  | { kind: "decisive-match"; reason: string };
 
 /**
  * 매칭 신호 인터페이스.

@@ -29,4 +29,11 @@ describe("MatchSignal types", () => {
     const result = signal.evaluate({} as any, {} as any, {} as MatchContext);
     expect(result).toEqual({ kind: "score", score: 1, reason: "always match" });
   });
+
+  it("SignalResult decisive-match has kind 'decisive-match' and no score", () => {
+    const r: SignalResult = { kind: "decisive-match", reason: "variant prop position override" };
+    expect(r.kind).toBe("decisive-match");
+    // @ts-expect-error — score must not exist on decisive-match
+    expect(r.score).toBeUndefined();
+  });
 });
