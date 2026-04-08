@@ -1,13 +1,18 @@
 /**
  * JsxGenerator
  *
- * UITree에서 React 컴포넌트 JSX 생성
+ * SemanticComponent에서 React 컴포넌트 JSX 생성
  */
 
-import type { UITree, ArraySlotInfo } from "../../../../types/types";
+import type { ArraySlotInfo, VariantInconsistency } from "../../../../types/types";
+import type { SemanticComponent } from "../../SemanticIR";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
-import type { VariantInconsistency } from "../../../../types/types";
 import { NodeRenderer, type NodeRendererContext } from "./NodeRenderer";
+
+/** Derive setter name from state variable name (React useState convention) */
+function setterFor(stateName: string): string {
+  return "set" + stateName.charAt(0).toUpperCase() + stateName.slice(1);
+}
 
 export interface JsxGenerateResult {
   code: string;
@@ -30,7 +35,7 @@ export class JsxGenerator {
    * 컴포넌트 코드 생성
    */
   static generate(
-    uiTree: UITree,
+    ir: SemanticComponent,
     componentName: string,
     styleStrategy: IStyleStrategy,
     options: JsxGeneratorOptions = {}
@@ -39,31 +44,31 @@ export class JsxGenerator {
 
     // Slot props 설정 (조건부 렌더링에서 사용)
     this.slotProps = new Set(
-      uiTree.props.filter((p) => p.type === "slot").map((p) => p.name)
+      ir.props.filter((p) => p.type === "slot").map((p) => p.name)
     );
 
     // Boolean props 설정 (스타일 참조에서 삼항 변환용)
     // extraValues가 있는 boolean prop (예: boolean | "indeterminate")은 값이 3개 이상이므로 Record + String() 유지
     this.booleanProps = new Set([
-      ...uiTree.props
+      ...ir.props
         .filter((p) => p.type === "boolean" && !(p as any).extraValues?.length)
         .map((p) => p.name),
-      // boolean stateVars (예: open from useState(false))
-      ...(uiTree.stateVars || [])
+      // boolean state vars (예: open from useState(false))
+      ...ir.state
         .filter((sv) => sv.initialValue === "false" || sv.initialValue === "true")
         .map((sv) => sv.name),
     ]);
 
     // extraValues가 있는 boolean props (Record 인덱스 시 String() 필요)
     this.booleanWithExtras = new Set(
-      uiTree.props
+      ir.props
         .filter((p) => p.type === "boolean" && (p as any).extraValues?.length)
         .map((p) => p.name)
     );
 
     // Prop rename 매핑 설정 (sourceKey → name)
     this.propRenameMap = new Map(
-      uiTree.props.map((p) => [p.sourceKey, p.name])
+      ir.props.map((p) => [p.sourceKey, p.name])
     );
 
     // NodeStyleMap 설정
@@ -71,30 +76,30 @@ export class JsxGenerator {
 
     // Array Slots 설정 (parentId → ArraySlotInfo 매핑)
     this.arraySlots = new Map(
-      (uiTree.arraySlots || []).map((slot) => [slot.parentId, slot])
+      (ir.arraySlots || []).map((slot) => [slot.parentId, slot])
     );
 
     // 컴포넌트에서 참조 가능한 변수 이름 수집 (props + 파생 변수 + state 변수)
     this.availableVarNames = new Set([
-      ...uiTree.props.map((p) => p.name),
-      ...(uiTree.derivedVars || []).map((dv) => dv.name),
-      ...(uiTree.stateVars || []).map((sv) => sv.name),
+      ...ir.props.map((p) => p.name),
+      ...ir.derived.map((dv) => dv.name),
+      ...ir.state.map((sv) => sv.name),
     ]);
 
     // 조건부 컴포넌트 map 선언 초기화
     this.componentMapDeclarations = [];
 
     // Props destructuring (별도 줄에서 수행)
-    const propsDestructuring = this.generatePropsDestructuring(uiTree);
+    const propsDestructuring = this.generatePropsDestructuring(ir);
 
     // React useState 훅 선언 (props destructuring 직후)
-    const stateVarsCode = uiTree.stateVars?.length
-      ? uiTree.stateVars.map((sv) => `  const [${sv.name}, ${sv.setter}] = useState(${sv.initialValue});`).join("\n") + "\n"
+    const stateVarsCode = ir.state.length
+      ? ir.state.map((sv) => `  const [${sv.name}, ${setterFor(sv.name)}] = useState(${sv.initialValue});`).join("\n") + "\n"
       : "";
 
     // 파생 변수 선언 (props destructuring 이후, return 이전)
-    const derivedVarsCode = uiTree.derivedVars?.length
-      ? uiTree.derivedVars.map((dv) => `  const ${dv.name} = ${dv.expression};`).join("\n") + "\n"
+    const derivedVarsCode = ir.derived.length
+      ? ir.derived.map((dv) => `  const ${dv.name} = ${dv.expression};`).join("\n") + "\n"
       : "";
 
     // NodeRenderer context 구성 (static 필드 설정 완료 후)
@@ -113,7 +118,7 @@ export class JsxGenerator {
     };
 
     // JSX body (루트 노드는 isRoot=true로 restProps 전파)
-    const jsxBody = NodeRenderer.generateNode(ctx, uiTree.root, 2, true);
+    const jsxBody = NodeRenderer.generateNode(ctx, ir.structure, 2, true);
 
     // 조건부 컴포넌트 map 선언 (JSX 생성 후 수집됨)
     // (ctx.componentMapDeclarations === this.componentMapDeclarations — shared array reference)
@@ -137,15 +142,15 @@ export default ${componentName}`;
   /**
    * Props destructuring 생성 (기본값 포함 + restProps)
    */
-  private static generatePropsDestructuring(uiTree: UITree): string {
-    if (uiTree.props.length === 0) {
+  private static generatePropsDestructuring(ir: SemanticComponent): string {
+    if (ir.props.length === 0) {
       return "{ ...restProps }";
     }
 
     // Array Slot 이름 집합 (기본값 [] 설정용)
-    const arraySlotNames = new Set((uiTree.arraySlots || []).map((slot) => slot.slotName));
+    const arraySlotNames = new Set((ir.arraySlots || []).map((slot) => slot.slotName));
 
-    const propEntries = uiTree.props.map((p) => {
+    const propEntries = ir.props.map((p) => {
       // Array Slot prop은 기본값 [] 설정 (undefined.map() 방지)
       if (p.type === "slot" && arraySlotNames.has(p.name)) {
         return `${p.name} = []`;

@@ -19,6 +19,8 @@ import type {
   ComponentType,
 } from "../../types/types";
 
+export type { TextSegment };
+
 /** Node kind — same value space as UINodeType, distinct name to mark IR boundary */
 export type SemanticNodeKind =
   | "container"
@@ -72,6 +74,10 @@ export interface SemanticNode {
   styles?: StyleObject;
   styleBindings?: Record<string, BindingSource>;
   content?: BindingSource | TextSegment[];
+  /** Inline text binding (CSS-preserving replacement, distinct from slot content) */
+  textContent?: BindingSource;
+  /** Text segments for rich text rendering */
+  textSegments?: TextSegment[];
   visibleCondition?: ConditionNode;
   children?: SemanticNode[];
 

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { NodeRenderer, type NodeRendererContext } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/generators/NodeRenderer";
 import { EmotionStrategy } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/style-strategy/EmotionStrategy";
-import type { UINode } from "@frontend/ui/domain/code-generator2/types/types";
+import type { SemanticNode } from "@frontend/ui/domain/code-generator2/layers/code-emitter/SemanticIR";
 
 function makeCtx(): NodeRendererContext {
   return {
@@ -21,19 +21,19 @@ function makeCtx(): NodeRendererContext {
 
 describe("NodeRenderer", () => {
   it("renders a simple text node", () => {
-    const node = {
-      id: "n1", name: "label", type: "text",
+    const node: SemanticNode = {
+      id: "n1", name: "label", kind: "text",
       textSegments: [{ text: "Hello" }],
-    } as unknown as UINode;
+    };
     const out = NodeRenderer.generateNode(makeCtx(), node, 0, false);
     expect(out).toContain("Hello");
   });
 
   it("wraps a node with visibleCondition", () => {
-    const node = {
-      id: "n1", name: "x", type: "container", children: [],
+    const node: SemanticNode = {
+      id: "n1", name: "x", kind: "container", children: [],
       visibleCondition: { type: "truthy", prop: "show" },
-    } as unknown as UINode;
+    };
     const out = NodeRenderer.generateNode(makeCtx(), node, 0, false);
     expect(out).toMatch(/show && \(/);
   });

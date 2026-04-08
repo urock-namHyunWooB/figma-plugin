@@ -352,7 +352,7 @@ export class ReactEmitter implements ICodeEmitter {
    * 모든 섹션 생성 (imports, props, styles, jsx)
    */
   private generateAllSections(
-    uiTree: UITree,
+    _uiTree: UITree,
     ir: SemanticComponent,
     componentName: string
   ): {
@@ -364,7 +364,7 @@ export class ReactEmitter implements ICodeEmitter {
   } {
     const propsInterface = PropsGenerator.generate(ir, componentName);
     const stylesResult = StylesGenerator.generate(ir, componentName, this.styleStrategy);
-    const jsxResult = JsxGenerator.generate(uiTree, componentName, this.styleStrategy, {
+    const jsxResult = JsxGenerator.generate(ir, componentName, this.styleStrategy, {
       debug: this.options.debug,
       nodeStyleMap: stylesResult.nodeStyleMap,
     });

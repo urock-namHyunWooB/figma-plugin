@@ -1,23 +1,16 @@
 /**
  * NodeRenderer
  *
- * Recursive UINode -> JSX rendering. Extracted from JsxGenerator (Phase 6
- * SemanticIR migration). Currently consumes UINode; will switch to SemanticNode
- * after Phase 7-8.
+ * Recursive SemanticNode -> JSX rendering. Phase 7: migrated from UINode to SemanticNode.
  */
 
 import type {
-  UINode,
-  ContainerNode,
-  ButtonNode,
-  InputNode,
-  LinkNode,
-  ComponentNode,
   ConditionNode,
   ArraySlotInfo,
   StyleObject,
   VariantInconsistency,
 } from "../../../../types/types";
+import type { SemanticNode } from "../../SemanticIR";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
 import { groupDynamicByProp } from "../style-strategy/groupDynamicByProp";
 import { extractAllPropNames } from "../../../../types/conditionUtils";
@@ -44,18 +37,18 @@ export interface NodeRendererContext {
 /** 같은 prop의 eq 조건으로 분기되는 component 노드 그룹 */
 interface ComponentMapGroup {
   propName: string;
-  entries: Array<{ value: string; node: UINode }>;
+  entries: Array<{ value: string; node: SemanticNode }>;
   /** 모든 엔트리가 동일한 wrapper 스타일을 가지면 true */
   hasSharedWrapper: boolean;
 }
 
 export class NodeRenderer {
   /**
-   * UINode를 JSX로 변환
+   * SemanticNode를 JSX로 변환
    */
   static generateNode(
     ctx: NodeRendererContext,
-    node: UINode,
+    node: SemanticNode,
     indent: number,
     isRoot: boolean = false
   ): string {
@@ -63,11 +56,11 @@ export class NodeRenderer {
 
     // Slot binding이 있으면 slot prop 렌더링 (styles가 있으면 wrapper div 적용)
     // 단, placeholder + attrs 바인딩이 있으면 <input> 태그로 렌더링하므로 스킵
-    const slotBinding = node.bindings?.content;
+    const slotBinding = node.content;
     if (
       slotBinding &&
       "prop" in slotBinding &&
-      !(node.semanticType === "placeholder" && node.bindings?.attrs)
+      !(node.semanticType === "placeholder" && (node.attrs || node.events))
     ) {
       // visibleCondition이 slot prop이 아닌 다른 prop을 참조할 때만 조건 추가
       const extraCondition = (node.visibleCondition && !NodeRenderer.getSlotPropFromCondition(ctx, node.visibleCondition))
@@ -82,7 +75,7 @@ export class NodeRenderer {
       const slotProp = NodeRenderer.getSlotPropFromCondition(ctx, node.visibleCondition);
       if (slotProp) {
         // component 또는 container with content binding → slot wrapper 패턴 사용
-        if (node.type === "component") {
+        if (node.kind === "component") {
           // Slot prop 값을 직접 렌더링
           return `${indentStr}{${slotProp}}`;
         }
@@ -125,19 +118,19 @@ export class NodeRenderer {
    */
   static generateNodeInner(
     ctx: NodeRendererContext,
-    node: UINode,
+    node: SemanticNode,
     indent: number,
     isRoot: boolean = false
   ): string {
     // semanticType 우선 처리: search-input 또는 input 내부의 placeholder → <input> 태그
     if (
       node.semanticType === "search-input" ||
-      (node.semanticType === "placeholder" && node.bindings?.attrs)
+      (node.semanticType === "placeholder" && (node.attrs || node.events))
     ) {
       return NodeRenderer.generateInputElement(ctx, node, indent);
     }
 
-    switch (node.type) {
+    switch (node.kind) {
       case "text":
         return NodeRenderer.generateTextNode(ctx, node, indent);
 
@@ -166,24 +159,25 @@ export class NodeRenderer {
   static generateArraySlotMap(
     ctx: NodeRendererContext,
     arraySlot: ArraySlotInfo,
-    parentNode: ContainerNode | ButtonNode | InputNode | LinkNode | ComponentNode,
+    parentNode: SemanticNode,
     indent: number
   ): string {
     const indentStr = " ".repeat(indent);
 
     // Array Slot에 포함된 첫 번째 자식 노드 찾기
     const firstNodeId = arraySlot.nodeIds[0];
-    const arrayItemNode = parentNode.children.find((child) => child.id === firstNodeId);
+    const children = parentNode.children ?? [];
+    const arrayItemNode = children.find((child) => child.id === firstNodeId);
 
     if (!arrayItemNode) {
       // Array Slot 노드를 찾을 수 없으면 일반 렌더링
-      return parentNode.children
+      return children
         .map((child) => NodeRenderer.generateNode(ctx, child, indent, false))
         .join("\n");
     }
 
     // 외부 컴포넌트 이름 (refId에서 추출 또는 itemComponentName 사용)
-    const componentName = arraySlot.itemComponentName || toComponentName(arrayItemNode.name);
+    const componentName = arraySlot.itemComponentName || toComponentName(arrayItemNode.name ?? "");
 
     // item props 매핑 — "content"는 children으로, 나머지는 속성으로 전달
     const itemPropsMapping = arraySlot.itemProps || [];
@@ -268,12 +262,12 @@ ${indentStr}))}`;
   /**
    * Loop 컨텐츠 렌더링 (제네릭 .map() 생성)
    *
-   * ContainerNode.loop 설정을 기반으로 .map() 코드 생성
+   * SemanticNode.loop 설정을 기반으로 .map() 코드 생성
    * 첫 번째 자식을 템플릿으로 사용
    */
   static generateLoopContent(
     ctx: NodeRendererContext,
-    node: ContainerNode,
+    node: SemanticNode,
     indent: number
   ): string {
     const indentStr = " ".repeat(indent);
@@ -283,7 +277,7 @@ ${indentStr}))}`;
     const itemVar = "option"; // loop item 변수명 (SegmentedControl 등 option 기반 컴포넌트 호환)
 
     // 첫 번째 자식을 템플릿으로 사용
-    const templateNode = node.children[0];
+    const templateNode = node.children?.[0];
     if (!templateNode) {
       return `${indentStr}{/* No template node for loop */}`;
     }
@@ -309,11 +303,11 @@ ${indentStr}})}`;
   /**
    * 템플릿 서브트리에 itemVariant 스타일이 있는지 확인
    */
-  static templateHasItemVariant(node: UINode): boolean {
-    if ("styles" in node && node.styles?.itemVariant) {
+  static templateHasItemVariant(node: SemanticNode): boolean {
+    if (node.styles?.itemVariant) {
       return true;
     }
-    if ("children" in node && node.children) {
+    if (node.children) {
       for (const child of node.children) {
         if (NodeRenderer.templateHasItemVariant(child)) return true;
       }
@@ -324,11 +318,11 @@ ${indentStr}})}`;
   /**
    * Loop 컨텍스트에서 노드 렌더링
    *
-   * bindings에서 item.xxx 참조를 loop item 변수로 치환
+   * attrs/events에서 item.xxx 참조를 loop item 변수로 치환
    */
   static generateNodeInLoop(
     ctx: NodeRendererContext,
-    node: UINode,
+    node: SemanticNode,
     indent: number,
     itemVar: string,
     keyField: string,
@@ -347,7 +341,7 @@ ${indentStr}})}`;
     const contentBinding = NodeRenderer.getLoopContentBinding(node, itemVar);
 
     // 자식 없고 content 바인딩도 없으면 self-closing
-    if (!("children" in node) || !node.children || node.children.length === 0) {
+    if (!node.children || node.children.length === 0) {
       if (contentBinding) {
         // content 바인딩이 있으면 내용 렌더링
         const jsx = `${indentStr}<${tag}${attrs}>{${contentBinding}}</${tag}>`;
@@ -374,7 +368,7 @@ ${indentStr})}` : jsx;
   /**
    * Loop 아이템 조건부 렌더링 조건 추출
    */
-  static getLoopVisibleCondition(node: UINode, itemVar: string): string | null {
+  static getLoopVisibleCondition(node: SemanticNode, itemVar: string): string | null {
     if (!node.visibleCondition) return null;
 
     const condition = node.visibleCondition;
@@ -389,10 +383,10 @@ ${indentStr})}` : jsx;
   /**
    * Loop 아이템 content 바인딩 추출
    */
-  static getLoopContentBinding(node: UINode, itemVar: string): string | null {
-    if (!node.bindings?.content) return null;
+  static getLoopContentBinding(node: SemanticNode, itemVar: string): string | null {
+    if (!node.content) return null;
 
-    const source = node.bindings.content;
+    const source = node.content;
     if ("ref" in source && source.ref.startsWith("item.")) {
       const field = source.ref.slice(5); // "item.xxx" -> "xxx"
       return `${itemVar}.${field}`;
@@ -408,7 +402,7 @@ ${indentStr})}` : jsx;
    */
   static generateAttributesInLoop(
     ctx: NodeRendererContext,
-    node: UINode,
+    node: SemanticNode,
     itemVar: string,
     keyField: string,
     isRoot: boolean
@@ -420,20 +414,19 @@ ${indentStr})}` : jsx;
       attrs = ` key={${itemVar}.${keyField}}` + attrs;
     }
 
-    // Loop item 바인딩 처리 (bindings에서 item.xxx 참조 치환)
-    if (node.bindings?.attrs) {
-      for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
-        if ("expr" in source) {
-          // expr 내의 item. 참조를 실제 loop 변수로 치환
-          const resolvedExpr = source.expr.replace(/\bitem\./g, `${itemVar}.`);
-          attrs += ` ${attrName}={${resolvedExpr}}`;
-        } else if ("ref" in source && source.ref.startsWith("item.")) {
-          const field = source.ref.slice(5); // "item.xxx" -> "xxx"
-          if (attrName.startsWith("on")) {
-            attrs += ` ${attrName}={() => ${field}?.(${itemVar})}`;
-          } else {
-            attrs += ` ${attrName}={${itemVar}.${field}}`;
-          }
+    // Loop item 바인딩 처리 (attrs에서 item.xxx 참조 치환)
+    const allAttrs = { ...(node.attrs ?? {}), ...(node.events ?? {}) };
+    for (const [attrName, source] of Object.entries(allAttrs)) {
+      if ("expr" in source) {
+        // expr 내의 item. 참조를 실제 loop 변수로 치환
+        const resolvedExpr = source.expr.replace(/\bitem\./g, `${itemVar}.`);
+        attrs += ` ${attrName}={${resolvedExpr}}`;
+      } else if ("ref" in source && source.ref.startsWith("item.")) {
+        const field = source.ref.slice(5); // "item.xxx" -> "xxx"
+        if (attrName.startsWith("on")) {
+          attrs += ` ${attrName}={() => ${field}?.(${itemVar})}`;
+        } else {
+          attrs += ` ${attrName}={${itemVar}.${field}}`;
         }
       }
     }
@@ -446,20 +439,20 @@ ${indentStr})}` : jsx;
    */
   static generateInputElement(
     ctx: NodeRendererContext,
-    node: UINode,
+    node: SemanticNode,
     indent: number
   ): string {
     const indentStr = " ".repeat(indent);
     const attrs = NodeRenderer.generateAttributes(ctx, node);
 
     const placeholderProp =
-      node.bindings?.content && "prop" in node.bindings.content
-        ? BindingRenderer.toExpression(node.bindings.content)
+      node.content && "prop" in node.content
+        ? BindingRenderer.toExpression(node.content)
         : "text";
 
-    // bindings.attrs에 onChange가 없으면 fallback 추가
+    // attrs/events に onChange が없으면 fallback 추가
     // input 타입(restProps 전달)이면 native onChange가 restProps에 포함되므로 생략
-    const hasOnChange = node.bindings?.attrs?.["onChange"];
+    const hasOnChange = node.events?.["onChange"] ?? node.attrs?.["onChange"];
     const onChangeFallback = hasOnChange || ctx._restPropsOnInput
       ? ""
       : `onChange={(e) => onValueChange?.(e.target.value)}`;
@@ -478,16 +471,16 @@ ${indentStr})}` : jsx;
    */
   static generateTextNode(
     ctx: NodeRendererContext,
-    node: UINode,
+    node: SemanticNode,
     indent: number
   ): string {
     const indentStr = " ".repeat(indent);
     const attrs = NodeRenderer.generateAttributes(ctx, node);
 
-    // bindings에서 텍스트 바인딩 확인
+    // テキストバインディング確認
     // textContent: CSS 유지하면서 텍스트만 교체 (slot wrapper 없이 직접 렌더링)
     // content: slot wrapper로 렌더링 (CSS 소실)
-    const textBinding = node.bindings?.textContent ?? node.bindings?.content;
+    const textBinding = node.textContent ?? node.content;
 
     let textContent: string;
     if (textBinding && "expr" in textBinding) {
@@ -496,7 +489,7 @@ ${indentStr})}` : jsx;
     } else if (textBinding && "prop" in textBinding) {
       // prop 바인딩이 있으면 prop 사용
       textContent = `{${BindingRenderer.toExpression(textBinding)}}`;
-    } else if (node.type === "text" && node.textSegments && node.textSegments.length > 0) {
+    } else if (node.kind === "text" && node.textSegments && node.textSegments.length > 0) {
       // textSegments가 있으면 실제 텍스트 렌더링
       // 스타일이 있는 segment는 개별 span으로 렌더링
       textContent = NodeRenderer.renderTextSegments(node.textSegments);
@@ -544,23 +537,23 @@ ${indentStr})}` : jsx;
    */
   static generateComponentNode(
     ctx: NodeRendererContext,
-    node: UINode,
+    node: SemanticNode,
     indent: number
   ): string {
     const indentStr = " ".repeat(indent);
 
-    // INSTANCE slot 확인 (bindings.content가 있으면 slot)
-    const slotBinding = node.bindings?.content;
+    // INSTANCE slot 확인 (content가 있으면 slot)
+    const slotBinding = node.content;
     if (slotBinding && "prop" in slotBinding) {
       return NodeRenderer.generateSlotWrapper(ctx, node, slotBinding.prop, indent);
     }
 
     // 일반 컴포넌트 렌더링
-    const componentName = toComponentName(node.name);
+    const componentName = toComponentName(node.name ?? "");
 
     // INSTANCE override props 생성
     let componentAttrs = "";
-    if (node.type === "component" && "overrideProps" in node && node.overrideProps) {
+    if (node.overrideProps) {
       for (const [propName, value] of Object.entries(node.overrideProps)) {
         // boolean 값은 JSX expression으로 출력
         if (value === "true" || value === "false") {
@@ -571,20 +564,19 @@ ${indentStr})}` : jsx;
       }
     }
 
-    // bindings.attrs 처리 (prop 바인딩: active={active}, expr 바인딩 등)
+    // attrs + events 처리 (prop 바인딩: active={active}, expr 바인딩 등)
     // 이벤트 핸들러(on*)는 wrapper div로 이동 (dependency props에 없을 수 있음)
     let wrapperEventAttrs = "";
-    if (node.bindings?.attrs) {
-      for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
-        const isEvent = /^on[A-Z]/.test(attrName);
-        if ("prop" in source) {
+    const allBindingAttrs = { ...(node.attrs ?? {}), ...(node.events ?? {}) };
+    for (const [attrName, source] of Object.entries(allBindingAttrs)) {
+      const isEvent = /^on[A-Z]/.test(attrName);
+      if ("prop" in source) {
+        componentAttrs += ` ${attrName}={${BindingRenderer.toExpression(source)}}`;
+      } else if ("expr" in source) {
+        if (isEvent) {
+          wrapperEventAttrs += ` ${attrName}={${BindingRenderer.toExpression(source)}}`;
+        } else {
           componentAttrs += ` ${attrName}={${BindingRenderer.toExpression(source)}}`;
-        } else if ("expr" in source) {
-          if (isEvent) {
-            wrapperEventAttrs += ` ${attrName}={${BindingRenderer.toExpression(source)}}`;
-          } else {
-            componentAttrs += ` ${attrName}={${BindingRenderer.toExpression(source)}}`;
-          }
         }
       }
     }
@@ -633,14 +625,14 @@ ${indentStr}</div>`;
    */
   static generateVectorNode(
     ctx: NodeRendererContext,
-    node: UINode,
+    node: SemanticNode,
     indent: number
   ): string {
     const indentStr = " ".repeat(indent);
     const attrs = NodeRenderer.generateAttributes(ctx, node);
 
     // SVG가 있으면 JSX 포맷으로 변환하여 사용
-    if (node.type === "vector" && "vectorSvg" in node && node.vectorSvg) {
+    if (node.kind === "vector" && node.vectorSvg) {
       const jsxSvg = NodeRenderer.convertSvgToJsx(node.vectorSvg);
       return `${indentStr}<span${attrs}>${jsxSvg}</span>`;
     }
@@ -695,7 +687,7 @@ ${indentStr}</div>`;
    */
   static generateContainerNode(
     ctx: NodeRendererContext,
-    node: UINode,
+    node: SemanticNode,
     indent: number,
     isRoot: boolean = false
   ): string {
@@ -706,11 +698,11 @@ ${indentStr}</div>`;
     let attrs = NodeRenderer.generateAttributes(ctx, node);
 
     // 루트 요소에 restProps 전파 (input 타입은 내부 <input>에 전달하므로 스킵)
-    if (isRoot && node.type !== "input") {
+    if (isRoot && node.kind !== "input") {
       attrs += " {...restProps}";
     }
     // input 타입 루트: children에 restProps 전달 플래그 설정
-    if (isRoot && node.type === "input") {
+    if (isRoot && node.kind === "input") {
       ctx = { ...ctx, _restPropsOnInput: true };
     }
 
@@ -718,15 +710,15 @@ ${indentStr}</div>`;
     const isVoidElement = NodeRenderer.isVoidElement(tag);
 
     // childrenSlot 확인 (래퍼 컴포넌트의 {children} 렌더링)
-    const childrenSlotName = node.type === "container" ? (node as ContainerNode).childrenSlot : undefined;
+    const childrenSlotName = node.childrenSlot;
 
     // 자식이 없거나 void element이면 self-closing (단, childrenSlot이 있으면 open tag 유지)
-    if (!childrenSlotName && (isVoidElement || !("children" in node) || !node.children || node.children.length === 0)) {
+    if (!childrenSlotName && (isVoidElement || !node.children || node.children.length === 0)) {
       return `${indentStr}<${tag}${attrs} />`;
     }
 
-    // Loop 처리: ContainerNode에 loop이 있으면 .map() 렌더링
-    if (node.type === "container" && node.loop) {
+    // Loop 처리: loop이 있으면 .map() 렌더링
+    if (node.loop) {
       const childrenJsx = NodeRenderer.generateLoopContent(ctx, node, indent + 2);
       return `${indentStr}<${tag}${attrs}>
 ${childrenJsx}
@@ -804,8 +796,8 @@ ${indentStr}</${tag}>`;
   /**
    * HTML 태그 결정
    */
-  static getHtmlTag(node: UINode): string {
-    switch (node.type) {
+  static getHtmlTag(node: SemanticNode): string {
+    switch (node.kind) {
       case "button":
         return "button";
       case "input":
@@ -824,14 +816,14 @@ ${indentStr}</${tag}>`;
    */
   static generateAttributes(
     ctx: NodeRendererContext,
-    node: UINode,
+    node: SemanticNode,
     opts?: { skipBindingAttrs?: boolean; inLoopContext?: boolean }
   ): string {
     const attrs: string[] = [];
 
     // 스타일 속성 (빈 스타일은 제외)
     if (node.styles && NodeRenderer.hasNonEmptyStyles(node.styles)) {
-      const styleVarName = NodeRenderer.toStyleVariableName(ctx, node.id, node.name);
+      const styleVarName = NodeRenderer.toStyleVariableName(ctx, node.id, node.name ?? "");
       const dynamicProps = NodeRenderer.extractDynamicProps(ctx, node.styles);
 
       // itemVariant ternary (loop 컨텍스트에서만)
@@ -846,7 +838,7 @@ ${indentStr}</${tag}>`;
           refs.push(...dynamicProps.map((prop) => NodeRenderer.buildDynamicStyleRef(ctx, styleVarName, prop)));
           attrs.push(`css={[${refs.join(", ")}]}`);
         } else {
-          // compound prop("style+tone")を個別 prop に分解して含める
+          // compound prop("style+tone")을 개별 prop으로 분해하여 포함
           const propArgs = [...new Set(dynamicProps
             .flatMap((prop) => prop.includes("+") ? prop.split("+") : [prop])
             .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
@@ -868,9 +860,10 @@ ${indentStr}</${tag}>`;
       attrs.push(`data-figma-id="${node.id}"`);
     }
 
-    // bindings에서 attrs 처리 (loop 컨텍스트에서는 generateAttributesInLoop이 처리)
-    if (node.bindings?.attrs && !opts?.skipBindingAttrs) {
-      for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
+    // attrs + events 처리 (loop 컨텍스트에서는 generateAttributesInLoop이 처리)
+    if (!opts?.skipBindingAttrs) {
+      const allAttrs = { ...(node.attrs ?? {}), ...(node.events ?? {}) };
+      for (const [attrName, source] of Object.entries(allAttrs)) {
         if ("prop" in source) {
           attrs.push(`${attrName}={${BindingRenderer.toExpression(source)}}`);
         } else if ("expr" in source) {
@@ -879,10 +872,10 @@ ${indentStr}</${tag}>`;
       }
     }
 
-    // bindings에서 style 처리
-    if (node.bindings?.style) {
+    // styleBindings 처리 (인라인 style prop)
+    if (node.styleBindings) {
       const styleEntries: string[] = [];
-      for (const [cssKey, source] of Object.entries(node.bindings.style)) {
+      for (const [cssKey, source] of Object.entries(node.styleBindings)) {
         if ("expr" in source) {
           styleEntries.push(`${cssKey}: ${BindingRenderer.toExpression(source)}`);
         } else if ("prop" in source) {
@@ -1070,14 +1063,14 @@ ${indentStr}</${tag}>`;
    */
   static generateSlotWrapper(
     ctx: NodeRendererContext,
-    node: UINode,
+    node: SemanticNode,
     slotProp: string,
     indent: number,
     extraCondition?: string
   ): string {
     const indentStr = " ".repeat(indent);
     const styleVarName = ctx.nodeStyleMap.get(node.id);
-    const isInline = node.type === "text" || node.semanticType === "icon" || node.semanticType === "icon-wrapper";
+    const isInline = node.kind === "text" || node.semanticType === "icon" || node.semanticType === "icon-wrapper";
     const tag = isInline ? "span" : "div";
     const condPrefix = extraCondition ? `${extraCondition} && ` : "";
 
@@ -1122,22 +1115,22 @@ ${indentStr}</${tag}>`;
    *
    * 감지 조건:
    * - visibleCondition.type === "eq", 같은 prop, 다른 value
-   * - type === "component"
+   * - kind === "component"
    * - wrapper 스타일 없음 (간결한 map 생성을 위해)
    * - 3개 이상 (2개는 if/else로 충분)
    */
-  static detectComponentMapGroups(ctx: NodeRendererContext, children: UINode[]): ComponentMapGroup[] {
-    const byProp = new Map<string, Array<{ value: string; node: UINode }>>();
+  static detectComponentMapGroups(ctx: NodeRendererContext, children: SemanticNode[]): ComponentMapGroup[] {
+    const byProp = new Map<string, Array<{ value: string; node: SemanticNode }>>();
 
     for (const child of children) {
       if (!child.visibleCondition) continue;
       if (child.visibleCondition.type !== "eq") continue;
-      if (child.type !== "component") continue;
+      if (child.kind !== "component") continue;
       if (typeof child.visibleCondition.value !== "string") continue;
       // override props가 있으면 스킵 (각 컴포넌트에 다른 props 전달)
-      if ("overrideProps" in child && child.overrideProps && Object.keys(child.overrideProps).length > 0) continue;
-      // bindings.attrs가 있으면 스킵
-      if (child.bindings?.attrs && Object.keys(child.bindings.attrs).length > 0) continue;
+      if (child.overrideProps && Object.keys(child.overrideProps).length > 0) continue;
+      // attrs/events가 있으면 스킵
+      if ((child.attrs && Object.keys(child.attrs).length > 0) || (child.events && Object.keys(child.events).length > 0)) continue;
 
       const prop = child.visibleCondition.prop;
       const value = child.visibleCondition.value as string;
@@ -1159,7 +1152,7 @@ ${indentStr}</${tag}>`;
    * 모든 노드의 wrapper 스타일이 동일한지 확인.
    * StylesGenerator가 생성한 변수명의 base CSS 내용을 비교.
    */
-  static hasIdenticalWrapperStyles(nodes: UINode[]): boolean {
+  static hasIdenticalWrapperStyles(nodes: SemanticNode[]): boolean {
     const styleKeys = nodes.map((node) => {
       if (!node.styles || !NodeRenderer.hasNonEmptyStyles(node.styles)) return "";
       // base + dynamic 구조를 JSON 직렬화해서 비교
@@ -1203,7 +1196,7 @@ ${indentStr}</${tag}>`;
 
     // map entries: { "Approved": Success, "Rejected": Forbid, ... }
     const mapEntries = group.entries
-      .map((e) => `${JSON.stringify(e.value)}: ${toComponentName(e.node.name)}`)
+      .map((e) => `${JSON.stringify(e.value)}: ${toComponentName(e.node.name ?? "")}`)
       .join(", ");
 
     // 변수 선언을 수집 (generate()에서 return 이전에 삽입)
@@ -1215,7 +1208,7 @@ ${indentStr}</${tag}>`;
     if (group.hasSharedWrapper) {
       const refNode = group.entries[0].node;
       if (refNode.styles && NodeRenderer.hasNonEmptyStyles(refNode.styles)) {
-        const componentName = toComponentName(refNode.name);
+        const componentName = toComponentName(refNode.name ?? "");
         const wrapperStyleVarName = ctx.nodeStyleMap.get(refNode.id) || `_${componentName}_wrapperCss`;
         const dynamicProps = NodeRenderer.extractDynamicProps(ctx, refNode.styles);
 

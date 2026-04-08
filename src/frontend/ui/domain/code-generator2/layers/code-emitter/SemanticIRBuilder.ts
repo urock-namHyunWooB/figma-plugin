@@ -52,11 +52,19 @@ export class SemanticIRBuilder {
 
     if (n.bindings?.style) node.styleBindings = n.bindings.style;
 
-    if ("children" in n && Array.isArray((n as any).children)) {
-      node.children = (n as any).children.map((c: UINode) => this.buildNode(c));
+    const anyN = n as any;
+
+    // textContent: CSS-preserving text binding (non-standard Bindings field)
+    const anyBindings = n.bindings as any;
+    if (anyBindings?.textContent) node.textContent = anyBindings.textContent;
+
+    // textSegments: rich text
+    if (anyN.textSegments !== undefined) node.textSegments = anyN.textSegments;
+
+    if ("children" in n && Array.isArray(anyN.children)) {
+      node.children = anyN.children.map((c: UINode) => this.buildNode(c));
     }
 
-    const anyN = n as any;
     if (anyN.vectorSvg !== undefined) node.vectorSvg = anyN.vectorSvg;
     if (anyN.variantSvgs !== undefined) node.variantSvgs = anyN.variantSvgs;
     if (anyN.refId !== undefined) node.refId = anyN.refId;
