@@ -18,6 +18,9 @@ export class FigmaPlugin {
     figma.showUI(__html__, { width: 500, height: 1000 });
 
     // 추출 파이프라인 생성: 캐시 + 디바운스 + 단일 walk 병렬 추출
+    // 주의: onLoading은 async dispatcher 안에서 post되면 Figma가 task 끝까지
+    // 메시지를 버퍼링해서 UI가 너무 늦게 받음. 대신 selectionchange / onmessage
+    // 동기 핸들러에서 직접 figma.ui.postMessage(EXTRACTION_LOADING)을 호출.
     this.pipeline = createExtractionPipeline({
       onResult: (data) => {
         figma.ui.postMessage({
@@ -33,11 +36,6 @@ export class FigmaPlugin {
           error: err.message,
         });
       },
-      onLoading: () => {
-        figma.ui.postMessage({
-          type: MESSAGE_TYPES.EXTRACTION_LOADING,
-        });
-      },
     });
 
     figma.ui.onmessage = async (msg) => {
@@ -50,6 +48,8 @@ export class FigmaPlugin {
           });
           return;
         }
+        // 새로고침은 캐시 우회 → 항상 walk 발생 → 로딩 신호 미리 보내기 (sync)
+        figma.ui.postMessage({ type: MESSAGE_TYPES.EXTRACTION_LOADING });
         // 멀티 선택은 첫 노드만 사용 (자동 점프 제거)
         // 새로고침은 디바운스 우회 + 캐시 우회
         this.pipeline.fireImmediate(selection[0], true);
@@ -67,8 +67,13 @@ export class FigmaPlugin {
         });
         return;
       }
+      const target = selection[0];
+      // 캐시 미스일 때만 로딩 신호 (sync 컨텍스트 → Figma가 즉시 dispatch)
+      if (!this.pipeline.peekCache(target.id)) {
+        figma.ui.postMessage({ type: MESSAGE_TYPES.EXTRACTION_LOADING });
+      }
       // 멀티 선택은 첫 노드만 사용
-      this.pipeline.schedule(selection[0]);
+      this.pipeline.schedule(target);
     });
   }
 
