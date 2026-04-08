@@ -1,0 +1,6775 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`UITree snapshots > any/BarsstatusBariphoneblack 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "I18:458;6316:31513",
+            "name": "Container",
+            "type": "vector",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "I18:458;6316:31515",
+                "name": "Bounds",
+                "type": "vector",
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "I18:458;6316:31518",
+                        "name": "Outer",
+                        "type": "vector",
+                      },
+                      {
+                        "children": [],
+                        "id": "I18:458;6316:31519",
+                        "name": "Inner",
+                        "type": "vector",
+                      },
+                    ],
+                    "id": "I18:458;6316:31517",
+                    "name": "Exclude",
+                    "type": "vector",
+                  },
+                  {
+                    "children": [],
+                    "id": "I18:458;6316:31520",
+                    "name": "Path",
+                    "type": "vector",
+                  },
+                ],
+                "id": "I18:458;6316:31516",
+                "name": "Body",
+                "type": "vector",
+              },
+              {
+                "children": [],
+                "id": "I18:458;6316:31521",
+                "name": "Reserve",
+                "type": "vector",
+              },
+            ],
+            "id": "I18:458;6316:31514",
+            "name": "Status Bar – Battery",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "I18:458;6316:31523",
+                "name": "Bounds",
+                "type": "vector",
+              },
+              {
+                "children": [],
+                "id": "I18:458;6316:31524",
+                "name": "Bounds",
+                "type": "vector",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "I18:458;6316:31526",
+                    "name": "Wave",
+                    "type": "vector",
+                  },
+                  {
+                    "children": [],
+                    "id": "I18:458;6316:31527",
+                    "name": "Wave",
+                    "type": "vector",
+                  },
+                  {
+                    "children": [],
+                    "id": "I18:458;6316:31528",
+                    "name": "Wave",
+                    "type": "vector",
+                  },
+                ],
+                "id": "I18:458;6316:31525",
+                "name": "Wi–Fi",
+                "type": "vector",
+              },
+            ],
+            "id": "I18:458;6316:31522",
+            "name": "Status Bar – Wi–Fi",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "I18:458;6316:31531",
+                    "name": "Bar",
+                    "type": "vector",
+                  },
+                  {
+                    "children": [],
+                    "id": "I18:458;6316:31532",
+                    "name": "Bar",
+                    "type": "vector",
+                  },
+                  {
+                    "children": [],
+                    "id": "I18:458;6316:31533",
+                    "name": "Bar",
+                    "type": "vector",
+                  },
+                  {
+                    "children": [],
+                    "id": "I18:458;6316:31534",
+                    "name": "Bar",
+                    "type": "vector",
+                  },
+                ],
+                "id": "I18:458;6316:31530",
+                "name": "Signal",
+                "type": "vector",
+              },
+            ],
+            "id": "I18:458;6316:31529",
+            "name": "Status Bar – Service",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "I18:458;6316:31537",
+                    "name": "Bounds",
+                    "type": "vector",
+                  },
+                  {
+                    "children": [],
+                    "id": "I18:458;6316:31538",
+                    "name": "Location",
+                    "type": "vector",
+                  },
+                ],
+                "id": "I18:458;6316:31536",
+                "name": "Status Bar – Location",
+                "type": "container",
+              },
+              {
+                "children": [],
+                "id": "I18:458;6316:31539",
+                "name": "12:22",
+                "type": "text",
+              },
+            ],
+            "id": "I18:458;6316:31535",
+            "name": "Time",
+            "type": "container",
+          },
+        ],
+        "id": "I18:458;6316:31512",
+        "name": "Status Bar – Light",
+        "type": "container",
+      },
+    ],
+    "id": "18:458",
+    "name": "Bars/Status Bar/iPhone/Black",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/Case 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "14:1616",
+            "name": "Title",
+            "type": "text",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "138:312",
+                "name": "label",
+                "refId": "137:858",
+                "type": "component",
+              },
+              {
+                "children": [],
+                "id": "138:315",
+                "name": "label",
+                "refId": "137:858",
+                "type": "component",
+              },
+            ],
+            "id": "14:1617",
+            "name": "Frame 960",
+            "type": "container",
+          },
+        ],
+        "id": "14:1615",
+        "name": "Label",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "14:1621",
+            "name": "Title",
+            "type": "text",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "138:317",
+                "name": "label",
+                "refId": "137:858",
+                "type": "component",
+              },
+              {
+                "children": [],
+                "id": "138:320",
+                "name": "label",
+                "refId": "137:858",
+                "type": "component",
+              },
+            ],
+            "id": "14:1622",
+            "name": "Frame 960",
+            "type": "container",
+          },
+        ],
+        "id": "14:1620",
+        "name": "Label",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "14:1626",
+            "name": "Title",
+            "type": "text",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "138:322",
+                "name": "label",
+                "refId": "137:858",
+                "type": "component",
+              },
+              {
+                "children": [],
+                "id": "138:325",
+                "name": "label",
+                "refId": "137:858",
+                "type": "component",
+              },
+            ],
+            "id": "14:1627",
+            "name": "Frame 960",
+            "type": "container",
+          },
+        ],
+        "id": "14:1625",
+        "name": "Label",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "14:1630",
+        "name": "Large",
+        "refId": "14:1645",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "14:1631",
+        "name": "Large",
+        "refId": "14:1645",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "14:1632",
+        "name": "Large",
+        "refId": "14:1645",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "14:1633",
+        "name": "Large",
+        "refId": "14:1645",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "14:1634",
+        "name": "Large",
+        "refId": "14:1653",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "14:1635",
+        "name": "Large",
+        "refId": "14:1665",
+        "type": "component",
+      },
+    ],
+    "id": "14:1614",
+    "name": "Case",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/ConfirmationDialog 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "711:14772",
+                "name": "Icon",
+                "refId": "93:669",
+                "type": "component",
+              },
+            ],
+            "id": "711:14777",
+            "name": "Close button",
+            "type": "container",
+          },
+        ],
+        "id": "732:143",
+        "name": "Pin to top",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "711:14780",
+                "name": "Title",
+                "type": "text",
+              },
+              {
+                "children": [],
+                "id": "711:14782",
+                "name": "Body text",
+                "type": "text",
+              },
+            ],
+            "id": "732:144",
+            "name": "Content",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "711:14783",
+                "name": "Button",
+                "refId": "308:6",
+                "type": "component",
+              },
+              {
+                "children": [],
+                "id": "711:14788",
+                "name": "Button",
+                "refId": "133:900",
+                "type": "component",
+              },
+            ],
+            "id": "711:14787",
+            "name": "Bottom bar",
+            "type": "container",
+          },
+        ],
+        "id": "711:14785",
+        "name": "Frame",
+        "type": "container",
+      },
+    ],
+    "id": "711:14818",
+    "name": "Confirmation dialog",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/Controlcheckbox 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "checked",
+    "disable",
+    "onCheckedChange",
+    "size",
+    "tight",
+  ],
+  "propsCount": 5,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "16215:34463",
+            "name": "Interaction/Normal",
+            "refId": "16215:17257",
+            "type": "component",
+          },
+        ],
+        "id": "16215:34462",
+        "name": "Interaction",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "16215:34466_Icon/Normal/Check",
+            "name": "Icon/Normal/Check",
+            "refId": "16215:14159",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "16215:34466_Icon/Normal/Line Horizontal",
+            "name": "Icon/Normal/Line Horizontal",
+            "refId": "16215:15522",
+            "type": "component",
+          },
+        ],
+        "id": "16215:34461",
+        "name": "Box",
+        "type": "container",
+      },
+    ],
+    "id": "16215:34460",
+    "name": "Control/Checkbox",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/Ghost 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "size",
+    "state",
+  ],
+  "propsCount": 2,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "15:20826",
+        "name": "Plus",
+        "refId": "297:22916",
+        "type": "component",
+      },
+    ],
+    "id": "15:20825",
+    "name": "Ghost",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/Gnb 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "I18:456;11099:10330",
+                    "name": "Color/GNB/Home_N",
+                    "refId": "18:251",
+                    "type": "component",
+                  },
+                  {
+                    "children": [],
+                    "id": "I18:456;10776:87771",
+                    "name": "홈 copy 11",
+                    "type": "text",
+                  },
+                ],
+                "id": "I18:456;10776:87765",
+                "name": "Frame 1512",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "I18:456;11099:45942",
+                    "name": "Color/GNB/Station_N",
+                    "refId": "18:266",
+                    "type": "component",
+                  },
+                  {
+                    "children": [],
+                    "id": "I18:456;10776:87778",
+                    "name": "스테이션",
+                    "type": "text",
+                  },
+                ],
+                "id": "I18:456;10776:87772",
+                "name": "Frame 1513",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "I18:456;11099:52760",
+                    "name": "Color/GNB/Wallet_N",
+                    "refId": "18:281",
+                    "type": "component",
+                  },
+                  {
+                    "children": [],
+                    "id": "I18:456;10776:87784",
+                    "name": "스테이션",
+                    "type": "text",
+                  },
+                ],
+                "id": "I18:456;10776:87779",
+                "name": "Frame 1514",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "I18:456;11099:58290",
+                    "name": "Color/GNB/Setting_N",
+                    "refId": "18:298",
+                    "type": "component",
+                  },
+                  {
+                    "children": [],
+                    "id": "I18:456;10776:87794",
+                    "name": "설정",
+                    "type": "text",
+                  },
+                ],
+                "id": "I18:456;10776:87785",
+                "name": "Frame 1515",
+                "type": "container",
+              },
+            ],
+            "id": "I18:456;10776:87764",
+            "name": "Frame 1516",
+            "type": "container",
+          },
+          {
+            "children": [],
+            "id": "I18:456;10776:87795",
+            "name": "iPhone X/Home Indicator/Black",
+            "refId": "14:378",
+            "type": "component",
+          },
+        ],
+        "id": "I18:456;10776:87763",
+        "name": "GNB_Home",
+        "type": "container",
+      },
+    ],
+    "id": "18:456",
+    "name": "GNB",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/Headerroot 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "rightIcon",
+  ],
+  "propsCount": 1,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "114:524",
+        "name": "Text",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "124:428",
+        "name": "_Normal Responsive",
+        "refId": "55:1322",
+        "type": "component",
+      },
+    ],
+    "id": "114:522",
+    "name": "Header/Root",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/Headersub 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "normalResponsive",
+    "rightIcon",
+    "text",
+    "type",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "114:519",
+            "name": "_Normal Responsive",
+            "refId": "55:1318",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "114:520",
+            "name": "Text",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "153:1214",
+            "name": "_Normal Responsive",
+            "refId": "55:1322",
+            "type": "component",
+          },
+        ],
+        "id": "114:518",
+        "name": "Sub Header",
+        "type": "container",
+      },
+    ],
+    "id": "114:517",
+    "name": "Header/Sub",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/Input 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "input",
+  "propNames": [
+    "placeholder",
+    "size",
+    "value",
+  ],
+  "propsCount": 3,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "3:96",
+        "name": "Placeholder",
+        "type": "text",
+      },
+    ],
+    "id": "3:95",
+    "name": "Input",
+    "type": "input",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/InputBoxotp 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "input",
+  "propNames": [
+    "state",
+  ],
+  "propsCount": 1,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "166:705",
+        "name": "Input box/Standard",
+        "refId": "153:3126",
+        "type": "component",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "166:4069",
+            "name": "063112",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "166:4070",
+            "name": "OTP Number",
+            "type": "text",
+          },
+        ],
+        "id": "166:4068",
+        "name": "Error",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "166:715",
+        "name": "Input box/Standard",
+        "refId": "153:3126",
+        "type": "component",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "166:4178",
+            "name": "063112",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "166:4179",
+            "name": "OTP Number",
+            "type": "text",
+          },
+        ],
+        "id": "166:4177",
+        "name": "Error",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "166:718",
+        "name": "Input box/Standard",
+        "refId": "153:3126",
+        "type": "component",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "166:4193",
+            "name": "063112",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "166:4194",
+            "name": "OTP Number",
+            "type": "text",
+          },
+        ],
+        "id": "166:4192",
+        "name": "Error",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "166:722",
+        "name": "Input box/Standard",
+        "refId": "153:3126",
+        "type": "component",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "166:4214",
+            "name": "063112",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "166:4215",
+            "name": "OTP Number",
+            "type": "text",
+          },
+        ],
+        "id": "166:4213",
+        "name": "Error",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "166:727",
+        "name": "Input box/Standard",
+        "refId": "153:3126",
+        "type": "component",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "166:4241",
+            "name": "063112",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "166:4242",
+            "name": "OTP Number",
+            "type": "text",
+          },
+        ],
+        "id": "166:4240",
+        "name": "Error",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "166:733",
+        "name": "Input box/Standard",
+        "refId": "153:3126",
+        "type": "component",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "166:4274",
+            "name": "063112",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "166:4275",
+            "name": "OTP Number",
+            "type": "text",
+          },
+        ],
+        "id": "166:4273",
+        "name": "Error",
+        "type": "container",
+      },
+    ],
+    "id": "153:3142",
+    "name": "Input box/OTP",
+    "type": "input",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/InputBoxstandard 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "input",
+  "propNames": [
+    "guideText",
+    "state",
+  ],
+  "propsCount": 2,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "153:3131",
+            "name": "number",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "166:3315",
+            "name": "OTP / Number",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "153:3300",
+            "name": "_Normal Responsive",
+            "refId": "55:1316",
+            "type": "component",
+          },
+        ],
+        "id": "166:3034",
+        "name": "Frame 962",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "153:3138",
+        "name": "Text",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "153:3128",
+        "name": "Rectangle",
+        "type": "vector",
+      },
+    ],
+    "id": "153:3126",
+    "name": "Input box/Standard",
+    "type": "input",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/InputFieldtextField 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "input",
+  "propNames": [
+    "helperText",
+    "iconHelp",
+    "label",
+    "placeholder",
+    "showButtonIcon",
+    "status",
+    "value",
+  ],
+  "propsCount": 7,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "2551:107285",
+            "name": "Label",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "2882:172105",
+            "name": "Button/Icon/Normal",
+            "refId": "790:43463",
+            "type": "component",
+          },
+        ],
+        "id": "2882:176764",
+        "name": "Label",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "2781:153823",
+            "name": "Cursor",
+            "type": "vector",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "2781:153841",
+                "name": "Input Text",
+                "type": "text",
+              },
+              {
+                "children": [],
+                "id": "2781:153843",
+                "name": "Cursor",
+                "type": "vector",
+              },
+            ],
+            "id": "2781:154123",
+            "name": "Container",
+            "type": "container",
+          },
+          {
+            "children": [],
+            "id": "2551:107287",
+            "name": "Input Text",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "2882:165458",
+            "name": "Button/Icon/Normal",
+            "refId": "790:43463",
+            "type": "component",
+          },
+        ],
+        "id": "2551:107286",
+        "name": "Input",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "2551:107288",
+        "name": "Characters",
+        "type": "text",
+      },
+    ],
+    "id": "2551:107289",
+    "name": "Input Field/Text Field",
+    "type": "input",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/LabelNameConflict 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "14:1626",
+        "name": "Title",
+        "type": "text",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "138:322",
+            "name": "label",
+            "refId": "137:858",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "138:325",
+            "name": "label",
+            "refId": "137:858",
+            "type": "component",
+          },
+        ],
+        "id": "14:1627",
+        "name": "Frame 960",
+        "type": "container",
+      },
+    ],
+    "id": "14:1625",
+    "name": "Label",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/Measure 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "15:20874",
+            "name": "Measure",
+            "type": "vector",
+          },
+        ],
+        "id": "15:20873",
+        "name": "Endpoint 1",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "15:20875",
+        "name": "Line",
+        "type": "vector",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "15:20877",
+            "name": "Number",
+            "type": "text",
+          },
+        ],
+        "id": "15:20876",
+        "name": "Midsection",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "15:20878",
+        "name": "Line",
+        "type": "vector",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "15:20880",
+            "name": "Measure",
+            "type": "vector",
+          },
+        ],
+        "id": "15:20879",
+        "name": "Endpoint 2",
+        "type": "container",
+      },
+    ],
+    "id": "15:20872",
+    "name": "Measure",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/Popup 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "large",
+  ],
+  "propsCount": 1,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "456:3394",
+        "name": "Decorator/Dimmer",
+        "refId": "193:720",
+        "type": "component",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "456:3396",
+            "name": "Popup/Top",
+            "refId": "243:135",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "456:3398",
+            "name": "Popup/Bottom",
+            "refId": "243:221",
+            "type": "component",
+          },
+        ],
+        "id": "456:3395",
+        "name": "Popup",
+        "type": "container",
+      },
+    ],
+    "id": "456:3393",
+    "name": "Popup",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/Primary 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "leftIcon",
+    "rightIcon",
+    "size",
+    "state",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "15:13581",
+            "name": "Plus",
+            "refId": "297:22916",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "15:13582",
+            "name": "Text",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "15:13587",
+            "name": "Plus",
+            "refId": "297:22916",
+            "type": "component",
+          },
+        ],
+        "id": "15:13580",
+        "name": "Frame 427318163",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "15:13577",
+        "name": "Text",
+        "type": "text",
+      },
+    ],
+    "id": "15:13575",
+    "name": "Primary",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/StateinsertGuideTextfalse 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "guideText",
+    "normalDelete",
+    "state",
+  ],
+  "propsCount": 3,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "153:3131",
+            "name": "number",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "166:3315",
+            "name": "OTP / Number",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "153:3300",
+            "name": "_Normal Responsive",
+            "refId": "55:1316",
+            "type": "component",
+          },
+        ],
+        "id": "166:3034",
+        "name": "Frame 962",
+        "type": "container",
+      },
+    ],
+    "id": "153:3129",
+    "name": "State=Insert, Guide Text=False",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/Switchswitch 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "toggle",
+  "propNames": [
+    "active",
+    "disable",
+    "onCheckedChange",
+    "platform",
+    "size",
+  ],
+  "propsCount": 5,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "16215:34985",
+        "name": "Switch/Resource/Switch",
+        "refId": "16215:35020",
+        "type": "component",
+      },
+    ],
+    "id": "16215:34984",
+    "name": "Switch/Switch",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/Tokens 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "74:1868",
+        "name": "Color guide",
+        "refId": "74:1547",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "74:1876",
+        "name": "Color guide",
+        "refId": "74:1547",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "74:1879",
+        "name": "Color guide",
+        "refId": "74:1547",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "74:1882",
+        "name": "Color guide",
+        "refId": "74:1547",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "74:1885",
+        "name": "Color guide",
+        "refId": "74:1547",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "74:1888",
+        "name": "Color guide",
+        "refId": "74:1547",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "74:1891",
+        "name": "Color guide",
+        "refId": "74:1547",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "74:1894",
+        "name": "Color guide",
+        "refId": "74:1547",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "74:1897",
+        "name": "Color guide",
+        "refId": "74:1547",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "74:1900",
+        "name": "Color guide",
+        "refId": "74:1547",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "74:1903",
+        "name": "Color guide",
+        "refId": "74:1547",
+        "type": "component",
+      },
+    ],
+    "id": "17:4112",
+    "name": "Tokens",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/TypedefaultRightIcontrue 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "normalBlank",
+    "normalResponsive",
+    "rightIcon",
+    "type",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "114:519",
+            "name": "_Normal Responsive",
+            "refId": "55:1318",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "114:520",
+            "name": "Text",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "153:1214",
+            "name": "_Normal Responsive",
+            "refId": "55:1322",
+            "type": "component",
+          },
+        ],
+        "id": "114:518",
+        "name": "Sub Header",
+        "type": "container",
+      },
+    ],
+    "id": "114:517",
+    "name": "Type=Default, Right Icon=True",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/any-01 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "3285:3229",
+            "name": "img-watch",
+            "refId": "3285:2419",
+            "type": "component",
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "3285:3232",
+                    "name": "icon-date-filled",
+                    "refId": "3273:1208",
+                    "type": "component",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3233",
+                    "name": "Account Status",
+                    "type": "text",
+                  },
+                ],
+                "id": "3285:3231",
+                "name": "Account Info",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "3285:3236",
+                        "name": "Step Number",
+                        "type": "text",
+                      },
+                    ],
+                    "id": "3285:3235",
+                    "name": "Date",
+                    "type": "container",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3237",
+                    "name": "Step Number",
+                    "type": "text",
+                  },
+                ],
+                "id": "3285:3234",
+                "name": "Account Details",
+                "type": "container",
+              },
+            ],
+            "id": "3285:3230",
+            "name": "Account Info",
+            "type": "container",
+          },
+        ],
+        "id": "3285:3228",
+        "name": "생성 시각",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "3285:3241",
+                    "name": "icon-warning-2-filled",
+                    "refId": "3246:966",
+                    "type": "component",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3242",
+                    "name": "Label",
+                    "type": "text",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3243",
+                    "name": "Value",
+                    "type": "text",
+                  },
+                ],
+                "id": "3285:3240",
+                "name": "Label",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "3285:3245",
+                    "name": "txt",
+                    "type": "text",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3246",
+                    "name": "icon-anchor",
+                    "refId": "3285:2420",
+                    "type": "component",
+                  },
+                ],
+                "id": "3285:3244",
+                "name": "Link",
+                "type": "container",
+              },
+            ],
+            "id": "3285:3239",
+            "name": "Column",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "3285:3249",
+                    "name": "txt",
+                    "type": "text",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3250",
+                    "name": "icon-anchor",
+                    "refId": "3285:2420",
+                    "type": "component",
+                  },
+                ],
+                "id": "3285:3248",
+                "name": "Link",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "3285:3252",
+                    "name": "txt",
+                    "type": "text",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3253",
+                    "name": "icon-anchor",
+                    "refId": "3285:2420",
+                    "type": "component",
+                  },
+                ],
+                "id": "3285:3251",
+                "name": "Link",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "3285:3255",
+                    "name": "txt",
+                    "type": "text",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3256",
+                    "name": "icon-anchor",
+                    "refId": "3285:2420",
+                    "type": "component",
+                  },
+                ],
+                "id": "3285:3254",
+                "name": "Link",
+                "type": "container",
+              },
+            ],
+            "id": "3285:3247",
+            "name": "frame",
+            "type": "container",
+          },
+        ],
+        "id": "3285:3238",
+        "name": "경고장치",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "3285:3260",
+                    "name": "icon-siren-filled",
+                    "refId": "3273:1029",
+                    "type": "component",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3261",
+                    "name": "Label",
+                    "type": "text",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3262",
+                    "name": "Value",
+                    "type": "text",
+                  },
+                ],
+                "id": "3285:3259",
+                "name": "Label",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "3285:3264",
+                    "name": "txt",
+                    "type": "text",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3265",
+                    "name": "icon-anchor",
+                    "refId": "3285:2420",
+                    "type": "component",
+                  },
+                ],
+                "id": "3285:3263",
+                "name": "Link",
+                "type": "container",
+              },
+            ],
+            "id": "3285:3258",
+            "name": "Column",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "3285:3268",
+                    "name": "txt",
+                    "type": "text",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3269",
+                    "name": "icon-anchor",
+                    "refId": "3285:2420",
+                    "type": "component",
+                  },
+                ],
+                "id": "3285:3267",
+                "name": "Link",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "3285:3271",
+                    "name": "txt",
+                    "type": "text",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3272",
+                    "name": "icon-anchor",
+                    "refId": "3285:2420",
+                    "type": "component",
+                  },
+                ],
+                "id": "3285:3270",
+                "name": "Link",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "3285:3274",
+                    "name": "txt",
+                    "type": "text",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3275",
+                    "name": "icon-anchor",
+                    "refId": "3285:2420",
+                    "type": "component",
+                  },
+                ],
+                "id": "3285:3273",
+                "name": "Link",
+                "type": "container",
+              },
+            ],
+            "id": "3285:3266",
+            "name": "frame",
+            "type": "container",
+          },
+        ],
+        "id": "3285:3257",
+        "name": "위험장치",
+        "type": "container",
+      },
+    ],
+    "id": "3285:3227",
+    "name": "Row",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/any-02 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "I3797:2179;3269:203472",
+        "name": "Scroll",
+        "refId": "3269:203471",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "I3797:2179;3125:163423",
+        "name": "Body Text",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "I3797:2179;3240:196103",
+        "name": "Decorate/Gradient",
+        "refId": "3240:196076",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "I3797:2179;3269:211069",
+        "name": "Decorate/Gradient",
+        "refId": "3240:196070",
+        "type": "component",
+      },
+    ],
+    "id": "3797:2179",
+    "name": "Popup/Body",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/any-03 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "decorateInteractive",
+    "global",
+    "showLeftButton",
+  ],
+  "propsCount": 3,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "I3797:2180;3123:162814",
+            "name": "Button/Solid/Secondary",
+            "refId": "247:55247",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "I3797:2180;3123:162815",
+            "name": "Button/Solid/Primary",
+            "refId": "87:3027",
+            "type": "component",
+          },
+        ],
+        "id": "I3797:2180;3855:35944",
+        "name": "Horizontal",
+        "type": "container",
+      },
+    ],
+    "id": "3797:2180",
+    "name": "Popup/Bottom",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/any-04 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "decorateInteractive",
+    "global",
+  ],
+  "propsCount": 2,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "3786:7302",
+        "name": "icon",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "3786:7303",
+        "name": "Button/Text",
+        "refId": "247:62157",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7304",
+        "name": "Button/Text",
+        "refId": "247:62157",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7305",
+        "name": "Button/Text",
+        "refId": "247:62157",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7306",
+        "name": "Button/Text",
+        "refId": "247:62157",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7307",
+        "name": "Button/Text",
+        "refId": "247:62157",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7308",
+        "name": "Button/Text",
+        "refId": "247:62171",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7309",
+        "name": "Button/Text",
+        "refId": "247:62171",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7310",
+        "name": "Button/Text",
+        "refId": "247:62157",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7311",
+        "name": "Button/Text",
+        "refId": "247:62165",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7312",
+        "name": "Button/Text",
+        "refId": "247:62157",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7313",
+        "name": "Button/Text",
+        "refId": "247:62157",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7314",
+        "name": "size =",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "3786:7315",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7316",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7317",
+        "name": "disabled =",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "3786:7318",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7319",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7320",
+        "name": "interaction =",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "3786:7321",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3786:7322",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+    ],
+    "id": "3786:7301",
+    "name": "Case",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/any-05 1`] = `
+{
+  "arraySlotNames": [
+    "chips",
+    "topLevelInputSmalls",
+  ],
+  "componentType": "unknown",
+  "propNames": [
+    "buttonIconNormal",
+    "chips",
+    "decorateInteractive",
+    "global",
+    "topLevelInputSmalls",
+  ],
+  "propsCount": 5,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "3802:342421",
+            "name": "Decorate/Dimmer",
+            "refId": "3580:354700",
+            "type": "component",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "3802:342423",
+                "name": "Modal/Handlebar",
+                "refId": "2215:90266",
+                "type": "component",
+              },
+              {
+                "children": [],
+                "id": "3802:342424",
+                "name": "Modal/Header",
+                "refId": "2324:89960",
+                "type": "component",
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "3802:342427",
+                        "name": "Type",
+                        "type": "text",
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "id": "3802:342429",
+                            "name": "Chip",
+                            "refId": "2556:12516",
+                            "type": "component",
+                          },
+                          {
+                            "children": [],
+                            "id": "3802:342430",
+                            "name": "Chip",
+                            "refId": "2556:12509",
+                            "type": "component",
+                          },
+                          {
+                            "children": [],
+                            "id": "3802:342431",
+                            "name": "Chip",
+                            "refId": "2556:12509",
+                            "type": "component",
+                          },
+                          {
+                            "children": [],
+                            "id": "3802:342432",
+                            "name": "Chip",
+                            "refId": "2556:12509",
+                            "type": "component",
+                          },
+                        ],
+                        "id": "3802:342428",
+                        "name": "Choice Chips",
+                        "type": "container",
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "id": "3802:342434",
+                            "name": "Chip",
+                            "refId": "707:28095",
+                            "type": "component",
+                          },
+                          {
+                            "children": [],
+                            "id": "3802:342435",
+                            "name": "Chip",
+                            "refId": "707:28095",
+                            "type": "component",
+                          },
+                          {
+                            "children": [],
+                            "id": "3802:342436",
+                            "name": "Chip",
+                            "refId": "707:28095",
+                            "type": "component",
+                          },
+                        ],
+                        "id": "3802:342433",
+                        "name": "Choice Chips",
+                        "type": "container",
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "id": "3802:342438",
+                            "name": "Top-level / Input / Small",
+                            "refId": "5951:12849",
+                            "type": "component",
+                          },
+                          {
+                            "children": [],
+                            "id": "3802:342439",
+                            "name": "Top-level / Input / Small",
+                            "refId": "5951:12849",
+                            "type": "component",
+                          },
+                        ],
+                        "id": "3802:342437",
+                        "name": "Custom Date",
+                        "type": "container",
+                      },
+                    ],
+                    "id": "3802:342426",
+                    "name": "Container",
+                    "type": "container",
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "3802:342441",
+                        "name": "Type",
+                        "type": "text",
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "id": "3802:342443",
+                            "name": "Chip",
+                            "refId": "707:28095",
+                            "type": "component",
+                          },
+                          {
+                            "children": [],
+                            "id": "3802:342444",
+                            "name": "Chip",
+                            "refId": "2556:12516",
+                            "type": "component",
+                          },
+                          {
+                            "children": [],
+                            "id": "3802:342445",
+                            "name": "Chip",
+                            "refId": "2556:12509",
+                            "type": "component",
+                          },
+                          {
+                            "children": [],
+                            "id": "3802:342446",
+                            "name": "Chip",
+                            "refId": "2556:12509",
+                            "type": "component",
+                          },
+                          {
+                            "children": [],
+                            "id": "3802:342447",
+                            "name": "Chip",
+                            "refId": "2556:12509",
+                            "type": "component",
+                          },
+                        ],
+                        "id": "3802:342442",
+                        "name": "Choice Chips",
+                        "type": "container",
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "id": "3802:342449",
+                            "name": "Chip",
+                            "refId": "707:28095",
+                            "type": "component",
+                          },
+                          {
+                            "children": [],
+                            "id": "3802:342450",
+                            "name": "Chip",
+                            "refId": "707:28095",
+                            "type": "component",
+                          },
+                          {
+                            "children": [],
+                            "id": "3802:342451",
+                            "name": "Chip",
+                            "refId": "707:28095",
+                            "type": "component",
+                          },
+                        ],
+                        "id": "3802:342448",
+                        "name": "Choice Chips",
+                        "type": "container",
+                      },
+                    ],
+                    "id": "3802:342440",
+                    "name": "Container",
+                    "type": "container",
+                  },
+                ],
+                "id": "3802:342425",
+                "name": "Contents",
+                "type": "container",
+              },
+              {
+                "children": [],
+                "id": "3802:342452",
+                "name": "Modal/Bottom",
+                "refId": "3141:159560",
+                "type": "component",
+              },
+            ],
+            "id": "3802:342422",
+            "name": "Modal/General",
+            "type": "container",
+          },
+        ],
+        "id": "3802:342420",
+        "name": "Modal",
+        "type": "container",
+      },
+    ],
+    "id": "3802:342112",
+    "name": "Screen",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/any-06 1`] = `
+{
+  "arraySlotNames": [
+    "tapTaps",
+  ],
+  "componentType": "unknown",
+  "propNames": [
+    "tapTaps",
+  ],
+  "propsCount": 1,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "10:2148",
+            "name": "Data Entry",
+            "type": "text",
+          },
+        ],
+        "id": "10:2147",
+        "name": "Section Meta",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "10:2153",
+                        "name": "Rectangle 11849",
+                        "type": "vector",
+                      },
+                      {
+                        "children": [],
+                        "id": "10:2154",
+                        "name": "Rectangle 11850",
+                        "type": "vector",
+                      },
+                      {
+                        "children": [],
+                        "id": "10:2155",
+                        "name": "Rectangle 11851",
+                        "type": "vector",
+                      },
+                    ],
+                    "id": "10:2152",
+                    "name": "Group 427318153",
+                    "type": "container",
+                  },
+                ],
+                "id": "10:2151",
+                "name": "页签",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "10:2157",
+                    "name": "TDS UI Kit",
+                    "type": "text",
+                  },
+                  {
+                    "children": [],
+                    "id": "10:2158",
+                    "name": "Ellipse 30",
+                    "type": "vector",
+                  },
+                ],
+                "id": "10:2156",
+                "name": "Group 427318158",
+                "type": "container",
+              },
+            ],
+            "id": "10:2150",
+            "name": "Frame 427318159",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "10:2161",
+                    "name": "TapTap",
+                    "refId": "3:9",
+                    "type": "component",
+                  },
+                  {
+                    "children": [],
+                    "id": "10:2162",
+                    "name": "TapTap",
+                    "refId": "3:9",
+                    "type": "component",
+                  },
+                ],
+                "id": "10:2160",
+                "name": "Frame 3",
+                "type": "container",
+              },
+              {
+                "children": [],
+                "id": "10:2163",
+                "name": "Design System",
+                "type": "text",
+              },
+            ],
+            "id": "10:2159",
+            "name": "Frame 427318162",
+            "type": "container",
+          },
+        ],
+        "id": "10:2149",
+        "name": "logo",
+        "type": "container",
+      },
+    ],
+    "id": "10:2146",
+    "name": ".Page Header",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/any-07 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "15:132",
+            "name": "Swatch",
+            "type": "vector",
+          },
+          {
+            "children": [],
+            "id": "15:133",
+            "name": "Yellow bright",
+            "type": "text",
+          },
+        ],
+        "id": "15:131",
+        "name": "Yellow bright",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "15:136",
+            "name": "Swatch",
+            "type": "vector",
+          },
+          {
+            "children": [],
+            "id": "15:137",
+            "name": "Yellow",
+            "type": "text",
+          },
+        ],
+        "id": "15:135",
+        "name": "Yellow ",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "15:140",
+            "name": "Swatch",
+            "type": "vector",
+          },
+          {
+            "children": [],
+            "id": "15:141",
+            "name": "Yellow dark 1",
+            "type": "text",
+          },
+        ],
+        "id": "15:139",
+        "name": "Yellow dark 1",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "15:144",
+            "name": "Swatch",
+            "type": "vector",
+          },
+          {
+            "children": [],
+            "id": "15:145",
+            "name": "Yellow light 1",
+            "type": "text",
+          },
+        ],
+        "id": "15:143",
+        "name": "Yellow light 1",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "15:148",
+            "name": "Swatch",
+            "type": "vector",
+          },
+          {
+            "children": [],
+            "id": "15:149",
+            "name": "Yellow light 2",
+            "type": "text",
+          },
+        ],
+        "id": "15:147",
+        "name": "Yellow light 2",
+        "type": "container",
+      },
+    ],
+    "id": "15:129",
+    "name": "Yellow",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/component-01 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "I6452:8804;79741:205388",
+        "name": "Home Indicator",
+        "type": "vector",
+      },
+    ],
+    "id": "6452:8804",
+    "name": "HomeIndicator",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/component-02 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "statusBarbattery",
+    "statusBartime",
+  ],
+  "propsCount": 2,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "I6452:8627;79741:205140",
+            "name": "notch",
+            "type": "vector",
+          },
+        ],
+        "id": "I6452:8627;79741:205139",
+        "name": "Notch",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "I6452:8627;79741:205142",
+            "name": "_StatusBar-time",
+            "refId": "6452:8107",
+            "type": "component",
+          },
+        ],
+        "id": "I6452:8627;79741:205141",
+        "name": "Left Side",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "I6452:8627;79741:205144",
+            "name": "_StatusBar-battery",
+            "refId": "6452:8149",
+            "type": "component",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "I6452:8627;79741:205146",
+                "name": "Wifi-path",
+                "type": "vector",
+              },
+              {
+                "children": [],
+                "id": "I6452:8627;79741:205147",
+                "name": "Wifi-path",
+                "type": "vector",
+              },
+              {
+                "children": [],
+                "id": "I6452:8627;79741:205148",
+                "name": "Wifi-path",
+                "type": "vector",
+              },
+            ],
+            "id": "I6452:8627;79741:205145",
+            "name": "Wifi",
+            "type": "vector",
+          },
+          {
+            "children": [],
+            "id": "I6452:8627;79741:205149",
+            "name": "Icon / Mobile Signal",
+            "type": "vector",
+          },
+        ],
+        "id": "I6452:8627;79741:205143",
+        "name": "Right Side",
+        "type": "container",
+      },
+    ],
+    "id": "6452:8627",
+    "name": "StatusBar",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/error-01 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "I704:56;704:48",
+        "name": "Primary cell value",
+        "type": "text",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "I704:56;704:30",
+                "name": "Field name",
+                "type": "text",
+              },
+              {
+                "children": [],
+                "id": "I704:56;704:29",
+                "name": "Choice token",
+                "refId": "692:1738",
+                "type": "component",
+              },
+            ],
+            "id": "I704:56;704:28",
+            "name": "Single select field",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "I704:56;704:32",
+                "name": "Field name",
+                "type": "text",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "I704:56;704:51",
+                    "name": "Linked record token",
+                    "refId": "692:1185",
+                    "type": "component",
+                  },
+                  {
+                    "children": [],
+                    "id": "I704:56;704:53",
+                    "name": "Linked record token",
+                    "refId": "692:1185",
+                    "type": "component",
+                  },
+                ],
+                "id": "I704:56;704:33",
+                "name": "Linked records",
+                "type": "container",
+              },
+            ],
+            "id": "I704:56;704:31",
+            "name": "Linked record field",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "I704:56;704:46",
+                "name": "Field name",
+                "type": "text",
+              },
+              {
+                "children": [],
+                "id": "I704:56;704:47",
+                "name": "Archie loves to go for walks.",
+                "type": "text",
+              },
+            ],
+            "id": "I704:56;704:45",
+            "name": "Text field",
+            "type": "container",
+          },
+        ],
+        "id": "I704:56;732:391",
+        "name": "Fields",
+        "type": "container",
+      },
+    ],
+    "id": "704:56",
+    "name": "Record card",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/error-02 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "disabled",
+    "label",
+    "leftIcon",
+    "rightIcon",
+    "size",
+  ],
+  "propsCount": 5,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "89:3235",
+            "name": "Decorate/Interactive",
+            "refId": "87:3019",
+            "type": "component",
+          },
+        ],
+        "id": "89:3234",
+        "name": "Interaction",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "258:34208",
+                "name": "Global",
+                "refId": "250:78027",
+                "type": "component",
+              },
+              {
+                "children": [],
+                "id": "87:3015",
+                "name": "dddddddddddddddddddd",
+                "type": "text",
+              },
+              {
+                "children": [],
+                "id": "258:34623",
+                "name": "Global",
+                "refId": "250:78027",
+                "type": "component",
+              },
+            ],
+            "id": "89:2972",
+            "name": "Contents",
+            "type": "container",
+          },
+        ],
+        "id": "89:2908",
+        "name": "Contents",
+        "type": "container",
+      },
+    ],
+    "id": "87:3027",
+    "name": "Button/Solid/Primary",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/frame-01 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "link",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "6452:8588",
+                "name": "Mission Title",
+                "type": "text",
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "6452:8591",
+                        "name": "Marcus Lee",
+                        "type": "text",
+                      },
+                      {
+                        "children": [],
+                        "id": "6452:8592",
+                        "name": "Marcus Lee",
+                        "type": "text",
+                      },
+                    ],
+                    "id": "6452:8590",
+                    "name": "Frame 21943",
+                    "type": "container",
+                  },
+                  {
+                    "children": [],
+                    "id": "6452:8593",
+                    "name": "Vector 620",
+                    "type": "vector",
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "6452:8595",
+                        "name": "Marcus Lee",
+                        "type": "text",
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "id": "6452:8597",
+                            "name": "Marcus Lee",
+                            "type": "text",
+                          },
+                          {
+                            "children": [],
+                            "id": "6452:8598",
+                            "name": "Marcus Lee",
+                            "type": "text",
+                          },
+                        ],
+                        "id": "6452:8596",
+                        "name": "Frame 21946",
+                        "type": "container",
+                      },
+                    ],
+                    "id": "6452:8594",
+                    "name": "Frame 21944",
+                    "type": "container",
+                  },
+                ],
+                "id": "6452:8589",
+                "name": "Frame 21945",
+                "type": "container",
+              },
+            ],
+            "id": "6452:8587",
+            "name": "Frame 21947",
+            "type": "container",
+          },
+          {
+            "children": [],
+            "id": "6452:8599",
+            "name": "Vector 621",
+            "type": "vector",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "6452:8601",
+                "name": "Mission Title",
+                "type": "text",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "6452:8603",
+                    "name": "16",
+                    "type": "text",
+                  },
+                  {
+                    "children": [],
+                    "id": "6452:8604",
+                    "name": "/30",
+                    "type": "text",
+                  },
+                ],
+                "id": "6452:8602",
+                "name": "Frame 21948",
+                "type": "container",
+              },
+            ],
+            "id": "6452:8600",
+            "name": "Frame 21949",
+            "type": "container",
+          },
+        ],
+        "id": "6452:8586",
+        "name": "Frame 21951",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "6452:8608",
+                    "name": "shutterstock_499720966",
+                    "type": "vector",
+                  },
+                ],
+                "id": "6452:8607",
+                "name": "Frame 21527",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "6452:8611",
+                        "name": "Marcus Lee",
+                        "type": "text",
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "children": [],
+                                "id": "6452:8614",
+                                "name": "Nari Choi",
+                                "type": "text",
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "children": [],
+                                    "id": "6452:8616",
+                                    "name": "Star 12",
+                                    "type": "vector",
+                                  },
+                                ],
+                                "id": "6452:8615",
+                                "name": "ic-rating",
+                                "type": "container",
+                              },
+                            ],
+                            "id": "6452:8613",
+                            "name": "Group 21776",
+                            "type": "container",
+                          },
+                          {
+                            "children": [],
+                            "id": "6452:8617",
+                            "name": "Vector 669",
+                            "type": "vector",
+                          },
+                          {
+                            "children": [],
+                            "id": "6452:8618",
+                            "name": "Nari Choi",
+                            "type": "text",
+                          },
+                          {
+                            "children": [],
+                            "id": "6452:8619",
+                            "name": "Vector 670",
+                            "type": "vector",
+                          },
+                          {
+                            "children": [],
+                            "id": "6452:8620",
+                            "name": "Nari Choi",
+                            "type": "text",
+                          },
+                        ],
+                        "id": "6452:8612",
+                        "name": "Frame 21937",
+                        "type": "container",
+                      },
+                    ],
+                    "id": "6452:8610",
+                    "name": "Frame 21803",
+                    "type": "container",
+                  },
+                ],
+                "id": "6452:8609",
+                "name": "Frame 21804",
+                "type": "container",
+              },
+            ],
+            "id": "6452:8606",
+            "name": "Frame 21942",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "6452:8622",
+                "name": "Mission Title",
+                "type": "text",
+              },
+            ],
+            "id": "6452:8621",
+            "name": "Frame 21941",
+            "type": "container",
+          },
+        ],
+        "id": "6452:8605",
+        "name": "Frame 21938",
+        "type": "container",
+      },
+    ],
+    "id": "6452:8585",
+    "name": "Frame 21950",
+    "type": "link",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/frame-02 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "4:1655",
+            "name": "Vector",
+            "type": "vector",
+          },
+        ],
+        "id": "4:1654",
+        "name": "Icon",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "4:1656",
+        "name": "Text",
+        "type": "text",
+      },
+    ],
+    "id": "4:1653",
+    "name": ".Section Header",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/frame-03 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "frame",
+  "propNames": [
+    "children",
+  ],
+  "propsCount": 1,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "3285:3249",
+            "name": "txt",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "3285:3250",
+            "name": "icon-anchor",
+            "refId": "3285:2420",
+            "type": "component",
+          },
+        ],
+        "id": "3285:3248",
+        "name": "Link",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "3285:3252",
+            "name": "txt",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "3285:3253",
+            "name": "icon-anchor",
+            "refId": "3285:2420",
+            "type": "component",
+          },
+        ],
+        "id": "3285:3251",
+        "name": "Link",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "3285:3255",
+            "name": "txt",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "3285:3256",
+            "name": "icon-anchor",
+            "refId": "3285:2420",
+            "type": "component",
+          },
+        ],
+        "id": "3285:3254",
+        "name": "Link",
+        "type": "container",
+      },
+    ],
+    "id": "3285:3247",
+    "name": "frame",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/frame-04 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "3285:3200",
+            "name": "Product Name",
+            "type": "text",
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "3285:3203",
+                    "name": "placeholder",
+                    "type": "text",
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "3285:3205",
+                        "name": "Version Type",
+                        "type": "text",
+                      },
+                    ],
+                    "id": "3285:3204",
+                    "name": "chips",
+                    "type": "container",
+                  },
+                ],
+                "id": "3285:3202",
+                "name": "Version Info",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "3285:3207",
+                    "name": "icon-checking",
+                    "refId": "3001:807",
+                    "type": "component",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3208",
+                    "name": "License Status",
+                    "type": "text",
+                  },
+                ],
+                "id": "3285:3206",
+                "name": "chips",
+                "type": "container",
+              },
+            ],
+            "id": "3285:3201",
+            "name": "Version Container",
+            "type": "container",
+          },
+        ],
+        "id": "3285:3199",
+        "name": "Header",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "3285:3212",
+                    "name": "Vector",
+                    "type": "vector",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3213",
+                    "name": "Ellipse 2091",
+                    "type": "vector",
+                  },
+                  {
+                    "children": [],
+                    "id": "3285:3214",
+                    "name": "Vector 2107",
+                    "type": "vector",
+                  },
+                ],
+                "id": "3285:3211",
+                "name": "Logo Icon",
+                "type": "container",
+              },
+              {
+                "children": [],
+                "id": "3285:3215",
+                "name": "Logo Text",
+                "type": "text",
+              },
+            ],
+            "id": "3285:3210",
+            "name": "Logo Container",
+            "type": "container",
+          },
+          {
+            "children": [],
+            "id": "3285:3216",
+            "name": "divider-vertical-dark",
+            "refId": "3273:983",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "3285:3217",
+            "name": "Logo Text",
+            "type": "text",
+          },
+        ],
+        "id": "3285:3209",
+        "name": "Logo",
+        "type": "container",
+      },
+    ],
+    "id": "3285:3198",
+    "name": "img-header-bg",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/group-02 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "6452:8811",
+        "name": "Rectangle 924",
+        "type": "vector",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "6452:8813",
+            "name": "Vector 52",
+            "type": "vector",
+          },
+        ],
+        "id": "6452:8812",
+        "name": "Group 467",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "6452:8814",
+        "name": "Address",
+        "type": "text",
+      },
+    ],
+    "id": "6452:8810",
+    "name": "Group 21737",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/group-node-01 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "1313:58602",
+                "name": "02. 디자인 시스템의 필요성과 목적",
+                "type": "text",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "1313:58604",
+                    "name": "타사 디자인 시스템",
+                    "type": "text",
+                  },
+                ],
+                "id": "1313:58603",
+                "name": "Frame 1196",
+                "type": "container",
+              },
+            ],
+            "id": "1313:58601",
+            "name": "Frame 1167",
+            "type": "container",
+          },
+          {
+            "children": [],
+            "id": "1313:58605",
+            "name": "TADA Design System",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "1313:58606",
+            "name": "Line 27 (Stroke)",
+            "type": "vector",
+          },
+        ],
+        "id": "1313:58600",
+        "name": "Group 240",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "1313:58610",
+                    "name": "스크린샷 2023-10-25 오후 3.56 1",
+                    "type": "vector",
+                  },
+                  {
+                    "children": [],
+                    "id": "1313:58611",
+                    "name": "배달의 민족 (배시시)",
+                    "type": "text",
+                  },
+                ],
+                "id": "1313:58609",
+                "name": "Group 187",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "1313:58613",
+                    "name": "스크린샷 2023-10-19 오후 4.07 1",
+                    "type": "vector",
+                  },
+                  {
+                    "children": [],
+                    "id": "1313:58614",
+                    "name": "라인 (LDS)",
+                    "type": "text",
+                  },
+                ],
+                "id": "1313:58612",
+                "name": "Group 188",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "1313:58616",
+                    "name": "Untitled (6) 1",
+                    "type": "vector",
+                  },
+                  {
+                    "children": [],
+                    "id": "1313:58617",
+                    "name": "Toss (TDS)",
+                    "type": "text",
+                  },
+                ],
+                "id": "1313:58615",
+                "name": "Group 186",
+                "type": "container",
+              },
+            ],
+            "id": "1313:58608",
+            "name": "Frame 1753",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "1313:58620",
+                    "name": "스크린샷 2023-10-19 오후 4.17 1",
+                    "type": "vector",
+                  },
+                  {
+                    "children": [],
+                    "id": "1313:58621",
+                    "name": "G마켓 (GDS)",
+                    "type": "text",
+                  },
+                ],
+                "id": "1313:58619",
+                "name": "Group 189",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "1313:58623",
+                    "name": "Shopify (Polaris)",
+                    "type": "text",
+                  },
+                  {
+                    "children": [],
+                    "id": "1313:58624",
+                    "name": "스크린샷 2023-10-19 오후 4.16 1",
+                    "type": "vector",
+                  },
+                ],
+                "id": "1313:58622",
+                "name": "Group 190",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "1313:58626",
+                    "name": "Adobe (Spectrum)",
+                    "type": "text",
+                  },
+                  {
+                    "children": [],
+                    "id": "1313:58627",
+                    "name": "스크린샷 2023-10-19 오후 4.19 1",
+                    "type": "vector",
+                  },
+                ],
+                "id": "1313:58625",
+                "name": "Group 191",
+                "type": "container",
+              },
+            ],
+            "id": "1313:58618",
+            "name": "Frame 1754",
+            "type": "container",
+          },
+        ],
+        "id": "1313:58607",
+        "name": "Frame 1752",
+        "type": "container",
+      },
+    ],
+    "id": "1313:58599",
+    "name": "06",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > any/taptap-anchor 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "input",
+  "propNames": [
+    "placeholder",
+    "value",
+  ],
+  "propsCount": 2,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "I4:1647;4:1679",
+            "name": "Rectangle 2",
+            "type": "vector",
+          },
+          {
+            "children": [],
+            "id": "I4:1647;4:1680",
+            "name": "Rectangle 1",
+            "type": "vector",
+          },
+        ],
+        "id": "I4:1647;4:1678",
+        "name": "Group",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "I4:1647;4:1683",
+                "name": "title",
+                "type": "text",
+              },
+            ],
+            "id": "I4:1647;4:1682",
+            "name": "Frame1",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "I4:1647;4:1686",
+                    "name": "title",
+                    "type": "text",
+                  },
+                ],
+                "id": "I4:1647;4:1685",
+                "name": "Frame",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "I4:1647;4:1689",
+                        "name": "title",
+                        "type": "text",
+                      },
+                    ],
+                    "id": "I4:1647;4:1688",
+                    "name": "Frame",
+                    "type": "container",
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "I4:1647;4:1691",
+                        "name": "title",
+                        "type": "text",
+                      },
+                    ],
+                    "id": "I4:1647;4:1690",
+                    "name": "Frame",
+                    "type": "container",
+                  },
+                ],
+                "id": "I4:1647;4:1687",
+                "name": "Frame",
+                "type": "container",
+              },
+            ],
+            "id": "I4:1647;4:1684",
+            "name": "Text",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "I4:1647;4:1694",
+                    "name": "title",
+                    "type": "text",
+                  },
+                ],
+                "id": "I4:1647;4:1693",
+                "name": "Frame",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "I4:1647;4:1697",
+                        "name": "title",
+                        "type": "text",
+                      },
+                    ],
+                    "id": "I4:1647;4:1696",
+                    "name": "Frame",
+                    "type": "container",
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "I4:1647;4:1699",
+                        "name": "title",
+                        "type": "text",
+                      },
+                    ],
+                    "id": "I4:1647;4:1698",
+                    "name": "Frame",
+                    "type": "container",
+                  },
+                ],
+                "id": "I4:1647;4:1695",
+                "name": "Frame",
+                "type": "container",
+              },
+            ],
+            "id": "I4:1647;4:1692",
+            "name": "Text",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "I4:1647;114:22996",
+                    "name": "title",
+                    "type": "text",
+                  },
+                ],
+                "id": "I4:1647;114:22995",
+                "name": "Frame",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "I4:1647;114:22999",
+                        "name": "title",
+                        "type": "text",
+                      },
+                    ],
+                    "id": "I4:1647;114:22998",
+                    "name": "Frame",
+                    "type": "container",
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "I4:1647;114:23001",
+                        "name": "title",
+                        "type": "text",
+                      },
+                    ],
+                    "id": "I4:1647;114:23000",
+                    "name": "Frame",
+                    "type": "container",
+                  },
+                ],
+                "id": "I4:1647;114:22997",
+                "name": "Frame",
+                "type": "container",
+              },
+            ],
+            "id": "I4:1647;114:22994",
+            "name": "Text",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "I4:1647;4:1702",
+                    "name": "title",
+                    "type": "text",
+                  },
+                ],
+                "id": "I4:1647;4:1701",
+                "name": "Frame",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "I4:1647;4:1705",
+                        "name": "title",
+                        "type": "text",
+                      },
+                    ],
+                    "id": "I4:1647;4:1704",
+                    "name": "Frame",
+                    "type": "container",
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "I4:1647;4:1707",
+                        "name": "title",
+                        "type": "text",
+                      },
+                    ],
+                    "id": "I4:1647;4:1706",
+                    "name": "Frame",
+                    "type": "container",
+                  },
+                ],
+                "id": "I4:1647;4:1703",
+                "name": "Frame",
+                "type": "container",
+              },
+            ],
+            "id": "I4:1647;4:1700",
+            "name": "Text",
+            "type": "container",
+          },
+        ],
+        "id": "I4:1647;4:1681",
+        "name": "Content",
+        "type": "container",
+      },
+    ],
+    "id": "4:1647",
+    "name": "Anchor",
+    "type": "input",
+  },
+}
+`;
+
+exports[`UITree snapshots > any-component-set/airtable-button 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "icon",
+    "labelText",
+    "size",
+    "variant",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "711:13871",
+        "name": "Icon",
+        "refId": "91:1058",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "15:45",
+        "name": "Label",
+        "type": "text",
+      },
+    ],
+    "id": "308:7",
+    "name": "Button",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > any-component-set/urock-list 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "showChips",
+  ],
+  "propsCount": 1,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "482:4316",
+                    "name": "tit",
+                    "type": "text",
+                  },
+                  {
+                    "children": [],
+                    "id": "946:7298",
+                    "name": "chips",
+                    "refId": "482:3752",
+                    "type": "component",
+                  },
+                ],
+                "id": "946:7305",
+                "name": "tit",
+                "type": "container",
+              },
+              {
+                "children": [],
+                "id": "482:4317",
+                "name": "des",
+                "type": "text",
+              },
+            ],
+            "id": "482:4315",
+            "name": "txt-group",
+            "type": "container",
+          },
+        ],
+        "id": "482:4313",
+        "name": "contents-left",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "482:4321",
+                    "name": "￦",
+                    "type": "text",
+                  },
+                ],
+                "id": "482:4320",
+                "name": "won",
+                "type": "container",
+              },
+              {
+                "children": [],
+                "id": "482:4322",
+                "name": "price",
+                "type": "text",
+              },
+            ],
+            "id": "482:4319",
+            "name": "price-text",
+            "type": "container",
+          },
+          {
+            "children": [],
+            "id": "482:4323",
+            "name": "URButton",
+            "refId": "305:23966",
+            "type": "component",
+          },
+        ],
+        "id": "482:4318",
+        "name": "contents-right",
+        "type": "container",
+      },
+    ],
+    "id": "482:4492",
+    "name": "list-price-L",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > button/Btnsbtn 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "buttonText",
+    "leftIcon",
+    "rightIcon",
+    "size",
+    "state",
+    "style",
+    "tone",
+  ],
+  "propsCount": 7,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "4214:393",
+        "name": "icon_arrow",
+        "refId": "1:98",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "4214:394",
+        "name": "button",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "4214:395",
+        "name": "icon_arrow",
+        "refId": "1:98",
+        "type": "component",
+      },
+    ],
+    "id": "4214:392",
+    "name": "btns/btn",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > button/Button 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "icon",
+    "labelText",
+    "size",
+    "variant",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "1:1562",
+        "name": "Icon",
+        "refId": "1:1011",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "1:1554",
+        "name": "Label",
+        "type": "text",
+      },
+    ],
+    "id": "1:1553",
+    "name": "Button",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > button/airtableButton 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "icon",
+    "labelText",
+    "size",
+    "variant",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "711:13871",
+        "name": "Icon",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "15:45",
+        "name": "Label",
+        "type": "text",
+      },
+    ],
+    "id": "308:7",
+    "name": "Button",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > button/tadaButton 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "disabled",
+    "label",
+    "leftIcon",
+    "rightIcon",
+    "size",
+  ],
+  "propsCount": 5,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "89:3235",
+            "name": "Interactive",
+            "type": "container",
+          },
+        ],
+        "id": "89:3234",
+        "name": "Interaction",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "258:34208",
+                "name": "Left Icon",
+                "type": "container",
+              },
+              {
+                "children": [],
+                "id": "87:3015",
+                "name": "Label",
+                "type": "text",
+              },
+              {
+                "children": [],
+                "id": "258:34623",
+                "name": "Right Icon",
+                "type": "container",
+              },
+            ],
+            "id": "89:2972",
+            "name": "Contents",
+            "type": "container",
+          },
+        ],
+        "id": "89:2908",
+        "name": "Contents",
+        "type": "container",
+      },
+    ],
+    "id": "87:3027",
+    "name": "Button/Solid/Primary",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > button/taptapButton 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "leftIcon",
+    "rightIcon",
+    "size",
+    "state",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "15:12975",
+            "name": "Plus",
+            "type": "container",
+          },
+          {
+            "children": [],
+            "id": "15:12976",
+            "name": "Text",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "15:12981",
+            "name": "Plus",
+            "type": "container",
+          },
+        ],
+        "id": "15:12974",
+        "name": "Frame 427318163",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "15:12971",
+        "name": "Text",
+        "type": "text",
+      },
+    ],
+    "id": "15:12969",
+    "name": "Primary",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > button/taptapButton_sample 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "leftIcon",
+    "rightIcon",
+    "size",
+    "state",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "15:12975",
+            "name": "Plus",
+            "type": "container",
+          },
+          {
+            "children": [],
+            "id": "15:12976",
+            "name": "Text",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "15:12981",
+            "name": "Plus",
+            "type": "container",
+          },
+        ],
+        "id": "15:12974",
+        "name": "Frame 427318163",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "15:12971",
+        "name": "Text",
+        "type": "text",
+      },
+    ],
+    "id": "15:12969",
+    "name": "PrimaryButton",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > button/urockButton 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "iconLeft",
+    "iconRight",
+    "size",
+    "states",
+    "text",
+    "type",
+  ],
+  "propsCount": 6,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "4139:412",
+        "name": "icon_arrow",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "4139:413",
+        "name": "button",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "4139:414",
+        "name": "icon_arrow",
+        "type": "container",
+      },
+    ],
+    "id": "4139:411",
+    "name": "btn",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > checkbox/taptap-checkbox 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "checked",
+    "disable",
+    "onCheckedChange",
+    "withLabel",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "10:2276",
+        "name": "Rectangle 10",
+        "type": "vector",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "10:2280",
+            "name": "Check",
+            "refId": "297:23291",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "10:2292",
+            "name": "Rectangle 9",
+            "type": "vector",
+          },
+        ],
+        "id": "10:2278",
+        "name": "size-keeper",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "10:2282",
+        "name": "input",
+        "refId": "10:2095",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "10:2283",
+        "name": "label",
+        "type": "text",
+      },
+    ],
+    "id": "10:2275",
+    "name": "Checkbox",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > chip/Chips 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "color",
+    "iconLeft",
+    "iconRight",
+    "label",
+    "size",
+  ],
+  "propsCount": 5,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "480:5772",
+        "name": "icon_checking",
+        "refId": "1:128",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "473:659",
+        "name": "Text",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "480:5769",
+        "name": "icon-star-filled",
+        "refId": "480:5720",
+        "type": "component",
+      },
+    ],
+    "id": "482:3752",
+    "name": "chips",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > chip/urock-chips 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "color",
+    "iconLeft",
+    "iconRight",
+    "label",
+    "size",
+  ],
+  "propsCount": 5,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "480:5772",
+        "name": "icon_checking",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "473:659",
+        "name": "Text",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "480:5769",
+        "name": "icon-star-filled",
+        "type": "container",
+      },
+    ],
+    "id": "482:3752",
+    "name": "chips",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/Btn 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "iconLeft",
+    "iconRight",
+    "size",
+    "states",
+    "text",
+    "type",
+  ],
+  "propsCount": 6,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "4139:412",
+        "name": "icon_arrow",
+        "refId": "1:98",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "4139:413",
+        "name": "button",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "4139:414",
+        "name": "icon_arrow",
+        "refId": "1:98",
+        "type": "component",
+      },
+    ],
+    "id": "4139:411",
+    "name": "btn",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/Btnsbtn 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "buttonText",
+    "leftIcon",
+    "rightIcon",
+    "size",
+    "state",
+    "style",
+    "tone",
+  ],
+  "propsCount": 7,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "4214:393",
+        "name": "icon_arrow",
+        "refId": "1:98",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "4214:394",
+        "name": "button",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "4214:395",
+        "name": "icon_arrow",
+        "refId": "1:98",
+        "type": "component",
+      },
+    ],
+    "id": "4214:392",
+    "name": "btns/btn",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/Button 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "icon",
+    "labelText",
+    "size",
+    "variant",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "46:3937",
+        "name": "Icon",
+        "refId": "1:1011",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "46:3929",
+        "name": "Label",
+        "type": "text",
+      },
+    ],
+    "id": "46:3928",
+    "name": "Button",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/Checkbox 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "checked",
+    "disable",
+    "onCheckedChange",
+    "withLabel",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "46:4307",
+        "name": "Rectangle 10",
+        "type": "vector",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "46:4311",
+            "name": "Check",
+            "refId": "14:96",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "46:4323",
+            "name": "Rectangle 9",
+            "type": "vector",
+          },
+        ],
+        "id": "46:4309",
+        "name": "size-keeper",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "46:4313",
+        "name": "input",
+        "refId": "14:111",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "46:4314",
+        "name": "label",
+        "type": "text",
+      },
+    ],
+    "id": "46:4306",
+    "name": "Checkbox",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/Chips 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "color",
+    "iconLeft",
+    "iconRight",
+    "label",
+    "size",
+  ],
+  "propsCount": 5,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "480:5772",
+        "name": "icon_checking",
+        "refId": "1:128",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "473:659",
+        "name": "Text",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "480:5769",
+        "name": "icon-star-filled",
+        "refId": "480:5720",
+        "type": "component",
+      },
+    ],
+    "id": "482:3752",
+    "name": "chips",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/Dropdowngeneric 1`] = `
+{
+  "arraySlotNames": [
+    "items",
+  ],
+  "componentType": "dropdown",
+  "propNames": [
+    "defaultValue",
+    "items",
+    "label",
+    "onChange",
+    "placeholder",
+    "size",
+  ],
+  "propsCount": 6,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "4078:432",
+            "name": "label",
+            "type": "text",
+          },
+        ],
+        "id": "4078:431",
+        "name": "label",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "4078:435",
+                "name": "Intro",
+                "type": "text",
+              },
+            ],
+            "id": "4078:434",
+            "name": "input",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "4078:437",
+                "name": "icon-dropdown",
+                "refId": "4078:412",
+                "type": "component",
+              },
+            ],
+            "id": "4078:436",
+            "name": "input",
+            "type": "container",
+          },
+        ],
+        "id": "4078:433",
+        "name": "dropdown",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "4077:2894",
+            "name": "dropdown-generic-list",
+            "refId": "4078:423",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4077:2895",
+            "name": "dropdown-generic-list",
+            "refId": "4078:425",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4077:2896",
+            "name": "dropdown-generic-list",
+            "refId": "4078:423",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4077:2897",
+            "name": "dropdown-generic-list",
+            "refId": "4078:423",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4077:2898",
+            "name": "dropdown-generic-list",
+            "refId": "4078:423",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4077:2899",
+            "name": "dropdown-generic-list",
+            "refId": "4078:423",
+            "type": "component",
+          },
+        ],
+        "id": "4077:2893",
+        "name": "list",
+        "type": "container",
+      },
+    ],
+    "id": "4078:430",
+    "name": "dropdown-generic",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/Fab 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "423:5375",
+        "name": "Ellipse 2129",
+        "type": "vector",
+      },
+      {
+        "children": [],
+        "id": "444:6268",
+        "name": "icon-fab",
+        "refId": "444:6254",
+        "type": "component",
+      },
+    ],
+    "id": "426:265",
+    "name": "fab",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/Frame 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "frame",
+  "propNames": [
+    "children",
+    "color",
+    "stroke",
+    "type",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "2390:1239",
+        "name": "Card Background",
+        "type": "vector",
+      },
+    ],
+    "id": "2390:1253",
+    "name": "frame",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/Input 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "input",
+  "propNames": [
+    "placeholder",
+    "size",
+    "value",
+  ],
+  "propsCount": 3,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "46:4403",
+        "name": "Placeholder",
+        "type": "text",
+      },
+    ],
+    "id": "46:4402",
+    "name": "Input",
+    "type": "input",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/Radio 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "checked",
+    "disable",
+    "onCheckedChange",
+    "text",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "3:128",
+            "name": "Rectangle",
+            "type": "vector",
+          },
+          {
+            "children": [],
+            "id": "3:121",
+            "name": "Rectangle",
+            "type": "vector",
+          },
+        ],
+        "id": "3:119",
+        "name": "shape",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "3:124",
+        "name": "radio",
+        "type": "vector",
+      },
+      {
+        "children": [],
+        "id": "3:122",
+        "name": "text",
+        "type": "text",
+      },
+    ],
+    "id": "3:118",
+    "name": "Radio",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/SegmentedControl 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "custom",
+  "propNames": [
+    "onValueChange",
+    "options",
+    "selectedValue",
+    "size",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "I1:1645;133:517",
+            "name": "Label",
+            "type": "text",
+          },
+        ],
+        "id": "1:1645",
+        "name": "Select button",
+        "type": "container",
+      },
+    ],
+    "id": "1:1644",
+    "name": "Segmented control",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/SelectButtons 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "labelText",
+    "options",
+    "size",
+  ],
+  "propsCount": 3,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "63:924",
+        "name": "Select button",
+        "refId": "1:1630",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "63:928",
+        "name": "Select button",
+        "refId": "1:1632",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "63:925_Option 2",
+        "name": "Select button",
+        "refId": "1:1632",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "63:925_Option 3",
+        "name": "Select button",
+        "refId": "1:1632",
+        "type": "component",
+      },
+    ],
+    "id": "63:923",
+    "name": "Select buttons",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/SelectionControled 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "labelText",
+    "options",
+    "selectButton",
+    "size",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "63:924",
+        "name": "Select button",
+        "refId": "1:1630",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "63:928",
+        "name": "Select button",
+        "refId": "1:1632",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "63:925_Option 2",
+        "name": "Select button",
+        "refId": "1:1632",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "63:925_Option 3",
+        "name": "Select button",
+        "refId": "1:1632",
+        "type": "component",
+      },
+    ],
+    "id": "63:923",
+    "name": "Selection Controled",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/Switch 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "toggle",
+  "propNames": [
+    "active",
+    "onCheckedChange",
+  ],
+  "propsCount": 2,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "74:151",
+        "name": "Rectangle 6574",
+        "type": "vector",
+      },
+      {
+        "children": [],
+        "id": "74:152",
+        "name": "Rectangle 6576",
+        "type": "vector",
+      },
+      {
+        "children": [],
+        "id": "74:157",
+        "name": "Rectangle 6575",
+        "type": "vector",
+      },
+    ],
+    "id": "74:150",
+    "name": "switch",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/Tagreview 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "error",
+    "forbid",
+    "info",
+    "label",
+    "size",
+    "state",
+    "success",
+    "time",
+  ],
+  "propsCount": 8,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "46:4023",
+            "name": "Ellipse 56",
+            "type": "vector",
+          },
+          {
+            "children": [],
+            "id": "46:4024_Forbid",
+            "name": "Forbid",
+            "refId": "3:454",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "46:4024_Time",
+            "name": "Time",
+            "refId": "3:460",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "46:4024_Success",
+            "name": "Success",
+            "refId": "3:172",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "46:4024_Info",
+            "name": "Info",
+            "refId": "3:156",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "46:4024_Error",
+            "name": "Error",
+            "refId": "3:167",
+            "type": "component",
+          },
+        ],
+        "id": "46:4022",
+        "name": "Group 897",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "46:4025",
+        "name": "Rejected",
+        "type": "text",
+      },
+    ],
+    "id": "46:3991",
+    "name": "Tag-Review",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > failing/Toggle 1`] = `
+{
+  "arraySlotNames": [
+    "fillFConfirms",
+  ],
+  "componentType": "toggle",
+  "propNames": [
+    "checked",
+    "disable",
+    "fillFConfirms",
+    "onCheckedChange",
+    "text",
+  ],
+  "propsCount": 5,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "46:4270",
+            "name": "ON",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "46:4288",
+            "name": "提示建议性/Fill/确认_FConfirm",
+            "refId": "3:403",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "46:4271",
+            "name": "提示建议性/Fill/确认_FConfirm",
+            "refId": "3:403",
+            "type": "component",
+          },
+        ],
+        "id": "46:4267",
+        "name": "content",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "46:4274",
+        "name": "Rectangle 3",
+        "type": "vector",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "46:4276",
+            "name": "提示建议性/Fill/关闭_FClose",
+            "refId": "3:405",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "46:4277",
+            "name": "OFF",
+            "type": "text",
+          },
+        ],
+        "id": "46:4275",
+        "name": "content",
+        "type": "container",
+      },
+    ],
+    "id": "46:4266",
+    "name": "Toggle",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > item-slot-likes/airtable-select-button 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "labelText",
+    "options",
+    "size",
+  ],
+  "propsCount": 3,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "133:735",
+        "name": "Select button",
+        "refId": "133:603",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "133:762",
+        "name": "Select button",
+        "refId": "133:604",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "133:736_Option 2",
+        "name": "Select button",
+        "refId": "133:604",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "133:736_Option 3",
+        "name": "Select button",
+        "refId": "133:604",
+        "type": "component",
+      },
+    ],
+    "id": "133:737",
+    "name": "Select buttons",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > item-slot-likes/tada-list 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "badgePush",
+    "badgeTag",
+    "buttonIconNormal",
+    "controlSwitch",
+    "decorateInteractive",
+    "global",
+  ],
+  "propsCount": 6,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "115:51288",
+        "name": "selected =",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "272:36196",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "272:36198",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "115:51294",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "244:63430",
+        "name": "List/General",
+        "refId": "142:56280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "115:51359",
+        "name": "disabled =",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "272:36200",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "272:36202",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "115:51365",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "202:45403",
+        "name": "List/General",
+        "refId": "142:56243",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "115:51221",
+        "name": "interaction =",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "272:36204",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "272:36206",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3242:34864",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "537:53649",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "537:53650",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "115:51244",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "537:53511",
+        "name": "List/General",
+        "refId": "142:56280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "138:30605",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "537:53512",
+        "name": "List/General",
+        "refId": "142:56280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158812",
+        "name": "badge =",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "3184:158813",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158814",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158815",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158816",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158817",
+        "name": "subtext =",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "3184:158818",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158819",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158820",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158821",
+        "name": "right =",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "3184:158822",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158823",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3246:22244",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158824",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158825",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158826",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158827",
+        "name": "left =",
+        "type": "text",
+      },
+      {
+        "children": [],
+        "id": "3184:158828",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158829",
+        "name": "Variant",
+        "refId": "247:56500",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158830",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158831",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158832",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3242:34656",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158833",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158834",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158835",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158836",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158837",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158838",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3184:158839",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "3242:58246",
+        "name": "List/General",
+        "refId": "103:26280",
+        "type": "component",
+      },
+    ],
+    "id": "3661:27474",
+    "name": "Case",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > item-slot-likes/taptap-navigation 1`] = `
+{
+  "arraySlotNames": [
+    "items",
+  ],
+  "componentType": "unknown",
+  "propNames": [
+    "centered",
+    "item",
+    "items",
+    "size",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "4:3768",
+            "name": "Item",
+            "refId": "4:3629",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4:3769",
+            "name": "Item",
+            "refId": "4:3623",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4:3770",
+            "name": "Item",
+            "refId": "4:3623",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4:3771",
+            "name": "Item",
+            "refId": "4:3623",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4:3772",
+            "name": "Item",
+            "refId": "4:3623",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4:3774",
+            "name": "Item",
+            "refId": "4:3623",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4:3775",
+            "name": "Item",
+            "refId": "4:3623",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4:3773",
+            "name": "Item",
+            "refId": "4:3623",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4:3785",
+            "name": "Item",
+            "refId": "4:3626",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4:3786",
+            "name": "Item",
+            "refId": "4:3626",
+            "type": "component",
+          },
+        ],
+        "id": "4:3767",
+        "name": "items-count ▾",
+        "type": "container",
+      },
+    ],
+    "id": "4:3766",
+    "name": "Basic",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > regression/BreakpointdesktopmdlgStatelogin 1`] = `
+{
+  "arraySlotNames": [
+    "icons",
+  ],
+  "componentType": "unknown",
+  "propNames": [
+    "Text",
+    "avatarAvatar",
+    "buttonIconNormal",
+    "iconNormalListCategory",
+    "icons",
+    "scrolled",
+    "state",
+  ],
+  "propsCount": 7,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "16215:20785",
+            "name": "Divider",
+            "type": "vector",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "16215:20787",
+                "name": "Background",
+                "type": "vector",
+              },
+            ],
+            "id": "16215:20786",
+            "name": "Background",
+            "type": "container",
+          },
+        ],
+        "id": "16215:20784",
+        "name": "Background",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "16215:20792",
+                        "name": "Logo/Wanted/Logo Horizontal",
+                        "refId": "16215:13494",
+                        "type": "component",
+                      },
+                    ],
+                    "id": "16215:20791",
+                    "name": "Logo",
+                    "type": "container",
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "id": "16215:20795",
+                            "name": "Icon/Normal/List Category",
+                            "refId": "16215:15554",
+                            "type": "component",
+                          },
+                          {
+                            "children": [],
+                            "id": "16215:20796",
+                            "name": "텍스트",
+                            "type": "text",
+                          },
+                        ],
+                        "id": "16215:20794",
+                        "name": "List",
+                        "type": "container",
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "id": "16215:20798",
+                            "name": "텍스트",
+                            "type": "text",
+                          },
+                        ],
+                        "id": "16215:20797",
+                        "name": "List",
+                        "type": "container",
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "id": "16215:20800",
+                            "name": "텍스트",
+                            "type": "text",
+                          },
+                        ],
+                        "id": "16215:20799",
+                        "name": "List",
+                        "type": "container",
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "id": "16215:20802",
+                            "name": "텍스트",
+                            "type": "text",
+                          },
+                        ],
+                        "id": "16215:20801",
+                        "name": "List",
+                        "type": "container",
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "id": "16215:20804",
+                            "name": "텍스트",
+                            "type": "text",
+                          },
+                        ],
+                        "id": "16215:20803",
+                        "name": "List",
+                        "type": "container",
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "id": "16215:20806",
+                            "name": "텍스트",
+                            "type": "text",
+                          },
+                        ],
+                        "id": "16215:20805",
+                        "name": "List",
+                        "type": "container",
+                      },
+                    ],
+                    "id": "16215:20793",
+                    "name": "Menu",
+                    "type": "container",
+                  },
+                ],
+                "id": "16215:20790",
+                "name": "Leading",
+                "type": "container",
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "id": "16215:20810",
+                            "name": "Button/Icon/Normal",
+                            "refId": "16215:38425",
+                            "type": "component",
+                          },
+                          {
+                            "children": [],
+                            "id": "16215:20811",
+                            "name": "Button/Icon/Normal",
+                            "refId": "16215:38425",
+                            "type": "component",
+                          },
+                          {
+                            "children": [],
+                            "id": "16215:20812",
+                            "name": "Button/Icon/Normal",
+                            "refId": "16215:38425",
+                            "type": "component",
+                          },
+                        ],
+                        "id": "16215:20809",
+                        "name": "Icon",
+                        "type": "container",
+                      },
+                      {
+                        "children": [],
+                        "id": "16215:20813",
+                        "name": "Avatar/Avatar",
+                        "refId": "16215:25736",
+                        "type": "component",
+                      },
+                    ],
+                    "id": "16215:20808",
+                    "name": "Action",
+                    "type": "container",
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [
+                          {
+                            "children": [],
+                            "id": "16215:20881",
+                            "name": "Button/Icon/Normal",
+                            "refId": "16215:38425",
+                            "type": "component",
+                          },
+                        ],
+                        "id": "16215:20878",
+                        "name": "Icon",
+                        "type": "container",
+                      },
+                      {
+                        "children": [],
+                        "id": "16215:20815",
+                        "name": "Button/Icon/Normal",
+                        "refId": "16215:38425",
+                        "type": "component",
+                      },
+                      {
+                        "children": [],
+                        "id": "16215:20849",
+                        "name": "Button/Icon/Normal",
+                        "refId": "16215:38425",
+                        "type": "component",
+                      },
+                    ],
+                    "id": "16215:20814",
+                    "name": "Action",
+                    "type": "container",
+                  },
+                ],
+                "id": "16215:20807",
+                "name": "Trailing",
+                "type": "container",
+              },
+            ],
+            "id": "16215:20789",
+            "name": "Content",
+            "type": "container",
+          },
+        ],
+        "id": "16215:20788",
+        "name": "Container",
+        "type": "container",
+      },
+    ],
+    "id": "16215:20783",
+    "name": "GNB/Wanted",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > regression/Controlradio 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "checked",
+    "disable",
+    "onCheckedChange",
+    "size",
+    "text",
+  ],
+  "propsCount": 5,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "16215:34777",
+            "name": "Interaction/Normal",
+            "refId": "16215:17257",
+            "type": "component",
+          },
+        ],
+        "id": "16215:34776",
+        "name": "Interaction",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "16215:34780",
+            "name": "Icon/Normal/Dot",
+            "refId": "16215:14959",
+            "type": "component",
+          },
+        ],
+        "id": "16215:34775",
+        "name": "Box",
+        "type": "container",
+      },
+    ],
+    "id": "16215:34774",
+    "name": "Control/Radio",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > regression/List 1`] = `
+{
+  "arraySlotNames": [
+    "leadingContents",
+    "trailingContents",
+  ],
+  "componentType": "unknown",
+  "propNames": [
+    "leadingContents",
+    "textinputResourceInteraction",
+    "textinputResourceTextareaLeadingContent",
+    "textinputResourceTextareaTrailingContent",
+    "trailingContents",
+  ],
+  "propsCount": 5,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "16274:135776",
+            "name": "status =",
+            "type": "text",
+          },
+          {
+            "children": [],
+            "id": "16274:135777",
+            "name": "_Badge/Value",
+            "refId": "16215:43128",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "16274:135778",
+            "name": "_Badge/Value",
+            "refId": "16215:43128",
+            "type": "component",
+          },
+        ],
+        "id": "16274:135775",
+        "name": "Heading",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "16274:135781",
+                "name": "Textinput/Textarea",
+                "refId": "16215:32235",
+                "type": "component",
+              },
+              {
+                "children": [],
+                "id": "16274:135782",
+                "name": "Textinput/Textarea",
+                "refId": "16215:32258",
+                "type": "component",
+              },
+            ],
+            "id": "16274:135780",
+            "name": "Content",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "16274:135784",
+                "name": "Textinput/Textarea",
+                "refId": "16215:32350",
+                "type": "component",
+              },
+              {
+                "children": [],
+                "id": "16274:135785",
+                "name": "Textinput/Textarea",
+                "refId": "16215:32373",
+                "type": "component",
+              },
+            ],
+            "id": "16274:135783",
+            "name": "Content",
+            "type": "container",
+          },
+        ],
+        "id": "16274:135779",
+        "name": "Content",
+        "type": "container",
+      },
+    ],
+    "id": "16274:135774",
+    "name": "List",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > regression/Searchfieldsearchfield 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "active",
+    "cursor",
+    "onValueChange",
+    "size",
+    "text",
+  ],
+  "propsCount": 5,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "16215:33773",
+                "name": "Icon/Normal/Search",
+                "refId": "16215:16222",
+                "type": "component",
+              },
+            ],
+            "id": "16215:33772",
+            "name": "Icon",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "16215:33775",
+                "name": "검색어를 입력해주세요.",
+                "type": "text",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "16215:33777",
+                    "name": "Pointing Device/Cursor",
+                    "refId": "16311:145174",
+                    "type": "component",
+                  },
+                ],
+                "id": "16215:33776",
+                "name": "Cursor",
+                "type": "container",
+              },
+            ],
+            "id": "16215:33774",
+            "name": "Text",
+            "type": "container",
+          },
+        ],
+        "id": "16215:33771",
+        "name": "Contents",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "16215:33787",
+            "name": "Button/Icon/Normal",
+            "refId": "16215:38425",
+            "type": "component",
+          },
+        ],
+        "id": "16215:33786",
+        "name": "Button",
+        "type": "container",
+      },
+    ],
+    "id": "16215:33770",
+    "name": "Searchfield/Searchfield",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > select-button/airtable-select-button 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "labelText",
+    "options",
+    "size",
+  ],
+  "propsCount": 3,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "133:735",
+        "name": "Select button",
+        "refId": "133:603",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "133:762",
+        "name": "Select button",
+        "refId": "133:604",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "133:736_Option 2",
+        "name": "Select button",
+        "refId": "133:604",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "133:736_Option 3",
+        "name": "Select button",
+        "refId": "133:604",
+        "type": "component",
+      },
+    ],
+    "id": "133:737",
+    "name": "Select buttons",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > tada-button-component 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "badge",
+  "propNames": [
+    "number",
+  ],
+  "propsCount": 1,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "I3661:82115;793:45846",
+            "name": "1",
+            "type": "text",
+          },
+        ],
+        "id": "I3661:82115;793:45833",
+        "name": "Container",
+        "type": "container",
+      },
+    ],
+    "id": "3661:82115",
+    "name": "Badge/Push",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > text-newline 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "test:2",
+        "name": "MultilineText",
+        "type": "text",
+      },
+    ],
+    "id": "test:1",
+    "name": "TextWithNewline",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > urock/Badgesicon 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "badge",
+  "propNames": [
+    "count",
+  ],
+  "propsCount": 1,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "1037:3015",
+        "name": "icon-bell",
+        "refId": "1032:3394",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "1037:3003",
+        "name": "badges",
+        "refId": "67:3766",
+        "type": "component",
+      },
+    ],
+    "id": "1037:3018",
+    "name": "Badges-icon",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > urock/Checkbox 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "checked",
+    "disable",
+    "onCheckedChange",
+  ],
+  "propsCount": 3,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "305:28973",
+        "name": "radio",
+        "type": "vector",
+      },
+      {
+        "children": [],
+        "id": "305:28976",
+        "name": "icon_checking",
+        "refId": "12:21089",
+        "type": "component",
+      },
+      {
+        "children": [],
+        "id": "2436:906",
+        "name": "Vector 149",
+        "type": "vector",
+      },
+    ],
+    "id": "305:28972",
+    "name": "checkbox",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > urock/Dropdowngeneric 1`] = `
+{
+  "arraySlotNames": [
+    "items",
+  ],
+  "componentType": "dropdown",
+  "propNames": [
+    "defaultValue",
+    "items",
+    "label",
+    "onChange",
+    "placeholder",
+    "size",
+  ],
+  "propsCount": 6,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "4078:432",
+            "name": "label",
+            "type": "text",
+          },
+        ],
+        "id": "4078:431",
+        "name": "label",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "4078:435",
+                "name": "Intro",
+                "type": "text",
+              },
+            ],
+            "id": "4078:434",
+            "name": "input",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "4078:437",
+                "name": "icon-dropdown",
+                "refId": "4078:412",
+                "type": "component",
+              },
+            ],
+            "id": "4078:436",
+            "name": "input",
+            "type": "container",
+          },
+        ],
+        "id": "4078:433",
+        "name": "dropdown",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "4077:2894",
+            "name": "dropdown-generic-list",
+            "refId": "4078:423",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4077:2895",
+            "name": "dropdown-generic-list",
+            "refId": "4078:425",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4077:2896",
+            "name": "dropdown-generic-list",
+            "refId": "4078:423",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4077:2897",
+            "name": "dropdown-generic-list",
+            "refId": "4078:423",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4077:2898",
+            "name": "dropdown-generic-list",
+            "refId": "4078:423",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "4077:2899",
+            "name": "dropdown-generic-list",
+            "refId": "4078:423",
+            "type": "component",
+          },
+        ],
+        "id": "4077:2893",
+        "name": "list",
+        "type": "container",
+      },
+    ],
+    "id": "4078:430",
+    "name": "dropdown-generic",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > urock/Fab 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [],
+  "propsCount": 0,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "423:5375",
+        "name": "Ellipse 2129",
+        "type": "vector",
+      },
+      {
+        "children": [],
+        "id": "444:6268",
+        "name": "icon-fab",
+        "refId": "444:6254",
+        "type": "component",
+      },
+    ],
+    "id": "426:265",
+    "name": "fab",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > urock/Frame 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "frame",
+  "propNames": [
+    "children",
+    "color",
+    "stroke",
+    "type",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "2390:1239",
+        "name": "Card Background",
+        "type": "vector",
+      },
+    ],
+    "id": "2390:1253",
+    "name": "frame",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > urock/Profile 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "imageSrc",
+    "size",
+    "text",
+  ],
+  "propsCount": 3,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "2069:2002",
+        "name": "profile",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "2069:1569",
+        "name": "Profile initial",
+        "type": "text",
+      },
+    ],
+    "id": "2069:1589",
+    "name": "profile",
+    "type": "container",
+  },
+}
+`;
+
+exports[`UITree snapshots > urock/Radio 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "unknown",
+  "propNames": [
+    "checked",
+    "disable",
+    "onCheckedChange",
+    "text",
+  ],
+  "propsCount": 4,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "305:28955",
+        "name": "Rectangle 5949",
+        "type": "vector",
+      },
+      {
+        "children": [],
+        "id": "384:34",
+        "name": "Rectangle 5950",
+        "type": "vector",
+      },
+    ],
+    "id": "305:28954",
+    "name": "radio",
+    "type": "button",
+  },
+}
+`;
+
+exports[`UITree snapshots > wanted/SegmentedControlsegmentedControl 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "custom",
+  "propNames": [
+    "onValueChange",
+    "options",
+    "selectedValue",
+    "size",
+    "variant",
+  ],
+  "propsCount": 5,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "16215:35118_icon_wrapper",
+                    "name": "IconWrapper",
+                    "type": "container",
+                  },
+                  {
+                    "children": [],
+                    "id": "16215:35118_label",
+                    "name": "Label",
+                    "type": "text",
+                  },
+                ],
+                "id": "16215:35118_content",
+                "name": "Content",
+                "type": "container",
+              },
+            ],
+            "id": "16215:35118",
+            "name": "Segmented Control/Resource/Knob",
+            "type": "container",
+          },
+        ],
+        "id": "16215:35117",
+        "name": "Container",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "16215:35141",
+        "name": "Divider",
+        "type": "vector",
+      },
+      {
+        "children": [],
+        "id": "16215:35159",
+        "name": "Divider",
+        "type": "vector",
+      },
+    ],
+    "id": "16215:35116",
+    "name": "Segmented Control/Segmented Control",
+    "type": "container",
+  },
+}
+`;
