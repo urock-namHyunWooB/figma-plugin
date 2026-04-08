@@ -126,10 +126,7 @@ describe("TreeBuilder Full Build", () => {
     };
 
     const frameNode = findFrame((taptapButton as any).info.document);
-    if (!frameNode) {
-      console.warn("FRAME 자식 노드 없음 — 스킵");
-      return;
-    }
+    expect(frameNode).not.toBeNull();
 
     const singleFrameData = {
       ...(taptapButton as any),
