@@ -1327,16 +1327,19 @@ exports[`UITree snapshots > any/StateinsertGuideTextfalse 1`] = `
 
 exports[`UITree snapshots > any/Switchswitch 1`] = `
 {
-  "arraySlotNames": [],
+  "arraySlotNames": [
+    "knobs",
+  ],
   "componentType": "toggle",
   "propNames": [
     "active",
     "disable",
+    "knobs",
     "onCheckedChange",
     "platform",
     "size",
   ],
-  "propsCount": 5,
+  "propsCount": 6,
   "root": {
     "children": [
       {
@@ -4912,16 +4915,22 @@ exports[`UITree snapshots > failing/Radio 1`] = `
   "root": {
     "children": [
       {
+        "children": [],
+        "id": "3:124",
+        "name": "radio",
+        "type": "vector",
+      },
+      {
         "children": [
           {
             "children": [],
-            "id": "3:128",
+            "id": "3:121",
             "name": "Rectangle",
             "type": "vector",
           },
           {
             "children": [],
-            "id": "3:121",
+            "id": "3:130",
             "name": "Rectangle",
             "type": "vector",
           },
@@ -4929,12 +4938,6 @@ exports[`UITree snapshots > failing/Radio 1`] = `
         "id": "3:119",
         "name": "shape",
         "type": "container",
-      },
-      {
-        "children": [],
-        "id": "3:124",
-        "name": "radio",
-        "type": "vector",
       },
       {
         "children": [],
@@ -6757,12 +6760,6 @@ exports[`UITree snapshots > wanted/SegmentedControlsegmentedControl 1`] = `
       {
         "children": [],
         "id": "16215:35141",
-        "name": "Divider",
-        "type": "vector",
-      },
-      {
-        "children": [],
-        "id": "16215:35159",
         "name": "Divider",
         "type": "vector",
       },
