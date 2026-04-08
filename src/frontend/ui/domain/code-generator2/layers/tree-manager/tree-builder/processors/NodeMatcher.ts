@@ -51,31 +51,30 @@ export class NodeMatcher {
   /**
    * 두 노드가 같은 역할을 하는지 판단.
    *
-   * Phase 1a 섀도 모드: legacy 로직을 실행해 반환값으로 쓰되,
-   * globalThis.__SHADOW_MODE_COLLECTOR__가 설정돼 있으면 엔진도 돌려 비교.
-   * 불일치는 collector에 push되어 테스트가 검증한다.
+   * Phase 1b: 엔진 결과를 실제로 반환한다.
+   * shadow collector가 설정돼 있으면 legacy도 돌려 diff 기록 (검증용).
    */
   public isSameNode(nodeA: InternalNode, nodeB: InternalNode): boolean {
-    const legacyResult = this.isSameNodeLegacy(nodeA, nodeB);
+    const ctx: MatchContext = {
+      dataManager: this.dataManager,
+      layoutNormalizer: this.layoutNormalizer,
+      nodeToVariantRoot: this.nodeToVariantRoot,
+      policy: defaultMatchingPolicy,
+    };
+    const decision = this.engine.decide(nodeA, nodeB, ctx);
+    const engineResult = decision.decision === "match";
 
     const collector = (globalThis as any).__SHADOW_MODE_COLLECTOR__ as
       | Array<{ pair: [string, string]; old: boolean; engine: boolean }>
       | undefined;
     if (collector) {
-      const ctx: MatchContext = {
-        dataManager: this.dataManager,
-        layoutNormalizer: this.layoutNormalizer,
-        nodeToVariantRoot: this.nodeToVariantRoot,
-        policy: defaultMatchingPolicy,
-      };
-      const decision = this.engine.decide(nodeA, nodeB, ctx);
-      const engineResult = decision.decision === "match";
+      const legacyResult = this.isSameNodeLegacy(nodeA, nodeB);
       if (engineResult !== legacyResult) {
         collector.push({ pair: [nodeA.id, nodeB.id], old: legacyResult, engine: engineResult });
       }
     }
 
-    return legacyResult;
+    return engineResult;
   }
 
   /** 기존 isSameNode 로직 — 내부 전용, Phase 1c에서 제거 예정 */
@@ -292,8 +291,12 @@ export class NodeMatcher {
   }
 
   /**
-   * Shape 노드의 크기 유사도 검증 (비율 1.3 이내)
-   * 중심점이 동일한 동심원(22x22 vs 16x16)이 같은 노드로 매칭되는 것을 방지
+   * Shape 노드의 크기 유사도 검증 (policy.relativeSizeMaxRatio 이내)
+   * 중심점이 동일한 동심원(22x22 vs 16x16)이 같은 노드로 매칭되는 것을 방지.
+   *
+   * Phase 1b: hardcoded 1.3 → defaultMatchingPolicy.relativeSizeMaxRatio (현재 2.0)
+   * 이 메서드는 legacy getPositionCost 경로에서만 사용됨. Phase 1c Task C2에서
+   * getPositionCost도 엔진으로 위임 후 제거 예정.
    */
   private isSimilarSize(nodeA: InternalNode, nodeB: InternalNode): boolean {
     if (!nodeA.mergedNodes?.[0] || !nodeB.mergedNodes?.[0]) return true;
@@ -307,7 +310,8 @@ export class NodeMatcher {
     if (minW <= 0 || minH <= 0) return true;
     const wRatio = Math.max(boxA.width, boxB.width) / minW;
     const hRatio = Math.max(boxA.height, boxB.height) / minH;
-    return wRatio <= 1.3 && hRatio <= 1.3;
+    const maxRatio = defaultMatchingPolicy.relativeSizeMaxRatio;
+    return wRatio <= maxRatio && hRatio <= maxRatio;
   }
 
   /**
