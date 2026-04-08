@@ -70,6 +70,7 @@ export interface SemanticNode {
   attrs?: Record<string, BindingSource>;
   events?: Record<string, BindingSource>;
   styles?: StyleObject;
+  styleBindings?: Record<string, BindingSource>;
   content?: BindingSource | TextSegment[];
   visibleCondition?: ConditionNode;
   children?: SemanticNode[];
