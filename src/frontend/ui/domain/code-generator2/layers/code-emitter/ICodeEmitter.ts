@@ -18,7 +18,8 @@
  * └─────────────────────────────────────────────────────────────────┘
  */
 
-import type { UITree, VariantInconsistency } from "../../types/types";
+import type { VariantInconsistency } from "../../types/types";
+import type { SemanticComponent } from "./SemanticIR";
 
 /** 코드 생성 결과 (단일 컴포넌트) */
 export interface EmittedCode {
@@ -52,23 +53,23 @@ export interface ICodeEmitter {
   readonly framework: string;
 
   /**
-   * 단일 UITree → 코드 변환
+   * 단일 SemanticComponent → 코드 변환
    */
-  emit(uiTree: UITree): Promise<EmittedCode>;
+  emit(ir: SemanticComponent): Promise<EmittedCode>;
 
   /**
-   * 메인 + 의존 트리 → 개별 코드 변환 (멀티 파일 출력용)
+   * 메인 + 의존 IR → 개별 코드 변환 (멀티 파일 출력용)
    */
   emitAll(
-    main: UITree,
-    deps: Map<string, UITree>
+    main: SemanticComponent,
+    deps: Map<string, SemanticComponent>
   ): Promise<GeneratedResult>;
 
   /**
-   * 메인 + 의존 트리 → 단일 파일 번들 출력
+   * 메인 + 의존 IR → 단일 파일 번들 출력
    */
   emitBundled(
-    main: UITree,
-    deps: Map<string, UITree>
+    main: SemanticComponent,
+    deps: Map<string, SemanticComponent>
   ): Promise<BundledResult>;
 }

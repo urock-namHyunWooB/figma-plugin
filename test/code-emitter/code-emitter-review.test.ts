@@ -2,7 +2,8 @@ import { describe, it, expect } from "vitest";
 import { writeFileSync } from "fs";
 import DataManager from "@frontend/ui/domain/code-generator2/layers/data-manager/DataManager";
 import TreeBuilder from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/TreeBuilder";
-import { CodeEmitter } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/ReactEmitter";
+import { CodeEmitter, renameNativeProps } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/ReactEmitter";
+import { SemanticIRBuilder } from "@frontend/ui/domain/code-generator2/layers/code-emitter/SemanticIRBuilder";
 
 import taptapButton from "../fixtures/button/taptapButton.json";
 import airtableButton from "../fixtures/any-component-set/airtable-button.json";
@@ -15,7 +16,8 @@ describe("CodeEmitter Review", () => {
     const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     const emitter = new CodeEmitter();
-    const result = await emitter.emit(uiTree);
+    const ir = SemanticIRBuilder.build(renameNativeProps(uiTree));
+    const result = await emitter.emit(ir);
 
     // 파일로 저장
     writeFileSync("test/code-emitter/generated-taptap.tsx", result.code);
@@ -31,7 +33,8 @@ describe("CodeEmitter Review", () => {
     const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     const emitter = new CodeEmitter();
-    const result = await emitter.emit(uiTree);
+    const ir = SemanticIRBuilder.build(renameNativeProps(uiTree));
+    const result = await emitter.emit(ir);
 
     writeFileSync("test/code-emitter/generated-airtable.tsx", result.code);
 
@@ -44,7 +47,8 @@ describe("CodeEmitter Review", () => {
     const uiTree = treeBuilder.build((urockButton as any).info.document);
 
     const emitter = new CodeEmitter();
-    const result = await emitter.emit(uiTree);
+    const ir = SemanticIRBuilder.build(renameNativeProps(uiTree));
+    const result = await emitter.emit(ir);
 
     writeFileSync("test/code-emitter/generated-urock.tsx", result.code);
 

@@ -25,7 +25,7 @@
  * └─────────────────────────────────────────────────────────────────┘
  */
 
-import type { UITree, UINode, SlotPropDefinition, VariantPropDefinition } from "../../../types/types";
+import type { UITree, SlotPropDefinition, VariantPropDefinition } from "../../../types/types";
 import type {
   ICodeEmitter,
   EmittedCode,
@@ -41,7 +41,7 @@ import type { VariantInconsistency } from "../../../types/types";
 import { EmotionStrategy } from "./style-strategy/EmotionStrategy";
 import { TailwindStrategy } from "./style-strategy/TailwindStrategy";
 import type { IStyleStrategy } from "./style-strategy/IStyleStrategy";
-import { toComponentName } from "../../../utils/nameUtils";
+import type { SemanticComponent, SemanticNode } from "../SemanticIR";
 
 /** element별 충돌하는 native HTML attribute */
 const NATIVE_ATTRS_BY_ELEMENT: Record<string, Set<string>> = {
@@ -82,24 +82,16 @@ export class ReactEmitter implements ICodeEmitter {
   }
 
   /**
-   * UITree → React 컴포넌트 코드 변환 (고수준 파이프라인)
+   * SemanticComponent → React 컴포넌트 코드 변환 (고수준 파이프라인)
    *
    * 1. 컴포넌트명 생성
    * 2. 각 섹션 독립적으로 생성 (imports, props, styles, jsx)
    *    - StylesGenerator가 변수명 고유성 보장
    * 3. 섹션 조합 및 포맷팅
    */
-  async emit(uiTree: UITree): Promise<EmittedCode> {
-    // Step 0: native HTML prop 충돌 rename (UITree 복사본에 적용)
-    const renamedTree = this.renameNativeProps(uiTree);
-
-    // Step 1: 컴포넌트명 생성
-    const componentName = toComponentName(renamedTree.root.name);
-
-    // Step 2: 각 섹션 생성 (독립적으로 병렬 가능)
-    const sections = this.generateAllSections(renamedTree, componentName);
-
-    // Step 3: 조합 및 포맷팅
+  async emit(ir: SemanticComponent): Promise<EmittedCode> {
+    const componentName = ir.name;
+    const sections = this.generateAllSections(ir, componentName);
     const code = await this.assembleAndFormat(sections);
 
     return {
@@ -111,35 +103,52 @@ export class ReactEmitter implements ICodeEmitter {
   }
 
   /**
-   * 메인 + 의존 트리 → 개별 코드 변환 (멀티 파일 출력용)
+   * 메인 + 의존 IR → 개별 코드 변환 (멀티 파일 출력용)
    */
   async emitAll(
-    main: UITree,
-    deps: Map<string, UITree>
+    main: SemanticComponent,
+    deps: Map<string, SemanticComponent>
   ): Promise<GeneratedResult> {
     const mainCode = await this.emit(main);
 
     const depCodes = new Map<string, EmittedCode>();
-    const emittedCache = new Map<UITree, EmittedCode>();
+    const emittedCache = new Map<SemanticComponent, EmittedCode>();
 
-    for (const [depId, depTree] of deps) {
-      if (!emittedCache.has(depTree)) {
-        emittedCache.set(depTree, await this.emit(depTree));
+    for (const [depId, depIR] of deps) {
+      if (!emittedCache.has(depIR)) {
+        emittedCache.set(depIR, await this.emit(depIR));
       }
-      depCodes.set(depId, emittedCache.get(depTree)!);
+      depCodes.set(depId, emittedCache.get(depIR)!);
     }
 
     return { main: mainCode, dependencies: depCodes };
   }
 
   /**
-   * 메인 + 의존 트리 → 단일 파일 번들 출력
+   * 메인 + 의존 IR → 단일 파일 번들 출력
    */
   async emitBundled(
-    main: UITree,
-    deps: Map<string, UITree>
+    main: SemanticComponent,
+    deps: Map<string, SemanticComponent>
   ): Promise<BundledResult> {
-    const filteredDeps = this.filterSlotDependencies(main, deps);
+    // Clone deps to prevent mutation leaking back to the caller's IR objects
+    const clonedDeps = new Map<string, SemanticComponent>();
+    for (const [id, dep] of deps) {
+      clonedDeps.set(id, {
+        ...dep,
+        props: dep.props.map((p) => {
+          if (p.type === "variant") {
+            return { ...p, options: [...(p as VariantPropDefinition).options] };
+          }
+          if (p.type === "boolean" && (p as any).extraValues?.length) {
+            return { ...p, extraValues: [...(p as any).extraValues] };
+          }
+          return p;
+        }),
+      });
+    }
+
+    const filteredDeps = this.filterSlotDependencies(main, clonedDeps);
 
     // dependency의 variant prop options를 parent binding에 맞춰 확장
     this.propagateVariantOptions(main, filteredDeps);
@@ -172,8 +181,8 @@ export class ReactEmitter implements ICodeEmitter {
    * 부모가 state={"Error"|"Normal"|...}를 전달하는데 dependency가 {"Normal"|...}만 수용하면 타입 에러.
    */
   private propagateVariantOptions(
-    main: UITree,
-    deps: Map<string, UITree>
+    main: SemanticComponent,
+    deps: Map<string, SemanticComponent>
   ): void {
     // main의 prop name → 확장 정보 매핑
     const mainPropInfo = new Map<string, { type: string; options?: Set<string>; extraValues?: string[] }>();
@@ -186,24 +195,23 @@ export class ReactEmitter implements ICodeEmitter {
     }
     if (mainPropInfo.size === 0) return;
 
-    // dep name → UITree 역매핑 (componentId가 없으면 name으로 매칭)
-    const depsByName = new Map<string, UITree[]>();
+    // dep name → SemanticComponent 역매핑
+    const depsByName = new Map<string, SemanticComponent[]>();
     for (const [, dep] of deps) {
-      const name = dep.componentName ?? dep.root?.name ?? "";
+      const name = dep.name ?? "";
       if (!depsByName.has(name)) depsByName.set(name, []);
       depsByName.get(name)!.push(dep);
     }
 
-    // main tree에서 component 노드의 bindings 수집 → dep name별로 필요한 options
-    // dep name → { attrName → variant options to add } + { attrName → extraValues to add }
+    // main structure에서 component 노드의 attrs 수집 → dep name별로 필요한 options
     const depVariantExtensions = new Map<string, Map<string, Set<string>>>();
     const depExtraValues = new Map<string, Map<string, string[]>>();
 
-    const walkNode = (node: UINode) => {
-      if (node.type === "component" && node.bindings?.attrs) {
+    const walkNode = (node: SemanticNode) => {
+      if (node.kind === "component" && node.attrs) {
         const compName = node.name ?? "";
         if (depsByName.has(compName)) {
-          for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
+          for (const [attrName, source] of Object.entries(node.attrs)) {
             if ("prop" in source) {
               const info = mainPropInfo.get(source.prop);
               if (!info) continue;
@@ -221,17 +229,17 @@ export class ReactEmitter implements ICodeEmitter {
           }
         }
       }
-      if ("children" in node && node.children) {
+      if (node.children) {
         for (const child of node.children) walkNode(child);
       }
     };
-    walkNode(main.root);
+    walkNode(main.structure);
 
-    // dependency props 확장
+    // dependency props 확장 (props は emitBundled でクローン済み)
     for (const [depName, propMap] of depVariantExtensions) {
-      const depTrees = depsByName.get(depName);
-      if (!depTrees) continue;
-      for (const dep of depTrees) {
+      const depIRs = depsByName.get(depName);
+      if (!depIRs) continue;
+      for (const dep of depIRs) {
         for (const prop of dep.props) {
           if (prop.type === "variant") {
             const extensions = propMap.get(prop.name);
@@ -249,9 +257,9 @@ export class ReactEmitter implements ICodeEmitter {
 
     // boolean extraValues 전파
     for (const [depName, extraMap] of depExtraValues) {
-      const depTrees = depsByName.get(depName);
-      if (!depTrees) continue;
-      for (const dep of depTrees) {
+      const depIRs = depsByName.get(depName);
+      if (!depIRs) continue;
+      for (const dep of depIRs) {
         for (const prop of dep.props) {
           if (prop.type === "boolean") {
             const extras = extraMap.get(prop.name);
@@ -274,14 +282,14 @@ export class ReactEmitter implements ICodeEmitter {
    *     parent의 <Input checked={checked}> → <Input customChecked={checked}>
    */
   private propagateNativeRenames(
-    main: UITree,
-    deps: Map<string, UITree>
+    main: SemanticComponent,
+    deps: Map<string, SemanticComponent>
   ): void {
     // dep name → { originalProp → renamedProp } 매핑
     const depRenameMap = new Map<string, Map<string, string>>();
     for (const [, dep] of deps) {
-      const rootType = (dep.root as any)?.type as string;
-      const nativeAttrs = NATIVE_ATTRS_BY_ELEMENT[rootType];
+      const rootKind = dep.structure.kind as string;
+      const nativeAttrs = NATIVE_ATTRS_BY_ELEMENT[rootKind];
       if (!nativeAttrs) continue;
 
       const renames = new Map<string, string>();
@@ -292,53 +300,53 @@ export class ReactEmitter implements ICodeEmitter {
         }
       }
       if (renames.size > 0) {
-        const depName = dep.componentName ?? dep.root?.name ?? "";
+        const depName = dep.name ?? "";
         depRenameMap.set(depName, renames);
       }
     }
     if (depRenameMap.size === 0) return;
 
-    // main tree의 component 노드 binding 업데이트
-    const walkNode = (node: UINode) => {
-      if (node.type === "component" && node.bindings?.attrs) {
+    // main structure의 component 노드 attrs 업데이트 (새 객체로 대체하여 mutation 격리)
+    const walkNode = (node: SemanticNode) => {
+      if (node.kind === "component" && node.attrs) {
         const compName = node.name ?? "";
         const renames = depRenameMap.get(compName);
         if (renames) {
           const newAttrs: Record<string, any> = {};
-          for (const [attrName, source] of Object.entries(node.bindings.attrs)) {
+          for (const [attrName, source] of Object.entries(node.attrs)) {
             const renamed = renames.get(attrName);
             newAttrs[renamed ?? attrName] = source;
           }
-          node.bindings.attrs = newAttrs;
+          node.attrs = newAttrs;
         }
       }
-      if ("children" in node && node.children) {
+      if (node.children) {
         for (const child of node.children) walkNode(child);
       }
     };
-    walkNode(main.root);
+    walkNode(main.structure);
   }
 
   private filterSlotDependencies(
-    main: UITree,
-    deps: Map<string, UITree>
-  ): Map<string, UITree> {
-    const slotTrees = new Set<UITree>();
+    main: SemanticComponent,
+    deps: Map<string, SemanticComponent>
+  ): Map<string, SemanticComponent> {
+    const slotIRs = new Set<SemanticComponent>();
     for (const prop of main.props) {
       if (prop.type === "slot") {
         const componentId = (prop as SlotPropDefinition).componentId;
         if (componentId) {
-          const tree = deps.get(componentId);
-          if (tree) slotTrees.add(tree);
+          const ir = deps.get(componentId);
+          if (ir) slotIRs.add(ir);
         }
       }
     }
 
-    if (slotTrees.size === 0) return deps;
+    if (slotIRs.size === 0) return deps;
 
-    const filtered = new Map<string, UITree>();
-    for (const [id, tree] of deps) {
-      if (!slotTrees.has(tree)) filtered.set(id, tree);
+    const filtered = new Map<string, SemanticComponent>();
+    for (const [id, ir] of deps) {
+      if (!slotIRs.has(ir)) filtered.set(id, ir);
     }
     return filtered;
   }
@@ -347,7 +355,7 @@ export class ReactEmitter implements ICodeEmitter {
    * 모든 섹션 생성 (imports, props, styles, jsx)
    */
   private generateAllSections(
-    uiTree: UITree,
+    ir: SemanticComponent,
     componentName: string
   ): {
     imports: string;
@@ -356,15 +364,15 @@ export class ReactEmitter implements ICodeEmitter {
     jsx: string;
     diagnostics: VariantInconsistency[];
   } {
-    const propsInterface = PropsGenerator.generate(uiTree, componentName);
-    const stylesResult = StylesGenerator.generate(uiTree, componentName, this.styleStrategy);
-    const jsxResult = JsxGenerator.generate(uiTree, componentName, this.styleStrategy, {
+    const propsInterface = PropsGenerator.generate(ir, componentName);
+    const stylesResult = StylesGenerator.generate(ir, componentName, this.styleStrategy);
+    const jsxResult = JsxGenerator.generate(ir, componentName, this.styleStrategy, {
       debug: this.options.debug,
       nodeStyleMap: stylesResult.nodeStyleMap,
     });
 
     // JSX에서 실제 사용되는 컴포넌트만 import (slot binding → JSX 미생성 케이스 제거)
-    const rawImports = ImportsGenerator.generate(uiTree, this.styleStrategy);
+    const rawImports = ImportsGenerator.generate(ir, this.styleStrategy);
     const imports = this.filterComponentImportsByJsx(rawImports, jsxResult.code);
 
     return {
@@ -481,40 +489,43 @@ export class ReactEmitter implements ICodeEmitter {
     }
   }
 
-  /**
-   * UITree 복사본을 만들어 native HTML prop 충돌 이름을 일괄 rename.
-   * 원본 UITree(Layer 2 출력)는 변경하지 않음.
-   *
-   * rename 대상: rootNodeType이 native element(button, input, a)일 때
-   * 해당 element의 native attributes와 이름이 겹치는 props.
-   */
-  private renameNativeProps(uiTree: UITree): UITree {
-    const rootType = (uiTree.root as any).type as string;
-    const nativeAttrs = NATIVE_ATTRS_BY_ELEMENT[rootType];
-    if (!nativeAttrs) return uiTree;
+}
 
-    // rename 대상 prop 수집 (nativeAttribute 플래그가 있으면 의도적 사용이므로 스킵)
-    const renameMap = new Map<string, string>();
-    for (const prop of uiTree.props) {
-      if (nativeAttrs.has(prop.name) && !prop.nativeAttribute) {
-        renameMap.set(prop.name, "custom" + prop.name.charAt(0).toUpperCase() + prop.name.slice(1));
-      }
+/**
+ * UITree 복사본을 만들어 native HTML prop 충돌 이름을 일괄 rename.
+ * 원본 UITree(Layer 2 출력)는 변경하지 않음.
+ *
+ * rename 대상: rootNodeType이 native element(button, input, a)일 때
+ * 해당 element의 native attributes와 이름이 겹치는 props.
+ *
+ * 호출 위치: SemanticIRBuilder.build() 전, FigmaCodeGenerator 또는 테스트에서 직접 호출.
+ */
+export function renameNativeProps(uiTree: UITree): UITree {
+  const rootType = (uiTree.root as any).type as string;
+  const nativeAttrs = NATIVE_ATTRS_BY_ELEMENT[rootType];
+  if (!nativeAttrs) return uiTree;
+
+  // rename 대상 prop 수집 (nativeAttribute 플래그가 있으면 의도적 사용이므로 스킵)
+  const renameMap = new Map<string, string>();
+  for (const prop of uiTree.props) {
+    if (nativeAttrs.has(prop.name) && !prop.nativeAttribute) {
+      renameMap.set(prop.name, "custom" + prop.name.charAt(0).toUpperCase() + prop.name.slice(1));
     }
-    if (renameMap.size === 0) return uiTree;
-
-    // deep copy + prop 이름 일괄 치환
-    const json = JSON.stringify(uiTree);
-    let renamed = json;
-
-    for (const [original, newName] of renameMap) {
-      // "prop":"type" → "prop":"customType" (ConditionNode, Bindings 등)
-      renamed = renamed.replaceAll(`"prop":"${original}"`, `"prop":"${newName}"`);
-      // "name":"type" (PropDefinition.name)
-      renamed = renamed.replaceAll(`"name":"${original}"`, `"name":"${newName}"`);
-    }
-
-    return JSON.parse(renamed);
   }
+  if (renameMap.size === 0) return uiTree;
+
+  // deep copy + prop 이름 일괄 치환
+  const json = JSON.stringify(uiTree);
+  let renamed = json;
+
+  for (const [original, newName] of renameMap) {
+    // "prop":"type" → "prop":"customType" (ConditionNode, Bindings 등)
+    renamed = renamed.split(`"prop":"${original}"`).join(`"prop":"${newName}"`);
+    // "name":"type" (PropDefinition.name)
+    renamed = renamed.split(`"name":"${original}"`).join(`"name":"${newName}"`);
+  }
+
+  return JSON.parse(renamed);
 }
 
 // Legacy alias for backward compatibility

@@ -1,10 +1,10 @@
 /**
  * StylesGenerator
  *
- * UITree의 모든 노드에서 스타일 코드 생성
+ * SemanticComponent의 모든 노드에서 스타일 코드 생성
  */
 
-import type { UITree, UINode } from "../../../../types/types";
+import type { SemanticComponent, SemanticNode } from "../../SemanticIR";
 import type { IStyleStrategy, StyleResult } from "../style-strategy/IStyleStrategy";
 
 export interface StylesGeneratorResult {
@@ -27,7 +27,7 @@ export class StylesGenerator {
    * 4. 빈 스타일 필터링 및 코드 조합
    */
   static generate(
-    uiTree: UITree,
+    ir: SemanticComponent,
     componentName: string,
     styleStrategy: IStyleStrategy
   ): StylesGeneratorResult {
@@ -37,7 +37,7 @@ export class StylesGenerator {
     // Step 1.5: Tailwind variant options 설정 (cva 타입 완전성 보장)
     if ("setVariantOptions" in styleStrategy) {
       const variantOptions = new Map<string, string[]>();
-      for (const p of uiTree.props) {
+      for (const p of ir.props) {
         if (p.type === "variant" && (p as any).options) {
           variantOptions.set(p.name, (p as any).options);
         } else if (p.type === "boolean") {
@@ -53,7 +53,7 @@ export class StylesGenerator {
     // Step 1.6: Emotion boolean/slot prop 이름 설정 (개별 True/False 변수 생성용)
     if ("setBooleanNames" in styleStrategy) {
       const boolNames = new Set<string>();
-      for (const p of uiTree.props) {
+      for (const p of ir.props) {
         if (p.type === "boolean" && !(p as any).extraValues?.length) {
           boolNames.add(p.name);
         }
@@ -62,8 +62,8 @@ export class StylesGenerator {
           boolNames.add(p.name);
         }
       }
-      // boolean stateVars (예: open from useState(false))
-      for (const sv of uiTree.stateVars || []) {
+      // boolean state (예: open from useState(false))
+      for (const sv of ir.state) {
         if (sv.initialValue === "false" || sv.initialValue === "true") {
           boolNames.add(sv.name);
         }
@@ -73,9 +73,9 @@ export class StylesGenerator {
 
     // Step 2: 트리 순회하며 스타일 수집
     const { styleResults, nodeStyleMap } = this.collectAllStyles(
-      uiTree.root,
+      ir.structure,
       styleStrategy,
-      uiTree.isDependency
+      ir.isDependency
     );
 
     // Step 3: 변수명 고유성 보장 (충돌 감지 및 카운터 추가)
@@ -123,7 +123,7 @@ export class StylesGenerator {
    * 트리 전체 스타일 수집
    */
   private static collectAllStyles(
-    root: UINode,
+    root: SemanticNode,
     styleStrategy: IStyleStrategy,
     isDependency?: boolean
   ): { styleResults: StyleResult[]; nodeStyleMap: Map<string, string> } {
@@ -184,7 +184,7 @@ export class StylesGenerator {
   /**
    * dependency root의 고정 width/height를 100%로 변환
    */
-  private static convertRootToFluid(root: UINode): void {
+  private static convertRootToFluid(root: SemanticNode): void {
     if (!root.styles) return;
 
     const replaceSize = (styles: Record<string, string>) => {
@@ -312,7 +312,7 @@ export class StylesGenerator {
    * 재귀적으로 스타일 수집 (부모 경로 추적)
    */
   private static collectStyles(
-    node: UINode,
+    node: SemanticNode,
     styleStrategy: IStyleStrategy,
     results: StyleResult[],
     nodeStyleMap: Map<string, string>,
@@ -320,13 +320,13 @@ export class StylesGenerator {
   ): void {
     // slot binding 노드: children은 skip하되, 노드 자체의 스타일은 수집
     // (variant별 텍스트 color 등이 slot wrapper에 적용되어야 함)
-    const slotBinding = node.bindings?.content;
+    const slotBinding = node.content;
     if (slotBinding && "prop" in slotBinding) {
       if (node.styles) {
-        const currentPath_ = [...parentPath, node.name];
+        const currentPath_ = [...parentPath, node.name ?? ""];
         const result = styleStrategy.generateStyle(
           node.id,
-          node.name,
+          node.name ?? "",
           node.styles,
           currentPath_
         );
@@ -340,15 +340,15 @@ export class StylesGenerator {
     }
 
     // 현재 노드를 포함한 전체 경로
-    const currentPath = [...parentPath, node.name];
+    const currentPath = [...parentPath, node.name ?? ""];
 
     // 노드에 스타일이 있으면 생성
     if (node.styles) {
       // component 타입일 때 wrapper 변수명 사용
-      const isComponent = node.type === "component";
+      const isComponent = node.kind === "component";
       const nodeName = isComponent
-        ? this.createWrapperName(node.name)
-        : node.name;
+        ? this.createWrapperName(node.name ?? "")
+        : (node.name ?? "");
 
       const result = styleStrategy.generateStyle(
         node.id,
@@ -367,12 +367,12 @@ export class StylesGenerator {
     }
 
     // component 노드의 children은 JsxGenerator가 렌더링하지 않으므로 skip
-    if (node.type === "component") {
+    if (node.kind === "component") {
       return;
     }
 
     // 자식 노드 순회 (현재 경로 전달)
-    if ("children" in node && node.children) {
+    if (node.children) {
       for (const child of node.children) {
         this.collectStyles(child, styleStrategy, results, nodeStyleMap, currentPath);
       }

@@ -48,7 +48,9 @@ import type {
   BundledResult,
 } from "./layers/code-emitter/ICodeEmitter";
 import type { VariantInconsistency, PropertyBindingFeedback } from "./types/types";
-import { ReactEmitter } from "./layers/code-emitter/react/ReactEmitter";
+import { ReactEmitter, renameNativeProps } from "./layers/code-emitter/react/ReactEmitter";
+import { SemanticIRBuilder } from "./layers/code-emitter/SemanticIRBuilder";
+import type { SemanticComponent } from "./layers/code-emitter/SemanticIR";
 import { toComponentName } from "./utils/nameUtils";
 import { toPublicProps } from "./adapters/PropsAdapter";
 
@@ -109,7 +111,12 @@ class FigmaCodeGenerator {
    */
   async generate(): Promise<GeneratedResult> {
     const { main, dependencies } = this.treeManager.build();
-    return this.codeEmitter.emitAll(main, dependencies);
+    const mainIR = SemanticIRBuilder.build(renameNativeProps(main));
+    const depIRs = new Map<string, SemanticComponent>();
+    for (const [id, dep] of dependencies) {
+      depIRs.set(id, SemanticIRBuilder.build(renameNativeProps(dep)));
+    }
+    return this.codeEmitter.emitAll(mainIR, depIRs);
   }
 
   /**
@@ -123,7 +130,8 @@ class FigmaCodeGenerator {
    * 단일 UITree → 코드 변환 (디버깅/테스트용)
    */
   async emitCode(uiTree: UITree): Promise<EmittedCode> {
-    return this.codeEmitter.emit(uiTree);
+    const ir = SemanticIRBuilder.build(renameNativeProps(uiTree));
+    return this.codeEmitter.emit(ir);
   }
 
   /**
@@ -141,7 +149,12 @@ class FigmaCodeGenerator {
     try {
       const diagnostics: VariantInconsistency[] = [];
       const { main, dependencies } = this.treeManager.build(diagnostics);
-      const result = await this.codeEmitter.emitBundled(main, dependencies);
+      const mainIR = SemanticIRBuilder.build(renameNativeProps(main));
+      const depIRs = new Map<string, SemanticComponent>();
+      for (const [id, dep] of dependencies) {
+        depIRs.set(id, SemanticIRBuilder.build(renameNativeProps(dep)));
+      }
+      const result = await this.codeEmitter.emitBundled(mainIR, depIRs);
       const designFeedback = this.detectPropertyBindingGaps();
       // 바인딩 누락을 VariantInconsistency 형태로 변환하여 기존 warning UI에 표시
       diagnostics.push(...this.bindingFeedbackToDiagnostics(designFeedback));
