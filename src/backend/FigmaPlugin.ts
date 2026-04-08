@@ -23,16 +23,15 @@ export class FigmaPlugin {
     figma.ui.onmessage = async (msg) => {
       if (msg.type === MESSAGE_TYPES.REQUEST_REFRESH) {
         const selection = figma.currentPage.selection;
-        if (selection.length === 0) return;
-        const target = selection[0];
-        const componentSet =
-          target.type === "COMPONENT_SET"
-            ? target
-            : target.parent?.type === "COMPONENT_SET"
-              ? target.parent
-              : null;
-        const nodes = componentSet ? [componentSet as SceneNode] : [...selection];
-        const data = await this.getNodeData(nodes);
+        if (selection.length === 0) {
+          figma.ui.postMessage({
+            type: MESSAGE_TYPES.ON_SELECTION_CHANGE,
+            data: null,
+          });
+          return;
+        }
+        // 멀티 선택은 첫 노드만 사용 (자동 점프 제거)
+        const data = await this.getNodeData([selection[0]]);
         figma.ui.postMessage({
           type: MESSAGE_TYPES.ON_SELECTION_CHANGE,
           data,
@@ -43,7 +42,16 @@ export class FigmaPlugin {
     };
 
     figma.on("selectionchange", async () => {
-      const data = await this.getNodeData([...figma.currentPage.selection]);
+      const selection = figma.currentPage.selection;
+      if (selection.length === 0) {
+        figma.ui.postMessage({
+          type: MESSAGE_TYPES.ON_SELECTION_CHANGE,
+          data: null,
+        });
+        return;
+      }
+      // 멀티 선택은 첫 노드만 사용
+      const data = await this.getNodeData([selection[0]]);
       figma.ui.postMessage({
         type: MESSAGE_TYPES.ON_SELECTION_CHANGE,
         data,
