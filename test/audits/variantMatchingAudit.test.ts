@@ -30,6 +30,7 @@ interface AuditReport {
   totalFixtures: number;
   fixturesWithRegressions: number;
   totalDisjointPairs: number;
+  compileErrors: number;
   patternTotals: Record<PatternLabel, number>;
   byFixture: FixtureReport[];
 }
@@ -48,6 +49,7 @@ async function runAudit(): Promise<AuditReport> {
   };
   let totalDisjointPairs = 0;
   let fixturesWithRegressions = 0;
+  let compileErrors = 0;
 
   const entries = Object.entries(fixtureLoaders)
     .map(([p, loader]) => ({
@@ -57,15 +59,21 @@ async function runAudit(): Promise<AuditReport> {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   for (const { name, loader } of entries) {
-    const mod = await loader();
-    const data = mod.default as any;
+    const mod = (await loader()) as {
+      default: { info?: { document?: unknown } };
+    };
+    const data = mod.default;
     let pairs: DisjointPair[] = [];
     try {
-      const dm = new DataManager(data);
+      const dm = new DataManager(data as any);
       const tb = new TreeBuilder(dm);
       const doc = data?.info?.document;
       if (!doc) {
-        byFixture.push(makeEmptyReport(name));
+        byFixture.push({
+          ...makeEmptyReport(name),
+          fixture: `${name} (COMPILE_ERROR: missing document)`,
+        });
+        compileErrors++;
         continue;
       }
       const tree = tb.buildInternalTreeDebug(doc);
@@ -76,6 +84,7 @@ async function runAudit(): Promise<AuditReport> {
         ...makeEmptyReport(name),
         fixture: `${name} (COMPILE_ERROR: ${(err as Error).message.slice(0, 80)})`,
       });
+      compileErrors++;
       continue;
     }
 
@@ -114,6 +123,7 @@ async function runAudit(): Promise<AuditReport> {
     totalFixtures: entries.length,
     fixturesWithRegressions,
     totalDisjointPairs,
+    compileErrors,
     patternTotals,
     byFixture,
   };
@@ -145,6 +155,7 @@ describe("Variant matching audit", () => {
         `Fixtures: ${report.totalFixtures}`,
         `With regressions: ${report.fixturesWithRegressions}`,
         `Total disjoint pairs: ${report.totalDisjointPairs}`,
+        `Compile errors: ${report.compileErrors}`,
         `  size-variant-reject: ${report.patternTotals["size-variant-reject"]}`,
         `  variant-prop-position: ${report.patternTotals["variant-prop-position"]}`,
         `  unknown: ${report.patternTotals.unknown}`,
@@ -174,6 +185,10 @@ describe("Variant matching audit", () => {
       );
       expect(report.fixturesWithRegressions).toBeLessThanOrEqual(
         baseline.fixturesWithRegressions
+      );
+      // 컴파일 에러가 증가하지 않았는지 검증 — 회귀가 개선처럼 보이는 걸 방지
+      expect(report.compileErrors).toBeLessThanOrEqual(
+        baseline.compileErrors ?? 0
       );
     },
     120_000

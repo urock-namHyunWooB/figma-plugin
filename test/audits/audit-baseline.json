@@ -1,8 +1,9 @@
 {
-  "generatedAt": "2026-04-08T11:59:22.286Z",
+  "generatedAt": "2026-04-08T12:05:24.997Z",
   "totalFixtures": 84,
   "fixturesWithRegressions": 55,
   "totalDisjointPairs": 1991,
+  "compileErrors": 0,
   "patternTotals": {
     "size-variant-reject": 45,
     "variant-prop-position": 16,
