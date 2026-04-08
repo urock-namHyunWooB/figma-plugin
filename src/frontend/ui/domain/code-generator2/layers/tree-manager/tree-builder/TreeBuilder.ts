@@ -1,6 +1,7 @@
 import {
   UITree,
   InternalTree,
+  InternalNode,
   PropDefinition,
   ConditionNode,
 } from "../../../types/types";

@@ -259,7 +259,7 @@ export class ButtonHeuristic implements IHeuristic {
     const stateProp = ctx.props.find(
       (p) => p.sourceKey.toLowerCase() === "state" || p.sourceKey.toLowerCase() === "states"
     );
-    if (!stateProp?.options?.some((opt) => /^disable[d]?$|^inactive$/i.test(opt))) return;
+    if (!(stateProp?.type === "variant" && stateProp.options.some((opt: string) => /^disable[d]?$|^inactive$/i.test(opt)))) return;
 
     const GUARD_MAP: Record<string, PseudoClass> = {
       ":hover": ":hover:not(:disabled)",
