@@ -6,8 +6,6 @@ import { SingleWalkExtractor } from "./SingleWalkExtractor";
 export interface ExtractionPipelineOptions {
   onResult: (data: FigmaNodeData) => void;
   onError: (err: Error) => void;
-  /** 캐시 미스로 walk가 실제로 시작될 때 호출. 캐시 히트는 호출 안 됨. */
-  onLoading?: () => void;
   /** 디바운스 지연 (ms). 기본 150. */
   debounceMs?: number;
   /** 캐시 LRU 상한. 기본 20. */
@@ -19,6 +17,11 @@ export interface ExtractionPipeline {
   schedule(node: SceneNode): void;
   /** REQUEST_REFRESH 등 즉시 발화 + 캐시 우회용. */
   fireImmediate(node: SceneNode, bypassCache?: boolean): void;
+  /**
+   * 캐시에 이미 있는지 동기 조회. selectionchange 등 sync 컨텍스트에서
+   * 로딩 신호를 보낼지 결정할 때 사용. LRU 순서를 변경하지 않음.
+   */
+  peekCache(nodeId: string): boolean;
 }
 
 interface DispatchArg {
@@ -56,8 +59,6 @@ export function createExtractionPipeline(opts: ExtractionPipelineOptions): Extra
             return;
           }
         }
-        // 캐시 미스 — walk 시작 전에 로딩 신호
-        if (isCurrent()) opts.onLoading?.();
         const data = await extractor.extract(node);
         if (!isCurrent()) return; // 새 선택 도착 — 결과 폐기
         cache.set(node.id, data);
@@ -106,6 +107,9 @@ export function createExtractionPipeline(opts: ExtractionPipelineOptions): Extra
     },
     fireImmediate(node: SceneNode, bypassCache = false): void {
       dispatcher.fireImmediate({ node, bypassCache });
+    },
+    peekCache(nodeId: string): boolean {
+      return cache.has(nodeId);
     },
   };
 }

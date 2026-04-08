@@ -23,6 +23,11 @@ export class ExtractionCache {
     return value;
   }
 
+  /** LRU 순서를 변경하지 않는 존재 여부 조회. */
+  has(nodeId: string): boolean {
+    return this.cache.has(nodeId);
+  }
+
   set(nodeId: string, data: FigmaNodeData): void {
     if (this.cache.has(nodeId)) {
       this.cache.delete(nodeId);
