@@ -1,4 +1,4 @@
-import type { FigmaNodeData } from "@frontend/ui/domain/transpiler/types/figma-api";
+import type { FigmaNodeData } from "@code-generator2";
 
 /**
  * 메시지 타입 상수

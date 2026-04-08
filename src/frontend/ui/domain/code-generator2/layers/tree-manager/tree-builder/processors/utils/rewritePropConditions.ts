@@ -18,7 +18,7 @@
  * conditionMap에 없는 값(예: "Unchecked")은 기본 상태로 간주 → 조건 제거
  */
 
-import type { InternalNode, ConditionNode, PseudoClass } from "../../../../types/types";
+import type { InternalNode, ConditionNode, PseudoClass } from "../../../../../types/types";
 
 /**
  * 트리 전체의 visibleCondition에서 removedProp 참조를 대체 ConditionNode로 치환
