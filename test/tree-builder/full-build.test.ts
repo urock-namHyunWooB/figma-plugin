@@ -111,4 +111,40 @@ describe("TreeBuilder Full Build", () => {
     expect(uiTree.root.id).toBe(firstComponent.id);
     expect(Array.isArray(uiTree.props)).toBe(true);
   });
+
+  it("should build UITree from a nested FRAME node (not COMPONENT_SET)", () => {
+    // 임의의 FRAME 자식 노드 탐색
+    const findFrame = (node: any): any => {
+      if (node.type === "FRAME") return node;
+      if (node.children) {
+        for (const c of node.children) {
+          const f = findFrame(c);
+          if (f) return f;
+        }
+      }
+      return null;
+    };
+
+    const frameNode = findFrame((taptapButton as any).info.document);
+    if (!frameNode) {
+      console.warn("FRAME 자식 노드 없음 — 스킵");
+      return;
+    }
+
+    const singleFrameData = {
+      ...(taptapButton as any),
+      info: {
+        ...(taptapButton as any).info,
+        document: frameNode,
+      },
+    };
+
+    const dataManager = new DataManager(singleFrameData);
+    const treeBuilder = new TreeBuilder(dataManager);
+
+    const uiTree = treeBuilder.build(frameNode);
+
+    expect(uiTree.root).toBeDefined();
+    expect(uiTree.root.id).toBe(frameNode.id);
+  });
 });
