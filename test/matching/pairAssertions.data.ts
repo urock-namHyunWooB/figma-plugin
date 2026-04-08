@@ -1,17 +1,13 @@
 import type { PairAssertion } from "./pairAssertions";
 
 /**
- * Phase 0: empty — populated during Phase 1~2 as specific matching cases
- * are debugged. Each entry represents a "should be the same node" or
- * "should NOT be the same node" claim verified by the engine.
+ * Auto-generated from test/audits/audit-baseline.json
+ * by scripts/generate-pair-assertions.ts
  *
- * Format example (add during Phase 1):
- *   {
- *     fixture: "failing/Switch",
- *     description: "Switch Knob — Off/On variants are the same node",
- *     nodeIdA: "<id in State=Off variant>",
- *     nodeIdB: "<id in State=On variant>",
- *     kind: "must-match",
- *   }
+ * Contents: all `size-variant-reject` pairs identified by Phase 0 audit.
+ * These assertions should FAIL in Phase 1a (engine behavior-preserving, still 1.3 ratio)
+ * and PASS in Phase 1b (relaxed to 2.0 ratio).
+ *
+ * Do NOT hand-edit. Re-run `npx tsx scripts/generate-pair-assertions.ts` to regenerate.
  */
 export const pairAssertions: PairAssertion[] = [];

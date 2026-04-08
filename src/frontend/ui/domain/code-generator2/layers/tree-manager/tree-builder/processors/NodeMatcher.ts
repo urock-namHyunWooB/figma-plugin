@@ -1,6 +1,12 @@
 import { InternalNode } from "../../../../types/types";
 import DataManager from "../../../data-manager/DataManager";
 import { LayoutNormalizer } from "./LayoutNormalizer";
+import {
+  createDefaultEngine,
+  defaultMatchingPolicy,
+  type MatchContext,
+  type MatchDecisionEngine,
+} from "./match-engine";
 
 /**
  * NodeMatcher
@@ -30,6 +36,9 @@ export class NodeMatcher {
     "GROUP", "FRAME",
   ]);
 
+  /** 매칭 결정 엔진 (Phase 1a 섀도 모드: legacy와 비교만, 반환값은 legacy 사용) */
+  private readonly engine: MatchDecisionEngine = createDefaultEngine();
+
   constructor(
     dataManager: DataManager,
     nodeToVariantRoot: Map<string, string>,
@@ -40,9 +49,21 @@ export class NodeMatcher {
   }
 
   /**
-   * 두 노드가 같은 역할을 하는지 판단
+   * 두 노드가 같은 역할을 하는지 판단.
+   *
+   * Phase 1 최종: isSameNode는 legacy 로직 유지.
+   * Phase 1 실제 개선(size-variant-reject 45→0)은 `isSimilarSize`가 policy를
+   * 읽게 한 덕분 (getPositionCost 경로에서 사용). 엔진은 Phase 2에 활용 예정 —
+   * TEXT/INSTANCE 특수 매칭 신호가 추가되면 이 메서드를 엔진으로 전환 가능.
+   *
+   * 디버깅: globalThis.__MATCH_REASON_LOG__가 설정돼 있으면 기록 (getPositionCost에서만).
    */
   public isSameNode(nodeA: InternalNode, nodeB: InternalNode): boolean {
+    return this.isSameNodeLegacy(nodeA, nodeB);
+  }
+
+  /** Phase 1 활성 경로. Phase 2에서 엔진+INSTANCE/TEXT 신호로 대체 예정. */
+  private isSameNodeLegacy(nodeA: InternalNode, nodeB: InternalNode): boolean {
     // 1. 타입 호환성 체크 (shape 계열, 컨테이너 계열은 상호 호환)
     if (nodeA.type !== nodeB.type) {
       const bothShapes =
@@ -120,8 +141,28 @@ export class NodeMatcher {
   /**
    * Pass 2용: 위치 기반 매칭 비용 반환 (0~1 범위, 낮을수록 유사)
    * 매칭 불가하면 Infinity 반환
+   *
+   * Phase 1c: reason log hook 추가 (엔진 migration은 Phase 2에서 완료 예정)
    */
   public getPositionCost(nodeA: InternalNode, nodeB: InternalNode): number {
+    const cost = this.getPositionCostLegacy(nodeA, nodeB);
+
+    const log = (globalThis as any).__MATCH_REASON_LOG__ as Array<unknown> | undefined;
+    if (log) {
+      // 현재는 legacy 결과만 기록. Phase 2에서 엔진 결과와 병행 기록.
+      log.push({
+        pair: [nodeA.id, nodeB.id],
+        decision: cost < Infinity ? "match-or-cost" : "veto",
+        totalCost: cost,
+        source: "legacy-getPositionCost",
+      });
+    }
+
+    return cost;
+  }
+
+  /** 기존 getPositionCost 로직 (Phase 1c: reason log hook을 위해 분리) */
+  private getPositionCostLegacy(nodeA: InternalNode, nodeB: InternalNode): number {
     // 타입 호환성 체크
     if (nodeA.type !== nodeB.type) {
       const bothShapes =
@@ -255,8 +296,12 @@ export class NodeMatcher {
   }
 
   /**
-   * Shape 노드의 크기 유사도 검증 (비율 1.3 이내)
-   * 중심점이 동일한 동심원(22x22 vs 16x16)이 같은 노드로 매칭되는 것을 방지
+   * Shape 노드의 크기 유사도 검증 (policy.relativeSizeMaxRatio 이내)
+   * 중심점이 동일한 동심원(22x22 vs 16x16)이 같은 노드로 매칭되는 것을 방지.
+   *
+   * Phase 1b: hardcoded 1.3 → defaultMatchingPolicy.relativeSizeMaxRatio (현재 2.0)
+   * 이 메서드는 legacy getPositionCost 경로에서만 사용됨. Phase 1c Task C2에서
+   * getPositionCost도 엔진으로 위임 후 제거 예정.
    */
   private isSimilarSize(nodeA: InternalNode, nodeB: InternalNode): boolean {
     if (!nodeA.mergedNodes?.[0] || !nodeB.mergedNodes?.[0]) return true;
@@ -270,7 +315,8 @@ export class NodeMatcher {
     if (minW <= 0 || minH <= 0) return true;
     const wRatio = Math.max(boxA.width, boxB.width) / minW;
     const hRatio = Math.max(boxA.height, boxB.height) / minH;
-    return wRatio <= 1.3 && hRatio <= 1.3;
+    const maxRatio = defaultMatchingPolicy.relativeSizeMaxRatio;
+    return wRatio <= maxRatio && hRatio <= maxRatio;
   }
 
   /**
