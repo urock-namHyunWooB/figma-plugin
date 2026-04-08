@@ -16,16 +16,22 @@ const entries = Object.entries(fixtureLoaders)
 
 /**
  * Shadow-mode verification:
- * For each fixture, collect all pairs passed to isSameNode during VariantMerger
- * (via a global __SHADOW_MODE_COLLECTOR__ hook) and verify engine.decide returns
- * the same match/no-match decision as the legacy NodeMatcher.isSameNodeLegacy.
  *
- * Phase 1a invariant: zero disagreements across all 84 fixtures.
- * Phase 1b will intentionally relax the expectation (size-variant-reject fixes).
+ * Phase 1a invariant (original): zero disagreements across all 84 fixtures.
+ * Phase 1b (now): RelativeSize was relaxed 1.3 → 2.0, so engine may now ACCEPT
+ * pairs that legacy rejected (the intended 45 size-variant-reject fixes).
+ *
+ * The new invariant: all disagreements must be in the SAFE direction only —
+ *   legacy=false, engine=true (new matches accepted due to relaxed size ratio).
+ *
+ * The UNSAFE direction would be:
+ *   legacy=true, engine=false (engine wrongly rejects a pair legacy accepted)
+ *
+ * Any unsafe-direction disagreement is a Phase 1a regression and must fail CI.
  */
-describe("Shadow mode: NodeMatcher ↔ MatchDecisionEngine agreement (Phase 1a)", () => {
+describe("Shadow mode: Phase 1b direction-constrained drift", () => {
   for (const { name, loader } of entries) {
-    it(`${name}: zero drift`, async () => {
+    it(`${name}: no unsafe-direction drift`, async () => {
       const mod = await loader();
       const data = mod.default as any;
       const doc = data?.info?.document;
@@ -45,12 +51,15 @@ describe("Shadow mode: NodeMatcher ↔ MatchDecisionEngine agreement (Phase 1a)"
         delete (globalThis as any).__SHADOW_MODE_COLLECTOR__;
       }
 
-      if (disagreements.length > 0) {
-        const sample = disagreements
+      const unsafe = disagreements.filter((d) => d.old === true && d.engine === false);
+      if (unsafe.length > 0) {
+        const sample = unsafe
           .slice(0, 5)
-          .map((d) => `  ${d.pair[0]} ↔ ${d.pair[1]}: legacy=${d.old} engine=${d.engine}`)
+          .map((d) => `  ${d.pair[0]} ↔ ${d.pair[1]}: legacy=true, engine=false`)
           .join("\n");
-        expect.fail(`${disagreements.length} disagreements in ${name}:\n${sample}`);
+        expect.fail(
+          `${unsafe.length} unsafe-direction disagreements in ${name} (engine rejects what legacy accepts):\n${sample}`,
+        );
       }
     }, 30_000);
   }

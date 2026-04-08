@@ -32,7 +32,7 @@ function makeCtx(
   } as any;
 }
 
-describe("RelativeSize signal (Phase 1a — ratio 1.3)", () => {
+describe("RelativeSize signal (Phase 1b — ratio 2.0)", () => {
   const signal = new RelativeSize();
 
   it("returns score 1 for non-shape/container pair (passthrough)", () => {
@@ -55,30 +55,31 @@ describe("RelativeSize signal (Phase 1a — ratio 1.3)", () => {
     if (r.kind === "score") expect(r.score).toBe(1);
   });
 
-  it("returns score 1 for shape pair within ratio 1.3", () => {
-    const r = signal.evaluate(
-      node("RECTANGLE", "a"),
-      node("RECTANGLE", "b"),
-      makeCtx({ width: 10, height: 10 }, { width: 12, height: 12 }),
-    );
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(1);
-  });
-
-  it("returns veto for shape pair exceeding ratio 1.3", () => {
+  it("returns score 1 for shape pair within ratio 2.0 (Phase 1b relaxed)", () => {
+    // 1.5 ratio — would veto in Phase 1a, passes in Phase 1b
     const r = signal.evaluate(
       node("RECTANGLE", "a"),
       node("RECTANGLE", "b"),
       makeCtx({ width: 10, height: 10 }, { width: 15, height: 15 }),
     );
+    expect(r.kind).toBe("score");
+    if (r.kind === "score") expect(r.score).toBe(1);
+  });
+
+  it("returns veto for shape pair exceeding ratio 2.0", () => {
+    const r = signal.evaluate(
+      node("RECTANGLE", "a"),
+      node("RECTANGLE", "b"),
+      makeCtx({ width: 10, height: 10 }, { width: 25, height: 25 }),
+    );
     expect(r.kind).toBe("veto");
   });
 
-  it("returns veto for GROUP↔FRAME cross with size exceeding ratio", () => {
+  it("returns veto for GROUP↔FRAME cross with size exceeding ratio 2.0", () => {
     const r = signal.evaluate(
       node("GROUP", "a"),
       node("FRAME", "b"),
-      makeCtx({ width: 10, height: 10 }, { width: 20, height: 20 }),
+      makeCtx({ width: 10, height: 10 }, { width: 30, height: 30 }),
     );
     expect(r.kind).toBe("veto");
   });

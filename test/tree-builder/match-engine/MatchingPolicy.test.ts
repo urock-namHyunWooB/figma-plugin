@@ -5,10 +5,10 @@ import {
 } from "@code-generator2/layers/tree-manager/tree-builder/processors/match-engine/MatchingPolicy";
 
 describe("MatchingPolicy", () => {
-  it("defaultMatchingPolicy has Phase 1a values (behavior-preserving)", () => {
+  it("defaultMatchingPolicy has Phase 1b values (relaxed size ratio)", () => {
     const p: MatchingPolicy = defaultMatchingPolicy;
     expect(p.normalizedPositionThreshold).toBe(0.1);
-    expect(p.relativeSizeMaxRatio).toBe(1.3);
+    expect(p.relativeSizeMaxRatio).toBe(2.0); // Phase 1b: 완화됨 (1.3 → 2.0)
     expect(p.variantRootSimilarityRatio).toBe(1.5);
     expect(p.overflowMismatchPenalty).toBe(0.5);
     expect(p.textSpecialMatchCost).toBe(0.05);

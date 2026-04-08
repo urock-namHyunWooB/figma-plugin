@@ -10,7 +10,7 @@
 export interface MatchingPolicy {
   /** 정규화된 위치 비용 임계값. cost ≤ 이 값이면 위치 일치로 간주. (기존 0.1) */
   readonly normalizedPositionThreshold: number;
-  /** 크기 비율 최대 허용값. max/min > 이 값이면 RelativeSize 신호가 veto. (Phase 1a: 1.3, Phase 1b: 2.0) */
+  /** 크기 비율 최대 허용값. max/min > 이 값이면 RelativeSize 신호가 veto. (Phase 1b: 2.0 — 완화됨) */
   readonly relativeSizeMaxRatio: number;
   /** variant root 크기 유사도 판정 비율. overflow penalty 적용 여부 결정. (기존 1.5) */
   readonly variantRootSimilarityRatio: number;
@@ -37,7 +37,7 @@ export interface MatchingPolicy {
  */
 export const defaultMatchingPolicy: MatchingPolicy = {
   normalizedPositionThreshold: 0.1,
-  relativeSizeMaxRatio: 1.3,
+  relativeSizeMaxRatio: 2.0, // Phase 1b: 완화됨 (원래 1.3, audit 45건 size-variant-reject 회귀 해소)
   variantRootSimilarityRatio: 1.5,
   overflowMismatchPenalty: 0.5,
   textSpecialMatchCost: 0.05,
