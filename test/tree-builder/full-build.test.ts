@@ -144,4 +144,36 @@ describe("TreeBuilder Full Build", () => {
     expect(uiTree.root).toBeDefined();
     expect(uiTree.root.id).toBe(frameNode.id);
   });
+
+  it("should build UITree from a single TEXT node", () => {
+    const findText = (node: any): any => {
+      if (node.type === "TEXT") return node;
+      if (node.children) {
+        for (const c of node.children) {
+          const t = findText(c);
+          if (t) return t;
+        }
+      }
+      return null;
+    };
+
+    const textNode = findText((taptapButton as any).info.document);
+    expect(textNode).not.toBeNull();
+
+    const singleTextData = {
+      ...(taptapButton as any),
+      info: {
+        ...(taptapButton as any).info,
+        document: textNode,
+      },
+    };
+
+    const dataManager = new DataManager(singleTextData);
+    const treeBuilder = new TreeBuilder(dataManager);
+
+    const uiTree = treeBuilder.build(textNode);
+
+    expect(uiTree.root).toBeDefined();
+    expect(uiTree.root.id).toBe(textNode.id);
+  });
 });
