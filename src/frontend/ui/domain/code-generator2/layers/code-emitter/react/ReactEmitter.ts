@@ -363,7 +363,7 @@ export class ReactEmitter implements ICodeEmitter {
     diagnostics: VariantInconsistency[];
   } {
     const propsInterface = PropsGenerator.generate(ir, componentName);
-    const stylesResult = StylesGenerator.generate(uiTree, componentName, this.styleStrategy);
+    const stylesResult = StylesGenerator.generate(ir, componentName, this.styleStrategy);
     const jsxResult = JsxGenerator.generate(uiTree, componentName, this.styleStrategy, {
       debug: this.options.debug,
       nodeStyleMap: stylesResult.nodeStyleMap,
