@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import DataManager from "@frontend/ui/domain/code-generator2/layers/data-manager/DataManager";
 import TreeBuilder from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/TreeBuilder";
-import { CodeEmitter } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/ReactEmitter";
+import { CodeEmitter, renameNativeProps } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/ReactEmitter";
+import { SemanticIRBuilder } from "@frontend/ui/domain/code-generator2/layers/code-emitter/SemanticIRBuilder";
 
 import taptapButton from "../fixtures/button/taptapButton.json";
 import airtableButton from "../fixtures/any-component-set/airtable-button.json";
@@ -15,7 +16,8 @@ describe("CodeEmitter", () => {
 
     // 2. 코드 생성
     const emitter = new CodeEmitter();
-    const result = await emitter.emit(uiTree);
+    const ir = SemanticIRBuilder.build(renameNativeProps(uiTree));
+    const result = await emitter.emit(ir);
 
     console.log("=== taptapButton Generated Code ===");
     console.log(result.code);
@@ -35,7 +37,8 @@ describe("CodeEmitter", () => {
     const uiTree = treeBuilder.build((airtableButton as any).info.document);
 
     const emitter = new CodeEmitter();
-    const result = await emitter.emit(uiTree);
+    const ir = SemanticIRBuilder.build(renameNativeProps(uiTree));
+    const result = await emitter.emit(ir);
 
     console.log("=== airtableButton Generated Code ===");
     console.log(result.code);
@@ -50,7 +53,8 @@ describe("CodeEmitter", () => {
     const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     const emitter = new CodeEmitter();
-    const result = await emitter.emit(uiTree);
+    const ir = SemanticIRBuilder.build(renameNativeProps(uiTree));
+    const result = await emitter.emit(ir);
 
     // Props 확인 (state는 pseudo-class로 처리되어 제외됨)
     expect(result.code).toContain("size");
@@ -64,7 +68,8 @@ describe("CodeEmitter", () => {
     const uiTree = treeBuilder.build((taptapButton as any).info.document);
 
     const emitter = new CodeEmitter();
-    const result = await emitter.emit(uiTree);
+    const ir = SemanticIRBuilder.build(renameNativeProps(uiTree));
+    const result = await emitter.emit(ir);
 
     // 스타일 확인
     expect(result.code).toContain("css`");

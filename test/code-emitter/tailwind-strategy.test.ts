@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import DataManager from "@frontend/ui/domain/code-generator2/layers/data-manager/DataManager";
 import TreeManager from "@frontend/ui/domain/code-generator2/layers/tree-manager/TreeManager";
-import { CodeEmitter } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/ReactEmitter";
+import { CodeEmitter, renameNativeProps } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/ReactEmitter";
+import { SemanticIRBuilder } from "@frontend/ui/domain/code-generator2/layers/code-emitter/SemanticIRBuilder";
 // TreeBuilder 직접 호출 대신 TreeManager.build()로 UITreeOptimizer 포함 (decompose 필요)
 
 import taptapButton from "../fixtures/button/taptapButton.json";
@@ -14,7 +15,8 @@ describe("TailwindStrategy", () => {
     const { main: uiTree } = treeManager.build();
 
     const emitter = new CodeEmitter({ styleStrategy: "tailwind" });
-    const result = await emitter.emit(uiTree);
+    const ir = SemanticIRBuilder.build(renameNativeProps(uiTree));
+    const result = await emitter.emit(ir);
 
     console.log("=== taptapButton Tailwind Code ===");
     console.log(result.code);
@@ -33,7 +35,8 @@ describe("TailwindStrategy", () => {
     const { main: uiTree } = treeManager.build();
 
     const emitter = new CodeEmitter({ styleStrategy: "tailwind" });
-    const result = await emitter.emit(uiTree);
+    const ir = SemanticIRBuilder.build(renameNativeProps(uiTree));
+    const result = await emitter.emit(ir);
 
     console.log("=== airtableButton Tailwind Code ===");
     console.log(result.code);
@@ -48,7 +51,8 @@ describe("TailwindStrategy", () => {
     const { main: uiTree } = treeManager.build();
 
     const emitter = new CodeEmitter({ styleStrategy: "tailwind" });
-    const result = await emitter.emit(uiTree);
+    const ir = SemanticIRBuilder.build(renameNativeProps(uiTree));
+    const result = await emitter.emit(ir);
 
     // 표준 Tailwind 클래스 사용 확인
     expect(result.code).toContain("inline-flex");
