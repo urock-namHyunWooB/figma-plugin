@@ -257,11 +257,6 @@ function App() {
       ? ["preview", "variants", "code", "publish", "release"]
       : ["preview", "code", "publish", "release"];
   }, [isComponentSet]);
-  useEffect(() => {
-    if (!isComponentSet && activeTab === "variants") {
-      setActiveTab("preview");
-    }
-  }, [isComponentSet, activeTab]);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [propDefinitions, setPropDefinitions] = useState<PropDefinition[]>([]);
   const [propValues, setPropValues] = useState<Record<string, any>>({});
@@ -286,6 +281,12 @@ function App() {
     const size = TAB_SIZES[tab];
     resizePluginUI(size.width, size.height);
   }, []);
+
+  useEffect(() => {
+    if (!isComponentSet && activeTab === "variants") {
+      handleTabChange("preview");
+    }
+  }, [isComponentSet, activeTab, handleTabChange]);
 
 
 
