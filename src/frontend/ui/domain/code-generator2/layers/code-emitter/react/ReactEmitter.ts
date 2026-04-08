@@ -370,7 +370,7 @@ export class ReactEmitter implements ICodeEmitter {
     });
 
     // JSX에서 실제 사용되는 컴포넌트만 import (slot binding → JSX 미생성 케이스 제거)
-    const rawImports = ImportsGenerator.generate(uiTree, this.styleStrategy);
+    const rawImports = ImportsGenerator.generate(ir, this.styleStrategy);
     const imports = this.filterComponentImportsByJsx(rawImports, jsxResult.code);
 
     return {
