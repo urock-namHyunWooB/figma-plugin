@@ -65,7 +65,7 @@ export interface DerivedDefinition {
 export interface SemanticNode {
   id: string;
   kind: SemanticNodeKind;
-  name?: string;
+  name: string;
 
   attrs?: Record<string, BindingSource>;
   events?: Record<string, BindingSource>;
