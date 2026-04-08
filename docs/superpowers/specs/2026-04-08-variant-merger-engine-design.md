@@ -11,15 +11,27 @@
 
 Figma `COMPONENT_SET`을 단일 컴포넌트로 병합할 때 매칭 엔진이 **"이 노드와 저 노드가 같은 노드인가"** 를 판단한다. 이 판단의 결함이 시각적 회귀로 나타난다.
 
-86개 fixture에 대한 자동 감사 결과 (**주의**: 실제 리포에는 현재 84개 JSON fixture가 존재. 86이라는 숫자는 원본 audit 기준이며 Phase 0에서 재검증 필요):
+84개 fixture에 대한 자동 감사 결과 (`test/audits/audit-baseline.json`, Phase 0에서 재측정 — 2026-04-08):
 
 | 지표 | 값 |
 |---|---|
-| 회귀 후보 (variant 집합 disjoint한 같은 부모 안 형제) | **74건** (main 57 + dependency 17) |
-| isSimilarSize 검증 비활성화 시 해결률 | **87.8%** (74→9) |
-| 남은 9건의 패턴 | **단일 패턴** — variant prop이 자식 위치를 결정 |
-| isSimilarSize 비활성화로 새로 발생하는 회귀 | **1 fixture** (Tagreview Small wrapper) |
-| 별도 회귀 (매칭과 무관) | Buttonbutton iconOnly (props 추출 단계) |
+| 총 fixture 수 | **84** |
+| 회귀가 있는 fixture 수 | **55** (65%) |
+| 회귀 후보 (disjoint variant sibling pairs 총합) | **1991건** |
+| 패턴: size-variant-reject | **45** (2.3%) |
+| 패턴: variant-prop-position | **16** (0.8%) |
+| 패턴: unknown | **1930** (96.9%) |
+| 컴파일 에러 fixture | **0** |
+
+**원본 74건과의 큰 차이에 대한 해석 (2026-04-08 재측정):**
+
+원본 audit(74건)과 Phase 0 재측정(1991건) 사이에는 **27배의 차이**가 있다. 주요 원인은 탐지 기준 차이로 추정된다:
+
+1. **원본 audit은 더 좁은 기준을 사용했을 가능성** — 예: "같은 type + similar size + 같은 부모"처럼 추가 필터가 있었을 수 있다. Phase 0 탐지기(`detectDisjointVariants`)는 variantName set disjointness **하나만** 보므로 legitimately 다른 노드도 모두 회귀 후보로 수집한다.
+2. **Unknown 패턴 비율 96.9%**가 결정적 증거 — §1.1이 묘사한 6개 "명확한 회귀 패턴"에 해당하는 케이스는 **61건(3.1%)**뿐이다. 나머지 1930건은 분류기가 "boolean prop 또는 Size prop 단독 diff"로 설명하지 못하는 경우로, 이 중 상당수는 실제 회귀가 아닌 "원래 다른 노드"일 가능성이 높다.
+3. **Phase 1 목표 재조정 필요** — 원본 spec이 겨냥한 "74건 → 9건 이하"는 Phase 0 재측정 기준으로 환산하면 **size-variant-reject(45) + variant-prop-position(16) = 61건을 최대한 해결**하는 것이 현실적인 상한이다. Unknown 1930건의 대부분은 Phase 1 엔진 개선의 타겟이 아니며, Phase 2 이후 탐지기/분류기를 정교화한 뒤 재측정해야 한다.
+
+**패턴 분류 정교화 과제 (Phase 2 이후)**: 현재 `classifyPattern`은 boolean/size 단독 diff만 명시 패턴으로 잡는다. Unknown 버킷 안에는 (a) 실제 다중-prop 회귀, (b) 원래 다른 노드, (c) 크기는 같지만 `unknown` 카테고리에 떨어진 케이스가 혼재되어 있다. 이를 분리하려면 노드 type/bounds 비교를 분류기에 추가해야 한다 — Phase 2의 신호 엔진이 이 작업을 자연스럽게 흡수할 수 있다.
 
 ### 1.1 데이터로 입증된 회귀 패턴 6가지
 
