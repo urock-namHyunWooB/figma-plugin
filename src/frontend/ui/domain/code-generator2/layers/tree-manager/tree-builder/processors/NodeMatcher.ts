@@ -51,6 +51,8 @@ export class NodeMatcher {
   /**
    * 두 노드가 같은 역할을 하는지 판단.
    * 엔진 결정에 완전히 위임 (Phase 1c: 섀도 모드 제거 완료).
+   *
+   * 디버깅: globalThis.__MATCH_REASON_LOG__가 설정돼 있으면 결정 근거를 수집.
    */
   public isSameNode(nodeA: InternalNode, nodeB: InternalNode): boolean {
     const ctx: MatchContext = {
@@ -59,7 +61,19 @@ export class NodeMatcher {
       nodeToVariantRoot: this.nodeToVariantRoot,
       policy: defaultMatchingPolicy,
     };
-    return this.engine.decide(nodeA, nodeB, ctx).decision === "match";
+    const decision = this.engine.decide(nodeA, nodeB, ctx);
+
+    const log = (globalThis as any).__MATCH_REASON_LOG__ as Array<unknown> | undefined;
+    if (log) {
+      log.push({
+        pair: [nodeA.id, nodeB.id],
+        decision: decision.decision,
+        totalCost: decision.totalCost,
+        signalResults: decision.signalResults,
+      });
+    }
+
+    return decision.decision === "match";
   }
 
   /**
@@ -144,8 +158,28 @@ export class NodeMatcher {
   /**
    * Pass 2용: 위치 기반 매칭 비용 반환 (0~1 범위, 낮을수록 유사)
    * 매칭 불가하면 Infinity 반환
+   *
+   * Phase 1c: reason log hook 추가 (엔진 migration은 Phase 2에서 완료 예정)
    */
   public getPositionCost(nodeA: InternalNode, nodeB: InternalNode): number {
+    const cost = this.getPositionCostLegacy(nodeA, nodeB);
+
+    const log = (globalThis as any).__MATCH_REASON_LOG__ as Array<unknown> | undefined;
+    if (log) {
+      // 현재는 legacy 결과만 기록. Phase 2에서 엔진 결과와 병행 기록.
+      log.push({
+        pair: [nodeA.id, nodeB.id],
+        decision: cost < Infinity ? "match-or-cost" : "veto",
+        totalCost: cost,
+        source: "legacy-getPositionCost",
+      });
+    }
+
+    return cost;
+  }
+
+  /** 기존 getPositionCost 로직 (Phase 1c: reason log hook을 위해 분리) */
+  private getPositionCostLegacy(nodeA: InternalNode, nodeB: InternalNode): number {
     // 타입 호환성 체크
     if (nodeA.type !== nodeB.type) {
       const bothShapes =
