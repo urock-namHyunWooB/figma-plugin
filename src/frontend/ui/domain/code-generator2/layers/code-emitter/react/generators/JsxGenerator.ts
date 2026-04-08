@@ -11,6 +11,7 @@ import { extractAllPropNames } from "../../../../types/conditionUtils";
 import type { VariantInconsistency } from "../../../../types/types";
 import { toComponentName } from "../../../../utils/nameUtils";
 import { BindingRenderer } from "./BindingRenderer";
+import { ConditionRenderer } from "./ConditionRenderer";
 
 export interface JsxGenerateResult {
   code: string;
@@ -225,7 +226,7 @@ export default ${componentName}`;
     ) {
       // visibleCondition이 slot prop이 아닌 다른 prop을 참조할 때만 조건 추가
       const extraCondition = (node.visibleCondition && !this.getSlotPropFromCondition(node.visibleCondition))
-        ? this.conditionToCode(node.visibleCondition)
+        ? ConditionRenderer.toJs(node.visibleCondition, (p) => this.resolvePropName(p))
         : undefined;
       return this.generateSlotWrapper(node, slotBinding.prop, styleStrategy, indent, extraCondition);
     }
@@ -245,7 +246,7 @@ export default ${componentName}`;
         return this.generateSlotWrapper(node, slotProp, styleStrategy, indent);
       }
 
-      const condition = this.conditionToCode(node.visibleCondition);
+      const condition = ConditionRenderer.toJs(node.visibleCondition, (p) => this.resolvePropName(p));
       const innerJsx = this.generateNodeInner(node, styleStrategy, options, indent, isRoot);
       return `${indentStr}{${condition} && (\n${innerJsx}\n${indentStr})}`;
     }
@@ -1085,34 +1086,6 @@ ${indentStr}</${tag}>`;
       .join("");
 
     return sanitized || prop;
-  }
-
-  /**
-   * ConditionNode를 코드로 변환
-   */
-  private static conditionToCode(condition: ConditionNode): string {
-    switch (condition.type) {
-      case "eq":
-        return `${this.resolvePropName(condition.prop)} === ${JSON.stringify(condition.value)}`;
-
-      case "neq":
-        return `${this.resolvePropName(condition.prop)} !== ${JSON.stringify(condition.value)}`;
-
-      case "truthy":
-        return this.resolvePropName(condition.prop);
-
-      case "and":
-        return `(${condition.conditions.map((c) => this.conditionToCode(c)).join(" && ")})`;
-
-      case "or":
-        return `(${condition.conditions.map((c) => this.conditionToCode(c)).join(" || ")})`;
-
-      case "not":
-        return `!${this.conditionToCode(condition.condition)}`;
-
-      default:
-        return "true";
-    }
   }
 
   /**
