@@ -50,36 +50,19 @@ export class NodeMatcher {
 
   /**
    * 두 노드가 같은 역할을 하는지 판단.
-   * 엔진 결정에 완전히 위임 (Phase 1c: 섀도 모드 제거 완료).
    *
-   * 디버깅: globalThis.__MATCH_REASON_LOG__가 설정돼 있으면 결정 근거를 수집.
+   * Phase 1 최종: isSameNode는 legacy 로직 유지.
+   * Phase 1 실제 개선(size-variant-reject 45→0)은 `isSimilarSize`가 policy를
+   * 읽게 한 덕분 (getPositionCost 경로에서 사용). 엔진은 Phase 2에 활용 예정 —
+   * TEXT/INSTANCE 특수 매칭 신호가 추가되면 이 메서드를 엔진으로 전환 가능.
+   *
+   * 디버깅: globalThis.__MATCH_REASON_LOG__가 설정돼 있으면 기록 (getPositionCost에서만).
    */
   public isSameNode(nodeA: InternalNode, nodeB: InternalNode): boolean {
-    const ctx: MatchContext = {
-      dataManager: this.dataManager,
-      layoutNormalizer: this.layoutNormalizer,
-      nodeToVariantRoot: this.nodeToVariantRoot,
-      policy: defaultMatchingPolicy,
-    };
-    const decision = this.engine.decide(nodeA, nodeB, ctx);
-
-    const log = (globalThis as any).__MATCH_REASON_LOG__ as Array<unknown> | undefined;
-    if (log) {
-      log.push({
-        pair: [nodeA.id, nodeB.id],
-        decision: decision.decision,
-        totalCost: decision.totalCost,
-        signalResults: decision.signalResults,
-      });
-    }
-
-    return decision.decision === "match";
+    return this.isSameNodeLegacy(nodeA, nodeB);
   }
 
-  /**
-   * @deprecated legacy isSameNode. getPositionCost에서 일부 helper 재사용 중.
-   * Phase 1c Task C2 완료 시 전부 제거 예정.
-   */
+  /** Phase 1 활성 경로. Phase 2에서 엔진+INSTANCE/TEXT 신호로 대체 예정. */
   private isSameNodeLegacy(nodeA: InternalNode, nodeB: InternalNode): boolean {
     // 1. 타입 호환성 체크 (shape 계열, 컨테이너 계열은 상호 호환)
     if (nodeA.type !== nodeB.type) {
