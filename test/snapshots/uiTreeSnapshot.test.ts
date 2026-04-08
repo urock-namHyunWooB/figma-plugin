@@ -35,9 +35,15 @@ describe("UITree snapshots", () => {
         expect(`BUILD_ERROR: ${(err as Error).message}`).toMatchSnapshot();
         return;
       }
-      // UITree는 { root: UINode, props, ... } 래퍼이므로 root를 직렬화한다.
-      // (serializeTree는 노드 단위 재귀 함수)
-      expect(serializeTree(tree.root as any)).toMatchSnapshot();
+      // UITree는 { root: UINode, props, ... } 래퍼이므로 wrapper 메타데이터와 root를 함께 캡처한다.
+      // Phase 0: matching 변화가 componentType/props/arraySlots에 전파되는지 감지
+      expect({
+        componentType: tree.componentType,
+        propsCount: tree.props.length,
+        propNames: tree.props.map((p: any) => p.name).sort(),
+        arraySlotNames: (tree.arraySlots ?? []).map((s: any) => s.slotName).sort(),
+        root: serializeTree(tree.root as any),
+      }).toMatchSnapshot();
     });
   }
 });
