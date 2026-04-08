@@ -50,9 +50,7 @@ export class NodeMatcher {
 
   /**
    * 두 노드가 같은 역할을 하는지 판단.
-   *
-   * Phase 1b: 엔진 결과를 실제로 반환한다.
-   * shadow collector가 설정돼 있으면 legacy도 돌려 diff 기록 (검증용).
+   * 엔진 결정에 완전히 위임 (Phase 1c: 섀도 모드 제거 완료).
    */
   public isSameNode(nodeA: InternalNode, nodeB: InternalNode): boolean {
     const ctx: MatchContext = {
@@ -61,23 +59,13 @@ export class NodeMatcher {
       nodeToVariantRoot: this.nodeToVariantRoot,
       policy: defaultMatchingPolicy,
     };
-    const decision = this.engine.decide(nodeA, nodeB, ctx);
-    const engineResult = decision.decision === "match";
-
-    const collector = (globalThis as any).__SHADOW_MODE_COLLECTOR__ as
-      | Array<{ pair: [string, string]; old: boolean; engine: boolean }>
-      | undefined;
-    if (collector) {
-      const legacyResult = this.isSameNodeLegacy(nodeA, nodeB);
-      if (engineResult !== legacyResult) {
-        collector.push({ pair: [nodeA.id, nodeB.id], old: legacyResult, engine: engineResult });
-      }
-    }
-
-    return engineResult;
+    return this.engine.decide(nodeA, nodeB, ctx).decision === "match";
   }
 
-  /** 기존 isSameNode 로직 — 내부 전용, Phase 1c에서 제거 예정 */
+  /**
+   * @deprecated legacy isSameNode. getPositionCost에서 일부 helper 재사용 중.
+   * Phase 1c Task C2 완료 시 전부 제거 예정.
+   */
   private isSameNodeLegacy(nodeA: InternalNode, nodeB: InternalNode): boolean {
     // 1. 타입 호환성 체크 (shape 계열, 컨테이너 계열은 상호 호환)
     if (nodeA.type !== nodeB.type) {
