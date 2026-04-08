@@ -201,7 +201,7 @@ export class StyleProcessor {
       styles = {
         ...styles,
         base: {
-          ...(styles.base || {}),
+          ...(styles!.base || {}),
           "text-box-trim": "trim-both",
           "text-box-edge": "cap alphabetic",
         },
