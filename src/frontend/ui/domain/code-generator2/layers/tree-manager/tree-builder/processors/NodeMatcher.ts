@@ -139,17 +139,19 @@ export class NodeMatcher {
   }
 
   /**
-   * Pass 2용: 위치 기반 매칭 비용 반환 (0~1 범위, 낮을수록 유사)
+   * Pass 2용: 위치 기반 매칭 비용 반환 (Phase 2: legacy 유지)
    * 매칭 불가하면 Infinity 반환
    *
-   * Phase 1c: reason log hook 추가 (엔진 migration은 Phase 2에서 완료 예정)
+   * Phase 2b 엔진 위임 시도 결과: 14+ fixture에 실제 regression. Dual-form cost
+   * 계산이 legacy raw posCost와 의미가 달라서 Hungarian matching의 선호 pair가
+   * 달라짐. 엔진은 인프라로만 유지하고 getPositionCost migration은 Phase 3에
+   * cost form을 재설계해서 재도전. 신호 카탈로그는 엔진에 이미 전부 등록돼 있음.
    */
   public getPositionCost(nodeA: InternalNode, nodeB: InternalNode): number {
     const cost = this.getPositionCostLegacy(nodeA, nodeB);
 
     const log = (globalThis as any).__MATCH_REASON_LOG__ as Array<unknown> | undefined;
     if (log) {
-      // 현재는 legacy 결과만 기록. Phase 2에서 엔진 결과와 병행 기록.
       log.push({
         pair: [nodeA.id, nodeB.id],
         decision: cost < Infinity ? "match-or-cost" : "veto",

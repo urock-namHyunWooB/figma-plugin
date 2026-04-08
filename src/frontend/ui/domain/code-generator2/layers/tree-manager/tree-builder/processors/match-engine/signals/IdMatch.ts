@@ -4,19 +4,20 @@ import type { MatchSignal, SignalResult, MatchContext } from "../MatchSignal";
 /**
  * ID 일치 신호.
  *
- * 같은 ID면 score 1, 다르면 score 0.
+ * - 같은 ID → decisive-match (기존 NodeMatcher.isSameNode Step 2: 즉시 true)
+ * - 다른 ID → score 1 (neutral, 이 신호로는 판단 불가)
  *
- * 이 신호는 "ID가 같으면 같은 노드"라는 기존 NodeMatcher의 Pass 1 확정 매칭 로직을
- * 그대로 재현한다. score 0는 veto가 아닌 "이 신호만으로는 판단 불가" 상태 —
- * 다른 신호들이 매칭 여부를 결정할 수 있다.
+ * 주의: 이 신호는 "ID가 다르면 다른 노드"를 의미하지 않는다. 서로 다른
+ * variant의 같은 노드는 ID가 다르지만 여전히 매칭 가능해야 한다. 따라서
+ * 다름은 **negative evidence가 아닌 neutral** (score 1로 cost 0 기여).
  */
 export class IdMatch implements MatchSignal {
   readonly name = "IdMatch";
 
   evaluate(a: InternalNode, b: InternalNode, _ctx: MatchContext): SignalResult {
     if (a.id === b.id) {
-      return { kind: "score", score: 1, reason: `id match: ${a.id}` };
+      return { kind: "decisive-match", reason: `id match: ${a.id}` };
     }
-    return { kind: "score", score: 0, reason: `id diff: ${a.id} ≠ ${b.id}` };
+    return { kind: "score", score: 1, reason: `id diff neutral: ${a.id} ≠ ${b.id}` };
   }
 }

@@ -42,9 +42,11 @@ export const defaultMatchingPolicy: MatchingPolicy = {
   overflowMismatchPenalty: 0.5,
   textSpecialMatchCost: 0.05,
   instanceSpecialMatchCost: 0.05,
-  // 기존 isSameNode는 posCost ≤ 0.1 → match. 엔진 aggregation에서 총 cost 역시 0.1 기준 유지.
-  // (Phase 1a에서는 NormalizedPosition 신호만 점수에 기여하므로 동일.)
-  matchCostThreshold: 0.1,
+  // Phase 2b: 엔진 dual-form에서 NormalizedPosition이 cost 최대 1 기여 (score 0 at threshold),
+  // OverflowPenalty가 0.5 추가 기여 → 최대 합산 cost ~1.5. Legacy의 posCost 0.1 threshold와는
+  // 의미가 다르다 (legacy raw posCost, engine weighted sum). Hungarian은 상대 순서만 쓰므로
+  // 여유있게 설정: non-applicable 신호들은 score 1 neutral을 반환 (cost 0 기여).
+  matchCostThreshold: 1.5,
   signalWeights: {
     TypeCompatibility: 1,
     IdMatch: 1,

@@ -16,35 +16,34 @@ function instanceNode(id: string, visibleRef?: string, componentId?: string): In
 describe("InstanceSpecialMatch signal", () => {
   const signal = new InstanceSpecialMatch();
 
-  it("returns score 1 when both INSTANCE share visible ref", () => {
+  it("returns decisive-match when both INSTANCE share visible ref", () => {
     const a = instanceNode("a", "showIcon");
     const b = instanceNode("b", "showIcon");
+    const r = signal.evaluate(a, b, {} as any);
+    expect(r.kind).toBe("decisive-match");
+  });
+
+  it("returns neutral score 1 when visible refs differ", () => {
+    const a = instanceNode("a", "showIcon");
+    const b = instanceNode("b", "showLabel");
     const r = signal.evaluate(a, b, {} as any);
     expect(r.kind).toBe("score");
     if (r.kind === "score") expect(r.score).toBe(1);
   });
 
-  it("returns score 0 when visible refs differ", () => {
-    const a = instanceNode("a", "showIcon");
-    const b = instanceNode("b", "showLabel");
-    const r = signal.evaluate(a, b, {} as any);
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(0);
-  });
-
-  it("returns score 0 for non-INSTANCE pair", () => {
+  it("returns neutral score 1 for non-INSTANCE pair", () => {
     const a = { id: "a", name: "x", type: "FRAME", children: [] } as any;
     const b = { id: "b", name: "x", type: "FRAME", children: [] } as any;
     const r = signal.evaluate(a, b, {} as any);
     expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(0);
+    if (r.kind === "score") expect(r.score).toBe(1);
   });
 
-  it("returns score 0 when only one side has visible ref", () => {
+  it("returns neutral score 1 when only one side has visible ref", () => {
     const a = instanceNode("a", "showIcon");
     const b = instanceNode("b");
     const r = signal.evaluate(a, b, {} as any);
     expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(0);
+    if (r.kind === "score") expect(r.score).toBe(1);
   });
 });
