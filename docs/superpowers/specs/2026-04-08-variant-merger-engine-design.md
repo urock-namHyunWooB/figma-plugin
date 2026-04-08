@@ -1,6 +1,7 @@
 # Variant Merger 엔진화 디자인
 
 **작성일**: 2026-04-08
+**최근 수정**: 2026-04-08 (Phase 0 추가, 견고성 전략 반영)
 **대상**: `src/frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/processors/` 의 매칭/병합/squash 모듈군
 **상태**: Draft (사용자 검토 대기)
 
@@ -10,7 +11,7 @@
 
 Figma `COMPONENT_SET`을 단일 컴포넌트로 병합할 때 매칭 엔진이 **"이 노드와 저 노드가 같은 노드인가"** 를 판단한다. 이 판단의 결함이 시각적 회귀로 나타난다.
 
-86개 fixture에 대한 자동 감사 결과:
+86개 fixture에 대한 자동 감사 결과 (**주의**: 실제 리포에는 현재 84개 JSON fixture가 존재. 86이라는 숫자는 원본 audit 기준이며 Phase 0에서 재검증 필요):
 
 | 지표 | 값 |
 |---|---|
@@ -108,6 +109,42 @@ matchDecision(A, B) = matchScore(A, B) ≥ threshold
 
 ## 4. 단계별 구현 계획
 
+### Phase 0 — 회귀 측정 + 스냅샷 하네스 (엔진 작업 선행 조건)
+
+엔진을 고치기 전에 **회귀를 객관적으로 측정할 수 있는 도구**가 먼저 필요하다. 현재 audit 결과는 문서에만 존재하고 스크립트가 리포에 없어서 재현 불가능하고, 스냅샷이 없어서 "의도하지 않은 부작용"을 감지할 수 없다. Phase 0가 없으면 이후 모든 Phase의 성과 주장을 검증할 근거가 없다.
+
+1. **Audit 스크립트 복원/작성** — `scripts/audit-variant-matching.ts` (또는 동급 위치)
+   - 84개 fixture 순회, VariantMerger로 병합 실행
+   - 검출 기준: "같은 부모 아래 disjoint variant set을 가진 형제 쌍"
+   - 출력: fixture별 회귀 후보 count, 패턴 분류 (§1.1의 6가지), 전체 요약
+   - 커밋되어야 함 (일회성 금지)
+
+2. **스냅샷 하네스 구축** — vitest 내장 snapshot 기능 활용
+   - 스냅샷 대상: **InternalTree (VariantMerger 직후) + UITree (후처리 후)** 두 층
+   - 매칭 변경이 InternalTree에만 나타나면 "매칭 국소 변경", UITree까지 번지면 "후처리 영향"을 즉시 구별
+   - 위치: `test/fixtures/**/__snapshots__/*.snap`
+   - `expect(tree).toMatchSnapshot()` 패턴
+
+3. **초기 스냅샷 고정 (부트스트랩)**
+   - **정답 라벨 부재 문제**: 현재 출력이 "정답"이 아님 (회귀 후보가 이미 박혀 있음)
+   - 해결 전략: audit 결과를 활용해 **"회귀 없음" fixture만 먼저 고정**, 나머지는 "회귀 있음" 마킹
+   - 엔진 작업 중 "회귀 있음" fixture가 고쳐지면 해당 fixture의 스냅샷을 수동 승인으로 업데이트
+   - 목표: Phase 3 종료 시점에 전체 84개 fixture 스냅샷이 **검토 완료된 정답** 상태
+
+4. **Diff 리뷰 도구**
+   - `git diff`로 JSON 스냅샷 비교는 읽기 어려움
+   - 최소 요구: 변경 노드 ID + 변경 유형 (add/remove/match change) 요약
+   - `npm run snapshot:review` 또는 동급 명령으로 접근 가능해야 함
+
+5. **정답 라벨링: 혼합 전략 (스냅샷 + 페어 단언)**
+   - **기본**: 스냅샷으로 전체 회귀 감지 (양적 안전망)
+   - **핵심 패턴**: Switch Knob, Toggle, Plus, Tagreview wrapper 등 §1.1의 6개 패턴 대표 케이스에 대해 **명시적 페어 단언** 추가
+     - 형식 예: `{ fixture: "switch.json", pairs: [{ variantA: "704:56", variantB: "704:29", shouldMatch: true }] }`
+     - 신호 단위로 "어느 신호가 이 단언을 만족시키는 데 기여했는가"를 추적 가능하게
+   - 페어 단언은 새 신호 추가 시 **TDD**로 활용: 단언 작성 → 신호 구현 → 단언 통과 확인
+
+6. **검증**: audit 스크립트 실행 결과가 디자인 문서 §1의 74건(main 57 + dependency 17)과 일치하는지 확인. 불일치 시 §1 숫자를 갱신하고 패턴 재분류.
+
 ### Phase 1 — 신호 엔진 골격 + 핵심 신호 4개 (회귀 80%+ 해결)
 
 1. `MatchSignal` 인터페이스 정의 (score / veto / reason)
@@ -140,9 +177,10 @@ matchDecision(A, B) = matchScore(A, B) ≥ threshold
 
 ### 5.1 데이터 기반 회귀 측정
 
-`disjoint variant set` 검출 audit을 회귀 테스트로 영구화한다. 매 PR마다:
+Phase 0에서 작성한 audit 스크립트를 **CI 회귀 테스트로 영구화**한다. 매 PR마다:
 - main + dependency 양쪽에서 매칭 → disjoint 검출 → 카운트 측정
 - 74 → 0 또는 ≤5 (위치 prop 패턴 잔존이면 OK)
+- **증가가 감지되면 CI 실패**
 
 ### 5.2 단위 + 브라우저 테스트
 
@@ -151,7 +189,26 @@ matchDecision(A, B) = matchScore(A, B) ≥ threshold
 
 ### 5.3 신호 단위 테스트
 
-각 신호는 독립 테스트 가능. 입력 두 노드 + context → 점수/veto/reason 검증.
+각 신호는 독립 테스트 가능. 입력 두 노드 + context → 점수/veto/reason 검증. 모든 신호는 Phase 0에서 정의한 **페어 단언**을 TDD 형태로 먼저 작성한 뒤 구현한다.
+
+### 5.4 스냅샷 하네스
+
+Phase 0에서 구축한 InternalTree + UITree 스냅샷으로 **의도하지 않은 부작용**을 감지한다. audit 카운트만으로는 "회귀가 줄었는지"는 알 수 있어도 "다른 곳이 깨졌는지"는 못 잡는다. 두 층의 역할:
+
+- **InternalTree 스냅샷**: 매칭 결정 결과를 직접 반영. 엔진 변경의 국소 영향 검증
+- **UITree 스냅샷**: 후처리까지 거친 결과. 매칭 변경이 UI 최종 구조에 미치는 파급 검증
+
+### 5.5 정답 라벨링 루프
+
+새 회귀 케이스가 발견되면 다음 루프를 돈다:
+
+1. fixture 추가 + 기대 페어 단언 작성 (사용자가 "어느 노드가 같은 노드여야 하는지" 명시)
+2. 하네스 실행 → 현재 엔진이 단언을 만족하는지 측정
+3. 실패 시 trace 로그(`reason` 누적)로 어느 신호가 잘못 판단했는지 특정
+4. 해당 신호 수정 또는 새 신호 추가
+5. 단언 통과 + 전체 스냅샷 회귀 없음 확인 → 병합
+
+이 루프가 엔진 견고성의 **유일한** 메커니즘이다. 루프가 돌아가지 않으면 신호를 몇 개 추가하든 엔진은 계속 새는 배가 된다.
 
 ---
 
@@ -161,11 +218,21 @@ matchDecision(A, B) = matchScore(A, B) ≥ threshold
 2. **시그널 가중치 튜닝** — 새로운 마법 숫자 위험. 단 모든 가중치는 한 곳(`MatchingPolicy`)에 모음.
 3. **Tagreview wrapper 검출 메커니즘** — `WrapperRoleDistinction` 신호의 정확한 임계값은 Tagreview 케이스 + 다른 wrapper 케이스로 데이터 튜닝 필요.
 4. **VariantPropPosition 신호** — variant prop ↔ position correlation 학습 방식이 결정적이지 않을 수 있음. 단순 휴리스틱(boolean prop + cx만 다름)으로 시작 후 보강.
+5. **부트스트랩 스냅샷의 숨은 회귀** — Phase 0에서 "회귀 없음"으로 분류되어 스냅샷이 고정된 fixture에도 audit이 잡지 못한 매칭 회귀가 숨어 있을 수 있음. 엔진 작업 중 해당 스냅샷이 변경되면 "의도된 개선"인지 "부작용"인지 사용자 건별 판단 필요.
+6. **Audit 숫자 불일치** — 디자인 §1의 74건(86 fixture 기준)과 실제 리포의 84 fixture 재측정 결과가 다를 수 있음. Phase 0 검증 단계에서 §1 숫자를 재확정.
 
 ---
 
 ## 7. 영향 받는 파일
 
+**Phase 0 (선행):**
+- 신규: `scripts/audit-variant-matching.ts` — disjoint variant set 회귀 audit
+- 신규: `scripts/snapshot-review.ts` 또는 동급 — JSON 스냅샷 diff 리뷰 도구
+- 신규: `test/fixtures/**/__snapshots__/*.snap` — InternalTree + UITree 스냅샷
+- 신규: `test/fixtures/match-pair-assertions.ts` (또는 fixture별 sidecar) — 핵심 패턴 페어 단언
+- 변경: `package.json` — `audit`, `snapshot:review` 등 npm script 추가
+
+**Phase 1~3 (엔진 본체):**
 - `processors/NodeMatcher.ts` — 핵심 변경. 엔진 호출로 위임
 - `processors/UpdateSquashByIou.ts` — `isSimilarSizeForSquash` 제거, 엔진 호출
 - `processors/VariantMerger.ts` — 매칭 호출부 일관화
