@@ -21,7 +21,9 @@
     "test:browser": "vitest run --config vitest.browser.config.ts",
     "test:browser:watch": "vitest --config vitest.browser.config.ts",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "audit": "vitest run test/audits/variantMatchingAudit.test.ts",
+    "audit:write": "AUDIT_WRITE=1 vitest run test/audits/variantMatchingAudit.test.ts"
   },
   "author": "",
   "license": "",
