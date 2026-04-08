@@ -598,7 +598,7 @@ ${indentStr})}` : jsx;
           const propArgs = [...new Set(dynamicProps
             .flatMap((prop) => prop.includes("+") ? prop.split("+") : [prop])
             .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
-          )];
+          )] as string[];
           const propArgStrs = propArgs.map((p) =>
             ctx.slotProps.has(p) ? `${p}: !!${p}` : p
           );
@@ -842,7 +842,7 @@ ${indentStr}</${tag}>`;
           const propArgs = [...new Set(dynamicProps
             .flatMap((prop) => prop.includes("+") ? prop.split("+") : [prop])
             .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
-          )];
+          )] as string[];
           // slot prop(ReactNode)은 boolean 변환 필요 (cva variant는 true/false)
           const propArgStrs = propArgs.map((p) =>
             ctx.slotProps.has(p) ? `${p}: !!${p}` : p
@@ -1092,7 +1092,7 @@ ${indentStr}</${tag}>`;
         const propArgs = [...new Set(dynamicProps
           .flatMap((prop) => prop.includes("+") ? prop.split("+") : [prop])
           .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
-        )];
+        )] as string[];
         const propArgStrs = propArgs.map((p) =>
           ctx.slotProps.has(p) ? `${p}: !!${p}` : p
         );
@@ -1223,7 +1223,7 @@ ${indentStr}</${tag}>`;
             const propArgs = [...new Set(dynamicProps
               .flatMap((prop) => prop.includes("+") ? prop.split("+") : [prop])
               .map((p) => p.replace(/[\x00-\x1f\x7f]/g, ""))
-            )];
+            )] as string[];
             const propArgStrs = propArgs.map((p) =>
               ctx.slotProps.has(p) ? `${p}: !!${p}` : p
             );
