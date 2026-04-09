@@ -1,4 +1,4 @@
-import { AuditReport } from "./runAudit";
+import { AuditReport, emptyPatternCounts } from "./runAudit";
 import { PatternLabel } from "./classifyPattern";
 
 export interface FixturePairKey {
@@ -42,15 +42,7 @@ export function diffAudits(
     (p) => !currentKeys.has(pairKeyString(p))
   );
 
-  const patternDelta: Record<PatternLabel, number> = {
-    "size-variant-reject": 0,
-    "variant-prop-position": 0,
-    "same-name-same-type": 0,
-    "same-name-cross-type": 0,
-    "different-type": 0,
-    "different-name": 0,
-    unknown: 0,
-  };
+  const patternDelta = emptyPatternCounts();
   for (const k of Object.keys(patternDelta) as PatternLabel[]) {
     patternDelta[k] =
       (current.patternTotals[k] ?? 0) - (baseline.patternTotals[k] ?? 0);
@@ -83,7 +75,8 @@ function collectPairs(report: AuditReport): PairChange[] {
 }
 
 function pairKeyString(p: PairChange | FixturePairKey): string {
-  return `${p.fixture}|${p.parentId}|${p.a}|${p.b}`;
+  const [lo, hi] = [p.a, p.b].sort();
+  return `${p.fixture}|${p.parentId}|${lo}|${hi}`;
 }
 
 export function formatDiffReport(diff: AuditDiffResult): string {
@@ -100,12 +93,12 @@ export function formatDiffReport(diff: AuditDiffResult): string {
   lines.push("");
   lines.push(`New regressions (${diff.newRegressions.length}):`);
   for (const r of diff.newRegressions) {
-    lines.push(`  + ${r.fixture}  ${r.a} ↔ ${r.b}  [${r.pattern}]`);
+    lines.push(`  + ${r.fixture}  parent=${r.parentId}  ${r.a} ↔ ${r.b}  [${r.pattern}]`);
   }
   lines.push("");
   lines.push(`Resolved regressions (${diff.resolvedRegressions.length}):`);
   for (const r of diff.resolvedRegressions) {
-    lines.push(`  - ${r.fixture}  ${r.a} ↔ ${r.b}  [${r.pattern}]`);
+    lines.push(`  - ${r.fixture}  parent=${r.parentId}  ${r.a} ↔ ${r.b}  [${r.pattern}]`);
   }
   return lines.join("\n");
 }
