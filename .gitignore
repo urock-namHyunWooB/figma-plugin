@@ -43,3 +43,6 @@ test/**/generated-*.tsx
 test/**/compiled/
 test/output/
 test/tree-builder/*.json
+
+# Git worktrees (프로젝트 컨벤션: .claude/worktrees/<name>)
+.claude/worktrees/
