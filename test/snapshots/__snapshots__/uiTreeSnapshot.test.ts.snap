@@ -456,20 +456,6 @@ exports[`UITree snapshots > any/Controlcheckbox 1`] = `
         "children": [
           {
             "children": [],
-            "id": "16215:34463",
-            "name": "Interaction/Normal",
-            "refId": "16215:17257",
-            "type": "component",
-          },
-        ],
-        "id": "16215:34462",
-        "name": "Interaction",
-        "type": "container",
-      },
-      {
-        "children": [
-          {
-            "children": [],
             "id": "16215:34466_Icon/Normal/Check",
             "name": "Icon/Normal/Check",
             "refId": "16215:14159",
@@ -1880,11 +1866,10 @@ exports[`UITree snapshots > any/any-03 1`] = `
   "arraySlotNames": [],
   "componentType": "unknown",
   "propNames": [
-    "decorateInteractive",
     "global",
     "showLeftButton",
   ],
-  "propsCount": 3,
+  "propsCount": 2,
   "root": {
     "children": [
       {
@@ -1921,10 +1906,9 @@ exports[`UITree snapshots > any/any-04 1`] = `
   "arraySlotNames": [],
   "componentType": "unknown",
   "propNames": [
-    "decorateInteractive",
     "global",
   ],
-  "propsCount": 2,
+  "propsCount": 1,
   "root": {
     "children": [
       {
@@ -2088,11 +2072,10 @@ exports[`UITree snapshots > any/any-05 1`] = `
   "propNames": [
     "buttonIconNormal",
     "chips",
-    "decorateInteractive",
     "global",
     "topLevelInputSmalls",
   ],
-  "propsCount": 5,
+  "propsCount": 4,
   "root": {
     "children": [
       {
@@ -2804,20 +2787,6 @@ exports[`UITree snapshots > any/error-02 1`] = `
   "propsCount": 5,
   "root": {
     "children": [
-      {
-        "children": [
-          {
-            "children": [],
-            "id": "89:3235",
-            "name": "Decorate/Interactive",
-            "refId": "87:3019",
-            "type": "component",
-          },
-        ],
-        "id": "89:3234",
-        "name": "Interaction",
-        "type": "container",
-      },
       {
         "children": [
           {
@@ -4135,19 +4104,6 @@ exports[`UITree snapshots > button/tadaButton 1`] = `
       {
         "children": [
           {
-            "children": [],
-            "id": "89:3235",
-            "name": "Interactive",
-            "type": "container",
-          },
-        ],
-        "id": "89:3234",
-        "name": "Interaction",
-        "type": "container",
-      },
-      {
-        "children": [
-          {
             "children": [
               {
                 "children": [],
@@ -4621,38 +4577,6 @@ exports[`UITree snapshots > failing/Buttonsolid 1`] = `
         "id": "16215:37748",
         "name": "Background",
         "type": "vector",
-      },
-      {
-        "children": [
-          {
-            "children": [],
-            "id": "16215:37613",
-            "name": "Interaction/Strong",
-            "refId": "16215:17267",
-            "type": "component",
-          },
-          {
-            "children": [],
-            "id": "16246:1228780",
-            "name": "Loading",
-            "type": "container",
-          },
-          {
-            "children": [],
-            "id": "16246:1228782",
-            "name": "Mask",
-            "type": "vector",
-          },
-          {
-            "children": [],
-            "id": "16215:37753",
-            "name": "Content",
-            "type": "container",
-          },
-        ],
-        "id": "16215:37612",
-        "name": "Interaction",
-        "type": "container",
       },
       {
         "children": [
@@ -5496,10 +5420,9 @@ exports[`UITree snapshots > item-slot-likes/tada-list 1`] = `
     "badgeTag",
     "buttonIconNormal",
     "controlSwitch",
-    "decorateInteractive",
     "global",
   ],
-  "propsCount": 6,
+  "propsCount": 5,
   "root": {
     "children": [
       {
@@ -6241,20 +6164,6 @@ exports[`UITree snapshots > regression/Controlradio 1`] = `
         "children": [
           {
             "children": [],
-            "id": "16215:34777",
-            "name": "Interaction/Normal",
-            "refId": "16215:17257",
-            "type": "component",
-          },
-        ],
-        "id": "16215:34776",
-        "name": "Interaction",
-        "type": "container",
-      },
-      {
-        "children": [
-          {
-            "children": [],
             "id": "16215:34780",
             "name": "Icon/Normal/Dot",
             "refId": "16215:14959",
@@ -6282,12 +6191,11 @@ exports[`UITree snapshots > regression/List 1`] = `
   "componentType": "unknown",
   "propNames": [
     "leadingContents",
-    "textinputResourceInteraction",
     "textinputResourceTextareaLeadingContent",
     "textinputResourceTextareaTrailingContent",
     "trailingContents",
   ],
-  "propsCount": 5,
+  "propsCount": 4,
   "root": {
     "children": [
       {

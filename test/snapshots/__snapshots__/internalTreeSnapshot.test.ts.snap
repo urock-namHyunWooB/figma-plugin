@@ -643,18 +643,6 @@ exports[`InternalTree snapshots > any/Case 1`] = `
           "name": "A",
           "type": "TEXT",
         },
-        {
-          "children": [],
-          "id": "I14:1630;14:1647",
-          "mergedNodes": [
-            {
-              "id": "I14:1630;14:1647",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "14:1630",
       "mergedNodes": [
@@ -679,18 +667,6 @@ exports[`InternalTree snapshots > any/Case 1`] = `
           ],
           "name": "A",
           "type": "TEXT",
-        },
-        {
-          "children": [],
-          "id": "I14:1631;14:1647",
-          "mergedNodes": [
-            {
-              "id": "I14:1631;14:1647",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
         },
       ],
       "id": "14:1631",
@@ -717,18 +693,6 @@ exports[`InternalTree snapshots > any/Case 1`] = `
           "name": "A",
           "type": "TEXT",
         },
-        {
-          "children": [],
-          "id": "I14:1632;14:1647",
-          "mergedNodes": [
-            {
-              "id": "I14:1632;14:1647",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "14:1632",
       "mergedNodes": [
@@ -753,31 +717,6 @@ exports[`InternalTree snapshots > any/Case 1`] = `
           ],
           "name": "A",
           "type": "TEXT",
-        },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I14:1633;14:1648",
-              "mergedNodes": [
-                {
-                  "id": "I14:1633;14:1648",
-                  "variantName": "Decorate/Interactive",
-                },
-              ],
-              "name": "Decorate/Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I14:1633;14:1647",
-          "mergedNodes": [
-            {
-              "id": "I14:1633;14:1647",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
         },
       ],
       "id": "14:1633",
@@ -804,18 +743,6 @@ exports[`InternalTree snapshots > any/Case 1`] = `
           "name": "A",
           "type": "TEXT",
         },
-        {
-          "children": [],
-          "id": "I14:1634;14:1655",
-          "mergedNodes": [
-            {
-              "id": "I14:1634;14:1655",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "14:1634",
       "mergedNodes": [
@@ -840,31 +767,6 @@ exports[`InternalTree snapshots > any/Case 1`] = `
           ],
           "name": "A",
           "type": "TEXT",
-        },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I14:1635;14:1668",
-              "mergedNodes": [
-                {
-                  "id": "I14:1635;14:1668",
-                  "variantName": "Decorate/Interactive",
-                },
-              ],
-              "name": "Decorate/Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I14:1635;14:1667",
-          "mergedNodes": [
-            {
-              "id": "I14:1635;14:1667",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
         },
       ],
       "id": "14:1635",
@@ -1073,119 +975,6 @@ exports[`InternalTree snapshots > any/ConfirmationDialog 1`] = `
 exports[`InternalTree snapshots > any/Controlcheckbox 1`] = `
 {
   "children": [
-    {
-      "children": [
-        {
-          "children": [],
-          "id": "16215:34463",
-          "mergedNodes": [
-            {
-              "id": "16215:34463",
-              "variantName": "Size=Normal, State=Unchecked, Tight=False, Disable=False",
-            },
-            {
-              "id": "16215:34468",
-              "variantName": "Size=Normal, State=Checked, Tight=False, Disable=False",
-            },
-            {
-              "id": "16215:34473",
-              "variantName": "Size=Normal, State=Indeterminate, Tight=False, Disable=False",
-            },
-            {
-              "id": "16215:34485",
-              "variantName": "Size=Small, State=Unchecked, Tight=False, Disable=False",
-            },
-            {
-              "id": "16215:34507",
-              "variantName": "Size=Normal, State=Unchecked, Tight=True, Disable=False",
-            },
-            {
-              "id": "16215:34490",
-              "variantName": "Size=Small, State=Checked, Tight=False, Disable=False",
-            },
-            {
-              "id": "16215:34512",
-              "variantName": "Size=Normal, State=Checked, Tight=True, Disable=False",
-            },
-            {
-              "id": "16215:34495",
-              "variantName": "Size=Small, State=Indeterminate, Tight=False, Disable=False",
-            },
-            {
-              "id": "16215:34517",
-              "variantName": "Size=Normal, State=Indeterminate, Tight=True, Disable=False",
-            },
-            {
-              "id": "16215:34529",
-              "variantName": "Size=Small, State=Unchecked, Tight=True, Disable=False",
-            },
-            {
-              "id": "16215:34534",
-              "variantName": "Size=Small, State=Checked, Tight=True, Disable=False",
-            },
-            {
-              "id": "16215:34539",
-              "variantName": "Size=Small, State=Indeterminate, Tight=True, Disable=False",
-            },
-          ],
-          "name": "Interaction",
-          "type": "INSTANCE",
-        },
-      ],
-      "id": "16215:34462",
-      "mergedNodes": [
-        {
-          "id": "16215:34462",
-          "variantName": "Size=Normal, State=Unchecked, Tight=False, Disable=False",
-        },
-        {
-          "id": "16215:34467",
-          "variantName": "Size=Normal, State=Checked, Tight=False, Disable=False",
-        },
-        {
-          "id": "16215:34472",
-          "variantName": "Size=Normal, State=Indeterminate, Tight=False, Disable=False",
-        },
-        {
-          "id": "16215:34484",
-          "variantName": "Size=Small, State=Unchecked, Tight=False, Disable=False",
-        },
-        {
-          "id": "16215:34506",
-          "variantName": "Size=Normal, State=Unchecked, Tight=True, Disable=False",
-        },
-        {
-          "id": "16215:34489",
-          "variantName": "Size=Small, State=Checked, Tight=False, Disable=False",
-        },
-        {
-          "id": "16215:34511",
-          "variantName": "Size=Normal, State=Checked, Tight=True, Disable=False",
-        },
-        {
-          "id": "16215:34494",
-          "variantName": "Size=Small, State=Indeterminate, Tight=False, Disable=False",
-        },
-        {
-          "id": "16215:34516",
-          "variantName": "Size=Normal, State=Indeterminate, Tight=True, Disable=False",
-        },
-        {
-          "id": "16215:34528",
-          "variantName": "Size=Small, State=Unchecked, Tight=True, Disable=False",
-        },
-        {
-          "id": "16215:34533",
-          "variantName": "Size=Small, State=Checked, Tight=True, Disable=False",
-        },
-        {
-          "id": "16215:34538",
-          "variantName": "Size=Small, State=Indeterminate, Tight=True, Disable=False",
-        },
-      ],
-      "name": "Interaction",
-      "type": "FRAME",
-    },
     {
       "children": [
         {
@@ -5057,31 +4846,6 @@ exports[`InternalTree snapshots > any/InputFieldtextField 1`] = `
             {
               "children": [
                 {
-                  "children": [],
-                  "id": "I2882:172105;790:43466",
-                  "mergedNodes": [
-                    {
-                      "id": "I2882:172105;790:43466",
-                      "variantName": "Status=Inactivated",
-                    },
-                  ],
-                  "name": "Decorate/Interactive",
-                  "type": "INSTANCE",
-                },
-              ],
-              "id": "I2882:172105;790:43465",
-              "mergedNodes": [
-                {
-                  "id": "I2882:172105;790:43465",
-                  "variantName": "Status=Inactivated",
-                },
-              ],
-              "name": "Interaction",
-              "type": "FRAME",
-            },
-            {
-              "children": [
-                {
                   "children": [
                     {
                       "children": [
@@ -5410,31 +5174,6 @@ exports[`InternalTree snapshots > any/InputFieldtextField 1`] = `
         },
         {
           "children": [
-            {
-              "children": [
-                {
-                  "children": [],
-                  "id": "I2781:153842;790:43466",
-                  "mergedNodes": [
-                    {
-                      "id": "I2781:153842;790:43466",
-                      "variantName": "Status=Typing",
-                    },
-                  ],
-                  "name": "Decorate/Interactive",
-                  "type": "INSTANCE",
-                },
-              ],
-              "id": "I2781:153842;790:43465",
-              "mergedNodes": [
-                {
-                  "id": "I2781:153842;790:43465",
-                  "variantName": "Status=Typing",
-                },
-              ],
-              "name": "Interaction",
-              "type": "FRAME",
-            },
             {
               "children": [
                 {
@@ -6045,18 +5784,6 @@ exports[`InternalTree snapshots > any/Popup 1`] = `
                       "name": "A",
                       "type": "TEXT",
                     },
-                    {
-                      "children": [],
-                      "id": "I456:3398;243:223;14:1667",
-                      "mergedNodes": [
-                        {
-                          "id": "I456:3398;243:223;14:1667",
-                          "variantName": "Interaction",
-                        },
-                      ],
-                      "name": "Interaction",
-                      "type": "FRAME",
-                    },
                   ],
                   "id": "I456:3398;243:223",
                   "mergedNodes": [
@@ -6081,18 +5808,6 @@ exports[`InternalTree snapshots > any/Popup 1`] = `
                       ],
                       "name": "A",
                       "type": "TEXT",
-                    },
-                    {
-                      "children": [],
-                      "id": "I456:3398;243:224;14:1659",
-                      "mergedNodes": [
-                        {
-                          "id": "I456:3398;243:224;14:1659",
-                          "variantName": "Interaction",
-                        },
-                      ],
-                      "name": "Interaction",
-                      "type": "FRAME",
                     },
                   ],
                   "id": "I456:3398;243:224",
@@ -9778,31 +9493,6 @@ exports[`InternalTree snapshots > any/any-03 1`] = `
               "name": "Contents",
               "type": "FRAME",
             },
-            {
-              "children": [
-                {
-                  "children": [],
-                  "id": "I3797:2180;3123:162814;247:55254",
-                  "mergedNodes": [
-                    {
-                      "id": "I3797:2180;3123:162814;247:55254",
-                      "variantName": "Interactive",
-                    },
-                  ],
-                  "name": "Interactive",
-                  "type": "INSTANCE",
-                },
-              ],
-              "id": "I3797:2180;3123:162814;247:55253",
-              "mergedNodes": [
-                {
-                  "id": "I3797:2180;3123:162814;247:55253",
-                  "variantName": "Interaction",
-                },
-              ],
-              "name": "Interaction",
-              "type": "FRAME",
-            },
           ],
           "id": "I3797:2180;3123:162814",
           "mergedNodes": [
@@ -10108,31 +9798,6 @@ exports[`InternalTree snapshots > any/any-03 1`] = `
               "name": "Contents",
               "type": "FRAME",
             },
-            {
-              "children": [
-                {
-                  "children": [],
-                  "id": "I3797:2180;3123:162815;89:3235",
-                  "mergedNodes": [
-                    {
-                      "id": "I3797:2180;3123:162815;89:3235",
-                      "variantName": "Interactive",
-                    },
-                  ],
-                  "name": "Interactive",
-                  "type": "INSTANCE",
-                },
-              ],
-              "id": "I3797:2180;3123:162815;89:3234",
-              "mergedNodes": [
-                {
-                  "id": "I3797:2180;3123:162815;89:3234",
-                  "variantName": "Interaction",
-                },
-              ],
-              "name": "Interaction",
-              "type": "FRAME",
-            },
           ],
           "id": "I3797:2180;3123:162815",
           "mergedNodes": [
@@ -10245,18 +9910,6 @@ exports[`InternalTree snapshots > any/any-04 1`] = `
             },
           ],
           "name": "Contents",
-          "type": "FRAME",
-        },
-        {
-          "children": [],
-          "id": "I3786:7303;247:62163",
-          "mergedNodes": [
-            {
-              "id": "I3786:7303;247:62163",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -10449,18 +10102,6 @@ exports[`InternalTree snapshots > any/any-04 1`] = `
           "name": "Contents",
           "type": "FRAME",
         },
-        {
-          "children": [],
-          "id": "I3786:7304;247:62163",
-          "mergedNodes": [
-            {
-              "id": "I3786:7304;247:62163",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "3786:7304",
       "mergedNodes": [
@@ -10649,18 +10290,6 @@ exports[`InternalTree snapshots > any/any-04 1`] = `
             },
           ],
           "name": "Contents",
-          "type": "FRAME",
-        },
-        {
-          "children": [],
-          "id": "I3786:7305;247:62163",
-          "mergedNodes": [
-            {
-              "id": "I3786:7305;247:62163",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -10968,18 +10597,6 @@ exports[`InternalTree snapshots > any/any-04 1`] = `
           "name": "Contents",
           "type": "FRAME",
         },
-        {
-          "children": [],
-          "id": "I3786:7306;247:62163",
-          "mergedNodes": [
-            {
-              "id": "I3786:7306;247:62163",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "3786:7306",
       "mergedNodes": [
@@ -11283,18 +10900,6 @@ exports[`InternalTree snapshots > any/any-04 1`] = `
             },
           ],
           "name": "Contents",
-          "type": "FRAME",
-        },
-        {
-          "children": [],
-          "id": "I3786:7307;247:62163",
-          "mergedNodes": [
-            {
-              "id": "I3786:7307;247:62163",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -11602,18 +11207,6 @@ exports[`InternalTree snapshots > any/any-04 1`] = `
           "name": "Contents",
           "type": "FRAME",
         },
-        {
-          "children": [],
-          "id": "I3786:7308;247:62177",
-          "mergedNodes": [
-            {
-              "id": "I3786:7308;247:62177",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "3786:7308",
       "mergedNodes": [
@@ -11689,31 +11282,6 @@ exports[`InternalTree snapshots > any/any-04 1`] = `
           "name": "Contents",
           "type": "FRAME",
         },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3786:7309;247:62178",
-              "mergedNodes": [
-                {
-                  "id": "I3786:7309;247:62178",
-                  "variantName": "Decorate/Interactive",
-                },
-              ],
-              "name": "Decorate/Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3786:7309;247:62177",
-          "mergedNodes": [
-            {
-              "id": "I3786:7309;247:62177",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "3786:7309",
       "mergedNodes": [
@@ -11787,18 +11355,6 @@ exports[`InternalTree snapshots > any/any-04 1`] = `
             },
           ],
           "name": "Contents",
-          "type": "FRAME",
-        },
-        {
-          "children": [],
-          "id": "I3786:7310;247:62163",
-          "mergedNodes": [
-            {
-              "id": "I3786:7310;247:62163",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -11951,18 +11507,6 @@ exports[`InternalTree snapshots > any/any-04 1`] = `
           "name": "Contents",
           "type": "FRAME",
         },
-        {
-          "children": [],
-          "id": "I3786:7312;247:62163",
-          "mergedNodes": [
-            {
-              "id": "I3786:7312;247:62163",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "3786:7312",
       "mergedNodes": [
@@ -12036,31 +11580,6 @@ exports[`InternalTree snapshots > any/any-04 1`] = `
             },
           ],
           "name": "Contents",
-          "type": "FRAME",
-        },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3786:7313;247:62164",
-              "mergedNodes": [
-                {
-                  "id": "I3786:7313;247:62164",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3786:7313;247:62163",
-          "mergedNodes": [
-            {
-              "id": "I3786:7313;247:62163",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -12436,18 +11955,6 @@ exports[`InternalTree snapshots > any/any-05 1`] = `
                               "name": "Contents",
                               "type": "FRAME",
                             },
-                            {
-                              "children": [],
-                              "id": "I3802:342429;2556:12521",
-                              "mergedNodes": [
-                                {
-                                  "id": "I3802:342429;2556:12521",
-                                  "variantName": "Interaction",
-                                },
-                              ],
-                              "name": "Interaction",
-                              "type": "FRAME",
-                            },
                           ],
                           "id": "3802:342429",
                           "mergedNodes": [
@@ -12508,18 +12015,6 @@ exports[`InternalTree snapshots > any/any-05 1`] = `
                                 },
                               ],
                               "name": "Contents",
-                              "type": "FRAME",
-                            },
-                            {
-                              "children": [],
-                              "id": "I3802:342430;2556:12514",
-                              "mergedNodes": [
-                                {
-                                  "id": "I3802:342430;2556:12514",
-                                  "variantName": "Interaction",
-                                },
-                              ],
-                              "name": "Interaction",
                               "type": "FRAME",
                             },
                           ],
@@ -12584,18 +12079,6 @@ exports[`InternalTree snapshots > any/any-05 1`] = `
                               "name": "Contents",
                               "type": "FRAME",
                             },
-                            {
-                              "children": [],
-                              "id": "I3802:342431;2556:12514",
-                              "mergedNodes": [
-                                {
-                                  "id": "I3802:342431;2556:12514",
-                                  "variantName": "Interaction",
-                                },
-                              ],
-                              "name": "Interaction",
-                              "type": "FRAME",
-                            },
                           ],
                           "id": "3802:342431",
                           "mergedNodes": [
@@ -12656,18 +12139,6 @@ exports[`InternalTree snapshots > any/any-05 1`] = `
                                 },
                               ],
                               "name": "Contents",
-                              "type": "FRAME",
-                            },
-                            {
-                              "children": [],
-                              "id": "I3802:342432;2556:12514",
-                              "mergedNodes": [
-                                {
-                                  "id": "I3802:342432;2556:12514",
-                                  "variantName": "Interaction",
-                                },
-                              ],
-                              "name": "Interaction",
                               "type": "FRAME",
                             },
                           ],
@@ -12868,18 +12339,6 @@ exports[`InternalTree snapshots > any/any-05 1`] = `
                               "name": "Contents",
                               "type": "FRAME",
                             },
-                            {
-                              "children": [],
-                              "id": "I3802:342444;2556:12521",
-                              "mergedNodes": [
-                                {
-                                  "id": "I3802:342444;2556:12521",
-                                  "variantName": "Interaction",
-                                },
-                              ],
-                              "name": "Interaction",
-                              "type": "FRAME",
-                            },
                           ],
                           "id": "3802:342444",
                           "mergedNodes": [
@@ -12940,18 +12399,6 @@ exports[`InternalTree snapshots > any/any-05 1`] = `
                                 },
                               ],
                               "name": "Contents",
-                              "type": "FRAME",
-                            },
-                            {
-                              "children": [],
-                              "id": "I3802:342445;2556:12514",
-                              "mergedNodes": [
-                                {
-                                  "id": "I3802:342445;2556:12514",
-                                  "variantName": "Interaction",
-                                },
-                              ],
-                              "name": "Interaction",
                               "type": "FRAME",
                             },
                           ],
@@ -13016,18 +12463,6 @@ exports[`InternalTree snapshots > any/any-05 1`] = `
                               "name": "Contents",
                               "type": "FRAME",
                             },
-                            {
-                              "children": [],
-                              "id": "I3802:342446;2556:12514",
-                              "mergedNodes": [
-                                {
-                                  "id": "I3802:342446;2556:12514",
-                                  "variantName": "Interaction",
-                                },
-                              ],
-                              "name": "Interaction",
-                              "type": "FRAME",
-                            },
                           ],
                           "id": "3802:342446",
                           "mergedNodes": [
@@ -13088,18 +12523,6 @@ exports[`InternalTree snapshots > any/any-05 1`] = `
                                 },
                               ],
                               "name": "Contents",
-                              "type": "FRAME",
-                            },
-                            {
-                              "children": [],
-                              "id": "I3802:342447;2556:12514",
-                              "mergedNodes": [
-                                {
-                                  "id": "I3802:342447;2556:12514",
-                                  "variantName": "Interaction",
-                                },
-                              ],
-                              "name": "Interaction",
                               "type": "FRAME",
                             },
                           ],
@@ -13491,31 +12914,6 @@ exports[`InternalTree snapshots > any/any-05 1`] = `
                       "name": "Contents",
                       "type": "FRAME",
                     },
-                    {
-                      "children": [
-                        {
-                          "children": [],
-                          "id": "I3802:342452;3141:159546;247:55941",
-                          "mergedNodes": [
-                            {
-                              "id": "I3802:342452;3141:159546;247:55941",
-                              "variantName": "Interactive",
-                            },
-                          ],
-                          "name": "Interactive",
-                          "type": "INSTANCE",
-                        },
-                      ],
-                      "id": "I3802:342452;3141:159546;247:55940",
-                      "mergedNodes": [
-                        {
-                          "id": "I3802:342452;3141:159546;247:55940",
-                          "variantName": "Interaction",
-                        },
-                      ],
-                      "name": "Interaction",
-                      "type": "FRAME",
-                    },
                   ],
                   "id": "I3802:342452;3141:159546",
                   "mergedNodes": [
@@ -13819,31 +13217,6 @@ exports[`InternalTree snapshots > any/any-05 1`] = `
                         },
                       ],
                       "name": "Contents",
-                      "type": "FRAME",
-                    },
-                    {
-                      "children": [
-                        {
-                          "children": [],
-                          "id": "I3802:342452;3141:159547;89:3235",
-                          "mergedNodes": [
-                            {
-                              "id": "I3802:342452;3141:159547;89:3235",
-                              "variantName": "Interactive",
-                            },
-                          ],
-                          "name": "Interactive",
-                          "type": "INSTANCE",
-                        },
-                      ],
-                      "id": "I3802:342452;3141:159547;89:3234",
-                      "mergedNodes": [
-                        {
-                          "id": "I3802:342452;3141:159547;89:3234",
-                          "variantName": "Interaction",
-                        },
-                      ],
-                      "name": "Interaction",
                       "type": "FRAME",
                     },
                   ],
@@ -14955,47 +14328,6 @@ exports[`InternalTree snapshots > any/error-01 1`] = `
 exports[`InternalTree snapshots > any/error-02 1`] = `
 {
   "children": [
-    {
-      "children": [
-        {
-          "children": [],
-          "id": "89:3235",
-          "mergedNodes": [
-            {
-              "id": "89:3235",
-              "variantName": "Size=Large, Disabled=False",
-            },
-            {
-              "id": "98:2969",
-              "variantName": "Size=Medium, Disabled=False",
-            },
-            {
-              "id": "98:3060",
-              "variantName": "Size=Small, Disabled=False",
-            },
-          ],
-          "name": "Interactive",
-          "type": "INSTANCE",
-        },
-      ],
-      "id": "89:3234",
-      "mergedNodes": [
-        {
-          "id": "89:3234",
-          "variantName": "Size=Large, Disabled=False",
-        },
-        {
-          "id": "98:2968",
-          "variantName": "Size=Medium, Disabled=False",
-        },
-        {
-          "id": "98:3059",
-          "variantName": "Size=Small, Disabled=False",
-        },
-      ],
-      "name": "Interaction",
-      "type": "FRAME",
-    },
     {
       "children": [
         {
@@ -20956,47 +20288,6 @@ exports[`InternalTree snapshots > button/airtableButton 1`] = `
 exports[`InternalTree snapshots > button/tadaButton 1`] = `
 {
   "children": [
-    {
-      "children": [
-        {
-          "children": [],
-          "id": "89:3235",
-          "mergedNodes": [
-            {
-              "id": "89:3235",
-              "variantName": "Size=Large, Disabled=False",
-            },
-            {
-              "id": "98:2969",
-              "variantName": "Size=Medium, Disabled=False",
-            },
-            {
-              "id": "98:3060",
-              "variantName": "Size=Small, Disabled=False",
-            },
-          ],
-          "name": "Interactive",
-          "type": "INSTANCE",
-        },
-      ],
-      "id": "89:3234",
-      "mergedNodes": [
-        {
-          "id": "89:3234",
-          "variantName": "Size=Large, Disabled=False",
-        },
-        {
-          "id": "98:2968",
-          "variantName": "Size=Medium, Disabled=False",
-        },
-        {
-          "id": "98:3059",
-          "variantName": "Size=Small, Disabled=False",
-        },
-      ],
-      "name": "Interaction",
-      "type": "FRAME",
-    },
     {
       "children": [
         {
@@ -31351,151 +30642,6 @@ exports[`InternalTree snapshots > failing/Buttonsolid 1`] = `
       "children": [
         {
           "children": [],
-          "id": "16215:37613",
-          "mergedNodes": [
-            {
-              "id": "16215:37613",
-              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
-            },
-            {
-              "id": "16215:37630",
-              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
-            },
-            {
-              "id": "16215:37647",
-              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
-            },
-            {
-              "id": "16215:37662",
-              "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
-            },
-            {
-              "id": "16215:37704",
-              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
-            },
-            {
-              "id": "16215:37675",
-              "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
-            },
-            {
-              "id": "16215:37722",
-              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
-            },
-            {
-              "id": "16215:37688",
-              "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
-            },
-            {
-              "id": "16215:37740",
-              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
-            },
-            {
-              "id": "16215:37770",
-              "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
-            },
-            {
-              "id": "16215:37784",
-              "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
-            },
-          ],
-          "name": "Interaction",
-          "type": "INSTANCE",
-        },
-        {
-          "children": [],
-          "id": "16246:1228780",
-          "mergedNodes": [
-            {
-              "id": "16246:1228780",
-              "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
-            },
-          ],
-          "name": "Loading",
-          "type": "FRAME",
-        },
-        {
-          "children": [],
-          "id": "16246:1228782",
-          "mergedNodes": [
-            {
-              "id": "16246:1228782",
-              "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
-            },
-          ],
-          "name": "Mask",
-          "type": "RECTANGLE",
-        },
-        {
-          "children": [],
-          "id": "16215:37753",
-          "mergedNodes": [
-            {
-              "id": "16215:37753",
-              "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
-            },
-          ],
-          "name": "Content",
-          "type": "FRAME",
-        },
-      ],
-      "id": "16215:37612",
-      "mergedNodes": [
-        {
-          "id": "16215:37612",
-          "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
-        },
-        {
-          "id": "16215:37629",
-          "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
-        },
-        {
-          "id": "16215:37646",
-          "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
-        },
-        {
-          "id": "16215:37661",
-          "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
-        },
-        {
-          "id": "16215:37703",
-          "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
-        },
-        {
-          "id": "16215:37674",
-          "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
-        },
-        {
-          "id": "16215:37721",
-          "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
-        },
-        {
-          "id": "16215:37687",
-          "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
-        },
-        {
-          "id": "16215:37739",
-          "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
-        },
-        {
-          "id": "16215:37749",
-          "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
-        },
-        {
-          "id": "16215:37769",
-          "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
-        },
-        {
-          "id": "16215:37783",
-          "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
-        },
-      ],
-      "name": "Interaction",
-      "type": "FRAME",
-    },
-    {
-      "children": [
-        {
-          "children": [],
           "id": "16215:37756",
           "mergedNodes": [
             {
@@ -37665,31 +36811,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
           "name": "Container",
           "type": "FRAME",
         },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I115:51294;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I115:51294;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I115:51294;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I115:51294;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "115:51294",
       "mergedNodes": [
@@ -38142,31 +37263,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
             },
           ],
           "name": "Container",
-          "type": "FRAME",
-        },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I244:63430;142:56296",
-              "mergedNodes": [
-                {
-                  "id": "I244:63430;142:56296",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I244:63430;142:56295",
-          "mergedNodes": [
-            {
-              "id": "I244:63430;142:56295",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -38695,31 +37791,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
             },
           ],
           "name": "Container",
-          "type": "FRAME",
-        },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I115:51365;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I115:51365;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I115:51365;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I115:51365;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -39779,31 +38850,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
           "name": "Container",
           "type": "FRAME",
         },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I115:51244;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I115:51244;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I115:51244;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I115:51244;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "115:51244",
       "mergedNodes": [
@@ -40256,31 +39302,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
             },
           ],
           "name": "Container",
-          "type": "FRAME",
-        },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I537:53511;142:56296",
-              "mergedNodes": [
-                {
-                  "id": "I537:53511;142:56296",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I537:53511;142:56295",
-          "mergedNodes": [
-            {
-              "id": "I537:53511;142:56295",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -40749,31 +39770,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
           "name": "Container",
           "type": "FRAME",
         },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I138:30605;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I138:30605;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I138:30605;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I138:30605;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "138:30605",
       "mergedNodes": [
@@ -41228,31 +40224,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
           "name": "Container",
           "type": "FRAME",
         },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I537:53512;142:56296",
-              "mergedNodes": [
-                {
-                  "id": "I537:53512;142:56296",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I537:53512;142:56295",
-          "mergedNodes": [
-            {
-              "id": "I537:53512;142:56295",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "537:53512",
       "mergedNodes": [
@@ -41490,31 +40461,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
           "name": "Container",
           "type": "FRAME",
         },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3184:158815;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I3184:158815;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3184:158815;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I3184:158815;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "3184:158815",
       "mergedNodes": [
@@ -41713,31 +40659,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
             },
           ],
           "name": "Container",
-          "type": "FRAME",
-        },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3184:158816;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I3184:158816;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3184:158816;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I3184:158816;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -42226,31 +41147,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
           "name": "Container",
           "type": "FRAME",
         },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3184:158830;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I3184:158830;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3184:158830;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I3184:158830;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "3184:158830",
       "mergedNodes": [
@@ -42426,31 +41322,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
           "name": "Container",
           "type": "FRAME",
         },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3184:158831;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I3184:158831;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3184:158831;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I3184:158831;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "3184:158831",
       "mergedNodes": [
@@ -42624,31 +41495,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
             },
           ],
           "name": "Container",
-          "type": "FRAME",
-        },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3184:158832;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I3184:158832;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3184:158832;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I3184:158832;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -42922,31 +41768,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
                           "type": "INSTANCE",
                         },
                         {
-                          "children": [
-                            {
-                              "children": [],
-                              "id": "I3242:34656;3242:5208;790:43466",
-                              "mergedNodes": [
-                                {
-                                  "id": "I3242:34656;3242:5208;790:43466",
-                                  "variantName": "Decorate/Interactive",
-                                },
-                              ],
-                              "name": "Decorate/Interactive",
-                              "type": "INSTANCE",
-                            },
-                          ],
-                          "id": "I3242:34656;3242:5208;790:43465",
-                          "mergedNodes": [
-                            {
-                              "id": "I3242:34656;3242:5208;790:43465",
-                              "variantName": "Interaction",
-                            },
-                          ],
-                          "name": "Interaction",
-                          "type": "FRAME",
-                        },
-                        {
                           "children": [],
                           "id": "I3242:34656;3242:5208;796:47234",
                           "mergedNodes": [
@@ -43050,31 +41871,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
             },
           ],
           "name": "Container",
-          "type": "FRAME",
-        },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3242:34656;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I3242:34656;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3242:34656;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I3242:34656;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -43250,31 +42046,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
             },
           ],
           "name": "Container",
-          "type": "FRAME",
-        },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3184:158833;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I3184:158833;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3184:158833;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I3184:158833;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -43628,31 +42399,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
           "name": "Container",
           "type": "FRAME",
         },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3184:158834;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I3184:158834;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3184:158834;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I3184:158834;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "3184:158834",
       "mergedNodes": [
@@ -43943,31 +42689,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
           "name": "Container",
           "type": "FRAME",
         },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3184:158835;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I3184:158835;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3184:158835;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I3184:158835;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "3184:158835",
       "mergedNodes": [
@@ -44099,18 +42820,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
                           "name": "Knob",
                           "type": "ELLIPSE",
                         },
-                        {
-                          "children": [],
-                          "id": "I3184:158836;737:124642;284:16926",
-                          "mergedNodes": [
-                            {
-                              "id": "I3184:158836;737:124642;284:16926",
-                              "variantName": "Interaction",
-                            },
-                          ],
-                          "name": "Interaction",
-                          "type": "FRAME",
-                        },
                       ],
                       "id": "I3184:158836;737:124642",
                       "mergedNodes": [
@@ -44227,31 +42936,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
             },
           ],
           "name": "Container",
-          "type": "FRAME",
-        },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3184:158836;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I3184:158836;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3184:158836;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I3184:158836;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -44488,31 +43172,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
             },
           ],
           "name": "Container",
-          "type": "FRAME",
-        },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3184:158837;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I3184:158837;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3184:158837;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I3184:158837;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -44777,31 +43436,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
           "name": "Container",
           "type": "FRAME",
         },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3184:158838;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I3184:158838;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3184:158838;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I3184:158838;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
-          "type": "FRAME",
-        },
       ],
       "id": "3184:158838",
       "mergedNodes": [
@@ -44975,31 +43609,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
             },
           ],
           "name": "Container",
-          "type": "FRAME",
-        },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3184:158839;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I3184:158839;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3184:158839;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I3184:158839;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -45388,31 +43997,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
                           "type": "INSTANCE",
                         },
                         {
-                          "children": [
-                            {
-                              "children": [],
-                              "id": "I3242:58246;3242:5208;790:43466",
-                              "mergedNodes": [
-                                {
-                                  "id": "I3242:58246;3242:5208;790:43466",
-                                  "variantName": "Decorate/Interactive",
-                                },
-                              ],
-                              "name": "Decorate/Interactive",
-                              "type": "INSTANCE",
-                            },
-                          ],
-                          "id": "I3242:58246;3242:5208;790:43465",
-                          "mergedNodes": [
-                            {
-                              "id": "I3242:58246;3242:5208;790:43465",
-                              "variantName": "Interaction",
-                            },
-                          ],
-                          "name": "Interaction",
-                          "type": "FRAME",
-                        },
-                        {
                           "children": [],
                           "id": "I3242:58246;3242:5208;796:47234",
                           "mergedNodes": [
@@ -45516,31 +44100,6 @@ exports[`InternalTree snapshots > item-slot-likes/tada-list 1`] = `
             },
           ],
           "name": "Container",
-          "type": "FRAME",
-        },
-        {
-          "children": [
-            {
-              "children": [],
-              "id": "I3242:58246;113:26138",
-              "mergedNodes": [
-                {
-                  "id": "I3242:58246;113:26138",
-                  "variantName": "Interactive",
-                },
-              ],
-              "name": "Interactive",
-              "type": "INSTANCE",
-            },
-          ],
-          "id": "I3242:58246;113:26348",
-          "mergedNodes": [
-            {
-              "id": "I3242:58246;113:26348",
-              "variantName": "Interaction",
-            },
-          ],
-          "name": "Interaction",
           "type": "FRAME",
         },
       ],
@@ -47644,63 +46203,6 @@ exports[`InternalTree snapshots > regression/BreakpointdesktopmdlgStatelogin 1`]
                             {
                               "children": [
                                 {
-                                  "children": [],
-                                  "id": "I16215:20810;16215:38428",
-                                  "mergedNodes": [
-                                    {
-                                      "id": "I16215:20810;16215:38428",
-                                      "variantName": "Breakpoint=Desktop(md-lg), State=Login",
-                                    },
-                                    {
-                                      "id": "I16215:20843;16215:38428",
-                                      "variantName": "Breakpoint=Desktop(md-lg), State=Logout",
-                                    },
-                                    {
-                                      "id": "I16215:20862;16215:38428",
-                                      "variantName": "Breakpoint=Mobile(xs-sm), State=Login",
-                                    },
-                                    {
-                                      "id": "I16215:20909;16215:38428",
-                                      "variantName": "Breakpoint=Desktop(xl), State=Login",
-                                    },
-                                    {
-                                      "id": "I16215:20942;16215:38428",
-                                      "variantName": "Breakpoint=Desktop(xl), State=Logout",
-                                    },
-                                  ],
-                                  "name": "Interaction",
-                                  "type": "INSTANCE",
-                                },
-                              ],
-                              "id": "I16215:20810;16215:38427",
-                              "mergedNodes": [
-                                {
-                                  "id": "I16215:20810;16215:38427",
-                                  "variantName": "Breakpoint=Desktop(md-lg), State=Login",
-                                },
-                                {
-                                  "id": "I16215:20843;16215:38427",
-                                  "variantName": "Breakpoint=Desktop(md-lg), State=Logout",
-                                },
-                                {
-                                  "id": "I16215:20862;16215:38427",
-                                  "variantName": "Breakpoint=Mobile(xs-sm), State=Login",
-                                },
-                                {
-                                  "id": "I16215:20909;16215:38427",
-                                  "variantName": "Breakpoint=Desktop(xl), State=Login",
-                                },
-                                {
-                                  "id": "I16215:20942;16215:38427",
-                                  "variantName": "Breakpoint=Desktop(xl), State=Logout",
-                                },
-                              ],
-                              "name": "Interaction",
-                              "type": "FRAME",
-                            },
-                            {
-                              "children": [
-                                {
                                   "children": [
                                     {
                                       "children": [
@@ -48041,47 +46543,6 @@ exports[`InternalTree snapshots > regression/BreakpointdesktopmdlgStatelogin 1`]
                         },
                         {
                           "children": [
-                            {
-                              "children": [
-                                {
-                                  "children": [],
-                                  "id": "I16215:20811;16215:38428",
-                                  "mergedNodes": [
-                                    {
-                                      "id": "I16215:20811;16215:38428",
-                                      "variantName": "Breakpoint=Desktop(md-lg), State=Login",
-                                    },
-                                    {
-                                      "id": "I16215:20863;16215:38428",
-                                      "variantName": "Breakpoint=Mobile(xs-sm), State=Login",
-                                    },
-                                    {
-                                      "id": "I16215:20910;16215:38428",
-                                      "variantName": "Breakpoint=Desktop(xl), State=Login",
-                                    },
-                                  ],
-                                  "name": "Interaction",
-                                  "type": "INSTANCE",
-                                },
-                              ],
-                              "id": "I16215:20811;16215:38427",
-                              "mergedNodes": [
-                                {
-                                  "id": "I16215:20811;16215:38427",
-                                  "variantName": "Breakpoint=Desktop(md-lg), State=Login",
-                                },
-                                {
-                                  "id": "I16215:20863;16215:38427",
-                                  "variantName": "Breakpoint=Mobile(xs-sm), State=Login",
-                                },
-                                {
-                                  "id": "I16215:20910;16215:38427",
-                                  "variantName": "Breakpoint=Desktop(xl), State=Login",
-                                },
-                              ],
-                              "name": "Interaction",
-                              "type": "FRAME",
-                            },
                             {
                               "children": [
                                 {
@@ -48459,121 +46920,6 @@ exports[`InternalTree snapshots > regression/BreakpointdesktopmdlgStatelogin 1`]
                           "type": "FRAME",
                         },
                         {
-                          "children": [
-                            {
-                              "children": [],
-                              "id": "I16215:20876;16246:1244599",
-                              "mergedNodes": [
-                                {
-                                  "id": "I16215:20876;16246:1244599",
-                                  "variantName": "Breakpoint=Mobile(xs-sm), State=Logout",
-                                },
-                              ],
-                              "name": "Mask",
-                              "type": "RECTANGLE",
-                            },
-                            {
-                              "children": [
-                                {
-                                  "children": [],
-                                  "id": "I16215:20876;16293:154075",
-                                  "mergedNodes": [
-                                    {
-                                      "id": "I16215:20876;16293:154075",
-                                      "variantName": "Breakpoint=Mobile(xs-sm), State=Logout",
-                                    },
-                                  ],
-                                  "name": "Leading Icon",
-                                  "type": "FRAME",
-                                },
-                                {
-                                  "children": [],
-                                  "id": "I16215:20876;16215:38052",
-                                  "mergedNodes": [
-                                    {
-                                      "id": "I16215:20876;16215:38052",
-                                      "variantName": "Breakpoint=Mobile(xs-sm), State=Logout",
-                                    },
-                                  ],
-                                  "name": "텍스트",
-                                  "type": "TEXT",
-                                },
-                              ],
-                              "id": "I16215:20876;16215:38050",
-                              "mergedNodes": [
-                                {
-                                  "id": "I16215:20876;16215:38050",
-                                  "variantName": "Breakpoint=Mobile(xs-sm), State=Logout",
-                                },
-                              ],
-                              "name": "Content",
-                              "type": "FRAME",
-                            },
-                            {
-                              "children": [
-                                {
-                                  "children": [],
-                                  "id": "I16215:20813;16215:25739",
-                                  "mergedNodes": [
-                                    {
-                                      "id": "I16215:20813;16215:25739",
-                                      "variantName": "Breakpoint=Desktop(md-lg), State=Login",
-                                    },
-                                    {
-                                      "id": "I16215:20912;16215:25739",
-                                      "variantName": "Breakpoint=Desktop(xl), State=Login",
-                                    },
-                                  ],
-                                  "name": "Interaction",
-                                  "type": "INSTANCE",
-                                },
-                              ],
-                              "id": "I16215:20813;16215:25738",
-                              "mergedNodes": [
-                                {
-                                  "id": "I16215:20813;16215:25738",
-                                  "variantName": "Breakpoint=Desktop(md-lg), State=Login",
-                                },
-                                {
-                                  "id": "I16215:20912;16215:25738",
-                                  "variantName": "Breakpoint=Desktop(xl), State=Login",
-                                },
-                                {
-                                  "id": "I16215:20876;16246:1244597",
-                                  "variantName": "Breakpoint=Mobile(xs-sm), State=Logout",
-                                },
-                              ],
-                              "name": "Interaction",
-                              "type": "FRAME",
-                            },
-                          ],
-                          "id": "I16215:20813;16215:25737",
-                          "mergedNodes": [
-                            {
-                              "id": "I16215:20849;16293:156004",
-                              "variantName": "Breakpoint=Desktop(md-lg), State=Logout",
-                            },
-                            {
-                              "id": "I16215:20948;16293:156004",
-                              "variantName": "Breakpoint=Desktop(xl), State=Logout",
-                            },
-                            {
-                              "id": "I16215:20813;16215:25737",
-                              "variantName": "Breakpoint=Desktop(md-lg), State=Login",
-                            },
-                            {
-                              "id": "I16215:20912;16215:25737",
-                              "variantName": "Breakpoint=Desktop(xl), State=Login",
-                            },
-                            {
-                              "id": "I16215:20876;16215:38046",
-                              "variantName": "Breakpoint=Mobile(xs-sm), State=Logout",
-                            },
-                          ],
-                          "name": "Interaction",
-                          "type": "FRAME",
-                        },
-                        {
                           "children": [],
                           "id": "I16215:20813;16215:25744",
                           "mergedNodes": [
@@ -48654,51 +47000,6 @@ exports[`InternalTree snapshots > regression/BreakpointdesktopmdlgStatelogin 1`]
                         {
                           "children": [
                             {
-                              "children": [
-                                {
-                                  "children": [],
-                                  "id": "I16215:20881;16215:38428",
-                                  "mergedNodes": [
-                                    {
-                                      "id": "I16215:20864;16215:38429",
-                                      "variantName": "Breakpoint=Mobile(xs-sm), State=Login",
-                                    },
-                                    {
-                                      "id": "I16215:20849;16215:38145",
-                                      "variantName": "Breakpoint=Desktop(md-lg), State=Logout",
-                                    },
-                                    {
-                                      "id": "I16215:20948;16215:38145",
-                                      "variantName": "Breakpoint=Desktop(xl), State=Logout",
-                                    },
-                                    {
-                                      "id": "I16215:20881;16215:38428",
-                                      "variantName": "Breakpoint=Mobile(xs-sm), State=Logout",
-                                    },
-                                  ],
-                                  "name": "Interaction",
-                                  "type": "INSTANCE",
-                                },
-                              ],
-                              "id": "I16215:20881;16215:38427",
-                              "mergedNodes": [
-                                {
-                                  "id": "I16215:20849;16215:38144",
-                                  "variantName": "Breakpoint=Desktop(md-lg), State=Logout",
-                                },
-                                {
-                                  "id": "I16215:20948;16215:38144",
-                                  "variantName": "Breakpoint=Desktop(xl), State=Logout",
-                                },
-                                {
-                                  "id": "I16215:20881;16215:38427",
-                                  "variantName": "Breakpoint=Mobile(xs-sm), State=Logout",
-                                },
-                              ],
-                              "name": "Interaction",
-                              "type": "FRAME",
-                            },
-                            {
                               "children": [],
                               "id": "I16215:20881;16215:38429",
                               "mergedNodes": [
@@ -48734,71 +47035,6 @@ exports[`InternalTree snapshots > regression/BreakpointdesktopmdlgStatelogin 1`]
                     },
                     {
                       "children": [
-                        {
-                          "children": [
-                            {
-                              "children": [],
-                              "id": "I16215:20815;16215:38145",
-                              "mergedNodes": [
-                                {
-                                  "id": "I16215:20880;16215:38426;16215:25202",
-                                  "variantName": "Breakpoint=Mobile(xs-sm), State=Logout",
-                                },
-                                {
-                                  "id": "I16215:20864;16215:38428",
-                                  "variantName": "Breakpoint=Mobile(xs-sm), State=Login",
-                                },
-                                {
-                                  "id": "I16215:20815;16215:38145",
-                                  "variantName": "Breakpoint=Desktop(md-lg), State=Login",
-                                },
-                                {
-                                  "id": "I16215:20848;16215:38055",
-                                  "variantName": "Breakpoint=Desktop(md-lg), State=Logout",
-                                },
-                                {
-                                  "id": "I16215:20914;16215:38145",
-                                  "variantName": "Breakpoint=Desktop(xl), State=Login",
-                                },
-                                {
-                                  "id": "I16215:20947;16215:38055",
-                                  "variantName": "Breakpoint=Desktop(xl), State=Logout",
-                                },
-                              ],
-                              "name": "Interaction",
-                              "type": "INSTANCE",
-                            },
-                          ],
-                          "id": "I16215:20815;16215:38144",
-                          "mergedNodes": [
-                            {
-                              "id": "I16215:20880;16215:38426;16215:25202;16215:16223;16215:17329",
-                              "variantName": "Breakpoint=Mobile(xs-sm), State=Logout",
-                            },
-                            {
-                              "id": "I16215:20864;16215:38427",
-                              "variantName": "Breakpoint=Mobile(xs-sm), State=Login",
-                            },
-                            {
-                              "id": "I16215:20815;16215:38144",
-                              "variantName": "Breakpoint=Desktop(md-lg), State=Login",
-                            },
-                            {
-                              "id": "I16215:20848;16215:38054",
-                              "variantName": "Breakpoint=Desktop(md-lg), State=Logout",
-                            },
-                            {
-                              "id": "I16215:20914;16215:38144",
-                              "variantName": "Breakpoint=Desktop(xl), State=Login",
-                            },
-                            {
-                              "id": "I16215:20947;16215:38054",
-                              "variantName": "Breakpoint=Desktop(xl), State=Logout",
-                            },
-                          ],
-                          "name": "Interaction",
-                          "type": "FRAME",
-                        },
                         {
                           "children": [
                             {
@@ -49529,87 +47765,6 @@ exports[`InternalTree snapshots > regression/BreakpointdesktopmdlgStatelogin 1`]
 exports[`InternalTree snapshots > regression/Controlradio 1`] = `
 {
   "children": [
-    {
-      "children": [
-        {
-          "children": [],
-          "id": "16215:34777",
-          "mergedNodes": [
-            {
-              "id": "16215:34777",
-              "variantName": "Size=Medium, State=Unchecked, Tight=False, Disable=False",
-            },
-            {
-              "id": "16215:34782",
-              "variantName": "Size=Medium, State=Checked, Tight=False, Disable=False",
-            },
-            {
-              "id": "16215:34791",
-              "variantName": "Size=Small, State=Unchecked, Tight=False, Disable=False",
-            },
-            {
-              "id": "16215:34805",
-              "variantName": "Size=Medium, State=Unchecked, Tight=True, Disable=False",
-            },
-            {
-              "id": "16215:34796",
-              "variantName": "Size=Small, State=Checked, Tight=False, Disable=False",
-            },
-            {
-              "id": "16215:34810",
-              "variantName": "Size=Medium, State=Checked, Tight=True, Disable=False",
-            },
-            {
-              "id": "16215:34819",
-              "variantName": "Size=Small, State=Unchecked, Tight=True, Disable=False",
-            },
-            {
-              "id": "16215:34824",
-              "variantName": "Size=Small, State=Checked, Tight=True, Disable=False",
-            },
-          ],
-          "name": "Interaction",
-          "type": "INSTANCE",
-        },
-      ],
-      "id": "16215:34776",
-      "mergedNodes": [
-        {
-          "id": "16215:34776",
-          "variantName": "Size=Medium, State=Unchecked, Tight=False, Disable=False",
-        },
-        {
-          "id": "16215:34781",
-          "variantName": "Size=Medium, State=Checked, Tight=False, Disable=False",
-        },
-        {
-          "id": "16215:34790",
-          "variantName": "Size=Small, State=Unchecked, Tight=False, Disable=False",
-        },
-        {
-          "id": "16215:34804",
-          "variantName": "Size=Medium, State=Unchecked, Tight=True, Disable=False",
-        },
-        {
-          "id": "16215:34795",
-          "variantName": "Size=Small, State=Checked, Tight=False, Disable=False",
-        },
-        {
-          "id": "16215:34809",
-          "variantName": "Size=Medium, State=Checked, Tight=True, Disable=False",
-        },
-        {
-          "id": "16215:34818",
-          "variantName": "Size=Small, State=Unchecked, Tight=True, Disable=False",
-        },
-        {
-          "id": "16215:34823",
-          "variantName": "Size=Small, State=Checked, Tight=True, Disable=False",
-        },
-      ],
-      "name": "Interaction",
-      "type": "FRAME",
-    },
     {
       "children": [
         {
@@ -50396,31 +48551,6 @@ exports[`InternalTree snapshots > regression/List 1`] = `
                                                   "name": "Wrapper",
                                                   "type": "FRAME",
                                                 },
-                                                {
-                                                  "children": [
-                                                    {
-                                                      "children": [],
-                                                      "id": "I16274:135781;16215:32254;16215:32890;16215:38302",
-                                                      "mergedNodes": [
-                                                        {
-                                                          "id": "I16274:135781;16215:32254;16215:32890;16215:38302",
-                                                          "variantName": "Interaction",
-                                                        },
-                                                      ],
-                                                      "name": "Interaction",
-                                                      "type": "INSTANCE",
-                                                    },
-                                                  ],
-                                                  "id": "I16274:135781;16215:32254;16215:32890;16215:38301",
-                                                  "mergedNodes": [
-                                                    {
-                                                      "id": "I16274:135781;16215:32254;16215:32890;16215:38301",
-                                                      "variantName": "Interaction",
-                                                    },
-                                                  ],
-                                                  "name": "Interaction",
-                                                  "type": "FRAME",
-                                                },
                                               ],
                                               "id": "I16274:135781;16215:32254;16215:32890",
                                               "mergedNodes": [
@@ -50496,81 +48626,6 @@ exports[`InternalTree snapshots > regression/List 1`] = `
                         },
                       ],
                       "name": "Input",
-                      "type": "FRAME",
-                    },
-                    {
-                      "children": [
-                        {
-                          "children": [
-                            {
-                              "children": [
-                                {
-                                  "children": [],
-                                  "id": "I16274:135781;16215:32256;16215:32940",
-                                  "mergedNodes": [
-                                    {
-                                      "id": "I16274:135781;16215:32256;16215:32940",
-                                      "variantName": "Inner Border",
-                                    },
-                                  ],
-                                  "name": "Inner Border",
-                                  "type": "RECTANGLE",
-                                },
-                                {
-                                  "children": [],
-                                  "id": "I16274:135781;16215:32256;16215:32941",
-                                  "mergedNodes": [
-                                    {
-                                      "id": "I16274:135781;16215:32256;16215:32941",
-                                      "variantName": "Drop Shadow",
-                                    },
-                                  ],
-                                  "name": "Drop Shadow",
-                                  "type": "RECTANGLE",
-                                },
-                              ],
-                              "id": "I16274:135781;16215:32256;16215:32939",
-                              "mergedNodes": [
-                                {
-                                  "id": "I16274:135781;16215:32256;16215:32939",
-                                  "variantName": "Normal",
-                                },
-                              ],
-                              "name": "Normal",
-                              "type": "FRAME",
-                            },
-                            {
-                              "children": [],
-                              "id": "I16274:135781;16215:32256;16215:32942",
-                              "mergedNodes": [
-                                {
-                                  "id": "I16274:135781;16215:32256;16215:32942",
-                                  "variantName": "Focus",
-                                },
-                              ],
-                              "name": "Focus",
-                              "type": "FRAME",
-                            },
-                          ],
-                          "id": "I16274:135781;16215:32256",
-                          "mergedNodes": [
-                            {
-                              "id": "I16274:135781;16215:32256",
-                              "variantName": "Interaction",
-                            },
-                          ],
-                          "name": "Interaction",
-                          "type": "INSTANCE",
-                        },
-                      ],
-                      "id": "I16274:135781;16215:32255",
-                      "mergedNodes": [
-                        {
-                          "id": "I16274:135781;16215:32255",
-                          "variantName": "Interaction",
-                        },
-                      ],
-                      "name": "Interaction",
                       "type": "FRAME",
                     },
                   ],
@@ -51051,81 +49106,6 @@ exports[`InternalTree snapshots > regression/List 1`] = `
                       "name": "Input",
                       "type": "FRAME",
                     },
-                    {
-                      "children": [
-                        {
-                          "children": [
-                            {
-                              "children": [
-                                {
-                                  "children": [],
-                                  "id": "I16274:135782;16215:32279;16215:32940",
-                                  "mergedNodes": [
-                                    {
-                                      "id": "I16274:135782;16215:32279;16215:32940",
-                                      "variantName": "Inner Border",
-                                    },
-                                  ],
-                                  "name": "Inner Border",
-                                  "type": "RECTANGLE",
-                                },
-                                {
-                                  "children": [],
-                                  "id": "I16274:135782;16215:32279;16215:32941",
-                                  "mergedNodes": [
-                                    {
-                                      "id": "I16274:135782;16215:32279;16215:32941",
-                                      "variantName": "Drop Shadow",
-                                    },
-                                  ],
-                                  "name": "Drop Shadow",
-                                  "type": "RECTANGLE",
-                                },
-                              ],
-                              "id": "I16274:135782;16215:32279;16215:32939",
-                              "mergedNodes": [
-                                {
-                                  "id": "I16274:135782;16215:32279;16215:32939",
-                                  "variantName": "Normal",
-                                },
-                              ],
-                              "name": "Normal",
-                              "type": "FRAME",
-                            },
-                            {
-                              "children": [],
-                              "id": "I16274:135782;16215:32279;16215:32942",
-                              "mergedNodes": [
-                                {
-                                  "id": "I16274:135782;16215:32279;16215:32942",
-                                  "variantName": "Focus",
-                                },
-                              ],
-                              "name": "Focus",
-                              "type": "FRAME",
-                            },
-                          ],
-                          "id": "I16274:135782;16215:32279",
-                          "mergedNodes": [
-                            {
-                              "id": "I16274:135782;16215:32279",
-                              "variantName": "Interaction",
-                            },
-                          ],
-                          "name": "Interaction",
-                          "type": "INSTANCE",
-                        },
-                      ],
-                      "id": "I16274:135782;16215:32278",
-                      "mergedNodes": [
-                        {
-                          "id": "I16274:135782;16215:32278",
-                          "variantName": "Interaction",
-                        },
-                      ],
-                      "name": "Interaction",
-                      "type": "FRAME",
-                    },
                   ],
                   "id": "I16274:135782;16215:32263",
                   "mergedNodes": [
@@ -51463,31 +49443,6 @@ exports[`InternalTree snapshots > regression/List 1`] = `
                                                   "name": "Wrapper",
                                                   "type": "FRAME",
                                                 },
-                                                {
-                                                  "children": [
-                                                    {
-                                                      "children": [],
-                                                      "id": "I16274:135784;16215:32369;16215:32890;16215:38302",
-                                                      "mergedNodes": [
-                                                        {
-                                                          "id": "I16274:135784;16215:32369;16215:32890;16215:38302",
-                                                          "variantName": "Interaction",
-                                                        },
-                                                      ],
-                                                      "name": "Interaction",
-                                                      "type": "INSTANCE",
-                                                    },
-                                                  ],
-                                                  "id": "I16274:135784;16215:32369;16215:32890;16215:38301",
-                                                  "mergedNodes": [
-                                                    {
-                                                      "id": "I16274:135784;16215:32369;16215:32890;16215:38301",
-                                                      "variantName": "Interaction",
-                                                    },
-                                                  ],
-                                                  "name": "Interaction",
-                                                  "type": "FRAME",
-                                                },
                                               ],
                                               "id": "I16274:135784;16215:32369;16215:32890",
                                               "mergedNodes": [
@@ -51563,81 +49518,6 @@ exports[`InternalTree snapshots > regression/List 1`] = `
                         },
                       ],
                       "name": "Input",
-                      "type": "FRAME",
-                    },
-                    {
-                      "children": [
-                        {
-                          "children": [
-                            {
-                              "children": [],
-                              "id": "I16274:135784;16215:32371;16215:32939",
-                              "mergedNodes": [
-                                {
-                                  "id": "I16274:135784;16215:32371;16215:32939",
-                                  "variantName": "Normal",
-                                },
-                              ],
-                              "name": "Normal",
-                              "type": "FRAME",
-                            },
-                            {
-                              "children": [
-                                {
-                                  "children": [],
-                                  "id": "I16274:135784;16215:32371;16215:32943",
-                                  "mergedNodes": [
-                                    {
-                                      "id": "I16274:135784;16215:32371;16215:32943",
-                                      "variantName": "Inner Border",
-                                    },
-                                  ],
-                                  "name": "Inner Border",
-                                  "type": "RECTANGLE",
-                                },
-                                {
-                                  "children": [],
-                                  "id": "I16274:135784;16215:32371;16215:32944",
-                                  "mergedNodes": [
-                                    {
-                                      "id": "I16274:135784;16215:32371;16215:32944",
-                                      "variantName": "Drop Shadow",
-                                    },
-                                  ],
-                                  "name": "Drop Shadow",
-                                  "type": "RECTANGLE",
-                                },
-                              ],
-                              "id": "I16274:135784;16215:32371;16215:32942",
-                              "mergedNodes": [
-                                {
-                                  "id": "I16274:135784;16215:32371;16215:32942",
-                                  "variantName": "Focus",
-                                },
-                              ],
-                              "name": "Focus",
-                              "type": "FRAME",
-                            },
-                          ],
-                          "id": "I16274:135784;16215:32371",
-                          "mergedNodes": [
-                            {
-                              "id": "I16274:135784;16215:32371",
-                              "variantName": "Interaction",
-                            },
-                          ],
-                          "name": "Interaction",
-                          "type": "INSTANCE",
-                        },
-                      ],
-                      "id": "I16274:135784;16215:32370",
-                      "mergedNodes": [
-                        {
-                          "id": "I16274:135784;16215:32370",
-                          "variantName": "Interaction",
-                        },
-                      ],
-                      "name": "Interaction",
                       "type": "FRAME",
                     },
                   ],
@@ -52118,81 +49998,6 @@ exports[`InternalTree snapshots > regression/List 1`] = `
                       "name": "Input",
                       "type": "FRAME",
                     },
-                    {
-                      "children": [
-                        {
-                          "children": [
-                            {
-                              "children": [],
-                              "id": "I16274:135785;16215:32394;16215:32939",
-                              "mergedNodes": [
-                                {
-                                  "id": "I16274:135785;16215:32394;16215:32939",
-                                  "variantName": "Normal",
-                                },
-                              ],
-                              "name": "Normal",
-                              "type": "FRAME",
-                            },
-                            {
-                              "children": [
-                                {
-                                  "children": [],
-                                  "id": "I16274:135785;16215:32394;16215:32943",
-                                  "mergedNodes": [
-                                    {
-                                      "id": "I16274:135785;16215:32394;16215:32943",
-                                      "variantName": "Inner Border",
-                                    },
-                                  ],
-                                  "name": "Inner Border",
-                                  "type": "RECTANGLE",
-                                },
-                                {
-                                  "children": [],
-                                  "id": "I16274:135785;16215:32394;16215:32944",
-                                  "mergedNodes": [
-                                    {
-                                      "id": "I16274:135785;16215:32394;16215:32944",
-                                      "variantName": "Drop Shadow",
-                                    },
-                                  ],
-                                  "name": "Drop Shadow",
-                                  "type": "RECTANGLE",
-                                },
-                              ],
-                              "id": "I16274:135785;16215:32394;16215:32942",
-                              "mergedNodes": [
-                                {
-                                  "id": "I16274:135785;16215:32394;16215:32942",
-                                  "variantName": "Focus",
-                                },
-                              ],
-                              "name": "Focus",
-                              "type": "FRAME",
-                            },
-                          ],
-                          "id": "I16274:135785;16215:32394",
-                          "mergedNodes": [
-                            {
-                              "id": "I16274:135785;16215:32394",
-                              "variantName": "Interaction",
-                            },
-                          ],
-                          "name": "Interaction",
-                          "type": "INSTANCE",
-                        },
-                      ],
-                      "id": "I16274:135785;16215:32393",
-                      "mergedNodes": [
-                        {
-                          "id": "I16274:135785;16215:32393",
-                          "variantName": "Interaction",
-                        },
-                      ],
-                      "name": "Interaction",
-                      "type": "FRAME",
-                    },
                   ],
                   "id": "I16274:135785;16215:32378",
                   "mergedNodes": [
@@ -52638,39 +50443,6 @@ exports[`InternalTree snapshots > regression/Searchfieldsearchfield 1`] = `
       "children": [
         {
           "children": [
-            {
-              "children": [
-                {
-                  "children": [],
-                  "id": "I16215:33787;16215:38428",
-                  "mergedNodes": [
-                    {
-                      "id": "I16215:33787;16215:38428",
-                      "variantName": "Size=Medium, Active=True",
-                    },
-                    {
-                      "id": "I16215:33805;16215:38428",
-                      "variantName": "Size=Small, Active=True",
-                    },
-                  ],
-                  "name": "Interaction",
-                  "type": "INSTANCE",
-                },
-              ],
-              "id": "I16215:33787;16215:38427",
-              "mergedNodes": [
-                {
-                  "id": "I16215:33787;16215:38427",
-                  "variantName": "Size=Medium, Active=True",
-                },
-                {
-                  "id": "I16215:33805;16215:38427",
-                  "variantName": "Size=Small, Active=True",
-                },
-              ],
-              "name": "Interaction",
-              "type": "FRAME",
-            },
             {
               "children": [
                 {

@@ -24,29 +24,10 @@ describe("Case.json visible override 이슈", () => {
     expect(mainCode).toContain("decorateInteractiveOpacity");
   });
 
-  it("should apply correct styles to Large dependency (position: relative)", async () => {
-    const fixtureData = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
-
-    const compiler = new FigmaCodeGenerator(fixtureData);
-    const result = await compiler.getGeneratedCodeWithDependencies();
-
-    const deps = result.dependencies || {};
-    let largeCode = "";
-    for (const [key, dep] of Object.entries(deps)) {
-      if (dep.code.includes("function Large")) {
-        largeCode = dep.code;
-      }
-    }
-
-    // Large 컴포넌트에 position: relative (absolute 자식이 있을 때)
-    expect(largeCode).toMatch(/position:\s*relative/);
-
-    // Interaction 노드 CSS가 존재해야 함
-    expect(largeCode).toMatch(/InteractionCss/i);
-
-    // TODO: hidden variant 노드의 width 스타일 병합 구현 후 활성화
-    // expect(largeCode).toMatch(/width:\s*343px/);
-  });
+  // 삭제됨: "should apply correct styles to Large dependency (position: relative)"
+  // — Interaction 노드가 sibling으로 렌더되던 OLD 동작을 검증하던 테스트.
+  //   Phase 3 InteractionLayerStripper 도입으로 Interaction은 트리에서 제거되며
+  //   부모는 absolute 자식이 없어졌으므로 position: relative 불필요.
 
   it("should apply transparent background to Decorateinteractive", async () => {
     const fixtureData = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
@@ -68,25 +49,9 @@ describe("Case.json visible override 이슈", () => {
     expect(diCode).toMatch(/background:\s*transparent/);
   });
 
-  it("should apply decorateInteractiveOpacity prop to Large dependency", async () => {
-    const fixtureData = JSON.parse(fs.readFileSync(fixturePath, "utf8"));
-
-    const compiler = new FigmaCodeGenerator(fixtureData);
-    const result = await compiler.getGeneratedCodeWithDependencies();
-
-    const deps = result.dependencies || {};
-    let largeCode = "";
-    for (const [key, dep] of Object.entries(deps)) {
-      if (dep.code.includes("function Large")) {
-        largeCode = dep.code;
-      }
-    }
-
-    // decorateInteractiveOpacity prop이 존재해야 함 (wrapper에서 opacity 제어)
-    expect(largeCode).toMatch(/decorateInteractiveOpacity/);
-    // prop의 기본값이 설정됨 (Figma 원본: ~0.08)
-    expect(largeCode).toMatch(/decorateInteractiveOpacity\s*=\s*"0\.0[78]/);
-    // CSS에도 opacity 값이 있어야 함
-    expect(largeCode).toMatch(/opacity:\s*0\.08/);
-  });
+  // 삭제됨: "should apply decorateInteractiveOpacity prop to Large dependency"
+  // — Interaction 노드 자체가 prop으로 opacity를 받아 렌더되던 OLD 동작.
+  //   Phase 3 stripper가 Interaction을 트리에서 제거하므로 prop 자체가 사라짐.
+  //   디자이너 의도(opacity 효과)는 별도 작업으로 부모의 :hover/:active로 흡수
+  //   되어야 함. 그 작업은 후속 task.
 });

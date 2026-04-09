@@ -7,6 +7,7 @@ import {
 } from "../../../types/types";
 import DataManager from "../../data-manager/DataManager";
 import { VariantMerger } from "./processors/VariantMerger";
+import { stripInteractionLayers } from "./processors/InteractionLayerStripper";
 import { PropsExtractor } from "./processors/PropsExtractor";
 import { SlotProcessor } from "./processors/SlotProcessor";
 import { StyleProcessor } from "./processors/StyleProcessor";
@@ -79,6 +80,11 @@ class TreeBuilder {
 
     // Step 1: 변형 병합
     let tree = this.variantMerger.merge(node);
+
+    // Step 1.1: Interaction layer 메타데이터 제거 (Phase 3)
+    // — Figma의 "Interaction" frame은 디자이너 의도 표현용 메타데이터이므로
+    //   트리에서 제거하고 디자이너 의도 색은 부모의 :hover/:active 등으로 흡수.
+    stripInteractionLayers(tree, this.dataManager);
 
     // Step 1.5: 다른 componentId가 prop에 의해 제어되는 INSTANCE → 분리
     this.splitMultiComponentInstances(tree);
@@ -453,10 +459,12 @@ class TreeBuilder {
   }
 
   /**
-   * 디버그용: InternalTree 반환 (Step 1 결과)
+   * 디버그용: InternalTree 반환 (Step 1 + 1.1 결과 — VariantMerger + Interaction strip)
    */
   public buildInternalTreeDebug(node: SceneNode): InternalTree {
-    return this.variantMerger.merge(node);
+    const tree = this.variantMerger.merge(node);
+    stripInteractionLayers(tree, this.dataManager);
+    return tree;
   }
 
   /**
