@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-04-09T06:13:44.039Z",
+  "generatedAt": "2026-04-09T07:50:21.301Z",
   "totalFixtures": 85,
   "fixturesWithRegressions": 45,
-  "totalDisjointPairs": 1929,
+  "totalDisjointPairs": 1856,
   "compileErrors": 0,
   "patternTotals": {
     "size-variant-reject": 1,
-    "variant-prop-position": 23,
+    "variant-prop-position": 20,
     "same-name-same-type": 7,
     "same-name-cross-type": 0,
-    "different-type": 910,
-    "different-name": 988,
+    "different-type": 897,
+    "different-name": 931,
     "unknown": 0
   },
   "byFixture": [
@@ -687,14 +687,14 @@
     },
     {
       "fixture": "any/any-03",
-      "disjointCount": 17,
+      "disjointCount": 15,
       "patterns": {
         "size-variant-reject": 0,
         "variant-prop-position": 0,
         "same-name-same-type": 0,
         "same-name-cross-type": 0,
         "different-type": 12,
-        "different-name": 5,
+        "different-name": 3,
         "unknown": 0
       },
       "pairs": [
@@ -707,18 +707,6 @@
           ],
           "variantsB": [
             "Button/Solid/Primary"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "I3797:2180;3123:162814",
-          "a": "I3797:2180;3123:162814;247:55248",
-          "b": "I3797:2180;3123:162814;247:55253",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
           ],
           "pattern": "different-name"
         },
@@ -805,18 +793,6 @@
             "Ratio/Vertical"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "I3797:2180;3123:162815",
-          "a": "I3797:2180;3123:162815;89:2908",
-          "b": "I3797:2180;3123:162815;89:3234",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3797:2180;3123:162815;89:2972",
@@ -906,14 +882,14 @@
     },
     {
       "fixture": "any/any-04",
-      "disjointCount": 199,
+      "disjointCount": 189,
       "patterns": {
         "size-variant-reject": 0,
         "variant-prop-position": 0,
         "same-name-same-type": 0,
         "same-name-cross-type": 0,
         "different-type": 106,
-        "different-name": 93,
+        "different-name": 83,
         "unknown": 0
       },
       "pairs": [
@@ -2598,18 +2574,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "3786:7303",
-          "a": "I3786:7303;247:62158",
-          "b": "I3786:7303;247:62163",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I3786:7303;247:62159",
           "a": "I3786:7303;258:39850",
           "b": "I3786:7303;247:62161",
@@ -2644,18 +2608,6 @@
             "Right Icon"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3786:7304",
-          "a": "I3786:7304;247:62158",
-          "b": "I3786:7304;247:62163",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3786:7304;247:62159",
@@ -2718,18 +2670,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "3786:7305",
-          "a": "I3786:7305;247:62158",
-          "b": "I3786:7305;247:62163",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I3786:7305;247:62159",
           "a": "I3786:7305;258:39850",
           "b": "I3786:7305;247:62161",
@@ -2788,18 +2728,6 @@
             "Ratio/Vertical"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3786:7306",
-          "a": "I3786:7306;247:62158",
-          "b": "I3786:7306;247:62163",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3786:7306;247:62159",
@@ -2886,18 +2814,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "3786:7307",
-          "a": "I3786:7307;247:62158",
-          "b": "I3786:7307;247:62163",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I3786:7307;247:62159",
           "a": "I3786:7307;258:39850",
           "b": "I3786:7307;247:62161",
@@ -2980,18 +2896,6 @@
             "Ratio/Vertical"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3786:7308",
-          "a": "I3786:7308;247:62172",
-          "b": "I3786:7308;247:62177",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3786:7308;247:62173",
@@ -3078,18 +2982,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "3786:7309",
-          "a": "I3786:7309;247:62172",
-          "b": "I3786:7309;247:62177",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I3786:7309;247:62173",
           "a": "I3786:7309;258:40848",
           "b": "I3786:7309;247:62175",
@@ -3124,18 +3016,6 @@
             "Right Icon"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3786:7310",
-          "a": "I3786:7310;247:62158",
-          "b": "I3786:7310;247:62163",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3786:7310;247:62159",
@@ -3210,18 +3090,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "3786:7312",
-          "a": "I3786:7312;247:62158",
-          "b": "I3786:7312;247:62163",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I3786:7312;247:62159",
           "a": "I3786:7312;258:39850",
           "b": "I3786:7312;247:62161",
@@ -3256,18 +3124,6 @@
             "Right Icon"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3786:7313",
-          "a": "I3786:7313;247:62158",
-          "b": "I3786:7313;247:62163",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3786:7313;247:62159",
@@ -3309,14 +3165,14 @@
     },
     {
       "fixture": "any/any-05",
-      "disjointCount": 64,
+      "disjointCount": 54,
       "patterns": {
         "size-variant-reject": 0,
         "variant-prop-position": 0,
         "same-name-same-type": 0,
         "same-name-cross-type": 0,
         "different-type": 38,
-        "different-name": 26,
+        "different-name": 16,
         "unknown": 0
       },
       "pairs": [
@@ -3477,18 +3333,6 @@
           "pattern": "different-name"
         },
         {
-          "parentId": "3802:342429",
-          "a": "I3802:342429;2556:12517",
-          "b": "I3802:342429;2556:12521",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I3802:342429;2556:12517",
           "a": "I3802:342429;2556:12518",
           "b": "I3802:342429;2556:12519",
@@ -3523,18 +3367,6 @@
             "Button/Icon/Normal"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3802:342430",
-          "a": "I3802:342430;2556:12510",
-          "b": "I3802:342430;2556:12514",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3802:342430;2556:12510",
@@ -3573,18 +3405,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "3802:342431",
-          "a": "I3802:342431;2556:12510",
-          "b": "I3802:342431;2556:12514",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I3802:342431;2556:12510",
           "a": "I3802:342431;2556:12511",
           "b": "I3802:342431;2556:12512",
@@ -3619,18 +3439,6 @@
             "Button/Icon/Normal"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3802:342432",
-          "a": "I3802:342432;2556:12510",
-          "b": "I3802:342432;2556:12514",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3802:342432;2556:12510",
@@ -3693,18 +3501,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "3802:342444",
-          "a": "I3802:342444;2556:12517",
-          "b": "I3802:342444;2556:12521",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I3802:342444;2556:12517",
           "a": "I3802:342444;2556:12518",
           "b": "I3802:342444;2556:12519",
@@ -3739,18 +3535,6 @@
             "Button/Icon/Normal"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3802:342445",
-          "a": "I3802:342445;2556:12510",
-          "b": "I3802:342445;2556:12514",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3802:342445;2556:12510",
@@ -3789,18 +3573,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "3802:342446",
-          "a": "I3802:342446;2556:12510",
-          "b": "I3802:342446;2556:12514",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I3802:342446;2556:12510",
           "a": "I3802:342446;2556:12511",
           "b": "I3802:342446;2556:12512",
@@ -3835,18 +3607,6 @@
             "Button/Icon/Normal"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3802:342447",
-          "a": "I3802:342447;2556:12510",
-          "b": "I3802:342447;2556:12514",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3802:342447;2556:12510",
@@ -3893,18 +3653,6 @@
           ],
           "variantsB": [
             "Button/Solid/Primary"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "I3802:342452;3141:159546",
-          "a": "I3802:342452;3141:159546;247:55935",
-          "b": "I3802:342452;3141:159546;247:55940",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
           ],
           "pattern": "different-name"
         },
@@ -3991,18 +3739,6 @@
             "Ratio/Vertical"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "I3802:342452;3141:159547",
-          "a": "I3802:342452;3141:159547;89:2908",
-          "b": "I3802:342452;3141:159547;89:3234",
-          "variantsA": [
-            "Contents"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3802:342452;3141:159547;89:2972",
@@ -4713,13 +4449,13 @@
     },
     {
       "fixture": "any/Case",
-      "disjointCount": 27,
+      "disjointCount": 21,
       "patterns": {
         "size-variant-reject": 0,
         "variant-prop-position": 0,
         "same-name-same-type": 0,
         "same-name-cross-type": 0,
-        "different-type": 27,
+        "different-type": 21,
         "different-name": 0,
         "unknown": 0
       },
@@ -4973,78 +4709,6 @@
           ],
           "variantsB": [
             "Frame 960"
-          ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "14:1630",
-          "a": "I14:1630;14:1646",
-          "b": "I14:1630;14:1647",
-          "variantsA": [
-            "A"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "14:1631",
-          "a": "I14:1631;14:1646",
-          "b": "I14:1631;14:1647",
-          "variantsA": [
-            "A"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "14:1632",
-          "a": "I14:1632;14:1646",
-          "b": "I14:1632;14:1647",
-          "variantsA": [
-            "A"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "14:1633",
-          "a": "I14:1633;14:1646",
-          "b": "I14:1633;14:1647",
-          "variantsA": [
-            "A"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "14:1634",
-          "a": "I14:1634;14:1654",
-          "b": "I14:1634;14:1655",
-          "variantsA": [
-            "A"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "14:1635",
-          "a": "I14:1635;14:1666",
-          "b": "I14:1635;14:1667",
-          "variantsA": [
-            "A"
-          ],
-          "variantsB": [
-            "Interaction"
           ],
           "pattern": "different-type"
         }
@@ -7434,13 +7098,13 @@
     },
     {
       "fixture": "any/Popup",
-      "disjointCount": 5,
+      "disjointCount": 3,
       "patterns": {
         "size-variant-reject": 0,
         "variant-prop-position": 0,
         "same-name-same-type": 0,
         "same-name-cross-type": 0,
-        "different-type": 3,
+        "different-type": 1,
         "different-name": 2,
         "unknown": 0
       },
@@ -7480,30 +7144,6 @@
             "Right Button"
           ],
           "pattern": "different-name"
-        },
-        {
-          "parentId": "I456:3398;243:223",
-          "a": "I456:3398;243:223;14:1666",
-          "b": "I456:3398;243:223;14:1667",
-          "variantsA": [
-            "A"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "I456:3398;243:224",
-          "a": "I456:3398;243:224;14:1658",
-          "b": "I456:3398;243:224;14:1659",
-          "variantsA": [
-            "A"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-type"
         }
       ]
     },
@@ -8551,10 +8191,10 @@
     },
     {
       "fixture": "failing/Buttonsolid",
-      "disjointCount": 12,
+      "disjointCount": 9,
       "patterns": {
         "size-variant-reject": 1,
-        "variant-prop-position": 10,
+        "variant-prop-position": 7,
         "same-name-same-type": 1,
         "same-name-cross-type": 0,
         "different-type": 0,
@@ -8575,72 +8215,6 @@
             "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
             "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
             "Variant=Assistive, Size=Small, Icon Only=True, Disable=False"
-          ],
-          "pattern": "variant-prop-position"
-        },
-        {
-          "parentId": "16215:37612",
-          "a": "16215:37613",
-          "b": "16246:1228780",
-          "variantsA": [
-            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=True, Disable=False"
-          ],
-          "variantsB": [
-            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
-          ],
-          "pattern": "variant-prop-position"
-        },
-        {
-          "parentId": "16215:37612",
-          "a": "16215:37613",
-          "b": "16246:1228782",
-          "variantsA": [
-            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=True, Disable=False"
-          ],
-          "variantsB": [
-            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
-          ],
-          "pattern": "variant-prop-position"
-        },
-        {
-          "parentId": "16215:37612",
-          "a": "16215:37613",
-          "b": "16215:37753",
-          "variantsA": [
-            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=True, Disable=False"
-          ],
-          "variantsB": [
-            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
           ],
           "pattern": "variant-prop-position"
         },
@@ -9223,14 +8797,14 @@
     },
     {
       "fixture": "item-slot-likes/tada-list",
-      "disjointCount": 1184,
+      "disjointCount": 1158,
       "patterns": {
         "size-variant-reject": 0,
         "variant-prop-position": 0,
         "same-name-same-type": 0,
         "same-name-cross-type": 0,
-        "different-type": 518,
-        "different-name": 666,
+        "different-type": 513,
+        "different-name": 645,
         "unknown": 0
       },
       "pairs": [
@@ -18991,18 +18565,6 @@
           "pattern": "different-name"
         },
         {
-          "parentId": "115:51294",
-          "a": "I115:51294;102:26012",
-          "b": "I115:51294;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I115:51294;102:26012",
           "a": "I115:51294;102:26013",
           "b": "I115:51294;102:26062",
@@ -19267,18 +18829,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "244:63430",
-          "a": "I244:63430;142:56281",
-          "b": "I244:63430;142:56295",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I244:63430;142:56281",
           "a": "I244:63430;142:56282",
           "b": "I244:63430;142:56293",
@@ -19493,18 +19043,6 @@
             "Ratio/Vertical"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "115:51365",
-          "a": "I115:51365;102:26012",
-          "b": "I115:51365;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I115:51365;102:26012",
@@ -19987,18 +19525,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "115:51244",
-          "a": "I115:51244;102:26012",
-          "b": "I115:51244;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I115:51244;102:26012",
           "a": "I115:51244;102:26013",
           "b": "I115:51244;102:26062",
@@ -20263,18 +19789,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "537:53511",
-          "a": "I537:53511;142:56281",
-          "b": "I537:53511;142:56295",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I537:53511;142:56281",
           "a": "I537:53511;142:56282",
           "b": "I537:53511;142:56293",
@@ -20489,18 +20003,6 @@
             "Ratio/Vertical"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "138:30605",
-          "a": "I138:30605;102:26012",
-          "b": "I138:30605;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I138:30605;102:26012",
@@ -20767,18 +20269,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "537:53512",
-          "a": "I537:53512;142:56281",
-          "b": "I537:53512;142:56295",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I537:53512;142:56281",
           "a": "I537:53512;142:56282",
           "b": "I537:53512;142:56293",
@@ -20995,18 +20485,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "3184:158815",
-          "a": "I3184:158815;102:26012",
-          "b": "I3184:158815;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I3184:158815;102:26012",
           "a": "I3184:158815;102:26013",
           "b": "I3184:158815;102:26062",
@@ -21101,18 +20579,6 @@
             "Badge/Tag"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3184:158816",
-          "a": "I3184:158816;102:26012",
-          "b": "I3184:158816;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3184:158816;102:26012",
@@ -21223,18 +20689,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "3184:158830",
-          "a": "I3184:158830;102:26012",
-          "b": "I3184:158830;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I3184:158830;102:26012",
           "a": "I3184:158830;102:26013",
           "b": "I3184:158830;102:26062",
@@ -21329,18 +20783,6 @@
             "Badge/Tag"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3184:158831",
-          "a": "I3184:158831;102:26012",
-          "b": "I3184:158831;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3184:158831;102:26012",
@@ -21439,18 +20881,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "3184:158832",
-          "a": "I3184:158832;102:26012",
-          "b": "I3184:158832;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I3184:158832;102:26012",
           "a": "I3184:158832;102:26013",
           "b": "I3184:158832;102:26062",
@@ -21545,18 +20975,6 @@
             "Badge/Tag"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3242:34656",
-          "a": "I3242:34656;102:26012",
-          "b": "I3242:34656;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3242:34656;102:26012",
@@ -21777,18 +21195,6 @@
         {
           "parentId": "I3242:34656;3242:5208",
           "a": "I3242:34656;3242:5208;802:64363",
-          "b": "I3242:34656;3242:5208;790:43465",
-          "variantsA": [
-            "Icon"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "I3242:34656;3242:5208",
-          "a": "I3242:34656;3242:5208;802:64363",
           "b": "I3242:34656;3242:5208;796:47234",
           "variantsA": [
             "Icon"
@@ -21797,18 +21203,6 @@
             "Badge/Push"
           ],
           "pattern": "different-name"
-        },
-        {
-          "parentId": "I3242:34656;3242:5208",
-          "a": "I3242:34656;3242:5208;790:43465",
-          "b": "I3242:34656;3242:5208;796:47234",
-          "variantsA": [
-            "Interaction"
-          ],
-          "variantsB": [
-            "Badge/Push"
-          ],
-          "pattern": "different-type"
         },
         {
           "parentId": "I3242:34656;3242:5208;802:64363;250:78017",
@@ -21833,18 +21227,6 @@
             "Ratio/Vertical"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3184:158833",
-          "a": "I3184:158833;102:26012",
-          "b": "I3184:158833;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3184:158833;102:26012",
@@ -21941,18 +21323,6 @@
             "Badge/Tag"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3184:158834",
-          "a": "I3184:158834;102:26012",
-          "b": "I3184:158834;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3184:158834;102:26012",
@@ -22195,18 +21565,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "3184:158835",
-          "a": "I3184:158835;102:26012",
-          "b": "I3184:158835;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I3184:158835;102:26012",
           "a": "I3184:158835;102:26013",
           "b": "I3184:158835;102:26062",
@@ -22325,18 +21683,6 @@
             "Badge/Tag"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3184:158836",
-          "a": "I3184:158836;102:26012",
-          "b": "I3184:158836;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3184:158836;102:26012",
@@ -22551,30 +21897,6 @@
           ],
           "variantsB": [
             "Badge/Push"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "I3184:158836;737:124642",
-          "a": "I3184:158836;737:124642;282:51306",
-          "b": "I3184:158836;737:124642;284:16926",
-          "variantsA": [
-            "Knob"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "3184:158837",
-          "a": "I3184:158837;102:26012",
-          "b": "I3184:158837;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
           ],
           "pattern": "different-name"
         },
@@ -22795,18 +22117,6 @@
           "pattern": "different-name"
         },
         {
-          "parentId": "3184:158838",
-          "a": "I3184:158838;102:26012",
-          "b": "I3184:158838;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I3184:158838;102:26012",
           "a": "I3184:158838;102:26013",
           "b": "I3184:158838;102:26062",
@@ -23023,18 +22333,6 @@
           "pattern": "different-name"
         },
         {
-          "parentId": "3184:158839",
-          "a": "I3184:158839;102:26012",
-          "b": "I3184:158839;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I3184:158839;102:26012",
           "a": "I3184:158839;102:26013",
           "b": "I3184:158839;102:26062",
@@ -23129,18 +22427,6 @@
             "Badge/Tag"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3242:58246",
-          "a": "I3242:58246;102:26012",
-          "b": "I3242:58246;113:26348",
-          "variantsA": [
-            "Container"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3242:58246;102:26012",
@@ -23385,18 +22671,6 @@
         {
           "parentId": "I3242:58246;3242:5208",
           "a": "I3242:58246;3242:5208;802:64363",
-          "b": "I3242:58246;3242:5208;790:43465",
-          "variantsA": [
-            "Icon"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "I3242:58246;3242:5208",
-          "a": "I3242:58246;3242:5208;802:64363",
           "b": "I3242:58246;3242:5208;796:47234",
           "variantsA": [
             "Icon"
@@ -23405,18 +22679,6 @@
             "Badge/Push"
           ],
           "pattern": "different-name"
-        },
-        {
-          "parentId": "I3242:58246;3242:5208",
-          "a": "I3242:58246;3242:5208;790:43465",
-          "b": "I3242:58246;3242:5208;796:47234",
-          "variantsA": [
-            "Interaction"
-          ],
-          "variantsB": [
-            "Badge/Push"
-          ],
-          "pattern": "different-type"
         },
         {
           "parentId": "I3242:58246;3242:5208;802:64363;250:78017",
@@ -23614,14 +22876,14 @@
     },
     {
       "fixture": "regression/List",
-      "disjointCount": 89,
+      "disjointCount": 75,
       "patterns": {
         "size-variant-reject": 0,
         "variant-prop-position": 0,
         "same-name-same-type": 0,
         "same-name-cross-type": 0,
         "different-type": 26,
-        "different-name": 63,
+        "different-name": 49,
         "unknown": 0
       },
       "pairs": [
@@ -23734,18 +22996,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "I16274:135781;16215:32240",
-          "a": "I16274:135781;16215:32241",
-          "b": "I16274:135781;16215:32255",
-          "variantsA": [
-            "Input"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I16274:135781;16215:32241",
           "a": "I16274:135781;16215:32242",
           "b": "I16274:135781;16215:32245",
@@ -23854,18 +23104,6 @@
           "pattern": "different-name"
         },
         {
-          "parentId": "I16274:135781;16215:32254;16215:32890",
-          "a": "I16274:135781;16215:32254;16215:32890;16215:38293",
-          "b": "I16274:135781;16215:32254;16215:32890;16215:38301",
-          "variantsA": [
-            "Wrapper"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I16274:135781;16215:32254;16215:32890;16215:38293",
           "a": "I16274:135781;16215:32254;16215:32890;16215:38294",
           "b": "I16274:135781;16215:32254;16215:32890;16215:38296",
@@ -23938,30 +23176,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "I16274:135781;16215:32256",
-          "a": "I16274:135781;16215:32256;16215:32939",
-          "b": "I16274:135781;16215:32256;16215:32942",
-          "variantsA": [
-            "Normal"
-          ],
-          "variantsB": [
-            "Focus"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "I16274:135781;16215:32256;16215:32939",
-          "a": "I16274:135781;16215:32256;16215:32940",
-          "b": "I16274:135781;16215:32256;16215:32941",
-          "variantsA": [
-            "Inner Border"
-          ],
-          "variantsB": [
-            "Drop Shadow"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "16274:135782",
           "a": "I16274:135782;16215:32259",
           "b": "I16274:135782;16215:32263",
@@ -24008,18 +23222,6 @@
             "Required"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "I16274:135782;16215:32263",
-          "a": "I16274:135782;16215:32264",
-          "b": "I16274:135782;16215:32278",
-          "variantsA": [
-            "Input"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I16274:135782;16215:32264",
@@ -24166,30 +23368,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "I16274:135782;16215:32279",
-          "a": "I16274:135782;16215:32279;16215:32939",
-          "b": "I16274:135782;16215:32279;16215:32942",
-          "variantsA": [
-            "Normal"
-          ],
-          "variantsB": [
-            "Focus"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "I16274:135782;16215:32279;16215:32939",
-          "a": "I16274:135782;16215:32279;16215:32940",
-          "b": "I16274:135782;16215:32279;16215:32941",
-          "variantsA": [
-            "Inner Border"
-          ],
-          "variantsB": [
-            "Drop Shadow"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "16274:135784",
           "a": "I16274:135784;16215:32351",
           "b": "I16274:135784;16215:32355",
@@ -24236,18 +23414,6 @@
             "Required"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "I16274:135784;16215:32355",
-          "a": "I16274:135784;16215:32356",
-          "b": "I16274:135784;16215:32370",
-          "variantsA": [
-            "Input"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I16274:135784;16215:32356",
@@ -24358,18 +23524,6 @@
           "pattern": "different-name"
         },
         {
-          "parentId": "I16274:135784;16215:32369;16215:32890",
-          "a": "I16274:135784;16215:32369;16215:32890;16215:38293",
-          "b": "I16274:135784;16215:32369;16215:32890;16215:38301",
-          "variantsA": [
-            "Wrapper"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "I16274:135784;16215:32369;16215:32890;16215:38293",
           "a": "I16274:135784;16215:32369;16215:32890;16215:38294",
           "b": "I16274:135784;16215:32369;16215:32890;16215:38296",
@@ -24442,30 +23596,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "I16274:135784;16215:32371",
-          "a": "I16274:135784;16215:32371;16215:32939",
-          "b": "I16274:135784;16215:32371;16215:32942",
-          "variantsA": [
-            "Normal"
-          ],
-          "variantsB": [
-            "Focus"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "I16274:135784;16215:32371;16215:32942",
-          "a": "I16274:135784;16215:32371;16215:32943",
-          "b": "I16274:135784;16215:32371;16215:32944",
-          "variantsA": [
-            "Inner Border"
-          ],
-          "variantsB": [
-            "Drop Shadow"
-          ],
-          "pattern": "different-name"
-        },
-        {
           "parentId": "16274:135785",
           "a": "I16274:135785;16215:32374",
           "b": "I16274:135785;16215:32378",
@@ -24512,18 +23642,6 @@
             "Required"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "I16274:135785;16215:32378",
-          "a": "I16274:135785;16215:32379",
-          "b": "I16274:135785;16215:32393",
-          "variantsA": [
-            "Input"
-          ],
-          "variantsB": [
-            "Interaction"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I16274:135785;16215:32379",
@@ -24668,30 +23786,6 @@
             "Vector"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "I16274:135785;16215:32394",
-          "a": "I16274:135785;16215:32394;16215:32939",
-          "b": "I16274:135785;16215:32394;16215:32942",
-          "variantsA": [
-            "Normal"
-          ],
-          "variantsB": [
-            "Focus"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "I16274:135785;16215:32394;16215:32942",
-          "a": "I16274:135785;16215:32394;16215:32943",
-          "b": "I16274:135785;16215:32394;16215:32944",
-          "variantsA": [
-            "Inner Border"
-          ],
-          "variantsB": [
-            "Drop Shadow"
-          ],
-          "pattern": "different-name"
         }
       ]
     },
