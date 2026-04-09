@@ -3,6 +3,7 @@ import { isInteractionLayer } from "@code-generator2/layers/tree-manager/tree-bu
 import { mapFigmaStateToPseudo } from "@code-generator2/layers/tree-manager/tree-builder/processors/InteractionLayerStripper";
 import { mergePseudoIntoParent } from "@code-generator2/layers/tree-manager/tree-builder/processors/InteractionLayerStripper";
 import { extractInteractionStyles } from "@code-generator2/layers/tree-manager/tree-builder/processors/InteractionLayerStripper";
+import { stripInteractionLayers } from "@code-generator2/layers/tree-manager/tree-builder/processors/InteractionLayerStripper";
 import type { InternalNode, StyleObject } from "@code-generator2/types/types";
 
 function node(name: string, type: string, children: InternalNode[] = []): InternalNode {
@@ -237,5 +238,118 @@ describe("extractInteractionStyles", () => {
     };
     const dm = makeMockDataManager({ spec, nodes: { "raw-inst-id": { id: "raw-inst-id" } } });
     expect(extractInteractionStyles(interactionFrame, dm)).toEqual({});
+  });
+});
+
+describe("stripInteractionLayers", () => {
+  function makeMockDataManager(opts: { spec?: any; nodes?: Record<string, any> } = {}): any {
+    return {
+      getById: (id: string) => ({
+        node: opts.nodes?.[id],
+        spec: opts.spec ?? { info: { components: {}, componentSets: {} } },
+      }),
+      getMainComponentId: () => "doc-root",
+    };
+  }
+
+  it("removes Interaction frame from parent.children", () => {
+    const parent: any = {
+      id: "p",
+      name: "Button",
+      type: "COMPONENT",
+      children: [
+        { id: "i", name: "Interaction", type: "FRAME", children: [], parent: null },
+        { id: "c", name: "Content", type: "FRAME", children: [], parent: null },
+      ],
+    };
+    parent.children.forEach((c: any) => (c.parent = parent));
+    stripInteractionLayers(parent, makeMockDataManager());
+    expect(parent.children.map((c: any) => c.name)).toEqual(["Content"]);
+  });
+
+  it("removes nested Interaction frames at all depths", () => {
+    const inner: any = {
+      id: "in",
+      name: "Interaction",
+      type: "FRAME",
+      children: [{ id: "leaf", name: "Interaction", type: "INSTANCE", children: [], mergedNodes: [{ id: "r" }] }],
+    };
+    const outer: any = { id: "out", name: "Interaction", type: "FRAME", children: [inner] };
+    const root: any = {
+      id: "p",
+      name: "Card",
+      type: "FRAME",
+      children: [outer, { id: "c", name: "Content", type: "FRAME", children: [] }],
+    };
+    stripInteractionLayers(root, makeMockDataManager());
+    expect(root.children.map((c: any) => c.name)).toEqual(["Content"]);
+  });
+
+  it("does not remove Interaction-named non-FRAME nodes", () => {
+    const root: any = {
+      id: "p",
+      name: "Btn",
+      type: "FRAME",
+      children: [
+        { id: "inst", name: "Interaction", type: "INSTANCE", children: [] },
+      ],
+    };
+    stripInteractionLayers(root, makeMockDataManager());
+    expect(root.children.length).toBe(1);
+  });
+
+  it("does not touch a tree without Interaction frames", () => {
+    const root: any = {
+      id: "p",
+      name: "Card",
+      type: "FRAME",
+      children: [
+        { id: "h", name: "Header", type: "FRAME", children: [] },
+        { id: "b", name: "Body", type: "FRAME", children: [] },
+      ],
+    };
+    const before = JSON.parse(JSON.stringify(root));
+    stripInteractionLayers(root, makeMockDataManager());
+    expect(root).toEqual(before);
+  });
+
+  it("merges extracted styles into parent.styles.pseudo", () => {
+    const childInst: any = {
+      id: "child",
+      name: "Interaction",
+      type: "INSTANCE",
+      children: [],
+      mergedNodes: [{ id: "raw" }],
+    };
+    const interaction: any = {
+      id: "i",
+      name: "Interaction",
+      type: "FRAME",
+      children: [childInst],
+    };
+    const parent: any = {
+      id: "p",
+      name: "Btn",
+      type: "COMPONENT",
+      children: [interaction],
+    };
+    const dm = makeMockDataManager({
+      spec: {
+        info: {
+          components: {
+            "comp-normal": { name: "State=Normal", componentSetId: "set-1" },
+            "comp-hover": { name: "State=Hover", componentSetId: "set-1" },
+          },
+          componentSets: { "set-1": { name: "Interaction/Normal" } },
+        },
+      },
+      nodes: {
+        raw: { id: "raw", componentId: "comp-normal" },
+        "comp-hover": { id: "comp-hover", fills: [{ type: "SOLID", color: { r: 0, g: 0, b: 0, a: 0.08 } }] },
+      },
+    });
+    stripInteractionLayers(parent, dm);
+    expect(parent.children.length).toBe(0);
+    expect(parent.styles?.pseudo?.[":hover"]).toBeDefined();
   });
 });

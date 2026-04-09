@@ -162,6 +162,48 @@ function parseStateValue(variantName: string): string | null {
   return null;
 }
 
+/**
+ * 트리 전체에서 Interaction layer를 제거.
+ *
+ * Post-order 순회로 자식부터 처리 → 중첩 Interaction의 안쪽부터 제거됨.
+ * 매칭된 노드를 만나면:
+ *   1. extractInteractionStyles로 스타일 추출
+ *   2. 추출된 pseudo entry를 부모의 styles.pseudo에 병합
+ *   3. 부모의 children에서 해당 노드 제거
+ *
+ * 트리는 in-place로 수정됨.
+ */
+export function stripInteractionLayers(
+  root: InternalNode,
+  dataManager: DataManager,
+): void {
+  walkAndStrip(root, dataManager);
+}
+
+function walkAndStrip(node: InternalNode, dataManager: DataManager): void {
+  // 1. 먼저 자식들을 재귀 처리 (post-order)
+  for (const child of [...(node.children ?? [])]) {
+    walkAndStrip(child, dataManager);
+  }
+
+  // 2. 자기 children 중 Interaction layer 제거
+  const children = node.children ?? [];
+  const survivors: InternalNode[] = [];
+  for (const child of children) {
+    if (isInteractionLayer(child)) {
+      // 제거 전에 스타일 추출 + 부모(=node)에 병합
+      const extracted = extractInteractionStyles(child, dataManager);
+      for (const [pseudo, style] of Object.entries(extracted)) {
+        mergePseudoIntoParent(node, pseudo as PseudoClass, style ?? {});
+      }
+      // child는 survivors에 안 넣음 → 제거됨
+      continue;
+    }
+    survivors.push(child);
+  }
+  node.children = survivors;
+}
+
 /** Figma 노드의 첫 SOLID fill을 CSS rgba 문자열로 변환 */
 function extractFirstSolidColor(node: any): string | null {
   const fills = node?.fills;
