@@ -134,8 +134,9 @@ describe("Anomaly scan", () => {
       expect(diff.newAnomalies.length).toBe(0);
 
       // 두 번째 게이트: fixture 개수 변동 감지
-      // 빌드 실패가 갑자기 늘면 다 해소된 것처럼 보이는 false positive 차단
-      expect(current.totalFixtures).toBe(baseline.totalFixtures);
+      // 핵심 의도: fixture 개수가 줄지 않았는지 확인 (compile error가 silent하게
+      // anomaly를 "해소"처럼 보이게 하는 false positive 방지). 새 fixture 추가는 OK.
+      expect(current.totalFixtures).toBeGreaterThanOrEqual(baseline.totalFixtures);
       expect(current.compileErrors).toBeLessThanOrEqual(baseline.compileErrors);
     },
     180_000

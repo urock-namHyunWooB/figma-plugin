@@ -134,5 +134,5 @@ A. 회귀가 의도적으로 줄거나 의도된 변화일 때만. 새 회귀를
 **Q. anomaly는 모두 버그인가?**
 A. 아니다. anomaly는 "회귀로는 안 잡히지만 의심스러운 매칭". legitimate rename / component swap도 잡힘. 새 anomaly가 등장했을 때만 분석하면 됨.
 
-**Q. matchTrace가 가짜 nodeToVariantRoot 매핑을 쓰는데 정확한가?**
-A. 정확하다. trace는 NodeMatcher의 단일 호출을 시뮬레이션하므로 fixture document에서 variant root를 한 번만 매핑하면 충분.
+**Q. matchTrace가 TreeBuilder가 아닌 VariantMerger를 직접 호출하는데 정확한가?**
+A. 정확하다. TreeBuilder는 nodeToVariantRoot 매핑을 외부에 노출하지 않으므로, NodeMatcher 구성에 필요한 매핑을 얻기 위해 VariantMerger를 직접 호출한다. merger.merge()가 채운 매핑을 그대로 사용하므로 production 경로와 동일한 매핑이다.
