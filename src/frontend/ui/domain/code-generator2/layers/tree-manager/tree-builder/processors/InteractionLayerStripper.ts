@@ -49,3 +49,34 @@ export function mapFigmaStateToPseudo(state: string): PseudoClass | null {
       return null;
   }
 }
+
+/**
+ * 부모 InternalNode의 styles.pseudo 구조에 pseudo-class entry를 병합.
+ *
+ * Spec §5.3 병합 규칙:
+ * - 부모에 styles가 없으면 빈 StyleObject 생성
+ * - styles.pseudo가 없으면 빈 객체 생성
+ * - 같은 pseudo entry가 이미 있으면 부모의 기존 값 우선 (디자이너가 직접 작성한 게 명시적)
+ * - 새 속성만 추가
+ * - 빈 style 맵은 효과 없음 (entry 자체는 생성)
+ */
+export function mergePseudoIntoParent(
+  parent: InternalNode,
+  pseudo: PseudoClass,
+  style: Record<string, string | number>,
+): void {
+  if (!parent.styles) {
+    parent.styles = { base: {}, dynamic: [] };
+  }
+  if (!parent.styles.pseudo) {
+    parent.styles.pseudo = {};
+  }
+  const existing = parent.styles.pseudo[pseudo] ?? {};
+  const merged: Record<string, string | number> = { ...existing };
+  for (const [key, value] of Object.entries(style)) {
+    if (!(key in merged)) {
+      merged[key] = value;
+    }
+  }
+  parent.styles.pseudo[pseudo] = merged;
+}
