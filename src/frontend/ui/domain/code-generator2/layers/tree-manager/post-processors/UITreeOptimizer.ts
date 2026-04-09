@@ -362,6 +362,7 @@ export class UITreeOptimizer {
       if (diagnostics && diag.length > 0) {
         for (const d of diag) {
           d.nodeName = node.name;
+          d.nodeId = node.id;
         }
         diagnostics.push(...diag);
       }
