@@ -52,10 +52,12 @@ npm run format:check   # Prettier check
 
 ### Code Generator Pipeline (`src/frontend/ui/domain/code-generator2/layers/`)
 
-**3-Layer Pipeline**:
+**3-Layer Pipeline + Layer 2.5 (SemanticIR)**:
 ```
-FigmaNodeData → DataManager → TreeManager → CodeEmitter → React Code
-                 (Layer 1)     (Layer 2)     (Layer 3)
+FigmaNodeData → DataManager → TreeManager → SemanticIRBuilder → CodeEmitter → React Code
+                 (Layer 1)     (Layer 2)     (Layer 2.5)         (Layer 3)
+                                  ↓               ↓                  ↓
+                               UITree     SemanticComponent      EmittedCode
 ```
 
 ```
@@ -71,12 +73,22 @@ layers/
 │   └── post-processors/         # UITree 후처리
 │       ├── ComponentPropsLinker.ts  # 외부 컴포넌트 props 연결
 │       └── UITreeOptimizer.ts      # FD 분해, 동적 스타일 병합, 미사용 props 제거
-└── code-emitter/                # Layer 3: 코드 생성
-    ├── react/
-    │   ├── ReactEmitter.ts      # ICodeEmitter 구현
-    │   ├── generators/          # UITree → JSX/Props/Style 생성
-    │   └── style-strategy/      # Emotion/Tailwind 전략 + DynamicStyleDecomposer
-    └── ICodeEmitter.ts
+└── code-emitter/                # Layer 2.5 + Layer 3: IR 변환 + 코드 생성
+    ├── SemanticIR.ts            # framework-agnostic IR 타입 (SemanticComponent, SemanticNode 등)
+    ├── SemanticIRBuilder.ts     # Layer 2.5: UITree → SemanticComponent 변환
+    ├── ICodeEmitter.ts          # emit(ir: SemanticComponent) 인터페이스
+    └── react/
+        ├── ReactEmitter.ts      # ICodeEmitter 구현 (renameNativeProps 포함)
+        ├── ReactBundler.ts      # 멀티 컴포넌트 단일 파일 번들링
+        ├── generators/
+        │   ├── ImportsGenerator.ts   # import 문
+        │   ├── PropsGenerator.ts     # interface Props
+        │   ├── StylesGenerator.ts    # CSS-in-JS / Tailwind 선언
+        │   ├── JsxGenerator.ts       # 함수 본문 오케스트레이터 (~215 LOC)
+        │   ├── NodeRenderer.ts       # SemanticNode → JSX 재귀 (~1250 LOC)
+        │   ├── BindingRenderer.ts    # BindingSource → JS 표현식
+        │   └── ConditionRenderer.ts  # ConditionNode → JS 조건식
+        └── style-strategy/      # Emotion/Tailwind 전략
 ```
 
 ## Key Concepts
@@ -158,3 +170,10 @@ Use these subagents proactively when conditions are met:
 - ✅ Auto Layout Context Matching — Stage 5.5 왼쪽 컨텍스트 보정 (NodeMatcher)
 - ✅ Cross-Depth Squash (UpdateSquashByIou) — 3-Way 독립 정규화 위치 비교
 - ✅ VisibilityProcessor Dead Code Elimination — 조상 조건 모순 제거 + OR branch simplification
+- ✅ **SemanticIR 마이그레이션 (Layer 2.5)** — framework-agnostic IR 도입.
+  ICodeEmitter가 `SemanticComponent`를 입력으로 받으며, 모든 generator가 IR을 소비.
+  JsxGenerator 1452 → 215 LOC (NodeRenderer/BindingRenderer/ConditionRenderer로 분리).
+  Vue/Svelte/SwiftUI/Compose 등 추가 emitter는 같은 IR을 소비. 유일한 future debt:
+  `derived.expression`이 JS string fallback (non-JS 타겟 추가 시 ExpressionNode IR 필요).
+- ✅ **Type debt cleanup** — tsc 에러 273 → 0 (메인 tsconfig target/lib을 ES2020으로
+  올려 lib 부족 false-positive 제거 + 진짜 type bug fix).

@@ -19,7 +19,7 @@ Figma와 React는 근본적으로 다른 모델을 사용한다.
 
 3. **스타일 소유권 결정**: `fontSize: 14px`가 size prop 때문인지 style prop 때문인지 — 48개 variant의 CSS를 비교해서 각 속성의 "주인"을 찾아야 한다. (→ [스타일 분해 가이드](../2b-props/style-decomposition.md))
 
-## 3-Layer 아키텍처가 필요한 이유
+## 3-Layer 아키텍처 + Layer 2.5
 
 이 세 문제는 **서로 다른 관심사**다. 하나의 모듈에서 다 처리하면 어떤 문제를 수정할 때 나머지가 깨진다. 그래서 각 관심사를 레이어로 분리했다:
 
@@ -27,11 +27,14 @@ Figma와 React는 근본적으로 다른 모델을 사용한다.
 |-------|--------|----------|
 | **1. DataManager** | 데이터 접근 | "이 노드의 스타일/이미지/SVG를 빠르게 찾으려면?" |
 | **2. TreeManager** | 의미 추론 | "48개 variant를 어떻게 하나의 typed 컴포넌트로?" |
-| **3. CodeEmitter** | 코드 생성 | "UITree를 어떤 프레임워크/스타일 전략으로 출력할까?" |
+| **2.5. SemanticIRBuilder** | IR 정규화 | "UITree에서 framework 종속을 제거하면?" |
+| **3. CodeEmitter** | 코드 생성 | "SemanticComponent를 어떤 프레임워크로 출력할까?" |
 
-**Layer 2가 가장 복잡하다.** variant 병합, 노드 매칭, 슬롯 감지, 휴리스틱 패턴 인식, 스타일 분류가 모두 여기서 일어난다. Layer 1과 3은 상대적으로 기계적이다.
+**Layer 2가 가장 복잡하다.** variant 병합, 노드 매칭, 슬롯 감지, 휴리스틱 패턴 인식, 스타일 분류가 모두 여기서 일어난다. Layer 1, 2.5, 3은 상대적으로 기계적이다.
 
-**Layer 2의 출력(UITree)은 플랫폼 독립적 IR이다.** 같은 UITree로 React/Emotion을 생성할 수도 있고, React/Tailwind를 생성할 수도 있다. 미래에 Vue나 Svelte를 지원하려면 Layer 3만 추가하면 된다.
+**Layer 2의 출력(UITree)** 은 Figma의 의미를 완전히 보존한 트리지만 일부 React 종속이 남아 있다 (`bindings.attrs`에 일반 속성과 이벤트가 섞임, `stateVars.setter` 같은 React 명명 등).
+
+**Layer 2.5(SemanticIRBuilder)** 가 이를 framework-agnostic한 `SemanticComponent`로 정규화한다. 7개 구역(`props` / `state` / `derived` / `structure` / `attrs` / `events` / `styles`)으로 평탄화되어 있어, React든 Vue든 Svelte든 SwiftUI든 같은 IR을 받아 자기 방식으로 풀기만 하면 된다. CSS는 그대로 보존되고 platform 매핑은 각 emitter 내부의 책임이다.
 
 ### 설계 원칙
 
@@ -71,13 +74,28 @@ Figma와 React는 근본적으로 다른 모델을 사용한다.
 │  │  │  DynamicStyleDecomposer (FD 분해)                      │ │ │
 │  │  └───────────────────────────────────────────────────────┘ │ │
 │  └────────────────────────────────────────────────────────────┘ │
-│                               │                                  │
+│                               │ UITree                           │
+│                               ▼                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  Layer 2.5: SemanticIRBuilder                                │ │
+│  │  UITree → SemanticComponent (framework-agnostic IR)         │ │
+│  │  - bindings.attrs를 attrs + events로 분리                    │ │
+│  │  - StateVar 정규화 (setter 제거, mutability 명시)            │ │
+│  │  - kind 기반 노드 (node.type → node.kind)                    │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                               │ SemanticComponent                │
 │                               ▼                                  │
 │  ┌────────────────────────────────────────────────────────────┐ │
 │  │  Layer 3: ReactEmitter (ICodeEmitter)                       │ │
 │  │  ┌────────────┐ ┌──────────┐ ┌─────────────┐ ┌─────────┐ │ │
 │  │  │ImportsGen. │ │PropsGen. │ │StylesGen.   │ │JsxGen.  │ │ │
-│  │  └────────────┘ └──────────┘ └─────────────┘ └─────────┘ │ │
+│  │  └────────────┘ └──────────┘ └─────────────┘ └────┬────┘ │ │
+│  │                                                    ▼      │ │
+│  │  ┌─────────────────────────────────────────────────────┐  │ │
+│  │  │  NodeRenderer (재귀, ~1250 LOC)                       │  │ │
+│  │  │   ├── BindingRenderer  (BindingSource → 표현식)       │  │ │
+│  │  │   └── ConditionRenderer (ConditionNode → JS)          │  │ │
+│  │  └─────────────────────────────────────────────────────┘  │ │
 │  │  ┌──────────────────────────────────────────────────────┐  │ │
 │  │  │  IStyleStrategy: EmotionStrategy / TailwindStrategy  │  │ │
 │  │  └──────────────────────────────────────────────────────┘  │ │
@@ -96,7 +114,11 @@ Figma와 React는 근본적으로 다른 모델을 사용한다.
 | **DataManager** | HashMap 기반 O(1) 데이터 접근, 벡터/이미지 정규화 |
 | **TreeManager** | 트리 빌딩 오케스트레이션 + 의존성 트리 구축 |
 | **TreeBuilder** | 2-Phase 파이프라인으로 UITree 생성 |
-| **ReactEmitter** | UITree → React 코드 생성 (ICodeEmitter 구현) |
+| **SemanticIRBuilder** | Layer 2.5 — UITree → SemanticComponent (framework-agnostic IR) 변환 |
+| **ReactEmitter** | SemanticComponent → React 코드 생성 (ICodeEmitter 구현) |
+| **NodeRenderer** | SemanticNode → JSX 재귀 (JsxGenerator에서 분리, ~1250 LOC) |
+| **BindingRenderer** | BindingSource → JS 표현식 (pure 함수) |
+| **ConditionRenderer** | ConditionNode → JS 조건식 (pure 함수) |
 | **ReactBundler** | 멀티 컴포넌트 단일 파일 번들링 |
 
 ---
@@ -605,11 +627,19 @@ utils/
 │                              │                                       │
 │                              ▼                                       │
 │  ┌──────────────────────────────────────────────────────────────┐   │
+│  │ Layer 2.5: SemanticIRBuilder                                  │   │
+│  │   build(uiTree) → SemanticComponent                           │   │
+│  │   (FigmaCodeGenerator가 main + 모든 dep에 대해 호출)            │   │
+│  └─────────────────────────┬────────────────────────────────────┘   │
+│                              │                                       │
+│                              ▼                                       │
+│  ┌──────────────────────────────────────────────────────────────┐   │
 │  │ Layer 3: ReactEmitter                                         │   │
 │  │                                                                │   │
 │  │  ┌────────────────────────────────────────────────────────┐   │   │
-│  │  │ emit() per UITree:                                      │   │   │
-│  │  │  Imports → Props → Styles → JSX → Prettier             │   │   │
+│  │  │ emit(ir: SemanticComponent):                            │   │   │
+│  │  │  renameNativeProps → 4 Generators → Prettier            │   │   │
+│  │  │  Generators가 IR을 직접 소비 (props/state/structure 등) │   │   │
 │  │  └────────────────────────────────────────────────────────┘   │   │
 │  │                              │                                 │   │
 │  │  ┌────────────────────────────────────────────────────────┐   │   │
@@ -701,18 +731,23 @@ src/frontend/ui/domain/code-generator2/
 │   │               ├── rewritePropConditions.ts
 │   │               └── textSlotUtils.ts
 │   │
-│   └── code-emitter/
-│       ├── ICodeEmitter.ts             # Layer 3 인터페이스
+│   └── code-emitter/                  # Layer 2.5 + Layer 3
+│       ├── SemanticIR.ts               # framework-agnostic IR 타입
+│       ├── SemanticIRBuilder.ts        # Layer 2.5: UITree → SemanticComponent
+│       ├── ICodeEmitter.ts             # emit(ir: SemanticComponent) 인터페이스
 │       ├── index.ts
 │       └── react/
-│           ├── ReactEmitter.ts         # React 코드 생성
+│           ├── ReactEmitter.ts         # React 코드 생성 (renameNativeProps free function 포함)
 │           ├── ReactBundler.ts         # 멀티 컴포넌트 번들링
 │           ├── generators/
 │           │   ├── index.ts
-│           │   ├── ImportsGenerator.ts
-│           │   ├── PropsGenerator.ts
-│           │   ├── StylesGenerator.ts
-│           │   └── JsxGenerator.ts
+│           │   ├── ImportsGenerator.ts # SemanticComponent → import 문
+│           │   ├── PropsGenerator.ts   # SemanticComponent → interface
+│           │   ├── StylesGenerator.ts  # SemanticNode 트리 → CSS-in-JS / Tailwind
+│           │   ├── JsxGenerator.ts     # 함수 본문 오케스트레이터 (~215 LOC)
+│           │   ├── NodeRenderer.ts     # SemanticNode → JSX 재귀 (~1250 LOC)
+│           │   ├── BindingRenderer.ts  # BindingSource → JS 표현식 (pure)
+│           │   └── ConditionRenderer.ts # ConditionNode → JS 조건식 (pure)
 │           └── style-strategy/
 │               ├── index.ts
 │               ├── IStyleStrategy.ts
@@ -783,15 +818,27 @@ COMPONENT_SET의 여러 variant (예: Size=Large/Small, State=Default/Hover)를 
 
 ### 새 플랫폼 추가
 
+새 emitter는 같은 `SemanticComponent` IR을 받아 자기 framework의 형식으로 풀기만 하면 된다.
+UITree나 Heuristic을 다시 해석할 필요 없음.
+
 ```typescript
 // ICodeEmitter 인터페이스 구현
 class VueEmitter implements ICodeEmitter {
   readonly framework = "vue";
-  async emit(uiTree: UITree): Promise<EmittedCode> {
-    // Vue SFC 생성 로직
+  async emit(ir: SemanticComponent): Promise<EmittedCode> {
+    // ir.props → defineProps
+    // ir.state → ref/reactive
+    // ir.structure → template + walk SemanticNode
+    //   - node.events.onClick → @click
+    //   - node.attrs → bind 속성
+    //   - node.styles → :style 또는 scoped <style>
   }
 }
 ```
+
+native UI 프레임워크(SwiftUI, Compose 등)도 같은 IR을 소비한다. 단, CSS → native 모디파이어
+매핑은 emitter 내부의 `StyleAdapter`가 담당하고, `derived.expression`이 JS 문자열인 한
+non-JS 타겟은 ExpressionNode IR을 별도로 도입해야 한다 (Known Future Debt).
 
 ### 새 스타일 전략 추가
 
