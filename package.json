@@ -23,7 +23,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "audit": "vitest run test/audits/variantMatchingAudit.test.ts",
-    "audit:write": "AUDIT_WRITE=1 vitest run test/audits/variantMatchingAudit.test.ts"
+    "audit:write": "AUDIT_WRITE=1 vitest run test/audits/variantMatchingAudit.test.ts",
+    "audit:diff": "vitest run test/audits/auditDiff.test.ts"
   },
   "author": "",
   "license": "",
