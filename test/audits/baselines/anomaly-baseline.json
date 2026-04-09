@@ -1,0 +1,5646 @@
+{
+  "generatedAt": "2026-04-09T10:21:25.208Z",
+  "totalFixtures": 85,
+  "totalAnomalies": 119,
+  "byDetector": {
+    "cross-name": 119
+  },
+  "byFixture": [
+    {
+      "fixture": "any-component-set/airtable-button",
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "15:45",
+          "primaryName": "Label",
+          "primaryType": "TEXT",
+          "payload": {
+            "mergedNodesCount": 24,
+            "outlierNames": [
+              {
+                "name": "Secondary",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "15:68",
+                "name": "Secondary",
+                "variantName": "Size=default, Variant=secondary, Icon=false"
+              },
+              {
+                "id": "711:13878",
+                "name": "Secondary",
+                "variantName": "Size=default, Variant=secondary, Icon=true"
+              },
+              {
+                "id": "711:13953",
+                "name": "Secondary",
+                "variantName": "Size=small, Variant=secondary, Icon=false"
+              },
+              {
+                "id": "711:14143",
+                "name": "Secondary",
+                "variantName": "Size=large, Variant=secondary, Icon=false"
+              },
+              {
+                "id": "716:530",
+                "name": "Secondary",
+                "variantName": "Size=small, Variant=secondary, Icon=true"
+              },
+              {
+                "id": "711:14156",
+                "name": "Secondary",
+                "variantName": "Size=large, Variant=secondary, Icon=true"
+              }
+            ]
+          },
+          "fixture": "any-component-set/airtable-button"
+        }
+      ]
+    },
+    {
+      "fixture": "any-component-set/urock-list",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/any-01",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/any-02",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/any-03",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/any-04",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/any-05",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/any-06",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/any-07",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/BarsstatusBariphoneblack",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/Case",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/component-01",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/component-02",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/ConfirmationDialog",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/Controlcheckbox",
+      "count": 3,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "16215:34466",
+          "primaryName": "Icon/Normal/Check",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 16,
+            "outlierNames": [
+              {
+                "name": "Icon/Normal/Line Horizontal",
+                "count": 8
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "16215:34471",
+                "name": "Icon/Normal/Line Horizontal",
+                "variantName": "Size=Normal, State=Indeterminate, Tight=False, Disable=False"
+              },
+              {
+                "id": "16215:34481",
+                "name": "Icon/Normal/Line Horizontal",
+                "variantName": "Size=Normal, State=Indeterminate, Tight=False, Disable=True"
+              },
+              {
+                "id": "16215:34493",
+                "name": "Icon/Normal/Line Horizontal",
+                "variantName": "Size=Small, State=Indeterminate, Tight=False, Disable=False"
+              },
+              {
+                "id": "16215:34515",
+                "name": "Icon/Normal/Line Horizontal",
+                "variantName": "Size=Normal, State=Indeterminate, Tight=True, Disable=False"
+              },
+              {
+                "id": "16215:34503",
+                "name": "Icon/Normal/Line Horizontal",
+                "variantName": "Size=Small, State=Indeterminate, Tight=False, Disable=True"
+              },
+              {
+                "id": "16215:34525",
+                "name": "Icon/Normal/Line Horizontal",
+                "variantName": "Size=Normal, State=Indeterminate, Tight=True, Disable=True"
+              },
+              {
+                "id": "16215:34537",
+                "name": "Icon/Normal/Line Horizontal",
+                "variantName": "Size=Small, State=Indeterminate, Tight=True, Disable=False"
+              },
+              {
+                "id": "16215:34547",
+                "name": "Icon/Normal/Line Horizontal",
+                "variantName": "Size=Small, State=Indeterminate, Tight=True, Disable=True"
+              }
+            ]
+          },
+          "fixture": "any/Controlcheckbox"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:34466;16215:14162",
+          "primaryName": "Union",
+          "primaryType": "BOOLEAN_OPERATION",
+          "payload": {
+            "mergedNodesCount": 8,
+            "outlierNames": [
+              {
+                "name": "Normal",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:34500;16215:14164",
+                "name": "Normal",
+                "variantName": "Size=Small, State=Checked, Tight=False, Disable=True"
+              },
+              {
+                "id": "I16215:34532;16215:14164",
+                "name": "Normal",
+                "variantName": "Size=Small, State=Checked, Tight=True, Disable=False"
+              },
+              {
+                "id": "I16215:34544;16215:14164",
+                "name": "Normal",
+                "variantName": "Size=Small, State=Checked, Tight=True, Disable=True"
+              }
+            ]
+          },
+          "fixture": "any/Controlcheckbox"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:34466;16215:14164",
+          "primaryName": "Line",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 16,
+            "outlierNames": [
+              {
+                "name": "Normal",
+                "count": 5
+              },
+              {
+                "name": "Union",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:34466;16215:14164",
+                "name": "Normal",
+                "variantName": "Size=Normal, State=Checked, Tight=False, Disable=False"
+              },
+              {
+                "id": "I16215:34478;16215:14164",
+                "name": "Normal",
+                "variantName": "Size=Normal, State=Checked, Tight=False, Disable=True"
+              },
+              {
+                "id": "I16215:34488;16215:14164",
+                "name": "Normal",
+                "variantName": "Size=Small, State=Checked, Tight=False, Disable=False"
+              },
+              {
+                "id": "I16215:34510;16215:14164",
+                "name": "Normal",
+                "variantName": "Size=Normal, State=Checked, Tight=True, Disable=False"
+              },
+              {
+                "id": "I16215:34500;16215:14162",
+                "name": "Union",
+                "variantName": "Size=Small, State=Checked, Tight=False, Disable=True"
+              },
+              {
+                "id": "I16215:34522;16215:14164",
+                "name": "Normal",
+                "variantName": "Size=Normal, State=Checked, Tight=True, Disable=True"
+              },
+              {
+                "id": "I16215:34532;16215:14162",
+                "name": "Union",
+                "variantName": "Size=Small, State=Checked, Tight=True, Disable=False"
+              },
+              {
+                "id": "I16215:34544;16215:14162",
+                "name": "Union",
+                "variantName": "Size=Small, State=Checked, Tight=True, Disable=True"
+              }
+            ]
+          },
+          "fixture": "any/Controlcheckbox"
+        }
+      ]
+    },
+    {
+      "fixture": "any/error-01",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/error-02",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/frame-01",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/frame-02",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/frame-03",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/frame-04",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/Ghost",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/Gnb",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/group-02",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/group-node-01",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/Headerroot",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/Headersub",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/Input",
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "3:96",
+          "primaryName": "Placeholder",
+          "primaryType": "TEXT",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Value",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "3:98",
+                "name": "Value",
+                "variantName": "Size=default, Placeholder=false"
+              },
+              {
+                "id": "3:102",
+                "name": "Value",
+                "variantName": "Size=small, Placeholder=false"
+              },
+              {
+                "id": "3:106",
+                "name": "Value",
+                "variantName": "Size=large, Placeholder=false"
+              }
+            ]
+          },
+          "fixture": "any/Input"
+        }
+      ]
+    },
+    {
+      "fixture": "any/InputBoxotp",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/InputBoxstandard",
+      "count": 3,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "166:3034",
+          "primaryName": "Frame 962",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 3,
+            "outlierNames": [
+              {
+                "name": "Error",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "153:3135",
+                "name": "Error",
+                "variantName": "State=Error, Guide Text=False"
+              }
+            ]
+          },
+          "fixture": "any/InputBoxstandard"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "153:3131",
+          "primaryName": "number",
+          "primaryType": "TEXT",
+          "payload": {
+            "mergedNodesCount": 3,
+            "outlierNames": [
+              {
+                "name": "063112",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "153:3136",
+                "name": "063112",
+                "variantName": "State=Error, Guide Text=False"
+              }
+            ]
+          },
+          "fixture": "any/InputBoxstandard"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "166:3315",
+          "primaryName": "OTP / Number",
+          "primaryType": "TEXT",
+          "payload": {
+            "mergedNodesCount": 3,
+            "outlierNames": [
+              {
+                "name": "OTP Number",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "166:4041",
+                "name": "OTP Number",
+                "variantName": "State=Error, Guide Text=False"
+              }
+            ]
+          },
+          "fixture": "any/InputBoxstandard"
+        }
+      ]
+    },
+    {
+      "fixture": "any/InputFieldtextField",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/LabelNameConflict",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/Measure",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/Popup",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/Primary",
+      "count": 2,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "15:13576",
+          "primaryName": "Min Width",
+          "primaryType": "LINE",
+          "payload": {
+            "mergedNodesCount": 36,
+            "outlierNames": [
+              {
+                "name": " Min Width",
+                "count": 9
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "15:13693",
+                "name": " Min Width",
+                "variantName": "Size=Large, State=Default, Left Icon=False, Right Icon=False"
+              },
+              {
+                "id": "15:13696",
+                "name": " Min Width",
+                "variantName": "Size=Large, State=Default, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13701",
+                "name": " Min Width",
+                "variantName": "Size=Large, State=Default, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13706",
+                "name": " Min Width",
+                "variantName": "Size=Medium, State=Default, Left Icon=False, Right Icon=False"
+              },
+              {
+                "id": "15:13719",
+                "name": " Min Width",
+                "variantName": "Size=Small, State=Default, Left Icon=False, Right Icon=False"
+              },
+              {
+                "id": "15:13709",
+                "name": " Min Width",
+                "variantName": "Size=Medium, State=Default, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13722",
+                "name": " Min Width",
+                "variantName": "Size=Small, State=Default, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13714",
+                "name": " Min Width",
+                "variantName": "Size=Medium, State=Default, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13727",
+                "name": " Min Width",
+                "variantName": "Size=Small, State=Default, Left Icon=False, Right Icon=True"
+              }
+            ]
+          },
+          "fixture": "any/Primary"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "15:13580",
+          "primaryName": "Frame 427318160",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 24,
+            "outlierNames": [
+              {
+                "name": "Frame 427318161",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318162",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318163",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318164",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318165",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318166",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318167",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318168",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318169",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318170",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318171",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "15:13580",
+                "name": "Frame 427318163",
+                "variantName": "Size=Large, State=Disabled, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13585",
+                "name": "Frame 427318163",
+                "variantName": "Size=Large, State=Disabled, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13593",
+                "name": "Frame 427318167",
+                "variantName": "Size=Medium, State=Disabled, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13606",
+                "name": "Frame 427318171",
+                "variantName": "Size=Small, State=Disabled, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13619",
+                "name": "Frame 427318162",
+                "variantName": "Size=Large, State=Pressed, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13658",
+                "name": "Frame 427318161",
+                "variantName": "Size=Large, State=Hover, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13598",
+                "name": "Frame 427318167",
+                "variantName": "Size=Medium, State=Disabled, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13611",
+                "name": "Frame 427318171",
+                "variantName": "Size=Small, State=Disabled, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13624",
+                "name": "Frame 427318162",
+                "variantName": "Size=Large, State=Pressed, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13663",
+                "name": "Frame 427318161",
+                "variantName": "Size=Large, State=Hover, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13632",
+                "name": "Frame 427318166",
+                "variantName": "Size=Medium, State=Pressed, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13671",
+                "name": "Frame 427318165",
+                "variantName": "Size=Medium, State=Hover, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13710",
+                "name": "Frame 427318164",
+                "variantName": "Size=Medium, State=Default, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13645",
+                "name": "Frame 427318170",
+                "variantName": "Size=Small, State=Pressed, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13684",
+                "name": "Frame 427318169",
+                "variantName": "Size=Small, State=Hover, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13723",
+                "name": "Frame 427318168",
+                "variantName": "Size=Small, State=Default, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13637",
+                "name": "Frame 427318166",
+                "variantName": "Size=Medium, State=Pressed, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13676",
+                "name": "Frame 427318165",
+                "variantName": "Size=Medium, State=Hover, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13715",
+                "name": "Frame 427318164",
+                "variantName": "Size=Medium, State=Default, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13650",
+                "name": "Frame 427318170",
+                "variantName": "Size=Small, State=Pressed, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13689",
+                "name": "Frame 427318169",
+                "variantName": "Size=Small, State=Hover, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13728",
+                "name": "Frame 427318168",
+                "variantName": "Size=Small, State=Default, Left Icon=False, Right Icon=True"
+              }
+            ]
+          },
+          "fixture": "any/Primary"
+        }
+      ]
+    },
+    {
+      "fixture": "any/StateinsertGuideTextfalse",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/Switchswitch",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/taptap-anchor",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/Tokens",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "any/TypedefaultRightIcontrue",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "button/airtableButton",
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "15:45",
+          "primaryName": "Label",
+          "primaryType": "TEXT",
+          "payload": {
+            "mergedNodesCount": 24,
+            "outlierNames": [
+              {
+                "name": "Secondary",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "15:68",
+                "name": "Secondary",
+                "variantName": "Size=default, Variant=secondary, Icon=false"
+              },
+              {
+                "id": "711:13878",
+                "name": "Secondary",
+                "variantName": "Size=default, Variant=secondary, Icon=true"
+              },
+              {
+                "id": "711:13953",
+                "name": "Secondary",
+                "variantName": "Size=small, Variant=secondary, Icon=false"
+              },
+              {
+                "id": "711:14143",
+                "name": "Secondary",
+                "variantName": "Size=large, Variant=secondary, Icon=false"
+              },
+              {
+                "id": "716:530",
+                "name": "Secondary",
+                "variantName": "Size=small, Variant=secondary, Icon=true"
+              },
+              {
+                "id": "711:14156",
+                "name": "Secondary",
+                "variantName": "Size=large, Variant=secondary, Icon=true"
+              }
+            ]
+          },
+          "fixture": "button/airtableButton"
+        }
+      ]
+    },
+    {
+      "fixture": "button/Btnsbtn",
+      "count": 3,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "4214:393",
+          "primaryName": "icon_arrow",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 75,
+            "outlierNames": [
+              {
+                "name": "icon_delete",
+                "count": 10
+              },
+              {
+                "name": "icon_wastebasket",
+                "count": 5
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "4214:453",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:456",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "4214:462",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:548",
+                "name": "icon_delete",
+                "variantName": "size=M, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:643",
+                "name": "icon_delete",
+                "variantName": "size=S, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:465",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "4214:551",
+                "name": "icon_delete",
+                "variantName": "size=M, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "4214:646",
+                "name": "icon_delete",
+                "variantName": "size=S, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "4214:459",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, style=outlined, tone=basic, state=loading"
+              },
+              {
+                "id": "4214:557",
+                "name": "icon_delete",
+                "variantName": "size=M, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:652",
+                "name": "icon_delete",
+                "variantName": "size=S, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:560",
+                "name": "icon_delete",
+                "variantName": "size=M, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "4214:655",
+                "name": "icon_delete",
+                "variantName": "size=S, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "4214:554",
+                "name": "icon_delete",
+                "variantName": "size=M, style=outlined, tone=basic, state=loading"
+              },
+              {
+                "id": "4214:649",
+                "name": "icon_delete",
+                "variantName": "size=S, style=outlined, tone=basic, state=loading"
+              }
+            ]
+          },
+          "fixture": "button/Btnsbtn"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I4214:393;3:315",
+          "primaryName": "Vector 40",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 75,
+            "outlierNames": [
+              {
+                "name": "Rectangle 419",
+                "count": 15
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I4214:453;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "I4214:456;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "I4214:462;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "I4214:548;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "I4214:643;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "I4214:465;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "I4214:551;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "I4214:646;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "I4214:459;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, style=outlined, tone=basic, state=loading"
+              },
+              {
+                "id": "I4214:557;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "I4214:652;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "I4214:560;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "I4214:655;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "I4214:554;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, style=outlined, tone=basic, state=loading"
+              },
+              {
+                "id": "I4214:649;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, style=outlined, tone=basic, state=loading"
+              }
+            ]
+          },
+          "fixture": "button/Btnsbtn"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "4214:394",
+          "primaryName": "button",
+          "primaryType": "TEXT",
+          "payload": {
+            "mergedNodesCount": 75,
+            "outlierNames": [
+              {
+                "name": "button..",
+                "count": 12
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "4214:454",
+                "name": "button..",
+                "variantName": "size=L, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:457",
+                "name": "button..",
+                "variantName": "size=L, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "4214:463",
+                "name": "button..",
+                "variantName": "size=L, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:549",
+                "name": "button..",
+                "variantName": "size=M, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:644",
+                "name": "button..",
+                "variantName": "size=S, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:466",
+                "name": "button..",
+                "variantName": "size=L, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "4214:552",
+                "name": "button..",
+                "variantName": "size=M, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "4214:647",
+                "name": "button..",
+                "variantName": "size=S, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "4214:558",
+                "name": "button..",
+                "variantName": "size=M, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:653",
+                "name": "button..",
+                "variantName": "size=S, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:561",
+                "name": "button..",
+                "variantName": "size=M, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "4214:656",
+                "name": "button..",
+                "variantName": "size=S, style=outlined, tone=red, state=loading"
+              }
+            ]
+          },
+          "fixture": "button/Btnsbtn"
+        }
+      ]
+    },
+    {
+      "fixture": "button/Button",
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "1:1554",
+          "primaryName": "Label",
+          "primaryType": "TEXT",
+          "payload": {
+            "mergedNodesCount": 24,
+            "outlierNames": [
+              {
+                "name": "Secondary",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "1:1560",
+                "name": "Secondary",
+                "variantName": "Size=default, Variant=secondary, Icon=false"
+              },
+              {
+                "id": "1:1572",
+                "name": "Secondary",
+                "variantName": "Size=default, Variant=secondary, Icon=true"
+              },
+              {
+                "id": "1:1580",
+                "name": "Secondary",
+                "variantName": "Size=small, Variant=secondary, Icon=false"
+              },
+              {
+                "id": "1:1600",
+                "name": "Secondary",
+                "variantName": "Size=large, Variant=secondary, Icon=false"
+              },
+              {
+                "id": "1:1592",
+                "name": "Secondary",
+                "variantName": "Size=small, Variant=secondary, Icon=true"
+              },
+              {
+                "id": "1:1612",
+                "name": "Secondary",
+                "variantName": "Size=large, Variant=secondary, Icon=true"
+              }
+            ]
+          },
+          "fixture": "button/Button"
+        }
+      ]
+    },
+    {
+      "fixture": "button/tadaButton",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "button/taptapButton",
+      "count": 2,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "15:12970",
+          "primaryName": "Min Width",
+          "primaryType": "LINE",
+          "payload": {
+            "mergedNodesCount": 36,
+            "outlierNames": [
+              {
+                "name": " Min Width",
+                "count": 9
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "15:13087",
+                "name": " Min Width",
+                "variantName": "Size=Large, State=Default, Left Icon=False, Right Icon=False"
+              },
+              {
+                "id": "15:13090",
+                "name": " Min Width",
+                "variantName": "Size=Large, State=Default, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13095",
+                "name": " Min Width",
+                "variantName": "Size=Large, State=Default, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13100",
+                "name": " Min Width",
+                "variantName": "Size=Medium, State=Default, Left Icon=False, Right Icon=False"
+              },
+              {
+                "id": "15:13113",
+                "name": " Min Width",
+                "variantName": "Size=Small, State=Default, Left Icon=False, Right Icon=False"
+              },
+              {
+                "id": "15:13103",
+                "name": " Min Width",
+                "variantName": "Size=Medium, State=Default, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13116",
+                "name": " Min Width",
+                "variantName": "Size=Small, State=Default, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13108",
+                "name": " Min Width",
+                "variantName": "Size=Medium, State=Default, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13121",
+                "name": " Min Width",
+                "variantName": "Size=Small, State=Default, Left Icon=False, Right Icon=True"
+              }
+            ]
+          },
+          "fixture": "button/taptapButton"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "15:12974",
+          "primaryName": "Frame 427318160",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 24,
+            "outlierNames": [
+              {
+                "name": "Frame 427318161",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318162",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318163",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318164",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318165",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318166",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318167",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318168",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318169",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318170",
+                "count": 2
+              },
+              {
+                "name": "Frame 427318171",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "15:12974",
+                "name": "Frame 427318163",
+                "variantName": "Size=Large, State=Disabled, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:12979",
+                "name": "Frame 427318163",
+                "variantName": "Size=Large, State=Disabled, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:12987",
+                "name": "Frame 427318167",
+                "variantName": "Size=Medium, State=Disabled, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13000",
+                "name": "Frame 427318171",
+                "variantName": "Size=Small, State=Disabled, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13013",
+                "name": "Frame 427318162",
+                "variantName": "Size=Large, State=Pressed, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13052",
+                "name": "Frame 427318161",
+                "variantName": "Size=Large, State=Hover, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:12992",
+                "name": "Frame 427318167",
+                "variantName": "Size=Medium, State=Disabled, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13005",
+                "name": "Frame 427318171",
+                "variantName": "Size=Small, State=Disabled, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13018",
+                "name": "Frame 427318162",
+                "variantName": "Size=Large, State=Pressed, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13057",
+                "name": "Frame 427318161",
+                "variantName": "Size=Large, State=Hover, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13026",
+                "name": "Frame 427318166",
+                "variantName": "Size=Medium, State=Pressed, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13065",
+                "name": "Frame 427318165",
+                "variantName": "Size=Medium, State=Hover, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13104",
+                "name": "Frame 427318164",
+                "variantName": "Size=Medium, State=Default, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13039",
+                "name": "Frame 427318170",
+                "variantName": "Size=Small, State=Pressed, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13078",
+                "name": "Frame 427318169",
+                "variantName": "Size=Small, State=Hover, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13117",
+                "name": "Frame 427318168",
+                "variantName": "Size=Small, State=Default, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:13031",
+                "name": "Frame 427318166",
+                "variantName": "Size=Medium, State=Pressed, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13070",
+                "name": "Frame 427318165",
+                "variantName": "Size=Medium, State=Hover, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13109",
+                "name": "Frame 427318164",
+                "variantName": "Size=Medium, State=Default, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13044",
+                "name": "Frame 427318170",
+                "variantName": "Size=Small, State=Pressed, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13083",
+                "name": "Frame 427318169",
+                "variantName": "Size=Small, State=Hover, Left Icon=False, Right Icon=True"
+              },
+              {
+                "id": "15:13122",
+                "name": "Frame 427318168",
+                "variantName": "Size=Small, State=Default, Left Icon=False, Right Icon=True"
+              }
+            ]
+          },
+          "fixture": "button/taptapButton"
+        }
+      ]
+    },
+    {
+      "fixture": "button/taptapButton_sample",
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "15:12974",
+          "primaryName": "Frame 427318163",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 4,
+            "outlierNames": [
+              {
+                "name": "Frame 427318167",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "15:12987",
+                "name": "Frame 427318167",
+                "variantName": "Size=Medium, State=Disabled, Left Icon=True, Right Icon=False"
+              },
+              {
+                "id": "15:12992",
+                "name": "Frame 427318167",
+                "variantName": "Size=Medium, State=Disabled, Left Icon=False, Right Icon=True"
+              }
+            ]
+          },
+          "fixture": "button/taptapButton_sample"
+        }
+      ]
+    },
+    {
+      "fixture": "button/urockButton",
+      "count": 3,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "4139:412",
+          "primaryName": "icon_arrow",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 114,
+            "outlierNames": [
+              {
+                "name": "icon_delete",
+                "count": 10
+              },
+              {
+                "name": "icon_wastebasket",
+                "count": 5
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "4139:622",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, type=filled, states=loading"
+              },
+              {
+                "id": "4139:625",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, type=filled-red, states=loading"
+              },
+              {
+                "id": "4139:628",
+                "name": "icon_delete",
+                "variantName": "size=M, type=filled, states=loading"
+              },
+              {
+                "id": "4139:634",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, type=outlined_black, states=loading"
+              },
+              {
+                "id": "4139:640",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "4139:643",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, type=outlined_red, states=loading"
+              },
+              {
+                "id": "4139:784",
+                "name": "icon_delete",
+                "variantName": "size=S, type=filled, states=loading"
+              },
+              {
+                "id": "4139:631",
+                "name": "icon_delete",
+                "variantName": "size=M, type=filled-red, states=loading"
+              },
+              {
+                "id": "4139:787",
+                "name": "icon_delete",
+                "variantName": "size=S, type=filled-red, states=loading"
+              },
+              {
+                "id": "4139:637",
+                "name": "icon_delete",
+                "variantName": "size=M, type=outlined_black, states=loading"
+              },
+              {
+                "id": "4139:646",
+                "name": "icon_delete",
+                "variantName": "size=M, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "4139:649",
+                "name": "icon_delete",
+                "variantName": "size=M, type=outlined_red, states=loading"
+              },
+              {
+                "id": "4139:790",
+                "name": "icon_delete",
+                "variantName": "size=S, type=outlined_black, states=loading"
+              },
+              {
+                "id": "4139:793",
+                "name": "icon_delete",
+                "variantName": "size=S, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "4139:796",
+                "name": "icon_delete",
+                "variantName": "size=S, type=outlined_red, states=loading"
+              }
+            ]
+          },
+          "fixture": "button/urockButton"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I4139:412;3:315",
+          "primaryName": "Vector 40",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 114,
+            "outlierNames": [
+              {
+                "name": "Rectangle 419",
+                "count": 15
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I4139:622;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, type=filled, states=loading"
+              },
+              {
+                "id": "I4139:625;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, type=filled-red, states=loading"
+              },
+              {
+                "id": "I4139:628;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, type=filled, states=loading"
+              },
+              {
+                "id": "I4139:634;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, type=outlined_black, states=loading"
+              },
+              {
+                "id": "I4139:640;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "I4139:643;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, type=outlined_red, states=loading"
+              },
+              {
+                "id": "I4139:784;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, type=filled, states=loading"
+              },
+              {
+                "id": "I4139:631;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, type=filled-red, states=loading"
+              },
+              {
+                "id": "I4139:787;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, type=filled-red, states=loading"
+              },
+              {
+                "id": "I4139:637;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, type=outlined_black, states=loading"
+              },
+              {
+                "id": "I4139:646;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "I4139:649;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, type=outlined_red, states=loading"
+              },
+              {
+                "id": "I4139:790;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, type=outlined_black, states=loading"
+              },
+              {
+                "id": "I4139:793;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "I4139:796;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, type=outlined_red, states=loading"
+              }
+            ]
+          },
+          "fixture": "button/urockButton"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "4139:413",
+          "primaryName": "button",
+          "primaryType": "TEXT",
+          "payload": {
+            "mergedNodesCount": 99,
+            "outlierNames": [
+              {
+                "name": "button..",
+                "count": 12
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "4139:623",
+                "name": "button..",
+                "variantName": "size=L, type=filled, states=loading"
+              },
+              {
+                "id": "4139:626",
+                "name": "button..",
+                "variantName": "size=L, type=filled-red, states=loading"
+              },
+              {
+                "id": "4139:629",
+                "name": "button..",
+                "variantName": "size=M, type=filled, states=loading"
+              },
+              {
+                "id": "4139:641",
+                "name": "button..",
+                "variantName": "size=L, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "4139:644",
+                "name": "button..",
+                "variantName": "size=L, type=outlined_red, states=loading"
+              },
+              {
+                "id": "4139:785",
+                "name": "button..",
+                "variantName": "size=S, type=filled, states=loading"
+              },
+              {
+                "id": "4139:632",
+                "name": "button..",
+                "variantName": "size=M, type=filled-red, states=loading"
+              },
+              {
+                "id": "4139:788",
+                "name": "button..",
+                "variantName": "size=S, type=filled-red, states=loading"
+              },
+              {
+                "id": "4139:647",
+                "name": "button..",
+                "variantName": "size=M, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "4139:650",
+                "name": "button..",
+                "variantName": "size=M, type=outlined_red, states=loading"
+              },
+              {
+                "id": "4139:794",
+                "name": "button..",
+                "variantName": "size=S, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "4139:797",
+                "name": "button..",
+                "variantName": "size=S, type=outlined_red, states=loading"
+              }
+            ]
+          },
+          "fixture": "button/urockButton"
+        }
+      ]
+    },
+    {
+      "fixture": "checkbox/taptap-checkbox",
+      "count": 3,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "10:2276",
+          "primaryName": "Rectangle 10",
+          "primaryType": "RECTANGLE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "bg",
+                "count": 2
+              },
+              {
+                "name": "Rectangle 8",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "10:2279",
+                "name": "bg",
+                "variantName": "With label=false, Checked=true, Status=Normal"
+              },
+              {
+                "id": "10:2291",
+                "name": "bg",
+                "variantName": "With label=false, Checked=true, Status=Indeterminate"
+              },
+              {
+                "id": "10:2303",
+                "name": "Rectangle 8",
+                "variantName": "With label=false, Checked=true, Status=Disable"
+              }
+            ]
+          },
+          "fixture": "checkbox/taptap-checkbox"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "10:2282",
+          "primaryName": "input",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "checkbox-input/disabled",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "10:2309",
+                "name": "checkbox-input/disabled",
+                "variantName": "With label=true, Checked=true, Status=Disable"
+              }
+            ]
+          },
+          "fixture": "checkbox/taptap-checkbox"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I10:2282;7126:29",
+          "primaryName": "Rectangle 10",
+          "primaryType": "RECTANGLE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "bg",
+                "count": 2
+              },
+              {
+                "name": "Rectangle 8",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I10:2285;7126:36",
+                "name": "bg",
+                "variantName": "With label=true, Checked=true, Status=Normal"
+              },
+              {
+                "id": "I10:2297;7126:24",
+                "name": "bg",
+                "variantName": "With label=true, Checked=true, Status=Indeterminate"
+              },
+              {
+                "id": "I10:2309;7126:32",
+                "name": "Rectangle 8",
+                "variantName": "With label=true, Checked=true, Status=Disable"
+              }
+            ]
+          },
+          "fixture": "checkbox/taptap-checkbox"
+        }
+      ]
+    },
+    {
+      "fixture": "chip/Chips",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "chip/urock-chips",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "failing/Btn",
+      "count": 3,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "4139:412",
+          "primaryName": "icon_arrow",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 114,
+            "outlierNames": [
+              {
+                "name": "icon_delete",
+                "count": 10
+              },
+              {
+                "name": "icon_wastebasket",
+                "count": 5
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "4139:622",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, type=filled, states=loading"
+              },
+              {
+                "id": "4139:625",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, type=filled-red, states=loading"
+              },
+              {
+                "id": "4139:628",
+                "name": "icon_delete",
+                "variantName": "size=M, type=filled, states=loading"
+              },
+              {
+                "id": "4139:634",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, type=outlined_black, states=loading"
+              },
+              {
+                "id": "4139:640",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "4139:643",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, type=outlined_red, states=loading"
+              },
+              {
+                "id": "4139:784",
+                "name": "icon_delete",
+                "variantName": "size=S, type=filled, states=loading"
+              },
+              {
+                "id": "4139:631",
+                "name": "icon_delete",
+                "variantName": "size=M, type=filled-red, states=loading"
+              },
+              {
+                "id": "4139:787",
+                "name": "icon_delete",
+                "variantName": "size=S, type=filled-red, states=loading"
+              },
+              {
+                "id": "4139:637",
+                "name": "icon_delete",
+                "variantName": "size=M, type=outlined_black, states=loading"
+              },
+              {
+                "id": "4139:646",
+                "name": "icon_delete",
+                "variantName": "size=M, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "4139:649",
+                "name": "icon_delete",
+                "variantName": "size=M, type=outlined_red, states=loading"
+              },
+              {
+                "id": "4139:790",
+                "name": "icon_delete",
+                "variantName": "size=S, type=outlined_black, states=loading"
+              },
+              {
+                "id": "4139:793",
+                "name": "icon_delete",
+                "variantName": "size=S, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "4139:796",
+                "name": "icon_delete",
+                "variantName": "size=S, type=outlined_red, states=loading"
+              }
+            ]
+          },
+          "fixture": "failing/Btn"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I4139:412;3:315",
+          "primaryName": "Vector 40",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 114,
+            "outlierNames": [
+              {
+                "name": "Rectangle 419",
+                "count": 15
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I4139:622;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, type=filled, states=loading"
+              },
+              {
+                "id": "I4139:625;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, type=filled-red, states=loading"
+              },
+              {
+                "id": "I4139:628;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, type=filled, states=loading"
+              },
+              {
+                "id": "I4139:634;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, type=outlined_black, states=loading"
+              },
+              {
+                "id": "I4139:640;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "I4139:643;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, type=outlined_red, states=loading"
+              },
+              {
+                "id": "I4139:784;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, type=filled, states=loading"
+              },
+              {
+                "id": "I4139:631;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, type=filled-red, states=loading"
+              },
+              {
+                "id": "I4139:787;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, type=filled-red, states=loading"
+              },
+              {
+                "id": "I4139:637;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, type=outlined_black, states=loading"
+              },
+              {
+                "id": "I4139:646;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "I4139:649;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, type=outlined_red, states=loading"
+              },
+              {
+                "id": "I4139:790;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, type=outlined_black, states=loading"
+              },
+              {
+                "id": "I4139:793;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "I4139:796;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, type=outlined_red, states=loading"
+              }
+            ]
+          },
+          "fixture": "failing/Btn"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "4139:413",
+          "primaryName": "button",
+          "primaryType": "TEXT",
+          "payload": {
+            "mergedNodesCount": 99,
+            "outlierNames": [
+              {
+                "name": "button..",
+                "count": 12
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "4139:623",
+                "name": "button..",
+                "variantName": "size=L, type=filled, states=loading"
+              },
+              {
+                "id": "4139:626",
+                "name": "button..",
+                "variantName": "size=L, type=filled-red, states=loading"
+              },
+              {
+                "id": "4139:629",
+                "name": "button..",
+                "variantName": "size=M, type=filled, states=loading"
+              },
+              {
+                "id": "4139:641",
+                "name": "button..",
+                "variantName": "size=L, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "4139:644",
+                "name": "button..",
+                "variantName": "size=L, type=outlined_red, states=loading"
+              },
+              {
+                "id": "4139:785",
+                "name": "button..",
+                "variantName": "size=S, type=filled, states=loading"
+              },
+              {
+                "id": "4139:632",
+                "name": "button..",
+                "variantName": "size=M, type=filled-red, states=loading"
+              },
+              {
+                "id": "4139:788",
+                "name": "button..",
+                "variantName": "size=S, type=filled-red, states=loading"
+              },
+              {
+                "id": "4139:647",
+                "name": "button..",
+                "variantName": "size=M, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "4139:650",
+                "name": "button..",
+                "variantName": "size=M, type=outlined_red, states=loading"
+              },
+              {
+                "id": "4139:794",
+                "name": "button..",
+                "variantName": "size=S, type=outlined_blue, states=loading"
+              },
+              {
+                "id": "4139:797",
+                "name": "button..",
+                "variantName": "size=S, type=outlined_red, states=loading"
+              }
+            ]
+          },
+          "fixture": "failing/Btn"
+        }
+      ]
+    },
+    {
+      "fixture": "failing/Btnsbtn",
+      "count": 3,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "4214:393",
+          "primaryName": "icon_arrow",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 75,
+            "outlierNames": [
+              {
+                "name": "icon_delete",
+                "count": 10
+              },
+              {
+                "name": "icon_wastebasket",
+                "count": 5
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "4214:453",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:456",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "4214:462",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:548",
+                "name": "icon_delete",
+                "variantName": "size=M, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:643",
+                "name": "icon_delete",
+                "variantName": "size=S, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:465",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "4214:551",
+                "name": "icon_delete",
+                "variantName": "size=M, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "4214:646",
+                "name": "icon_delete",
+                "variantName": "size=S, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "4214:459",
+                "name": "icon_wastebasket",
+                "variantName": "size=L, style=outlined, tone=basic, state=loading"
+              },
+              {
+                "id": "4214:557",
+                "name": "icon_delete",
+                "variantName": "size=M, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:652",
+                "name": "icon_delete",
+                "variantName": "size=S, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:560",
+                "name": "icon_delete",
+                "variantName": "size=M, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "4214:655",
+                "name": "icon_delete",
+                "variantName": "size=S, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "4214:554",
+                "name": "icon_delete",
+                "variantName": "size=M, style=outlined, tone=basic, state=loading"
+              },
+              {
+                "id": "4214:649",
+                "name": "icon_delete",
+                "variantName": "size=S, style=outlined, tone=basic, state=loading"
+              }
+            ]
+          },
+          "fixture": "failing/Btnsbtn"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I4214:393;3:315",
+          "primaryName": "Vector 40",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 75,
+            "outlierNames": [
+              {
+                "name": "Rectangle 419",
+                "count": 15
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I4214:453;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "I4214:456;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "I4214:462;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "I4214:548;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "I4214:643;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "I4214:465;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "I4214:551;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "I4214:646;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "I4214:459;3:481",
+                "name": "Rectangle 419",
+                "variantName": "size=L, style=outlined, tone=basic, state=loading"
+              },
+              {
+                "id": "I4214:557;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "I4214:652;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "I4214:560;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "I4214:655;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "I4214:554;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=M, style=outlined, tone=basic, state=loading"
+              },
+              {
+                "id": "I4214:649;3:352",
+                "name": "Rectangle 419",
+                "variantName": "size=S, style=outlined, tone=basic, state=loading"
+              }
+            ]
+          },
+          "fixture": "failing/Btnsbtn"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "4214:394",
+          "primaryName": "button",
+          "primaryType": "TEXT",
+          "payload": {
+            "mergedNodesCount": 75,
+            "outlierNames": [
+              {
+                "name": "button..",
+                "count": 12
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "4214:454",
+                "name": "button..",
+                "variantName": "size=L, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:457",
+                "name": "button..",
+                "variantName": "size=L, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "4214:463",
+                "name": "button..",
+                "variantName": "size=L, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:549",
+                "name": "button..",
+                "variantName": "size=M, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:644",
+                "name": "button..",
+                "variantName": "size=S, style=filled, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:466",
+                "name": "button..",
+                "variantName": "size=L, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "4214:552",
+                "name": "button..",
+                "variantName": "size=M, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "4214:647",
+                "name": "button..",
+                "variantName": "size=S, style=filled, tone=red, state=loading"
+              },
+              {
+                "id": "4214:558",
+                "name": "button..",
+                "variantName": "size=M, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:653",
+                "name": "button..",
+                "variantName": "size=S, style=outlined, tone=blue, state=loading"
+              },
+              {
+                "id": "4214:561",
+                "name": "button..",
+                "variantName": "size=M, style=outlined, tone=red, state=loading"
+              },
+              {
+                "id": "4214:656",
+                "name": "button..",
+                "variantName": "size=S, style=outlined, tone=red, state=loading"
+              }
+            ]
+          },
+          "fixture": "failing/Btnsbtn"
+        }
+      ]
+    },
+    {
+      "fixture": "failing/Button",
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "46:3929",
+          "primaryName": "Label",
+          "primaryType": "TEXT",
+          "payload": {
+            "mergedNodesCount": 24,
+            "outlierNames": [
+              {
+                "name": "Secondary",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "46:3935",
+                "name": "Secondary",
+                "variantName": "Size=default, Variant=secondary, Icon=false"
+              },
+              {
+                "id": "46:3947",
+                "name": "Secondary",
+                "variantName": "Size=default, Variant=secondary, Icon=true"
+              },
+              {
+                "id": "46:3955",
+                "name": "Secondary",
+                "variantName": "Size=small, Variant=secondary, Icon=false"
+              },
+              {
+                "id": "46:3975",
+                "name": "Secondary",
+                "variantName": "Size=large, Variant=secondary, Icon=false"
+              },
+              {
+                "id": "46:3967",
+                "name": "Secondary",
+                "variantName": "Size=small, Variant=secondary, Icon=true"
+              },
+              {
+                "id": "46:3987",
+                "name": "Secondary",
+                "variantName": "Size=large, Variant=secondary, Icon=true"
+              }
+            ]
+          },
+          "fixture": "failing/Button"
+        }
+      ]
+    },
+    {
+      "fixture": "failing/Buttonsolid",
+      "count": 23,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "16215:37612",
+          "primaryName": "Interaction",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Wrapper",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "16215:37749",
+                "name": "Wrapper",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "16215:37604",
+          "primaryName": "Wrapper",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 24,
+            "outlierNames": [
+              {
+                "name": "Interaction",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "16215:37755",
+                "name": "Interaction",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37609;16215:25202;16215:13730",
+          "primaryName": "┗ Icon Variant ᠎",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Ratio",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37609;16215:25202;16215:13730",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37626;16215:25202;16215:13730",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37643;16215:25202;16215:13730",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37700;16215:25202;16215:13730",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37718;16215:25202;16215:13730",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37736;16215:25202;16215:13730",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37617;16215:25202;16215:13731",
+          "primaryName": "Ratio",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Shape",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37617;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37634;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37651;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37708;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37726;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37744;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37617;16215:25202;16215:13734",
+          "primaryName": "Normal",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Ratio",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37609;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37626;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37643;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37700;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37718;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37736;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37609;16215:25202;16215:13731",
+          "primaryName": "Ratio",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Shape",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37609;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37626;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37643;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37700;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37718;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37736;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37609;16215:25202;16215:13734",
+          "primaryName": "Normal",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Ratio",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37617;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37634;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37651;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37708;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37726;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37744;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37611;16215:25202;16215:13730",
+          "primaryName": "┗ Icon Variant ᠎",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Ratio",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37611;16215:25202;16215:13730",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37628;16215:25202;16215:13730",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37645;16215:25202;16215:13730",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37702;16215:25202;16215:13730",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37720;16215:25202;16215:13730",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37738;16215:25202;16215:13730",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37619;16215:25202;16215:13731",
+          "primaryName": "Ratio",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Shape",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37619;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37636;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37653;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37710;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37728;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37746;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37619;16215:25202;16215:13734",
+          "primaryName": "Normal",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Ratio",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37611;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37628;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37645;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37702;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37720;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37738;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37611;16215:25202;16215:13731",
+          "primaryName": "Ratio",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Shape",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37611;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37628;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37645;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37702;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37720;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16215:37738;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37611;16215:25202;16215:13734",
+          "primaryName": "Normal",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Ratio",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37619;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37636;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37653;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37710;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37728;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True"
+              },
+              {
+                "id": "I16215:37746;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "16215:37605",
+          "primaryName": "Content",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 23,
+            "outlierNames": [
+              {
+                "name": "Loading",
+                "count": 11
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "16215:37605",
+                "name": "Loading",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "16215:37622",
+                "name": "Loading",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "16215:37639",
+                "name": "Loading",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "16215:37656",
+                "name": "Loading",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False"
+              },
+              {
+                "id": "16246:1228603",
+                "name": "Loading",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "16215:37669",
+                "name": "Loading",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False"
+              },
+              {
+                "id": "16246:1228758",
+                "name": "Loading",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "16215:37682",
+                "name": "Loading",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False"
+              },
+              {
+                "id": "16246:1228769",
+                "name": "Loading",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "16246:1228791",
+                "name": "Loading",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False"
+              },
+              {
+                "id": "16246:1228802",
+                "name": "Loading",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "16215:37606",
+          "primaryName": "Loading",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 17,
+            "outlierNames": [
+              {
+                "name": "Icon",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "16215:37666",
+                "name": "Icon",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "16215:37679",
+                "name": "Icon",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "16215:37692",
+                "name": "Icon",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "16215:37760",
+                "name": "Icon",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "16215:37774",
+                "name": "Icon",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "16215:37788",
+                "name": "Icon",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=True"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37606;16215:24962",
+          "primaryName": "Ratio/Vertical",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 17,
+            "outlierNames": [
+              {
+                "name": "┗ Icon Variant ᠎",
+                "count": 6
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37666;16215:25202",
+                "name": "┗ Icon Variant ᠎",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37679;16215:25202",
+                "name": "┗ Icon Variant ᠎",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37692;16215:25202",
+                "name": "┗ Icon Variant ᠎",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37760;16215:25202",
+                "name": "┗ Icon Variant ᠎",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37774;16215:25202",
+                "name": "┗ Icon Variant ᠎",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37788;16215:25202",
+                "name": "┗ Icon Variant ᠎",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=True"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37666;16215:25202;16215:13730",
+          "primaryName": "Ratio",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "┗ Icon Variant ᠎",
+                "count": 5
+              },
+              {
+                "name": "Ratio/Vertical",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16246:1228781;16215:24962",
+                "name": "Ratio/Vertical",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+              },
+              {
+                "id": "I16215:37660;16215:25202",
+                "name": "┗ Icon Variant ᠎",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False"
+              },
+              {
+                "id": "I16215:37673;16215:25202",
+                "name": "┗ Icon Variant ᠎",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False"
+              },
+              {
+                "id": "I16215:37686;16215:25202",
+                "name": "┗ Icon Variant ᠎",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False"
+              },
+              {
+                "id": "I16215:37768;16215:25202",
+                "name": "┗ Icon Variant ᠎",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False"
+              },
+              {
+                "id": "I16215:37782;16215:25202",
+                "name": "┗ Icon Variant ᠎",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37660;16215:25202;16215:13730",
+          "primaryName": "Ratio",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "┗ Icon Variant ᠎",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37754;16215:25202",
+                "name": "┗ Icon Variant ᠎",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37660;16215:25202;16215:13730;16215:17329",
+          "primaryName": "Ratio",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Shape",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37754;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37660;16215:25202;16215:13730;16215:17330",
+          "primaryName": "Ratio",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Normal",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37754;16215:25202;16215:13734",
+                "name": "Normal",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37606;16215:24962;16215:17329",
+          "primaryName": "Ratio",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 18,
+            "outlierNames": [
+              {
+                "name": "Shape",
+                "count": 7
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16246:1228781;16215:24963",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+              },
+              {
+                "id": "I16215:37666;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37679;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37692;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37760;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37774;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37788;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=True"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37666;16215:25202;16215:13734",
+          "primaryName": "Vector",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Union",
+                "count": 4
+              },
+              {
+                "name": "Normal",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37666;16215:25202;16215:13734",
+                "name": "Normal",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37679;16215:25202;16215:13732",
+                "name": "Union",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37692;16215:25202;16215:13732",
+                "name": "Union",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37760;16215:25202;16215:13734",
+                "name": "Normal",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37774;16215:25202;16215:13732",
+                "name": "Union",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37788;16215:25202;16215:13732",
+                "name": "Union",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=True"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37679;16215:25202;16215:13733",
+          "primaryName": "Vector",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 5,
+            "outlierNames": [
+              {
+                "name": "Ratio",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37754;16215:25202;16215:13730;16215:17330",
+                "name": "Ratio",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37606;16215:24962;16215:17330",
+          "primaryName": "Ratio",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 16,
+            "outlierNames": [
+              {
+                "name": "Normal",
+                "count": 2
+              },
+              {
+                "name": "Vector",
+                "count": 2
+              },
+              {
+                "name": "Union",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37666;16215:25202;16215:13733",
+                "name": "Vector",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37760;16215:25202;16215:13733",
+                "name": "Vector",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16246:1228781;16215:24966",
+                "name": "Union",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+              },
+              {
+                "id": "I16215:37692;16215:25202;16215:13734",
+                "name": "Normal",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=True"
+              },
+              {
+                "id": "I16215:37788;16215:25202;16215:13734",
+                "name": "Normal",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=True"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonsolid"
+        }
+      ]
+    },
+    {
+      "fixture": "failing/Checkbox",
+      "count": 3,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "46:4307",
+          "primaryName": "Rectangle 10",
+          "primaryType": "RECTANGLE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "bg",
+                "count": 2
+              },
+              {
+                "name": "Rectangle 8",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "46:4310",
+                "name": "bg",
+                "variantName": "With label=false, Checked=true, Status=Normal"
+              },
+              {
+                "id": "46:4322",
+                "name": "bg",
+                "variantName": "With label=false, Checked=true, Status=Indeterminate"
+              },
+              {
+                "id": "46:4334",
+                "name": "Rectangle 8",
+                "variantName": "With label=false, Checked=true, Status=Disable"
+              }
+            ]
+          },
+          "fixture": "failing/Checkbox"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "46:4313",
+          "primaryName": "input",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "checkbox-input/disabled",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "46:4340",
+                "name": "checkbox-input/disabled",
+                "variantName": "With label=true, Checked=true, Status=Disable"
+              }
+            ]
+          },
+          "fixture": "failing/Checkbox"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I46:4313;7126:29",
+          "primaryName": "Rectangle 10",
+          "primaryType": "RECTANGLE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "bg",
+                "count": 2
+              },
+              {
+                "name": "Rectangle 8",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I46:4316;7126:36",
+                "name": "bg",
+                "variantName": "With label=true, Checked=true, Status=Normal"
+              },
+              {
+                "id": "I46:4328;7126:24",
+                "name": "bg",
+                "variantName": "With label=true, Checked=true, Status=Indeterminate"
+              },
+              {
+                "id": "I46:4340;7126:32",
+                "name": "Rectangle 8",
+                "variantName": "With label=true, Checked=true, Status=Disable"
+              }
+            ]
+          },
+          "fixture": "failing/Checkbox"
+        }
+      ]
+    },
+    {
+      "fixture": "failing/Chips",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "failing/Dropdowngeneric",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "failing/Fab",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "failing/Frame",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "failing/Input",
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "46:4403",
+          "primaryName": "Placeholder",
+          "primaryType": "TEXT",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Value",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "46:4405",
+                "name": "Value",
+                "variantName": "Size=default, Placeholder=false"
+              },
+              {
+                "id": "46:4409",
+                "name": "Value",
+                "variantName": "Size=small, Placeholder=false"
+              },
+              {
+                "id": "46:4413",
+                "name": "Value",
+                "variantName": "Size=large, Placeholder=false"
+              }
+            ]
+          },
+          "fixture": "failing/Input"
+        }
+      ]
+    },
+    {
+      "fixture": "failing/Radio",
+      "count": 3,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "3:124",
+          "primaryName": "radio",
+          "primaryType": "RECTANGLE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Rectangle",
+                "count": 2
+              },
+              {
+                "name": "inner",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "3:120",
+                "name": "Rectangle",
+                "variantName": "Check=true, Status=Normal"
+              },
+              {
+                "id": "3:128",
+                "name": "Rectangle",
+                "variantName": "Check=true, Status=Hover/Pressed"
+              },
+              {
+                "id": "3:140",
+                "name": "inner",
+                "variantName": "Check=true, Status=Disabled"
+              }
+            ]
+          },
+          "fixture": "failing/Radio"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "3:119",
+          "primaryName": "shape",
+          "primaryType": "GROUP",
+          "payload": {
+            "mergedNodesCount": 3,
+            "outlierNames": [
+              {
+                "name": "radio",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "3:139",
+                "name": "radio",
+                "variantName": "Check=true, Status=Disabled"
+              }
+            ]
+          },
+          "fixture": "failing/Radio"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "3:121",
+          "primaryName": "Rectangle",
+          "primaryType": "RECTANGLE",
+          "payload": {
+            "mergedNodesCount": 3,
+            "outlierNames": [
+              {
+                "name": "input",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "3:141",
+                "name": "input",
+                "variantName": "Check=true, Status=Disabled"
+              }
+            ]
+          },
+          "fixture": "failing/Radio"
+        }
+      ]
+    },
+    {
+      "fixture": "failing/SegmentedControl",
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "1:1646",
+          "primaryName": "Option 2",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Option 3",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "1:1650",
+                "name": "Option 3",
+                "variantName": "Size=default, Options=3 options"
+              },
+              {
+                "id": "1:1657",
+                "name": "Option 3",
+                "variantName": "Size=small, Options=3 options"
+              },
+              {
+                "id": "1:1664",
+                "name": "Option 3",
+                "variantName": "Size=large, Options=3 options"
+              }
+            ]
+          },
+          "fixture": "failing/SegmentedControl"
+        }
+      ]
+    },
+    {
+      "fixture": "failing/SelectButtons",
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "63:925",
+          "primaryName": "Option 2",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Option 3",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "63:929",
+                "name": "Option 3",
+                "variantName": "Size=default, Options=3 options"
+              },
+              {
+                "id": "63:936",
+                "name": "Option 3",
+                "variantName": "Size=small, Options=3 options"
+              },
+              {
+                "id": "63:943",
+                "name": "Option 3",
+                "variantName": "Size=large, Options=3 options"
+              }
+            ]
+          },
+          "fixture": "failing/SelectButtons"
+        }
+      ]
+    },
+    {
+      "fixture": "failing/SelectionControled",
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "63:925",
+          "primaryName": "Option 2",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Option 3",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "63:929",
+                "name": "Option 3",
+                "variantName": "Size=default, Options=3 options"
+              },
+              {
+                "id": "63:936",
+                "name": "Option 3",
+                "variantName": "Size=small, Options=3 options"
+              },
+              {
+                "id": "63:943",
+                "name": "Option 3",
+                "variantName": "Size=large, Options=3 options"
+              }
+            ]
+          },
+          "fixture": "failing/SelectionControled"
+        }
+      ]
+    },
+    {
+      "fixture": "failing/Switch",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "failing/Tagreview",
+      "count": 2,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "46:4024",
+          "primaryName": "Error",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 15,
+            "outlierNames": [
+              {
+                "name": "Forbid",
+                "count": 3
+              },
+              {
+                "name": "Info",
+                "count": 3
+              },
+              {
+                "name": "Success",
+                "count": 3
+              },
+              {
+                "name": "Time",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "46:3995",
+                "name": "Forbid",
+                "variantName": "Size=Small, State=Rejected"
+              },
+              {
+                "id": "46:4001",
+                "name": "Time",
+                "variantName": "Size=Small, State=UnderReview"
+              },
+              {
+                "id": "46:4007",
+                "name": "Success",
+                "variantName": "Size=Small, State=Approved"
+              },
+              {
+                "id": "46:4013",
+                "name": "Info",
+                "variantName": "Size=Small, State=CurrentVersion"
+              },
+              {
+                "id": "46:4024",
+                "name": "Forbid",
+                "variantName": "Size=Medium, State=Rejected"
+              },
+              {
+                "id": "46:4049",
+                "name": "Forbid",
+                "variantName": "Size=Large, State=Rejected"
+              },
+              {
+                "id": "46:4029",
+                "name": "Time",
+                "variantName": "Size=Medium, State=UnderReview"
+              },
+              {
+                "id": "46:4054",
+                "name": "Time",
+                "variantName": "Size=Large, State=UnderReview"
+              },
+              {
+                "id": "46:4034",
+                "name": "Success",
+                "variantName": "Size=Medium, State=Approved"
+              },
+              {
+                "id": "46:4059",
+                "name": "Success",
+                "variantName": "Size=Large, State=Approved"
+              },
+              {
+                "id": "46:4039",
+                "name": "Info",
+                "variantName": "Size=Medium, State=CurrentVersion"
+              },
+              {
+                "id": "46:4064",
+                "name": "Info",
+                "variantName": "Size=Large, State=CurrentVersion"
+              }
+            ]
+          },
+          "fixture": "failing/Tagreview"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "46:4025",
+          "primaryName": "Rejected",
+          "primaryType": "TEXT",
+          "payload": {
+            "mergedNodesCount": 15,
+            "outlierNames": [
+              {
+                "name": "Approved",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "46:4008",
+                "name": "Approved",
+                "variantName": "Size=Small, State=Approved"
+              }
+            ]
+          },
+          "fixture": "failing/Tagreview"
+        }
+      ]
+    },
+    {
+      "fixture": "failing/Toggle",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "item-slot-likes/airtable-select-button",
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "133:736",
+          "primaryName": "Option 2",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Option 3",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "133:763",
+                "name": "Option 3",
+                "variantName": "Size=default, Options=3 options"
+              },
+              {
+                "id": "711:14362",
+                "name": "Option 3",
+                "variantName": "Size=small, Options=3 options"
+              },
+              {
+                "id": "711:14365",
+                "name": "Option 3",
+                "variantName": "Size=large, Options=3 options"
+              }
+            ]
+          },
+          "fixture": "item-slot-likes/airtable-select-button"
+        }
+      ]
+    },
+    {
+      "fixture": "item-slot-likes/tada-list",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "item-slot-likes/taptap-navigation",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "regression/BreakpointdesktopmdlgStatelogin",
+      "count": 26,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "16215:20785",
+          "primaryName": "Divider",
+          "primaryType": "RECTANGLE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Background",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "16215:20854",
+                "name": "Background",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Login"
+              },
+              {
+                "id": "16215:20869",
+                "name": "Background",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "16215:20787",
+          "primaryName": "Background",
+          "primaryType": "RECTANGLE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Divider",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "16215:20852",
+                "name": "Divider",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Login"
+              },
+              {
+                "id": "16215:20867",
+                "name": "Divider",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20810;16215:38426;16215:25202",
+          "primaryName": "Icon/Normal/Search",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 5,
+            "outlierNames": [
+              {
+                "name": "┗ Icon Variant ᠎",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20843;16215:38426;16215:25202",
+                "name": "┗ Icon Variant ᠎",
+                "variantName": "Breakpoint=Desktop(md-lg), State=Logout"
+              },
+              {
+                "id": "I16215:20942;16215:38426;16215:25202",
+                "name": "┗ Icon Variant ᠎",
+                "variantName": "Breakpoint=Desktop(xl), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20811;16215:38426;16215:25202;16215:13857",
+          "primaryName": "Path",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 4,
+            "outlierNames": [
+              {
+                "name": "Ratio",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20880;16215:38426;16215:25202;16215:16223;16215:17330",
+                "name": "Ratio",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20864;16215:38426",
+          "primaryName": "Icon",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 2,
+            "outlierNames": [
+              {
+                "name": "Icon/Normal/Menu",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20881;16215:38426;16215:25202",
+                "name": "Icon/Normal/Menu",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "16215:20813",
+          "primaryName": "Avatar",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 5,
+            "outlierNames": [
+              {
+                "name": "Button/Outlined",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "16215:20876",
+                "name": "Button/Outlined",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20813;16215:25740",
+          "primaryName": "Container",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 3,
+            "outlierNames": [
+              {
+                "name": "Interaction",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20876;16215:38054",
+                "name": "Interaction",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20813;16215:25741",
+          "primaryName": "Ratio",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 3,
+            "outlierNames": [
+              {
+                "name": "Interaction",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20876;16215:38055",
+                "name": "Interaction",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20813;16215:25737",
+          "primaryName": "Interaction",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 5,
+            "outlierNames": [
+              {
+                "name": "Trailing Icon",
+                "count": 2
+              },
+              {
+                "name": "Wrapper",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20849;16293:156004",
+                "name": "Trailing Icon",
+                "variantName": "Breakpoint=Desktop(md-lg), State=Logout"
+              },
+              {
+                "id": "I16215:20948;16293:156004",
+                "name": "Trailing Icon",
+                "variantName": "Breakpoint=Desktop(xl), State=Logout"
+              },
+              {
+                "id": "I16215:20876;16215:38046",
+                "name": "Wrapper",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20813;16215:25738",
+          "primaryName": "Interaction",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 3,
+            "outlierNames": [
+              {
+                "name": "Loading",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20876;16246:1244597",
+                "name": "Loading",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20881;16215:38428",
+          "primaryName": "Interaction",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 4,
+            "outlierNames": [
+              {
+                "name": "Push Badge",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20864;16215:38429",
+                "name": "Push Badge",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Login"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "16215:20815",
+          "primaryName": "Button/Outlined",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 5,
+            "outlierNames": [
+              {
+                "name": "Icon 1",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "16215:20879",
+                "name": "Icon 1",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20815;16215:38144",
+          "primaryName": "Interaction",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Ratio",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20880;16215:38426;16215:25202;16215:16223;16215:17329",
+                "name": "Ratio",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20815;16215:38145",
+          "primaryName": "Interaction",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Icon/Normal/Search",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20880;16215:38426;16215:25202",
+                "name": "Icon/Normal/Search",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20815;16215:38136",
+          "primaryName": "Wrapper",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Interaction",
+                "count": 1
+              },
+              {
+                "name": "Ratio",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20880;16215:38427",
+                "name": "Interaction",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              },
+              {
+                "id": "I16215:20864;16215:38426;16215:25202;16215:15803;16215:17329",
+                "name": "Ratio",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Login"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20815;16215:38140",
+          "primaryName": "Content",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 5,
+            "outlierNames": [
+              {
+                "name": "Trailing Icon",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20876;16293:156011",
+                "name": "Trailing Icon",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20880;16215:38428",
+          "primaryName": "Interaction",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 2,
+            "outlierNames": [
+              {
+                "name": "Ratio",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20864;16215:38426;16215:25202;16215:15803",
+                "name": "Ratio",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Login"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20815;16246:1246756",
+          "primaryName": "Loading",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Ratio",
+                "count": 1
+              },
+              {
+                "name": "Shape",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20881;16215:38426;16215:25202;16215:15803;16215:17329",
+                "name": "Ratio",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              },
+              {
+                "id": "I16215:20864;16215:38426;16215:25202;16215:15804",
+                "name": "Shape",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Login"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20864;16215:38426;16215:25202;16215:15809",
+          "primaryName": "Normal",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 2,
+            "outlierNames": [
+              {
+                "name": "Ratio",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20881;16215:38426;16215:25202;16215:15803;16215:17330",
+                "name": "Ratio",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20864;16215:38426;16215:25202;16215:15806",
+          "primaryName": "Normal",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 2,
+            "outlierNames": [
+              {
+                "name": "Vector ",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20864;16215:38426;16215:25202;16215:15806",
+                "name": "Vector ",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Login"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "16215:20849",
+          "primaryName": "Button/Outlined",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 3,
+            "outlierNames": [
+              {
+                "name": "Icon 2",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "16215:20880",
+                "name": "Icon 2",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20849;16215:38136",
+          "primaryName": "Wrapper",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 3,
+            "outlierNames": [
+              {
+                "name": "Shape",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20880;16215:38426;16215:25202;16215:16224",
+                "name": "Shape",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20880;16215:38426;16215:25202;16215:16227",
+          "primaryName": "Ratio",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 3,
+            "outlierNames": [
+              {
+                "name": "Path",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20880;16215:38426;16215:25202;16215:16227",
+                "name": "Path",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20849;16293:154066",
+          "primaryName": "Ratio",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 5,
+            "outlierNames": [
+              {
+                "name": "Leading Icon",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20849;16293:154066",
+                "name": "Leading Icon",
+                "variantName": "Breakpoint=Desktop(md-lg), State=Logout"
+              },
+              {
+                "id": "I16215:20948;16293:154066",
+                "name": "Leading Icon",
+                "variantName": "Breakpoint=Desktop(xl), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20849;16246:1246756",
+          "primaryName": "Loading",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 3,
+            "outlierNames": [
+              {
+                "name": "Shape",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20881;16215:38426;16215:25202;16215:15804",
+                "name": "Shape",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20881;16215:38426;16215:25202;16215:15806",
+          "primaryName": "Ratio",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 2,
+            "outlierNames": [
+              {
+                "name": "Vector ",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20881;16215:38426;16215:25202;16215:15806",
+                "name": "Vector ",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        }
+      ]
+    },
+    {
+      "fixture": "regression/Controlradio",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "regression/List",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "regression/Searchfieldsearchfield",
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "16215:33775",
+          "primaryName": "검색어를 입력해주세요.",
+          "primaryType": "TEXT",
+          "payload": {
+            "mergedNodesCount": 4,
+            "outlierNames": [
+              {
+                "name": "내용",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "16215:33783",
+                "name": "내용",
+                "variantName": "Size=Medium, Active=True"
+              },
+              {
+                "id": "16215:33801",
+                "name": "내용",
+                "variantName": "Size=Small, Active=True"
+              }
+            ]
+          },
+          "fixture": "regression/Searchfieldsearchfield"
+        }
+      ]
+    },
+    {
+      "fixture": "select-button/airtable-select-button",
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "133:736",
+          "primaryName": "Option 2",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Option 3",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "133:763",
+                "name": "Option 3",
+                "variantName": "Size=default, Options=3 options"
+              },
+              {
+                "id": "711:14362",
+                "name": "Option 3",
+                "variantName": "Size=small, Options=3 options"
+              },
+              {
+                "id": "711:14365",
+                "name": "Option 3",
+                "variantName": "Size=large, Options=3 options"
+              }
+            ]
+          },
+          "fixture": "select-button/airtable-select-button"
+        }
+      ]
+    },
+    {
+      "fixture": "tada-button-component",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "text-newline",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "urock/Badgesicon",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "urock/Checkbox",
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "305:28973",
+          "primaryName": "radio",
+          "primaryType": "RECTANGLE",
+          "payload": {
+            "mergedNodesCount": 4,
+            "outlierNames": [
+              {
+                "name": "Rectangle 5949",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "305:28975",
+                "name": "Rectangle 5949",
+                "variantName": "states=active, on/off=true"
+              },
+              {
+                "id": "2436:392",
+                "name": "Rectangle 5949",
+                "variantName": "states=partial, on/off=true"
+              }
+            ]
+          },
+          "fixture": "urock/Checkbox"
+        }
+      ]
+    },
+    {
+      "fixture": "urock/Dropdowngeneric",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "urock/Fab",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "urock/Frame",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "urock/Profile",
+      "count": 0,
+      "anomalies": []
+    },
+    {
+      "fixture": "urock/Radio",
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "305:28955",
+          "primaryName": "radio",
+          "primaryType": "RECTANGLE",
+          "payload": {
+            "mergedNodesCount": 2,
+            "outlierNames": [
+              {
+                "name": "Rectangle 5949",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "305:28955",
+                "name": "Rectangle 5949",
+                "variantName": "states=active"
+              }
+            ]
+          },
+          "fixture": "urock/Radio"
+        }
+      ]
+    },
+    {
+      "fixture": "wanted/SegmentedControlsegmentedControl",
+      "count": 22,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35118;16215:35228",
+          "primaryName": "Ratio",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 8,
+            "outlierNames": [
+              {
+                "name": "Icons",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35118;16215:35228",
+                "name": "Icons",
+                "variantName": "Variant=Solid, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35143;16215:35228",
+                "name": "Icons",
+                "variantName": "Variant=Outlined, Size=Large, Icon=False"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35169;16215:35228",
+          "primaryName": "Icons",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Shape",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35177;16215:35229;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Solid, Size=Medium, Icon=True"
+              },
+              {
+                "id": "I16215:35185;16215:35229;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Solid, Size=Small, Icon=True"
+              },
+              {
+                "id": "I16215:35212;16215:35229;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Outlined, Size=Small, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35177;16215:35229;16215:25202;16215:13734",
+          "primaryName": "Normal",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Vector",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35169;16215:35229;16215:25202;16215:13733",
+                "name": "Vector",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35194;16215:35229;16215:25202;16215:13733",
+                "name": "Vector",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35203;16215:35229;16215:25202;16215:13733",
+                "name": "Vector",
+                "variantName": "Variant=Outlined, Size=Medium, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35118;16215:35231",
+          "primaryName": "Content",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 10,
+            "outlierNames": [
+              {
+                "name": "Inactive",
+                "count": 4
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35118;16215:35231",
+                "name": "Inactive",
+                "variantName": "Variant=Solid, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35143;16215:35231",
+                "name": "Inactive",
+                "variantName": "Variant=Outlined, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35169;16215:35231",
+                "name": "Inactive",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35194;16215:35231",
+                "name": "Inactive",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35126;16215:35228",
+          "primaryName": "Icons",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 10,
+            "outlierNames": [
+              {
+                "name": "Shape",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35169;16215:35229;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35194;16215:35229;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35203;16215:35229;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Outlined, Size=Medium, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35169;16215:35229;16215:25202;16215:13734",
+          "primaryName": "Normal",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Vector",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35177;16215:35229;16215:25202;16215:13733",
+                "name": "Vector",
+                "variantName": "Variant=Solid, Size=Medium, Icon=True"
+              },
+              {
+                "id": "I16215:35185;16215:35229;16215:25202;16215:13733",
+                "name": "Vector",
+                "variantName": "Variant=Solid, Size=Small, Icon=True"
+              },
+              {
+                "id": "I16215:35212;16215:35229;16215:25202;16215:13733",
+                "name": "Vector",
+                "variantName": "Variant=Outlined, Size=Small, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35119;16215:35239",
+          "primaryName": "Inactive",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Active",
+                "count": 4
+              },
+              {
+                "name": "Content",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35127;16215:35250",
+                "name": "Content",
+                "variantName": "Variant=Solid, Size=Medium, Icon=False"
+              },
+              {
+                "id": "I16215:35119;16215:35239",
+                "name": "Active",
+                "variantName": "Variant=Solid, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35144;16215:35239",
+                "name": "Active",
+                "variantName": "Variant=Outlined, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35170;16215:35239",
+                "name": "Active",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35195;16215:35239",
+                "name": "Active",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35135;16215:35248",
+          "primaryName": "Background",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Icons",
+                "count": 5
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35170;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35195;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35119;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Solid, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35144;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Outlined, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35127;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Solid, Size=Medium, Icon=False"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35119;16215:35247",
+          "primaryName": "Content",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Inactive",
+                "count": 5
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35119;16215:35247",
+                "name": "Inactive",
+                "variantName": "Variant=Solid, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35127;16215:35247",
+                "name": "Inactive",
+                "variantName": "Variant=Solid, Size=Medium, Icon=False"
+              },
+              {
+                "id": "I16215:35144;16215:35247",
+                "name": "Inactive",
+                "variantName": "Variant=Outlined, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35170;16215:35247",
+                "name": "Inactive",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35195;16215:35247",
+                "name": "Inactive",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35119;16215:35248",
+          "primaryName": "Ratio",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 14,
+            "outlierNames": [
+              {
+                "name": "Background",
+                "count": 5
+              },
+              {
+                "name": "Icons",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35153;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Outlined, Size=Medium, Icon=False"
+              },
+              {
+                "id": "I16215:35135;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Solid, Size=Small, Icon=False"
+              },
+              {
+                "id": "I16215:35162;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Outlined, Size=Small, Icon=False"
+              },
+              {
+                "id": "I16215:35119;16215:35248",
+                "name": "Background",
+                "variantName": "Variant=Solid, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35127;16215:35248",
+                "name": "Background",
+                "variantName": "Variant=Solid, Size=Medium, Icon=False"
+              },
+              {
+                "id": "I16215:35144;16215:35248",
+                "name": "Background",
+                "variantName": "Variant=Outlined, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35170;16215:35248",
+                "name": "Background",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35195;16215:35248",
+                "name": "Background",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35119;16215:35250",
+          "primaryName": "Content",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 10,
+            "outlierNames": [
+              {
+                "name": "Icons",
+                "count": 4
+              },
+              {
+                "name": "Shape",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35204;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Outlined, Size=Medium, Icon=True"
+              },
+              {
+                "id": "I16215:35170;16215:35252;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35195;16215:35252;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35178;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Solid, Size=Medium, Icon=True"
+              },
+              {
+                "id": "I16215:35186;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Solid, Size=Small, Icon=True"
+              },
+              {
+                "id": "I16215:35213;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Outlined, Size=Small, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35178;16215:35252;16215:25202",
+          "primaryName": "┗ Icon Variant ᠎",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Icon",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35170;16215:35252",
+                "name": "Icon",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35195;16215:35252",
+                "name": "Icon",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35178;16215:35252;16215:25202;16215:13734",
+          "primaryName": "Normal",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Vector",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35170;16215:35252;16215:25202;16215:13733",
+                "name": "Vector",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35195;16215:35252;16215:25202;16215:13733",
+                "name": "Vector",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35170;16215:35252;16215:25202;16215:13734",
+          "primaryName": "Vector",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Normal",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35170;16215:35252;16215:25202;16215:13734",
+                "name": "Normal",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35195;16215:35252;16215:25202;16215:13734",
+                "name": "Normal",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35123;16215:35239",
+          "primaryName": "Inactive",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Active",
+                "count": 4
+              },
+              {
+                "name": "Content",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35131;16215:35250",
+                "name": "Content",
+                "variantName": "Variant=Solid, Size=Medium, Icon=False"
+              },
+              {
+                "id": "I16215:35123;16215:35239",
+                "name": "Active",
+                "variantName": "Variant=Solid, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35148;16215:35239",
+                "name": "Active",
+                "variantName": "Variant=Outlined, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35174;16215:35239",
+                "name": "Active",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35199;16215:35239",
+                "name": "Active",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35139;16215:35248",
+          "primaryName": "Background",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Icons",
+                "count": 5
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35174;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35199;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35123;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Solid, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35148;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Outlined, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35131;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Solid, Size=Medium, Icon=False"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35123;16215:35247",
+          "primaryName": "Content",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 12,
+            "outlierNames": [
+              {
+                "name": "Inactive",
+                "count": 5
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35123;16215:35247",
+                "name": "Inactive",
+                "variantName": "Variant=Solid, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35131;16215:35247",
+                "name": "Inactive",
+                "variantName": "Variant=Solid, Size=Medium, Icon=False"
+              },
+              {
+                "id": "I16215:35148;16215:35247",
+                "name": "Inactive",
+                "variantName": "Variant=Outlined, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35174;16215:35247",
+                "name": "Inactive",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35199;16215:35247",
+                "name": "Inactive",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35123;16215:35248",
+          "primaryName": "Ratio",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 14,
+            "outlierNames": [
+              {
+                "name": "Background",
+                "count": 5
+              },
+              {
+                "name": "Icons",
+                "count": 3
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35157;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Outlined, Size=Medium, Icon=False"
+              },
+              {
+                "id": "I16215:35139;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Solid, Size=Small, Icon=False"
+              },
+              {
+                "id": "I16215:35166;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Outlined, Size=Small, Icon=False"
+              },
+              {
+                "id": "I16215:35123;16215:35248",
+                "name": "Background",
+                "variantName": "Variant=Solid, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35131;16215:35248",
+                "name": "Background",
+                "variantName": "Variant=Solid, Size=Medium, Icon=False"
+              },
+              {
+                "id": "I16215:35148;16215:35248",
+                "name": "Background",
+                "variantName": "Variant=Outlined, Size=Large, Icon=False"
+              },
+              {
+                "id": "I16215:35174;16215:35248",
+                "name": "Background",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35199;16215:35248",
+                "name": "Background",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35123;16215:35250",
+          "primaryName": "Content",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 10,
+            "outlierNames": [
+              {
+                "name": "Icons",
+                "count": 4
+              },
+              {
+                "name": "Shape",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35208;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Outlined, Size=Medium, Icon=True"
+              },
+              {
+                "id": "I16215:35174;16215:35252;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35199;16215:35252;16215:25202;16215:13731",
+                "name": "Shape",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35182;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Solid, Size=Medium, Icon=True"
+              },
+              {
+                "id": "I16215:35190;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Solid, Size=Small, Icon=True"
+              },
+              {
+                "id": "I16215:35217;16215:35251",
+                "name": "Icons",
+                "variantName": "Variant=Outlined, Size=Small, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35182;16215:35252;16215:25202",
+          "primaryName": "┗ Icon Variant ᠎",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Icon",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35174;16215:35252",
+                "name": "Icon",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35199;16215:35252",
+                "name": "Icon",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35182;16215:35252;16215:25202;16215:13734",
+          "primaryName": "Normal",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Vector",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35174;16215:35252;16215:25202;16215:13733",
+                "name": "Vector",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35199;16215:35252;16215:25202;16215:13733",
+                "name": "Vector",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:35174;16215:35252;16215:25202;16215:13734",
+          "primaryName": "Vector",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 6,
+            "outlierNames": [
+              {
+                "name": "Normal",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:35174;16215:35252;16215:25202;16215:13734",
+                "name": "Normal",
+                "variantName": "Variant=Solid, Size=Large, Icon=True"
+              },
+              {
+                "id": "I16215:35199;16215:35252;16215:25202;16215:13734",
+                "name": "Normal",
+                "variantName": "Variant=Outlined, Size=Large, Icon=True"
+              }
+            ]
+          },
+          "fixture": "wanted/SegmentedControlsegmentedControl"
+        }
+      ]
+    }
+  ]
+}
