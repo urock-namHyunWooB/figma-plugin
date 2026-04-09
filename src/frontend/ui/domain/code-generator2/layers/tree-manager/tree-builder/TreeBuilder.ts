@@ -460,10 +460,18 @@ class TreeBuilder {
 
   /**
    * 디버그용: InternalTree 반환 (Step 1 + 1.1 결과 — VariantMerger + Interaction strip)
+   *
+   * @param options.skipInteractionStripper true이면 Interaction layer strip을 건너뛴다.
+   *   merger가 만든 raw tree를 관찰할 때 사용 (cross-parent 매칭 버그 조사 등).
    */
-  public buildInternalTreeDebug(node: SceneNode): InternalTree {
+  public buildInternalTreeDebug(
+    node: SceneNode,
+    options?: { skipInteractionStripper?: boolean }
+  ): InternalTree {
     const tree = this.variantMerger.merge(node);
-    stripInteractionLayers(tree, this.dataManager);
+    if (!options?.skipInteractionStripper) {
+      stripInteractionLayers(tree, this.dataManager);
+    }
     return tree;
   }
 
