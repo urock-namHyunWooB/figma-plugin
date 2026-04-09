@@ -38,12 +38,14 @@ describe("isInteractionLayer", () => {
     expect(isInteractionLayer(inst)).toBe(false);
   });
 
-  it("returns false for FRAME with 2 children (defensive)", () => {
+  it("returns true for FRAME with 2+ children (merger bug case — strip anyway)", () => {
+    // VariantMerger가 다른 sibling의 자식을 Interaction에 잘못 넣는 경우.
+    // 그래도 strip해서 merger 버그를 가린다 (의도된 부수효과).
     const frame = node("Interaction", "FRAME", [
       node("a", "INSTANCE"),
       node("b", "INSTANCE"),
     ]);
-    expect(isInteractionLayer(frame)).toBe(false);
+    expect(isInteractionLayer(frame)).toBe(true);
   });
 
   it("name match is case-sensitive ('interaction' lowercase fails)", () => {

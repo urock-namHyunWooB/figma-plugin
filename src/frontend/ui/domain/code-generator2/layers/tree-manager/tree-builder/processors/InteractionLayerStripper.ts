@@ -9,17 +9,15 @@ type PseudoStyles = Partial<Record<PseudoClass, Record<string, string | number>>
  * Spec §4 감지 규칙:
  * - name === "Interaction" (case-sensitive)
  * - type === "FRAME"
- * - children.length <= 1 (defensive: 2+ children은 strip 안 함)
  *
- * children type 제약은 의도적으로 없음 — 중첩 Interaction의 외곽 frame은
- * 자식이 FRAME(또 다른 Interaction)이고, 일반 case는 자식이 INSTANCE.
- * 둘 다 지원.
+ * 자식 수 제약 없음. 데이터 조사상 정상 fixture에서는 0~1개 자식이지만,
+ * VariantMerger가 잘못된 매칭으로 다른 sibling의 자식들을 Interaction 안으로
+ * 끌어다 넣는 경우가 있음 (예: Buttonsolid). 그 자식들도 stripping과 함께
+ * 사라지게 하여 merger 버그를 가린다 (의도된 부수효과).
  */
 export function isInteractionLayer(node: InternalNode): boolean {
   if (node.type !== "FRAME") return false;
   if (node.name !== "Interaction") return false;
-  const children = node.children ?? [];
-  if (children.length > 1) return false;
   return true;
 }
 

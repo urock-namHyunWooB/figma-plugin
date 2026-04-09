@@ -459,10 +459,12 @@ class TreeBuilder {
   }
 
   /**
-   * 디버그용: InternalTree 반환 (Step 1 결과)
+   * 디버그용: InternalTree 반환 (Step 1 + 1.1 결과 — VariantMerger + Interaction strip)
    */
   public buildInternalTreeDebug(node: SceneNode): InternalTree {
-    return this.variantMerger.merge(node);
+    const tree = this.variantMerger.merge(node);
+    stripInteractionLayers(tree, this.dataManager);
+    return tree;
   }
 
   /**
