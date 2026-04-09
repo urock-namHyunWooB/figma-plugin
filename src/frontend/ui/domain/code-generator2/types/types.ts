@@ -79,11 +79,15 @@ export interface VariantInconsistency {
   propName: string;
   propValue: string;
   nodeName?: string;
+  /** 진단이 발견된 UINode의 id (Figma 원본 노드 id) */
+  nodeId?: string;
   variants: Array<{
     props: Record<string, string>;
     value: string;
   }>;
   expectedValue: string | null;
+  /** 이 진단이 피드백 엔진에서 자동 fix 가능한지 (expectedValue != null 기반) */
+  canAutoFix?: boolean;
 }
 
 /**
