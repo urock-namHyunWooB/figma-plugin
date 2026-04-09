@@ -5,7 +5,6 @@ import { VariantPropPosition } from "./signals/VariantPropPosition";
 import { NormalizedPosition } from "./signals/NormalizedPosition";
 import { TextSpecialMatch } from "./signals/TextSpecialMatch";
 import { InstanceSpecialMatch } from "./signals/InstanceSpecialMatch";
-import { ParentShapeIdentity } from "./signals/ParentShapeIdentity";
 import { WrapperRoleDistinction } from "./signals/WrapperRoleDistinction";
 import { defaultMatchingPolicy, type MatchingPolicy } from "./MatchingPolicy";
 
@@ -37,6 +36,12 @@ export function createDefaultEngine(
     // Phase 2d 결정: WrapperRoleDistinction은 정의돼 있지만 등록하지 않는다.
     // 이유: Tagreview는 이미 NormalizedPosition의 size check로 보존되고 있어
     // 추가 wrapper veto가 불필요. 등록 시 Headersub/SegmentedControl에 false positive 발생.
+    // Phase 3: ParentShapeIdentity 등록 해제.
+    // 원래 설계는 "같은 부모 → 같은 노드 가능성 ↑"이지만 variant merger context
+    // 에서는 매칭 대상 모두가 같은 variant root 하위라 거의 항상 true → 신호 가치 없음.
+    // 원설계자도 주석에 "NP fallback에서만 의미"라 혼란 표시. 현재 NP의
+    // decisive-match-with-cost로 short-circuit되고 있어서 PSI는 거의 호출되지 않음.
+    // 이 전제를 명시적으로 확정하고 제거 (클래스 파일은 남김).
     [
       new TypeCompatibility(),
       new IdMatch(),
@@ -44,7 +49,6 @@ export function createDefaultEngine(
       new VariantPropPosition(),
       new TextSpecialMatch(),
       new InstanceSpecialMatch(),
-      new ParentShapeIdentity(),
     ],
     policy,
   );
