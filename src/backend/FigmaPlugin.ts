@@ -2,6 +2,7 @@ declare const GITHUB_TOKEN: string;
 
 import { MESSAGE_TYPES, PluginMessage } from "./types/messages";
 import { createExtractionPipeline, type ExtractionPipeline } from "./extraction";
+import { applyFix, applyFixes } from "./handlers/feedbackFixHandler";
 
 /**
  * 메인 플러그인 클래스
@@ -114,8 +115,97 @@ export class FigmaPlugin {
         await this.handleSelectNode(msg.nodeId);
         break;
 
+      case MESSAGE_TYPES.APPLY_FIX_ITEM:
+        await this.handleApplyFixItem(msg);
+        break;
+
+      case MESSAGE_TYPES.APPLY_FIX_GROUP:
+        await this.handleApplyFixGroup(msg);
+        break;
+
       default:
         console.log("⚠️ [Plugin Backend] Unknown message type:", msg.type);
+    }
+  }
+
+  /**
+   * 단일 fix 적용 — UI에서 [Fix] 버튼 클릭 시.
+   * Undo는 Figma 기본 메커니즘에 위임 (한 핸들러 호출 = 1 undo step).
+   */
+  private async handleApplyFixItem(msg: {
+    nodeId: string;
+    cssProperty: string;
+    expectedValue: string;
+  }): Promise<void> {
+    try {
+      const node = figma.getNodeById(msg.nodeId);
+      if (!node) {
+        figma.ui.postMessage({
+          type: MESSAGE_TYPES.APPLY_FIX_RESULT,
+          success: false,
+          appliedCount: 0,
+          skippedReasons: ["node not found"],
+        });
+        return;
+      }
+
+      const result = applyFix(node, {
+        cssProperty: msg.cssProperty,
+        expectedValue: msg.expectedValue,
+      });
+
+      figma.ui.postMessage({
+        type: MESSAGE_TYPES.APPLY_FIX_RESULT,
+        success: result.success,
+        appliedCount: result.success ? 1 : 0,
+        skippedReasons: result.success ? [] : [result.reason ?? "unknown"],
+      });
+    } catch (error) {
+      console.error("Failed to apply fix:", error);
+      figma.ui.postMessage({
+        type: MESSAGE_TYPES.APPLY_FIX_RESULT,
+        success: false,
+        appliedCount: 0,
+        skippedReasons: [String(error)],
+      });
+    }
+  }
+
+  /**
+   * 그룹 fix 적용 — UI에서 [Fix N] 버튼 클릭 시.
+   */
+  private async handleApplyFixGroup(msg: {
+    nodeId: string;
+    fixes: Array<{ cssProperty: string; expectedValue: string }>;
+  }): Promise<void> {
+    try {
+      const node = figma.getNodeById(msg.nodeId);
+      if (!node) {
+        figma.ui.postMessage({
+          type: MESSAGE_TYPES.APPLY_FIX_RESULT,
+          success: false,
+          appliedCount: 0,
+          skippedReasons: ["node not found"],
+        });
+        return;
+      }
+
+      const { appliedCount, skippedReasons } = applyFixes(node, msg.fixes);
+
+      figma.ui.postMessage({
+        type: MESSAGE_TYPES.APPLY_FIX_RESULT,
+        success: appliedCount > 0,
+        appliedCount,
+        skippedReasons,
+      });
+    } catch (error) {
+      console.error("Failed to apply fix group:", error);
+      figma.ui.postMessage({
+        type: MESSAGE_TYPES.APPLY_FIX_RESULT,
+        success: false,
+        appliedCount: 0,
+        skippedReasons: [String(error)],
+      });
     }
   }
 
