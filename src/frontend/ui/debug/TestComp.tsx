@@ -4,7 +4,6 @@ import type { FigmaNodeData } from "@code-generator2";
 import { useCompilerDebug, StyleStrategyType } from "./useCompilerDebug";
 import ErrorBoundary from "@frontend/ui/components/ErrorBoundary";
 import CodeViewer from "@frontend/ui/components/CodeViewer";
-import { FeedbackPanel } from "@frontend/ui/components/FeedbackPanel";
 
 // twind
 import { install, observe, stringify } from "@twind/core";
@@ -75,7 +74,6 @@ export function TestComp() {
     Component,
     error,
     compileMs,
-    feedbackGroups,
     defaultProps: _defaultProps,
   } = useCompilerDebug(currentFixture?.data || null, { styleStrategy });
 
@@ -188,27 +186,6 @@ export function TestComp() {
           </div>
         </ErrorBoundary>
       )}
-
-      <div style={{ marginBottom: "30px" }}>
-        <h3>Feedback Panel ({feedbackGroups.length} groups):</h3>
-        <div style={{ border: "1px solid #ddd", borderRadius: "4px", background: "#fafafa", maxWidth: 480 }}>
-          <FeedbackPanel
-            groups={feedbackGroups}
-            onJumpToNode={(nodeId) => {
-              console.log("[debug] jump to node:", nodeId);
-              alert(`Jump to node: ${nodeId}\n(no Figma context — UI only)`);
-            }}
-            onApplyFixItem={(itemId) => {
-              console.log("[debug] apply fix item:", itemId);
-              alert(`Apply fix item: ${itemId}\n(no Figma context — UI only)`);
-            }}
-            onApplyFixGroup={(groupId) => {
-              console.log("[debug] apply fix group:", groupId);
-              alert(`Apply fix group: ${groupId}\n(no Figma context — UI only)`);
-            }}
-          />
-        </div>
-      </div>
 
       <div style={{ marginBottom: "30px" }}>
         <h3>생성된 TSX 코드:</h3>
