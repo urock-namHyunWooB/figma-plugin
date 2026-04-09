@@ -1,7 +1,6 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo } from "react";
 import { css } from "@emotion/react";
 import type { PropDefinition } from "@code-generator2/types/public";
-import type { VariantInconsistency } from "@code-generator2";
 import ErrorBoundary from "./ErrorBoundary";
 
 interface PropsMatrixProps {
@@ -11,8 +10,6 @@ interface PropsMatrixProps {
   fixedProps: Record<string, any>;
   isLoading: boolean;
   error: string | null;
-  /** variant 불일치 진단 정보 */
-  warnings?: VariantInconsistency[];
 }
 
 interface Axis {
@@ -257,183 +254,6 @@ const singleCellPreviewStyle = css`
   min-height: 60px;
 `;
 
-const warningCellStyle = css`
-  outline: 2px solid #ef4444;
-  outline-offset: -2px;
-  position: relative;
-`;
-
-const warningBadgeStyle = css`
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  font-size: 12px;
-  line-height: 1;
-  cursor: pointer;
-  z-index: 1;
-`;
-
-const warningTooltipStyle = css`
-  position: fixed;
-  background: #1f2937;
-  color: #fff;
-  font-size: 11px;
-  padding: 6px 8px;
-  border-radius: 4px;
-  white-space: pre-wrap;
-  z-index: 9999;
-  pointer-events: none;
-  max-width: 360px;
-  overflow-wrap: break-word;
-
-  &::after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    right: 8px;
-    border: 4px solid transparent;
-    border-top-color: #1f2937;
-  }
-`;
-
-/**
- * 셀의 prop 조합이 진단의 outlier variant와 매치되는지 확인.
- * axisNames: 매트릭스 축 prop 이름만 비교 (slot/string 등 fixedProps 제외)
- */
-function findCellWarnings(
-  cellProps: Record<string, any>,
-  warnings: VariantInconsistency[],
-  axisNames: Set<string>
-): VariantInconsistency[] {
-  if (!warnings.length) return [];
-
-  return warnings.filter((w) =>
-    w.variants.length === 0 ||
-    w.variants.some((v) =>
-      Object.entries(v.props).every(
-        ([key, val]) => !axisNames.has(key) || !(key in cellProps) || String(cellProps[key]) === val
-      )
-    )
-  );
-}
-
-/**
- * 경고가 있는 셀에 하이라이트 + 툴팁을 표시하는 래퍼
- */
-function WarningOverlay({
-  cellWarnings,
-  onSelectNode,
-}: {
-  cellWarnings: VariantInconsistency[];
-  onSelectNode?: (nodeId: string) => void;
-}) {
-  const [showTooltip, setShowTooltip] = React.useState(false);
-  const [pinned, setPinned] = React.useState(false);
-  const badgeRef = React.useRef<HTMLSpanElement>(null);
-  const [tooltipPos, setTooltipPos] = React.useState<{ top: number; right: number } | null>(null);
-
-  // pinned 상태에서 외부 클릭 시 닫기
-  React.useEffect(() => {
-    if (!pinned) return;
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (badgeRef.current && !badgeRef.current.contains(e.target as Node)) {
-        setPinned(false);
-        setShowTooltip(false);
-      }
-    };
-    document.addEventListener("click", handleOutsideClick, true);
-    return () => document.removeEventListener("click", handleOutsideClick, true);
-  }, [pinned]);
-
-  if (cellWarnings.length === 0) return null;
-
-  const updatePos = () => {
-    if (badgeRef.current) {
-      const rect = badgeRef.current.getBoundingClientRect();
-      setTooltipPos({
-        top: rect.top - 4,
-        right: window.innerWidth - rect.right,
-      });
-    }
-  };
-
-  const handleMouseEnter = () => {
-    updatePos();
-    setShowTooltip(true);
-  };
-
-  const handleMouseLeave = () => {
-    if (!pinned) setShowTooltip(false);
-  };
-
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (pinned) {
-      setPinned(false);
-      setShowTooltip(false);
-    } else {
-      updatePos();
-      setPinned(true);
-      setShowTooltip(true);
-    }
-  };
-
-  const isVisible = showTooltip || pinned;
-
-  return (
-    <>
-      <span
-        ref={badgeRef}
-        css={warningBadgeStyle}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onClick={handleClick}
-      >
-        ⚠️
-      </span>
-      {isVisible && tooltipPos && (
-        <div
-          css={warningTooltipStyle}
-          style={{ top: tooltipPos.top, right: tooltipPos.right, transform: "translateY(-100%)" }}
-        >
-          {cellWarnings.map((w, wi) => (
-            <div key={wi} style={{ marginBottom: wi < cellWarnings.length - 1 ? 6 : 0 }}>
-              <div style={{ fontWeight: 600, marginBottom: 2 }}>
-                {w.nodeName && <span style={{ color: "#93c5fd" }}>[{w.nodeName}]</span>}{" "}
-                {w.propName
-                  ? `${w.cssProperty} 값 불일치 (${w.propName}=${w.propValue}):`
-                  : w.cssProperty}
-              </div>
-              {w.variants.map((v, vi) => {
-                const otherProps = Object.entries(v.props)
-                  .filter(([k]) => k !== w.propName)
-                  .map(([k, val]) => `${k}=${val}`)
-                  .join(", ");
-                const isOutlier = w.expectedValue != null && v.value !== w.expectedValue;
-                return (
-                  <div key={vi} style={{ paddingLeft: 8, color: isOutlier ? "#f87171" : "#d1d5db" }}>
-                    {otherProps || "default"}: {v.value}
-                  </div>
-                );
-              })}
-              {w.expectedValue && (
-                <div style={{ paddingLeft: 8, marginTop: 2, color: "#9ca3af", fontSize: 10 }}>
-                  기대값: {w.expectedValue}
-                </div>
-              )}
-            </div>
-          ))}
-          {pinned && (
-            <div style={{ marginTop: 4, fontSize: 10, color: "#6b7280", textAlign: "right" }}>
-              click to close
-            </div>
-          )}
-        </div>
-      )}
-    </>
-  );
-}
-
 const MAX_TOTAL = 200;
 
 export function PropsMatrix({
@@ -442,7 +262,6 @@ export function PropsMatrix({
   fixedProps,
   isLoading,
   error,
-  warnings = [],
 }: PropsMatrixProps) {
   const tableData = useMemo(
     () => buildTableData(propDefinitions, fixedProps),
@@ -453,15 +272,6 @@ export function PropsMatrix({
     () => generateExtraCombinations(tableData.extraAxes),
     [tableData.extraAxes]
   );
-
-  // 축 이름 집합 (diagnostic 매칭에서 축 prop만 비교하기 위해)
-  const axisNames = useMemo(() => {
-    const names = new Set<string>();
-    if (tableData.colAxis) names.add(tableData.colAxis.name);
-    if (tableData.rowAxis) names.add(tableData.rowAxis.name);
-    for (const ax of tableData.extraAxes) names.add(ax.name);
-    return names;
-  }, [tableData.rowAxis, tableData.colAxis, tableData.extraAxes]);
 
   if (isLoading) {
     return <div css={emptyStyle}>Loading...</div>;
@@ -587,16 +397,8 @@ export function PropsMatrix({
                     [rowAxis.name]: rowVal,
                     [colAxis.name]: colVal,
                   };
-                  const cellWarnings = findCellWarnings(cellProps, warnings, axisNames);
                   return (
-                    <td
-                      key={String(colVal)}
-                      css={[cellTdStyle, cellWarnings.length > 0 && warningCellStyle]}
-                      style={{ position: "relative" }}
-                    >
-                      {cellWarnings.length > 0 && (
-                        <WarningOverlay cellWarnings={cellWarnings} />
-                      )}
+                    <td key={String(colVal)} css={cellTdStyle}>
                       <div css={cellInnerStyle}>
                         {extraCombos.map((extra, ei) => {
                           const props = resolveSlotAxes({ ...cellProps, ...extra });

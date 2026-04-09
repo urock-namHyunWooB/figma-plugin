@@ -639,7 +639,6 @@ function App() {
               fixedProps={fixedProps}
               isLoading={isLoading}
               error={error}
-              warnings={variantWarnings}
             />
           </div>
         )}
