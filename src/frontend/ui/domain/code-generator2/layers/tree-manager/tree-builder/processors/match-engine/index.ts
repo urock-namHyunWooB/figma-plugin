@@ -6,6 +6,7 @@ import { NormalizedPosition } from "./signals/NormalizedPosition";
 import { TextSpecialMatch } from "./signals/TextSpecialMatch";
 import { InstanceSpecialMatch } from "./signals/InstanceSpecialMatch";
 import { ParentShapeIdentity } from "./signals/ParentShapeIdentity";
+import { WrapperRoleDistinction } from "./signals/WrapperRoleDistinction";
 import { defaultMatchingPolicy, type MatchingPolicy } from "./MatchingPolicy";
 
 export { MatchDecisionEngine } from "./MatchDecisionEngine";
@@ -33,6 +34,9 @@ export function createDefaultEngine(
   policy: MatchingPolicy = defaultMatchingPolicy,
 ): MatchDecisionEngine {
   return new MatchDecisionEngine(
+    // Phase 2d 결정: WrapperRoleDistinction은 정의돼 있지만 등록하지 않는다.
+    // 이유: Tagreview는 이미 NormalizedPosition의 size check로 보존되고 있어
+    // 추가 wrapper veto가 불필요. 등록 시 Headersub/SegmentedControl에 false positive 발생.
     [
       new TypeCompatibility(),
       new IdMatch(),

@@ -22,6 +22,8 @@ export interface MatchingPolicy {
   readonly instanceSpecialMatchCost: number;
   /** 엔진이 match로 결정하는 totalCost 임계값. totalCost ≤ 이 값 → match. */
   readonly matchCostThreshold: number;
+  /** WrapperRoleDistinction: 두 노드 자식 수 비율이 이 값을 넘으면 wrapper로 보고 veto. */
+  readonly childrenCountDiffRatio: number;
   /** 각 신호의 가중치. Phase 1a는 전부 1. */
   readonly signalWeights: {
     readonly TypeCompatibility: number;
@@ -48,6 +50,7 @@ export const defaultMatchingPolicy: MatchingPolicy = {
   // matchCostThreshold = 0.6으로 잡으면 legacy `getPositionCost <= 0.6` 동등.
   // Hungarian은 상대 순서 + threshold 위반시 Infinity만 보므로 0.6이 안전.
   matchCostThreshold: 0.6,
+  childrenCountDiffRatio: 3.0, // Phase 2d: Tagreview wrapper 보호 (3배 이상 차이 시 다른 역할로 간주)
   signalWeights: {
     TypeCompatibility: 1,
     IdMatch: 1,
