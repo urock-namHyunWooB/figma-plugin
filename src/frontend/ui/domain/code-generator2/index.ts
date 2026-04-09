@@ -8,5 +8,5 @@ export type { GeneratorOptions as FigmaCodeGeneratorOptions } from "./types/publ
 // FigmaCodeGenerator
 import FigmaCodeGenerator from "./FigmaCodeGenerator";
 export { FigmaCodeGenerator };
-export type { CompileResult, VariantInconsistency } from "./FigmaCodeGenerator";
+export type { CompileResult, VariantInconsistency, FeedbackGroup, FeedbackItem } from "./FigmaCodeGenerator";
 export default FigmaCodeGenerator;

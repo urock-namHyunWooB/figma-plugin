@@ -53,9 +53,12 @@ import { SemanticIRBuilder } from "./layers/code-emitter/SemanticIRBuilder";
 import type { SemanticComponent } from "./layers/code-emitter/SemanticIR";
 import { toComponentName } from "./utils/nameUtils";
 import { toPublicProps } from "./adapters/PropsAdapter";
+import type { FeedbackGroup } from "./feedback/types";
+import { FeedbackBuilder } from "./feedback/FeedbackBuilder";
 
 export type { GeneratedResult, BundledResult } from "./layers/code-emitter/ICodeEmitter";
 export type { VariantInconsistency, PropertyBindingFeedback } from "./types/types";
+export type { FeedbackGroup, FeedbackItem } from "./feedback/types";
 
 /** compile() 반환 타입: 코드 + 진단 */
 export interface CompileResult {
@@ -63,6 +66,8 @@ export interface CompileResult {
   diagnostics: VariantInconsistency[];
   /** Component Property 바인딩 누락 피드백 */
   designFeedback: PropertyBindingFeedback[];
+  /** 그룹핑된 variant style 피드백 (UI 소비용) */
+  feedbackGroups: FeedbackGroup[];
 }
 
 export type {
@@ -158,10 +163,14 @@ class FigmaCodeGenerator {
       const designFeedback = this.detectPropertyBindingGaps();
       // 바인딩 누락을 VariantInconsistency 형태로 변환하여 기존 warning UI에 표시
       diagnostics.push(...this.bindingFeedbackToDiagnostics(designFeedback));
-      return { code: result.code, diagnostics, designFeedback };
+
+      const componentSetName = main.root.name ?? "Component";
+      const feedbackGroups = FeedbackBuilder.build(diagnostics, componentSetName);
+
+      return { code: result.code, diagnostics, designFeedback, feedbackGroups };
     } catch (e) {
       console.error("Compile error:", e);
-      return { code: null, diagnostics: [], designFeedback: [] };
+      return { code: null, diagnostics: [], designFeedback: [], feedbackGroups: [] };
     }
   }
 
