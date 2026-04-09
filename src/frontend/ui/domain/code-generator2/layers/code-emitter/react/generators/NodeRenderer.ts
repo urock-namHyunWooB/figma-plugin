@@ -8,7 +8,6 @@ import type {
   ConditionNode,
   ArraySlotInfo,
   StyleObject,
-  VariantInconsistency,
 } from "../../../../types/types";
 import type { SemanticNode } from "../../SemanticIR";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
@@ -31,7 +30,6 @@ export interface NodeRendererContext {
   arraySlots: Map<string, ArraySlotInfo>;
   availableVarNames: Set<string>;
   componentMapDeclarations: string[];
-  collectedDiagnostics: VariantInconsistency[];
 }
 
 /** 같은 prop의 eq 조건으로 분기되는 component 노드 그룹 */

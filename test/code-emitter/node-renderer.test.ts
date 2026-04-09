@@ -15,7 +15,6 @@ function makeCtx(): NodeRendererContext {
     arraySlots: new Map(),
     availableVarNames: new Set(),
     componentMapDeclarations: [],
-    collectedDiagnostics: [],
   };
 }
 

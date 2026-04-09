@@ -28,9 +28,6 @@ interface JsxGeneratorOptions {
 }
 
 export class JsxGenerator {
-  /** 진단 정보 수집기 (generate() 호출 동안 유효) */
-  private static collectedDiagnostics: VariantInconsistency[] = [];
-
   /**
    * 컴포넌트 코드 생성
    */
@@ -40,8 +37,6 @@ export class JsxGenerator {
     styleStrategy: IStyleStrategy,
     options: JsxGeneratorOptions = {}
   ): JsxGenerateResult {
-    this.collectedDiagnostics = [];
-
     // Slot props 설정 (조건부 렌더링에서 사용)
     this.slotProps = new Set(
       ir.props.filter((p) => p.type === "slot").map((p) => p.name)
@@ -114,7 +109,6 @@ export class JsxGenerator {
       arraySlots: this.arraySlots,
       availableVarNames: this.availableVarNames,
       componentMapDeclarations: this.componentMapDeclarations,
-      collectedDiagnostics: this.collectedDiagnostics,
     };
 
     // JSX body (루트 노드는 isRoot=true로 restProps 전파)
@@ -136,7 +130,7 @@ ${jsxBody}
 
 export default ${componentName}`;
 
-    return { code, diagnostics: this.collectedDiagnostics };
+    return { code, diagnostics: [] };
   }
 
   /**
