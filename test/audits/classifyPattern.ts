@@ -3,39 +3,71 @@ import type { DisjointPair } from "./detectDisjointVariants";
 export type PatternLabel =
   | "size-variant-reject"
   | "variant-prop-position"
+  | "same-name-same-type" // 매우 강한 회귀 신호 — 같은 이름+같은 type
+  | "same-name-cross-type" // 강한 회귀 신호 — 같은 이름이지만 type 다름 (refactor 가능성)
+  | "different-type" // 거의 확실한 distinct — 타입 자체가 다름
+  | "different-name" // 아마도 distinct — 이름이 명백히 다름 (다른 노드)
   | "unknown";
 
+const SHAPE_TYPES = new Set([
+  "RECTANGLE", "VECTOR", "ELLIPSE", "LINE", "STAR", "POLYGON", "BOOLEAN_OPERATION",
+]);
+const CONTAINER_TYPES = new Set(["GROUP", "FRAME"]);
+
 /**
- * DisjointPair를 §1.1 패턴 중 하나로 분류.
+ * DisjointPair를 패턴별로 분류 (Phase 3 정교화).
  *
- * 매우 단순한 휴리스틱:
- * - 두 형제 양쪽의 variantName을 각각 파싱해 prop 집합으로 만든다
- * - 두 형제에 걸쳐 값이 다른 prop이 정확히 하나이고:
- *   - 그 prop 이름이 Size 또는 다른 enum 느낌이면 → size-variant-reject
- *   - 그 prop 값이 True/False boolean이면 → variant-prop-position
- * - 그 외 → unknown
+ * 우선순위 (위가 먼저 매칭):
+ * 1. variantName 단일 prop diff 분석:
+ *    - boolean diff → variant-prop-position
+ *    - Size 관련 diff → size-variant-reject
+ * 2. 노드 metadata 기반 분류:
+ *    - 같은 이름 + 호환 type → same-name-same-type (강한 회귀 신호)
+ *    - 같은 이름 + 호환 안 되는 type → same-name-cross-type
+ *    - 다른 이름 + 호환 안 되는 type → different-type (distinct)
+ *    - 다른 이름 + 호환 type → different-name (likely distinct)
+ * 3. 그 외 → unknown
  *
- * 이 분류는 Phase 0 리포트의 "분포 감각"을 주기 위한 것이며,
- * 정밀 분류는 Phase 1 이후 신호 단위 로그로 보강한다.
+ * "호환 type" 정의:
+ * - 동일 type
+ * - 둘 다 SHAPE_TYPES (cross-shape)
+ * - 둘 다 CONTAINER_TYPES (GROUP↔FRAME)
  */
 export function classifyPattern(pair: DisjointPair): PatternLabel {
+  // Step 1: variantName diff 분석 (기존 로직)
   const propsA = parseVariantProps(pair.variantsA[0]);
   const propsB = parseVariantProps(pair.variantsB[0]);
-  if (!propsA || !propsB) return "unknown";
-
-  const allKeys = new Set([...propsA.keys(), ...propsB.keys()]);
-  const diffKeys: string[] = [];
-  for (const key of allKeys) {
-    if (propsA.get(key) !== propsB.get(key)) diffKeys.push(key);
+  if (propsA && propsB) {
+    const allKeys = new Set([...propsA.keys(), ...propsB.keys()]);
+    const diffKeys: string[] = [];
+    for (const key of allKeys) {
+      if (propsA.get(key) !== propsB.get(key)) diffKeys.push(key);
+    }
+    if (diffKeys.length === 1) {
+      const diffKey = diffKeys[0];
+      const valA = propsA.get(diffKey);
+      const valB = propsB.get(diffKey);
+      if (isBoolean(valA) && isBoolean(valB)) return "variant-prop-position";
+      if (/^size$/i.test(diffKey)) return "size-variant-reject";
+    }
   }
-  if (diffKeys.length !== 1) return "unknown";
 
-  const diffKey = diffKeys[0];
-  const valA = propsA.get(diffKey);
-  const valB = propsB.get(diffKey);
-  if (isBoolean(valA) && isBoolean(valB)) return "variant-prop-position";
-  if (/^size$/i.test(diffKey)) return "size-variant-reject";
-  return "unknown";
+  // Step 2: metadata 기반 분류
+  const [nodeA, nodeB] = pair.pair;
+  const sameName = nodeA.name === nodeB.name;
+  const compatibleType = isCompatibleType(nodeA.type, nodeB.type);
+
+  if (sameName && compatibleType) return "same-name-same-type";
+  if (sameName && !compatibleType) return "same-name-cross-type";
+  if (!compatibleType) return "different-type";
+  return "different-name";
+}
+
+function isCompatibleType(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (SHAPE_TYPES.has(a) && SHAPE_TYPES.has(b)) return true;
+  if (CONTAINER_TYPES.has(a) && CONTAINER_TYPES.has(b)) return true;
+  return false;
 }
 
 function parseVariantProps(variantName: string): Map<string, string> | null {

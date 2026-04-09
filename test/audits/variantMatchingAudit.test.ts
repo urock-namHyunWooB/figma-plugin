@@ -42,11 +42,7 @@ const BASELINE_PATH = resolve(
 
 async function runAudit(): Promise<AuditReport> {
   const byFixture: FixtureReport[] = [];
-  const patternTotals: Record<PatternLabel, number> = {
-    "size-variant-reject": 0,
-    "variant-prop-position": 0,
-    unknown: 0,
-  };
+  const patternTotals: Record<PatternLabel, number> = emptyPatternCounts();
   let totalDisjointPairs = 0;
   let fixturesWithRegressions = 0;
   let compileErrors = 0;
@@ -88,11 +84,7 @@ async function runAudit(): Promise<AuditReport> {
       continue;
     }
 
-    const patterns: Record<PatternLabel, number> = {
-      "size-variant-reject": 0,
-      "variant-prop-position": 0,
-      unknown: 0,
-    };
+    const patterns: Record<PatternLabel, number> = emptyPatternCounts();
     const pairReports = pairs.map((p) => {
       const label = classifyPattern(p);
       patterns[label]++;
@@ -129,15 +121,23 @@ async function runAudit(): Promise<AuditReport> {
   };
 }
 
+function emptyPatternCounts(): Record<PatternLabel, number> {
+  return {
+    "size-variant-reject": 0,
+    "variant-prop-position": 0,
+    "same-name-same-type": 0,
+    "same-name-cross-type": 0,
+    "different-type": 0,
+    "different-name": 0,
+    unknown: 0,
+  };
+}
+
 function makeEmptyReport(name: string): FixtureReport {
   return {
     fixture: name,
     disjointCount: 0,
-    patterns: {
-      "size-variant-reject": 0,
-      "variant-prop-position": 0,
-      unknown: 0,
-    },
+    patterns: emptyPatternCounts(),
     pairs: [],
   };
 }
@@ -156,9 +156,13 @@ describe("Variant matching audit", () => {
         `With regressions: ${report.fixturesWithRegressions}`,
         `Total disjoint pairs: ${report.totalDisjointPairs}`,
         `Compile errors: ${report.compileErrors}`,
-        `  size-variant-reject: ${report.patternTotals["size-variant-reject"]}`,
-        `  variant-prop-position: ${report.patternTotals["variant-prop-position"]}`,
-        `  unknown: ${report.patternTotals.unknown}`,
+        `  size-variant-reject:    ${report.patternTotals["size-variant-reject"]}`,
+        `  variant-prop-position:  ${report.patternTotals["variant-prop-position"]}`,
+        `  same-name-same-type:    ${report.patternTotals["same-name-same-type"]}  (강한 회귀)`,
+        `  same-name-cross-type:   ${report.patternTotals["same-name-cross-type"]}  (refactor 후보)`,
+        `  different-type:         ${report.patternTotals["different-type"]}  (likely distinct)`,
+        `  different-name:         ${report.patternTotals["different-name"]}  (likely distinct)`,
+        `  unknown:                ${report.patternTotals.unknown}`,
       ];
       // vitest silent 모드에서도 출력하려면 process.stdout.write 사용
       process.stdout.write("\n" + summaryLines.join("\n") + "\n");

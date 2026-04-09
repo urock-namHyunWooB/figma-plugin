@@ -2,7 +2,10 @@ import type { InternalNode } from "@code-generator2/types/types";
 
 export interface DisjointPair {
   parentId: string;
-  pair: [{ id: string; name: string }, { id: string; name: string }];
+  pair: [
+    { id: string; name: string; type: string },
+    { id: string; name: string; type: string },
+  ];
   variantsA: string[];
   variantsB: string[];
 }
@@ -35,8 +38,8 @@ function walk(node: InternalNode, out: DisjointPair[]): void {
         out.push({
           parentId: node.id,
           pair: [
-            { id: a.id, name: a.name },
-            { id: b.id, name: b.name },
+            { id: a.id, name: a.name, type: a.type },
+            { id: b.id, name: b.name, type: b.type },
           ],
           variantsA: [...setA].sort(),
           variantsB: [...setB].sort(),
