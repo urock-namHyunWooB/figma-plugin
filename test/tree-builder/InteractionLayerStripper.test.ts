@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { isInteractionLayer } from "@code-generator2/layers/tree-manager/tree-builder/processors/InteractionLayerStripper";
 import { mapFigmaStateToPseudo } from "@code-generator2/layers/tree-manager/tree-builder/processors/InteractionLayerStripper";
 import { mergePseudoIntoParent } from "@code-generator2/layers/tree-manager/tree-builder/processors/InteractionLayerStripper";
+import { extractInteractionStyles } from "@code-generator2/layers/tree-manager/tree-builder/processors/InteractionLayerStripper";
 import type { InternalNode, StyleObject } from "@code-generator2/types/types";
 
 function node(name: string, type: string, children: InternalNode[] = []): InternalNode {
@@ -136,5 +137,105 @@ describe("mergePseudoIntoParent", () => {
     mergePseudoIntoParent(p, ":hover", {});
     // pseudo 필드는 생성됐지만 :hover 항목은 빈 객체
     expect(p.styles?.pseudo?.[":hover"] ?? {}).toEqual({});
+  });
+});
+
+describe("extractInteractionStyles", () => {
+  function makeMockDataManager(opts: {
+    spec: any;
+    nodes?: Record<string, any>;
+  }): any {
+    return {
+      getById: (id: string) => {
+        if (opts.nodes && opts.nodes[id]) return { node: opts.nodes[id], spec: opts.spec };
+        return { spec: opts.spec };
+      },
+      getMainComponentId: () => "doc-root",
+    };
+  }
+
+  it("returns empty object when interaction frame has no children", () => {
+    const interactionFrame = node("Interaction", "FRAME");
+    const dm = makeMockDataManager({ spec: { info: { components: {}, componentSets: {} } } });
+    expect(extractInteractionStyles(interactionFrame, dm)).toEqual({});
+  });
+
+  it("returns empty object when only Normal variant exists (no pseudo to extract)", () => {
+    const childInst: any = {
+      id: "child-inst",
+      name: "Interaction",
+      type: "INSTANCE",
+      mergedNodes: [{ id: "raw-inst-id" }],
+    };
+    const interactionFrame = { id: "f", name: "Interaction", type: "FRAME", children: [childInst] } as unknown as InternalNode;
+    const spec = {
+      info: {
+        components: {
+          "comp-normal": { name: "State=Normal", componentSetId: "set-1" },
+        },
+        componentSets: { "set-1": { name: "Interaction/Normal" } },
+      },
+    };
+    const rawInst = {
+      id: "raw-inst-id",
+      componentId: "comp-normal",
+      fills: [{ type: "SOLID", color: { r: 0, g: 0, b: 0, a: 1 } }],
+    };
+    const dm = makeMockDataManager({ spec, nodes: { "raw-inst-id": rawInst } });
+
+    const result = extractInteractionStyles(interactionFrame, dm);
+    // Normal은 default → pseudo entry 생성 안 함
+    expect(result).toEqual({});
+  });
+
+  it("extracts :hover when State=Hover variant exists", () => {
+    const childInst: any = {
+      id: "child-inst",
+      name: "Interaction",
+      type: "INSTANCE",
+      mergedNodes: [{ id: "raw-inst-id" }],
+    };
+    const interactionFrame = { id: "f", name: "Interaction", type: "FRAME", children: [childInst] } as unknown as InternalNode;
+    const spec = {
+      info: {
+        components: {
+          "comp-normal": { name: "State=Normal", componentSetId: "set-1" },
+          "comp-hover": { name: "State=Hover", componentSetId: "set-1" },
+        },
+        componentSets: { "set-1": { name: "Interaction/Normal" } },
+      },
+    };
+    const rawInst = {
+      id: "raw-inst-id",
+      componentId: "comp-normal",
+      fills: [{ type: "SOLID", color: { r: 0, g: 0, b: 0, a: 1 } }],
+    };
+    const hoverComp = {
+      id: "comp-hover",
+      fills: [{ type: "SOLID", color: { r: 1, g: 0, b: 0, a: 0.5 } }],
+    };
+    const dm = makeMockDataManager({
+      spec,
+      nodes: { "raw-inst-id": rawInst, "comp-hover": hoverComp },
+    });
+
+    const result = extractInteractionStyles(interactionFrame, dm);
+    expect(result[":hover"]).toBeDefined();
+    expect(result[":hover"]?.background).toMatch(/rgba?\(/);
+  });
+
+  it("returns empty object when child INSTANCE has no fills", () => {
+    const childInst: any = {
+      id: "child-inst",
+      name: "Interaction",
+      type: "INSTANCE",
+      mergedNodes: [{ id: "raw-inst-id" }],
+    };
+    const interactionFrame = { id: "f", name: "Interaction", type: "FRAME", children: [childInst] } as unknown as InternalNode;
+    const spec = {
+      info: { components: {}, componentSets: {} },
+    };
+    const dm = makeMockDataManager({ spec, nodes: { "raw-inst-id": { id: "raw-inst-id" } } });
+    expect(extractInteractionStyles(interactionFrame, dm)).toEqual({});
   });
 });

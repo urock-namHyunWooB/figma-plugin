@@ -1,4 +1,7 @@
 import type { InternalNode, PseudoClass } from "../../../../types/types";
+import type DataManager from "../../../data-manager/DataManager";
+
+type PseudoStyles = Partial<Record<PseudoClass, Record<string, string | number>>>;
 
 /**
  * Interaction layer 감지.
@@ -79,4 +82,98 @@ export function mergePseudoIntoParent(
     }
   }
   parent.styles.pseudo[pseudo] = merged;
+}
+
+/**
+ * Interaction frame에서 디자이너 의도 스타일을 추출.
+ *
+ * 1. 자식 INSTANCE의 raw Figma 노드를 DataManager에서 조회
+ * 2. componentId의 componentSetId를 찾고 같은 set의 다른 variants 수집
+ * 3. 각 variant의 State value를 pseudo-class로 매핑
+ * 4. variant의 fills에서 색을 추출해 background로 변환
+ * 5. State=Normal은 default이므로 pseudo entry로 변환하지 않음
+ *
+ * 반환: pseudo-class별 style map. State variants가 없거나 색이 없으면 빈 객체.
+ */
+export function extractInteractionStyles(
+  interactionFrame: InternalNode,
+  dataManager: DataManager,
+): PseudoStyles {
+  const result: PseudoStyles = {};
+  const child = interactionFrame.children?.[0];
+  if (!child || child.type !== "INSTANCE") return result;
+
+  // 자식 INSTANCE의 원본 노드 조회 (mergedNodes로 raw id 얻음)
+  const rawId = child.mergedNodes?.[0]?.id;
+  if (!rawId) return result;
+  const lookup = dataManager.getById(rawId);
+  const rawInst = lookup?.node;
+  const spec = lookup?.spec;
+  if (!rawInst || !spec) return result;
+
+  const componentId = (rawInst as any).componentId as string | undefined;
+  if (!componentId) return result;
+
+  const components = (spec as any).info?.components ?? {};
+  const baseComponent = components[componentId];
+  if (!baseComponent) return result;
+
+  const componentSetId = baseComponent.componentSetId;
+  if (!componentSetId) return result;
+
+  // 같은 set에 속한 모든 variants 찾기
+  const setVariants: Array<{ id: string; name: string }> = [];
+  for (const [cid, comp] of Object.entries(components)) {
+    if ((comp as any).componentSetId === componentSetId) {
+      setVariants.push({ id: cid, name: (comp as any).name });
+    }
+  }
+
+  // 각 variant의 State 값 → pseudo-class 매핑 → 색 추출
+  for (const variant of setVariants) {
+    const stateValue = parseStateValue(variant.name);
+    if (!stateValue) continue;
+    const pseudo = mapFigmaStateToPseudo(stateValue);
+    if (!pseudo) continue; // Normal은 default
+
+    const variantNode = dataManager.getById(variant.id)?.node;
+    const color = extractFirstSolidColor(variantNode ?? rawInst);
+    if (!color) continue;
+
+    result[pseudo] = { background: color };
+  }
+
+  return result;
+}
+
+/** "State=Hover, Size=Large" 같은 variant 이름에서 State 값 추출 */
+function parseStateValue(variantName: string): string | null {
+  const parts = variantName.split(",").map((s) => s.trim());
+  for (const part of parts) {
+    const eq = part.indexOf("=");
+    if (eq < 0) continue;
+    const key = part.slice(0, eq).trim();
+    if (key.toLowerCase() === "state") {
+      return part.slice(eq + 1).trim();
+    }
+  }
+  // State 단독 (variant 이름이 "Hover" 같은 경우)
+  if (parts.length === 1) return parts[0];
+  return null;
+}
+
+/** Figma 노드의 첫 SOLID fill을 CSS rgba 문자열로 변환 */
+function extractFirstSolidColor(node: any): string | null {
+  const fills = node?.fills;
+  if (!Array.isArray(fills)) return null;
+  for (const fill of fills) {
+    if (fill?.type === "SOLID" && fill.color) {
+      const r = Math.round(fill.color.r * 255);
+      const g = Math.round(fill.color.g * 255);
+      const b = Math.round(fill.color.b * 255);
+      const a = fill.color.a ?? 1;
+      return `rgba(${r}, ${g}, ${b}, ${a})`;
+    }
+  }
+  return null;
 }
