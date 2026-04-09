@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { InternalNode, InternalTree } from "@code-generator2/types/types";
+import type { InternalNode } from "@code-generator2/types/types";
 import { CrossNameDetector } from "./CrossNameDetector";
 
 const ctx = {} as any;
@@ -42,6 +42,18 @@ describe("CrossNameDetector", () => {
     const node = makeNode("n1", "FRAME", [
       { id: "a", name: "Wrapper", variantName: "v1" },
     ]);
+    const det = new CrossNameDetector();
+    expect(det.detect(node, 1, ctx)).toBeNull();
+  });
+
+  it("returns null when mergedNodes is undefined", () => {
+    const node = {
+      id: "n1",
+      type: "FRAME" as any,
+      name: "x",
+      children: [],
+      mergedNodes: undefined,
+    } as any;
     const det = new CrossNameDetector();
     expect(det.detect(node, 1, ctx)).toBeNull();
   });

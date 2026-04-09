@@ -23,7 +23,9 @@ export class CrossNameDetector implements AnomalyDetector {
     }
     if (nameCounts.size <= 1) return null;
 
-    const sorted = [...nameCounts.entries()].sort((a, b) => b[1] - a[1]);
+    const sorted = [...nameCounts.entries()].sort(
+      (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
+    );
     const primaryName = sorted[0][0];
     const outliers = sorted.slice(1);
 
