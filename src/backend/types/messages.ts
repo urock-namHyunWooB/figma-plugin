@@ -32,6 +32,11 @@ export const MESSAGE_TYPES = {
 
   // 새로고침 요청
   REQUEST_REFRESH: "request-refresh",  // UI → Plugin: 현재 선택 데이터 재전송
+
+  // Feedback fix-assist
+  APPLY_FIX_ITEM: "apply-fix-item",      // UI → Plugin: 단일 item fix 적용
+  APPLY_FIX_GROUP: "apply-fix-group",    // UI → Plugin: group 전체 fix 적용
+  APPLY_FIX_RESULT: "apply-fix-result",  // Plugin → UI: 적용 결과
 } as const;
 
 export interface OnSelectionChangeMessage {
@@ -110,6 +115,32 @@ export interface SelectNodeMessage {
   nodeId: string;
 }
 
+// Feedback fix-assist 단일 item (UI → Plugin)
+export interface ApplyFixItemMessage {
+  type: typeof MESSAGE_TYPES.APPLY_FIX_ITEM;
+  nodeId: string;
+  cssProperty: string;
+  expectedValue: string;
+}
+
+// Feedback fix-assist 그룹 (UI → Plugin)
+export interface ApplyFixGroupMessage {
+  type: typeof MESSAGE_TYPES.APPLY_FIX_GROUP;
+  nodeId: string;
+  fixes: Array<{
+    cssProperty: string;
+    expectedValue: string;
+  }>;
+}
+
+// Feedback fix-assist 결과 (Plugin → UI)
+export interface ApplyFixResultMessage {
+  type: typeof MESSAGE_TYPES.APPLY_FIX_RESULT;
+  success: boolean;
+  appliedCount: number;
+  skippedReasons: string[];
+}
+
 /**
  * UI로 전송되는 모든 메시지의 Union 타입
  */
@@ -124,4 +155,7 @@ export type PluginMessage =
   | ResizeUIMessage
   | ExtractDesignTokensMessage
   | DesignTokensResultMessage
-  | SelectNodeMessage;
+  | SelectNodeMessage
+  | ApplyFixItemMessage
+  | ApplyFixGroupMessage
+  | ApplyFixResultMessage;
