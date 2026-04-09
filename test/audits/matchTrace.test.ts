@@ -52,6 +52,7 @@ function formatTrace(
   lines.push("");
   lines.push("Signal              | Decision           | Cost  | Reason");
   lines.push("--------------------|--------------------|-------|----------------------------");
+  // getPositionCost는 호출당 정확히 1개 entry를 push하므로 마지막 entry만 사용.
   const last = log[log.length - 1];
   if (!last) {
     lines.push("(no signal log entries)");
@@ -64,7 +65,7 @@ function formatTrace(
         : "score" in sr.result && typeof sr.result.score === "number"
           ? `s=${sr.result.score.toFixed(2)}`
           : "-";
-    const reason = (sr.result as any).reason ?? "";
+    const reason = sr.result.reason ?? "";
     lines.push(
       `${sr.signalName.padEnd(20)}| ${sr.result.kind.padEnd(19)}| ${String(cost).padEnd(6)}| ${reason}`
     );
@@ -123,12 +124,16 @@ describe("matchTrace", () => {
       expect(internalA, `node A not found: ${nodeIdA}`).toBeTruthy();
       expect(internalB, `node B not found: ${nodeIdB}`).toBeTruthy();
 
-      const log: SignalLogEntry[] = [];
-      (globalThis as any).__MATCH_REASON_LOG__ = log;
+      // 병합 후 두 ID가 같은 InternalNode로 수렴할 수 있음 (e.g. Wrapper↔Interaction).
+      // 이 경우 (node, node) 쌍에 대해 IdMatch가 즉시 accept → trace가 예상과 다르게
+      // 보일 수 있지만, 이는 post-merge 상태를 보여주는 의도된 동작.
 
+      const log: SignalLogEntry[] = [];
+      const layoutNormalizer = new LayoutNormalizer(dm);
+      const matcher = new NodeMatcher(dm, nodeToVariantRoot, layoutNormalizer);
+
+      (globalThis as any).__MATCH_REASON_LOG__ = log;
       try {
-        const layoutNormalizer = new LayoutNormalizer(dm);
-        const matcher = new NodeMatcher(dm, nodeToVariantRoot, layoutNormalizer);
         matcher.getPositionCost(internalA!, internalB!);
       } finally {
         delete (globalThis as any).__MATCH_REASON_LOG__;
@@ -141,6 +146,6 @@ describe("matchTrace", () => {
       // trace가 최소 1건 수집되었는지 확인
       expect(log.length).toBeGreaterThan(0);
     },
-    60_000
+    30_000
   );
 });
