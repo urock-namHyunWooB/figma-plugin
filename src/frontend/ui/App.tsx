@@ -471,6 +471,23 @@ function App() {
     }
   }, [activeTab, Component, isLoading, error, propValues, updateAutoScale]);
 
+  // Fix-assist 결과 수신: 성공 시 selection-change가 곧 재컴파일을 트리거하므로
+  // 별도 갱신 불필요. 실패만 콘솔 경고.
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      const msg = event.data.pluginMessage;
+      if (msg?.type === "apply-fix-result") {
+        if (msg.success) {
+          console.log(`Fix 적용됨 (${msg.appliedCount}건). ⌘Z로 되돌리기 가능.`);
+        } else {
+          console.warn("Fix 실패:", msg.skippedReasons);
+        }
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
   const handlePropChange = (name: string, value: any) => {
     setPropValues((prev) => ({ ...prev, [name]: value }));
   };
@@ -650,12 +667,47 @@ function App() {
                 );
               }}
               onApplyFixItem={(itemId) => {
-                // Phase D에서 구현
-                console.log("apply fix item:", itemId);
+                for (const group of feedbackGroups) {
+                  const item = group.items.find((it) => it.id === itemId);
+                  if (item && item.canAutoFix && item.expectedValue !== null) {
+                    parent.postMessage(
+                      {
+                        pluginMessage: {
+                          type: "apply-fix-item",
+                          nodeId: item.nodeId,
+                          cssProperty: item.cssProperty,
+                          expectedValue: item.expectedValue,
+                        },
+                      },
+                      "*"
+                    );
+                    return;
+                  }
+                }
               }}
               onApplyFixGroup={(groupId) => {
-                // Phase D에서 구현
-                console.log("apply fix group:", groupId);
+                const group = feedbackGroups.find((g) => g.id === groupId);
+                if (!group) return;
+
+                const fixes = group.items
+                  .filter((it) => it.canAutoFix && it.expectedValue !== null)
+                  .map((it) => ({
+                    cssProperty: it.cssProperty,
+                    expectedValue: it.expectedValue!,
+                  }));
+
+                if (fixes.length === 0) return;
+
+                parent.postMessage(
+                  {
+                    pluginMessage: {
+                      type: "apply-fix-group",
+                      nodeId: group.sharedContext.nodeId,
+                      fixes,
+                    },
+                  },
+                  "*"
+                );
               }}
             />
           </div>
