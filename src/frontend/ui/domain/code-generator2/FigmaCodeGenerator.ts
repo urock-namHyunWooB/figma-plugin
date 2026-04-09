@@ -47,7 +47,7 @@ import type {
   GeneratedResult,
   BundledResult,
 } from "./layers/code-emitter/ICodeEmitter";
-import type { VariantInconsistency, PropertyBindingFeedback } from "./types/types";
+import type { VariantInconsistency } from "./types/types";
 import { ReactEmitter, renameNativeProps } from "./layers/code-emitter/react/ReactEmitter";
 import { SemanticIRBuilder } from "./layers/code-emitter/SemanticIRBuilder";
 import type { SemanticComponent } from "./layers/code-emitter/SemanticIR";
@@ -57,15 +57,13 @@ import type { FeedbackGroup } from "./feedback/types";
 import { FeedbackBuilder } from "./feedback/FeedbackBuilder";
 
 export type { GeneratedResult, BundledResult } from "./layers/code-emitter/ICodeEmitter";
-export type { VariantInconsistency, PropertyBindingFeedback } from "./types/types";
+export type { VariantInconsistency } from "./types/types";
 export type { FeedbackGroup, FeedbackItem } from "./feedback/types";
 
 /** compile() 반환 타입: 코드 + 진단 */
 export interface CompileResult {
   code: string | null;
   diagnostics: VariantInconsistency[];
-  /** Component Property 바인딩 누락 피드백 */
-  designFeedback: PropertyBindingFeedback[];
   /** 그룹핑된 variant style 피드백 (UI 소비용) */
   feedbackGroups: FeedbackGroup[];
 }
@@ -160,119 +158,15 @@ class FigmaCodeGenerator {
         depIRs.set(id, SemanticIRBuilder.build(renameNativeProps(dep)));
       }
       const result = await this.codeEmitter.emitBundled(mainIR, depIRs);
-      const designFeedback = this.detectPropertyBindingGaps();
-      // 바인딩 누락을 VariantInconsistency 형태로 변환하여 기존 warning UI에 표시
-      diagnostics.push(...this.bindingFeedbackToDiagnostics(designFeedback));
 
       const componentSetName = main.root.name ?? "Component";
       const feedbackGroups = FeedbackBuilder.build(diagnostics, componentSetName);
 
-      return { code: result.code, diagnostics, designFeedback, feedbackGroups };
+      return { code: result.code, diagnostics, feedbackGroups };
     } catch (e) {
       console.error("Compile error:", e);
-      return { code: null, diagnostics: [], designFeedback: [], feedbackGroups: [] };
+      return { code: null, diagnostics: [], feedbackGroups: [] };
     }
-  }
-
-  /**
-   * Component Property 바인딩 누락 감지.
-   * 일부 variant에만 바인딩이 있고 나머지에 없으면 피드백 생성.
-   */
-  private detectPropertyBindingGaps(): PropertyBindingFeedback[] {
-    const propDefs = this.dataManager.getComponentPropertyDefinitions();
-    if (!propDefs) return [];
-
-    const doc = this.dataManager.getDocument() as any;
-    if (!doc?.children) return [];
-
-    const feedback: PropertyBindingFeedback[] = [];
-
-    for (const [propKey, propDef] of Object.entries(propDefs)) {
-      const def = propDef as any;
-      if (def.type === "VARIANT") continue;
-
-      const refField = def.type === "BOOLEAN" ? "visible"
-        : def.type === "TEXT" ? "characters"
-        : null;
-      if (!refField) continue;
-
-      const bound: string[] = [];
-      const unbound: string[] = [];
-
-      for (const variant of doc.children) {
-        const variantName = variant.name || "";
-        const hasBinding = this.findBindingInTree(variant, refField, propKey);
-        if (hasBinding) bound.push(variantName);
-        else unbound.push(variantName);
-      }
-
-      // 일부만 바인딩 → 피드백
-      if (bound.length > 0 && unbound.length > 0) {
-        feedback.push({
-          propertyName: propKey,
-          propertyType: def.type,
-          boundVariants: bound,
-          unboundVariants: unbound,
-        });
-      }
-    }
-
-    return feedback;
-  }
-
-  private findBindingInTree(node: any, refField: string, propKey: string): boolean {
-    if (node.componentPropertyReferences?.[refField] === propKey) return true;
-    if (node.children) {
-      for (const child of node.children) {
-        if (this.findBindingInTree(child, refField, propKey)) return true;
-      }
-    }
-    return false;
-  }
-
-
-  /**
-   * PropertyBindingFeedback → VariantInconsistency 변환.
-   * 기존 PropsMatrix warning UI에서 동일하게 표시되도록.
-   */
-  private bindingFeedbackToDiagnostics(
-    feedbacks: PropertyBindingFeedback[]
-  ): VariantInconsistency[] {
-    return feedbacks.map((fb) => {
-      const displayName = fb.propertyName.replace(/#.*$/, "").trim();
-
-      const parsePropPairs = (name: string): Record<string, string> => {
-        const result: Record<string, string> = {};
-        for (const pair of name.split(",")) {
-          const [k, v] = pair.trim().split("=");
-          if (k && v) result[k.trim()] = v.trim();
-        }
-        return result;
-      };
-
-      // 누락된 variant 이름에서 공통 조건 추출 (예: "size=small" variant 전체)
-      const unboundProps = fb.unboundVariants.map(parsePropPairs);
-      const commonConditions: string[] = [];
-      if (unboundProps.length > 0) {
-        for (const [key, val] of Object.entries(unboundProps[0])) {
-          if (unboundProps.every((p) => p[key] === val)) {
-            commonConditions.push(`${key}=${val}`);
-          }
-        }
-      }
-      const where = commonConditions.length > 0
-        ? commonConditions.join(", ") + " variant"
-        : `${fb.unboundVariants.length}개 variant`;
-
-      return {
-        cssProperty: `${where}에서 "${displayName}" 토글이 빠져있어요. 해당 레이어에 Component Property를 연결해주세요.`,
-        propName: "",
-        propValue: "",
-        nodeName: displayName,
-        variants: [],
-        expectedValue: null,
-      };
-    });
   }
 
   /**

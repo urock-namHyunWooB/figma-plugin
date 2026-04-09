@@ -61,18 +61,6 @@ export type PseudoClass =
   | ":visited"
   | "::placeholder";
 
-/** Component Property 바인딩 누락 피드백 */
-export interface PropertyBindingFeedback {
-  /** 누락된 property 이름 (예: "icon left#482:0") */
-  propertyName: string;
-  /** property 타입 */
-  propertyType: "BOOLEAN" | "TEXT" | "INSTANCE_SWAP";
-  /** 바인딩이 있는 variant 이름 목록 */
-  boundVariants: string[];
-  /** 바인딩이 없는 variant 이름 목록 */
-  unboundVariants: string[];
-}
-
 /** variant 불일치 진단 정보 */
 export interface VariantInconsistency {
   cssProperty: string;
