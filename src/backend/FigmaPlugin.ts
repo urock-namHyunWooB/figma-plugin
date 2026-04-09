@@ -18,6 +18,39 @@ export class FigmaPlugin {
     // UI 표시
     figma.showUI(__html__, { width: 500, height: 1000 });
 
+    // 진단: dynamic-page 모드에서 documentchange / stylechange를 받으려면
+    // 반드시 loadAllPagesAsync를 먼저 호출해야 함 (Figma 공식 docs).
+    console.log("[init] currentPage before load:", figma.currentPage?.id, figma.currentPage?.name);
+    try {
+      await figma.loadAllPagesAsync();
+      console.log("[init] loadAllPagesAsync done");
+    } catch (e) {
+      console.log("[init] loadAllPagesAsync FAILED:", e);
+    }
+
+    // 진단: 3개 채널 모두 listen해서 어느 것이 발동하는지 확인
+    try {
+      figma.on("documentchange", (event) => {
+        const summary = event.documentChanges.slice(0, 5).map((c: any) => ({
+          type: c.type,
+          id: c.id,
+          props: c.properties,
+        }));
+        console.log("[diag-documentchange] fired, currentPage:", figma.currentPage?.id, "changes:", JSON.stringify(summary));
+      });
+      console.log("[init] documentchange listener attached");
+    } catch (e) {
+      console.log("[init] documentchange attach FAILED:", e);
+    }
+    try {
+      figma.on("stylechange", (event: any) => {
+        console.log("[diag-stylechange] fired, currentPage:", figma.currentPage?.id, "changes:", JSON.stringify(event?.styleChanges?.slice?.(0, 5)));
+      });
+      console.log("[init] stylechange listener attached");
+    } catch (e) {
+      console.log("[init] stylechange attach FAILED:", e);
+    }
+
     // 추출 파이프라인 생성: 캐시 + 디바운스 + 단일 walk 병렬 추출
     // 주의: onLoading은 async dispatcher 안에서 post되면 Figma가 task 끝까지
     // 메시지를 버퍼링해서 UI가 너무 늦게 받음. 대신 selectionchange / onmessage
