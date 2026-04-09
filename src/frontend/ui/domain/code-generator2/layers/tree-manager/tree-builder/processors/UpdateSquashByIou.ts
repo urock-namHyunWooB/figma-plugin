@@ -485,7 +485,7 @@ export class UpdateSquashByIou {
         ...(node.componentPropertyReferences
           ? { componentPropertyReferences: { ...node.componentPropertyReferences } }
           : {}),
-        ...(node.componentId ? { componentId: node.componentId } : {}),
+        ...((node as any).componentId ? { componentId: (node as any).componentId } : {}),
       };
 
       clonedNode.children = node.children.map((child) =>

@@ -138,7 +138,7 @@ export function useCompilerDebug(
       const start = performance.now();
       try {
         const compiler = new FigmaCodeGenerator(spec!, compilerOptions);
-        const code = await compiler.getGeneratedCode();
+        const code = await compiler.compile();
         if (!code) throw new Error("코드 생성 실패");
 
         const Component = await renderReactComponent(code);

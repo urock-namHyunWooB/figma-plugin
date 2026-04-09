@@ -133,7 +133,7 @@ export function DeployButton({ componentName, generatedCode, figmaNodeId }: Depl
         </span>
       )}
 
-      {isBusy && (
+      {isBusy && "message" in status && (
         <span css={statusStyle} style={{ color: statusColor }}>
           {status.message}
         </span>
