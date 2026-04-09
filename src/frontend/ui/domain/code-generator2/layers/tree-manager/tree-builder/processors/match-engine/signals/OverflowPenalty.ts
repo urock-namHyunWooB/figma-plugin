@@ -21,13 +21,13 @@ export class OverflowPenalty implements MatchSignal {
 
   evaluate(a: InternalNode, b: InternalNode, ctx: MatchContext): SignalResult {
     if (!CONTAINER_TYPES.has(a.type) || !CONTAINER_TYPES.has(b.type)) {
-      return { kind: "score", score: 1, reason: "non-container pair passthrough" };
+      return { kind: "neutral", reason: "non-container pair passthrough" };
     }
 
     const rootA = this.getVariantRootBounds(a, ctx);
     const rootB = this.getVariantRootBounds(b, ctx);
     if (!rootA || !rootB) {
-      return { kind: "score", score: 1, reason: "missing variant root bounds" };
+      return { kind: "neutral", reason: "missing variant root bounds" };
     }
 
     const maxW = Math.max(rootA.width, rootB.width);
@@ -35,24 +35,25 @@ export class OverflowPenalty implements MatchSignal {
     const maxH = Math.max(rootA.height, rootB.height);
     const minH = Math.min(rootA.height, rootB.height);
     if (minW <= 0 || minH <= 0) {
-      return { kind: "score", score: 1, reason: "zero variant root" };
+      return { kind: "neutral", reason: "zero variant root" };
     }
     const rootSimilar =
       maxW / minW <= ctx.policy.variantRootSimilarityRatio &&
       maxH / minH <= ctx.policy.variantRootSimilarityRatio;
     if (!rootSimilar) {
-      return { kind: "score", score: 1, reason: "variant roots too different" };
+      return { kind: "neutral", reason: "variant roots too different" };
     }
 
     const overflowA = this.isOverflow(a, ctx);
     const overflowB = this.isOverflow(b, ctx);
     if (overflowA === overflowB) {
-      return { kind: "score", score: 1, reason: "same overflow state" };
+      return { kind: "neutral", reason: "same overflow state" };
     }
 
+    // overflow mismatch → 추가 cost (legacy +0.5)
     return {
-      kind: "score",
-      score: 1 - ctx.policy.overflowMismatchPenalty,
+      kind: "match-with-cost",
+      cost: ctx.policy.overflowMismatchPenalty,
       reason: `overflow mismatch: a=${overflowA} b=${overflowB}`,
     };
   }

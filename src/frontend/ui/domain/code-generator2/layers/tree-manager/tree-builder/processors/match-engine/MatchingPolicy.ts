@@ -42,11 +42,12 @@ export const defaultMatchingPolicy: MatchingPolicy = {
   overflowMismatchPenalty: 0.5,
   textSpecialMatchCost: 0.05,
   instanceSpecialMatchCost: 0.05,
-  // Phase 2b: 엔진 dual-form에서 NormalizedPosition이 cost 최대 1 기여 (score 0 at threshold),
-  // OverflowPenalty가 0.5 추가 기여 → 최대 합산 cost ~1.5. Legacy의 posCost 0.1 threshold와는
-  // 의미가 다르다 (legacy raw posCost, engine weighted sum). Hungarian은 상대 순서만 쓰므로
-  // 여유있게 설정: non-applicable 신호들은 score 1 neutral을 반환 (cost 0 기여).
-  matchCostThreshold: 1.5,
+  // Phase 2 cost form 재설계: 신호들이 legacy raw posCost와 호환되는 cost를 반환.
+  // 최대 cost: NormalizedPosition 0.1 + OverflowPenalty 0.5 = 0.6
+  // (TextSpecial/InstanceSpecial 0.05는 NormalizedPosition과 동시 발생 안 함 - decisive 또는 별 path)
+  // matchCostThreshold = 0.6으로 잡으면 legacy `getPositionCost <= 0.6` 동등.
+  // Hungarian은 상대 순서 + threshold 위반시 Infinity만 보므로 0.6이 안전.
+  matchCostThreshold: 0.6,
   signalWeights: {
     TypeCompatibility: 1,
     IdMatch: 1,

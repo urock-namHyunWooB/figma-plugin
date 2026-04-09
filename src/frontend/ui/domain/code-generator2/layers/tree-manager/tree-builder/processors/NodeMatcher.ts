@@ -139,28 +139,35 @@ export class NodeMatcher {
   }
 
   /**
-   * Pass 2용: 위치 기반 매칭 비용 반환 (Phase 2: legacy 유지)
+   * Pass 2용: 위치 기반 매칭 비용 반환 (Phase 2: 엔진 위임)
    * 매칭 불가하면 Infinity 반환
    *
-   * Phase 2b 엔진 위임 시도 결과: 14+ fixture에 실제 regression. Dual-form cost
-   * 계산이 legacy raw posCost와 의미가 달라서 Hungarian matching의 선호 pair가
-   * 달라짐. 엔진은 인프라로만 유지하고 getPositionCost migration은 Phase 3에
-   * cost form을 재설계해서 재도전. 신호 카탈로그는 엔진에 이미 전부 등록돼 있음.
+   * Phase 2 cost form 재설계로 엔진의 totalCost가 legacy raw posCost와
+   * 호환되는 형태가 됨. NormalizedPosition signal은 raw posCost를 그대로
+   * match-with-cost로 반환, OverflowPenalty는 +0.5 추가, TextSpecial/InstanceSpecial은
+   * 0.05 — 모두 legacy `getPositionCost` 숫자와 동일.
    */
   public getPositionCost(nodeA: InternalNode, nodeB: InternalNode): number {
-    const cost = this.getPositionCostLegacy(nodeA, nodeB);
+    const ctx: MatchContext = {
+      dataManager: this.dataManager,
+      layoutNormalizer: this.layoutNormalizer,
+      nodeToVariantRoot: this.nodeToVariantRoot,
+      policy: defaultMatchingPolicy,
+    };
+    const decision = this.engine.decide(nodeA, nodeB, ctx);
 
     const log = (globalThis as any).__MATCH_REASON_LOG__ as Array<unknown> | undefined;
     if (log) {
       log.push({
         pair: [nodeA.id, nodeB.id],
-        decision: cost < Infinity ? "match-or-cost" : "veto",
-        totalCost: cost,
-        source: "legacy-getPositionCost",
+        decision: decision.decision,
+        totalCost: decision.totalCost,
+        signalResults: decision.signalResults,
+        source: "engine-getPositionCost",
       });
     }
 
-    return cost;
+    return decision.totalCost;
   }
 
   /** 기존 getPositionCost 로직 (Phase 1c: reason log hook을 위해 분리) */

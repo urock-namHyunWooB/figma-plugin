@@ -36,32 +36,29 @@ function makeCtx(overflowA: boolean, overflowB: boolean, rootSimilar = true) {
   } as any;
 }
 
-describe("OverflowPenalty signal", () => {
+describe("OverflowPenalty signal (Phase 2 cost form)", () => {
   const signal = new OverflowPenalty();
 
-  it("returns score 1 when both nodes are normal (no overflow)", () => {
+  it("returns neutral when both nodes are normal (no overflow)", () => {
     const r = signal.evaluate(containerNode("a"), containerNode("b"), makeCtx(false, false));
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(1);
+    expect(r.kind).toBe("neutral");
   });
 
-  it("returns score 1 when both nodes are overflow", () => {
+  it("returns neutral when both nodes are overflow", () => {
     const r = signal.evaluate(containerNode("a"), containerNode("b"), makeCtx(true, true));
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(1);
+    expect(r.kind).toBe("neutral");
   });
 
-  it("returns penalized score when one is overflow and other is normal", () => {
+  it("returns match-with-cost 0.5 when one is overflow and other is normal", () => {
     const r = signal.evaluate(containerNode("a"), containerNode("b"), makeCtx(true, false));
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(0.5);
+    expect(r.kind).toBe("match-with-cost");
+    if (r.kind === "match-with-cost") expect(r.cost).toBe(0.5);
   });
 
-  it("returns score 1 for non-container pair (passthrough)", () => {
+  it("returns neutral for non-container pair (passthrough)", () => {
     const a = { id: "a", name: "a", type: "TEXT", children: [] } as any;
     const b = { id: "b", name: "b", type: "TEXT", children: [] } as any;
     const r = signal.evaluate(a, b, makeCtx(true, false));
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(1);
+    expect(r.kind).toBe("neutral");
   });
 });

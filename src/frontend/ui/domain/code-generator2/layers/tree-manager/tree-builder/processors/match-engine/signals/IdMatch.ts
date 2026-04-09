@@ -18,6 +18,6 @@ export class IdMatch implements MatchSignal {
     if (a.id === b.id) {
       return { kind: "decisive-match", reason: `id match: ${a.id}` };
     }
-    return { kind: "score", score: 1, reason: `id diff neutral: ${a.id} ≠ ${b.id}` };
+    return { kind: "neutral", reason: `id diff: ${a.id} ≠ ${b.id}` };
   }
 }

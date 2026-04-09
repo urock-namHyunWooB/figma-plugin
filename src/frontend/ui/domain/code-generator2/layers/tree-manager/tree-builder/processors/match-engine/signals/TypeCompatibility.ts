@@ -25,13 +25,13 @@ export class TypeCompatibility implements MatchSignal {
 
   evaluate(a: InternalNode, b: InternalNode, _ctx: MatchContext): SignalResult {
     if (a.type === b.type) {
-      return { kind: "score", score: 1, reason: `same type: ${a.type}` };
+      return { kind: "neutral", reason: `same type: ${a.type}` };
     }
     if (SHAPE_TYPES.has(a.type) && SHAPE_TYPES.has(b.type)) {
-      return { kind: "score", score: 1, reason: `shape group: ${a.type}↔${b.type}` };
+      return { kind: "neutral", reason: `shape group: ${a.type}↔${b.type}` };
     }
     if (CONTAINER_TYPES.has(a.type) && CONTAINER_TYPES.has(b.type)) {
-      return { kind: "score", score: 1, reason: `container group: ${a.type}↔${b.type}` };
+      return { kind: "neutral", reason: `container group: ${a.type}↔${b.type}` };
     }
     return { kind: "veto", reason: `incompatible types: ${a.type}↔${b.type}` };
   }

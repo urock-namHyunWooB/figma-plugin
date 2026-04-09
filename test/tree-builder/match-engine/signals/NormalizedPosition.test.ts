@@ -16,9 +16,17 @@ function node(id: string): InternalNode {
 function makeCtx(positionCost: number) {
   return {
     dataManager: {
-      getById: vi.fn().mockReturnValue({
-        node: { id: "orig", absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } },
-      }),
+      getById: vi.fn((id: string) => ({
+        node: id === "root"
+          ? {
+              children: [
+                { id: "x", absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } },
+                { id: "y", absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } },
+              ],
+              absoluteBoundingBox: { x: 0, y: 0, width: 100, height: 100 },
+            }
+          : { id, absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } },
+      })),
     },
     layoutNormalizer: {
       normalize: vi.fn().mockReturnValue({ cx: 0.5, cy: 0.5, relWidth: 0.5, relHeight: 0.5 }),
@@ -30,78 +38,52 @@ function makeCtx(positionCost: number) {
   } as any;
 }
 
-describe("NormalizedPosition signal", () => {
+describe("NormalizedPosition signal (Phase 2 inline overflow + size)", () => {
   const signal = new NormalizedPosition();
 
-  it("returns score 1 when cost is 0", () => {
-    // parent 필요 — 루트 단락 금지하기 위해 parent 추가
+  it("returns decisive-match-with-cost 0 when raw posCost is 0", () => {
     const a = { ...node("x"), parent: {} } as any;
     const b = { ...node("y"), parent: {} } as any;
-    const ctx = makeCtx(0);
-    // findDirectParent가 부모를 찾도록 mock 보강
-    ctx.dataManager.getById = vi.fn((id: string) => ({
-      node: id === "root"
-        ? { children: [{ id: "x", absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } }, { id: "y", absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } }] }
-        : { id, absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } },
-    }));
-    const r = signal.evaluate(a, b, ctx);
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(1);
+    const r = signal.evaluate(a, b, makeCtx(0));
+    expect(r.kind).toBe("decisive-match-with-cost");
+    if (r.kind === "decisive-match-with-cost") expect(r.cost).toBe(0);
   });
 
-  it("returns score ~0.5 when cost is half of threshold", () => {
+  it("returns decisive-match-with-cost equal to raw posCost (0.05)", () => {
     const a = { ...node("x"), parent: {} } as any;
     const b = { ...node("y"), parent: {} } as any;
-    const ctx = makeCtx(0.05);
-    ctx.dataManager.getById = vi.fn((id: string) => ({
-      node: id === "root"
-        ? { children: [{ id: "x", absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } }, { id: "y", absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } }] }
-        : { id, absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } },
-    }));
-    const r = signal.evaluate(a, b, ctx);
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBeCloseTo(0.5, 2);
+    const r = signal.evaluate(a, b, makeCtx(0.05));
+    expect(r.kind).toBe("decisive-match-with-cost");
+    if (r.kind === "decisive-match-with-cost") expect(r.cost).toBeCloseTo(0.05, 5);
   });
 
-  it("returns score 0 when cost equals threshold", () => {
+  it("returns decisive-match-with-cost 0.1 at threshold boundary", () => {
     const a = { ...node("x"), parent: {} } as any;
     const b = { ...node("y"), parent: {} } as any;
-    const ctx = makeCtx(0.1);
-    ctx.dataManager.getById = vi.fn((id: string) => ({
-      node: id === "root"
-        ? { children: [{ id: "x", absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } }, { id: "y", absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } }] }
-        : { id, absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } },
-    }));
-    const r = signal.evaluate(a, b, ctx);
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(0);
+    const r = signal.evaluate(a, b, makeCtx(0.1));
+    expect(r.kind).toBe("decisive-match-with-cost");
+    if (r.kind === "decisive-match-with-cost") expect(r.cost).toBeCloseTo(0.1, 5);
   });
 
-  it("returns veto when cost exceeds threshold", () => {
+  it("returns neutral (fallback) when cost exceeds threshold", () => {
     const a = { ...node("x"), parent: {} } as any;
     const b = { ...node("y"), parent: {} } as any;
-    const ctx = makeCtx(0.2);
-    ctx.dataManager.getById = vi.fn((id: string) => ({
-      node: id === "root"
-        ? { children: [{ id: "x", absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } }, { id: "y", absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } }] }
-        : { id, absoluteBoundingBox: { x: 0, y: 0, width: 10, height: 10 } },
-    }));
-    const r = signal.evaluate(a, b, ctx);
-    expect(r.kind).toBe("veto");
+    const r = signal.evaluate(a, b, makeCtx(0.2));
+    expect(r.kind).toBe("neutral");
   });
 
-  it("returns veto when mergedNodes missing", () => {
+  it("returns neutral when mergedNodes missing", () => {
     const a = { id: "a", name: "a", type: "FRAME", children: [], parent: {} } as unknown as InternalNode;
     const b = { id: "b", name: "b", type: "FRAME", children: [], parent: {} } as unknown as InternalNode;
     const r = signal.evaluate(a, b, makeCtx(0));
-    expect(r.kind).toBe("veto");
+    expect(r.kind).toBe("neutral");
   });
 
-  it("returns score 1 when both nodes are roots (no parent)", () => {
+  it("returns decisive-match-with-cost 0 for root-root pair", () => {
     const a = node("x"); // no parent
     const b = node("y");
     const r = signal.evaluate(a, b, makeCtx(0));
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(1);
+    expect(r.kind).toBe("decisive-match-with-cost");
+    if (r.kind === "decisive-match-with-cost") expect(r.cost).toBe(0);
   });
 });

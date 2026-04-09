@@ -26,7 +26,7 @@ export class RelativeSize implements MatchSignal {
   evaluate(a: InternalNode, b: InternalNode, ctx: MatchContext): SignalResult {
     // 같은 container type 내 매칭(FRAME↔FRAME, GROUP↔GROUP)은 크기 체크 제외
     if (a.type === b.type && CONTAINER_TYPES.has(a.type)) {
-      return { kind: "score", score: 1, reason: `same-type ${a.type} passthrough` };
+      return { kind: "neutral", reason: `same-type ${a.type} passthrough` };
     }
 
     // 같은 shape type은 체크 (기존 isSimilarSize 동심원 방지 로직)
@@ -38,7 +38,7 @@ export class RelativeSize implements MatchSignal {
     const bothShapes = SHAPE_TYPES.has(a.type) && SHAPE_TYPES.has(b.type);
     const bothContainers = CONTAINER_TYPES.has(a.type) && CONTAINER_TYPES.has(b.type);
     if (!bothShapes && !bothContainers) {
-      return { kind: "score", score: 1, reason: `non-shape/container cross passthrough` };
+      return { kind: "neutral", reason: `non-shape/container cross passthrough` };
     }
     return this.checkRatio(a, b, ctx);
   }
@@ -47,19 +47,19 @@ export class RelativeSize implements MatchSignal {
     const mergedA = a.mergedNodes?.[0];
     const mergedB = b.mergedNodes?.[0];
     if (!mergedA || !mergedB) {
-      return { kind: "score", score: 1, reason: "missing mergedNodes, defensive passthrough" };
+      return { kind: "neutral", reason: "missing mergedNodes, defensive passthrough" };
     }
     const origA = ctx.dataManager.getById(mergedA.id)?.node as any;
     const origB = ctx.dataManager.getById(mergedB.id)?.node as any;
     const boxA = origA?.absoluteBoundingBox;
     const boxB = origB?.absoluteBoundingBox;
     if (!boxA || !boxB) {
-      return { kind: "score", score: 1, reason: "missing bounding box, defensive passthrough" };
+      return { kind: "neutral", reason: "missing bounding box, defensive passthrough" };
     }
     const minW = Math.min(boxA.width, boxB.width);
     const minH = Math.min(boxA.height, boxB.height);
     if (minW <= 0 || minH <= 0) {
-      return { kind: "score", score: 1, reason: "zero dimension, defensive passthrough" };
+      return { kind: "neutral", reason: "zero dimension, defensive passthrough" };
     }
     const wRatio = Math.max(boxA.width, boxB.width) / minW;
     const hRatio = Math.max(boxA.height, boxB.height) / minH;
@@ -71,8 +71,7 @@ export class RelativeSize implements MatchSignal {
       };
     }
     return {
-      kind: "score",
-      score: 1,
+      kind: "neutral",
       reason: `size ratio ${maxRatio.toFixed(2)} ≤ ${ctx.policy.relativeSizeMaxRatio}`,
     };
   }

@@ -16,18 +16,26 @@ export interface MatchContext {
 /**
  * 한 신호의 평가 결과.
  *
- * discriminated union:
- * - kind="veto": 결정적 거부. 엔진은 즉시 match 불가로 결정.
- * - kind="score": 0~1 사이 점수. 1=완벽 일치, 0=전혀 맞지 않음.
- * - kind="decisive-match": 결정적 수용. 엔진은 즉시 match로 결정 (다른 veto 무시).
- *   VariantPropPosition처럼 "위치는 다르지만 같은 노드임이 명백한" 케이스에 사용.
+ * discriminated union (Phase 2 cost form 재설계):
+ * - kind="veto": 결정적 거부. 엔진은 즉시 match 불가, totalCost=Infinity.
+ * - kind="decisive-match": 결정적 수용. 엔진은 즉시 match, totalCost=0.
+ *   다른 신호의 veto도 override한다.
+ * - kind="decisive-match-with-cost": 결정적 수용 + 명시적 cost. 엔진은 즉시 match,
+ *   totalCost=cost. 이후 신호는 평가하지 않는다 (mutually-exclusive 신호용 — TextSpecial/InstanceSpecial).
+ * - kind="match-with-cost": 매치이지만 cost 기여 (legacy raw posCost와 동일 형태).
+ *   이 cost가 엔진 totalCost에 누적된다 (NormalizedPosition + OverflowPenalty 처럼 additive).
+ * - kind="neutral": 이 신호는 적용 불가, totalCost에 0 기여.
+ * - kind="score": 0~1 사이 점수. 보조 신호 (booster)에 사용. weight × (1-score)가 cost 기여.
  *
- * reason은 사람이 읽는 디버그 문자열 — reason log에 누적되어 결정 근거를 재구성할 수 있게 한다.
+ * reason은 사람이 읽는 디버그 문자열 — reason log에 누적되어 결정 근거를 재구성한다.
  */
 export type SignalResult =
   | { kind: "veto"; reason: string }
-  | { kind: "score"; score: number; reason: string }
-  | { kind: "decisive-match"; reason: string };
+  | { kind: "decisive-match"; reason: string }
+  | { kind: "decisive-match-with-cost"; cost: number; reason: string }
+  | { kind: "match-with-cost"; cost: number; reason: string }
+  | { kind: "neutral"; reason: string }
+  | { kind: "score"; score: number; reason: string };
 
 /**
  * 매칭 신호 인터페이스.
