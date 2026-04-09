@@ -110,6 +110,13 @@ export type StyleObject = {
     style: Record<string, string | number>;
     /** compound-varying CSS의 조건부 pseudo (per-group pseudo-class 스타일) */
     pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
+    /**
+     * 이 dynamic entry가 어느 raw figma 노드에서 왔는지.
+     * fix-assist가 outlier variant의 정확한 노드를 수정하기 위해 사용.
+     * StyleProcessor.collectVariantStyles에서 채워짐. 이후 처리(decomposer 등)에서
+     * entry가 합쳐지거나 가공되면 손실될 수 있으므로 best-effort.
+     */
+    sourceVariantNodeId?: string;
   }>;
   pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
   mediaQueries?: Array<{

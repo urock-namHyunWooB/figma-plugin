@@ -581,10 +581,11 @@ export class StyleProcessor {
    */
   private collectVariantStyles(
     mergedNodes: VariantOrigin[]
-  ): Array<{ variantName: string; cssStyle: Record<string, string> }> {
+  ): Array<{ variantName: string; cssStyle: Record<string, string>; nodeId: string }> {
     const result: Array<{
       variantName: string;
       cssStyle: Record<string, string>;
+      nodeId: string;
     }> = [];
 
     for (const merged of mergedNodes) {
@@ -619,6 +620,7 @@ export class StyleProcessor {
         result.push({
           variantName: merged.variantName || merged.name,
           cssStyle,
+          nodeId: merged.id,
         });
       }
     }
@@ -802,13 +804,14 @@ export class StyleProcessor {
    * 조건부 스타일 추출 (base에 없는 스타일)
    */
   private extractDynamicStyles(
-    variantStyles: Array<{ variantName: string; cssStyle: Record<string, string> }>,
+    variantStyles: Array<{ variantName: string; cssStyle: Record<string, string>; nodeId?: string }>,
     base: Record<string, string | number>,
     includeStateInConditions: boolean = false
-  ): Array<{ condition: ConditionNode; style: Record<string, string | number> }> {
+  ): Array<{ condition: ConditionNode; style: Record<string, string | number>; sourceVariantNodeId?: string }> {
     const dynamic: Array<{
       condition: ConditionNode;
       style: Record<string, string | number>;
+      sourceVariantNodeId?: string;
     }> = [];
 
     for (const variant of variantStyles) {
@@ -820,7 +823,11 @@ export class StyleProcessor {
           includeStateInConditions
         );
         if (condition) {
-          dynamic.push({ condition, style: uniqueStyles });
+          dynamic.push({
+            condition,
+            style: uniqueStyles,
+            ...(variant.nodeId ? { sourceVariantNodeId: variant.nodeId } : {}),
+          });
         }
       }
     }

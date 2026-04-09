@@ -43,12 +43,16 @@ interface DynamicEntry {
   condition: ConditionNode;
   style: Record<string, string | number>;
   pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
+  /** fix-assist용 raw figma node id (optional, best-effort) */
+  sourceVariantNodeId?: string;
 }
 
 interface MatrixEntry {
   propValues: Map<string, string>;
   style: Record<string, string | number>;
   pseudo?: Partial<Record<PseudoClass, Record<string, string | number>>>;
+  /** fix-assist용 raw figma node id (optional, best-effort) */
+  sourceVariantNodeId?: string;
 }
 
 interface PropGroup {
@@ -425,6 +429,7 @@ export class DynamicStyleDecomposer {
             condition: entry.condition,
             style: { ...entry.style },
             ...(entry.pseudo && { pseudo: JSON.parse(JSON.stringify(entry.pseudo)) }),
+            ...(entry.sourceVariantNodeId && { sourceVariantNodeId: entry.sourceVariantNodeId }),
           });
         }
       }
@@ -438,6 +443,7 @@ export class DynamicStyleDecomposer {
       propValues: this.extractPropValueMap(entry.condition),
       style: entry.style,
       ...(entry.pseudo && { pseudo: entry.pseudo }),
+      ...(entry.sourceVariantNodeId && { sourceVariantNodeId: entry.sourceVariantNodeId }),
     }));
 
     // Step 2: 모든 prop 이름 수집 (순서 유지)
@@ -893,6 +899,7 @@ export class DynamicStyleDecomposer {
         variants.push({
           props,
           value: normalizeCssValue(String(entry.style[cssKey])),
+          ...(entry.sourceVariantNodeId ? { nodeId: entry.sourceVariantNodeId } : {}),
         });
       }
 
@@ -962,6 +969,7 @@ export class DynamicStyleDecomposer {
         variants.push({
           props,
           value: normalizeCssValue(String(entry.style[cssKey])),
+          ...(entry.sourceVariantNodeId ? { nodeId: entry.sourceVariantNodeId } : {}),
         });
       }
 
