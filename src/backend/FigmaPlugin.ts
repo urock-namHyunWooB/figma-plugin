@@ -138,7 +138,7 @@ export class FigmaPlugin {
     expectedValue: string;
   }): Promise<void> {
     try {
-      const node = figma.getNodeById(msg.nodeId);
+      const node = await figma.getNodeByIdAsync(msg.nodeId);
       if (!node) {
         figma.ui.postMessage({
           type: MESSAGE_TYPES.APPLY_FIX_RESULT,
@@ -179,7 +179,7 @@ export class FigmaPlugin {
     fixes: Array<{ cssProperty: string; expectedValue: string }>;
   }): Promise<void> {
     try {
-      const node = figma.getNodeById(msg.nodeId);
+      const node = await figma.getNodeByIdAsync(msg.nodeId);
       if (!node) {
         figma.ui.postMessage({
           type: MESSAGE_TYPES.APPLY_FIX_RESULT,
@@ -218,7 +218,7 @@ export class FigmaPlugin {
    */
   private async handleSelectNode(nodeId: string): Promise<void> {
     try {
-      const node = figma.getNodeById(nodeId);
+      const node = await figma.getNodeByIdAsync(nodeId);
       if (node && "type" in node && node.type !== "DOCUMENT" && node.type !== "PAGE") {
         figma.currentPage.selection = [node as SceneNode];
         figma.viewport.scrollAndZoomIntoView([node as SceneNode]);
