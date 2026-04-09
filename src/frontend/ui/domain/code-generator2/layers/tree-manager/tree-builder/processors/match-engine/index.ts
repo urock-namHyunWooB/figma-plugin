@@ -5,6 +5,7 @@ import { VariantPropPosition } from "./signals/VariantPropPosition";
 import { NormalizedPosition } from "./signals/NormalizedPosition";
 import { TextSpecialMatch } from "./signals/TextSpecialMatch";
 import { InstanceSpecialMatch } from "./signals/InstanceSpecialMatch";
+import { ParentShapeIdentity } from "./signals/ParentShapeIdentity";
 import { defaultMatchingPolicy, type MatchingPolicy } from "./MatchingPolicy";
 
 export { MatchDecisionEngine } from "./MatchDecisionEngine";
@@ -39,6 +40,7 @@ export function createDefaultEngine(
       new VariantPropPosition(),
       new TextSpecialMatch(),
       new InstanceSpecialMatch(),
+      new ParentShapeIdentity(),
     ],
     policy,
   );
