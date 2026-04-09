@@ -160,6 +160,9 @@ export class FigmaPlugin {
         appliedCount: result.success ? 1 : 0,
         skippedReasons: result.success ? [] : [result.reason ?? "unknown"],
       });
+
+      // 성공 시 현재 selection 강제 재추출 → UI 자동 갱신
+      if (result.success) this.refreshCurrentSelection();
     } catch (error) {
       console.error("Failed to apply fix:", error);
       figma.ui.postMessage({
@@ -198,6 +201,9 @@ export class FigmaPlugin {
         appliedCount,
         skippedReasons,
       });
+
+      // 1건 이상 성공 시 현재 selection 강제 재추출 → UI 자동 갱신
+      if (appliedCount > 0) this.refreshCurrentSelection();
     } catch (error) {
       console.error("Failed to apply fix group:", error);
       figma.ui.postMessage({
@@ -211,6 +217,17 @@ export class FigmaPlugin {
 
   private async handleCancel(): Promise<void> {
     figma.closePlugin();
+  }
+
+  /**
+   * Fix 적용 후 현재 selection을 강제 재추출 (캐시 우회).
+   * selectionchange가 트리거되지 않으므로 수동으로 동일한 경로를 호출.
+   */
+  private refreshCurrentSelection(): void {
+    const selection = figma.currentPage.selection;
+    if (selection.length === 0) return;
+    figma.ui.postMessage({ type: MESSAGE_TYPES.EXTRACTION_LOADING });
+    this.pipeline.fireImmediate(selection[0], true);
   }
 
   /**
