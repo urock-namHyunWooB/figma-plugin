@@ -32,38 +32,34 @@ function makeCtx(
   } as any;
 }
 
-describe("RelativeSize signal (Phase 1b — ratio 2.0)", () => {
+describe("RelativeSize signal (Phase 2 cost form)", () => {
   const signal = new RelativeSize();
 
-  it("returns score 1 for non-shape/container pair (passthrough)", () => {
+  it("returns neutral for non-shape/container pair (passthrough)", () => {
     const r = signal.evaluate(
       node("TEXT", "a"),
       node("TEXT", "b"),
       makeCtx({ width: 10, height: 10 }, { width: 100, height: 100 }),
     );
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(1);
+    expect(r.kind).toBe("neutral");
   });
 
-  it("returns score 1 for shape pair with same size", () => {
+  it("returns neutral for shape pair with same size", () => {
     const r = signal.evaluate(
       node("RECTANGLE", "a"),
       node("VECTOR", "b"),
       makeCtx({ width: 20, height: 20 }, { width: 20, height: 20 }),
     );
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(1);
+    expect(r.kind).toBe("neutral");
   });
 
-  it("returns score 1 for shape pair within ratio 2.0 (Phase 1b relaxed)", () => {
-    // 1.5 ratio — would veto in Phase 1a, passes in Phase 1b
+  it("returns neutral for shape pair within ratio 2.0", () => {
     const r = signal.evaluate(
       node("RECTANGLE", "a"),
       node("RECTANGLE", "b"),
       makeCtx({ width: 10, height: 10 }, { width: 15, height: 15 }),
     );
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(1);
+    expect(r.kind).toBe("neutral");
   });
 
   it("returns veto for shape pair exceeding ratio 2.0", () => {
@@ -84,23 +80,21 @@ describe("RelativeSize signal (Phase 1b — ratio 2.0)", () => {
     expect(r.kind).toBe("veto");
   });
 
-  it("returns score 1 for same-type container pair regardless of size", () => {
+  it("returns neutral for same-type container pair regardless of size", () => {
     const r = signal.evaluate(
       node("FRAME", "a"),
       node("FRAME", "b"),
       makeCtx({ width: 10, height: 10 }, { width: 100, height: 100 }),
     );
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(1);
+    expect(r.kind).toBe("neutral");
   });
 
-  it("returns score 1 when bounding box unavailable (defensive)", () => {
+  it("returns neutral when bounding box unavailable (defensive)", () => {
     const ctx: any = {
       dataManager: { getById: vi.fn().mockReturnValue({ node: {} }) },
       policy: defaultMatchingPolicy,
     };
     const r = signal.evaluate(node("RECTANGLE", "a"), node("RECTANGLE", "b"), ctx);
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(1);
+    expect(r.kind).toBe("neutral");
   });
 });

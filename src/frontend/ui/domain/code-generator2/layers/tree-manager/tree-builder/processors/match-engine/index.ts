@@ -1,38 +1,50 @@
 import { MatchDecisionEngine } from "./MatchDecisionEngine";
 import { TypeCompatibility } from "./signals/TypeCompatibility";
 import { IdMatch } from "./signals/IdMatch";
+import { VariantPropPosition } from "./signals/VariantPropPosition";
 import { NormalizedPosition } from "./signals/NormalizedPosition";
-import { RelativeSize } from "./signals/RelativeSize";
+import { TextSpecialMatch } from "./signals/TextSpecialMatch";
+import { InstanceSpecialMatch } from "./signals/InstanceSpecialMatch";
+import { ParentShapeIdentity } from "./signals/ParentShapeIdentity";
+import { WrapperRoleDistinction } from "./signals/WrapperRoleDistinction";
 import { defaultMatchingPolicy, type MatchingPolicy } from "./MatchingPolicy";
 
 export { MatchDecisionEngine } from "./MatchDecisionEngine";
 export { defaultMatchingPolicy } from "./MatchingPolicy";
 export type { MatchingPolicy } from "./MatchingPolicy";
-export type {
-  MatchSignal,
-  SignalResult,
-  MatchContext,
-  MatchDecision,
-} from "./MatchSignal";
+export type { MatchSignal, SignalResult, MatchContext, MatchDecision } from "./MatchSignal";
 
 /**
- * Phase 1 기본 엔진 생성.
+ * Phase 2 엔진 — getPositionCost 위임 호환 cost form.
  *
- * 등록 순서는 평가 비용이 낮은 것부터:
- * 1. TypeCompatibility — O(1), 대부분의 불일치를 즉시 veto
- * 2. IdMatch — O(1), 확정 매칭 빠른 경로
- * 3. RelativeSize — O(1), hit에는 DataManager 조회 1회
- * 4. NormalizedPosition — O(1)~O(depth), LayoutNormalizer 호출
+ * 신호 순서:
+ * 1. TypeCompatibility — O(1), 가장 빠른 veto
+ * 2. IdMatch — O(1), id 일치 시 decisive-match
+ * 3. NormalizedPosition — O(depth), 위치+size+overflow 통합. success 시 decisive-match-with-cost로
+ *    fallback 신호 차단. 실패 시 neutral (Text/Instance Special 및 VariantPropPosition에 위임).
+ * 4. VariantPropPosition — NormalizedPosition fallback에서만 발동. boolean variant가 cx 이동을
+ *    결정하는 패턴 (Switch Knob 등)을 decisive-match 처리. NP가 성공하면 이 신호는 실행되지 않음.
+ * 5. TextSpecialMatch — TEXT pair fallback (decisive-match-with-cost(0.05))
+ * 6. InstanceSpecialMatch — INSTANCE pair fallback (decisive-match-with-cost(0.05))
+ *
+ * RelativeSize와 OverflowPenalty는 NormalizedPosition에 inline됨 (legacy semantic 보존).
+ * 모든 신호가 neutral이면 엔진이 veto 반환.
  */
 export function createDefaultEngine(
   policy: MatchingPolicy = defaultMatchingPolicy,
 ): MatchDecisionEngine {
   return new MatchDecisionEngine(
+    // Phase 2d 결정: WrapperRoleDistinction은 정의돼 있지만 등록하지 않는다.
+    // 이유: Tagreview는 이미 NormalizedPosition의 size check로 보존되고 있어
+    // 추가 wrapper veto가 불필요. 등록 시 Headersub/SegmentedControl에 false positive 발생.
     [
       new TypeCompatibility(),
       new IdMatch(),
-      new RelativeSize(),
       new NormalizedPosition(),
+      new VariantPropPosition(),
+      new TextSpecialMatch(),
+      new InstanceSpecialMatch(),
+      new ParentShapeIdentity(),
     ],
     policy,
   );

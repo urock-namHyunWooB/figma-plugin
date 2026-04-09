@@ -9,21 +9,19 @@ function node(type: string): InternalNode {
 describe("TypeCompatibility signal", () => {
   const signal = new TypeCompatibility();
 
-  it("returns score 1 for identical types", () => {
+  it("returns neutral for identical types", () => {
     const r = signal.evaluate(node("FRAME"), node("FRAME"), {} as any);
-    expect(r).toEqual({ kind: "score", score: 1, reason: expect.any(String) });
+    expect(r.kind).toBe("neutral");
   });
 
-  it("returns score 1 for same shape group", () => {
+  it("returns neutral for same shape group", () => {
     const r = signal.evaluate(node("RECTANGLE"), node("VECTOR"), {} as any);
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(1);
+    expect(r.kind).toBe("neutral");
   });
 
-  it("returns score 1 for same container group", () => {
+  it("returns neutral for same container group", () => {
     const r = signal.evaluate(node("GROUP"), node("FRAME"), {} as any);
-    expect(r.kind).toBe("score");
-    if (r.kind === "score") expect(r.score).toBe(1);
+    expect(r.kind).toBe("neutral");
   });
 
   it("returns veto for cross-group types", () => {
