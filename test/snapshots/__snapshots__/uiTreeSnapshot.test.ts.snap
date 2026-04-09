@@ -4593,6 +4593,181 @@ exports[`UITree snapshots > failing/Button 1`] = `
 }
 `;
 
+exports[`UITree snapshots > failing/Buttonsolid 1`] = `
+{
+  "arraySlotNames": [],
+  "componentType": "button",
+  "propNames": [
+    "disable",
+    "iconOnly",
+    "label",
+    "leadingIcon",
+    "loading",
+    "size",
+    "trailingIcon",
+    "variant",
+  ],
+  "propsCount": 8,
+  "root": {
+    "children": [
+      {
+        "children": [],
+        "id": "16215:37694",
+        "name": "Background",
+        "type": "vector",
+      },
+      {
+        "children": [],
+        "id": "16215:37748",
+        "name": "Background",
+        "type": "vector",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "16215:37613",
+            "name": "Interaction/Strong",
+            "refId": "16215:17267",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "16246:1228780",
+            "name": "Loading",
+            "type": "container",
+          },
+          {
+            "children": [],
+            "id": "16246:1228782",
+            "name": "Mask",
+            "type": "vector",
+          },
+          {
+            "children": [],
+            "id": "16215:37753",
+            "name": "Content",
+            "type": "container",
+          },
+        ],
+        "id": "16215:37612",
+        "name": "Interaction",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "16215:37756",
+            "name": "Interaction/Normal",
+            "refId": "16215:17257",
+            "type": "component",
+          },
+          {
+            "children": [],
+            "id": "16215:37671",
+            "name": "Mask",
+            "type": "vector",
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "16215:37609",
+                    "name": "Icons/Icons",
+                    "refId": "16215:25200",
+                    "type": "component",
+                  },
+                ],
+                "id": "16293:159646",
+                "name": "Leading Icon",
+                "type": "container",
+              },
+              {
+                "children": [],
+                "id": "16215:37610",
+                "name": "텍스트",
+                "type": "text",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "16215:37611",
+                    "name": "Icons/Icons",
+                    "refId": "16215:25200",
+                    "type": "component",
+                  },
+                ],
+                "id": "16293:161074",
+                "name": "Trailing Icon",
+                "type": "container",
+              },
+            ],
+            "id": "16215:37608",
+            "name": "Content",
+            "type": "container",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "16293:159639",
+                "name": "Leading Icon",
+                "type": "container",
+              },
+              {
+                "children": [],
+                "id": "16215:37618",
+                "name": "텍스트",
+                "type": "text",
+              },
+              {
+                "children": [],
+                "id": "16215:37606_Loading",
+                "name": "Circular/Circular",
+                "refId": "16215:24961",
+                "type": "component",
+              },
+              {
+                "children": [],
+                "id": "16215:37606_Icon",
+                "name": "Icons/Icons",
+                "refId": "16215:25200",
+                "type": "component",
+              },
+              {
+                "children": [],
+                "id": "16293:161071",
+                "name": "Trailing Icon",
+                "type": "container",
+              },
+            ],
+            "id": "16215:37605",
+            "name": "Loading",
+            "type": "container",
+          },
+          {
+            "children": [],
+            "id": "16215:37607",
+            "name": "Mask",
+            "type": "vector",
+          },
+        ],
+        "id": "16215:37604",
+        "name": "Wrapper",
+        "type": "container",
+      },
+    ],
+    "id": "16215:37603",
+    "name": "Button/Solid",
+    "type": "button",
+  },
+}
+`;
+
 exports[`UITree snapshots > failing/Checkbox 1`] = `
 {
   "arraySlotNames": [],

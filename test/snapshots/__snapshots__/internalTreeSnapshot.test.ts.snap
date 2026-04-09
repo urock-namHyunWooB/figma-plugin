@@ -31304,6 +31304,2429 @@ exports[`InternalTree snapshots > failing/Button 1`] = `
 }
 `;
 
+exports[`InternalTree snapshots > failing/Buttonsolid 1`] = `
+{
+  "children": [
+    {
+      "children": [],
+      "id": "16215:37694",
+      "mergedNodes": [
+        {
+          "id": "16215:37694",
+          "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+        },
+        {
+          "id": "16215:37712",
+          "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+        },
+        {
+          "id": "16215:37730",
+          "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+        },
+      ],
+      "name": "Background",
+      "type": "RECTANGLE",
+    },
+    {
+      "children": [],
+      "id": "16215:37748",
+      "mergedNodes": [
+        {
+          "id": "16215:37748",
+          "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+        },
+        {
+          "id": "16215:37762",
+          "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+        },
+        {
+          "id": "16215:37776",
+          "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+        },
+      ],
+      "name": "Background",
+      "type": "RECTANGLE",
+    },
+    {
+      "children": [
+        {
+          "children": [],
+          "id": "16215:37613",
+          "mergedNodes": [
+            {
+              "id": "16215:37613",
+              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37630",
+              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37647",
+              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37662",
+              "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16215:37704",
+              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37675",
+              "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16215:37722",
+              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37688",
+              "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16215:37740",
+              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37770",
+              "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16215:37784",
+              "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            },
+          ],
+          "name": "Interaction",
+          "type": "INSTANCE",
+        },
+        {
+          "children": [],
+          "id": "16246:1228780",
+          "mergedNodes": [
+            {
+              "id": "16246:1228780",
+              "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+            },
+          ],
+          "name": "Loading",
+          "type": "FRAME",
+        },
+        {
+          "children": [],
+          "id": "16246:1228782",
+          "mergedNodes": [
+            {
+              "id": "16246:1228782",
+              "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+            },
+          ],
+          "name": "Mask",
+          "type": "RECTANGLE",
+        },
+        {
+          "children": [],
+          "id": "16215:37753",
+          "mergedNodes": [
+            {
+              "id": "16215:37753",
+              "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+            },
+          ],
+          "name": "Content",
+          "type": "FRAME",
+        },
+      ],
+      "id": "16215:37612",
+      "mergedNodes": [
+        {
+          "id": "16215:37612",
+          "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+        },
+        {
+          "id": "16215:37629",
+          "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+        },
+        {
+          "id": "16215:37646",
+          "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+        },
+        {
+          "id": "16215:37661",
+          "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+        },
+        {
+          "id": "16215:37703",
+          "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+        },
+        {
+          "id": "16215:37674",
+          "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+        },
+        {
+          "id": "16215:37721",
+          "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+        },
+        {
+          "id": "16215:37687",
+          "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+        },
+        {
+          "id": "16215:37739",
+          "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+        },
+        {
+          "id": "16215:37749",
+          "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+        },
+        {
+          "id": "16215:37769",
+          "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+        },
+        {
+          "id": "16215:37783",
+          "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+        },
+      ],
+      "name": "Interaction",
+      "type": "FRAME",
+    },
+    {
+      "children": [
+        {
+          "children": [],
+          "id": "16215:37756",
+          "mergedNodes": [
+            {
+              "id": "16215:37756",
+              "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+            },
+          ],
+          "name": "Interaction",
+          "type": "INSTANCE",
+        },
+        {
+          "children": [],
+          "id": "16215:37671",
+          "mergedNodes": [
+            {
+              "id": "16215:37671",
+              "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16215:37684",
+              "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16246:1228793",
+              "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16246:1228804",
+              "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            },
+          ],
+          "name": "Mask",
+          "type": "RECTANGLE",
+        },
+        {
+          "children": [
+            {
+              "children": [
+                {
+                  "children": [
+                    {
+                      "children": [
+                        {
+                          "children": [
+                            {
+                              "children": [
+                                {
+                                  "children": [],
+                                  "id": "I16215:37617;16215:25202;16215:13734",
+                                  "mergedNodes": [
+                                    {
+                                      "id": "I16215:37609;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37626;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37643;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37700;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37718;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37736;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37617;16215:25202;16215:13734",
+                                      "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                                    },
+                                    {
+                                      "id": "I16215:37634;16215:25202;16215:13734",
+                                      "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                                    },
+                                    {
+                                      "id": "I16215:37651;16215:25202;16215:13734",
+                                      "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                                    },
+                                    {
+                                      "id": "I16215:37708;16215:25202;16215:13734",
+                                      "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                                    },
+                                    {
+                                      "id": "I16215:37726;16215:25202;16215:13734",
+                                      "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                                    },
+                                    {
+                                      "id": "I16215:37744;16215:25202;16215:13734",
+                                      "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                                    },
+                                  ],
+                                  "name": "Normal",
+                                  "type": "VECTOR",
+                                },
+                              ],
+                              "id": "I16215:37617;16215:25202;16215:13731",
+                              "mergedNodes": [
+                                {
+                                  "id": "I16215:37609;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37626;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37643;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37700;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37718;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37736;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37617;16215:25202;16215:13731",
+                                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37634;16215:25202;16215:13731",
+                                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37651;16215:25202;16215:13731",
+                                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37708;16215:25202;16215:13731",
+                                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37726;16215:25202;16215:13731",
+                                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37744;16215:25202;16215:13731",
+                                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                                },
+                              ],
+                              "name": "Shape",
+                              "type": "FRAME",
+                            },
+                          ],
+                          "id": "I16215:37609;16215:25202;16215:13730",
+                          "mergedNodes": [
+                            {
+                              "id": "I16215:37617;16215:25202",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37634;16215:25202",
+                              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37651;16215:25202",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37708;16215:25202",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37726;16215:25202",
+                              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37744;16215:25202",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37609;16215:25202;16215:13730",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37626;16215:25202;16215:13730",
+                              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37643;16215:25202;16215:13730",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37700;16215:25202;16215:13730",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37718;16215:25202;16215:13730",
+                              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37736;16215:25202;16215:13730",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                            },
+                          ],
+                          "name": "Ratio",
+                          "type": "INSTANCE",
+                        },
+                        {
+                          "children": [
+                            {
+                              "children": [],
+                              "id": "I16215:37609;16215:25202;16215:13734",
+                              "mergedNodes": [
+                                {
+                                  "id": "I16215:37617;16215:25202;16215:13730;16215:17330",
+                                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37634;16215:25202;16215:13730;16215:17330",
+                                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37651;16215:25202;16215:13730;16215:17330",
+                                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37708;16215:25202;16215:13730;16215:17330",
+                                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37726;16215:25202;16215:13730;16215:17330",
+                                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37744;16215:25202;16215:13730;16215:17330",
+                                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37609;16215:25202;16215:13734",
+                                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37626;16215:25202;16215:13734",
+                                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37643;16215:25202;16215:13734",
+                                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37700;16215:25202;16215:13734",
+                                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37718;16215:25202;16215:13734",
+                                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37736;16215:25202;16215:13734",
+                                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                                },
+                              ],
+                              "name": "Normal",
+                              "type": "VECTOR",
+                            },
+                          ],
+                          "id": "I16215:37609;16215:25202;16215:13731",
+                          "mergedNodes": [
+                            {
+                              "id": "I16215:37617;16215:25202;16215:13730;16215:17329",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37634;16215:25202;16215:13730;16215:17329",
+                              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37651;16215:25202;16215:13730;16215:17329",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37708;16215:25202;16215:13730;16215:17329",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37726;16215:25202;16215:13730;16215:17329",
+                              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37744;16215:25202;16215:13730;16215:17329",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37609;16215:25202;16215:13731",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37626;16215:25202;16215:13731",
+                              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37643;16215:25202;16215:13731",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37700;16215:25202;16215:13731",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37718;16215:25202;16215:13731",
+                              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37736;16215:25202;16215:13731",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                            },
+                          ],
+                          "name": "Shape",
+                          "type": "FRAME",
+                        },
+                      ],
+                      "id": "I16215:37609;16215:25202",
+                      "mergedNodes": [
+                        {
+                          "id": "I16215:37609;16215:25202",
+                          "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37626;16215:25202",
+                          "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37643;16215:25202",
+                          "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37700;16215:25202",
+                          "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37718;16215:25202",
+                          "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37736;16215:25202",
+                          "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                        },
+                      ],
+                      "name": "┗ Icon Variant ᠎",
+                      "type": "INSTANCE",
+                    },
+                  ],
+                  "id": "16215:37609",
+                  "mergedNodes": [
+                    {
+                      "id": "16215:37609",
+                      "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "16215:37626",
+                      "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "16215:37643",
+                      "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "16215:37700",
+                      "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "16215:37718",
+                      "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "16215:37736",
+                      "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                    },
+                  ],
+                  "name": "Leading Icon",
+                  "type": "INSTANCE",
+                },
+              ],
+              "id": "16293:159646",
+              "mergedNodes": [
+                {
+                  "id": "16293:159646",
+                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16293:159642",
+                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16293:159636",
+                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16293:159638",
+                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16293:159637",
+                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16293:159643",
+                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                },
+              ],
+              "name": "Leading Icon",
+              "type": "FRAME",
+            },
+            {
+              "children": [],
+              "id": "16215:37610",
+              "mergedNodes": [
+                {
+                  "id": "16215:37610",
+                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16215:37627",
+                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16215:37644",
+                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16215:37701",
+                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16215:37719",
+                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16215:37737",
+                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                },
+              ],
+              "name": "텍스트",
+              "type": "TEXT",
+            },
+            {
+              "children": [
+                {
+                  "children": [
+                    {
+                      "children": [
+                        {
+                          "children": [
+                            {
+                              "children": [
+                                {
+                                  "children": [],
+                                  "id": "I16215:37619;16215:25202;16215:13734",
+                                  "mergedNodes": [
+                                    {
+                                      "id": "I16215:37611;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37628;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37645;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37702;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37720;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37738;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37619;16215:25202;16215:13734",
+                                      "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                                    },
+                                    {
+                                      "id": "I16215:37636;16215:25202;16215:13734",
+                                      "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                                    },
+                                    {
+                                      "id": "I16215:37653;16215:25202;16215:13734",
+                                      "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                                    },
+                                    {
+                                      "id": "I16215:37710;16215:25202;16215:13734",
+                                      "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                                    },
+                                    {
+                                      "id": "I16215:37728;16215:25202;16215:13734",
+                                      "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                                    },
+                                    {
+                                      "id": "I16215:37746;16215:25202;16215:13734",
+                                      "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                                    },
+                                  ],
+                                  "name": "Normal",
+                                  "type": "VECTOR",
+                                },
+                                {
+                                  "children": [
+                                    {
+                                      "children": [],
+                                      "id": "I16215:37619;16215:25202;16215:13733",
+                                      "mergedNodes": [
+                                        {
+                                          "id": "I16215:37619;16215:25202;16215:13733",
+                                          "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                                        },
+                                        {
+                                          "id": "I16215:37636;16215:25202;16215:13733",
+                                          "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                                        },
+                                        {
+                                          "id": "I16215:37653;16215:25202;16215:13733",
+                                          "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                                        },
+                                        {
+                                          "id": "I16215:37710;16215:25202;16215:13733",
+                                          "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                                        },
+                                        {
+                                          "id": "I16215:37728;16215:25202;16215:13733",
+                                          "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                                        },
+                                        {
+                                          "id": "I16215:37746;16215:25202;16215:13733",
+                                          "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                                        },
+                                      ],
+                                      "name": "Vector",
+                                      "type": "VECTOR",
+                                    },
+                                  ],
+                                  "id": "I16215:37619;16215:25202;16215:13732",
+                                  "mergedNodes": [
+                                    {
+                                      "id": "I16215:37619;16215:25202;16215:13732",
+                                      "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                                    },
+                                    {
+                                      "id": "I16215:37636;16215:25202;16215:13732",
+                                      "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                                    },
+                                    {
+                                      "id": "I16215:37653;16215:25202;16215:13732",
+                                      "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                                    },
+                                    {
+                                      "id": "I16215:37710;16215:25202;16215:13732",
+                                      "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                                    },
+                                    {
+                                      "id": "I16215:37728;16215:25202;16215:13732",
+                                      "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                                    },
+                                    {
+                                      "id": "I16215:37746;16215:25202;16215:13732",
+                                      "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                                    },
+                                  ],
+                                  "name": "Union",
+                                  "type": "BOOLEAN_OPERATION",
+                                },
+                              ],
+                              "id": "I16215:37619;16215:25202;16215:13731",
+                              "mergedNodes": [
+                                {
+                                  "id": "I16215:37611;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37628;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37645;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37702;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37720;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37738;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37619;16215:25202;16215:13731",
+                                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37636;16215:25202;16215:13731",
+                                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37653;16215:25202;16215:13731",
+                                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37710;16215:25202;16215:13731",
+                                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37728;16215:25202;16215:13731",
+                                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37746;16215:25202;16215:13731",
+                                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                                },
+                              ],
+                              "name": "Shape",
+                              "type": "FRAME",
+                            },
+                          ],
+                          "id": "I16215:37611;16215:25202;16215:13730",
+                          "mergedNodes": [
+                            {
+                              "id": "I16215:37619;16215:25202",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37636;16215:25202",
+                              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37653;16215:25202",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37710;16215:25202",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37728;16215:25202",
+                              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37746;16215:25202",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37611;16215:25202;16215:13730",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37628;16215:25202;16215:13730",
+                              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37645;16215:25202;16215:13730",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37702;16215:25202;16215:13730",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37720;16215:25202;16215:13730",
+                              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37738;16215:25202;16215:13730",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                            },
+                          ],
+                          "name": "Ratio",
+                          "type": "INSTANCE",
+                        },
+                        {
+                          "children": [
+                            {
+                              "children": [],
+                              "id": "I16215:37611;16215:25202;16215:13734",
+                              "mergedNodes": [
+                                {
+                                  "id": "I16215:37619;16215:25202;16215:13730;16215:17330",
+                                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37636;16215:25202;16215:13730;16215:17330",
+                                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37653;16215:25202;16215:13730;16215:17330",
+                                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37710;16215:25202;16215:13730;16215:17330",
+                                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37728;16215:25202;16215:13730;16215:17330",
+                                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37746;16215:25202;16215:13730;16215:17330",
+                                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37611;16215:25202;16215:13734",
+                                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37628;16215:25202;16215:13734",
+                                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37645;16215:25202;16215:13734",
+                                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37702;16215:25202;16215:13734",
+                                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37720;16215:25202;16215:13734",
+                                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37738;16215:25202;16215:13734",
+                                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                                },
+                              ],
+                              "name": "Normal",
+                              "type": "VECTOR",
+                            },
+                            {
+                              "children": [
+                                {
+                                  "children": [],
+                                  "id": "I16215:37611;16215:25202;16215:13733",
+                                  "mergedNodes": [
+                                    {
+                                      "id": "I16215:37611;16215:25202;16215:13733",
+                                      "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37628;16215:25202;16215:13733",
+                                      "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37645;16215:25202;16215:13733",
+                                      "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37702;16215:25202;16215:13733",
+                                      "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37720;16215:25202;16215:13733",
+                                      "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37738;16215:25202;16215:13733",
+                                      "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                                    },
+                                  ],
+                                  "name": "Vector",
+                                  "type": "VECTOR",
+                                },
+                              ],
+                              "id": "I16215:37611;16215:25202;16215:13732",
+                              "mergedNodes": [
+                                {
+                                  "id": "I16215:37611;16215:25202;16215:13732",
+                                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37628;16215:25202;16215:13732",
+                                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37645;16215:25202;16215:13732",
+                                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37702;16215:25202;16215:13732",
+                                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37720;16215:25202;16215:13732",
+                                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37738;16215:25202;16215:13732",
+                                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                                },
+                              ],
+                              "name": "Union",
+                              "type": "BOOLEAN_OPERATION",
+                            },
+                          ],
+                          "id": "I16215:37611;16215:25202;16215:13731",
+                          "mergedNodes": [
+                            {
+                              "id": "I16215:37619;16215:25202;16215:13730;16215:17329",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37636;16215:25202;16215:13730;16215:17329",
+                              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37653;16215:25202;16215:13730;16215:17329",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37710;16215:25202;16215:13730;16215:17329",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37728;16215:25202;16215:13730;16215:17329",
+                              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37746;16215:25202;16215:13730;16215:17329",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37611;16215:25202;16215:13731",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37628;16215:25202;16215:13731",
+                              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37645;16215:25202;16215:13731",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37702;16215:25202;16215:13731",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37720;16215:25202;16215:13731",
+                              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37738;16215:25202;16215:13731",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                            },
+                          ],
+                          "name": "Shape",
+                          "type": "FRAME",
+                        },
+                      ],
+                      "id": "I16215:37611;16215:25202",
+                      "mergedNodes": [
+                        {
+                          "id": "I16215:37611;16215:25202",
+                          "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37628;16215:25202",
+                          "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37645;16215:25202",
+                          "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37702;16215:25202",
+                          "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37720;16215:25202",
+                          "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37738;16215:25202",
+                          "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                        },
+                      ],
+                      "name": "┗ Icon Variant ᠎",
+                      "type": "INSTANCE",
+                    },
+                  ],
+                  "id": "16215:37611",
+                  "mergedNodes": [
+                    {
+                      "id": "16215:37611",
+                      "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "16215:37628",
+                      "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "16215:37645",
+                      "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "16215:37702",
+                      "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "16215:37720",
+                      "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "16215:37738",
+                      "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                    },
+                  ],
+                  "name": "Trailing Icon",
+                  "type": "INSTANCE",
+                },
+              ],
+              "id": "16293:161074",
+              "mergedNodes": [
+                {
+                  "id": "16293:161074",
+                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16293:161066",
+                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16293:161067",
+                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16293:161070",
+                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16293:161069",
+                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16293:161065",
+                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                },
+              ],
+              "name": "Trailing Icon",
+              "type": "FRAME",
+            },
+          ],
+          "id": "16215:37608",
+          "mergedNodes": [
+            {
+              "id": "16215:37608",
+              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37625",
+              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37642",
+              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37659",
+              "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16215:37699",
+              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37672",
+              "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16215:37717",
+              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37685",
+              "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16215:37735",
+              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37767",
+              "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16215:37781",
+              "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            },
+          ],
+          "name": "Content",
+          "type": "FRAME",
+        },
+        {
+          "children": [
+            {
+              "children": [],
+              "id": "16293:159639",
+              "mergedNodes": [
+                {
+                  "id": "16293:159639",
+                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                },
+                {
+                  "id": "16293:159645",
+                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                },
+                {
+                  "id": "16293:159641",
+                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                },
+                {
+                  "id": "16293:159644",
+                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                },
+                {
+                  "id": "16293:159640",
+                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                },
+                {
+                  "id": "16293:159635",
+                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                },
+              ],
+              "name": "Leading Icon",
+              "type": "FRAME",
+            },
+            {
+              "children": [],
+              "id": "16215:37618",
+              "mergedNodes": [
+                {
+                  "id": "16215:37618",
+                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                },
+                {
+                  "id": "16215:37635",
+                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                },
+                {
+                  "id": "16215:37652",
+                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                },
+                {
+                  "id": "16215:37709",
+                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                },
+                {
+                  "id": "16215:37727",
+                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                },
+                {
+                  "id": "16215:37745",
+                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                },
+              ],
+              "name": "텍스트",
+              "type": "TEXT",
+            },
+            {
+              "children": [
+                {
+                  "children": [
+                    {
+                      "children": [
+                        {
+                          "children": [
+                            {
+                              "children": [
+                                {
+                                  "children": [],
+                                  "id": "I16215:37660;16215:25202;16215:13730;16215:17330",
+                                  "mergedNodes": [
+                                    {
+                                      "id": "I16215:37754;16215:25202;16215:13734",
+                                      "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37660;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37673;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37686;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37768;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+                                    },
+                                    {
+                                      "id": "I16215:37782;16215:25202;16215:13730;16215:17330",
+                                      "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+                                    },
+                                  ],
+                                  "name": "Ratio",
+                                  "type": "VECTOR",
+                                },
+                              ],
+                              "id": "I16215:37660;16215:25202;16215:13730;16215:17329",
+                              "mergedNodes": [
+                                {
+                                  "id": "I16215:37754;16215:25202;16215:13731",
+                                  "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37660;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37673;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37686;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37768;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37782;16215:25202;16215:13730;16215:17329",
+                                  "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+                                },
+                              ],
+                              "name": "Ratio",
+                              "type": "FRAME",
+                            },
+                            {
+                              "children": [],
+                              "id": "I16215:37754;16215:25202;16215:13730",
+                              "mergedNodes": [
+                                {
+                                  "id": "I16215:37754;16215:25202;16215:13730",
+                                  "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+                                },
+                              ],
+                              "name": "Ratio",
+                              "type": "INSTANCE",
+                            },
+                          ],
+                          "id": "I16215:37660;16215:25202;16215:13730",
+                          "mergedNodes": [
+                            {
+                              "id": "I16215:37754;16215:25202",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37660;16215:25202;16215:13730",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37673;16215:25202;16215:13730",
+                              "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37686;16215:25202;16215:13730",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37768;16215:25202;16215:13730",
+                              "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37782;16215:25202;16215:13730",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+                            },
+                          ],
+                          "name": "Ratio",
+                          "type": "INSTANCE",
+                        },
+                      ],
+                      "id": "I16215:37666;16215:25202;16215:13730",
+                      "mergedNodes": [
+                        {
+                          "id": "I16246:1228781;16215:24962",
+                          "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37660;16215:25202",
+                          "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37673;16215:25202",
+                          "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37686;16215:25202",
+                          "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37768;16215:25202",
+                          "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37782;16215:25202",
+                          "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37666;16215:25202;16215:13730",
+                          "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+                        },
+                        {
+                          "id": "I16215:37679;16215:25202;16215:13730",
+                          "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+                        },
+                        {
+                          "id": "I16215:37692;16215:25202;16215:13730",
+                          "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=True",
+                        },
+                        {
+                          "id": "I16215:37760;16215:25202;16215:13730",
+                          "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+                        },
+                        {
+                          "id": "I16215:37774;16215:25202;16215:13730",
+                          "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+                        },
+                        {
+                          "id": "I16215:37788;16215:25202;16215:13730",
+                          "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+                        },
+                      ],
+                      "name": "Ratio",
+                      "type": "INSTANCE",
+                    },
+                    {
+                      "children": [
+                        {
+                          "children": [
+                            {
+                              "children": [],
+                              "id": "I16215:37679;16215:25202;16215:13733",
+                              "mergedNodes": [
+                                {
+                                  "id": "I16215:37754;16215:25202;16215:13730;16215:17330",
+                                  "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+                                },
+                                {
+                                  "id": "I16215:37679;16215:25202;16215:13733",
+                                  "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37692;16215:25202;16215:13733",
+                                  "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37774;16215:25202;16215:13733",
+                                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+                                },
+                                {
+                                  "id": "I16215:37788;16215:25202;16215:13733",
+                                  "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+                                },
+                              ],
+                              "name": "Vector",
+                              "type": "VECTOR",
+                            },
+                          ],
+                          "id": "I16215:37666;16215:25202;16215:13734",
+                          "mergedNodes": [
+                            {
+                              "id": "I16215:37754;16215:25202;16215:13733",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37660;16215:25202;16215:13733",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37673;16215:25202;16215:13733",
+                              "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37686;16215:25202;16215:13733",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37768;16215:25202;16215:13733",
+                              "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37782;16215:25202;16215:13733",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37666;16215:25202;16215:13734",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37679;16215:25202;16215:13732",
+                              "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37692;16215:25202;16215:13732",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37760;16215:25202;16215:13734",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37774;16215:25202;16215:13732",
+                              "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37788;16215:25202;16215:13732",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+                            },
+                          ],
+                          "name": "Normal",
+                          "type": "VECTOR",
+                        },
+                        {
+                          "children": [],
+                          "id": "I16215:37606;16215:24962;16215:17330",
+                          "mergedNodes": [
+                            {
+                              "id": "I16215:37666;16215:25202;16215:13733",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+                            },
+                            {
+                              "id": "I16215:37760;16215:25202;16215:13733",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+                            },
+                            {
+                              "id": "I16246:1228781;16215:24966",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37606;16215:24962;16215:17330",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37623;16215:24962;16215:17330",
+                              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37640;16215:24962;16215:17330",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37657;16215:24962;16215:17330",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16246:1228604;16215:24962;16215:17330",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37670;16215:24962;16215:17330",
+                              "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16246:1228759;16215:24962;16215:17330",
+                              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37683;16215:24962;16215:17330",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16246:1228770;16215:24962;16215:17330",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37692;16215:25202;16215:13734",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=True",
+                            },
+                            {
+                              "id": "I16246:1228792;16215:24962;16215:17330",
+                              "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16246:1228803;16215:24962;16215:17330",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37788;16215:25202;16215:13734",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+                            },
+                          ],
+                          "name": "Ratio",
+                          "type": "VECTOR",
+                        },
+                      ],
+                      "id": "I16215:37606;16215:24962;16215:17329",
+                      "mergedNodes": [
+                        {
+                          "id": "I16246:1228781;16215:24963",
+                          "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37606;16215:24962;16215:17329",
+                          "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37623;16215:24962;16215:17329",
+                          "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37640;16215:24962;16215:17329",
+                          "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37657;16215:24962;16215:17329",
+                          "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16246:1228604;16215:24962;16215:17329",
+                          "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37666;16215:25202;16215:13731",
+                          "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+                        },
+                        {
+                          "id": "I16215:37670;16215:24962;16215:17329",
+                          "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16246:1228759;16215:24962;16215:17329",
+                          "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37683;16215:24962;16215:17329",
+                          "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16246:1228770;16215:24962;16215:17329",
+                          "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37679;16215:25202;16215:13731",
+                          "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+                        },
+                        {
+                          "id": "I16215:37692;16215:25202;16215:13731",
+                          "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=True",
+                        },
+                        {
+                          "id": "I16215:37760;16215:25202;16215:13731",
+                          "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+                        },
+                        {
+                          "id": "I16246:1228792;16215:24962;16215:17329",
+                          "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16246:1228803;16215:24962;16215:17329",
+                          "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37774;16215:25202;16215:13731",
+                          "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+                        },
+                        {
+                          "id": "I16215:37788;16215:25202;16215:13731",
+                          "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+                        },
+                      ],
+                      "name": "Ratio",
+                      "type": "FRAME",
+                    },
+                  ],
+                  "id": "I16215:37606;16215:24962",
+                  "mergedNodes": [
+                    {
+                      "id": "I16215:37606;16215:24962",
+                      "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "I16215:37623;16215:24962",
+                      "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "I16215:37640;16215:24962",
+                      "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "I16215:37657;16215:24962",
+                      "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+                    },
+                    {
+                      "id": "I16246:1228604;16215:24962",
+                      "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "I16215:37666;16215:25202",
+                      "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+                    },
+                    {
+                      "id": "I16215:37670;16215:24962",
+                      "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+                    },
+                    {
+                      "id": "I16246:1228759;16215:24962",
+                      "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "I16215:37683;16215:24962",
+                      "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+                    },
+                    {
+                      "id": "I16246:1228770;16215:24962",
+                      "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "I16215:37679;16215:25202",
+                      "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+                    },
+                    {
+                      "id": "I16215:37692;16215:25202",
+                      "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=True",
+                    },
+                    {
+                      "id": "I16215:37760;16215:25202",
+                      "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+                    },
+                    {
+                      "id": "I16246:1228792;16215:24962",
+                      "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+                    },
+                    {
+                      "id": "I16246:1228803;16215:24962",
+                      "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+                    },
+                    {
+                      "id": "I16215:37774;16215:25202",
+                      "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+                    },
+                    {
+                      "id": "I16215:37788;16215:25202",
+                      "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+                    },
+                  ],
+                  "name": "Ratio/Vertical",
+                  "type": "INSTANCE",
+                },
+                {
+                  "children": [
+                    {
+                      "children": [
+                        {
+                          "children": [],
+                          "id": "I16215:37606;16215:24965",
+                          "mergedNodes": [
+                            {
+                              "id": "I16246:1228781;16215:24965",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37606;16215:24965",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37623;16215:24965",
+                              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37640;16215:24965",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37657;16215:24965",
+                              "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16246:1228604;16215:24965",
+                              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37670;16215:24965",
+                              "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16246:1228759;16215:24965",
+                              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16215:37683;16215:24965",
+                              "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16246:1228770;16215:24965",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                            },
+                            {
+                              "id": "I16246:1228792;16215:24965",
+                              "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+                            },
+                            {
+                              "id": "I16246:1228803;16215:24965",
+                              "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+                            },
+                          ],
+                          "name": "Ellipse",
+                          "type": "ELLIPSE",
+                        },
+                      ],
+                      "id": "I16215:37606;16215:24964",
+                      "mergedNodes": [
+                        {
+                          "id": "I16215:37754;16215:25202;16215:13732",
+                          "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37606;16215:24964",
+                          "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37623;16215:24964",
+                          "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37640;16215:24964",
+                          "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37657;16215:24964",
+                          "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16246:1228604;16215:24964",
+                          "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37670;16215:24964",
+                          "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16246:1228759;16215:24964",
+                          "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37683;16215:24964",
+                          "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16246:1228770;16215:24964",
+                          "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16246:1228792;16215:24964",
+                          "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16246:1228803;16215:24964",
+                          "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+                        },
+                      ],
+                      "name": "Union",
+                      "type": "BOOLEAN_OPERATION",
+                    },
+                    {
+                      "children": [],
+                      "id": "I16215:37606;16215:24966",
+                      "mergedNodes": [
+                        {
+                          "id": "I16215:37606;16215:24966",
+                          "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37623;16215:24966",
+                          "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37640;16215:24966",
+                          "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37657;16215:24966",
+                          "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16246:1228604;16215:24966",
+                          "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37670;16215:24966",
+                          "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16246:1228759;16215:24966",
+                          "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16215:37683;16215:24966",
+                          "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16246:1228770;16215:24966",
+                          "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                        },
+                        {
+                          "id": "I16246:1228792;16215:24966",
+                          "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+                        },
+                        {
+                          "id": "I16246:1228803;16215:24966",
+                          "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+                        },
+                      ],
+                      "name": "Union",
+                      "type": "VECTOR",
+                    },
+                  ],
+                  "id": "I16215:37606;16215:24963",
+                  "mergedNodes": [
+                    {
+                      "id": "I16215:37606;16215:24963",
+                      "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "I16215:37623;16215:24963",
+                      "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "I16215:37640;16215:24963",
+                      "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "I16215:37657;16215:24963",
+                      "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+                    },
+                    {
+                      "id": "I16246:1228604;16215:24963",
+                      "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "I16215:37670;16215:24963",
+                      "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+                    },
+                    {
+                      "id": "I16246:1228759;16215:24963",
+                      "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "I16215:37683;16215:24963",
+                      "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+                    },
+                    {
+                      "id": "I16246:1228770;16215:24963",
+                      "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                    },
+                    {
+                      "id": "I16246:1228792;16215:24963",
+                      "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+                    },
+                    {
+                      "id": "I16246:1228803;16215:24963",
+                      "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+                    },
+                  ],
+                  "name": "Shape",
+                  "type": "FRAME",
+                },
+              ],
+              "id": "16215:37606",
+              "mergedNodes": [
+                {
+                  "id": "16215:37606",
+                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16215:37623",
+                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16215:37640",
+                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16215:37657",
+                  "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+                },
+                {
+                  "id": "16246:1228604",
+                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16215:37666",
+                  "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+                },
+                {
+                  "id": "16215:37670",
+                  "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+                },
+                {
+                  "id": "16246:1228759",
+                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16215:37683",
+                  "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+                },
+                {
+                  "id": "16246:1228770",
+                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                },
+                {
+                  "id": "16215:37679",
+                  "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+                },
+                {
+                  "id": "16215:37692",
+                  "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=True",
+                },
+                {
+                  "id": "16215:37760",
+                  "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+                },
+                {
+                  "id": "16246:1228792",
+                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+                },
+                {
+                  "id": "16246:1228803",
+                  "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+                },
+                {
+                  "id": "16215:37774",
+                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+                },
+                {
+                  "id": "16215:37788",
+                  "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+                },
+              ],
+              "name": "Loading",
+              "type": "INSTANCE",
+            },
+            {
+              "children": [],
+              "id": "16293:161071",
+              "mergedNodes": [
+                {
+                  "id": "16293:161071",
+                  "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                },
+                {
+                  "id": "16293:161073",
+                  "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                },
+                {
+                  "id": "16293:161076",
+                  "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                },
+                {
+                  "id": "16293:161072",
+                  "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                },
+                {
+                  "id": "16293:161075",
+                  "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                },
+                {
+                  "id": "16293:161068",
+                  "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                },
+              ],
+              "name": "Trailing Icon",
+              "type": "FRAME",
+            },
+          ],
+          "id": "16215:37605",
+          "mergedNodes": [
+            {
+              "id": "16215:37605",
+              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37616",
+              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+            },
+            {
+              "id": "16215:37622",
+              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37639",
+              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37656",
+              "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16246:1228603",
+              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37633",
+              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+            },
+            {
+              "id": "16215:37650",
+              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+            },
+            {
+              "id": "16215:37665",
+              "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+            },
+            {
+              "id": "16215:37707",
+              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+            },
+            {
+              "id": "16215:37669",
+              "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16246:1228758",
+              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37682",
+              "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16246:1228769",
+              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37678",
+              "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+            },
+            {
+              "id": "16215:37725",
+              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+            },
+            {
+              "id": "16215:37691",
+              "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=True",
+            },
+            {
+              "id": "16215:37743",
+              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+            },
+            {
+              "id": "16215:37759",
+              "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+            },
+            {
+              "id": "16246:1228791",
+              "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16246:1228802",
+              "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16215:37773",
+              "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+            },
+            {
+              "id": "16215:37787",
+              "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+            },
+          ],
+          "name": "Loading",
+          "type": "FRAME",
+        },
+        {
+          "children": [],
+          "id": "16215:37607",
+          "mergedNodes": [
+            {
+              "id": "16215:37607",
+              "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37624",
+              "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37641",
+              "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16215:37658",
+              "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            },
+            {
+              "id": "16246:1228605",
+              "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16246:1228760",
+              "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            },
+            {
+              "id": "16246:1228771",
+              "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+            },
+          ],
+          "name": "Mask",
+          "type": "RECTANGLE",
+        },
+      ],
+      "id": "16215:37604",
+      "mergedNodes": [
+        {
+          "id": "16215:37604",
+          "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+        },
+        {
+          "id": "16215:37615",
+          "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+        },
+        {
+          "id": "16215:37621",
+          "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+        },
+        {
+          "id": "16215:37638",
+          "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+        },
+        {
+          "id": "16215:37655",
+          "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+        },
+        {
+          "id": "16215:37695",
+          "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+        },
+        {
+          "id": "16215:37632",
+          "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+        },
+        {
+          "id": "16215:37649",
+          "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+        },
+        {
+          "id": "16215:37664",
+          "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+        },
+        {
+          "id": "16215:37706",
+          "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+        },
+        {
+          "id": "16215:37668",
+          "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+        },
+        {
+          "id": "16215:37713",
+          "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+        },
+        {
+          "id": "16215:37681",
+          "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+        },
+        {
+          "id": "16215:37731",
+          "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+        },
+        {
+          "id": "16215:37755",
+          "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+        },
+        {
+          "id": "16215:37677",
+          "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+        },
+        {
+          "id": "16215:37724",
+          "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+        },
+        {
+          "id": "16215:37690",
+          "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=True",
+        },
+        {
+          "id": "16215:37742",
+          "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+        },
+        {
+          "id": "16215:37758",
+          "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+        },
+        {
+          "id": "16215:37763",
+          "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+        },
+        {
+          "id": "16215:37777",
+          "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+        },
+        {
+          "id": "16215:37772",
+          "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+        },
+        {
+          "id": "16215:37786",
+          "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+        },
+      ],
+      "name": "Wrapper",
+      "type": "FRAME",
+    },
+  ],
+  "id": "16215:37603",
+  "mergedNodes": [
+    {
+      "id": "16215:37603",
+      "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+    },
+    {
+      "id": "16215:37614",
+      "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+    },
+    {
+      "id": "16215:37620",
+      "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+    },
+    {
+      "id": "16215:37637",
+      "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+    },
+    {
+      "id": "16215:37654",
+      "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+    },
+    {
+      "id": "16215:37693",
+      "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+    },
+    {
+      "id": "16215:37631",
+      "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+    },
+    {
+      "id": "16215:37648",
+      "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+    },
+    {
+      "id": "16215:37663",
+      "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+    },
+    {
+      "id": "16215:37705",
+      "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+    },
+    {
+      "id": "16215:37667",
+      "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+    },
+    {
+      "id": "16215:37711",
+      "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+    },
+    {
+      "id": "16215:37680",
+      "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+    },
+    {
+      "id": "16215:37729",
+      "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+    },
+    {
+      "id": "16215:37747",
+      "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+    },
+    {
+      "id": "16215:37676",
+      "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+    },
+    {
+      "id": "16215:37723",
+      "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+    },
+    {
+      "id": "16215:37689",
+      "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=True",
+    },
+    {
+      "id": "16215:37741",
+      "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+    },
+    {
+      "id": "16215:37757",
+      "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+    },
+    {
+      "id": "16215:37761",
+      "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+    },
+    {
+      "id": "16215:37775",
+      "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+    },
+    {
+      "id": "16215:37771",
+      "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+    },
+    {
+      "id": "16215:37785",
+      "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+    },
+  ],
+  "name": "Button/Solid",
+  "type": "COMPONENT",
+}
+`;
+
 exports[`InternalTree snapshots > failing/Checkbox 1`] = `
 {
   "children": [

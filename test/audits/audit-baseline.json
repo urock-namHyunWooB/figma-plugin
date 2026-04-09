@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-04-09T05:31:26.403Z",
-  "totalFixtures": 84,
-  "fixturesWithRegressions": 44,
-  "totalDisjointPairs": 1917,
+  "generatedAt": "2026-04-09T06:13:44.039Z",
+  "totalFixtures": 85,
+  "fixturesWithRegressions": 45,
+  "totalDisjointPairs": 1929,
   "compileErrors": 0,
   "patternTotals": {
-    "size-variant-reject": 0,
-    "variant-prop-position": 13,
-    "same-name-same-type": 6,
+    "size-variant-reject": 1,
+    "variant-prop-position": 23,
+    "same-name-same-type": 7,
     "same-name-cross-type": 0,
     "different-type": 910,
     "different-name": 988,
@@ -8548,6 +8548,312 @@
         "unknown": 0
       },
       "pairs": []
+    },
+    {
+      "fixture": "failing/Buttonsolid",
+      "disjointCount": 12,
+      "patterns": {
+        "size-variant-reject": 1,
+        "variant-prop-position": 10,
+        "same-name-same-type": 1,
+        "same-name-cross-type": 0,
+        "different-type": 0,
+        "different-name": 0,
+        "unknown": 0
+      },
+      "pairs": [
+        {
+          "parentId": "16215:37603",
+          "a": "16215:37694",
+          "b": "16215:37748",
+          "variantsA": [
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False"
+          ],
+          "variantsB": [
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False"
+          ],
+          "pattern": "variant-prop-position"
+        },
+        {
+          "parentId": "16215:37612",
+          "a": "16215:37613",
+          "b": "16246:1228780",
+          "variantsA": [
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=False"
+          ],
+          "variantsB": [
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+          ],
+          "pattern": "variant-prop-position"
+        },
+        {
+          "parentId": "16215:37612",
+          "a": "16215:37613",
+          "b": "16246:1228782",
+          "variantsA": [
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=False"
+          ],
+          "variantsB": [
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+          ],
+          "pattern": "variant-prop-position"
+        },
+        {
+          "parentId": "16215:37612",
+          "a": "16215:37613",
+          "b": "16215:37753",
+          "variantsA": [
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=False"
+          ],
+          "variantsB": [
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+          ],
+          "pattern": "variant-prop-position"
+        },
+        {
+          "parentId": "16215:37604",
+          "a": "16215:37756",
+          "b": "16215:37671",
+          "variantsA": [
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+          ],
+          "variantsB": [
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=False"
+          ],
+          "pattern": "size-variant-reject"
+        },
+        {
+          "parentId": "16215:37604",
+          "a": "16215:37756",
+          "b": "16215:37608",
+          "variantsA": [
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+          ],
+          "variantsB": [
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=False"
+          ],
+          "pattern": "variant-prop-position"
+        },
+        {
+          "parentId": "16215:37604",
+          "a": "16215:37756",
+          "b": "16215:37605",
+          "variantsA": [
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+          ],
+          "variantsB": [
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=True"
+          ],
+          "pattern": "variant-prop-position"
+        },
+        {
+          "parentId": "16215:37604",
+          "a": "16215:37756",
+          "b": "16215:37607",
+          "variantsA": [
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
+          ],
+          "variantsB": [
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=False"
+          ],
+          "pattern": "variant-prop-position"
+        },
+        {
+          "parentId": "16215:37604",
+          "a": "16215:37671",
+          "b": "16215:37607",
+          "variantsA": [
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=False"
+          ],
+          "variantsB": [
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=False"
+          ],
+          "pattern": "same-name-same-type"
+        },
+        {
+          "parentId": "16215:37605",
+          "a": "16293:159639",
+          "b": "16215:37606",
+          "variantsA": [
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=True"
+          ],
+          "variantsB": [
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=True"
+          ],
+          "pattern": "variant-prop-position"
+        },
+        {
+          "parentId": "16215:37605",
+          "a": "16215:37618",
+          "b": "16215:37606",
+          "variantsA": [
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=True"
+          ],
+          "variantsB": [
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=True"
+          ],
+          "pattern": "variant-prop-position"
+        },
+        {
+          "parentId": "16215:37605",
+          "a": "16215:37606",
+          "b": "16293:161071",
+          "variantsA": [
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=True"
+          ],
+          "variantsB": [
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=True"
+          ],
+          "pattern": "variant-prop-position"
+        }
+      ]
     },
     {
       "fixture": "failing/Checkbox",
