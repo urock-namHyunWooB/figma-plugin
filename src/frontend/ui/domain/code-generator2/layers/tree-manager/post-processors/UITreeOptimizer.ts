@@ -345,6 +345,42 @@ export class UITreeOptimizer {
    * DynamicStyleDecomposer가 pseudo 데이터를 네이티브로 분배하므로,
    * 별도의 pseudo 재부착 로직 없이 decomposer 결과를 직접 사용.
    */
+  /**
+   * variantName ("Size=L, State=Hover" 또는 "Default")을 prop map으로 파싱.
+   */
+  private parseVariantName(variantName: string): Record<string, string> {
+    const result: Record<string, string> = {};
+    for (const pair of variantName.split(",")) {
+      const [k, v] = pair.trim().split("=");
+      if (k && v) result[k.trim()] = v.trim();
+    }
+    return result;
+  }
+
+  /**
+   * 진단의 outlier variant props에 매칭되는 mergedNodes entry의 raw figma id 반환.
+   * 매칭 기준: outlier props의 모든 [key, value]가 variantName parsed에 동일하게 존재.
+   * 매칭 실패 시 undefined → FeedbackBuilder가 representative nodeId fallback 사용.
+   */
+  private lookupVariantNodeId(
+    mergedNodes: Array<{ id: string; variantName?: string }>,
+    outlierProps: Record<string, string>
+  ): string | undefined {
+    for (const m of mergedNodes) {
+      if (!m.variantName) continue;
+      const parsed = this.parseVariantName(m.variantName);
+      let allMatch = true;
+      for (const [k, v] of Object.entries(outlierProps)) {
+        if (parsed[k] !== v) {
+          allMatch = false;
+          break;
+        }
+      }
+      if (allMatch) return m.id;
+    }
+    return undefined;
+  }
+
   private decomposeDynamicStyles(node: UINode, diagnostics?: VariantInconsistency[]): void {
     if (node.styles?.dynamic && node.styles.dynamic.length > 0) {
       // Decomposer 전 최적화: pseudo 중복 제거, 빈 entry 제거
@@ -363,6 +399,14 @@ export class UITreeOptimizer {
         for (const d of diag) {
           d.nodeName = node.name;
           d.nodeId = node.id;
+          // 각 variant entry에 raw figma node id를 채워서 fix-assist가
+          // outlier variant의 정확한 노드를 수정할 수 있게 한다.
+          if (node.mergedNodes && node.mergedNodes.length > 0) {
+            for (const v of d.variants) {
+              const matchedId = this.lookupVariantNodeId(node.mergedNodes, v.props);
+              if (matchedId) v.nodeId = matchedId;
+            }
+          }
         }
         diagnostics.push(...diag);
       }

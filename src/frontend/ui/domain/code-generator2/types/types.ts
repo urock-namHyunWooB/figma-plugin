@@ -67,11 +67,17 @@ export interface VariantInconsistency {
   propName: string;
   propValue: string;
   nodeName?: string;
-  /** 진단이 발견된 UINode의 id (Figma 원본 노드 id) */
+  /** 진단이 발견된 UINode의 id (Figma 원본 노드 id, representative) */
   nodeId?: string;
   variants: Array<{
     props: Record<string, string>;
     value: string;
+    /**
+     * 이 variant entry에 해당하는 raw figma node id.
+     * fix-assist는 outlier variant의 nodeId로 정확한 figma 노드를 수정.
+     * mergedNodes lookup이 실패하면 undefined (FeedbackBuilder는 fallback으로 진단의 representative nodeId 사용).
+     */
+    nodeId?: string;
   }>;
   expectedValue: string | null;
   /** 이 진단이 피드백 엔진에서 자동 fix 가능한지 (expectedValue != null 기반) */
@@ -302,6 +308,12 @@ interface UINodeBase {
   bindings?: Bindings;
   /** 휴리스틱이 판별한 세부 역할 */
   semanticType?: string;
+  /**
+   * variant 출처 정보 — 어떤 raw figma 노드들로부터 합쳐졌는지.
+   * fix-assist의 outlier per-variant nodeId lookup에 사용.
+   * InternalNode에서 그대로 복사됨.
+   */
+  mergedNodes?: VariantOrigin[];
 }
 
 /**

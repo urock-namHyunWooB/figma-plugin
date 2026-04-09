@@ -59,6 +59,7 @@ class UINodeConverter {
           : {}),
         ...(node.bindings ? { bindings: node.bindings } : {}),
         ...(node.semanticType ? { semanticType: node.semanticType } : {}),
+        ...(node.mergedNodes ? { mergedNodes: node.mergedNodes } : {}),
         ...(overrides
           ? {
               overrideProps: Object.fromEntries(
@@ -134,6 +135,7 @@ class UINodeConverter {
         : {}),
       ...(node.bindings ? { bindings: node.bindings } : {}),
       ...(node.semanticType ? { semanticType: node.semanticType } : {}),
+      ...(node.mergedNodes ? { mergedNodes: node.mergedNodes } : {}),
       ...(node.loop ? { loop: node.loop } : {}),
       ...(node.childrenSlot ? { childrenSlot: node.childrenSlot } : {}),
       ...(nodeType === "component" && node.refId ? { refId: node.refId } : {}),

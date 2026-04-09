@@ -29,13 +29,17 @@ export class FeedbackBuilder {
         // expected가 null이면 모든 variant를 item으로 (tie 케이스)
         if (expected !== null && v.value === expected) continue;
 
+        // outlier variant entry의 raw figma nodeId 우선, 없으면 representative fallback
+        const targetNodeId = v.nodeId ?? d.nodeId;
+
         const coordKey = JSON.stringify(v.props);
-        const groupKey = `${d.nodeId}|${coordKey}`;
+        // 그룹 키도 outlier nodeId 기준 — 같은 variant root의 다른 속성은 같은 그룹
+        const groupKey = `${targetNodeId}|${coordKey}`;
 
         let group = groupMap.get(groupKey);
         if (!group) {
           group = {
-            nodeId: d.nodeId,
+            nodeId: targetNodeId,
             variantCoordinate: { ...v.props },
             items: [],
           };
@@ -47,7 +51,7 @@ export class FeedbackBuilder {
           cssProperty: d.cssProperty,
           actualValue: v.value,
           expectedValue: expected,
-          nodeId: d.nodeId,
+          nodeId: targetNodeId,
           variantCoordinate: { ...v.props },
           canAutoFix: expected !== null,
           reason: "",
