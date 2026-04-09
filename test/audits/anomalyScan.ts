@@ -8,6 +8,7 @@ export interface AnomalyReport {
   generatedAt: string;
   totalFixtures: number;
   totalAnomalies: number;
+  compileErrors: number;
   byDetector: Record<string, number>;
   byFixture: Array<{
     fixture: string;
@@ -32,6 +33,7 @@ export async function runAnomalyScan(
   const byDetector: Record<string, number> = {};
   for (const d of detectors) byDetector[d.name] = 0;
   let totalAnomalies = 0;
+  let compileErrors = 0;
 
   const entries = Object.entries(fixtureLoaders)
     .map(([p, loader]) => ({
@@ -47,7 +49,12 @@ export async function runAnomalyScan(
     const data = mod.default;
     const doc = data?.info?.document;
     if (!doc) {
-      byFixture.push({ fixture: name, count: 0, anomalies: [] });
+      byFixture.push({
+        fixture: `${name} (COMPILE_ERROR: missing document)`,
+        count: 0,
+        anomalies: [],
+      });
+      compileErrors++;
       continue;
     }
 
@@ -59,8 +66,13 @@ export async function runAnomalyScan(
       tree = tb.buildInternalTreeDebug(doc as any, {
         skipInteractionStripper: true,
       });
-    } catch {
-      byFixture.push({ fixture: name, count: 0, anomalies: [] });
+    } catch (err) {
+      byFixture.push({
+        fixture: `${name} (COMPILE_ERROR: ${(err as Error).message.slice(0, 80)})`,
+        count: 0,
+        anomalies: [],
+      });
+      compileErrors++;
       continue;
     }
 
@@ -88,6 +100,7 @@ export async function runAnomalyScan(
     generatedAt: new Date().toISOString(),
     totalFixtures: entries.length,
     totalAnomalies,
+    compileErrors,
     byDetector,
     byFixture,
   };
@@ -128,6 +141,7 @@ export function formatAnomalyReport(report: AnomalyReport): string {
   const lines: string[] = [];
   lines.push("=== Anomaly Scan ===");
   lines.push(`Total: ${report.totalAnomalies}`);
+  lines.push(`Compile errors: ${report.compileErrors}`);
   for (const [name, count] of Object.entries(report.byDetector)) {
     lines.push(`  ${name}: ${count}`);
   }
