@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-04-09T04:42:54.607Z",
+  "generatedAt": "2026-04-09T05:09:18.311Z",
   "totalFixtures": 84,
   "fixturesWithRegressions": 44,
-  "totalDisjointPairs": 1919,
+  "totalDisjointPairs": 1917,
   "compileErrors": 0,
   "patternTotals": {
     "size-variant-reject": 0,
-    "variant-prop-position": 16,
-    "unknown": 1903
+    "variant-prop-position": 13,
+    "unknown": 1904
   },
   "byFixture": [
     {
@@ -7546,8 +7546,8 @@
       "disjointCount": 6,
       "patterns": {
         "size-variant-reject": 0,
-        "variant-prop-position": 2,
-        "unknown": 4
+        "variant-prop-position": 0,
+        "unknown": 6
       },
       "pairs": [
         {
@@ -7619,6 +7619,7 @@
           "variantsB": [
             "Platform=iOS, Size=Medium, Active=False, Disable=False",
             "Platform=iOS, Size=Medium, Active=False, Disable=True",
+            "Platform=iOS, Size=Medium, Active=True, Disable=False",
             "Platform=iOS, Size=Small, Active=False, Disable=False",
             "Platform=iOS, Size=Small, Active=False, Disable=True"
           ],
@@ -7627,7 +7628,7 @@
         {
           "parentId": "16215:34985",
           "a": "I16215:34985;16215:35021",
-          "b": "I16215:34995;1579:9588",
+          "b": "I16215:34999;1579:9588",
           "variantsA": [
             "Platform=Normal, Size=Medium, Active=False, Disable=False",
             "Platform=Normal, Size=Medium, Active=False, Disable=True",
@@ -7639,7 +7640,6 @@
             "Platform=Normal, Size=Small, Active=True, Disable=True"
           ],
           "variantsB": [
-            "Platform=iOS, Size=Medium, Active=True, Disable=False",
             "Platform=iOS, Size=Medium, Active=True, Disable=True",
             "Platform=iOS, Size=Small, Active=True, Disable=False",
             "Platform=iOS, Size=Small, Active=True, Disable=True"
@@ -7649,38 +7649,38 @@
         {
           "parentId": "16215:34985",
           "a": "I16215:34993;1579:9584",
-          "b": "I16215:34995;1579:9588",
+          "b": "I16215:34999;1579:9588",
           "variantsA": [
             "Platform=iOS, Size=Medium, Active=False, Disable=False",
             "Platform=iOS, Size=Medium, Active=False, Disable=True",
+            "Platform=iOS, Size=Medium, Active=True, Disable=False",
             "Platform=iOS, Size=Small, Active=False, Disable=False",
             "Platform=iOS, Size=Small, Active=False, Disable=True"
           ],
           "variantsB": [
-            "Platform=iOS, Size=Medium, Active=True, Disable=False",
             "Platform=iOS, Size=Medium, Active=True, Disable=True",
             "Platform=iOS, Size=Small, Active=True, Disable=False",
             "Platform=iOS, Size=Small, Active=True, Disable=True"
           ],
-          "pattern": "variant-prop-position"
+          "pattern": "unknown"
         },
         {
           "parentId": "I16215:34985;16215:35021",
           "a": "I16215:34985;16215:35022",
-          "b": "I16215:34987;16215:35025",
+          "b": "I16215:34991;16215:35031",
           "variantsA": [
             "Platform=Normal, Size=Medium, Active=False, Disable=False",
             "Platform=Normal, Size=Medium, Active=False, Disable=True",
+            "Platform=Normal, Size=Medium, Active=True, Disable=False",
             "Platform=Normal, Size=Small, Active=False, Disable=False",
             "Platform=Normal, Size=Small, Active=False, Disable=True"
           ],
           "variantsB": [
-            "Platform=Normal, Size=Medium, Active=True, Disable=False",
             "Platform=Normal, Size=Medium, Active=True, Disable=True",
             "Platform=Normal, Size=Small, Active=True, Disable=False",
             "Platform=Normal, Size=Small, Active=True, Disable=True"
           ],
-          "pattern": "variant-prop-position"
+          "pattern": "unknown"
         }
       ]
     },
@@ -8578,24 +8578,23 @@
     },
     {
       "fixture": "failing/Toggle",
-      "disjointCount": 5,
+      "disjointCount": 3,
       "patterns": {
         "size-variant-reject": 0,
-        "variant-prop-position": 3,
-        "unknown": 2
+        "variant-prop-position": 2,
+        "unknown": 1
       },
       "pairs": [
         {
           "parentId": "46:4266",
           "a": "46:4267",
-          "b": "46:4274",
+          "b": "46:4283",
           "variantsA": [
             "Checked=true, Disable=false, Text=true",
             "Checked=true, Disable=true, Text=true"
           ],
           "variantsB": [
             "Checked=false, Disable=false, Text=false",
-            "Checked=false, Disable=false, Text=true",
             "Checked=false, Disable=true, Text=true"
           ],
           "pattern": "unknown"
@@ -8616,48 +8615,19 @@
         },
         {
           "parentId": "46:4266",
-          "a": "46:4274",
+          "a": "46:4283",
           "b": "46:4272",
           "variantsA": [
             "Checked=false, Disable=false, Text=false",
-            "Checked=false, Disable=false, Text=true",
             "Checked=false, Disable=true, Text=true"
           ],
           "variantsB": [
+            "Checked=false, Disable=false, Text=true",
             "Checked=false, Disable=true, Text=false",
             "Checked=true, Disable=false, Text=false",
             "Checked=true, Disable=false, Text=true",
             "Checked=true, Disable=true, Text=false",
             "Checked=true, Disable=true, Text=true"
-          ],
-          "pattern": "variant-prop-position"
-        },
-        {
-          "parentId": "46:4266",
-          "a": "46:4275",
-          "b": "46:4272",
-          "variantsA": [
-            "Checked=false, Disable=false, Text=true",
-            "Checked=false, Disable=true, Text=true"
-          ],
-          "variantsB": [
-            "Checked=false, Disable=true, Text=false",
-            "Checked=true, Disable=false, Text=false",
-            "Checked=true, Disable=false, Text=true",
-            "Checked=true, Disable=true, Text=false",
-            "Checked=true, Disable=true, Text=true"
-          ],
-          "pattern": "unknown"
-        },
-        {
-          "parentId": "46:4267",
-          "a": "46:4288",
-          "b": "46:4271",
-          "variantsA": [
-            "Checked=true, Disable=true, Text=true"
-          ],
-          "variantsB": [
-            "Checked=true, Disable=false, Text=true"
           ],
           "pattern": "variant-prop-position"
         }

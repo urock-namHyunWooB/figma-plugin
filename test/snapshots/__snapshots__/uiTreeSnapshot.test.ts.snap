@@ -1327,19 +1327,16 @@ exports[`UITree snapshots > any/StateinsertGuideTextfalse 1`] = `
 
 exports[`UITree snapshots > any/Switchswitch 1`] = `
 {
-  "arraySlotNames": [
-    "knobs",
-  ],
+  "arraySlotNames": [],
   "componentType": "toggle",
   "propNames": [
     "active",
     "disable",
-    "knobs",
     "onCheckedChange",
     "platform",
     "size",
   ],
-  "propsCount": 6,
+  "propsCount": 5,
   "root": {
     "children": [
       {
@@ -5202,18 +5199,15 @@ exports[`UITree snapshots > failing/Tagreview 1`] = `
 
 exports[`UITree snapshots > failing/Toggle 1`] = `
 {
-  "arraySlotNames": [
-    "fillFConfirms",
-  ],
+  "arraySlotNames": [],
   "componentType": "toggle",
   "propNames": [
     "checked",
     "disable",
-    "fillFConfirms",
     "onCheckedChange",
     "text",
   ],
-  "propsCount": 5,
+  "propsCount": 4,
   "root": {
     "children": [
       {
@@ -5223,13 +5217,6 @@ exports[`UITree snapshots > failing/Toggle 1`] = `
             "id": "46:4270",
             "name": "ON",
             "type": "text",
-          },
-          {
-            "children": [],
-            "id": "46:4288",
-            "name": "提示建议性/Fill/确认_FConfirm",
-            "refId": "3:403",
-            "type": "component",
           },
           {
             "children": [],
@@ -5245,7 +5232,7 @@ exports[`UITree snapshots > failing/Toggle 1`] = `
       },
       {
         "children": [],
-        "id": "46:4274",
+        "id": "46:4283",
         "name": "Rectangle 3",
         "type": "vector",
       },

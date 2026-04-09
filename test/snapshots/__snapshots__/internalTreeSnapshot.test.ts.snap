@@ -7158,6 +7158,10 @@ exports[`InternalTree snapshots > any/Switchswitch 1`] = `
                   "variantName": "Platform=Normal, Size=Medium, Active=False, Disable=False",
                 },
                 {
+                  "id": "I16215:34987;16215:35025",
+                  "variantName": "Platform=Normal, Size=Medium, Active=True, Disable=False",
+                },
+                {
                   "id": "I16215:34989;16215:35028",
                   "variantName": "Platform=Normal, Size=Medium, Active=False, Disable=True",
                 },
@@ -7175,12 +7179,8 @@ exports[`InternalTree snapshots > any/Switchswitch 1`] = `
             },
             {
               "children": [],
-              "id": "I16215:34987;16215:35025",
+              "id": "I16215:34991;16215:35031",
               "mergedNodes": [
-                {
-                  "id": "I16215:34987;16215:35025",
-                  "variantName": "Platform=Normal, Size=Medium, Active=True, Disable=False",
-                },
                 {
                   "id": "I16215:34991;16215:35031",
                   "variantName": "Platform=Normal, Size=Medium, Active=True, Disable=True",
@@ -7327,6 +7327,10 @@ exports[`InternalTree snapshots > any/Switchswitch 1`] = `
                   "variantName": "Platform=iOS, Size=Medium, Active=False, Disable=False",
                 },
                 {
+                  "id": "I16215:34995;1579:9588;1642:9608",
+                  "variantName": "Platform=iOS, Size=Medium, Active=True, Disable=False",
+                },
+                {
                   "id": "I16215:34997;1579:9584;1642:9608",
                   "variantName": "Platform=iOS, Size=Medium, Active=False, Disable=True",
                 },
@@ -7349,6 +7353,10 @@ exports[`InternalTree snapshots > any/Switchswitch 1`] = `
                 {
                   "id": "I16215:34993;1579:9584;1579:9590",
                   "variantName": "Platform=iOS, Size=Medium, Active=False, Disable=False",
+                },
+                {
+                  "id": "I16215:34995;1579:9588;1579:9590",
+                  "variantName": "Platform=iOS, Size=Medium, Active=True, Disable=False",
                 },
                 {
                   "id": "I16215:34997;1579:9584;1579:9590",
@@ -7374,6 +7382,10 @@ exports[`InternalTree snapshots > any/Switchswitch 1`] = `
               "variantName": "Platform=iOS, Size=Medium, Active=False, Disable=False",
             },
             {
+              "id": "I16215:34995;1579:9588",
+              "variantName": "Platform=iOS, Size=Medium, Active=True, Disable=False",
+            },
+            {
               "id": "I16215:34997;1579:9584",
               "variantName": "Platform=iOS, Size=Medium, Active=False, Disable=True",
             },
@@ -7393,12 +7405,8 @@ exports[`InternalTree snapshots > any/Switchswitch 1`] = `
           "children": [
             {
               "children": [],
-              "id": "I16215:34995;1579:9588;1642:9608",
+              "id": "I16215:34999;1579:9588;1642:9608",
               "mergedNodes": [
-                {
-                  "id": "I16215:34995;1579:9588;1642:9608",
-                  "variantName": "Platform=iOS, Size=Medium, Active=True, Disable=False",
-                },
                 {
                   "id": "I16215:34999;1579:9588;1642:9608",
                   "variantName": "Platform=iOS, Size=Medium, Active=True, Disable=True",
@@ -7417,12 +7425,8 @@ exports[`InternalTree snapshots > any/Switchswitch 1`] = `
             },
             {
               "children": [],
-              "id": "I16215:34995;1579:9588;1579:9590",
+              "id": "I16215:34999;1579:9588;1579:9590",
               "mergedNodes": [
-                {
-                  "id": "I16215:34995;1579:9588;1579:9590",
-                  "variantName": "Platform=iOS, Size=Medium, Active=True, Disable=False",
-                },
                 {
                   "id": "I16215:34999;1579:9588;1579:9590",
                   "variantName": "Platform=iOS, Size=Medium, Active=True, Disable=True",
@@ -7440,12 +7444,8 @@ exports[`InternalTree snapshots > any/Switchswitch 1`] = `
               "type": "ELLIPSE",
             },
           ],
-          "id": "I16215:34995;1579:9588",
+          "id": "I16215:34999;1579:9588",
           "mergedNodes": [
-            {
-              "id": "I16215:34995;1579:9588",
-              "variantName": "Platform=iOS, Size=Medium, Active=True, Disable=False",
-            },
             {
               "id": "I16215:34999;1579:9588",
               "variantName": "Platform=iOS, Size=Medium, Active=True, Disable=True",
@@ -34283,36 +34283,15 @@ exports[`InternalTree snapshots > failing/Toggle 1`] = `
           "children": [
             {
               "children": [],
-              "id": "I46:4288;3111:1510",
-              "mergedNodes": [
-                {
-                  "id": "I46:4288;3111:1510",
-                  "variantName": "Checked=true, Disable=true, Text=true",
-                },
-              ],
-              "name": "Vector 154 (Stroke)",
-              "type": "VECTOR",
-            },
-          ],
-          "id": "46:4288",
-          "mergedNodes": [
-            {
-              "id": "46:4288",
-              "variantName": "Checked=true, Disable=true, Text=true",
-            },
-          ],
-          "name": "提示建议性/Fill/确认_FConfirm",
-          "type": "INSTANCE",
-        },
-        {
-          "children": [
-            {
-              "children": [],
               "id": "I46:4271;3111:1510",
               "mergedNodes": [
                 {
                   "id": "I46:4271;3111:1510",
                   "variantName": "Checked=true, Disable=false, Text=true",
+                },
+                {
+                  "id": "I46:4288;3111:1510",
+                  "variantName": "Checked=true, Disable=true, Text=true",
                 },
               ],
               "name": "Vector 154 (Stroke)",
@@ -34324,6 +34303,10 @@ exports[`InternalTree snapshots > failing/Toggle 1`] = `
             {
               "id": "46:4271",
               "variantName": "Checked=true, Disable=false, Text=true",
+            },
+            {
+              "id": "46:4288",
+              "variantName": "Checked=true, Disable=true, Text=true",
             },
           ],
           "name": "提示建议性/Fill/确认_FConfirm",
@@ -34346,12 +34329,8 @@ exports[`InternalTree snapshots > failing/Toggle 1`] = `
     },
     {
       "children": [],
-      "id": "46:4274",
+      "id": "46:4283",
       "mergedNodes": [
-        {
-          "id": "46:4274",
-          "variantName": "Checked=false, Disable=false, Text=true",
-        },
         {
           "id": "46:4283",
           "variantName": "Checked=false, Disable=false, Text=false",
@@ -34470,6 +34449,10 @@ exports[`InternalTree snapshots > failing/Toggle 1`] = `
         {
           "id": "46:4272",
           "variantName": "Checked=true, Disable=false, Text=true",
+        },
+        {
+          "id": "46:4274",
+          "variantName": "Checked=false, Disable=false, Text=true",
         },
         {
           "id": "46:4281",
