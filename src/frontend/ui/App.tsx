@@ -2,11 +2,12 @@ import React, { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { css } from "@emotion/react";
 import { useNavigate } from "react-router-dom";
 import useMessageHandler from "./useMessageHandler";
-import FigmaCodeGenerator, { type PropDefinition, type VariantInconsistency } from "@code-generator2";
+import FigmaCodeGenerator, { type PropDefinition, type FeedbackGroup } from "@code-generator2";
 import { useComponentRenderer } from "./hooks/useComponentRenderer";
 import { PropController } from "./components/PropController";
 import { CodeEditor } from "./components/CodeEditor";
 import { PropsMatrix } from "./components/PropsMatrix";
+import { FeedbackPanel } from "./components/FeedbackPanel";
 import ErrorBoundary from "@frontend/ui/components/ErrorBoundary";
 import { PublishTab } from "./components/PublishTab";
 import { ReleaseSection } from "./components/ReleaseSection";
@@ -294,7 +295,7 @@ function App() {
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [editedCode, setEditedCode] = useState<string | null>(null);
   const [deployCodes, setDeployCodes] = useState<{ emotion: string; tailwind: string } | null>(null);
-  const [variantWarnings, setVariantWarnings] = useState<VariantInconsistency[]>([]);
+  const [feedbackGroups, setFeedbackGroups] = useState<FeedbackGroup[]>([]);
   const editDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const previewContentRef = useRef<HTMLDivElement>(null);
@@ -377,7 +378,7 @@ function App() {
       setComponentName("");
       setDeployCodes(null);
       setGeneratedCode(null);
-      setVariantWarnings([]);
+      setFeedbackGroups([]);
       return;
     }
 
@@ -409,7 +410,7 @@ function App() {
       codeGenerator.compileWithDiagnostics().then((result) => {
         if (cancelled) return;
         setGeneratedCode(result.code);
-        setVariantWarnings(result.diagnostics);
+        setFeedbackGroups(result.feedbackGroups);
         setEditedCode(null);
       });
 
@@ -639,6 +640,23 @@ function App() {
               fixedProps={fixedProps}
               isLoading={isLoading}
               error={error}
+            />
+            <FeedbackPanel
+              groups={feedbackGroups}
+              onJumpToNode={(nodeId) => {
+                parent.postMessage(
+                  { pluginMessage: { type: "select-node", nodeId } },
+                  "*"
+                );
+              }}
+              onApplyFixItem={(itemId) => {
+                // Phase D에서 구현
+                console.log("apply fix item:", itemId);
+              }}
+              onApplyFixGroup={(groupId) => {
+                // Phase D에서 구현
+                console.log("apply fix group:", groupId);
+              }}
             />
           </div>
         )}
