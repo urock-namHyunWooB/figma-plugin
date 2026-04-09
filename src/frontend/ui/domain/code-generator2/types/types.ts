@@ -171,7 +171,8 @@ export type PropType = "variant" | "boolean" | "slot" | "string" | "function" | 
 interface PropBase {
   name: string;
   type: PropType;
-  defaultValue?: string | boolean | number;
+  /** null = explicit "no default" (e.g., slot props); array = array slot default */
+  defaultValue?: string | boolean | number | null | unknown[];
   required: boolean;
   /** Figma componentPropertyDefinitions 키 — DataPreparer 질의용 */
   sourceKey: string;
@@ -266,6 +267,7 @@ export type ComponentType =
   | "link"
   | "icon"
   | "frame"
+  | "badge"
   | "custom"
   | "unknown";
 

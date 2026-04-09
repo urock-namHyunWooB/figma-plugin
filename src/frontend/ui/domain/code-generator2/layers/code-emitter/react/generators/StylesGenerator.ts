@@ -187,11 +187,11 @@ export class StylesGenerator {
   private static convertRootToFluid(root: SemanticNode): void {
     if (!root.styles) return;
 
-    const replaceSize = (styles: Record<string, string>) => {
-      if (styles.width && styles.width.endsWith("px")) {
+    const replaceSize = (styles: Record<string, string | number>) => {
+      if (typeof styles.width === "string" && styles.width.endsWith("px")) {
         styles.width = "100%";
       }
-      if (styles.height && styles.height.endsWith("px")) {
+      if (typeof styles.height === "string" && styles.height.endsWith("px")) {
         styles.height = "100%";
       }
     };

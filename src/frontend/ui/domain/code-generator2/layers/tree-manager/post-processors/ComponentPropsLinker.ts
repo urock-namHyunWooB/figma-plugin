@@ -7,7 +7,7 @@
  * Override 감지는 TreeBuilder 레이어(overrideUtils.detectInstanceOverrides)에서 수행
  */
 
-import type { UITree, UINode, InstanceOverride, ComponentNode } from "../../../types/types";
+import type { UITree, UINode, InstanceOverride, ComponentNode, PropDefinition } from "../../../types/types";
 import type DataManager from "../../data-manager/DataManager";
 
 export class ComponentPropsLinker {
@@ -42,13 +42,18 @@ export class ComponentPropsLinker {
 
         const defaultValue = this.extractDefaultValue(override);
 
+        // override.propType: "string" | "number" | "boolean" → PropType
+        // number is not in PropType union, fall back to "string" (rendered as string in React)
+        const propType: PropDefinition["type"] =
+          override.propType === "number" ? "string" : override.propType;
+
         depTree.props.push({
-          type: override.propType,
+          type: propType,
           name: override.propName,
           defaultValue,
           required: false,
           sourceKey: "",
-        });
+        } as PropDefinition);
       }
 
       this.addBindingsToTree(depTree.root, overrides);

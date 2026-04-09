@@ -550,12 +550,12 @@ export class ProfileHeuristic implements IHeuristic {
   /** 조건에서 states prop의 값 추출 */
   private getStatesValue(condition: ConditionNode): string | undefined {
     if (condition.type === "eq" && /^states?$/i.test(condition.prop)) {
-      return condition.value;
+      return String(condition.value);
     }
     if (condition.type === "and") {
       for (const c of condition.conditions) {
         if (c.type === "eq" && /^states?$/i.test(c.prop)) {
-          return c.value;
+          return String(c.value);
         }
       }
     }

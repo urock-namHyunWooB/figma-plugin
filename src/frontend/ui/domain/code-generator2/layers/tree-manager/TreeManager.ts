@@ -173,7 +173,7 @@ class TreeManager {
       componentPropertyDefinitions: inferredProps, // 추론된 props 설정
     };
 
-    return this.treeBuilder.build(syntheticComponentSet);
+    return this.treeBuilder.build(syntheticComponentSet as any);
   }
 
   /**

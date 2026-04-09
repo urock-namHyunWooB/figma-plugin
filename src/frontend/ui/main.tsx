@@ -20,7 +20,7 @@ const twindConfig = defineConfig({
       ([, prop, value]: string[]) => ({
         [prop]: value.replace(/_/g, " ").replace(/\\_/g, "_"),
       }),
-    ],
+    ] as any,
   ],
   ignorelist: [/^css-/, /^hljs/, /^language-/, /^class_$/, /^function_$/],
 });

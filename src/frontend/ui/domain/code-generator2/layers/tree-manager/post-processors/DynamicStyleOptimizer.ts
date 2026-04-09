@@ -170,13 +170,13 @@ export class DynamicStyleOptimizer {
     condition: ConditionNode
   ): Map<string, string> | null {
     if (condition.type === "eq") {
-      return new Map([[condition.prop, condition.value]]);
+      return new Map([[condition.prop, String(condition.value)]]);
     }
     if (condition.type === "and" && (condition as any).conditions) {
       const map = new Map<string, string>();
       for (const c of (condition as any).conditions) {
         if (c.type === "eq") {
-          map.set(c.prop, c.value);
+          map.set(c.prop, String(c.value));
         } else if (c.type === "and" && c.conditions) {
           // 중첩 AND 풀기
           for (const inner of c.conditions) {

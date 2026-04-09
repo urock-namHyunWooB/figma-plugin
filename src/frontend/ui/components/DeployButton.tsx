@@ -80,7 +80,16 @@ export function DeployButton({ componentName, generatedCode, figmaNodeId }: Depl
       return;
     }
 
-    await deployComponent(componentName, generatedCode, figmaNodeId, setStatus);
+    // FIXME: deployComponent now requires { emotion, tailwind } (strategy-split
+    // deployment). DeployButton's single-string `generatedCode` prop has not been
+    // migrated. This component appears unused (no import sites). Safe to leave
+    // as-is until either the deploy workflow or this component is updated.
+    await deployComponent(
+      componentName,
+      { emotion: generatedCode, tailwind: generatedCode },
+      figmaNodeId,
+      setStatus,
+    );
   };
 
   const handleRelease = async () => {
