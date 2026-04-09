@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { isInteractionLayer } from "@code-generator2/layers/tree-manager/tree-builder/processors/InteractionLayerStripper";
+import { mapFigmaStateToPseudo } from "@code-generator2/layers/tree-manager/tree-builder/processors/InteractionLayerStripper";
 import type { InternalNode } from "@code-generator2/types/types";
 
 function node(name: string, type: string, children: InternalNode[] = []): InternalNode {
@@ -45,5 +46,37 @@ describe("isInteractionLayer", () => {
   it("name match is case-sensitive ('interaction' lowercase fails)", () => {
     const frame = node("interaction", "FRAME", []);
     expect(isInteractionLayer(frame)).toBe(false);
+  });
+});
+
+describe("mapFigmaStateToPseudo", () => {
+  it("maps Normal to null (no pseudo)", () => {
+    expect(mapFigmaStateToPseudo("Normal")).toBeNull();
+  });
+
+  it("maps Hover to :hover", () => {
+    expect(mapFigmaStateToPseudo("Hover")).toBe(":hover");
+  });
+
+  it("maps Pressed to :active", () => {
+    expect(mapFigmaStateToPseudo("Pressed")).toBe(":active");
+  });
+
+  it("maps Focused to :focus", () => {
+    expect(mapFigmaStateToPseudo("Focused")).toBe(":focus");
+  });
+
+  it("maps Disabled to :disabled", () => {
+    expect(mapFigmaStateToPseudo("Disabled")).toBe(":disabled");
+  });
+
+  it("is case-insensitive", () => {
+    expect(mapFigmaStateToPseudo("hover")).toBe(":hover");
+    expect(mapFigmaStateToPseudo("PRESSED")).toBe(":active");
+  });
+
+  it("returns null for unknown values", () => {
+    expect(mapFigmaStateToPseudo("Weird")).toBeNull();
+    expect(mapFigmaStateToPseudo("")).toBeNull();
   });
 });

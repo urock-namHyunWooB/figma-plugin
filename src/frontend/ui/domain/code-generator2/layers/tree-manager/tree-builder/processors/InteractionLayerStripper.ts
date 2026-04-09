@@ -1,4 +1,4 @@
-import type { InternalNode } from "../../../../types/types";
+import type { InternalNode, PseudoClass } from "../../../../types/types";
 
 /**
  * Interaction layer 감지.
@@ -18,4 +18,34 @@ export function isInteractionLayer(node: InternalNode): boolean {
   const children = node.children ?? [];
   if (children.length > 1) return false;
   return true;
+}
+
+/**
+ * Figma `State` variant 값을 CSS pseudo-class로 매핑.
+ *
+ * Spec §5.2 매핑 테이블:
+ * - Normal  → null (default state, no pseudo)
+ * - Hover   → :hover
+ * - Pressed → :active
+ * - Focused → :focus
+ * - Disabled → :disabled
+ *
+ * Case-insensitive. 알 수 없는 값은 null 반환.
+ */
+export function mapFigmaStateToPseudo(state: string): PseudoClass | null {
+  const normalized = state.toLowerCase().trim();
+  switch (normalized) {
+    case "normal":
+      return null;
+    case "hover":
+      return ":hover";
+    case "pressed":
+      return ":active";
+    case "focused":
+      return ":focus";
+    case "disabled":
+      return ":disabled";
+    default:
+      return null;
+  }
 }
