@@ -630,6 +630,10 @@ export class DynamicStyleDecomposer {
     // 1차: 엄격한 일관성 체크
     for (const propName of allProps) {
       if (this.isPropConsistentForCssKey(propName, cssKey, matrix)) {
+        // Owner-scoped 안전망 audit (선정된 prop 그룹 내 숨은 불일치 재확인)
+        if (diagnostics) {
+          this.auditOwnerConsistency(cssKey, propName, matrix, diagnostics);
+        }
         return propName;
       }
     }
@@ -913,6 +917,74 @@ export class DynamicStyleDecomposer {
       diagnostics.push({
         cssProperty: cssKey,
         propName: bestProp,
+        propValue,
+        variants,
+        expectedValue: isTie ? null : maxValue,
+      });
+    }
+  }
+
+  /**
+   * Owner-scoped 전수 audit.
+   * 1차 single-prop FD로 소유자가 결정된 후, 해당 prop의 모든 값 그룹이
+   * 실제로 내부 일관적인지 재검증하여 숨은 불일치를 진단으로 수집한다.
+   *
+   * isPropConsistentForCssKey가 true를 반환한 경우 진단이 추가될 가능성은
+   * 낮지만 (같은 isGroupConsistent를 사용), normalize edge case나 향후
+   * 분기 차이에 대한 안전망으로 남긴다. 또한 향후 전수 검사 경로 승격을
+   * 위한 구조적 진입점.
+   */
+  private static auditOwnerConsistency(
+    cssKey: string,
+    ownerProp: string,
+    matrix: MatrixEntry[],
+    diagnostics: VariantInconsistency[]
+  ): void {
+    const groups = this.buildPropGroups(ownerProp, cssKey, matrix);
+
+    for (const [propValue, group] of groups) {
+      if (this.isGroupConsistent(group)) continue;
+
+      // absent-only/모두 동일은 디자인 실수 아님
+      if (group.presentValues.length > 0) {
+        const first = normalizeCssValue(String(group.presentValues[0]));
+        const allSame = group.presentValues.every(
+          (v) => normalizeCssValue(String(v)) === first
+        );
+        if (allSame) continue;
+      }
+
+      const variants: VariantInconsistency["variants"] = [];
+      for (const entry of group.entries) {
+        if (!(cssKey in entry.style)) continue;
+        const props: Record<string, string> = {};
+        for (const [k, v] of entry.propValues) props[k] = v;
+        variants.push({
+          props,
+          value: normalizeCssValue(String(entry.style[cssKey])),
+        });
+      }
+
+      const valueCounts = new Map<string, number>();
+      for (const v of variants) {
+        valueCounts.set(v.value, (valueCounts.get(v.value) || 0) + 1);
+      }
+      let maxCount = 0;
+      let maxValue: string | null = null;
+      let isTie = false;
+      for (const [val, count] of valueCounts) {
+        if (count > maxCount) {
+          maxCount = count;
+          maxValue = val;
+          isTie = false;
+        } else if (count === maxCount) {
+          isTie = true;
+        }
+      }
+
+      diagnostics.push({
+        cssProperty: cssKey,
+        propName: ownerProp,
         propValue,
         variants,
         expectedValue: isTie ? null : maxValue,
