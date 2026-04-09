@@ -115,6 +115,26 @@ export function applyFix(node: any, spec: FixSpec): FixResult {
       return { success: true };
     }
 
+    case "width": {
+      const px = parsePx(val);
+      if (px === null) return { success: false, reason: `invalid px: ${val}` };
+      if (typeof node.resize !== "function") {
+        return { success: false, reason: "node does not support resize" };
+      }
+      node.resize(px, node.height);
+      return { success: true };
+    }
+
+    case "height": {
+      const px = parsePx(val);
+      if (px === null) return { success: false, reason: `invalid px: ${val}` };
+      if (typeof node.resize !== "function") {
+        return { success: false, reason: "node does not support resize" };
+      }
+      node.resize(node.width, px);
+      return { success: true };
+    }
+
     default:
       return { success: false, reason: `unsupported CSS property: ${prop}` };
   }

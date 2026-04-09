@@ -13,10 +13,13 @@ interface MockNode {
   paddingLeft: number;
   itemSpacing: number;
   opacity: number;
+  width: number;
+  height: number;
+  resize: (w: number, h: number) => void;
 }
 
 function mockFrameNode(overrides: Partial<MockNode> = {}): MockNode {
-  return {
+  const node: MockNode = {
     id: "n1",
     type: "FRAME",
     fills: [],
@@ -28,8 +31,15 @@ function mockFrameNode(overrides: Partial<MockNode> = {}): MockNode {
     paddingLeft: 0,
     itemSpacing: 0,
     opacity: 1,
+    width: 100,
+    height: 50,
+    resize(w: number, h: number) {
+      node.width = w;
+      node.height = h;
+    },
     ...overrides,
   };
+  return node;
 }
 
 describe("feedbackFixHandler.applyFix", () => {
@@ -128,6 +138,31 @@ describe("feedbackFixHandler.applyFix", () => {
     const node = mockFrameNode();
     const result = applyFix(node, { cssProperty: "padding-top", expectedValue: "12rem" });
     expect(result.success).toBe(false);
+  });
+
+  it("width px → resize(W, height)", () => {
+    const node = mockFrameNode({ width: 100, height: 50 });
+    const result = applyFix(node, { cssProperty: "width", expectedValue: "200px" });
+    expect(result.success).toBe(true);
+    expect(node.width).toBe(200);
+    expect(node.height).toBe(50); // height 보존
+  });
+
+  it("height px → resize(width, H)", () => {
+    const node = mockFrameNode({ width: 100, height: 50 });
+    const result = applyFix(node, { cssProperty: "height", expectedValue: "80px" });
+    expect(result.success).toBe(true);
+    expect(node.width).toBe(100); // width 보존
+    expect(node.height).toBe(80);
+  });
+
+  it("resize 함수가 없는 노드는 success=false", () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const node = mockFrameNode() as any;
+    delete node.resize;
+    const result = applyFix(node, { cssProperty: "width", expectedValue: "100px" });
+    expect(result.success).toBe(false);
+    expect(result.reason).toContain("resize");
   });
 });
 
