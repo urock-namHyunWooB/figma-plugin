@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useReducer, useRef } from "react";
 
 import FigmaCodeGenerator from "@frontend/ui/domain/code-generator2";
-import type { GeneratorOptions, FigmaNodeData } from "@frontend/ui/domain/code-generator2";
+import type { GeneratorOptions, FigmaNodeData, FeedbackGroup } from "@frontend/ui/domain/code-generator2";
 import { renderReactComponent } from "@frontend/ui/domain/renderer/component-render";
 
 export type StyleStrategyType = "emotion" | "tailwind";
@@ -18,6 +18,7 @@ type State = {
   Component: React.ComponentType<any> | null;
   error: string | null;
   compileMs: number | null;
+  feedbackGroups: FeedbackGroup[];
 };
 
 type Action =
@@ -28,6 +29,7 @@ type Action =
         code: string;
         Component: React.ComponentType<any>;
         compileMs: number;
+        feedbackGroups: FeedbackGroup[];
       };
     }
   | { type: "COMPILE_ERROR"; payload: { error: string } };
@@ -38,6 +40,7 @@ const initialState: State = {
   Component: null,
   error: null,
   compileMs: null,
+  feedbackGroups: [],
 };
 
 function reducer(state: State, action: Action): State {
@@ -49,6 +52,7 @@ function reducer(state: State, action: Action): State {
         Component: null,
         error: null,
         compileMs: null,
+        feedbackGroups: [],
       };
     case "COMPILE_SUCCESS":
       return {
@@ -57,6 +61,7 @@ function reducer(state: State, action: Action): State {
         Component: action.payload.Component,
         error: null,
         compileMs: action.payload.compileMs,
+        feedbackGroups: action.payload.feedbackGroups,
       };
     case "COMPILE_ERROR":
       return {
@@ -65,6 +70,7 @@ function reducer(state: State, action: Action): State {
         Component: null,
         error: action.payload.error,
         compileMs: null,
+        feedbackGroups: [],
       };
     default:
       return state;
@@ -138,10 +144,10 @@ export function useCompilerDebug(
       const start = performance.now();
       try {
         const compiler = new FigmaCodeGenerator(spec!, compilerOptions);
-        const code = await compiler.compile();
-        if (!code) throw new Error("코드 생성 실패");
+        const result = await compiler.compileWithDiagnostics();
+        if (!result.code) throw new Error("코드 생성 실패");
 
-        const Component = await renderReactComponent(code);
+        const Component = await renderReactComponent(result.code);
 
         if (!isMounted) return;
         if (compileId !== compileIdRef.current) return;
@@ -149,9 +155,10 @@ export function useCompilerDebug(
         dispatch({
           type: "COMPILE_SUCCESS",
           payload: {
-            code,
+            code: result.code,
             Component,
             compileMs: Math.round(performance.now() - start),
+            feedbackGroups: result.feedbackGroups,
           },
         });
       } catch (err) {

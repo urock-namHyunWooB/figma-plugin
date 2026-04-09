@@ -88,6 +88,40 @@ export function createExtractionPipeline(opts: ExtractionPipelineOptions): Extra
         ids.add(change.id);
       }
       if (ids.size > 0) cache.invalidate(ids);
+
+      // 선택한 루트의 자손이 변경되면 루트 cache도 stale해지므로
+      // 자손 여부를 parent chain으로 확인 → 영향 있을 때만 재추출 schedule.
+      // 삭제된 노드는 추적 불가 → 안전하게 affected로 간주.
+      const selection = figma.currentPage.selection;
+      if (selection.length === 0) return;
+      const target = selection[0];
+
+      let affected = false;
+      for (const id of ids) {
+        if (id === target.id) {
+          affected = true;
+          break;
+        }
+        const changed = figma.getNodeById(id);
+        if (!changed) {
+          affected = true;
+          break;
+        }
+        let cur: BaseNode | null = changed.parent;
+        while (cur) {
+          if (cur.id === target.id) {
+            affected = true;
+            break;
+          }
+          cur = cur.parent;
+        }
+        if (affected) break;
+      }
+
+      if (affected) {
+        cache.invalidate([target.id]);
+        dispatcher.schedule({ node: target, bypassCache: false });
+      }
     };
     figma.currentPage.on("nodechange", listener);
     listenerPage = figma.currentPage;
