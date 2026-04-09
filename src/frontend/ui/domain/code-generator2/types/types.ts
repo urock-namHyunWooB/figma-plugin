@@ -124,6 +124,8 @@ export type StyleObject = {
     true: Record<string, string | number>;
     false: Record<string, string | number>;
   };
+  /** 레거시: variant prop별 스타일 맵 (StylesGenerator/UITreeOptimizer 일부 분기에서만 사용) */
+  variants?: Record<string, Record<string, Record<string, string | number>>>;
 };
 
 /**
@@ -169,7 +171,8 @@ export type PropType = "variant" | "boolean" | "slot" | "string" | "function" | 
 interface PropBase {
   name: string;
   type: PropType;
-  defaultValue?: string | boolean | number;
+  /** null = explicit "no default" (e.g., slot props); array = array slot default */
+  defaultValue?: string | boolean | number | null | unknown[];
   required: boolean;
   /** Figma componentPropertyDefinitions 키 — DataPreparer 질의용 */
   sourceKey: string;
@@ -264,6 +267,7 @@ export type ComponentType =
   | "link"
   | "icon"
   | "frame"
+  | "badge"
   | "custom"
   | "unknown";
 
@@ -292,6 +296,8 @@ export interface Bindings {
   attrs?: Record<string, BindingSource>;
   /** 노드 콘텐츠 바인딩 — TextNode, SlotNode */
   content?: BindingSource;
+  /** 텍스트 노드의 텍스트 내용 바인딩 (CSS 보존 텍스트 치환용) */
+  textContent?: BindingSource;
   /** 인라인 스타일 바인딩 — CSS 속성명 → 소스 (예: background → props.iconBg) */
   style?: Record<string, BindingSource>;
 }

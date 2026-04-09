@@ -423,6 +423,10 @@ function App() {
         otherGenerator.compile(),
       ]).then(([currentCode, otherCode]) => {
         if (cancelled) return;
+        if (currentCode == null || otherCode == null) {
+          setDeployCodes(null);
+          return;
+        }
         setDeployCodes(
           styleStrategy === "emotion"
             ? { emotion: currentCode, tailwind: otherCode }

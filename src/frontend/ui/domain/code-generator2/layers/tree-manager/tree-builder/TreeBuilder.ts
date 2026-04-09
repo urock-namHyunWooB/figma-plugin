@@ -1,6 +1,7 @@
 import {
   UITree,
   InternalTree,
+  InternalNode,
   PropDefinition,
   ConditionNode,
 } from "../../../types/types";
@@ -311,19 +312,19 @@ class TreeBuilder {
         const compName = (origNode as any)?.name || compId;
         compNameById.set(compId, compName);
         if (!variantCompMap.has(compName)) variantCompMap.set(compName, new Set());
-        variantCompMap.get(compName)!.add(m.variantName);
+        if (m.variantName) variantCompMap.get(compName)!.add(m.variantName);
       }
 
       // 모든 variant가 같은 componentName이면 분리 불필요
       if (variantCompMap.size <= 1) continue;
 
       // 어떤 prop이 componentId를 제어하는지 찾기
-      const controllingProp = this.findControllingPropForComponent(child.mergedNodes, variantCompMap);
+      const controllingProp = this.findControllingPropForComponent(child.mergedNodes as any, variantCompMap);
       if (!controllingProp) continue;
 
       // controlling prop이 variant root 크기도 변경하는 prop이면 분리하지 않음
       // (예: size prop이 전체 크기를 바꾸면서 아이콘도 바뀌는 경우 → 같은 역할)
-      if (this.isPropChangingRootSize(child.mergedNodes, controllingProp)) continue;
+      if (this.isPropChangingRootSize(child.mergedNodes as any, controllingProp)) continue;
 
       // 분리: componentName별로 새 INSTANCE 노드 생성
       const newNodes: InternalNode[] = [];

@@ -80,7 +80,7 @@ class TreeManager {
       // v1 호환: I... 노드 사전 정리 (트리 빌드 전에 소스 데이터에서 제거)
       // 원본 children이 있는 dependency에서 I... 노드 삭제
       const hasOriginalChildren = group.variants.some((v) => {
-        const children = v.info.document.children || [];
+        const children = (v.info.document as any).children || [];
         return children.some((c: any) => c.id && !c.id.startsWith("I"));
       });
       if (hasOriginalChildren) {
@@ -173,7 +173,7 @@ class TreeManager {
       componentPropertyDefinitions: inferredProps, // 추론된 props 설정
     };
 
-    return this.treeBuilder.build(syntheticComponentSet);
+    return this.treeBuilder.build(syntheticComponentSet as any);
   }
 
   /**

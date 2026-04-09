@@ -29,9 +29,10 @@ export class TextProcessor {
     const characters = node.characters;
 
     // characterStyleOverrides가 없으면 전체 텍스트를 하나의 segment로
+    const nodeAny = node as any;
     if (
-      !node.characterStyleOverrides ||
-      node.characterStyleOverrides.length === 0
+      !nodeAny.characterStyleOverrides ||
+      nodeAny.characterStyleOverrides.length === 0
     ) {
       return [{ text: characters }];
     }

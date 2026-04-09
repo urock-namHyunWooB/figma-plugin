@@ -326,23 +326,6 @@ export class DropdownHeuristic implements IHeuristic {
     );
   }
 
-  /**
-   * root의 open 조건 dynamic style에서 gap 변경 제거
-   * list가 absolute이므로 open 시 gap 변경은 label↔trigger 간격만 흔들림
-   */
-  private removeRootOpenGap(root: InternalNode): void {
-    if (!root.styles?.dynamic) return;
-    for (const entry of root.styles.dynamic) {
-      if (entry.condition.type === "truthy" && (entry.condition as any).prop === "open") {
-        delete entry.style["gap"];
-      }
-    }
-    // 빈 dynamic entry 정리
-    root.styles.dynamic = root.styles.dynamic.filter(
-      (e) => Object.keys(e.style).length > 0
-    );
-  }
-
   private findListContainer(node: InternalNode): InternalNode | null {
     for (const child of node.children || []) {
       if (/^list$/i.test(child.name)) return child;

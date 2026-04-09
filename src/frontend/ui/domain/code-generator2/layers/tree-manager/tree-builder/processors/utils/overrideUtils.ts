@@ -4,8 +4,8 @@
  * INSTANCE 노드의 override 비교를 위한 공통 유틸 함수
  */
 
-import type { InternalTree, InstanceOverride } from "../../../../types/types";
-import type DataManager from "../../../data-manager/DataManager";
+import type { InternalTree, InstanceOverride } from "../../../../../types/types";
+import type DataManager from "../../../../data-manager/DataManager";
 
 /**
  * 인스턴스들이 서로 다른 override 값을 가지는지 확인

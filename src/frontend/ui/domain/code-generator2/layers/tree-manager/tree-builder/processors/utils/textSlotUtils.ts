@@ -5,8 +5,8 @@
  * 각 휴리스틱(Button, Input, Card 등)에서 컨텍스트에 맞게 사용 가능
  */
 
-import type { InternalTree } from "../../../../types/types";
-import type DataManager from "../../../data-manager/DataManager";
+import type { InternalTree } from "../../../../../types/types";
+import type DataManager from "../../../../data-manager/DataManager";
 
 /**
  * TEXT 노드의 실제 텍스트 내용 추출

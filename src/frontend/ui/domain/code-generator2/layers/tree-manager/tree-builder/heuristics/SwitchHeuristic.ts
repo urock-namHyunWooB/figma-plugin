@@ -258,7 +258,7 @@ export class SwitchHeuristic implements IHeuristic {
         if (knobs[i].mergedNodes) {
           primary.mergedNodes = [
             ...(primary.mergedNodes || []),
-            ...knobs[i].mergedNodes,
+            ...(knobs[i].mergedNodes ?? []),
           ];
         }
       }

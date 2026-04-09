@@ -9,8 +9,8 @@
  * 3. 배열 slot 감지 (개별 slot 제외)
  */
 
-import type { InternalTree, ArraySlotInfo, PropDefinition, SlotPropDefinition } from "../../../types/types";
-import type DataManager from "../../data-manager/DataManager";
+import type { InternalTree, ArraySlotInfo, PropDefinition, SlotPropDefinition } from "../../../../types/types";
+import type DataManager from "../../../data-manager/DataManager";
 import { hasDistinctOverrides } from "./utils/overrideUtils";
 import { toComponentName } from "../../../../utils/nameUtils";
 
@@ -78,7 +78,7 @@ export class SlotProcessor {
           defaultValue: null,
           ...componentInfo,
           nodeId: representativeNodeId,
-        } as SlotPropDefinition;
+        } as unknown as SlotPropDefinition;
       }
       return prop;
     });

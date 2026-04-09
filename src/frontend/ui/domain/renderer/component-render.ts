@@ -88,12 +88,14 @@ export async function renderReactComponent(
     const exportDefaultFunctionMatches = [
       ...code.matchAll(/export\s+default\s+function\s+(\w+)\s*\(/g),
     ];
-    const exportDefaultFunctionMatch = exportDefaultFunctionMatches.at(-1);
+    const exportDefaultFunctionMatch =
+      exportDefaultFunctionMatches[exportDefaultFunctionMatches.length - 1];
 
     const exportDefaultMatches = [
       ...code.matchAll(/export\s+default\s+(\w+)/g),
     ];
-    const exportDefaultMatch = exportDefaultMatches.at(-1);
+    const exportDefaultMatch =
+      exportDefaultMatches[exportDefaultMatches.length - 1];
 
     const exportFunctionMatch = code.match(/export\s+function\s+(\w+)\s*\(/);
     const functionMatch = code.match(/function\s+(\w+)\s*\(/);

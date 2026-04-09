@@ -4,7 +4,7 @@
  * INSTANCE 노드를 slot으로 변환하기 위한 휴리스틱 전용 유틸 함수들
  */
 
-import type { InternalTree } from "../../../../types/types";
+import type { InternalTree } from "../../../../../types/types";
 import type { ComponentPropertyDef } from "../../heuristics/IHeuristic";
 
 /**

@@ -485,7 +485,7 @@ export class UpdateSquashByIou {
         ...(node.componentPropertyReferences
           ? { componentPropertyReferences: { ...node.componentPropertyReferences } }
           : {}),
-        ...(node.componentId ? { componentId: node.componentId } : {}),
+        ...((node as any).componentId ? { componentId: (node as any).componentId } : {}),
       };
 
       clonedNode.children = node.children.map((child) =>
@@ -769,7 +769,9 @@ export class UpdateSquashByIou {
       if (!parent.metadata) parent.metadata = {};
       if (!parent.metadata.layoutOverrides)
         parent.metadata.layoutOverrides = {};
-      parent.metadata.layoutOverrides[merged.variantName] = css;
+      if (merged.variantName) {
+        parent.metadata.layoutOverrides[merged.variantName] = css;
+      }
     }
   }
 

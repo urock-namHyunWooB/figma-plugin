@@ -196,16 +196,16 @@ export class StyleProcessor {
     // text-box-trim으로 leading을 제거하여 Figma와 동일한 정렬 결과를 얻음
     if (node.type === "text") {
       if (!styles) {
-        styles = { base: {} };
+        styles = { base: {}, dynamic: [] };
       }
       styles = {
         ...styles,
         base: {
-          ...(styles.base || {}),
+          ...(styles!.base || {}),
           "text-box-trim": "trim-both",
           "text-box-edge": "cap alphabetic",
         },
-      };
+      } as StyleObject;
     }
 
     // strokeAlign: INSIDE → box-sizing: border-box 적용

@@ -194,7 +194,7 @@ export class VisibilityProcessor {
     const guaranteedEqs = new Map<string, string>();
     for (const g of guaranteed) {
       if (g.type === "eq") {
-        guaranteedEqs.set(g.prop, g.value);
+        guaranteedEqs.set(g.prop, String(g.value));
       }
     }
     if (guaranteedEqs.size === 0) return false;
@@ -218,7 +218,7 @@ export class VisibilityProcessor {
     for (const g of guaranteed) {
       if (g.type === "eq") {
         // 단일 eq → 정확히 하나의 값만 허용
-        allowed.set(g.prop, new Set([g.value]));
+        allowed.set(g.prop, new Set([String(g.value)]));
       } else if (g.type === "or") {
         // OR의 모든 분기가 같은 prop의 eq인 경우 → 허용 값 집합
         const props = new Set<string>();
@@ -227,7 +227,7 @@ export class VisibilityProcessor {
         for (const c of g.conditions) {
           if (c.type === "eq") {
             props.add(c.prop);
-            values.push(c.value);
+            values.push(String(c.value));
           } else {
             allEq = false;
             break;
@@ -276,7 +276,7 @@ export class VisibilityProcessor {
     switch (condition.type) {
       case "eq": {
         const allowed = allowedValues.get(condition.prop);
-        if (allowed && !allowed.has(condition.value)) {
+        if (allowed && !allowed.has(String(condition.value))) {
           return undefined; // 불가능한 값
         }
         return condition;
