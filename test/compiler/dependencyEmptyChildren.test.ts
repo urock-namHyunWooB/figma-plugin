@@ -29,8 +29,8 @@ describe("의존 컴포넌트 children 처리", () => {
     const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
-    // Colorgnbhomen 컴포넌트 정의가 존재해야 함
-    expect(result).toContain("Colorgnbhomen:");
+    // Colorgnbhomen 컴포넌트 정의가 존재해야 함 (function declaration - default)
+    expect(result).toMatch(/function\s+Colorgnbhomen\s*\(/);
 
     // 메인 컴포넌트에서 <Colorgnbhomen /> 참조로 렌더링되어야 함
     expect(result).toContain("<Colorgnbhomen");
@@ -90,8 +90,8 @@ describe("의존 컴포넌트 children 처리", () => {
     ];
 
     for (const comp of expectedComponents) {
-      // v2는 arrow function 사용 (const Comp: function declaration)
-      expect(result).toContain(`${comp}:`);
+      // default는 function declaration
+      expect(result).toMatch(new RegExp(`function\\s+${comp}\\s*\\(`));
     }
   });
 });

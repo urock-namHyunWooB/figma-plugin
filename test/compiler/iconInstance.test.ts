@@ -34,9 +34,9 @@ describe("INSTANCE 아이콘 SVG 합성 테스트", () => {
 
       expect(code).toBeDefined();
 
-      // Iconanchor 컴포넌트 정의 안에 SVG가 있어야 함
+      // Iconanchor 컴포넌트 정의 안에 SVG가 있어야 함 (function declaration - default)
       const iconMatch = code!.match(
-        /const Iconanchor[\s\S]*?return\s*\(?([\s\S]*?)\);\s*\};/
+        /function\s+Iconanchor\s*\([^)]*\)\s*\{[\s\S]*?return\s*\(?([\s\S]*?)\);\s*\}/
       );
       expect(iconMatch).not.toBeNull();
       expect(iconMatch![1]).toContain("<svg");

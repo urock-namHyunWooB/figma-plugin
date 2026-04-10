@@ -430,8 +430,8 @@ describe("compiler 테스트", () => {
         });
 
         test("dependency 컴포넌트가 같은 파일에 생성되어야 한다", () => {
-          // SelectButton이 코드에 포함되어야 함 (arrow function)
-          expect(generatedCode).toMatch(/const\s+SelectButton:/);
+          // SelectButton이 코드에 포함되어야 함 (function declaration - default)
+          expect(generatedCode).toMatch(/function\s+SelectButton\s*\(/);
         });
 
         test("dependency 컴포넌트 이름이 올바르게 생성되어야 한다 (variant 이름이 아님)", () => {

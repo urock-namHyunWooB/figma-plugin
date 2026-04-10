@@ -260,7 +260,9 @@ export class ReactBundler {
     const match = code.match(funcRegex);
     if (!match) return code;
 
-    const params = match[1];
+    const params = withFc
+      ? match[1].replace(/\s*:.*$/, "")   // "props: SubProps" → "props"
+      : match[1];
     const typeAnnotation = withFc
       ? `const ${componentName}: React.FC<${componentName}Props> = (${params}) => {`
       : `const ${componentName} = (${params}) => {`;
@@ -277,7 +279,10 @@ export class ReactBundler {
     code: string,
     componentName: string
   ): string {
-    const arrowStart = code.indexOf(`const ${componentName}:`);
+    let arrowStart = code.indexOf(`const ${componentName}:`);
+    if (arrowStart === -1) {
+      arrowStart = code.indexOf(`const ${componentName} =`);
+    }
     if (arrowStart === -1) return code;
 
     const funcBodyStart = code.indexOf("{", code.indexOf("=>", arrowStart));
