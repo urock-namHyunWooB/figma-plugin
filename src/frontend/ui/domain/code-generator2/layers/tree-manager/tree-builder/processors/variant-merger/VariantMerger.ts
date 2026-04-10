@@ -675,9 +675,11 @@ export class VariantMerger {
     };
 
     if (children) {
-      internalNode.children = children.map((child) =>
-        this.convertToInternalNode(child, variantName, internalNode)
-      );
+      internalNode.children = children
+        .filter((child) => (child as any).visible !== false)
+        .map((child) =>
+          this.convertToInternalNode(child, variantName, internalNode)
+        );
     }
 
     return internalNode;
