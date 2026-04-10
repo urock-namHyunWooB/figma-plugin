@@ -268,21 +268,15 @@ export class StylesGenerator {
   ): string {
     const escaped = this.escapeRegex(oldName);
 
-    // 1. Variant 객체명 치환: oldName_xxxStyles → newName_xxxStyles
+    // 1. 모든 _xxx 접미 패턴 치환 (variant/boolean 포함)
     //    예: btnCss_sizeStyles → btnCss_2_sizeStyles
+    //    예: btnCss_disableTrue → btnCss_2_disableTrue
     code = code.replace(
-      new RegExp(`\\b${escaped}(_\\w+Styles)\\b`, "g"),
+      new RegExp(`\\b${escaped}(_\\w+)\\b`, "g"),
       `${newName}$1`
     );
 
-    // 1b. Boolean 개별 변수 치환: oldName_xxxTrue/False → newName_xxxTrue/False
-    //     예: btnCss_disableTrue → btnCss_2_disableTrue
-    code = code.replace(
-      new RegExp(`\\b${escaped}(_\\w+(?:True|False))\\b`, "g"),
-      `${newName}$1`
-    );
-
-    // 2. Base 변수명 치환: oldName → newName
+    // 2. Base 변수명 치환
     //    예: btnCss → btnCss_2
     code = code.replace(
       new RegExp(`\\b${escaped}\\b`, "g"),
