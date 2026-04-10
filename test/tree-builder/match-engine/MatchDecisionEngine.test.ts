@@ -92,7 +92,9 @@ describe("MatchDecisionEngine (Phase 2 cost form)", () => {
     expect(d.signalResults.map((r) => r.signalName)).toEqual(["s1", "s2", "s3"]);
   });
 
-  it("short-circuits evaluation after first veto", () => {
+  // Spec C: 신호 독립성 복원 — 모든 신호가 평가된 후 resolution
+
+  it("evaluates all signals even after veto, final decision is veto", () => {
     let s3Called = false;
     const engine = new MatchDecisionEngine(
       [
@@ -110,10 +112,11 @@ describe("MatchDecisionEngine (Phase 2 cost form)", () => {
     );
     const d = engine.decide(n("a"), n("b"), ctx);
     expect(d.decision).toBe("veto");
-    expect(s3Called).toBe(false);
+    expect(s3Called).toBe(true); // 모든 신호가 평가됨
+    expect(d.signalResults).toHaveLength(3);
   });
 
-  it("returns match immediately when a signal returns decisive-match", () => {
+  it("decisive-match overrides veto (IdMatch absolute certainty)", () => {
     const engine = new MatchDecisionEngine(
       [
         fakeSignal("s1", { kind: "match-with-cost", cost: 0.1, reason: "" }),
@@ -125,9 +128,10 @@ describe("MatchDecisionEngine (Phase 2 cost form)", () => {
     const d = engine.decide(n("a"), n("b"), ctx);
     expect(d.decision).toBe("match");
     expect(d.totalCost).toBe(0);
+    expect(d.signalResults).toHaveLength(3); // 모든 신호 수집
   });
 
-  it("short-circuits on decisive-match (signals after are not evaluated)", () => {
+  it("evaluates all signals even after decisive-match", () => {
     let s3Called = false;
     const engine = new MatchDecisionEngine(
       [
@@ -139,6 +143,20 @@ describe("MatchDecisionEngine (Phase 2 cost form)", () => {
     );
     const d = engine.decide(n("a"), n("b"), ctx);
     expect(d.decision).toBe("match");
-    expect(s3Called).toBe(false);
+    expect(s3Called).toBe(true); // 모든 신호가 평가됨
+    expect(d.signalResults).toHaveLength(3);
+  });
+
+  it("veto overrides decisive-match-with-cost", () => {
+    const engine = new MatchDecisionEngine(
+      [
+        fakeSignal("s1", { kind: "decisive-match-with-cost", cost: 0.05, reason: "NP match" }),
+        fakeSignal("s2", { kind: "veto", reason: "후속 신호가 거부" }),
+      ],
+      defaultMatchingPolicy,
+    );
+    const d = engine.decide(n("a"), n("b"), ctx);
+    expect(d.decision).toBe("veto");
+    expect(d.totalCost).toBe(Infinity);
   });
 });
