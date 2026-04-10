@@ -66,7 +66,7 @@ class TreeBuilder {
     this.propsExtractor = new PropsExtractor(dataManager);
     this.slotProcessor = new SlotProcessor(dataManager);
     this.styleProcessor = new StyleProcessor(dataManager);
-    this.visibilityProcessor = new VisibilityProcessor();
+    this.visibilityProcessor = new VisibilityProcessor(dataManager);
     this.externalRefsProcessor = new ExternalRefsProcessor(dataManager);
     this.heuristicsRunner = new HeuristicsRunner();
     this.nodeConverter = new UINodeConverter(dataManager);
