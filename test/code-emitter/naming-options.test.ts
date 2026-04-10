@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { EmotionStrategy } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/style-strategy/EmotionStrategy";
+import { renameNativeProps } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/ReactEmitter";
 
 describe("EmotionStrategy naming options", () => {
   describe("styleBaseSuffix", () => {
@@ -51,5 +52,28 @@ describe("EmotionStrategy naming options", () => {
       expect(r1.variableName).toBe("s1");
       expect(r2.variableName).toBe("s2");
     });
+  });
+});
+
+describe("renameNativeProps conflictPropPrefix", () => {
+  const makeTree = (propName: string) => ({
+    root: { type: "button", children: [] },
+    props: [{ name: propName, type: "variant", sourceKey: propName, defaultValue: "submit" }],
+    name: "Btn",
+  });
+
+  it("uses 'custom' prefix by default", () => {
+    const result = renameNativeProps(makeTree("type") as any);
+    expect(result.props[0].name).toBe("customType");
+  });
+
+  it("uses custom prefix when provided", () => {
+    const result = renameNativeProps(makeTree("type") as any, "fig");
+    expect(result.props[0].name).toBe("figType");
+  });
+
+  it("does not rename when no conflict", () => {
+    const result = renameNativeProps(makeTree("size") as any, "fig");
+    expect(result.props[0].name).toBe("size");
   });
 });

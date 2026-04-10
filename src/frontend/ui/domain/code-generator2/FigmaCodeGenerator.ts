@@ -55,6 +55,7 @@ import { toComponentName } from "./utils/nameUtils";
 import { toPublicProps } from "./adapters/PropsAdapter";
 import type { FeedbackGroup } from "./feedback/types";
 import { FeedbackBuilder } from "./feedback/FeedbackBuilder";
+import type { NamingOptions } from "./types/public";
 
 export type { GeneratedResult, BundledResult } from "./layers/code-emitter/ICodeEmitter";
 export type { VariantInconsistency } from "./types/types";
@@ -83,6 +84,7 @@ class FigmaCodeGenerator {
   private readonly dataManager: DataManager;
   private readonly treeManager: TreeManager;
   private readonly codeEmitter: ICodeEmitter;
+  private readonly namingOptions?: NamingOptions;
 
   constructor(spec: FigmaNodeData, options: GeneratorOptions = {}) {
     // Layer 1: 데이터 접근
@@ -104,13 +106,20 @@ class FigmaCodeGenerator {
         : "emotion");
     const tailwindOptions = styleStrategyObj?.tailwind;
 
+    this.namingOptions = options.naming;
+
     this.codeEmitter = new ReactEmitter({
       styleStrategy,
       debug: options.debug ?? false,
       tailwind: tailwindOptions,
       declarationStyle: options.declarationStyle,
       exportStyle: options.exportStyle,
+      naming: options.naming,
     });
+  }
+
+  private get conflictPrefix(): string {
+    return this.namingOptions?.conflictPropPrefix ?? "custom";
   }
 
   /**
@@ -118,10 +127,11 @@ class FigmaCodeGenerator {
    */
   async generate(): Promise<GeneratedResult> {
     const { main, dependencies } = this.treeManager.build();
-    const mainIR = SemanticIRBuilder.build(renameNativeProps(main));
+    const prefix = this.conflictPrefix;
+    const mainIR = SemanticIRBuilder.build(renameNativeProps(main, prefix));
     const depIRs = new Map<string, SemanticComponent>();
     for (const [id, dep] of dependencies) {
-      depIRs.set(id, SemanticIRBuilder.build(renameNativeProps(dep)));
+      depIRs.set(id, SemanticIRBuilder.build(renameNativeProps(dep, prefix)));
     }
     return this.codeEmitter.emitAll(mainIR, depIRs);
   }
@@ -137,7 +147,7 @@ class FigmaCodeGenerator {
    * 단일 UITree → 코드 변환 (디버깅/테스트용)
    */
   async emitCode(uiTree: UITree): Promise<EmittedCode> {
-    const ir = SemanticIRBuilder.build(renameNativeProps(uiTree));
+    const ir = SemanticIRBuilder.build(renameNativeProps(uiTree, this.conflictPrefix));
     return this.codeEmitter.emit(ir);
   }
 
@@ -156,10 +166,11 @@ class FigmaCodeGenerator {
     try {
       const diagnostics: VariantInconsistency[] = [];
       const { main, dependencies } = this.treeManager.build(diagnostics);
-      const mainIR = SemanticIRBuilder.build(renameNativeProps(main));
+      const prefix = this.conflictPrefix;
+      const mainIR = SemanticIRBuilder.build(renameNativeProps(main, prefix));
       const depIRs = new Map<string, SemanticComponent>();
       for (const [id, dep] of dependencies) {
-        depIRs.set(id, SemanticIRBuilder.build(renameNativeProps(dep)));
+        depIRs.set(id, SemanticIRBuilder.build(renameNativeProps(dep, prefix)));
       }
       const result = await this.codeEmitter.emitBundled(mainIR, depIRs);
 

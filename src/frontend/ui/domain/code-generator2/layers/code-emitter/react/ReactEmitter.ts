@@ -521,7 +521,7 @@ export class ReactEmitter implements ICodeEmitter {
  *
  * 호출 위치: SemanticIRBuilder.build() 전, FigmaCodeGenerator 또는 테스트에서 직접 호출.
  */
-export function renameNativeProps(uiTree: UITree): UITree {
+export function renameNativeProps(uiTree: UITree, conflictPrefix = "custom"): UITree {
   const rootType = (uiTree.root as any).type as string;
   const nativeAttrs = NATIVE_ATTRS_BY_ELEMENT[rootType];
   if (!nativeAttrs) return uiTree;
@@ -530,7 +530,7 @@ export function renameNativeProps(uiTree: UITree): UITree {
   const renameMap = new Map<string, string>();
   for (const prop of uiTree.props) {
     if (nativeAttrs.has(prop.name) && !prop.nativeAttribute) {
-      renameMap.set(prop.name, "custom" + prop.name.charAt(0).toUpperCase() + prop.name.slice(1));
+      renameMap.set(prop.name, conflictPrefix + prop.name.charAt(0).toUpperCase() + prop.name.slice(1));
     }
   }
   if (renameMap.size === 0) return uiTree;
