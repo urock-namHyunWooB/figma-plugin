@@ -647,32 +647,6 @@ exports[`UITree snapshots > any/ConfirmationDialog 1`] = `
       {
         "children": [
           {
-            "children": [],
-            "id": "711:14772",
-            "mergedNodes": [
-              {
-                "id": "711:14772",
-                "variantName": "Icon",
-              },
-            ],
-            "name": "Icon",
-            "refId": "93:669",
-            "type": "component",
-          },
-        ],
-        "id": "732:143",
-        "mergedNodes": [
-          {
-            "id": "732:143",
-            "variantName": "Pin to top",
-          },
-        ],
-        "name": "Pin to top",
-        "type": "container",
-      },
-      {
-        "children": [
-          {
             "children": [
               {
                 "children": [],
@@ -2532,31 +2506,6 @@ exports[`UITree snapshots > any/Measure 1`] = `
   "root": {
     "children": [
       {
-        "children": [
-          {
-            "children": [],
-            "id": "15:20874",
-            "mergedNodes": [
-              {
-                "id": "15:20874",
-                "variantName": "Measure",
-              },
-            ],
-            "name": "Measure",
-            "type": "vector",
-          },
-        ],
-        "id": "15:20873",
-        "mergedNodes": [
-          {
-            "id": "15:20873",
-            "variantName": "Endpoint 1",
-          },
-        ],
-        "name": "Endpoint 1",
-        "type": "container",
-      },
-      {
         "children": [],
         "id": "15:20875",
         "mergedNodes": [
@@ -2604,31 +2553,6 @@ exports[`UITree snapshots > any/Measure 1`] = `
         ],
         "name": "Line",
         "type": "vector",
-      },
-      {
-        "children": [
-          {
-            "children": [],
-            "id": "15:20880",
-            "mergedNodes": [
-              {
-                "id": "15:20880",
-                "variantName": "Measure",
-              },
-            ],
-            "name": "Measure",
-            "type": "vector",
-          },
-        ],
-        "id": "15:20879",
-        "mergedNodes": [
-          {
-            "id": "15:20879",
-            "variantName": "Endpoint 2",
-          },
-        ],
-        "name": "Endpoint 2",
-        "type": "container",
       },
     ],
     "id": "15:20872",
@@ -6904,18 +6828,6 @@ exports[`UITree snapshots > any/group-02 1`] = `
         ],
         "name": "Rectangle 924",
         "type": "vector",
-      },
-      {
-        "children": [],
-        "id": "6452:8812",
-        "mergedNodes": [
-          {
-            "id": "6452:8812",
-            "variantName": "Group 467",
-          },
-        ],
-        "name": "Group 467",
-        "type": "container",
       },
       {
         "children": [],
@@ -16937,46 +16849,6 @@ exports[`UITree snapshots > failing/Buttonbutton 1`] = `
   "root": {
     "children": [
       {
-        "children": [],
-        "id": "16215:37671",
-        "mergedNodes": [
-          {
-            "id": "16215:37671",
-            "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
-          },
-          {
-            "id": "16215:37684",
-            "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=True, Disable=False",
-          },
-          {
-            "id": "16246:1228793",
-            "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
-          },
-          {
-            "id": "16246:1245077",
-            "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
-          },
-          {
-            "id": "16246:1228804",
-            "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
-          },
-          {
-            "id": "16246:1245088",
-            "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=True, Disable=False",
-          },
-          {
-            "id": "16246:1247596",
-            "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
-          },
-          {
-            "id": "16246:1247607",
-            "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
-          },
-        ],
-        "name": "Mask",
-        "type": "vector",
-      },
-      {
         "children": [
           {
             "children": [],
@@ -18016,78 +17888,6 @@ exports[`UITree snapshots > failing/Buttonbutton 1`] = `
         "name": "Loading",
         "type": "container",
       },
-      {
-        "children": [],
-        "id": "16215:37607",
-        "mergedNodes": [
-          {
-            "id": "16215:37607",
-            "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16215:37624",
-            "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16215:37641",
-            "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16215:37658",
-            "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=True, Disable=False",
-          },
-          {
-            "id": "16246:1228605",
-            "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16246:1243447",
-            "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16246:1228760",
-            "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16246:1244434",
-            "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16246:1228771",
-            "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16246:1244599",
-            "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16246:1228782",
-            "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
-          },
-          {
-            "id": "16246:1245066",
-            "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=True, Disable=False",
-          },
-          {
-            "id": "16246:1245998",
-            "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16246:1246645",
-            "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16246:1246758",
-            "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16246:1247565",
-            "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
-          },
-        ],
-        "name": "Mask",
-        "type": "vector",
-      },
     ],
     "id": "16215:37603",
     "mergedNodes": [
@@ -18307,30 +18107,6 @@ exports[`UITree snapshots > failing/Buttonsolid 1`] = `
   "propsCount": 8,
   "root": {
     "children": [
-      {
-        "children": [],
-        "id": "16215:37671",
-        "mergedNodes": [
-          {
-            "id": "16215:37671",
-            "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
-          },
-          {
-            "id": "16215:37684",
-            "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
-          },
-          {
-            "id": "16246:1228793",
-            "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
-          },
-          {
-            "id": "16246:1228804",
-            "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
-          },
-        ],
-        "name": "Mask",
-        "type": "vector",
-      },
       {
         "children": [
           {
@@ -18890,46 +18666,6 @@ exports[`UITree snapshots > failing/Buttonsolid 1`] = `
         ],
         "name": "Content",
         "type": "container",
-      },
-      {
-        "children": [],
-        "id": "16215:37607",
-        "mergedNodes": [
-          {
-            "id": "16215:37607",
-            "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16215:37624",
-            "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16215:37641",
-            "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16215:37658",
-            "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
-          },
-          {
-            "id": "16246:1228605",
-            "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16246:1228760",
-            "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16246:1228771",
-            "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
-          },
-          {
-            "id": "16246:1228782",
-            "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
-          },
-        ],
-        "name": "Mask",
-        "type": "vector",
       },
     ],
     "id": "16215:37603",

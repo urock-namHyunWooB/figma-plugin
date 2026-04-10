@@ -177,7 +177,7 @@ class UINodeConverter {
   }
 
   private isInvisibleLayoutNode(node: InternalTree): boolean {
-    if (node.type === "LINE" && node.bounds?.height === 0) {
+    if (node.bounds && node.bounds.height < 1) {
       return true;
     }
     return false;
