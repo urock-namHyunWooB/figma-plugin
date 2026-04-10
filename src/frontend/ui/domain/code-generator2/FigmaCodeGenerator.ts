@@ -119,6 +119,8 @@ class FigmaCodeGenerator {
       declarationStyle: options.declarationStyle,
       exportStyle: options.exportStyle,
       naming: options.naming,
+      dependencyMode: options.dependencyMode,
+      importBasePath: options.importBasePath,
     });
   }
 

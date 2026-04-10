@@ -15,9 +15,17 @@ import { type DeclarationStyle } from "./generators/JsxGenerator";
 
 export class ReactBundler {
   private readonly declarationStyle: DeclarationStyle;
+  private readonly dependencyMode: "bundle" | "import";
+  private readonly importBasePath: string;
 
-  constructor(options?: { declarationStyle?: DeclarationStyle }) {
+  constructor(options?: {
+    declarationStyle?: DeclarationStyle;
+    dependencyMode?: "bundle" | "import";
+    importBasePath?: string;
+  }) {
     this.declarationStyle = options?.declarationStyle ?? "function";
+    this.dependencyMode = options?.dependencyMode ?? "bundle";
+    this.importBasePath = options?.importBasePath ?? "@/components/";
   }
   /**
    * main + deps를 단일 파일로 번들링
@@ -34,6 +42,10 @@ export class ReactBundler {
       return this.mergeExportDefault(main.code, main.componentName);
     }
 
+    if (this.dependencyMode === "import") {
+      return this.bundleAsImports(main, referencedDeps);
+    }
+
     return this.bundleCode(main, referencedDeps);
   }
 
@@ -44,6 +56,62 @@ export class ReactBundler {
       seen.add(dep.componentName);
       return true;
     });
+  }
+
+  /**
+   * import 모드: dependency 코드를 인라인하지 않고 import 문만 생성
+   */
+  private bundleAsImports(main: EmittedCode, deps: EmittedCode[]): string {
+    // Step 1: main 코드에서 라이브러리 import만 추출 (내부 ./ ../ import 제외)
+    const libraryImports: string[] = [];
+    const importRegex = /^import .+ from ['""](.+)['""]/gm;
+    let match;
+    while ((match = importRegex.exec(main.code)) !== null) {
+      const importPath = match[1];
+      const isInternal = importPath.startsWith("./") || importPath.startsWith("../");
+      if (!isInternal) {
+        libraryImports.push(match[0]);
+      }
+    }
+
+    // Step 2: dependency별 import 문 생성
+    const basePath = this.importBasePath;
+    const depImports = deps.map((dep) => {
+      const name = dep.componentName;
+      const fullPath = basePath.endsWith("/")
+        ? `${basePath}${name}`
+        : `${basePath}/${name}`;
+      return `import { ${name} } from "${fullPath}";`;
+    });
+
+    // Step 3: main 코드에서 모든 import 제거
+    let mainCodeClean = main.code.replace(/^import .+;?\n/gm, "");
+    mainCodeClean = mainCodeClean.trim();
+
+    // Step 4: cn 함수 추출
+    const cnDeclaration = this.extractCnDeclaration(mainCodeClean);
+    if (cnDeclaration) {
+      mainCodeClean = this.removeCnDeclaration(mainCodeClean);
+      mainCodeClean = mainCodeClean.trim();
+    }
+
+    // Step 5: export default 합체
+    mainCodeClean = this.mergeExportDefault(mainCodeClean, main.componentName);
+
+    // Step 6: 결합
+    const parts: string[] = [];
+    if (libraryImports.length > 0) {
+      parts.push(libraryImports.join("\n"));
+    }
+    if (depImports.length > 0) {
+      parts.push(depImports.join("\n"));
+    }
+    if (cnDeclaration) {
+      parts.push("", cnDeclaration);
+    }
+    parts.push("", mainCodeClean);
+
+    return parts.join("\n");
   }
 
   /**
