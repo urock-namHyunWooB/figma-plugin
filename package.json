@@ -28,7 +28,8 @@
     "audit:anomaly": "vitest run test/audits/anomalyScan.test.ts",
     "audit:anomaly:write": "UPDATE_ANOMALY_BASELINE=1 vitest run test/audits/anomalyScan.test.ts",
     "audit:trace": "vitest run test/audits/matchTrace.test.ts",
-    "audit:observe": "vitest run test/audits/hungarianObserver.test.ts"
+    "audit:observe": "vitest run test/audits/hungarianObserver.test.ts",
+    "audit:assert": "vitest run test/audits/pairAssertions.test.ts"
   },
   "author": "",
   "license": "",
