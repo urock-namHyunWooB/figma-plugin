@@ -79,6 +79,8 @@ interface JsxGeneratorOptions {
   _restPropsOnInput?: boolean;
   declarationStyle?: DeclarationStyle;
   exportStyle?: ExportStyle;
+  /** 스타일 전략 이름 (shadcn일 때 className destructuring 추가) */
+  strategyName?: string;
 }
 
 export class JsxGenerator {
@@ -139,7 +141,7 @@ export class JsxGenerator {
     this.componentMapDeclarations = [];
 
     // Props destructuring (별도 줄에서 수행)
-    const propsDestructuring = this.generatePropsDestructuring(ir);
+    const propsDestructuring = this.generatePropsDestructuring(ir, options);
 
     // React useState 훅 선언 (props destructuring 직후)
     const stateVarsCode = ir.state.length
@@ -191,7 +193,7 @@ ${jsxBody}
   /**
    * Props destructuring 생성 (기본값 포함 + restProps)
    */
-  private static generatePropsDestructuring(ir: SemanticComponent): string {
+  private static generatePropsDestructuring(ir: SemanticComponent, options: JsxGeneratorOptions = {}): string {
     if (ir.props.length === 0) {
       return "{ ...restProps }";
     }

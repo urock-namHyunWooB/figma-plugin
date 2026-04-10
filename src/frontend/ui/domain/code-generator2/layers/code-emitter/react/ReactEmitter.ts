@@ -391,6 +391,7 @@ export class ReactEmitter implements ICodeEmitter {
       nodeStyleMap: stylesResult.nodeStyleMap,
       declarationStyle: this.options.declarationStyle,
       exportStyle: this.options.exportStyle,
+      strategyName: this.styleStrategy.name,
     });
 
     // JSX에서 실제 사용되는 컴포넌트만 import (slot binding → JSX 미생성 케이스 제거)
