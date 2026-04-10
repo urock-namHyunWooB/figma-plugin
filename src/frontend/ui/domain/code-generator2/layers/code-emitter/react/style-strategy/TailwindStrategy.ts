@@ -7,129 +7,15 @@
 
 import type { StyleObject, PseudoClass } from "../../../../types/types";
 import type { IStyleStrategy, StyleResult, JsxStyleAttribute } from "./IStyleStrategy";
-import { groupDynamicByProp, type DecomposedValue } from "./groupDynamicByProp";
+import { groupDynamicByProp } from "./groupDynamicByProp";
 import { extractAllPropInfos } from "../../../../types/conditionUtils";
-
-/**
- * CSS 속성+값 → Tailwind 클래스 매핑
- */
-const CSS_TO_TAILWIND: Record<string, Record<string, string>> = {
-  display: {
-    flex: "flex",
-    "inline-flex": "inline-flex",
-    grid: "grid",
-    block: "block",
-    "inline-block": "inline-block",
-    none: "hidden",
-  },
-  position: {
-    absolute: "absolute",
-    relative: "relative",
-    fixed: "fixed",
-    sticky: "sticky",
-  },
-  flexDirection: {
-    row: "flex-row",
-    column: "flex-col",
-    "row-reverse": "flex-row-reverse",
-    "column-reverse": "flex-col-reverse",
-  },
-  justifyContent: {
-    "flex-start": "justify-start",
-    "flex-end": "justify-end",
-    center: "justify-center",
-    "space-between": "justify-between",
-    "space-around": "justify-around",
-    "space-evenly": "justify-evenly",
-  },
-  alignItems: {
-    "flex-start": "items-start",
-    "flex-end": "items-end",
-    center: "items-center",
-    stretch: "items-stretch",
-    baseline: "items-baseline",
-  },
-  textAlign: {
-    left: "text-left",
-    center: "text-center",
-    right: "text-right",
-    justify: "text-justify",
-  },
-  fontStyle: {
-    normal: "not-italic",
-    italic: "italic",
-  },
-  overflow: {
-    hidden: "overflow-hidden",
-    auto: "overflow-auto",
-    scroll: "overflow-scroll",
-    visible: "overflow-visible",
-  },
-  boxSizing: {
-    "border-box": "box-border",
-    "content-box": "box-content",
-  },
-  flexWrap: {
-    wrap: "flex-wrap",
-    nowrap: "flex-nowrap",
-    "wrap-reverse": "flex-wrap-reverse",
-  },
-  flexShrink: {
-    "0": "shrink-0",
-    "1": "shrink",
-  },
-  flexGrow: {
-    "0": "grow-0",
-    "1": "grow",
-  },
-};
-
-/**
- * CSS 속성 → Tailwind 접두사
- */
-const CSS_TO_PREFIX: Record<string, string> = {
-  width: "w",
-  minWidth: "min-w",
-  maxWidth: "max-w",
-  height: "h",
-  minHeight: "min-h",
-  maxHeight: "max-h",
-  padding: "p",
-  paddingTop: "pt",
-  paddingRight: "pr",
-  paddingBottom: "pb",
-  paddingLeft: "pl",
-  margin: "m",
-  marginTop: "mt",
-  marginRight: "mr",
-  marginBottom: "mb",
-  marginLeft: "ml",
-  gap: "gap",
-  borderRadius: "rounded",
-  fontSize: "text",
-  lineHeight: "leading",
-  opacity: "opacity",
-  zIndex: "z",
-  top: "top",
-  right: "right",
-  bottom: "bottom",
-  left: "left",
-  letterSpacing: "tracking",
-};
-
-/**
- * Pseudo-class → Tailwind prefix
- */
-const PSEUDO_TO_PREFIX: Partial<Record<PseudoClass, string>> = {
-  ":hover": "hover:",
-  ":active": "active:",
-  ":focus": "focus:",
-  ":disabled": "disabled:",
-  ":focus-visible": "focus-visible:",
-  ":checked": "checked:",
-  ":visited": "visited:",
-  "::placeholder": "placeholder:",
-};
+import {
+  PSEUDO_TO_PREFIX,
+  cssObjectToTailwind,
+  wrapClassString,
+  needsQuoting,
+  getDiffStyles,
+} from "./tailwindUtils";
 
 export interface TailwindStrategyOptions {
   /** cn 함수를 인라인으로 생성할지 (기본: true) */
@@ -214,7 +100,7 @@ export class TailwindStrategy implements IStyleStrategy {
       }
       filteredBase[key] = value;
     }
-    const baseClasses = this.cssObjectToTailwind(filteredBase);
+    const baseClasses = cssObjectToTailwind(filteredBase);
     const hasBaseStyles = baseClasses.length > 0;
 
     // pseudo 스타일 → Tailwind 클래스 (prefix 붙임)
@@ -225,10 +111,10 @@ export class TailwindStrategy implements IStyleStrategy {
         if (!prefix) continue;
 
         // base와 다른 속성만 추출
-        const diffStyles = this.getDiffStyles(style.base, styles);
+        const diffStyles = getDiffStyles(style.base, styles);
         if (Object.keys(diffStyles).length === 0) continue;
 
-        const classes = this.cssObjectToTailwind(diffStyles);
+        const classes = cssObjectToTailwind(diffStyles);
         for (const cls of classes) {
           pseudoClassesList.push(`${prefix}${cls}`);
         }
@@ -241,7 +127,7 @@ export class TailwindStrategy implements IStyleStrategy {
     if (style.mediaQueries) {
       for (const { query, style: mqStyle } of style.mediaQueries) {
         const prefix = this.getBreakpointPrefix(query);
-        const classes = this.cssObjectToTailwind(mqStyle);
+        const classes = cssObjectToTailwind(mqStyle);
         for (const cls of classes) {
           mediaClasses.push(`${prefix}:${cls}`);
         }
@@ -268,14 +154,14 @@ export class TailwindStrategy implements IStyleStrategy {
       const compoundBlock = dynamicResult.compoundCode || "";
       const cvaBody = [variantsBlock, compoundBlock].filter(Boolean).join("\n");
       if (cvaBody) {
-        code = `const ${variableName} = cva(${this.wrapClassString(baseStr)}, {\n${cvaBody}\n});`;
+        code = `const ${variableName} = cva(${wrapClassString(baseStr)}, {\n${cvaBody}\n});`;
         this.cvaVariables.add(variableName);
       } else {
-        code = `const ${variableName} = ${this.wrapClassString(baseStr)};`;
+        code = `const ${variableName} = ${wrapClassString(baseStr)};`;
       }
     } else {
       // dynamic 없으면 plain string
-      code = `const ${variableName} = ${this.wrapClassString(baseStr)};`;
+      code = `const ${variableName} = ${wrapClassString(baseStr)};`;
     }
 
     return { variableName, code, isEmpty: false };
@@ -343,7 +229,7 @@ export class TailwindStrategy implements IStyleStrategy {
       const entries: string[] = [];
 
       for (const [value, { style: dynStyle, pseudo }] of valueMap) {
-        const classes = this.cssObjectToTailwind(dynStyle);
+        const classes = cssObjectToTailwind(dynStyle);
 
         // per-group pseudo → Tailwind variant prefix 적용 (base와 동일한 pseudo는 제거)
         if (pseudo) {
@@ -351,7 +237,7 @@ export class TailwindStrategy implements IStyleStrategy {
           for (const [selector, pseudoStyle] of Object.entries(pseudo)) {
             const prefix = pseudoToTwPrefix[selector];
             if (!prefix) continue;
-            const pseudoClasses = this.cssObjectToTailwind(pseudoStyle as Record<string, string | number>);
+            const pseudoClasses = cssObjectToTailwind(pseudoStyle as Record<string, string | number>);
             for (const cls of pseudoClasses) {
               if (!baseClassSet.has(cls)) {
                 classes.push(`${prefix}:${cls}`);
@@ -361,9 +247,9 @@ export class TailwindStrategy implements IStyleStrategy {
         }
 
         if (classes.length > 0) {
-          const key = this.needsQuoting(value) ? `"${value}"` : value;
+          const key = needsQuoting(value) ? `"${value}"` : value;
           const classStr = classes.join(" ");
-          entries.push(`        ${key}: ${this.wrapClassString(classStr)},`);
+          entries.push(`        ${key}: ${wrapClassString(classStr)},`);
         }
       }
 
@@ -374,13 +260,13 @@ export class TailwindStrategy implements IStyleStrategy {
         const propNames = propName.split("+");
         for (const p of propNames) compoundProps.add(p);
         for (const [value, { style: dynStyle, pseudo }] of valueMap) {
-          const classes = this.cssObjectToTailwind(dynStyle);
+          const classes = cssObjectToTailwind(dynStyle);
           if (pseudo) {
             const baseClassSet = new Set(classes);
             for (const [selector, pseudoStyle] of Object.entries(pseudo)) {
               const prefix = pseudoToTwPrefix[selector];
               if (!prefix) continue;
-              const pseudoClasses = this.cssObjectToTailwind(pseudoStyle as Record<string, string | number>);
+              const pseudoClasses = cssObjectToTailwind(pseudoStyle as Record<string, string | number>);
               for (const cls of pseudoClasses) {
                 if (!baseClassSet.has(cls)) {
                   classes.push(`${prefix}:${cls}`);
@@ -392,12 +278,12 @@ export class TailwindStrategy implements IStyleStrategy {
           const values = value.split("+");
           if (values.length !== propNames.length) continue;
           const conditions = propNames.map((p, i) => {
-            const key = this.needsQuoting(p) ? `"${p}"` : p;
+            const key = needsQuoting(p) ? `"${p}"` : p;
             const val = values[i];
             if (val === "true" || val === "false") return `${key}: ${val}`;
             return `${key}: "${val}"`;
           });
-          compoundEntries.push(`    { ${conditions.join(", ")}, className: ${this.wrapClassString(classes.join(" "))} },`);
+          compoundEntries.push(`    { ${conditions.join(", ")}, className: ${wrapClassString(classes.join(" "))} },`);
         }
         continue;
       }
@@ -408,7 +294,7 @@ export class TailwindStrategy implements IStyleStrategy {
         const existingValues = new Set([...valueMap.keys()]);
         for (const opt of allOptions) {
           if (!existingValues.has(opt)) {
-            const key = this.needsQuoting(opt) ? `"${opt}"` : opt;
+            const key = needsQuoting(opt) ? `"${opt}"` : opt;
             entries.push(`        ${key}: "",`);
           }
         }
@@ -416,7 +302,7 @@ export class TailwindStrategy implements IStyleStrategy {
 
       // Figma prop 이름에서 제어 문자 제거 (backspace 등)
       const safePropName = propName.replace(/[\x00-\x1f\x7f]/g, "");
-      const propKey = this.needsQuoting(safePropName) ? `"${safePropName}"` : safePropName;
+      const propKey = needsQuoting(safePropName) ? `"${safePropName}"` : safePropName;
       variantParts.push(`    ${propKey}: {\n${entries.join("\n")}\n    },`);
       declaredVariants.add(propName);
     }
@@ -427,10 +313,10 @@ export class TailwindStrategy implements IStyleStrategy {
       const allOptions = this.variantOptions.get(p);
       if (allOptions) {
         const emptyEntries = [...allOptions].map((opt) => {
-          const key = this.needsQuoting(opt) ? `"${opt}"` : opt;
+          const key = needsQuoting(opt) ? `"${opt}"` : opt;
           return `        ${key}: "",`;
         });
-        const propKey = this.needsQuoting(p) ? `"${p}"` : p;
+        const propKey = needsQuoting(p) ? `"${p}"` : p;
         variantParts.push(`    ${propKey}: {\n${emptyEntries.join("\n")}\n    },`);
       }
     }
@@ -457,30 +343,6 @@ export class TailwindStrategy implements IStyleStrategy {
     condition: import("../../../../types/types").ConditionNode
   ): Array<{ propName: string; propValue: string }> {
     return extractAllPropInfos(condition);
-  }
-
-  /**
-   * JavaScript 객체 키로 사용 시 따옴표가 필요한지 확인
-   * (하이픈, 공백 등 특수문자 포함 시 필요)
-   */
-  private needsQuoting(key: string): boolean {
-    return !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key);
-  }
-
-  /**
-   * base와 다른 스타일만 추출
-   */
-  private getDiffStyles(
-    base: Record<string, string | number>,
-    target: Record<string, string | number>
-  ): Record<string, string | number> {
-    const diff: Record<string, string | number> = {};
-    for (const [key, value] of Object.entries(target)) {
-      if (base[key] !== value) {
-        diff[key] = value;
-      }
-    }
-    return diff;
   }
 
   /**
@@ -533,146 +395,10 @@ export class TailwindStrategy implements IStyleStrategy {
     style: Record<string, string | number>
   ): string {
     const prefix = PSEUDO_TO_PREFIX[pseudoClass] || "";
-    const classes = this.cssObjectToTailwind(style);
+    const classes = cssObjectToTailwind(style);
     return classes.map((cls) => `${prefix}${cls}`).join(" ");
   }
 
-  /**
-   * CSS 객체를 Tailwind 클래스 배열로 변환
-   */
-  private cssObjectToTailwind(style: Record<string, string | number>): string[] {
-    const classes: string[] = [];
-
-    for (const [key, value] of Object.entries(style)) {
-      // __nested: 중첩 셀렉터 → arbitrary variant 클래스 변환
-      if (key === "__nested" && typeof value === "object" && value !== null) {
-        const nested = value as Record<string, Record<string, string | number>>;
-        for (const [selector, nestedStyle] of Object.entries(nested)) {
-          const variant = this.selectorToArbitraryVariant(selector);
-          for (const [prop, val] of Object.entries(nestedStyle)) {
-            const twClass = this.cssPropertyToTailwind(prop, String(val));
-            if (twClass) {
-              classes.push(`${variant}:${twClass}`);
-            }
-          }
-        }
-        continue;
-      }
-
-      const tailwindClass = this.cssPropertyToTailwind(key, String(value));
-      if (tailwindClass) {
-        classes.push(tailwindClass);
-      }
-    }
-
-    return classes;
-  }
-
-  /**
-   * CSS 셀렉터를 Tailwind arbitrary variant로 변환
-   * e.g., "svg path" → "[&_svg_path]", "& > div svg path" → "[&>div_svg_path]"
-   */
-  private selectorToArbitraryVariant(selector: string): string {
-    let s = selector.trim();
-    // &로 시작하지 않으면 자손 셀렉터로 & 추가
-    if (!s.startsWith("&")) {
-      s = "& " + s;
-    }
-    // 공백 → _ (Tailwind arbitrary variant 문법)
-    s = s.replace(/\s+/g, "_");
-    return `[${s}]`;
-  }
-
-  /**
-   * 단일 CSS 속성을 Tailwind 클래스로 변환
-   */
-  private cssPropertyToTailwind(property: string, value: string): string {
-    const valueStr = value.trim();
-
-    // kebab → camelCase
-    const camelProperty = this.kebabToCamel(property);
-
-    // 정확한 매핑 확인
-    const exactMap = CSS_TO_TAILWIND[camelProperty];
-    if (exactMap && exactMap[valueStr]) {
-      return exactMap[valueStr];
-    }
-
-    // 100% → full
-    if (valueStr === "100%") {
-      if (camelProperty === "width") return "w-full";
-      if (camelProperty === "height") return "h-full";
-    }
-
-    // backdrop-filter: blur(Npx) → backdrop-blur-[Npx]
-    if (camelProperty === "backdropFilter") {
-      const blurMatch = valueStr.match(/^blur\((.+)\)$/);
-      if (blurMatch) return `backdrop-blur-[${this.escapeArbitraryValue(blurMatch[1])}]`;
-      return `backdrop-blur-[${this.escapeArbitraryValue(valueStr)}]`;
-    }
-
-    // 접두사 기반 변환
-    const prefix = CSS_TO_PREFIX[camelProperty];
-    if (prefix) {
-      // text-[var(...)]은 Tailwind이 color로 해석하므로 length: 타입 힌트 필요
-      if (camelProperty === "fontSize") {
-        return `${prefix}-[length:${this.escapeArbitraryValue(valueStr)}]`;
-      }
-      return `${prefix}-[${this.escapeArbitraryValue(valueStr)}]`;
-    }
-
-    // 색상: arbitrary property 사용
-    // bg-[var(...)]는 Tailwind가 background-image로 해석할 수 있으므로 [background-color:...] 사용
-    if (camelProperty === "backgroundColor" || camelProperty === "background") {
-      return `[background-color:${this.escapeArbitraryValue(valueStr)}]`;
-    }
-    if (camelProperty === "color") {
-      return `text-[${this.escapeArbitraryValue(valueStr)}]`;
-    }
-    if (camelProperty === "fill") {
-      return `fill-[${this.escapeArbitraryValue(valueStr)}]`;
-    }
-
-    // border: arbitrary property (shorthand는 border- prefix가 지원 안 함)
-    if (camelProperty === "border") {
-      return `[border:${this.escapeArbitraryValue(valueStr)}]`;
-    }
-    if (camelProperty === "borderColor") {
-      return `border-[${this.escapeArbitraryValue(valueStr)}]`;
-    }
-
-    // font-family / font-weight: 같은 font- prefix 충돌 방지
-    if (camelProperty === "fontFamily") {
-      return `[font-family:${this.escapeArbitraryValue(valueStr)}]`;
-    }
-    if (camelProperty === "fontWeight") {
-      return `[font-weight:${this.escapeArbitraryValue(valueStr)}]`;
-    }
-
-    // box-shadow → shadow-[...]
-    if (camelProperty === "boxShadow") {
-      return `shadow-[${this.escapeArbitraryValue(valueStr)}]`;
-    }
-
-    // 기타: arbitrary property fallback
-    const cssKey = this.camelToKebab(camelProperty);
-    return `[${cssKey}:${this.escapeArbitraryValue(valueStr)}]`;
-  }
-
-  /**
-   * 클래스 문자열을 JS 리터럴로 감싸기
-   * \_가 포함된 경우 String.raw를 사용해 백슬래시 보존
-   */
-  private wrapClassString(str: string): string {
-    if (str.includes("\\")) {
-      return "String.raw`" + str + "`";
-    }
-    return `"${str}"`;
-  }
-
-  /**
-   * Arbitrary value 이스케이프
-   */
   /**
    * 같은 className을 가진 compound 조건을 합침.
    * 공통 prop만 남기고, 차이 나는 prop은 제거.
@@ -732,30 +458,6 @@ export class TailwindStrategy implements IStyleStrategy {
       }
     }
     return result;
-  }
-
-  private escapeArbitraryValue(value: string): string {
-    return value
-      .trim()
-      .replace(/\/\*.*?\*\//g, "") // CSS 주석 제거
-      .trim()
-      .replace(/_/g, "\\_") // underscore 이스케이프
-      .replace(/\s+/g, "_") // 공백 → underscore
-      .replace(/['"]/g, ""); // 따옴표 제거
-  }
-
-  /**
-   * kebab-case → camelCase
-   */
-  private kebabToCamel(str: string): string {
-    return str.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
-  }
-
-  /**
-   * camelCase → kebab-case
-   */
-  private camelToKebab(str: string): string {
-    return str.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
   }
 
   /**
