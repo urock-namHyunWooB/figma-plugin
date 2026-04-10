@@ -42,19 +42,25 @@ export const pairAssertions: FixtureAssertions[] = [
     ],
   },
   {
-    fixture: "button/Btnsbtn",
+    fixture: "failing/Buttonsolid",
     pairs: [
       {
-        nodeA: "4214:393", // icon_arrow (default variant의 아이콘 인스턴스)
-        nodeB: "4214:548", // icon_delete (loading variant의 다른 아이콘 인스턴스)
-        shouldMatch: false,
-        description: "다른 아이콘 — arrow와 delete는 별개 요소, 합치면 안 됨",
+        nodeA: "16215:37604", // Wrapper (Primary/Large/IconOnly=False/Disable=False)
+        nodeB: "16215:37749", // Wrapper (Assistive/Large/IconOnly=True/Disable=False — 이상 variant)
+        shouldMatch: true,
+        description: "같은 Wrapper 컨테이너 — 이상 variant에서도 Wrapper는 Wrapper끼리 매칭돼야 함",
       },
       {
-        nodeA: "I4214:393;3:315", // Vector 40 (icon_arrow 내부 벡터)
-        nodeB: "I4214:453;3:481", // Rectangle 419 (icon_wastebasket 내부 사각형)
+        nodeA: "16215:37612", // Interaction (Primary/Large/IconOnly=False/Disable=False)
+        nodeB: "16215:37749", // Wrapper (이상 variant) — 현재 엔진이 잘못 매칭하는 쌍
         shouldMatch: false,
-        description: "다른 도형 — 아이콘 내부 벡터/사각형은 별개 요소",
+        description: "Interaction ↔ Wrapper 뒤바뀜 금지 — 역할이 다른 컨테이너를 혼동하면 안 됨",
+      },
+      {
+        nodeA: "16215:37608", // Content (기준 variant Wrapper 내부)
+        nodeB: "16215:37605", // Loading (기준 variant Wrapper 내부)
+        shouldMatch: false,
+        description: "Content ↔ Loading 합침 금지 — 같은 부모(Wrapper) 안의 다른 역할 자식",
       },
     ],
   },
