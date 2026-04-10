@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { VariantPropPosition } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/match-engine/signals/VariantPropPosition";
+import { BooleanPositionSwap } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/match-engine/signals/BooleanPositionSwap";
 import { defaultMatchingPolicy } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/match-engine/MatchingPolicy";
 import type { InternalNode } from "@code-generator2/types/types";
 
@@ -49,8 +49,8 @@ function makeCtx(cxA: number, cxB: number, cyA = 0.5, cyB = 0.5) {
   } as any;
 }
 
-describe("VariantPropPosition signal", () => {
-  const signal = new VariantPropPosition();
+describe("BooleanPositionSwap signal", () => {
+  const signal = new BooleanPositionSwap();
 
   it("returns decisive-match-with-cost for True/False variant diff with cx-only movement", () => {
     const a = node("a", "LeftIcon=False, State=Default");

@@ -2,34 +2,34 @@ import type { InternalNode } from "../../../../../../../types/types";
 import type { MatchSignal, SignalResult, MatchContext } from "../MatchSignal";
 
 /**
- * Variant prop → 위치 결정 신호.
+ * BooleanPositionSwap (구 VariantPropPosition)
  *
- * 회귀 패턴 처리 (Switch Knob, Toggle, Plus 등):
- *   boolean variant prop이 자식의 위치를 결정하는 케이스. 위치는 다르지만
- *   같은 노드임이 명백 → decisive-match.
+ * Switch/Toggle 노브 전용 신호.
+ * boolean variant prop(Checked, Active 등)이 노브/인디케이터의 좌우 위치를
+ * 결정하는 패턴을 감지. 위치는 다르지만 같은 노드 → decisive-match.
+ *
+ * 실제 발동 fixture: Switchswitch, Toggle, taptap-navigation (3개).
+ * NP가 decisive-match를 주지 못하는 극단적 cx 이동(0.2↔0.8 등)에서만 유효.
  *
  * 판정 (모두 만족해야 fire):
  * 1. mergedNodes의 variantName 파싱 가능
  * 2. 두 prop 집합에서 정확히 하나의 prop 값이 다름
  * 3. 그 prop 값이 둘 다 boolean (True/False/true/false)
- * 4. 두 노드의 타입이 일치 (TypeCompatibility가 먼저 veto 하지만 안전장치)
- * 5. 두 노드의 절대 크기가 유사 (ratio ≤ 1.2) — 서로 다른 크기의 우연한 매칭 방지
+ * 4. 두 노드의 타입이 일치
+ * 5. 두 노드의 절대 크기가 유사 (ratio ≤ 1.2)
  * 6. 두 노드의 정규화 cy 거의 같음 (|Δcy| < 0.05)
  * 7. cx는 명백히 다름 (|Δcx| > 0.1)
- * 8. 두 노드의 name이 일치 — cross-sibling 매칭 방지 (SegmentedControl Tab4 vs Tab5)
- * 9. 두 노드 자체의 자식 개수가 같음 — existence toggle 방지 (Icons frame: 빈 vs Icon 1개)
- * 10. 두 직접 부모의 자식 개수가 같음 — 부모도 같은 structural shape
- * → decisive-match (NormalizedPosition의 fallback을 override)
- *
- * 그 외 → neutral
+ * 8. 두 노드의 name이 일치
+ * 9. 두 노드 자체의 자식 개수가 같음
+ * 10. 두 직접 부모의 자식 개수가 같음
  */
 const SIZE_SIMILARITY_RATIO = 1.2;
 /** Position swap이 감지됐을 때 부여하는 고정 cost. 0이 아니라 0.05로 둬서
  *  동시에 여러 후보가 fire해도 Hungarian이 tie를 만들지 않게 한다. */
 const VPP_MATCH_COST = 0.05;
 
-export class VariantPropPosition implements MatchSignal {
-  readonly name = "VariantPropPosition";
+export class BooleanPositionSwap implements MatchSignal {
+  readonly name = "BooleanPositionSwap";
 
   evaluate(a: InternalNode, b: InternalNode, ctx: MatchContext): SignalResult {
     const mergedA = a.mergedNodes?.[0];

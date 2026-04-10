@@ -1,7 +1,7 @@
 import { MatchDecisionEngine } from "./MatchDecisionEngine";
 import { TypeCompatibility } from "./signals/TypeCompatibility";
 import { IdMatch } from "./signals/IdMatch";
-import { VariantPropPosition } from "./signals/VariantPropPosition";
+import { BooleanPositionSwap } from "./signals/BooleanPositionSwap";
 import { NormalizedPosition } from "./signals/NormalizedPosition";
 import { TextSpecialMatch } from "./signals/TextSpecialMatch";
 import { InstanceSpecialMatch } from "./signals/InstanceSpecialMatch";
@@ -21,8 +21,8 @@ export type { MatchSignal, SignalResult, MatchContext, MatchDecision } from "./M
  * 2. IdMatch — O(1), id 일치 시 decisive-match
  * 3. NormalizedPosition — O(depth), 위치+size+overflow 통합. success 시 decisive-match-with-cost로
  *    fallback 신호 차단. 실패 시 neutral (Text/Instance Special 및 VariantPropPosition에 위임).
- * 4. VariantPropPosition — NormalizedPosition fallback에서만 발동. boolean variant가 cx 이동을
- *    결정하는 패턴 (Switch Knob 등)을 decisive-match 처리. NP가 성공하면 이 신호는 실행되지 않음.
+ * 4. BooleanPositionSwap — Switch/Toggle 노브 전용. NP fallback에서만 발동.
+ *    boolean variant가 cx 이동을 결정하는 패턴을 decisive-match 처리.
  * 5. TextSpecialMatch — TEXT pair fallback (decisive-match-with-cost(0.05))
  * 6. InstanceSpecialMatch — INSTANCE pair fallback (decisive-match-with-cost(0.05))
  *
@@ -46,7 +46,7 @@ export function createDefaultEngine(
       new TypeCompatibility(),
       new IdMatch(),
       new NormalizedPosition(),
-      new VariantPropPosition(),
+      new BooleanPositionSwap(),
       new TextSpecialMatch(),
       new InstanceSpecialMatch(),
     ],
