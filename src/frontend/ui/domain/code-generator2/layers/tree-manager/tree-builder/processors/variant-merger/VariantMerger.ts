@@ -9,6 +9,7 @@ import { NodeMatcher } from "./NodeMatcher";
 import { LayoutNormalizer } from "./LayoutNormalizer";
 import { VariantGraphBuilder } from "./VariantGraphBuilder";
 import { VariantSquasher } from "./VariantSquasher";
+import type { MatchDecision } from "./match-engine/MatchSignal";
 
 /**
  * VariantMerger
@@ -168,7 +169,22 @@ export class VariantMerger {
     let merged = graph.nodes[mergeOrder[0]].tree;
     let prevProps = graph.nodes[mergeOrder[0]].props;
 
+    // Observer: merge 순서 기록
+    const obs = this.observer;
+    if (obs) {
+      for (const idx of mergeOrder) {
+        obs.mergeOrder.push(graph.nodes[idx].variantName);
+      }
+    }
+
     for (let i = 1; i < mergeOrder.length; i++) {
+      // Observer: 현재 merge의 variant pair 설정 (root-level mergeChildren이 읽음)
+      if (obs) {
+        obs._variantA = i === 1
+          ? graph.nodes[mergeOrder[0]].variantName
+          : "(merged)";
+        obs._variantB = graph.nodes[mergeOrder[i]].variantName;
+      }
       const currentProps = graph.nodes[mergeOrder[i]].props;
       const nextTree = graph.nodes[mergeOrder[i]].tree;
 
@@ -229,14 +245,31 @@ export class VariantMerger {
   private mergeChildren(
     childrenA: InternalNode[],
     childrenB: InternalNode[],
-    propDiff: PropDiffInfo
+    propDiff: PropDiffInfo,
+    _obsParentName?: string,   // observer용: 부모 노드 이름
+    _obsDepth?: number,        // observer용: 재귀 깊이
   ): InternalNode[] {
+    const obs = this.observer;
+    const depth = _obsDepth ?? 0;
+    const parentName = _obsParentName ?? "ROOT";
+
+    // Observer: merge 시작
+    if (obs) {
+      obs.pushMerge({
+        path: parentName,
+        depth,
+        childrenACount: childrenA.length,
+        childrenBCount: childrenB.length,
+        variantA: depth === 0 ? obs._variantA : undefined,
+        variantB: depth === 0 ? obs._variantB : undefined,
+      });
+    }
+
     const merged: InternalNode[] = [...childrenA];
     const usedA = new Set<number>();
     const usedB = new Set<number>();
 
     // === Pass 1: 확정 매칭 ===
-    // 1a. 같은 ID 매칭
     for (let bi = 0; bi < childrenB.length; bi++) {
       if (usedB.has(bi)) continue;
       for (let ai = 0; ai < merged.length; ai++) {
@@ -244,7 +277,19 @@ export class VariantMerger {
         if (this.nodeMatcher!.isDefiniteMatch(merged[ai], childrenB[bi])) {
           usedA.add(ai);
           usedB.add(bi);
-          merged[ai] = this.mergeMatchedNodes(merged[ai], childrenB[bi], propDiff);
+
+          // Observer: Pass 1 매칭 기록
+          if (obs) {
+            obs.addPass1Match({
+              aNode: this.nodeInfo(merged[ai]),
+              bNode: this.nodeInfo(childrenB[bi]),
+              reason: "same id",
+            });
+          }
+
+          merged[ai] = this.mergeMatchedNodes(
+            merged[ai], childrenB[bi], propDiff, depth,
+          );
           break;
         }
       }
@@ -255,30 +300,99 @@ export class VariantMerger {
     const freeB = childrenB.map((_, i) => i).filter(i => !usedB.has(i));
 
     if (freeA.length > 0 && freeB.length > 0) {
-      // 비용 행렬 구성
       const costMatrix: number[][] = [];
+      // Observer: cell-level signal 분해를 위한 decision 캐시
+      const decisions: MatchDecision[][] | undefined = obs ? [] : undefined;
+
       for (const bi of freeB) {
         const row: number[] = [];
+        const decRow: MatchDecision[] | undefined = obs ? [] : undefined;
         for (const ai of freeA) {
-          row.push(this.nodeMatcher!.getPositionCost(merged[ai], childrenB[bi]));
+          if (obs) {
+            const dec = this.nodeMatcher!.getDecision(merged[ai], childrenB[bi]);
+            row.push(dec.totalCost);
+            decRow!.push(dec);
+          } else {
+            row.push(this.nodeMatcher!.getPositionCost(merged[ai], childrenB[bi]));
+          }
         }
         costMatrix.push(row);
+        if (decisions) decisions.push(decRow!);
       }
 
       // Hungarian algorithm 실행
       const assignment = this.hungarian(costMatrix);
 
+      // Observer: Pass 2 데이터 수집
+      if (obs && decisions) {
+        const freeANodes = freeA.map(ai => this.nodeInfo(merged[ai]));
+        const freeBNodes = freeB.map(bi => this.nodeInfo(childrenB[bi]));
+
+        const matrixData = decisions.map((decRow, ri) =>
+          decRow.map((dec, ci) => ({
+            aIndex: ci,
+            bIndex: ri,
+            aNode: freeANodes[ci],
+            bNode: freeBNodes[ri],
+            cost: dec.totalCost,
+            decision: dec.decision,
+            signals: dec.signalResults.map(sr => ({
+              signalName: sr.signalName,
+              kind: sr.result.kind,
+              cost: "cost" in sr.result ? (sr.result as any).cost : undefined,
+              score: "score" in sr.result ? (sr.result as any).score : undefined,
+              reason: sr.result.reason,
+              weight: sr.weight,
+            })),
+          })),
+        );
+
+        const assignmentEntries = assignment
+          .map((ci, ri) => {
+            if (ci === -1) return null;
+            const cost = costMatrix[ri][ci];
+            return {
+              aNode: freeANodes[ci],
+              bNode: freeBNodes[ri],
+              cost,
+              accepted: cost <= 0.1,
+            };
+          })
+          .filter((e): e is NonNullable<typeof e> => e !== null);
+
+        const unmatchedBIndices = new Set(
+          freeB.map((_, i) => i),
+        );
+        for (let ri = 0; ri < assignment.length; ri++) {
+          const ci = assignment[ri];
+          if (ci !== -1 && costMatrix[ri][ci] <= 0.1) {
+            unmatchedBIndices.delete(ri);
+          }
+        }
+
+        obs.setPass2({
+          freeA: freeANodes,
+          freeB: freeBNodes,
+          matrix: matrixData,
+          assignment: assignmentEntries,
+          unmatched: [...unmatchedBIndices].map(ri => freeBNodes[ri]),
+        });
+      }
+
+      // 기존 assignment 적용 로직 (변경 없음)
       for (let ri = 0; ri < assignment.length; ri++) {
         const ci = assignment[ri];
         if (ci === -1) continue;
         const cost = costMatrix[ri][ci];
-        if (cost > 0.1) continue; // threshold 초과 → 매칭 거부
+        if (cost > 0.1) continue;
 
         const ai = freeA[ci];
         const bi = freeB[ri];
         usedA.add(ai);
         usedB.add(bi);
-        merged[ai] = this.mergeMatchedNodes(merged[ai], childrenB[bi], propDiff);
+        merged[ai] = this.mergeMatchedNodes(
+          merged[ai], childrenB[bi], propDiff, depth,
+        );
       }
     }
 
@@ -287,6 +401,11 @@ export class VariantMerger {
       if (!usedB.has(bi)) {
         merged.push(childrenB[bi]);
       }
+    }
+
+    // Observer: merge 종료
+    if (obs) {
+      obs.popMerge();
     }
 
     return merged;
@@ -298,7 +417,8 @@ export class VariantMerger {
   private mergeMatchedNodes(
     nodeA: InternalNode,
     nodeB: InternalNode,
-    propDiff: PropDiffInfo
+    propDiff: PropDiffInfo,
+    parentDepth?: number,
   ): InternalNode {
     return {
       ...nodeA,
@@ -309,7 +429,9 @@ export class VariantMerger {
       children: this.mergeChildren(
         nodeA.children,
         nodeB.children,
-        propDiff
+        propDiff,
+        nodeA.name,                       // observer: 부모 이름
+        (parentDepth ?? 0) + 1,           // observer: depth 증가
       ),
     };
   }
@@ -559,5 +681,17 @@ export class VariantMerger {
     }
 
     return internalNode;
+  }
+
+  // ===========================================================================
+  // Private: Observer hook helpers
+  // ===========================================================================
+
+  private get observer(): any {
+    return (globalThis as any).__HUNGARIAN_OBSERVER__;
+  }
+
+  private nodeInfo(node: InternalNode) {
+    return { id: node.id, name: node.name, type: node.type };
   }
 }

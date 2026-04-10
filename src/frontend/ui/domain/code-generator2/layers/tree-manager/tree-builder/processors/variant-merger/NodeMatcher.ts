@@ -6,6 +6,7 @@ import {
   defaultMatchingPolicy,
   type MatchContext,
   type MatchDecisionEngine,
+  type MatchDecision,
 } from "./match-engine";
 
 /**
@@ -87,6 +88,14 @@ export class NodeMatcher {
     }
 
     return decision.totalCost;
+  }
+
+  /**
+   * 두 노드의 full MatchDecision 반환. Observer용.
+   * getPositionCost()와 같은 엔진 호출이지만 signalResults까지 전체 반환.
+   */
+  public getDecision(nodeA: InternalNode, nodeB: InternalNode): MatchDecision {
+    return this.engine.decide(nodeA, nodeB, this.makeCtx());
   }
 
   private makeCtx(): MatchContext {
