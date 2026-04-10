@@ -87,6 +87,8 @@ describe("Layout Regression Tests", () => {
         // INSTANCE 타입 노드 중 외부 컴포넌트(이름에 "/" 포함)가 있는지 확인
         // 단, Decorate/Interactive 같은 데코레이터는 렌더링되지 않으므로 제외
         const findExternalInstances = (node: any, parent?: any): boolean => {
+          // hidden 노드는 생성 코드에 포함되지 않으므로 제외
+          if (node.visible === false) return false;
           if (node.type === "INSTANCE" && node.name?.includes("/")) {
             // Decorate 또는 Interaction 관련 인스턴스는 제외
             // (동작만 제공하고 렌더링되지 않음)
