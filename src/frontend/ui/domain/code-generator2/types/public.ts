@@ -53,6 +53,17 @@ export interface MultiComponentResult {
 
 // ─── 옵션 ───────────────────────────────────────────────────
 
+export type StyleNamingStrategy = "verbose" | "compact" | "minimal";
+
+export interface NamingOptions {
+  componentPrefix?: string;
+  componentSuffix?: string;
+  conflictPropPrefix?: string;
+  styleBaseSuffix?: string;
+  styleVariantSuffix?: string;
+  styleNamingStrategy?: StyleNamingStrategy;
+}
+
 export interface TailwindOptions {
   /** cn 함수를 인라인으로 생성할지 (기본: true) */
   inlineCn?: boolean;
@@ -71,4 +82,6 @@ export interface GeneratorOptions {
   declarationStyle?: DeclarationStyle;
   /** export 방식 */
   exportStyle?: ExportStyle;
+  /** 네이밍 커스터마이징 */
+  naming?: NamingOptions;
 }
