@@ -18,11 +18,11 @@ declare const __DEV_BUILD__: boolean;
 type TabId = "preview" | "variants" | "code" | "publish" | "release";
 
 const TAB_SIZES: Record<TabId, { width: number; height: number }> = {
-  preview: { width: 400, height: 1000 },
+  preview: { width: 900, height: 1000 },
   variants: { width: 900, height: 1000 },
-  code: { width: 400, height: 1000 },
-  publish: { width: 400, height: 1000 },
-  release: { width: 400, height: 1000 },
+  code: { width: 900, height: 1000 },
+  publish: { width: 900, height: 1000 },
+  release: { width: 900, height: 1000 },
 };
 
 const TAB_LABELS: Record<TabId, string> = {
@@ -145,6 +145,22 @@ const optionSelectStyle = css`
   &:focus { border-color: #00c2e0; }
 `;
 
+const minimizeButtonStyle = css`
+  width: 24px;
+  height: 24px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  background: #ffffff;
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &:hover { background: #f3f4f6; border-color: #9ca3af; }
+`;
+
 const tabBarStyle = css`
   flex: 0 0 auto;
   display: flex;
@@ -226,6 +242,13 @@ const codeTabStyle = css`
   min-height: 0;
 `;
 
+const codeOptionsBarStyle = css`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+`;
+
 // Extraction loading overlay (전체 화면, 검은 반투명 + 가운데 회전 스피너)
 const overlayStyle = css`
   position: fixed;
@@ -305,6 +328,7 @@ function App() {
   const [styleStrategy, setStyleStrategy] = useState<"emotion" | "tailwind">("emotion");
   const [declarationStyle, setDeclarationStyle] = useState<DeclarationStyle>("function");
   const [exportStyle, setExportStyle] = useState<ExportStyle>("default");
+  const [minimized, setMinimized] = useState(false);
   const [slotMockupEnabled, setSlotMockupEnabled] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
@@ -321,6 +345,18 @@ function App() {
     const size = TAB_SIZES[tab];
     resizePluginUI(size.width, size.height);
   }, []);
+
+  const handleMinimize = useCallback(() => {
+    setMinimized((prev) => {
+      if (!prev) {
+        resizePluginUI(200, 40);
+      } else {
+        const size = TAB_SIZES[activeTab];
+        resizePluginUI(size.width, size.height);
+      }
+      return !prev;
+    });
+  }, [activeTab]);
 
   useEffect(() => {
     if (!isComponentSet && activeTab === "variants") {
@@ -584,54 +620,18 @@ function App() {
           )}
         </div>
         <div css={headerRightStyle}>
-          <div css={styleToggleStyle}>
-            <button
-              css={[styleButtonStyle, styleStrategy === "emotion" && styleButtonActiveStyle]}
-              onClick={() => setStyleStrategy("emotion")}
-            >
-              Emotion
-            </button>
-            <button
-              css={[styleButtonStyle, styleStrategy === "tailwind" && styleButtonActiveStyle]}
-              onClick={() => setStyleStrategy("tailwind")}
-            >
-              Tailwind
-            </button>
-          </div>
-          <select
-            css={optionSelectStyle}
-            value={declarationStyle}
-            onChange={(e) => {
-              const val = e.target.value as DeclarationStyle;
-              setDeclarationStyle(val);
-              if (val !== "function" && exportStyle === "inline-default") {
-                setExportStyle("default");
-              }
-            }}
+          <button
+            css={minimizeButtonStyle}
+            onClick={handleMinimize}
+            title={minimized ? "복원" : "최소화"}
           >
-            <option value="function">function</option>
-            <option value="arrow">arrow</option>
-            <option value="arrow-fc">arrow (FC)</option>
-          </select>
-          <select
-            css={optionSelectStyle}
-            value={exportStyle}
-            onChange={(e) => {
-              const val = e.target.value as ExportStyle;
-              setExportStyle(val);
-            }}
-          >
-            <option value="default">export default</option>
-            <option value="inline-default" disabled={declarationStyle !== "function"}>
-              export default (inline)
-            </option>
-            <option value="named">named export</option>
-          </select>
+            {minimized ? "□" : "─"}
+          </button>
         </div>
       </div>
 
       {/* ─── Tab Bar ─── */}
-      <div css={tabBarStyle}>
+      {!minimized && <div css={tabBarStyle}>
         {visibleTabs.map((tab) => (
           <button
             key={tab}
@@ -641,10 +641,10 @@ function App() {
             {TAB_LABELS[tab]}
           </button>
         ))}
-      </div>
+      </div>}
 
       {/* ─── Tab Content ─── */}
-      <div css={tabContentStyle}>
+      {!minimized && <div css={tabContentStyle}>
         {/* Preview Tab */}
         {activeTab === "preview" && (
           <>
@@ -764,6 +764,48 @@ function App() {
         {/* Code Tab */}
         {activeTab === "code" && (
           <div css={codeTabStyle}>
+            <div css={codeOptionsBarStyle}>
+              <div css={styleToggleStyle}>
+                <button
+                  css={[styleButtonStyle, styleStrategy === "emotion" && styleButtonActiveStyle]}
+                  onClick={() => setStyleStrategy("emotion")}
+                >
+                  Emotion
+                </button>
+                <button
+                  css={[styleButtonStyle, styleStrategy === "tailwind" && styleButtonActiveStyle]}
+                  onClick={() => setStyleStrategy("tailwind")}
+                >
+                  Tailwind
+                </button>
+              </div>
+              <select
+                css={optionSelectStyle}
+                value={declarationStyle}
+                onChange={(e) => {
+                  const val = e.target.value as DeclarationStyle;
+                  setDeclarationStyle(val);
+                  if (val !== "function" && exportStyle === "inline-default") {
+                    setExportStyle("default");
+                  }
+                }}
+              >
+                <option value="function">function</option>
+                <option value="arrow">arrow</option>
+                <option value="arrow-fc">arrow (FC)</option>
+              </select>
+              <select
+                css={optionSelectStyle}
+                value={exportStyle}
+                onChange={(e) => setExportStyle(e.target.value as ExportStyle)}
+              >
+                <option value="default">export default</option>
+                <option value="inline-default" disabled={declarationStyle !== "function"}>
+                  export default (inline)
+                </option>
+                <option value="named">named export</option>
+              </select>
+            </div>
             <CodeEditor code={generatedCode} onChange={handleCodeChange} />
           </div>
         )}
@@ -777,7 +819,7 @@ function App() {
         <div style={{ display: activeTab === "release" ? "block" : "none" }}>
           <ReleaseSection />
         </div>
-      </div>
+      </div>}
 
       {/* 추출 중 전체 화면 오버레이 (캐시 미스 시에만) */}
       {isExtracting && (

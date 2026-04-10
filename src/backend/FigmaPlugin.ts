@@ -16,7 +16,7 @@ export class FigmaPlugin {
    */
   async initialize(): Promise<void> {
     // UI 표시
-    figma.showUI(__html__, { width: 500, height: 1000 });
+    figma.showUI(__html__, { width: 900, height: 1000 });
 
     // dynamic-page 모드에서 documentchange 이벤트를 받으려면 반드시 먼저 호출해야 함.
     // 이게 없으면 documentchange 자체가 발동 안 함 (Figma 공식 docs + 실측 확인).
