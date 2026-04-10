@@ -43,6 +43,8 @@ import { TailwindStrategy } from "./style-strategy/TailwindStrategy";
 import { ShadcnStrategy } from "./style-strategy/ShadcnStrategy";
 import type { IStyleStrategy } from "./style-strategy/IStyleStrategy";
 import type { SemanticComponent, SemanticNode } from "../SemanticIR";
+import { RadixMapper } from "./radix/RadixMapper";
+import { isRadixMappable } from "./radix/RadixComponentConfig";
 import type { NamingOptions } from "../../../types/public";
 
 /** element별 충돌하는 native HTML attribute */
@@ -111,6 +113,20 @@ export class ReactEmitter implements ICodeEmitter {
   async emit(ir: SemanticComponent): Promise<EmittedCode> {
     const componentName = this.options.naming?.componentName
       || `${this.options.naming?.componentPrefix ?? ""}${ir.name}${this.options.naming?.componentSuffix ?? ""}`;
+
+    // Radix mapping: shadcn + Radix-mappable componentType → RadixMapper
+    if (
+      this.options.styleStrategy === "shadcn" &&
+      isRadixMappable(ir.componentType)
+    ) {
+      const rawCode = RadixMapper.emit(ir, {
+        cnImportPath: this.options.shadcn?.cnImportPath,
+        componentName,
+      });
+      const code = await this.formatCode(rawCode);
+      return { code, componentName, fileExtension: ".tsx" };
+    }
+
     const sections = this.generateAllSections(ir, componentName);
     const code = await this.assembleAndFormat(sections);
 
