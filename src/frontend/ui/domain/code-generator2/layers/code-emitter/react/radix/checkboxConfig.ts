@@ -16,9 +16,6 @@ const checkboxConfig: RadixComponentConfig = {
   nativeRadixProps: new Set([
     "checked", "onCheckedChange", "disabled", "disable",
   ]),
-  nativeRadixAttrs: new Set([
-    "role", "aria-checked", "onClick", "disabled",
-  ]),
 };
 
 registerRadixConfig("checkbox", checkboxConfig);

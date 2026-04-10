@@ -14,7 +14,6 @@ export interface RadixComponentConfig {
   subPrimitives: RadixSubPrimitive[];
   extraImports?: string[];
   nativeRadixProps: Set<string>;
-  nativeRadixAttrs: Set<string>;
 }
 
 const registry = new Map<string, RadixComponentConfig>();

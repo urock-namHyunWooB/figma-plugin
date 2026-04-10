@@ -20,9 +20,6 @@ const switchConfig: RadixComponentConfig = {
   nativeRadixProps: new Set([
     "checked", "onCheckedChange", "active", "disabled", "disable",
   ]),
-  nativeRadixAttrs: new Set([
-    "role", "aria-checked", "onClick", "disabled",
-  ]),
 };
 
 registerRadixConfig("toggle", switchConfig);
