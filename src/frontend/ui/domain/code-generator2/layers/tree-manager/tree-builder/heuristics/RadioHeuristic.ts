@@ -30,7 +30,7 @@ const CHECKED_VALUE_PATTERNS = /^(checked|active|selected|on)$/i;
 
 export class RadioHeuristic implements IHeuristic {
   readonly name = "RadioHeuristic";
-  readonly componentType: ComponentType = "unknown";
+  readonly componentType: ComponentType = "radio";
 
   score(ctx: HeuristicContext): number {
     if (/\bradio\b/i.test(ctx.componentName)) return 20;

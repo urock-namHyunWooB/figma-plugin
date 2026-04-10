@@ -61,7 +61,7 @@ const DISABLE_PSEUDO_MAP: Record<string, PseudoClass> = {
 
 export class CheckboxHeuristic implements IHeuristic {
   readonly name = "CheckboxHeuristic";
-  readonly componentType: ComponentType = "unknown";
+  readonly componentType: ComponentType = "checkbox";
 
   score(ctx: HeuristicContext): number {
     if (/checkbox/i.test(ctx.componentName)) return 20;

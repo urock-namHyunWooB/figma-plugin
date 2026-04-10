@@ -776,7 +776,7 @@ exports[`UITree snapshots > any/ConfirmationDialog 1`] = `
 exports[`UITree snapshots > any/Controlcheckbox 1`] = `
 {
   "arraySlotNames": [],
-  "componentType": "unknown",
+  "componentType": "checkbox",
   "propNames": [
     "checked",
     "disable",
@@ -12295,7 +12295,7 @@ exports[`UITree snapshots > button/urockButton 1`] = `
 exports[`UITree snapshots > checkbox/taptap-checkbox 1`] = `
 {
   "arraySlotNames": [],
-  "componentType": "unknown",
+  "componentType": "checkbox",
   "propNames": [
     "checked",
     "disable",
@@ -19040,7 +19040,7 @@ exports[`UITree snapshots > failing/Buttonsolid 1`] = `
 exports[`UITree snapshots > failing/Checkbox 1`] = `
 {
   "arraySlotNames": [],
-  "componentType": "unknown",
+  "componentType": "checkbox",
   "propNames": [
     "checked",
     "disable",
@@ -20267,7 +20267,7 @@ exports[`UITree snapshots > failing/Input 1`] = `
 exports[`UITree snapshots > failing/Radio 1`] = `
 {
   "arraySlotNames": [],
-  "componentType": "unknown",
+  "componentType": "radio",
   "propNames": [
     "checked",
     "disable",
@@ -23346,7 +23346,7 @@ exports[`UITree snapshots > regression/BreakpointdesktopmdlgStatelogin 1`] = `
 exports[`UITree snapshots > regression/Controlradio 1`] = `
 {
   "arraySlotNames": [],
-  "componentType": "unknown",
+  "componentType": "radio",
   "propNames": [
     "checked",
     "disable",
@@ -24243,7 +24243,7 @@ exports[`UITree snapshots > urock/Badgesicon 1`] = `
 exports[`UITree snapshots > urock/Checkbox 1`] = `
 {
   "arraySlotNames": [],
-  "componentType": "unknown",
+  "componentType": "checkbox",
   "propNames": [
     "checked",
     "disable",
@@ -25117,7 +25117,7 @@ exports[`UITree snapshots > urock/Profile 1`] = `
 exports[`UITree snapshots > urock/Radio 1`] = `
 {
   "arraySlotNames": [],
-  "componentType": "unknown",
+  "componentType": "radio",
   "propNames": [
     "checked",
     "disable",
