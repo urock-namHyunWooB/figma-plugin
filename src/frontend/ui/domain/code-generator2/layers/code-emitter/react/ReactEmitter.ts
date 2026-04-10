@@ -44,6 +44,7 @@ import { ShadcnStrategy } from "./style-strategy/ShadcnStrategy";
 import type { IStyleStrategy } from "./style-strategy/IStyleStrategy";
 import type { SemanticComponent, SemanticNode } from "../SemanticIR";
 import type { NamingOptions } from "../../../types/public";
+import { toComponentName } from "../../../utils/nameUtils";
 
 /** element별 충돌하는 native HTML attribute */
 const NATIVE_ATTRS_BY_ELEMENT: Record<string, Set<string>> = {
@@ -170,11 +171,12 @@ export class ReactEmitter implements ICodeEmitter {
 
     const filteredDeps = this.filterSlotDependencies(main, clonedDeps);
 
+    // dependency의 native prop rename을 parent binding에 반영 (먼저 실행)
+    // propagateVariantOptions보다 먼저 실행해야 attr key가 dep prop name과 일치
+    this.propagateNativeRenames(main, filteredDeps);
+
     // dependency의 variant prop options를 parent binding에 맞춰 확장
     this.propagateVariantOptions(main, filteredDeps);
-
-    // dependency의 native prop rename을 parent binding에 반영
-    this.propagateNativeRenames(main, filteredDeps);
 
     const result = await this.emitAll(main, filteredDeps);
     const depArray = Array.from(result.dependencies.values());
@@ -229,7 +231,7 @@ export class ReactEmitter implements ICodeEmitter {
 
     const walkNode = (node: SemanticNode) => {
       if (node.kind === "component" && node.attrs) {
-        const compName = node.name ?? "";
+        const compName = toComponentName(node.name ?? "");
         if (depsByName.has(compName)) {
           for (const [attrName, source] of Object.entries(node.attrs)) {
             if ("prop" in source) {
@@ -314,9 +316,17 @@ export class ReactEmitter implements ICodeEmitter {
 
       const renames = new Map<string, string>();
       for (const prop of dep.props) {
+        // Case 1: 아직 rename 안 된 prop (원래 이름이 native attr에 해당)
         if (nativeAttrs.has(prop.name) && !prop.nativeAttribute) {
           const newName = "custom" + prop.name.charAt(0).toUpperCase() + prop.name.slice(1);
           renames.set(prop.name, newName);
+        }
+        // Case 2: 이미 renameNativeProps()로 rename된 prop (customXxx → 원래 xxx 역추론)
+        if (prop.name.startsWith("custom") && prop.name.length > 6 && !prop.nativeAttribute) {
+          const originalName = prop.name.charAt(6).toLowerCase() + prop.name.slice(7);
+          if (nativeAttrs.has(originalName)) {
+            renames.set(originalName, prop.name);
+          }
         }
       }
       if (renames.size > 0) {
@@ -329,7 +339,7 @@ export class ReactEmitter implements ICodeEmitter {
     // main structure의 component 노드 attrs 업데이트 (새 객체로 대체하여 mutation 격리)
     const walkNode = (node: SemanticNode) => {
       if (node.kind === "component" && node.attrs) {
-        const compName = node.name ?? "";
+        const compName = toComponentName(node.name ?? "");
         const renames = depRenameMap.get(compName);
         if (renames) {
           const newAttrs: Record<string, any> = {};
@@ -364,9 +374,20 @@ export class ReactEmitter implements ICodeEmitter {
 
     if (slotIRs.size === 0) return deps;
 
+    // 메인 구조에서 component 노드로 직접 참조되는 dep은 제거하지 않음
+    // (슬롯 + 일반 참조 둘 다 사용되는 경우)
+    const referencedIds = new Set<string>();
+    const collectRefs = (node: { kind?: string; refId?: string; children?: any[] }) => {
+      if (node.kind === "component" && node.refId) {
+        referencedIds.add(node.refId);
+      }
+      for (const child of node.children ?? []) collectRefs(child);
+    };
+    collectRefs(main.structure);
+
     const filtered = new Map<string, SemanticComponent>();
     for (const [id, ir] of deps) {
-      if (!slotIRs.has(ir)) filtered.set(id, ir);
+      if (!slotIRs.has(ir) || referencedIds.has(id)) filtered.set(id, ir);
     }
     return filtered;
   }

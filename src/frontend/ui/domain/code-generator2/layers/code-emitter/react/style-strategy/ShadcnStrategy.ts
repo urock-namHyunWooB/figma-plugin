@@ -319,13 +319,16 @@ export class ShadcnStrategy implements IStyleStrategy {
     for (const p of compoundProps) {
       if (declaredVariants.has(p)) continue;
       const allOptions = this.variantOptions.get(p);
+      const propKey = needsQuoting(p) ? `"${p}"` : p;
       if (allOptions) {
         const emptyEntries = [...allOptions].map((opt) => {
           const key = needsQuoting(opt) ? `"${opt}"` : opt;
           return `        ${key}: "",`;
         });
-        const propKey = needsQuoting(p) ? `"${p}"` : p;
         variantParts.push(`    ${propKey}: {\n${emptyEntries.join("\n")}\n    },`);
+      } else {
+        // slot prop 등 variantOptions에 없는 경우 boolean variant로 fallback
+        variantParts.push(`    ${propKey}: {\n        true: "",\n        false: "",\n    },`);
       }
     }
 
