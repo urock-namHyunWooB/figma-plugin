@@ -2149,6 +2149,43 @@ exports[`UITree snapshots > any/InputFieldtextField 1`] = `
             "name": "Label",
             "type": "text",
           },
+          {
+            "children": [],
+            "id": "2882:172105",
+            "mergedNodes": [
+              {
+                "id": "2882:172105",
+                "variantName": "Status=Inactivated",
+              },
+              {
+                "id": "2882:180346",
+                "variantName": "Status=Focused",
+              },
+              {
+                "id": "2882:180543",
+                "variantName": "Status=Typing",
+              },
+              {
+                "id": "2882:180720",
+                "variantName": "Status=Filled",
+              },
+              {
+                "id": "2882:180984",
+                "variantName": "Status=Error",
+              },
+              {
+                "id": "2882:181061",
+                "variantName": "Status=Deactived",
+              },
+              {
+                "id": "2882:181138",
+                "variantName": "Status=ReadOnly",
+              },
+            ],
+            "name": "Button/Icon/Normal",
+            "refId": "790:43463",
+            "type": "component",
+          },
         ],
         "id": "2882:176764",
         "mergedNodes": [
@@ -2266,6 +2303,43 @@ exports[`UITree snapshots > any/InputFieldtextField 1`] = `
             ],
             "name": "Input Text",
             "type": "text",
+          },
+          {
+            "children": [],
+            "id": "2882:165458",
+            "mergedNodes": [
+              {
+                "id": "2882:165458",
+                "variantName": "Status=Inactivated",
+              },
+              {
+                "id": "2882:170900",
+                "variantName": "Status=Focused",
+              },
+              {
+                "id": "2781:153842",
+                "variantName": "Status=Typing",
+              },
+              {
+                "id": "2882:171302",
+                "variantName": "Status=Filled",
+              },
+              {
+                "id": "2882:171511",
+                "variantName": "Status=Error",
+              },
+              {
+                "id": "2882:171566",
+                "variantName": "Status=Deactived",
+              },
+              {
+                "id": "2882:171621",
+                "variantName": "Status=ReadOnly",
+              },
+            ],
+            "name": "Button/Icon/Normal",
+            "refId": "790:43463",
+            "type": "component",
           },
         ],
         "id": "2551:107286",
@@ -4369,9 +4443,10 @@ exports[`UITree snapshots > any/any-03 1`] = `
   "arraySlotNames": [],
   "componentType": "unknown",
   "propNames": [
+    "global",
     "showLeftButton",
   ],
-  "propsCount": 1,
+  "propsCount": 2,
   "root": {
     "children": [
       {
@@ -4727,9 +4802,11 @@ exports[`UITree snapshots > any/any-05 1`] = `
   ],
   "componentType": "unknown",
   "propNames": [
+    "buttonIconNormal",
     "chips",
+    "global",
   ],
-  "propsCount": 1,
+  "propsCount": 3,
   "root": {
     "children": [
       {
@@ -5385,7 +5462,20 @@ exports[`UITree snapshots > any/component-02 1`] = `
   "root": {
     "children": [
       {
-        "children": [],
+        "children": [
+          {
+            "children": [],
+            "id": "I6452:8627;79741:205140",
+            "mergedNodes": [
+              {
+                "id": "I6452:8627;79741:205140",
+                "variantName": "notch",
+              },
+            ],
+            "name": "notch",
+            "type": "vector",
+          },
+        ],
         "id": "I6452:8627;79741:205139",
         "mergedNodes": [
           {
@@ -5725,6 +5815,39 @@ exports[`UITree snapshots > any/error-02 1`] = `
     "children": [
       {
         "children": [],
+        "id": "258:34208",
+        "mergedNodes": [
+          {
+            "id": "258:34208",
+            "variantName": "Size=Large, Disabled=False",
+          },
+          {
+            "id": "258:35111",
+            "variantName": "Size=Large, Disabled=True",
+          },
+          {
+            "id": "258:35499",
+            "variantName": "Size=Medium, Disabled=False",
+          },
+          {
+            "id": "258:35995",
+            "variantName": "Size=Small, Disabled=False",
+          },
+          {
+            "id": "258:35665",
+            "variantName": "Size=Medium, Disabled=True",
+          },
+          {
+            "id": "258:36159",
+            "variantName": "Size=Small, Disabled=True",
+          },
+        ],
+        "name": "Global",
+        "refId": "250:78027",
+        "type": "component",
+      },
+      {
+        "children": [],
         "id": "87:3015",
         "mergedNodes": [
           {
@@ -5754,6 +5877,39 @@ exports[`UITree snapshots > any/error-02 1`] = `
         ],
         "name": "dddddddddddddddddddd",
         "type": "text",
+      },
+      {
+        "children": [],
+        "id": "258:34623",
+        "mergedNodes": [
+          {
+            "id": "258:34623",
+            "variantName": "Size=Large, Disabled=False",
+          },
+          {
+            "id": "258:35112",
+            "variantName": "Size=Large, Disabled=True",
+          },
+          {
+            "id": "258:35500",
+            "variantName": "Size=Medium, Disabled=False",
+          },
+          {
+            "id": "258:35996",
+            "variantName": "Size=Small, Disabled=False",
+          },
+          {
+            "id": "258:35666",
+            "variantName": "Size=Medium, Disabled=True",
+          },
+          {
+            "id": "258:36160",
+            "variantName": "Size=Small, Disabled=True",
+          },
+        ],
+        "name": "Global",
+        "refId": "250:78027",
+        "type": "component",
       },
     ],
     "id": "87:3027",
@@ -6095,7 +6251,20 @@ exports[`UITree snapshots > any/frame-01 1`] = `
                                 "type": "text",
                               },
                               {
-                                "children": [],
+                                "children": [
+                                  {
+                                    "children": [],
+                                    "id": "6452:8616",
+                                    "mergedNodes": [
+                                      {
+                                        "id": "6452:8616",
+                                        "variantName": "Star 12",
+                                      },
+                                    ],
+                                    "name": "Star 12",
+                                    "type": "vector",
+                                  },
+                                ],
                                 "id": "6452:8615",
                                 "mergedNodes": [
                                   {
@@ -9606,6 +9775,38 @@ exports[`UITree snapshots > button/tadaButton 1`] = `
     "children": [
       {
         "children": [],
+        "id": "258:34208",
+        "mergedNodes": [
+          {
+            "id": "258:34208",
+            "variantName": "Size=Large, Disabled=False",
+          },
+          {
+            "id": "258:35111",
+            "variantName": "Size=Large, Disabled=True",
+          },
+          {
+            "id": "258:35499",
+            "variantName": "Size=Medium, Disabled=False",
+          },
+          {
+            "id": "258:35995",
+            "variantName": "Size=Small, Disabled=False",
+          },
+          {
+            "id": "258:35665",
+            "variantName": "Size=Medium, Disabled=True",
+          },
+          {
+            "id": "258:36159",
+            "variantName": "Size=Small, Disabled=True",
+          },
+        ],
+        "name": "Left Icon",
+        "type": "container",
+      },
+      {
+        "children": [],
         "id": "87:3015",
         "mergedNodes": [
           {
@@ -9635,6 +9836,38 @@ exports[`UITree snapshots > button/tadaButton 1`] = `
         ],
         "name": "Label",
         "type": "text",
+      },
+      {
+        "children": [],
+        "id": "258:34623",
+        "mergedNodes": [
+          {
+            "id": "258:34623",
+            "variantName": "Size=Large, Disabled=False",
+          },
+          {
+            "id": "258:35112",
+            "variantName": "Size=Large, Disabled=True",
+          },
+          {
+            "id": "258:35500",
+            "variantName": "Size=Medium, Disabled=False",
+          },
+          {
+            "id": "258:35996",
+            "variantName": "Size=Small, Disabled=False",
+          },
+          {
+            "id": "258:35666",
+            "variantName": "Size=Medium, Disabled=True",
+          },
+          {
+            "id": "258:36160",
+            "variantName": "Size=Small, Disabled=True",
+          },
+        ],
+        "name": "Right Icon",
+        "type": "container",
       },
     ],
     "id": "87:3027",
@@ -16704,6 +16937,46 @@ exports[`UITree snapshots > failing/Buttonbutton 1`] = `
   "root": {
     "children": [
       {
+        "children": [],
+        "id": "16215:37671",
+        "mergedNodes": [
+          {
+            "id": "16215:37671",
+            "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16215:37684",
+            "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1228793",
+            "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1245077",
+            "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1228804",
+            "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1245088",
+            "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1247596",
+            "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1247607",
+            "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
+          },
+        ],
+        "name": "Mask",
+        "type": "vector",
+      },
+      {
         "children": [
           {
             "children": [],
@@ -16811,6 +17084,216 @@ exports[`UITree snapshots > failing/Buttonbutton 1`] = `
             "type": "component",
           },
           {
+            "children": [
+              {
+                "children": [],
+                "id": "16215:37609",
+                "mergedNodes": [
+                  {
+                    "id": "16215:37609",
+                    "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37617",
+                    "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37626",
+                    "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37643",
+                    "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37700",
+                    "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:38017",
+                    "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37634",
+                    "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37651",
+                    "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37708",
+                    "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:38025",
+                    "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37718",
+                    "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:38034",
+                    "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37736",
+                    "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:38051",
+                    "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:38107",
+                    "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37726",
+                    "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:38042",
+                    "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37744",
+                    "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:38059",
+                    "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:38115",
+                    "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:38124",
+                    "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:38141",
+                    "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:38132",
+                    "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:38149",
+                    "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=True",
+                  },
+                ],
+                "name": "Icons/Icons",
+                "refId": "16215:25200",
+                "type": "component",
+              },
+            ],
+            "id": "16293:159646",
+            "mergedNodes": [
+              {
+                "id": "16293:159646",
+                "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:159639",
+                "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:159642",
+                "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:159636",
+                "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:159638",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:154071",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:159645",
+                "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:159641",
+                "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:159644",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:154061",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:159637",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:154059",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:159643",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:154075",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:154073",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:159640",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:154067",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:159635",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:154068",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:154062",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:154065",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:154066",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:154064",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:154060",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=True",
+              },
+            ],
+            "name": "Leading Icon",
+            "type": "container",
+          },
+          {
             "children": [],
             "id": "16215:37610",
             "mergedNodes": [
@@ -16913,6 +17396,216 @@ exports[`UITree snapshots > failing/Buttonbutton 1`] = `
             ],
             "name": "텍스트",
             "type": "text",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "16215:37611",
+                "mergedNodes": [
+                  {
+                    "id": "16215:37611",
+                    "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37619",
+                    "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37628",
+                    "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37645",
+                    "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37702",
+                    "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:38019",
+                    "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37636",
+                    "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37653",
+                    "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37710",
+                    "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:38027",
+                    "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37720",
+                    "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:38036",
+                    "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37738",
+                    "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:38053",
+                    "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:38109",
+                    "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37728",
+                    "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:38044",
+                    "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37746",
+                    "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:38061",
+                    "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:38117",
+                    "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:38126",
+                    "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:38143",
+                    "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:38134",
+                    "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:38151",
+                    "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=True",
+                  },
+                ],
+                "name": "Icons/Icons",
+                "refId": "16215:25200",
+                "type": "component",
+              },
+            ],
+            "id": "16293:161074",
+            "mergedNodes": [
+              {
+                "id": "16293:161074",
+                "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:161071",
+                "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:161066",
+                "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:161067",
+                "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:161070",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:156014",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:161073",
+                "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:161076",
+                "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:161072",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:155999",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:161069",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:155997",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:161065",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:156011",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:156009",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:161075",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:156005",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:161068",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:156006",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:156000",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:156003",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:156004",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:156002",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:155998",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=True",
+              },
+            ],
+            "name": "Trailing Icon",
+            "type": "container",
           },
         ],
         "id": "16215:37608",
@@ -17112,6 +17805,288 @@ exports[`UITree snapshots > failing/Buttonbutton 1`] = `
         ],
         "name": "Content",
         "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "16215:37606",
+            "mergedNodes": [
+              {
+                "id": "16215:37606",
+                "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16215:37623",
+                "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16215:37640",
+                "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16215:37657",
+                "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1228604",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16246:1243446",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16215:37670",
+                "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1228759",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16246:1244433",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16215:37683",
+                "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1228770",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16246:1244598",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16246:1228781",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1245065",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1245997",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16246:1228792",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1245076",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1246644",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16246:1228803",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1245087",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1246757",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16246:1247564",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1247595",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1247606",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
+              },
+            ],
+            "name": "Circular/Circular",
+            "refId": "16215:24961",
+            "type": "component",
+          },
+        ],
+        "id": "16215:37605",
+        "mergedNodes": [
+          {
+            "id": "16215:37605",
+            "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37622",
+            "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37639",
+            "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37656",
+            "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1228603",
+            "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1243445",
+            "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37669",
+            "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1228758",
+            "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1244432",
+            "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37682",
+            "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1228769",
+            "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1244597",
+            "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1228780",
+            "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1245064",
+            "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1245996",
+            "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1228791",
+            "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1245075",
+            "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1246643",
+            "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1228802",
+            "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1245086",
+            "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1246756",
+            "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1247563",
+            "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1247594",
+            "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1247605",
+            "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
+          },
+        ],
+        "name": "Loading",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "16215:37607",
+        "mergedNodes": [
+          {
+            "id": "16215:37607",
+            "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37624",
+            "variantName": "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37641",
+            "variantName": "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37658",
+            "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1228605",
+            "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1243447",
+            "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1228760",
+            "variantName": "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1244434",
+            "variantName": "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1228771",
+            "variantName": "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1244599",
+            "variantName": "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1228782",
+            "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1245066",
+            "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1245998",
+            "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1246645",
+            "variantName": "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1246758",
+            "variantName": "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1247565",
+            "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
+          },
+        ],
+        "name": "Mask",
+        "type": "vector",
       },
     ],
     "id": "16215:37603",
@@ -17333,6 +18308,144 @@ exports[`UITree snapshots > failing/Buttonsolid 1`] = `
   "root": {
     "children": [
       {
+        "children": [],
+        "id": "16215:37671",
+        "mergedNodes": [
+          {
+            "id": "16215:37671",
+            "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16215:37684",
+            "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1228793",
+            "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1228804",
+            "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+          },
+        ],
+        "name": "Mask",
+        "type": "vector",
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "16215:37606",
+            "mergedNodes": [
+              {
+                "id": "16215:37606",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16215:37623",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16215:37640",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16215:37657",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1228604",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16215:37670",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1228759",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16215:37683",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1228770",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16246:1228781",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1228792",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+              },
+              {
+                "id": "16246:1228803",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+              },
+            ],
+            "name": "Circular/Circular",
+            "refId": "16215:24961",
+            "type": "component",
+          },
+        ],
+        "id": "16215:37605",
+        "mergedNodes": [
+          {
+            "id": "16215:37605",
+            "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37622",
+            "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37639",
+            "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37656",
+            "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1228603",
+            "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37669",
+            "variantName": "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1228758",
+            "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37682",
+            "variantName": "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1228769",
+            "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1228780",
+            "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1228791",
+            "variantName": "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1228802",
+            "variantName": "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+          },
+        ],
+        "name": "Loading",
+        "type": "container",
+      },
+      {
         "children": [
           {
             "children": [],
@@ -17392,6 +18505,120 @@ exports[`UITree snapshots > failing/Buttonsolid 1`] = `
             "type": "component",
           },
           {
+            "children": [
+              {
+                "children": [],
+                "id": "16215:37609",
+                "mergedNodes": [
+                  {
+                    "id": "16215:37609",
+                    "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37617",
+                    "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37626",
+                    "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37643",
+                    "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37700",
+                    "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37634",
+                    "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37651",
+                    "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37708",
+                    "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37718",
+                    "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37736",
+                    "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37726",
+                    "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37744",
+                    "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                  },
+                ],
+                "name": "Icons/Icons",
+                "refId": "16215:25200",
+                "type": "component",
+              },
+            ],
+            "id": "16293:159646",
+            "mergedNodes": [
+              {
+                "id": "16293:159646",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:159639",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:159642",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:159636",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:159638",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:159645",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:159641",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:159644",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:159637",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:159643",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:159640",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:159635",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+              },
+            ],
+            "name": "Leading Icon",
+            "type": "container",
+          },
+          {
             "children": [],
             "id": "16215:37610",
             "mergedNodes": [
@@ -17446,6 +18673,120 @@ exports[`UITree snapshots > failing/Buttonsolid 1`] = `
             ],
             "name": "텍스트",
             "type": "text",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "16215:37611",
+                "mergedNodes": [
+                  {
+                    "id": "16215:37611",
+                    "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37619",
+                    "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37628",
+                    "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37645",
+                    "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37702",
+                    "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37636",
+                    "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37653",
+                    "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37710",
+                    "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37720",
+                    "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37738",
+                    "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+                  },
+                  {
+                    "id": "16215:37728",
+                    "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+                  },
+                  {
+                    "id": "16215:37746",
+                    "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+                  },
+                ],
+                "name": "Icons/Icons",
+                "refId": "16215:25200",
+                "type": "component",
+              },
+            ],
+            "id": "16293:161074",
+            "mergedNodes": [
+              {
+                "id": "16293:161074",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:161071",
+                "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:161066",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:161067",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:161070",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:161073",
+                "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:161076",
+                "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:161072",
+                "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:161069",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:161065",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+              },
+              {
+                "id": "16293:161075",
+                "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+              },
+              {
+                "id": "16293:161068",
+                "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+              },
+            ],
+            "name": "Trailing Icon",
+            "type": "container",
           },
         ],
         "id": "16215:37608",
@@ -17549,6 +18890,46 @@ exports[`UITree snapshots > failing/Buttonsolid 1`] = `
         ],
         "name": "Content",
         "type": "container",
+      },
+      {
+        "children": [],
+        "id": "16215:37607",
+        "mergedNodes": [
+          {
+            "id": "16215:37607",
+            "variantName": "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37624",
+            "variantName": "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37641",
+            "variantName": "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16215:37658",
+            "variantName": "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+          },
+          {
+            "id": "16246:1228605",
+            "variantName": "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1228760",
+            "variantName": "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1228771",
+            "variantName": "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
+          },
+          {
+            "id": "16246:1228782",
+            "variantName": "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+          },
+        ],
+        "name": "Mask",
+        "type": "vector",
       },
     ],
     "id": "16215:37603",
@@ -22166,13 +23547,18 @@ exports[`UITree snapshots > regression/Controlradio 1`] = `
 
 exports[`UITree snapshots > regression/List 1`] = `
 {
-  "arraySlotNames": [],
+  "arraySlotNames": [
+    "leadingContents",
+    "trailingContents",
+  ],
   "componentType": "unknown",
   "propNames": [
+    "leadingContents",
     "textinputResourceTextareaLeadingContent",
     "textinputResourceTextareaTrailingContent",
+    "trailingContents",
   ],
-  "propsCount": 2,
+  "propsCount": 4,
   "root": {
     "children": [
       {
@@ -22422,6 +23808,56 @@ exports[`UITree snapshots > regression/Searchfieldsearchfield 1`] = `
                 ],
                 "name": "검색어를 입력해주세요.",
                 "type": "text",
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "id": "16215:33777",
+                    "mergedNodes": [
+                      {
+                        "id": "16215:33777",
+                        "variantName": "Size=Medium, Active=False",
+                      },
+                      {
+                        "id": "16215:33785",
+                        "variantName": "Size=Medium, Active=True",
+                      },
+                      {
+                        "id": "16215:33795",
+                        "variantName": "Size=Small, Active=False",
+                      },
+                      {
+                        "id": "16215:33803",
+                        "variantName": "Size=Small, Active=True",
+                      },
+                    ],
+                    "name": "Pointing Device/Cursor",
+                    "refId": "16311:145174",
+                    "type": "component",
+                  },
+                ],
+                "id": "16215:33776",
+                "mergedNodes": [
+                  {
+                    "id": "16215:33776",
+                    "variantName": "Size=Medium, Active=False",
+                  },
+                  {
+                    "id": "16215:33784",
+                    "variantName": "Size=Medium, Active=True",
+                  },
+                  {
+                    "id": "16215:33794",
+                    "variantName": "Size=Small, Active=False",
+                  },
+                  {
+                    "id": "16215:33802",
+                    "variantName": "Size=Small, Active=True",
+                  },
+                ],
+                "name": "Cursor",
+                "type": "container",
               },
             ],
             "id": "16215:33774",

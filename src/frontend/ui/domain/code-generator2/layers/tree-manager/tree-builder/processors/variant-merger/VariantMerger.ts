@@ -676,7 +676,13 @@ export class VariantMerger {
 
     if (children) {
       internalNode.children = children
-        .filter((child) => (child as any).visible !== false)
+        .filter((child) => {
+          if ((child as any).visible !== false) return true;
+          // prop으로 visible을 제어하는 노드는 기본값이 false여도 유지
+          const refs = (child as any).componentPropertyReferences;
+          if (refs?.visible) return true;
+          return false;
+        })
         .map((child) =>
           this.convertToInternalNode(child, variantName, internalNode)
         );

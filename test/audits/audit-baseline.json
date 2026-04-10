@@ -1,16 +1,16 @@
 {
-  "generatedAt": "2026-04-09T07:50:21.301Z",
-  "totalFixtures": 85,
-  "fixturesWithRegressions": 45,
-  "totalDisjointPairs": 1856,
+  "generatedAt": "2026-04-10T08:16:15.885Z",
+  "totalFixtures": 87,
+  "fixturesWithRegressions": 47,
+  "totalDisjointPairs": 1839,
   "compileErrors": 0,
   "patternTotals": {
-    "size-variant-reject": 1,
-    "variant-prop-position": 20,
-    "same-name-same-type": 7,
+    "size-variant-reject": 3,
+    "variant-prop-position": 17,
+    "same-name-same-type": 9,
     "same-name-cross-type": 0,
-    "different-type": 897,
-    "different-name": 931,
+    "different-type": 890,
+    "different-name": 920,
     "unknown": 0
   },
   "byFixture": [
@@ -3165,14 +3165,14 @@
     },
     {
       "fixture": "any/any-05",
-      "disjointCount": 54,
+      "disjointCount": 49,
       "patterns": {
         "size-variant-reject": 0,
         "variant-prop-position": 0,
         "same-name-same-type": 0,
         "same-name-cross-type": 0,
-        "different-type": 38,
-        "different-name": 16,
+        "different-type": 35,
+        "different-name": 14,
         "unknown": 0
       },
       "pairs": [
@@ -3283,54 +3283,6 @@
             "Choice Chips"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "3802:342426",
-          "a": "3802:342427",
-          "b": "3802:342433",
-          "variantsA": [
-            "Type"
-          ],
-          "variantsB": [
-            "Choice Chips"
-          ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "3802:342426",
-          "a": "3802:342427",
-          "b": "3802:342437",
-          "variantsA": [
-            "Type"
-          ],
-          "variantsB": [
-            "Custom Date"
-          ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "3802:342426",
-          "a": "3802:342428",
-          "b": "3802:342437",
-          "variantsA": [
-            "Choice Chips"
-          ],
-          "variantsB": [
-            "Custom Date"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "3802:342426",
-          "a": "3802:342433",
-          "b": "3802:342437",
-          "variantsA": [
-            "Choice Chips"
-          ],
-          "variantsB": [
-            "Custom Date"
-          ],
-          "pattern": "different-name"
         },
         {
           "parentId": "I3802:342429;2556:12517",
@@ -3480,18 +3432,6 @@
           "parentId": "3802:342440",
           "a": "3802:342441",
           "b": "3802:342442",
-          "variantsA": [
-            "Type"
-          ],
-          "variantsB": [
-            "Choice Chips"
-          ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "3802:342440",
-          "a": "3802:342441",
-          "b": "3802:342448",
           "variantsA": [
             "Type"
           ],
@@ -3828,14 +3768,14 @@
     },
     {
       "fixture": "any/any-06",
-      "disjointCount": 14,
+      "disjointCount": 8,
       "patterns": {
         "size-variant-reject": 0,
         "variant-prop-position": 0,
         "same-name-same-type": 0,
         "same-name-cross-type": 0,
-        "different-type": 2,
-        "different-name": 12,
+        "different-type": 1,
+        "different-name": 7,
         "unknown": 0
       },
       "pairs": [
@@ -3850,78 +3790,6 @@
             "logo"
           ],
           "pattern": "different-name"
-        },
-        {
-          "parentId": "10:2149",
-          "a": "10:2150",
-          "b": "10:2159",
-          "variantsA": [
-            "Frame 427318159"
-          ],
-          "variantsB": [
-            "Frame 427318162"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "10:2150",
-          "a": "10:2151",
-          "b": "10:2156",
-          "variantsA": [
-            "页签"
-          ],
-          "variantsB": [
-            "Group 427318158"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "10:2152",
-          "a": "10:2153",
-          "b": "10:2154",
-          "variantsA": [
-            "Rectangle 11849"
-          ],
-          "variantsB": [
-            "Rectangle 11850"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "10:2152",
-          "a": "10:2153",
-          "b": "10:2155",
-          "variantsA": [
-            "Rectangle 11849"
-          ],
-          "variantsB": [
-            "Rectangle 11851"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "10:2152",
-          "a": "10:2154",
-          "b": "10:2155",
-          "variantsA": [
-            "Rectangle 11850"
-          ],
-          "variantsB": [
-            "Rectangle 11851"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "10:2156",
-          "a": "10:2157",
-          "b": "10:2158",
-          "variantsA": [
-            "TDS UI Kit"
-          ],
-          "variantsB": [
-            "Ellipse 30"
-          ],
-          "pattern": "different-type"
         },
         {
           "parentId": "10:2159",
@@ -4904,17 +4772,44 @@
     },
     {
       "fixture": "any/Controlcheckbox",
-      "disjointCount": 0,
+      "disjointCount": 1,
       "patterns": {
         "size-variant-reject": 0,
         "variant-prop-position": 0,
-        "same-name-same-type": 0,
+        "same-name-same-type": 1,
         "same-name-cross-type": 0,
         "different-type": 0,
         "different-name": 0,
         "unknown": 0
       },
-      "pairs": []
+      "pairs": [
+        {
+          "parentId": "I16215:34466;16215:14161",
+          "a": "I16215:34466;16215:14164",
+          "b": "I16215:34471;16215:15527",
+          "variantsA": [
+            "Size=Normal, State=Checked, Tight=False, Disable=False",
+            "Size=Normal, State=Checked, Tight=False, Disable=True",
+            "Size=Normal, State=Checked, Tight=True, Disable=False",
+            "Size=Normal, State=Checked, Tight=True, Disable=True",
+            "Size=Small, State=Checked, Tight=False, Disable=False",
+            "Size=Small, State=Checked, Tight=False, Disable=True",
+            "Size=Small, State=Checked, Tight=True, Disable=False",
+            "Size=Small, State=Checked, Tight=True, Disable=True"
+          ],
+          "variantsB": [
+            "Size=Normal, State=Indeterminate, Tight=False, Disable=False",
+            "Size=Normal, State=Indeterminate, Tight=False, Disable=True",
+            "Size=Normal, State=Indeterminate, Tight=True, Disable=False",
+            "Size=Normal, State=Indeterminate, Tight=True, Disable=True",
+            "Size=Small, State=Indeterminate, Tight=False, Disable=False",
+            "Size=Small, State=Indeterminate, Tight=False, Disable=True",
+            "Size=Small, State=Indeterminate, Tight=True, Disable=False",
+            "Size=Small, State=Indeterminate, Tight=True, Disable=True"
+          ],
+          "pattern": "same-name-same-type"
+        }
+      ]
     },
     {
       "fixture": "any/error-01",
@@ -7244,47 +7139,23 @@
     },
     {
       "fixture": "any/StateinsertGuideTextfalse",
-      "disjointCount": 6,
+      "disjointCount": 4,
       "patterns": {
         "size-variant-reject": 0,
         "variant-prop-position": 0,
         "same-name-same-type": 0,
         "same-name-cross-type": 0,
-        "different-type": 3,
-        "different-name": 3,
+        "different-type": 2,
+        "different-name": 2,
         "unknown": 0
       },
       "pairs": [
         {
           "parentId": "166:3034",
           "a": "153:3131",
-          "b": "166:3315",
-          "variantsA": [
-            "number"
-          ],
-          "variantsB": [
-            "OTP / Number"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "166:3034",
-          "a": "153:3131",
           "b": "153:3300",
           "variantsA": [
             "number"
-          ],
-          "variantsB": [
-            "_Normal Responsive"
-          ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "166:3034",
-          "a": "166:3315",
-          "b": "153:3300",
-          "variantsA": [
-            "OTP / Number"
           ],
           "variantsB": [
             "_Normal Responsive"
@@ -7478,14 +7349,14 @@
     },
     {
       "fixture": "any/taptap-anchor",
-      "disjointCount": 6,
+      "disjointCount": 5,
       "patterns": {
         "size-variant-reject": 0,
         "variant-prop-position": 0,
         "same-name-same-type": 0,
         "same-name-cross-type": 0,
         "different-type": 0,
-        "different-name": 6,
+        "different-name": 5,
         "unknown": 0
       },
       "pairs": [
@@ -7529,18 +7400,6 @@
           "parentId": "I4:1647;4:1681",
           "a": "I4:1647;4:1682",
           "b": "I4:1647;4:1692",
-          "variantsA": [
-            "Frame1"
-          ],
-          "variantsB": [
-            "Text"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "I4:1647;4:1681",
-          "a": "I4:1647;4:1682",
-          "b": "I4:1647;114:22994",
           "variantsA": [
             "Frame1"
           ],
@@ -8176,6 +8035,20 @@
       "pairs": []
     },
     {
+      "fixture": "failing/Btnsicon",
+      "disjointCount": 0,
+      "patterns": {
+        "size-variant-reject": 0,
+        "variant-prop-position": 0,
+        "same-name-same-type": 0,
+        "same-name-cross-type": 0,
+        "different-type": 0,
+        "different-name": 0,
+        "unknown": 0
+      },
+      "pairs": []
+    },
+    {
       "fixture": "failing/Button",
       "disjointCount": 0,
       "patterns": {
@@ -8190,11 +8063,250 @@
       "pairs": []
     },
     {
-      "fixture": "failing/Buttonsolid",
-      "disjointCount": 9,
+      "fixture": "failing/Buttonbutton",
+      "disjointCount": 5,
       "patterns": {
-        "size-variant-reject": 1,
-        "variant-prop-position": 7,
+        "size-variant-reject": 0,
+        "variant-prop-position": 4,
+        "same-name-same-type": 1,
+        "same-name-cross-type": 0,
+        "different-type": 0,
+        "different-name": 0,
+        "unknown": 0
+      },
+      "pairs": [
+        {
+          "parentId": "16215:37603",
+          "a": "16215:37694",
+          "b": "16215:37748",
+          "variantsA": [
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=False"
+          ],
+          "variantsB": [
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=True, Disable=False"
+          ],
+          "pattern": "variant-prop-position"
+        },
+        {
+          "parentId": "16215:37604",
+          "a": "16215:37671",
+          "b": "16215:37607",
+          "variantsA": [
+            "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Small, Icon Only=True, Disable=False"
+          ],
+          "variantsB": [
+            "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=False"
+          ],
+          "pattern": "same-name-same-type"
+        },
+        {
+          "parentId": "16215:37608",
+          "a": "16215:37660",
+          "b": "16293:159646",
+          "variantsA": [
+            "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Small, Icon Only=True, Disable=True"
+          ],
+          "variantsB": [
+            "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=True"
+          ],
+          "pattern": "variant-prop-position"
+        },
+        {
+          "parentId": "16215:37608",
+          "a": "16215:37660",
+          "b": "16215:37610",
+          "variantsA": [
+            "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Small, Icon Only=True, Disable=True"
+          ],
+          "variantsB": [
+            "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=True"
+          ],
+          "pattern": "variant-prop-position"
+        },
+        {
+          "parentId": "16215:37608",
+          "a": "16215:37660",
+          "b": "16293:161074",
+          "variantsA": [
+            "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Small, Icon Only=True, Disable=True"
+          ],
+          "variantsB": [
+            "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Assistive, Size=Small, Icon Only=False, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Outlined, Color=Primary, Size=Small, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Assistive, Size=Small, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=False",
+            "Variant=Solid, Color=Primary, Size=Small, Icon Only=False, Disable=True"
+          ],
+          "pattern": "variant-prop-position"
+        }
+      ]
+    },
+    {
+      "fixture": "failing/Buttonsolid",
+      "disjointCount": 5,
+      "patterns": {
+        "size-variant-reject": 0,
+        "variant-prop-position": 4,
         "same-name-same-type": 1,
         "same-name-cross-type": 0,
         "different-type": 0,
@@ -8220,95 +8332,6 @@
         },
         {
           "parentId": "16215:37604",
-          "a": "16215:37756",
-          "b": "16215:37671",
-          "variantsA": [
-            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
-          ],
-          "variantsB": [
-            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=True, Disable=False"
-          ],
-          "pattern": "size-variant-reject"
-        },
-        {
-          "parentId": "16215:37604",
-          "a": "16215:37756",
-          "b": "16215:37608",
-          "variantsA": [
-            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
-          ],
-          "variantsB": [
-            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=True, Disable=False"
-          ],
-          "pattern": "variant-prop-position"
-        },
-        {
-          "parentId": "16215:37604",
-          "a": "16215:37756",
-          "b": "16215:37605",
-          "variantsA": [
-            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
-          ],
-          "variantsB": [
-            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
-            "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
-            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
-            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
-            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
-            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
-            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
-            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
-            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
-            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
-            "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=False, Disable=True",
-            "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=True, Disable=True"
-          ],
-          "pattern": "variant-prop-position"
-        },
-        {
-          "parentId": "16215:37604",
-          "a": "16215:37756",
-          "b": "16215:37607",
-          "variantsA": [
-            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False"
-          ],
-          "variantsB": [
-            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=False, Disable=False"
-          ],
-          "pattern": "variant-prop-position"
-        },
-        {
-          "parentId": "16215:37604",
           "a": "16215:37671",
           "b": "16215:37607",
           "variantsA": [
@@ -8319,6 +8342,7 @@
           ],
           "variantsB": [
             "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
             "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
             "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
             "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
@@ -8329,100 +8353,103 @@
           "pattern": "same-name-same-type"
         },
         {
-          "parentId": "16215:37605",
-          "a": "16293:159639",
-          "b": "16215:37606",
+          "parentId": "16215:37608",
+          "a": "16215:37660",
+          "b": "16293:159646",
           "variantsA": [
-            "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
-            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
-            "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
-            "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
-            "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
-            "Variant=Primary, Size=Small, Icon Only=False, Disable=True"
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=True"
           ],
           "variantsB": [
             "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
             "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
             "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
             "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
             "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
             "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=True, Disable=True"
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=True"
           ],
           "pattern": "variant-prop-position"
         },
         {
-          "parentId": "16215:37605",
-          "a": "16215:37618",
-          "b": "16215:37606",
+          "parentId": "16215:37608",
+          "a": "16215:37660",
+          "b": "16215:37610",
           "variantsA": [
-            "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
-            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
-            "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
-            "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
-            "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
-            "Variant=Primary, Size=Small, Icon Only=False, Disable=True"
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
+            "Variant=Primary, Size=Small, Icon Only=True, Disable=True"
           ],
           "variantsB": [
             "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
             "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
             "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
-            "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
             "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
             "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
             "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
-            "Variant=Primary, Size=Small, Icon Only=True, Disable=True"
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=True"
           ],
           "pattern": "variant-prop-position"
         },
         {
-          "parentId": "16215:37605",
-          "a": "16215:37606",
-          "b": "16293:161071",
+          "parentId": "16215:37608",
+          "a": "16215:37660",
+          "b": "16293:161074",
           "variantsA": [
-            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
+            "Variant=Assistive, Size=Large, Icon Only=True, Disable=False",
             "Variant=Assistive, Size=Large, Icon Only=True, Disable=True",
-            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
             "Variant=Assistive, Size=Medium, Icon Only=True, Disable=False",
             "Variant=Assistive, Size=Medium, Icon Only=True, Disable=True",
-            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
             "Variant=Assistive, Size=Small, Icon Only=True, Disable=False",
             "Variant=Assistive, Size=Small, Icon Only=True, Disable=True",
-            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
             "Variant=Primary, Size=Large, Icon Only=True, Disable=False",
             "Variant=Primary, Size=Large, Icon Only=True, Disable=True",
-            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
             "Variant=Primary, Size=Medium, Icon Only=True, Disable=False",
             "Variant=Primary, Size=Medium, Icon Only=True, Disable=True",
-            "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
             "Variant=Primary, Size=Small, Icon Only=True, Disable=False",
             "Variant=Primary, Size=Small, Icon Only=True, Disable=True"
           ],
           "variantsB": [
+            "Variant=Assistive, Size=Large, Icon Only=False, Disable=False",
             "Variant=Assistive, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Assistive, Size=Medium, Icon Only=False, Disable=False",
             "Variant=Assistive, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Assistive, Size=Small, Icon Only=False, Disable=False",
             "Variant=Assistive, Size=Small, Icon Only=False, Disable=True",
+            "Variant=Primary, Size=Large, Icon Only=False, Disable=False",
             "Variant=Primary, Size=Large, Icon Only=False, Disable=True",
+            "Variant=Primary, Size=Medium, Icon Only=False, Disable=False",
             "Variant=Primary, Size=Medium, Icon Only=False, Disable=True",
+            "Variant=Primary, Size=Small, Icon Only=False, Disable=False",
             "Variant=Primary, Size=Small, Icon Only=False, Disable=True"
           ],
           "pattern": "variant-prop-position"
@@ -22708,74 +22735,17 @@
     },
     {
       "fixture": "item-slot-likes/taptap-navigation",
-      "disjointCount": 4,
+      "disjointCount": 0,
       "patterns": {
         "size-variant-reject": 0,
-        "variant-prop-position": 4,
+        "variant-prop-position": 0,
         "same-name-same-type": 0,
         "same-name-cross-type": 0,
         "different-type": 0,
         "different-name": 0,
         "unknown": 0
       },
-      "pairs": [
-        {
-          "parentId": "4:3767",
-          "a": "4:3774",
-          "b": "4:3785",
-          "variantsA": [
-            "Size=Default, Centered=false"
-          ],
-          "variantsB": [
-            "Size=Default, Centered=true",
-            "Size=Small, Centered=false",
-            "Size=Small, Centered=true"
-          ],
-          "pattern": "variant-prop-position"
-        },
-        {
-          "parentId": "4:3767",
-          "a": "4:3774",
-          "b": "4:3786",
-          "variantsA": [
-            "Size=Default, Centered=false"
-          ],
-          "variantsB": [
-            "Size=Default, Centered=true",
-            "Size=Small, Centered=false",
-            "Size=Small, Centered=true"
-          ],
-          "pattern": "variant-prop-position"
-        },
-        {
-          "parentId": "4:3767",
-          "a": "4:3775",
-          "b": "4:3785",
-          "variantsA": [
-            "Size=Default, Centered=false"
-          ],
-          "variantsB": [
-            "Size=Default, Centered=true",
-            "Size=Small, Centered=false",
-            "Size=Small, Centered=true"
-          ],
-          "pattern": "variant-prop-position"
-        },
-        {
-          "parentId": "4:3767",
-          "a": "4:3775",
-          "b": "4:3786",
-          "variantsA": [
-            "Size=Default, Centered=false"
-          ],
-          "variantsB": [
-            "Size=Default, Centered=true",
-            "Size=Small, Centered=false",
-            "Size=Small, Centered=true"
-          ],
-          "pattern": "variant-prop-position"
-        }
-      ]
+      "pairs": []
     },
     {
       "fixture": "regression/BreakpointdesktopmdlgStatelogin",
@@ -22791,9 +22761,61 @@
       },
       "pairs": [
         {
+          "parentId": "I16215:20813;16215:25740",
+          "a": "I16215:20876;16246:1244599",
+          "b": "I16215:20813;16215:25741",
+          "variantsA": [
+            "Breakpoint=Mobile(xs-sm), State=Logout"
+          ],
+          "variantsB": [
+            "Breakpoint=Desktop(md-lg), State=Login",
+            "Breakpoint=Desktop(xl), State=Login"
+          ],
+          "pattern": "different-type"
+        },
+        {
+          "parentId": "I16215:20813;16215:25740",
+          "a": "I16215:20876;16215:38050",
+          "b": "I16215:20813;16215:25741",
+          "variantsA": [
+            "Breakpoint=Mobile(xs-sm), State=Logout"
+          ],
+          "variantsB": [
+            "Breakpoint=Desktop(md-lg), State=Login",
+            "Breakpoint=Desktop(xl), State=Login"
+          ],
+          "pattern": "different-type"
+        },
+        {
+          "parentId": "I16215:20849;16215:38136",
+          "a": "I16215:20880;16215:38426;16215:25202;16215:16228",
+          "b": "I16215:20849;16246:1246758",
+          "variantsA": [
+            "Breakpoint=Mobile(xs-sm), State=Logout"
+          ],
+          "variantsB": [
+            "Breakpoint=Desktop(md-lg), State=Logout",
+            "Breakpoint=Desktop(xl), State=Logout"
+          ],
+          "pattern": "different-name"
+        },
+        {
+          "parentId": "I16215:20849;16215:38136",
+          "a": "I16215:20880;16215:38426;16215:25202;16215:16228",
+          "b": "I16215:20849;16215:38140",
+          "variantsA": [
+            "Breakpoint=Mobile(xs-sm), State=Logout"
+          ],
+          "variantsB": [
+            "Breakpoint=Desktop(md-lg), State=Logout",
+            "Breakpoint=Desktop(xl), State=Logout"
+          ],
+          "pattern": "different-type"
+        },
+        {
           "parentId": "I16215:20815;16215:38136",
           "a": "I16215:20815;16246:1246758",
-          "b": "I16215:20880;16215:38428",
+          "b": "I16215:20864;16215:38426;16215:25202;16215:15803;16215:17330",
           "variantsA": [
             "Breakpoint=Desktop(md-lg), State=Login",
             "Breakpoint=Desktop(md-lg), State=Logout",
@@ -22804,59 +22826,7 @@
             "Breakpoint=Mobile(xs-sm), State=Login",
             "Breakpoint=Mobile(xs-sm), State=Logout"
           ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "I16215:20849;16215:38136",
-          "a": "I16215:20880;16215:38426;16215:25202;16215:16228",
-          "b": "I16215:20849;16246:1246758",
-          "variantsA": [
-            "Breakpoint=Mobile(xs-sm), State=Logout"
-          ],
-          "variantsB": [
-            "Breakpoint=Desktop(md-lg), State=Logout",
-            "Breakpoint=Desktop(xl), State=Logout"
-          ],
           "pattern": "different-name"
-        },
-        {
-          "parentId": "I16215:20849;16215:38136",
-          "a": "I16215:20880;16215:38426;16215:25202;16215:16228",
-          "b": "I16215:20849;16215:38140",
-          "variantsA": [
-            "Breakpoint=Mobile(xs-sm), State=Logout"
-          ],
-          "variantsB": [
-            "Breakpoint=Desktop(md-lg), State=Logout",
-            "Breakpoint=Desktop(xl), State=Logout"
-          ],
-          "pattern": "different-type"
-        },
-        {
-          "parentId": "I16215:20849;16215:38136",
-          "a": "I16215:20880;16215:38426;16215:25202;16215:16225",
-          "b": "I16215:20849;16246:1246758",
-          "variantsA": [
-            "Breakpoint=Mobile(xs-sm), State=Logout"
-          ],
-          "variantsB": [
-            "Breakpoint=Desktop(md-lg), State=Logout",
-            "Breakpoint=Desktop(xl), State=Logout"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "I16215:20849;16215:38136",
-          "a": "I16215:20880;16215:38426;16215:25202;16215:16225",
-          "b": "I16215:20849;16215:38140",
-          "variantsA": [
-            "Breakpoint=Mobile(xs-sm), State=Logout"
-          ],
-          "variantsB": [
-            "Breakpoint=Desktop(md-lg), State=Logout",
-            "Breakpoint=Desktop(xl), State=Logout"
-          ],
-          "pattern": "different-type"
         }
       ]
     },
@@ -22876,14 +22846,14 @@
     },
     {
       "fixture": "regression/List",
-      "disjointCount": 75,
+      "disjointCount": 71,
       "patterns": {
         "size-variant-reject": 0,
         "variant-prop-position": 0,
         "same-name-same-type": 0,
         "same-name-cross-type": 0,
-        "different-type": 26,
-        "different-name": 49,
+        "different-type": 24,
+        "different-name": 47,
         "unknown": 0
       },
       "pairs": [
@@ -23344,30 +23314,6 @@
           "pattern": "different-type"
         },
         {
-          "parentId": "I16274:135782;16215:32277;16215:32896;16215:25202;16215:14450",
-          "a": "I16274:135782;16215:32277;16215:32896;16215:25202;16215:14451",
-          "b": "I16274:135782;16215:32277;16215:32896;16215:25202;16215:14459",
-          "variantsA": [
-            "Subtract"
-          ],
-          "variantsB": [
-            "Normal"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "I16274:135782;16215:32277;16215:32896;16215:25202;16215:14455",
-          "a": "I16274:135782;16215:32277;16215:32896;16215:25202;16215:14456",
-          "b": "I16274:135782;16215:32277;16215:32896;16215:25202;16215:14458",
-          "variantsA": [
-            "Adjust"
-          ],
-          "variantsB": [
-            "Vector"
-          ],
-          "pattern": "different-type"
-        },
-        {
           "parentId": "16274:135784",
           "a": "I16274:135784;16215:32351",
           "b": "I16274:135784;16215:32355",
@@ -23762,30 +23708,6 @@
             "Shape"
           ],
           "pattern": "different-type"
-        },
-        {
-          "parentId": "I16274:135785;16215:32392;16215:32896;16215:25202;16215:14450",
-          "a": "I16274:135785;16215:32392;16215:32896;16215:25202;16215:14451",
-          "b": "I16274:135785;16215:32392;16215:32896;16215:25202;16215:14459",
-          "variantsA": [
-            "Subtract"
-          ],
-          "variantsB": [
-            "Normal"
-          ],
-          "pattern": "different-name"
-        },
-        {
-          "parentId": "I16274:135785;16215:32392;16215:32896;16215:25202;16215:14455",
-          "a": "I16274:135785;16215:32392;16215:32896;16215:25202;16215:14456",
-          "b": "I16274:135785;16215:32392;16215:32896;16215:25202;16215:14458",
-          "variantsA": [
-            "Adjust"
-          ],
-          "variantsB": [
-            "Vector"
-          ],
-          "pattern": "different-type"
         }
       ]
     },
@@ -23993,9 +23915,9 @@
     },
     {
       "fixture": "wanted/SegmentedControlsegmentedControl",
-      "disjointCount": 0,
+      "disjointCount": 3,
       "patterns": {
-        "size-variant-reject": 0,
+        "size-variant-reject": 3,
         "variant-prop-position": 0,
         "same-name-same-type": 0,
         "same-name-cross-type": 0,
@@ -24003,7 +23925,74 @@
         "different-name": 0,
         "unknown": 0
       },
-      "pairs": []
+      "pairs": [
+        {
+          "parentId": "I16215:35118;16215:35223",
+          "a": "I16215:35118;16215:35227",
+          "b": "I16215:35126;16215:35227",
+          "variantsA": [
+            "Variant=Outlined, Size=Large, Icon=False",
+            "Variant=Outlined, Size=Large, Icon=True",
+            "Variant=Outlined, Size=Medium, Icon=False",
+            "Variant=Outlined, Size=Medium, Icon=True",
+            "Variant=Solid, Size=Large, Icon=False",
+            "Variant=Solid, Size=Large, Icon=True"
+          ],
+          "variantsB": [
+            "Variant=Outlined, Size=Small, Icon=False",
+            "Variant=Outlined, Size=Small, Icon=True",
+            "Variant=Solid, Size=Medium, Icon=False",
+            "Variant=Solid, Size=Medium, Icon=True",
+            "Variant=Solid, Size=Small, Icon=False",
+            "Variant=Solid, Size=Small, Icon=True"
+          ],
+          "pattern": "size-variant-reject"
+        },
+        {
+          "parentId": "I16215:35119;16215:35247",
+          "a": "I16215:35119;16215:35250",
+          "b": "I16215:35127;16215:35250",
+          "variantsA": [
+            "Variant=Outlined, Size=Large, Icon=False",
+            "Variant=Outlined, Size=Large, Icon=True",
+            "Variant=Outlined, Size=Medium, Icon=False",
+            "Variant=Outlined, Size=Medium, Icon=True",
+            "Variant=Solid, Size=Large, Icon=False",
+            "Variant=Solid, Size=Large, Icon=True"
+          ],
+          "variantsB": [
+            "Variant=Outlined, Size=Small, Icon=False",
+            "Variant=Outlined, Size=Small, Icon=True",
+            "Variant=Solid, Size=Medium, Icon=False",
+            "Variant=Solid, Size=Medium, Icon=True",
+            "Variant=Solid, Size=Small, Icon=False",
+            "Variant=Solid, Size=Small, Icon=True"
+          ],
+          "pattern": "size-variant-reject"
+        },
+        {
+          "parentId": "I16215:35123;16215:35247",
+          "a": "I16215:35131;16215:35250",
+          "b": "I16215:35123;16215:35250",
+          "variantsA": [
+            "Variant=Outlined, Size=Small, Icon=False",
+            "Variant=Outlined, Size=Small, Icon=True",
+            "Variant=Solid, Size=Medium, Icon=False",
+            "Variant=Solid, Size=Medium, Icon=True",
+            "Variant=Solid, Size=Small, Icon=False",
+            "Variant=Solid, Size=Small, Icon=True"
+          ],
+          "variantsB": [
+            "Variant=Outlined, Size=Large, Icon=False",
+            "Variant=Outlined, Size=Large, Icon=True",
+            "Variant=Outlined, Size=Medium, Icon=False",
+            "Variant=Outlined, Size=Medium, Icon=True",
+            "Variant=Solid, Size=Large, Icon=False",
+            "Variant=Solid, Size=Large, Icon=True"
+          ],
+          "pattern": "size-variant-reject"
+        }
+      ]
     }
   ]
 }

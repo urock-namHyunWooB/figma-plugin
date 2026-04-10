@@ -61,8 +61,9 @@ describe("의존 컴포넌트 children 처리", () => {
       (d) => d.includes("MonoResponsiveProps") || d.includes("function MonoResponsive")
     );
     if (monoCode) {
-      // I... 노드가 삭제되어 정당한 Color 노드에서 responsiveColorCss가 생성됨
-      expect(monoCode).toContain("responsiveColorCss");
+      // Color 노드는 ABSOLUTE 풀커버 RECTANGLE이므로 부모에 background로 흡수됨
+      // responsiveColorCss 대신 부모의 responsiveCss에 background가 포함됨
+      expect(monoCode).toContain("background");
       expect(monoCode).not.toContain("globalMonoResponsiveColorCss");
     }
   });

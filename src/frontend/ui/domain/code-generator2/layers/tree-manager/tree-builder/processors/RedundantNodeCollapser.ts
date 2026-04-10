@@ -89,9 +89,10 @@ function absorbFullCoverChildren(
  * 조건:
  * 1. children이 없음
  * 2. TEXT, INSTANCE가 아님
- * 3. 모든 variant에서 부모를 완전히 커버 (coverage ≥ 99%)
- * 4. fills만 있고 strokes/effects 없음 (순수 배경 역할)
- * 5. 부모에 기존 fills가 없거나, 있더라도 같은 값
+ * 3. 부모에 다른 형제가 있음 (유일한 자식이면 콘텐츠이지 배경이 아님)
+ * 4. 모든 variant에서 부모를 완전히 커버 (coverage ≥ 99%)
+ * 5. fills만 있고 strokes/effects 없음 (순수 배경 역할)
+ * 6. 부모에 기존 fills가 없거나, 있더라도 같은 값
  */
 function isFullCoverStyleOnly(
   child: InternalNode,
@@ -102,6 +103,9 @@ function isFullCoverStyleOnly(
   if (child.children && child.children.length > 0) return false;
   // TEXT, INSTANCE는 콘텐츠 노드
   if (child.type === "TEXT" || child.type === "INSTANCE") return false;
+  // 부모의 유일한 자식이면 콘텐츠이지 배경이 아님
+  const siblings = parent.children ?? [];
+  if (siblings.length <= 1) return false;
 
   const mergedNodes = child.mergedNodes ?? [];
   if (mergedNodes.length === 0) return false;

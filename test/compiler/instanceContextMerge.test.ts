@@ -36,8 +36,8 @@ describe("INSTANCE 컨텍스트 병합 - visible 처리", () => {
 
     // I... 노드에서 유래한 ColorCss는 없어야 함 (I... 노드는 올바르게 삭제됨)
     if (monoCode) {
-      // responsiveColorCss는 있어야 함 (정당한 Color 노드에서 생성)
-      expect(monoCode).toContain("responsiveColorCss");
+      // Color 노드는 ABSOLUTE 풀커버 RECTANGLE이므로 부모에 background로 흡수됨
+      expect(monoCode).toContain("background");
       expect(monoCode).not.toContain("globalMonoResponsiveColorCss");
     }
   });

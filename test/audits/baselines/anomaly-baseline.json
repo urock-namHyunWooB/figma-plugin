@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-10T06:25:13.429Z",
+  "generatedAt": "2026-04-10T08:15:32.482Z",
   "totalFixtures": 87,
-  "totalAnomalies": 70,
+  "totalAnomalies": 76,
   "compileErrors": 0,
   "byDetector": {
-    "cross-name": 70
+    "cross-name": 76
   },
   "byFixture": [
     {
@@ -2376,8 +2376,47 @@
     },
     {
       "fixture": "failing/Buttonbutton",
-      "count": 0,
-      "anomalies": []
+      "count": 1,
+      "anomalies": [
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:37660;16215:25202;16215:13734",
+          "primaryName": "Normal",
+          "primaryType": "VECTOR",
+          "payload": {
+            "mergedNodesCount": 28,
+            "outlierNames": [
+              {
+                "name": "Union",
+                "count": 4
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:37606;16215:24966",
+                "name": "Union",
+                "variantName": "Variant=Solid, Color=Primary, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16246:1228604;16215:24966",
+                "name": "Union",
+                "variantName": "Variant=Solid, Color=Assistive, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16246:1243446;16215:24966",
+                "name": "Union",
+                "variantName": "Variant=Outlined, Color=Primary, Size=Large, Icon Only=False, Disable=False"
+              },
+              {
+                "id": "I16246:1245997;16215:24966",
+                "name": "Union",
+                "variantName": "Variant=Outlined, Color=Assistive, Size=Large, Icon Only=False, Disable=False"
+              }
+            ]
+          },
+          "fixture": "failing/Buttonbutton"
+        }
+      ]
     },
     {
       "fixture": "failing/Buttonsolid",
@@ -2932,7 +2971,7 @@
     },
     {
       "fixture": "regression/BreakpointdesktopmdlgStatelogin",
-      "count": 15,
+      "count": 20,
       "anomalies": [
         {
           "detectorName": "cross-name",
@@ -3038,6 +3077,57 @@
         },
         {
           "detectorName": "cross-name",
+          "nodeId": "I16215:20813;16215:25742",
+          "primaryName": "Content",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 3,
+            "outlierNames": [
+              {
+                "name": "Loading",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20876;16246:1244597",
+                "name": "Loading",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20813;16215:25737",
+          "primaryName": "Interaction",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 5,
+            "outlierNames": [
+              {
+                "name": "Trailing Icon",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20849;16293:156004",
+                "name": "Trailing Icon",
+                "variantName": "Breakpoint=Desktop(md-lg), State=Logout"
+              },
+              {
+                "id": "I16215:20948;16293:156004",
+                "name": "Trailing Icon",
+                "variantName": "Breakpoint=Desktop(xl), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
           "nodeId": "I16215:20810;16215:38426;16215:25202",
           "primaryName": "Icon/Normal/Search",
           "primaryType": "INSTANCE",
@@ -3089,6 +3179,29 @@
         },
         {
           "detectorName": "cross-name",
+          "nodeId": "I16215:20880;16215:38426",
+          "primaryName": "Icon",
+          "primaryType": "INSTANCE",
+          "payload": {
+            "mergedNodesCount": 2,
+            "outlierNames": [
+              {
+                "name": "Push Badge",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20880;16215:38429",
+                "name": "Push Badge",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
           "nodeId": "I16215:20849;16215:38136",
           "primaryName": "Wrapper",
           "primaryType": "FRAME",
@@ -3105,6 +3218,34 @@
                 "id": "I16215:20880;16215:38426;16215:25202;16215:16224",
                 "name": "Shape",
                 "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20849;16293:154066",
+          "primaryName": "Ratio",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 5,
+            "outlierNames": [
+              {
+                "name": "Leading Icon",
+                "count": 2
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20849;16293:154066",
+                "name": "Leading Icon",
+                "variantName": "Breakpoint=Desktop(md-lg), State=Logout"
+              },
+              {
+                "id": "I16215:20948;16293:154066",
+                "name": "Leading Icon",
+                "variantName": "Breakpoint=Desktop(xl), State=Logout"
               }
             ]
           },
@@ -3170,14 +3311,14 @@
             "mergedNodesCount": 6,
             "outlierNames": [
               {
-                "name": "Icon/Normal/Search",
+                "name": "Push Badge",
                 "count": 1
               }
             ],
             "outlierMerged": [
               {
-                "id": "I16215:20880;16215:38426;16215:25202",
-                "name": "Icon/Normal/Search",
+                "id": "I16215:20881;16215:38429",
+                "name": "Push Badge",
                 "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
               }
             ]
@@ -3187,14 +3328,14 @@
         {
           "detectorName": "cross-name",
           "nodeId": "I16215:20815;16215:38136",
-          "primaryName": "Wrapper",
+          "primaryName": "Interaction",
           "primaryType": "FRAME",
           "payload": {
-            "mergedNodesCount": 6,
+            "mergedNodesCount": 9,
             "outlierNames": [
               {
-                "name": "Interaction",
-                "count": 1
+                "name": "Wrapper",
+                "count": 4
               },
               {
                 "name": "Ratio",
@@ -3203,14 +3344,29 @@
             ],
             "outlierMerged": [
               {
-                "id": "I16215:20880;16215:38427",
-                "name": "Interaction",
-                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
-              },
-              {
                 "id": "I16215:20864;16215:38426;16215:25202;16215:15803;16215:17329",
                 "name": "Ratio",
                 "variantName": "Breakpoint=Mobile(xs-sm), State=Login"
+              },
+              {
+                "id": "I16215:20815;16215:38136",
+                "name": "Wrapper",
+                "variantName": "Breakpoint=Desktop(md-lg), State=Login"
+              },
+              {
+                "id": "I16215:20848;16215:38046",
+                "name": "Wrapper",
+                "variantName": "Breakpoint=Desktop(md-lg), State=Logout"
+              },
+              {
+                "id": "I16215:20914;16215:38136",
+                "name": "Wrapper",
+                "variantName": "Breakpoint=Desktop(xl), State=Login"
+              },
+              {
+                "id": "I16215:20947;16215:38046",
+                "name": "Wrapper",
+                "variantName": "Breakpoint=Desktop(xl), State=Logout"
               }
             ]
           },
@@ -3220,6 +3376,29 @@
           "detectorName": "cross-name",
           "nodeId": "I16215:20815;16215:38140",
           "primaryName": "Content",
+          "primaryType": "FRAME",
+          "payload": {
+            "mergedNodesCount": 5,
+            "outlierNames": [
+              {
+                "name": "Trailing Icon",
+                "count": 1
+              }
+            ],
+            "outlierMerged": [
+              {
+                "id": "I16215:20876;16293:156011",
+                "name": "Trailing Icon",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+              }
+            ]
+          },
+          "fixture": "regression/BreakpointdesktopmdlgStatelogin"
+        },
+        {
+          "detectorName": "cross-name",
+          "nodeId": "I16215:20815;16246:1246756",
+          "primaryName": "Loading",
           "primaryType": "FRAME",
           "payload": {
             "mergedNodesCount": 6,
@@ -3296,22 +3475,22 @@
         },
         {
           "detectorName": "cross-name",
-          "nodeId": "I16215:20881;16215:38426;16215:25202;16215:15804",
-          "primaryName": "Content",
-          "primaryType": "FRAME",
+          "nodeId": "I16215:20864;16215:38426",
+          "primaryName": "Icon",
+          "primaryType": "INSTANCE",
           "payload": {
             "mergedNodesCount": 3,
             "outlierNames": [
               {
-                "name": "Shape",
+                "name": "Push Badge",
                 "count": 1
               }
             ],
             "outlierMerged": [
               {
-                "id": "I16215:20881;16215:38426;16215:25202;16215:15804",
-                "name": "Shape",
-                "variantName": "Breakpoint=Mobile(xs-sm), State=Logout"
+                "id": "I16215:20864;16215:38429",
+                "name": "Push Badge",
+                "variantName": "Breakpoint=Mobile(xs-sm), State=Login"
               }
             ]
           },
