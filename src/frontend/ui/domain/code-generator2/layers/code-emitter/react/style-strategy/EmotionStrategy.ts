@@ -25,11 +25,30 @@
 import type { StyleObject, PseudoClass, ConditionNode } from "../../../../types/types";
 import type { IStyleStrategy, StyleResult, JsxStyleAttribute } from "./IStyleStrategy";
 import { groupDynamicByProp, type DecomposedResult, type DecomposedValue } from "./groupDynamicByProp";
+import type { StyleNamingStrategy } from "../../../../types/public";
+
+export interface EmotionStrategyOptions {
+  styleBaseSuffix?: string;
+  styleVariantSuffix?: string;
+  styleNamingStrategy?: StyleNamingStrategy;
+}
 
 export class EmotionStrategy implements IStyleStrategy {
   readonly name = "emotion";
+
+  private readonly baseSuffix: string;
+  private readonly variantSuffix: string;
+  private readonly namingStrategy: StyleNamingStrategy;
+  private minimalCounter = 0;
+
   /** boolean prop/stateVar 이름 (개별 변수 생성 + 삼항 참조용) */
   private booleanNames = new Set<string>();
+
+  constructor(options?: EmotionStrategyOptions) {
+    this.baseSuffix = options?.styleBaseSuffix ?? "Css";
+    this.variantSuffix = options?.styleVariantSuffix ?? "Styles";
+    this.namingStrategy = options?.styleNamingStrategy ?? "verbose";
+  }
 
   /** boolean prop/stateVar 이름 설정 */
   setBooleanNames(names: Set<string>): void {
@@ -171,7 +190,7 @@ export class EmotionStrategy implements IStyleStrategy {
       } else {
         // variant/compound prop → Record 방식
         const entries = this.buildVariantEntries(valueMap);
-        const varName = `${baseVarName}_${safePropName}Styles`;
+        const varName = `${baseVarName}_${safePropName}${this.variantSuffix}`;
         if (entries.length > 0) {
           codeParts.push(`const ${varName}: Record<string, SerializedStyles> = {\n${entries.join("\n")}\n};`);
         } else {
@@ -376,18 +395,26 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
    * 충돌 시 StylesGenerator.ensureUniqueNames()가 _2 접미사 추가
    */
   private createPathBasedName(parentPath: string[]): string {
-    // 마지막 3개 노드명만 사용
-    const lastThreeNodes = parentPath.slice(-3);
-    // 각 노드에서 마지막 단어만 추출
-    const lastWords = lastThreeNodes.map((name) => this.extractLastWord(name));
-    let combinedName = this.combinePathToCamelCase(lastWords);
-
-    // 숫자로 시작하면 앞에 _ 추가
-    if (/^[0-9]/.test(combinedName)) {
-      combinedName = "_" + combinedName;
+    switch (this.namingStrategy) {
+      case "minimal": {
+        this.minimalCounter++;
+        return `s${this.minimalCounter}`;
+      }
+      case "compact": {
+        const lastNode = parentPath[parentPath.length - 1];
+        let name = this.extractLastWord(lastNode);
+        if (/^[0-9]/.test(name)) name = "_" + name;
+        return `${name}${this.baseSuffix}`;
+      }
+      case "verbose":
+      default: {
+        const lastThreeNodes = parentPath.slice(-3);
+        const lastWords = lastThreeNodes.map((n) => this.extractLastWord(n));
+        let combinedName = this.combinePathToCamelCase(lastWords);
+        if (/^[0-9]/.test(combinedName)) combinedName = "_" + combinedName;
+        return `${combinedName}${this.baseSuffix}`;
+      }
     }
-
-    return `${combinedName}Css`;
   }
 
   /**
@@ -413,13 +440,13 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
    * 예: nodeName="SwitchResourceSwitchWrapper" → "switchResourceSwitchWrapperCss"
    */
   private createIdBasedName(_nodeId: string, nodeName: string): string {
-    let nameBase = this.toSafeVariableName(nodeName);
-
-    if (/^[0-9]/.test(nameBase)) {
-      nameBase = "_" + nameBase;
+    if (this.namingStrategy === "minimal") {
+      this.minimalCounter++;
+      return `s${this.minimalCounter}`;
     }
-
-    return `${nameBase}Css`;
+    let nameBase = this.toSafeVariableName(nodeName);
+    if (/^[0-9]/.test(nameBase)) nameBase = "_" + nameBase;
+    return `${nameBase}${this.baseSuffix}`;
   }
 
   /**

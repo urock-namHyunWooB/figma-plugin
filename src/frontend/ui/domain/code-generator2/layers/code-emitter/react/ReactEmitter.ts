@@ -42,6 +42,7 @@ import { EmotionStrategy } from "./style-strategy/EmotionStrategy";
 import { TailwindStrategy } from "./style-strategy/TailwindStrategy";
 import type { IStyleStrategy } from "./style-strategy/IStyleStrategy";
 import type { SemanticComponent, SemanticNode } from "../SemanticIR";
+import type { NamingOptions } from "../../../types/public";
 
 /** element별 충돌하는 native HTML attribute */
 const NATIVE_ATTRS_BY_ELEMENT: Record<string, Set<string>> = {
@@ -65,6 +66,8 @@ export interface ReactEmitterOptions {
   declarationStyle?: DeclarationStyle;
   /** export 방식 */
   exportStyle?: ExportStyle;
+  /** 네이밍 커스터마이징 */
+  naming?: NamingOptions;
 }
 
 export class ReactEmitter implements ICodeEmitter {
@@ -84,6 +87,7 @@ export class ReactEmitter implements ICodeEmitter {
       styleStrategy: options.styleStrategy ?? "emotion",
       debug: options.debug ?? false,
       tailwind: options.tailwind,
+      naming: options.naming,
       declarationStyle: options.declarationStyle ?? "function",
       exportStyle: options.exportStyle ?? "default",
     };
@@ -477,7 +481,11 @@ export class ReactEmitter implements ICodeEmitter {
         return new TailwindStrategy(this.options.tailwind);
       case "emotion":
       default:
-        return new EmotionStrategy();
+        return new EmotionStrategy(this.options.naming ? {
+          styleBaseSuffix: this.options.naming.styleBaseSuffix,
+          styleVariantSuffix: this.options.naming.styleVariantSuffix,
+          styleNamingStrategy: this.options.naming.styleNamingStrategy,
+        } : undefined);
     }
   }
 
