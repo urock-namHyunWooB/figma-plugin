@@ -8,6 +8,7 @@ import {
 import DataManager from "../../data-manager/DataManager";
 import { VariantMerger } from "./processors/variant-merger";
 import { stripInteractionLayers } from "./processors/InteractionLayerStripper";
+import { collapseRedundantNodes } from "./processors/RedundantNodeCollapser";
 import { PropsExtractor } from "./processors/PropsExtractor";
 import { SlotProcessor } from "./processors/SlotProcessor";
 import { StyleProcessor } from "./processors/StyleProcessor";
@@ -85,6 +86,10 @@ class TreeBuilder {
     // — Figma의 "Interaction" frame은 디자이너 의도 표현용 메타데이터이므로
     //   트리에서 제거하고 디자이너 의도 색은 부모의 :hover/:active 등으로 흡수.
     stripInteractionLayers(tree, this.dataManager);
+
+    // Step 1.2: 불필요한 노드 제거 (최적화)
+    // — 풀커버 배경 노드 흡수 + 유일한 자식 래퍼 합침
+    collapseRedundantNodes(tree, this.dataManager);
 
     // Step 1.5: 다른 componentId가 prop에 의해 제어되는 INSTANCE → 분리
     this.splitMultiComponentInstances(tree);
