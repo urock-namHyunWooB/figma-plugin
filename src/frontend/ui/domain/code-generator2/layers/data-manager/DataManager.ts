@@ -120,6 +120,14 @@ class DataManager {
   }
 
   /**
+   * 특정 componentId의 dependency를 제거.
+   * InteractionLayerStripper 등에서 제거된 INSTANCE의 dependency 정리에 사용.
+   */
+  public removeDependency(componentId: string): void {
+    this.dependencies.delete(componentId);
+  }
+
+  /**
    * 이미지 참조(imageRef)로 URL 조회 (O(1))
    * @param imageRef - 이미지 참조 키
    * @returns 해당 참조의 이미지 URL, 없으면 undefined

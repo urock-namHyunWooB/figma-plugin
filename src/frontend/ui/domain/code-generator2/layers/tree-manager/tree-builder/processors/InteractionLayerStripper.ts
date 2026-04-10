@@ -161,27 +161,32 @@ function parseStateValue(variantName: string): string | null {
 }
 
 /**
- * 트리 전체에서 Interaction layer를 제거.
+ * 트리 전체에서 Interaction layer를 제거하고,
+ * 제거된 INSTANCE 자식의 componentId 집합을 반환.
+ *
+ * 반환된 componentId는 더 이상 메인 트리에서 참조되지 않으므로
+ * dependency 목록에서도 제거해야 한다.
  *
  * Post-order 순회로 자식부터 처리 → 중첩 Interaction의 안쪽부터 제거됨.
- * 매칭된 노드를 만나면:
- *   1. extractInteractionStyles로 스타일 추출
- *   2. 추출된 pseudo entry를 부모의 styles.pseudo에 병합
- *   3. 부모의 children에서 해당 노드 제거
- *
  * 트리는 in-place로 수정됨.
  */
 export function stripInteractionLayers(
   root: InternalNode,
   dataManager: DataManager,
-): void {
-  walkAndStrip(root, dataManager);
+): Set<string> {
+  const strippedComponentIds = new Set<string>();
+  walkAndStrip(root, dataManager, strippedComponentIds);
+  return strippedComponentIds;
 }
 
-function walkAndStrip(node: InternalNode, dataManager: DataManager): void {
+function walkAndStrip(
+  node: InternalNode,
+  dataManager: DataManager,
+  strippedComponentIds: Set<string>,
+): void {
   // 1. 먼저 자식들을 재귀 처리 (post-order)
   for (const child of [...(node.children ?? [])]) {
-    walkAndStrip(child, dataManager);
+    walkAndStrip(child, dataManager, strippedComponentIds);
   }
 
   // 2. 자기 children 중 Interaction layer 제거
@@ -194,12 +199,30 @@ function walkAndStrip(node: InternalNode, dataManager: DataManager): void {
       for (const [pseudo, style] of Object.entries(extracted)) {
         mergePseudoIntoParent(node, pseudo as PseudoClass, style ?? {});
       }
+      // 제거되는 INSTANCE 자식의 componentId 수집
+      collectStrippedComponentIds(child, dataManager, strippedComponentIds);
       // child는 survivors에 안 넣음 → 제거됨
       continue;
     }
     survivors.push(child);
   }
   node.children = survivors;
+}
+
+/** 제거되는 Interaction frame 내 INSTANCE 자식들의 componentId 수집 */
+function collectStrippedComponentIds(
+  interactionFrame: InternalNode,
+  dataManager: DataManager,
+  ids: Set<string>,
+): void {
+  for (const child of interactionFrame.children ?? []) {
+    if (child.type !== "INSTANCE") continue;
+    for (const m of child.mergedNodes ?? []) {
+      const lookup = dataManager.getById(m.id);
+      const componentId = (lookup?.node as any)?.componentId;
+      if (componentId) ids.add(componentId);
+    }
+  }
 }
 
 /** Figma 노드의 첫 SOLID fill을 CSS rgba 문자열로 변환 */

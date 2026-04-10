@@ -54,6 +54,12 @@ class TreeBuilder {
   private readonly heuristicsRunner: HeuristicsRunner;
   private readonly nodeConverter: UINodeConverter;
 
+  /** InteractionLayerStripper가 제거한 INSTANCE의 componentId 집합 */
+  private _strippedInteractionComponentIds = new Set<string>();
+  get strippedInteractionComponentIds(): ReadonlySet<string> {
+    return this._strippedInteractionComponentIds;
+  }
+
   constructor(dataManager: DataManager) {
     this.dataManager = dataManager;
     this.variantMerger = new VariantMerger(dataManager);
@@ -85,7 +91,8 @@ class TreeBuilder {
     // Step 1.1: Interaction layer 메타데이터 제거 (Phase 3)
     // — Figma의 "Interaction" frame은 디자이너 의도 표현용 메타데이터이므로
     //   트리에서 제거하고 디자이너 의도 색은 부모의 :hover/:active 등으로 흡수.
-    stripInteractionLayers(tree, this.dataManager);
+    // — 제거된 INSTANCE의 componentId를 수집하여 dependency 정리에 사용.
+    this._strippedInteractionComponentIds = stripInteractionLayers(tree, this.dataManager);
 
     // Step 1.2: 불필요한 노드 제거 (최적화)
     // — 풀커버 배경 노드 흡수 + 유일한 자식 래퍼 합침

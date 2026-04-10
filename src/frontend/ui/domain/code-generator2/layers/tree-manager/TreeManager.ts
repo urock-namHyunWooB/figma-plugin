@@ -1,4 +1,4 @@
-import type { UITree, VariantInconsistency } from "../../types/types";
+import type { UITree, UINode, VariantInconsistency } from "../../types/types";
 import DataManager from "../data-manager/DataManager";
 import TreeBuilder from "./tree-builder/TreeBuilder";
 import { ComponentPropsLinker } from "./post-processors/ComponentPropsLinker";
@@ -62,6 +62,18 @@ class TreeManager {
     // Step 1: Main 컴포넌트 트리 구축
     const mainId = this.dataManager.getMainComponentId();
     const main = this.buildComponentTree(mainId);
+
+    // Step 1.5: Interaction strip으로 제거된 INSTANCE의 dependency 정리
+    // — 메인 트리에서 여전히 참조되는 componentId는 제거하지 않음
+    const strippedIds = this.treeBuilder.strippedInteractionComponentIds;
+    if (strippedIds.size > 0) {
+      const referencedIds = this.collectReferencedComponentIds(main.root);
+      for (const compId of strippedIds) {
+        if (!referencedIds.has(compId)) {
+          this.dataManager.removeDependency(compId);
+        }
+      }
+    }
 
     // Step 2: Dependencies 처리 (variant 병합 포함)
     const dependencies = this.buildDependencyTrees();
@@ -240,6 +252,22 @@ class TreeManager {
       this.removeInstanceInternalNodesFromSource(child);
       return true;
     });
+  }
+  /** UITree에서 참조되는 모든 componentId (refId) 수집 */
+  private collectReferencedComponentIds(root: UINode): Set<string> {
+    const ids = new Set<string>();
+    const walk = (node: UINode) => {
+      if (node.type === "component" && node.refId) {
+        ids.add(node.refId);
+      }
+      if ("children" in node && node.children) {
+        for (const child of node.children) {
+          walk(child);
+        }
+      }
+    };
+    walk(root);
+    return ids;
   }
 }
 

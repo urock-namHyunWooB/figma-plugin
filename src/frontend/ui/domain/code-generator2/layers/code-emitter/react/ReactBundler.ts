@@ -47,18 +47,35 @@ export class ReactBundler {
   }
 
   /**
-   * main/다른 deps 코드에서 전혀 참조되지 않는 dep을 제거
+   * main/다른 deps 코드에서 전혀 참조되지 않는 dep을 제거.
+   *
+   * dep 이름이 main 이름과 동일한 경우, main.code에 해당 이름이 반드시 포함되어
+   * includes()가 항상 true를 반환하는 false positive가 발생한다.
+   * 이 경우 JSX 태그 패턴(`<Name`)으로 실제 사용 여부를 검사한다.
    */
   private filterReferencedDependencies(
     main: EmittedCode,
     deps: EmittedCode[]
   ): EmittedCode[] {
     return deps.filter((dep) => {
-      const otherCodes = [
-        main.code,
-        ...deps.filter((d) => d !== dep).map((d) => d.code),
-      ].join("\n");
-      return otherCodes.includes(dep.componentName);
+      const otherDepCodes = deps
+        .filter((d) => d !== dep)
+        .map((d) => d.code)
+        .join("\n");
+
+      // 다른 deps에서 참조하면 무조건 유지
+      if (otherDepCodes.includes(dep.componentName)) {
+        return true;
+      }
+
+      // dep 이름 === main 이름: includes()가 항상 true → JSX 태그로 검사
+      if (dep.componentName === main.componentName) {
+        const tagPattern = new RegExp(`<${dep.componentName}[\\s/>]`);
+        return tagPattern.test(main.code);
+      }
+
+      // 일반 케이스: main 코드에서 참조 여부
+      return main.code.includes(dep.componentName);
     });
   }
 

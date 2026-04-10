@@ -137,12 +137,31 @@ export class ReactEmitter implements ICodeEmitter {
 
     for (const [depId, depIR] of deps) {
       if (!emittedCache.has(depIR)) {
-        emittedCache.set(depIR, await this.emit(depIR));
+        emittedCache.set(depIR, await this.emitDependency(depIR));
       }
       depCodes.set(depId, emittedCache.get(depIR)!);
     }
 
     return { main: mainCode, dependencies: depCodes };
+  }
+
+  /**
+   * Dependency emit — componentName override를 무시하고 ir.name 사용.
+   * naming.componentName은 메인 컴포넌트 전용이며, deps에 적용하면
+   * 모든 dependency가 같은 이름이 되어 번들링이 깨진다.
+   */
+  private async emitDependency(ir: SemanticComponent): Promise<EmittedCode> {
+    const componentName =
+      `${this.options.naming?.componentPrefix ?? ""}${ir.name}${this.options.naming?.componentSuffix ?? ""}`;
+    const sections = this.generateAllSections(ir, componentName);
+    const code = await this.assembleAndFormat(sections);
+
+    return {
+      code,
+      componentName,
+      fileExtension: ".tsx",
+      diagnostics: sections.diagnostics,
+    };
   }
 
   /**
