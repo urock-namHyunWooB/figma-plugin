@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { css } from "@emotion/react";
 import { useNavigate } from "react-router-dom";
 import useMessageHandler from "./useMessageHandler";
-import FigmaCodeGenerator, { type PropDefinition, type FeedbackGroup } from "@code-generator2";
+import FigmaCodeGenerator, { type PropDefinition, type FeedbackGroup, type DeclarationStyle, type ExportStyle } from "@code-generator2";
 import { useComponentRenderer } from "./hooks/useComponentRenderer";
 import { PropController } from "./components/PropController";
 import { CodeEditor } from "./components/CodeEditor";
@@ -130,6 +130,19 @@ const styleButtonStyle = css`
 const styleButtonActiveStyle = css`
   background: #00c2e0;
   color: #ffffff;
+`;
+
+const optionSelectStyle = css`
+  padding: 4px 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  outline: none;
+  &:focus { border-color: #00c2e0; }
 `;
 
 const tabBarStyle = css`
@@ -290,6 +303,8 @@ function App() {
   const [scale, setScale] = useState(1);
   const [originalSize, setOriginalSize] = useState<{ width: number; height: number } | null>(null);
   const [styleStrategy, setStyleStrategy] = useState<"emotion" | "tailwind">("emotion");
+  const [declarationStyle, setDeclarationStyle] = useState<DeclarationStyle>("function");
+  const [exportStyle, setExportStyle] = useState<ExportStyle>("default");
   const [slotMockupEnabled, setSlotMockupEnabled] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
@@ -385,6 +400,8 @@ function App() {
     try {
       const codeGenerator = new FigmaCodeGenerator(selectionNodeData, {
         styleStrategy: { type: styleStrategy },
+        declarationStyle,
+        exportStyle,
       });
       const name = codeGenerator.getComponentName();
       setComponentName(name);
@@ -418,6 +435,8 @@ function App() {
       const otherStrategy = styleStrategy === "emotion" ? "tailwind" : "emotion";
       const otherGenerator = new FigmaCodeGenerator(selectionNodeData, {
         styleStrategy: { type: otherStrategy },
+        declarationStyle,
+        exportStyle,
       });
       Promise.all([
         codeGenerator.compile(),
@@ -438,7 +457,7 @@ function App() {
       console.error("FigmaCodeGenerator error:", e);
     }
     return () => { cancelled = true; };
-  }, [selectionNodeData, styleStrategy]);
+  }, [selectionNodeData, styleStrategy, declarationStyle, exportStyle]);
 
   // 동적 컴포넌트 렌더러
   const activeCode = editedCode ?? generatedCode;
@@ -579,6 +598,35 @@ function App() {
               Tailwind
             </button>
           </div>
+          <select
+            css={optionSelectStyle}
+            value={declarationStyle}
+            onChange={(e) => {
+              const val = e.target.value as DeclarationStyle;
+              setDeclarationStyle(val);
+              if (val !== "function" && exportStyle === "inline-default") {
+                setExportStyle("default");
+              }
+            }}
+          >
+            <option value="function">function</option>
+            <option value="arrow">arrow</option>
+            <option value="arrow-fc">arrow (FC)</option>
+          </select>
+          <select
+            css={optionSelectStyle}
+            value={exportStyle}
+            onChange={(e) => {
+              const val = e.target.value as ExportStyle;
+              setExportStyle(val);
+            }}
+          >
+            <option value="default">export default</option>
+            <option value="inline-default" disabled={declarationStyle !== "function"}>
+              export default (inline)
+            </option>
+            <option value="named">named export</option>
+          </select>
         </div>
       </div>
 

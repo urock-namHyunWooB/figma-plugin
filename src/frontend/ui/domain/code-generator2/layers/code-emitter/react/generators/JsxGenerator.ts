@@ -9,6 +9,58 @@ import type { SemanticComponent } from "../../SemanticIR";
 import type { IStyleStrategy } from "../style-strategy/IStyleStrategy";
 import { NodeRenderer, type NodeRendererContext } from "./NodeRenderer";
 
+export type DeclarationStyle = "function" | "arrow" | "arrow-fc";
+export type ExportStyle = "default" | "inline-default" | "named";
+
+export interface ComponentWrapOptions {
+  declarationStyle: DeclarationStyle;
+  exportStyle: ExportStyle;
+}
+
+/**
+ * 컴포넌트 body를 선언 형태 + export 방식으로 감싸기
+ */
+export function wrapComponent(
+  name: string,
+  propsType: string,
+  body: string,
+  options: ComponentWrapOptions
+): string {
+  const { declarationStyle } = options;
+  const exportStyle =
+    declarationStyle !== "function" && options.exportStyle === "inline-default"
+      ? "default"
+      : options.exportStyle;
+
+  const exportPrefix =
+    exportStyle === "inline-default"
+      ? "export default "
+      : exportStyle === "named"
+        ? "export "
+        : "";
+
+  let header: string;
+  let footer: string;
+  switch (declarationStyle) {
+    case "function":
+      header = `${exportPrefix}function ${name}(props: ${propsType}) {`;
+      footer = "}";
+      break;
+    case "arrow":
+      header = `${exportPrefix}const ${name} = (props: ${propsType}) => {`;
+      footer = "};";
+      break;
+    case "arrow-fc":
+      header = `${exportPrefix}const ${name}: React.FC<${propsType}> = (props) => {`;
+      footer = "};";
+      break;
+  }
+
+  const exportLine = exportStyle === "default" ? `\n\nexport default ${name}` : "";
+
+  return `${header}\n${body}\n${footer}${exportLine}`;
+}
+
 /** Derive setter name from state variable name (React useState convention) */
 function setterFor(stateName: string): string {
   return "set" + stateName.charAt(0).toUpperCase() + stateName.slice(1);
@@ -25,6 +77,8 @@ interface JsxGeneratorOptions {
   nodeStyleMap?: Map<string, string>;
   /** input 타입 루트의 자식 <input>에 restProps를 전달하기 위한 내부 플래그 */
   _restPropsOnInput?: boolean;
+  declarationStyle?: DeclarationStyle;
+  exportStyle?: ExportStyle;
 }
 
 export class JsxGenerator {
@@ -120,15 +174,16 @@ export class JsxGenerator {
       ? this.componentMapDeclarations.join("\n") + "\n"
       : "";
 
-    const code = `function ${componentName}(props: ${componentName}Props) {
-  const ${propsDestructuring} = props;
+    const body = `  const ${propsDestructuring} = props;
 ${stateVarsCode}${derivedVarsCode}${componentMapCode}
   return (
 ${jsxBody}
-  );
-}
+  );`;
 
-export default ${componentName}`;
+    const code = wrapComponent(componentName, `${componentName}Props`, body, {
+      declarationStyle: options.declarationStyle ?? "function",
+      exportStyle: options.exportStyle ?? "default",
+    });
 
     return { code, diagnostics: [] };
   }

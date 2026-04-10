@@ -41,12 +41,12 @@ describe("Ghost INSTANCE SVG 중복 렌더링 회귀 테스트", () => {
 
     expect(code).toBeDefined();
 
-    // Plus 서브 컴포넌트 정의가 있어야 함
-    expect(code).toMatch(/const Plus/);
+    // Plus 서브 컴포넌트 정의가 있어야 함 (function declaration - default)
+    expect(code).toMatch(/function\s+Plus\s*\(/);
 
     // Plus 정의 안에 SVG가 있어야 함
     const plusMatch = code!.match(
-      /const Plus[\s\S]*?return\s*\(?([\s\S]*?)\);\s*\};/
+      /function\s+Plus\s*\([^)]*\)\s*\{[\s\S]*?return\s*\(?([\s\S]*?)\);\s*\}/
     );
     expect(plusMatch).not.toBeNull();
     expect(plusMatch![1]).toMatch(/<svg/);

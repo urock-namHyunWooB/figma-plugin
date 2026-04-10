@@ -36,7 +36,7 @@ import { ReactBundler } from "./ReactBundler";
 import { ImportsGenerator } from "./generators/ImportsGenerator";
 import { PropsGenerator } from "./generators/PropsGenerator";
 import { StylesGenerator } from "./generators/StylesGenerator";
-import { JsxGenerator, type JsxGenerateResult } from "./generators/JsxGenerator";
+import { JsxGenerator, type JsxGenerateResult, type DeclarationStyle, type ExportStyle } from "./generators/JsxGenerator";
 import type { VariantInconsistency } from "../../../types/types";
 import { EmotionStrategy } from "./style-strategy/EmotionStrategy";
 import { TailwindStrategy } from "./style-strategy/TailwindStrategy";
@@ -61,12 +61,21 @@ export interface ReactEmitterOptions {
   debug?: boolean;
   /** Tailwind 전략 옵션 */
   tailwind?: { inlineCn?: boolean; cnImportPath?: string };
+  /** 컴포넌트 선언 스타일 */
+  declarationStyle?: DeclarationStyle;
+  /** export 방식 */
+  exportStyle?: ExportStyle;
 }
 
 export class ReactEmitter implements ICodeEmitter {
   readonly framework = "react";
 
-  private readonly options: ReactEmitterOptions & { styleStrategy: StyleStrategyType; debug: boolean };
+  private readonly options: ReactEmitterOptions & {
+    styleStrategy: StyleStrategyType;
+    debug: boolean;
+    declarationStyle: DeclarationStyle;
+    exportStyle: ExportStyle;
+  };
   private readonly styleStrategy: IStyleStrategy;
   private readonly bundler: ReactBundler;
 
@@ -75,10 +84,12 @@ export class ReactEmitter implements ICodeEmitter {
       styleStrategy: options.styleStrategy ?? "emotion",
       debug: options.debug ?? false,
       tailwind: options.tailwind,
+      declarationStyle: options.declarationStyle ?? "function",
+      exportStyle: options.exportStyle ?? "default",
     };
 
     this.styleStrategy = this.createStyleStrategy();
-    this.bundler = new ReactBundler();
+    this.bundler = new ReactBundler({ declarationStyle: this.options.declarationStyle });
   }
 
   /**
@@ -369,6 +380,8 @@ export class ReactEmitter implements ICodeEmitter {
     const jsxResult = JsxGenerator.generate(ir, componentName, this.styleStrategy, {
       debug: this.options.debug,
       nodeStyleMap: stylesResult.nodeStyleMap,
+      declarationStyle: this.options.declarationStyle,
+      exportStyle: this.options.exportStyle,
     });
 
     // JSX에서 실제 사용되는 컴포넌트만 import (slot binding → JSX 미생성 케이스 제거)

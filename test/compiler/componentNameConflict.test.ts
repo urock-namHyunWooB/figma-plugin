@@ -27,7 +27,7 @@ describe("컴포넌트 이름 충돌 처리", () => {
     const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
-    // 의존성 컴포넌트가 _Label로 변경되어야 함 (v2는 arrow function)
+    // 의존성 컴포넌트가 _Label로 변경되어야 함 (function declaration - default)
     expect(result).toContain("_Label");
   });
 
@@ -67,9 +67,9 @@ describe("컴포넌트 이름 충돌 처리", () => {
     const compiler = new FigmaCodeGenerator(fixture, { strategy: "emotion" });
     const result = await compiler.compile();
 
-    // _Label 컴포넌트 추출 (arrow function)
+    // _Label 컴포넌트 추출 (function declaration - default)
     const depMatch = result?.match(
-      /const _Label[\s\S]*?=>\s*\{[\s\S]*?return[\s\S]*?(?=\nconst\s[A-Z]|\nexport\s|\/\/\s*===)/
+      /function\s+_Label\s*\([^)]*\)\s*\{[\s\S]*?return[\s\S]*?(?=\nfunction\s[_A-Z]|\nexport\s|\/\/\s*===)/
     );
 
     expect(depMatch).not.toBeNull();

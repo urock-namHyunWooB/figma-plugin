@@ -75,6 +75,8 @@ export type {
   MultiComponentResult,
   TailwindOptions,
   GeneratorOptions,
+  DeclarationStyle,
+  ExportStyle,
 } from "./types/public";
 
 class FigmaCodeGenerator {
@@ -106,6 +108,8 @@ class FigmaCodeGenerator {
       styleStrategy,
       debug: options.debug ?? false,
       tailwind: tailwindOptions,
+      declarationStyle: options.declarationStyle,
+      exportStyle: options.exportStyle,
     });
   }
 
