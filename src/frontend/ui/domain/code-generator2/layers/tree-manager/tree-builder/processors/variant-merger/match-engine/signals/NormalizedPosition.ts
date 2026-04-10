@@ -45,6 +45,15 @@ export class NormalizedPosition implements MatchSignal {
       return { kind: "neutral", reason: "cannot resolve parent/original node" };
     }
 
+    // layoutPositioning이 다르면 비교 무의미 (플로우 자식 vs absolute 오버레이)
+    const positioningA = (origA as any).layoutPositioning;
+    const positioningB = (origB as any).layoutPositioning;
+    const isAbsoluteA = positioningA === "ABSOLUTE";
+    const isAbsoluteB = positioningB === "ABSOLUTE";
+    if (isAbsoluteA !== isAbsoluteB) {
+      return { kind: "neutral", reason: `layoutPositioning mismatch: ${positioningA ?? "flow"} vs ${positioningB ?? "flow"}` };
+    }
+
     const posA = ctx.layoutNormalizer.normalize(parentA as any, origA as any);
     const posB = ctx.layoutNormalizer.normalize(parentB as any, origB as any);
     if (!posA || !posB) {
