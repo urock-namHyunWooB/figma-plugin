@@ -353,6 +353,8 @@ function App() {
   const [exportStyle, setExportStyle] = useState<ExportStyle>("default");
   const [styleNamingStrategy, setStyleNamingStrategy] = useState<StyleNamingStrategy>("verbose");
   const [componentNameOverride, setComponentNameOverride] = useState<string>("");
+  const [dependencyMode, setDependencyMode] = useState<"bundle" | "import">("bundle");
+  const [importBasePath, setImportBasePath] = useState("@/components/");
   const [minimized, setMinimized] = useState(false);
   const [slotMockupEnabled, setSlotMockupEnabled] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -468,6 +470,8 @@ function App() {
           styleNamingStrategy,
           ...(componentNameOverride ? { componentName: componentNameOverride } : {}),
         },
+        dependencyMode,
+        importBasePath,
       });
       const name = codeGenerator.getComponentName();
       setComponentName(name);
@@ -508,6 +512,8 @@ function App() {
             styleNamingStrategy,
             ...(componentNameOverride ? { componentName: componentNameOverride } : {}),
           },
+          dependencyMode,
+          importBasePath,
         });
 
       if (styleStrategy === "emotion") {
@@ -538,7 +544,7 @@ function App() {
       console.error("FigmaCodeGenerator error:", e);
     }
     return () => { cancelled = true; };
-  }, [selectionNodeData, styleStrategy, declarationStyle, exportStyle, styleNamingStrategy, componentNameOverride]);
+  }, [selectionNodeData, styleStrategy, declarationStyle, exportStyle, styleNamingStrategy, componentNameOverride, dependencyMode, importBasePath]);
 
   // 동적 컴포넌트 렌더러
   const activeCode = editedCode ?? generatedCode;
@@ -830,6 +836,30 @@ function App() {
                   Shadcn
                 </button>
               </div>
+              <div css={styleToggleStyle}>
+                <button
+                  css={[styleButtonStyle, dependencyMode === "bundle" && styleButtonActiveStyle]}
+                  onClick={() => setDependencyMode("bundle")}
+                >
+                  Bundle
+                </button>
+                <button
+                  css={[styleButtonStyle, dependencyMode === "import" && styleButtonActiveStyle]}
+                  onClick={() => setDependencyMode("import")}
+                >
+                  Import
+                </button>
+              </div>
+              {dependencyMode === "import" && (
+                <input
+                  type="text"
+                  value={importBasePath}
+                  onChange={(e) => setImportBasePath(e.target.value)}
+                  placeholder="@/components/"
+                  css={optionInputStyle}
+                  style={{ width: 140 }}
+                />
+              )}
               <select
                 css={optionSelectStyle}
                 value={declarationStyle}

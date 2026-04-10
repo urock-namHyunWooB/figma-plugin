@@ -49,6 +49,49 @@ describe("Dependency 번들링", () => {
     expect(code).not.toContain("_ButtonsolidProps");
   });
 
+  it("import 모드: dependency 코드 없이 import 문만 생성됨", async () => {
+    const fixture = JSON.parse(fs.readFileSync(buttonsolidPath, "utf-8"));
+    const gen = new FigmaCodeGenerator(fixture, {
+      styleStrategy: { type: "tailwind" },
+      dependencyMode: "import",
+      importBasePath: "@/components/",
+    });
+    const code = await gen.compile();
+
+    // dependency 함수가 인라인되지 않음
+    expect(code).not.toMatch(/function\s+Circularcircular\s*\(/);
+    expect(code).not.toMatch(/function\s+Iconsicons\s*\(/);
+
+    // import 문이 생성됨
+    expect(code).toContain("import { Circularcircular }");
+    expect(code).toContain("import { Iconsicons }");
+    expect(code).toContain("@/components/");
+  });
+
+  it("import 모드 + 상대경로: ./ prefix로 import 생성됨", async () => {
+    const fixture = JSON.parse(fs.readFileSync(buttonsolidPath, "utf-8"));
+    const gen = new FigmaCodeGenerator(fixture, {
+      styleStrategy: { type: "tailwind" },
+      dependencyMode: "import",
+      importBasePath: "./",
+    });
+    const code = await gen.compile();
+
+    expect(code).toContain('from "./Circularcircular"');
+    expect(code).toContain('from "./Iconsicons"');
+  });
+
+  it("bundle 모드 (기본): 기존 동작 유지", async () => {
+    const fixture = JSON.parse(fs.readFileSync(buttonsolidPath, "utf-8"));
+    const gen = new FigmaCodeGenerator(fixture, {
+      styleStrategy: { type: "tailwind" },
+    });
+    const code = await gen.compile();
+
+    // dependency가 인라인 번들됨
+    expect(code).toMatch(/function\s+Circularcircular\s*\(/);
+  });
+
   it("Interaction layer dependency가 제거됨", async () => {
     const fixture = JSON.parse(fs.readFileSync(buttonsolidPath, "utf-8"));
     const gen = new FigmaCodeGenerator(fixture, {

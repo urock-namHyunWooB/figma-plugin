@@ -91,4 +91,8 @@ export interface GeneratorOptions {
   exportStyle?: ExportStyle;
   /** 네이밍 커스터마이징 */
   naming?: NamingOptions;
+  /** dependency 처리 모드: bundle(기본, 인라인) 또는 import(외부 import문 생성) */
+  dependencyMode?: "bundle" | "import";
+  /** import 모드 시 base path (예: "@/components/", "./") */
+  importBasePath?: string;
 }

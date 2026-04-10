@@ -72,6 +72,10 @@ export interface ReactEmitterOptions {
   exportStyle?: ExportStyle;
   /** 네이밍 커스터마이징 */
   naming?: NamingOptions;
+  /** dependency 처리 모드: bundle(기본) 또는 import(외부 import문 생성) */
+  dependencyMode?: "bundle" | "import";
+  /** import 모드 시 base path */
+  importBasePath?: string;
 }
 
 export class ReactEmitter implements ICodeEmitter {
@@ -98,7 +102,11 @@ export class ReactEmitter implements ICodeEmitter {
     };
 
     this.styleStrategy = this.createStyleStrategy();
-    this.bundler = new ReactBundler({ declarationStyle: this.options.declarationStyle });
+    this.bundler = new ReactBundler({
+      declarationStyle: this.options.declarationStyle,
+      dependencyMode: options.dependencyMode,
+      importBasePath: options.importBasePath,
+    });
   }
 
   /**
