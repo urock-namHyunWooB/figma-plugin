@@ -107,6 +107,7 @@ class FigmaCodeGenerator {
         ? options.styleStrategy
         : "emotion");
     const tailwindOptions = styleStrategyObj?.tailwind;
+    const shadcnOptions = styleStrategyObj?.shadcn;
 
     this.namingOptions = options.naming;
 
@@ -114,6 +115,7 @@ class FigmaCodeGenerator {
       styleStrategy,
       debug: options.debug ?? false,
       tailwind: tailwindOptions,
+      shadcn: shadcnOptions,
       declarationStyle: options.declarationStyle,
       exportStyle: options.exportStyle,
       naming: options.naming,

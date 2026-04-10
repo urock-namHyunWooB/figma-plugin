@@ -28,34 +28,73 @@ export class PropsGenerator {
    *   interface OwnProps { ... }
    *   interface ComponentProps extends Omit<NativeAttrs, keyof OwnProps>, OwnProps {}
    */
-  static generate(ir: SemanticComponent, componentName: string): string {
+  static generate(ir: SemanticComponent, componentName: string, strategyName?: string): string {
     const props = ir.props;
     const rootKind = ir.structure.kind;
     const nativeAttrsType = NATIVE_ATTRS_TYPE[rootKind];
+    const isShadcn = strategyName === "shadcn";
 
-    if (props.length === 0) {
+    // shadcn: VariantProps 타입 생성
+    const variantsVarName = isShadcn
+      ? `${componentName.charAt(0).toLowerCase() + componentName.slice(1)}Variants`
+      : "";
+    const variantPropsExtend = isShadcn
+      ? `VariantProps<typeof ${variantsVarName}>`
+      : "";
+
+    // shadcn: className prop 추가
+    const extraPropLines: string[] = [];
+    if (isShadcn) {
+      const hasClassName = props.some((p) => p.name === "className");
+      if (!hasClassName) {
+        extraPropLines.push("  className?: string;");
+      }
+    }
+
+    // Array Slot 이름 집합 생성 (빠른 조회용)
+    const arraySlotNames = new Set((ir.arraySlots || []).map((slot) => slot.slotName));
+    const propLines = props.map((prop) => this.generatePropLine(prop, arraySlotNames, ir));
+    const allPropLines = [...propLines, ...extraPropLines];
+
+    if (allPropLines.length === 0 && !isShadcn) {
       if (nativeAttrsType) {
         return `export interface ${componentName}Props extends ${nativeAttrsType} {}`;
       }
       return `export interface ${componentName}Props {}`;
     }
 
-    // Array Slot 이름 집합 생성 (빠른 조회용)
-    const arraySlotNames = new Set((ir.arraySlots || []).map((slot) => slot.slotName));
-
-    const propLines = props.map((prop) => this.generatePropLine(prop, arraySlotNames, ir));
+    if (allPropLines.length === 0 && isShadcn) {
+      if (nativeAttrsType) {
+        // shadcn + native: extend both VariantProps and NativeAttrs
+        return `export interface ${componentName}Props extends ${nativeAttrsType}, ${variantPropsExtend} {
+  className?: string;
+}`;
+      }
+      return `export interface ${componentName}Props extends ${variantPropsExtend} {
+  className?: string;
+}`;
+    }
 
     if (nativeAttrsType) {
       const ownName = `${componentName}OwnProps`;
-      return `interface ${ownName} {
-${propLines.join("\n")}
+      const extendsClause = isShadcn
+        ? ` extends ${variantPropsExtend}`
+        : "";
+      return `interface ${ownName}${extendsClause} {
+${allPropLines.join("\n")}
 }
 
 export interface ${componentName}Props extends Omit<${nativeAttrsType}, keyof ${ownName}>, ${ownName} {}`;
     }
 
+    if (isShadcn) {
+      return `export interface ${componentName}Props extends ${variantPropsExtend} {
+${allPropLines.join("\n")}
+}`;
+    }
+
     return `export interface ${componentName}Props {
-${propLines.join("\n")}
+${allPropLines.join("\n")}
 }`;
   }
 

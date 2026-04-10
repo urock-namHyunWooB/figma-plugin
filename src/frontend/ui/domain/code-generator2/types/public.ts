@@ -73,11 +73,16 @@ export interface TailwindOptions {
   cnImportPath?: string;
 }
 
+export interface ShadcnOptions {
+  /** cn import 경로 (기본: "@/lib/utils") */
+  cnImportPath?: string;
+}
+
 export interface GeneratorOptions {
-  /** 스타일 전략: emotion (기본) 또는 tailwind */
+  /** 스타일 전략: emotion (기본), tailwind, 또는 shadcn */
   styleStrategy?:
     | StyleStrategyType
-    | { type: StyleStrategyType; tailwind?: TailwindOptions };
+    | { type: StyleStrategyType; tailwind?: TailwindOptions; shadcn?: ShadcnOptions };
   /** 디버그 모드: data-figma-id 속성 추가 */
   debug?: boolean;
   /** 컴포넌트 선언 스타일 */

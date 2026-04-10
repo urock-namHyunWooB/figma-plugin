@@ -40,6 +40,7 @@ import { JsxGenerator, type JsxGenerateResult, type DeclarationStyle, type Expor
 import type { VariantInconsistency } from "../../../types/types";
 import { EmotionStrategy } from "./style-strategy/EmotionStrategy";
 import { TailwindStrategy } from "./style-strategy/TailwindStrategy";
+import { ShadcnStrategy } from "./style-strategy/ShadcnStrategy";
 import type { IStyleStrategy } from "./style-strategy/IStyleStrategy";
 import type { SemanticComponent, SemanticNode } from "../SemanticIR";
 import type { NamingOptions } from "../../../types/public";
@@ -52,7 +53,7 @@ const NATIVE_ATTRS_BY_ELEMENT: Record<string, Set<string>> = {
 };
 
 /** 스타일 전략 타입 */
-export type StyleStrategyType = "emotion" | "tailwind";
+export type StyleStrategyType = "emotion" | "tailwind" | "shadcn";
 
 /** ReactEmitter 옵션 */
 export interface ReactEmitterOptions {
@@ -62,6 +63,8 @@ export interface ReactEmitterOptions {
   debug?: boolean;
   /** Tailwind 전략 옵션 */
   tailwind?: { inlineCn?: boolean; cnImportPath?: string };
+  /** Shadcn 전략 옵션 */
+  shadcn?: { cnImportPath?: string };
   /** 컴포넌트 선언 스타일 */
   declarationStyle?: DeclarationStyle;
   /** export 방식 */
@@ -87,6 +90,7 @@ export class ReactEmitter implements ICodeEmitter {
       styleStrategy: options.styleStrategy ?? "emotion",
       debug: options.debug ?? false,
       tailwind: options.tailwind,
+      shadcn: options.shadcn,
       naming: options.naming,
       declarationStyle: options.declarationStyle ?? "function",
       exportStyle: options.exportStyle ?? "default",
@@ -380,7 +384,7 @@ export class ReactEmitter implements ICodeEmitter {
     jsx: string;
     diagnostics: VariantInconsistency[];
   } {
-    const propsInterface = PropsGenerator.generate(ir, componentName);
+    const propsInterface = PropsGenerator.generate(ir, componentName, this.styleStrategy.name);
     const stylesResult = StylesGenerator.generate(ir, componentName, this.styleStrategy);
     const jsxResult = JsxGenerator.generate(ir, componentName, this.styleStrategy, {
       debug: this.options.debug,
@@ -480,6 +484,8 @@ export class ReactEmitter implements ICodeEmitter {
     switch (this.options.styleStrategy) {
       case "tailwind":
         return new TailwindStrategy(this.options.tailwind);
+      case "shadcn":
+        return new ShadcnStrategy(this.options.shadcn);
       case "emotion":
       default:
         return new EmotionStrategy(this.options.naming ? {

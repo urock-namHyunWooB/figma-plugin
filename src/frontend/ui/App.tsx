@@ -348,7 +348,7 @@ function App() {
   const [errorBoundaryKey, setErrorBoundaryKey] = useState(0);
   const [scale, setScale] = useState(1);
   const [originalSize, setOriginalSize] = useState<{ width: number; height: number } | null>(null);
-  const [styleStrategy, setStyleStrategy] = useState<"emotion" | "tailwind">("emotion");
+  const [styleStrategy, setStyleStrategy] = useState<"emotion" | "tailwind" | "shadcn">("emotion");
   const [declarationStyle, setDeclarationStyle] = useState<DeclarationStyle>("function");
   const [exportStyle, setExportStyle] = useState<ExportStyle>("default");
   const [styleNamingStrategy, setStyleNamingStrategy] = useState<StyleNamingStrategy>("verbose");
@@ -499,31 +499,41 @@ function App() {
       });
 
       // 배포용: emotion + tailwind 둘 다 생성
-      const otherStrategy = styleStrategy === "emotion" ? "tailwind" : "emotion";
-      const otherGenerator = new FigmaCodeGenerator(selectionNodeData, {
-        styleStrategy: { type: otherStrategy },
-        declarationStyle,
-        exportStyle,
-        naming: {
-          styleNamingStrategy,
-          ...(componentNameOverride ? { componentName: componentNameOverride } : {}),
-        },
-      });
-      Promise.all([
-        codeGenerator.compile(),
-        otherGenerator.compile(),
-      ]).then(([currentCode, otherCode]) => {
-        if (cancelled) return;
-        if (currentCode == null || otherCode == null) {
-          setDeployCodes(null);
-          return;
-        }
-        setDeployCodes(
-          styleStrategy === "emotion"
-            ? { emotion: currentCode, tailwind: otherCode }
-            : { emotion: otherCode, tailwind: currentCode }
-        );
-      });
+      const makeGenerator = (type: "emotion" | "tailwind") =>
+        new FigmaCodeGenerator(selectionNodeData, {
+          styleStrategy: { type },
+          declarationStyle,
+          exportStyle,
+          naming: {
+            styleNamingStrategy,
+            ...(componentNameOverride ? { componentName: componentNameOverride } : {}),
+          },
+        });
+
+      if (styleStrategy === "emotion") {
+        const twGen = makeGenerator("tailwind");
+        Promise.all([codeGenerator.compile(), twGen.compile()]).then(([emotionCode, tailwindCode]) => {
+          if (cancelled) return;
+          if (emotionCode == null || tailwindCode == null) { setDeployCodes(null); return; }
+          setDeployCodes({ emotion: emotionCode, tailwind: tailwindCode });
+        });
+      } else if (styleStrategy === "tailwind") {
+        const emGen = makeGenerator("emotion");
+        Promise.all([codeGenerator.compile(), emGen.compile()]).then(([tailwindCode, emotionCode]) => {
+          if (cancelled) return;
+          if (tailwindCode == null || emotionCode == null) { setDeployCodes(null); return; }
+          setDeployCodes({ emotion: emotionCode, tailwind: tailwindCode });
+        });
+      } else {
+        // shadcn: generate both emotion and tailwind separately
+        const emGen = makeGenerator("emotion");
+        const twGen = makeGenerator("tailwind");
+        Promise.all([emGen.compile(), twGen.compile()]).then(([emotionCode, tailwindCode]) => {
+          if (cancelled) return;
+          if (emotionCode == null || tailwindCode == null) { setDeployCodes(null); return; }
+          setDeployCodes({ emotion: emotionCode, tailwind: tailwindCode });
+        });
+      }
     } catch (e) {
       console.error("FigmaCodeGenerator error:", e);
     }
@@ -812,6 +822,12 @@ function App() {
                   onClick={() => setStyleStrategy("tailwind")}
                 >
                   Tailwind
+                </button>
+                <button
+                  css={[styleButtonStyle, styleStrategy === "shadcn" && styleButtonActiveStyle]}
+                  onClick={() => setStyleStrategy("shadcn")}
+                >
+                  Shadcn
                 </button>
               </div>
               <select
