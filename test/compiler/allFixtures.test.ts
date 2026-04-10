@@ -157,7 +157,10 @@ describe("모든 Fixture 렌더링 테스트", () => {
 
   describe("TypeScript 타입 체크", () => {
     // 의존 컴포넌트의 variant state 타입이 메인과 불일치하는 알려진 이슈
-    // 의존 컴포넌트의 variant state/prop 타입이 메인과 불일치하는 알려진 이슈
+    // 알려진 타입 에러 — 각각 별도 엔진 이슈
+    // - InputBoxotp: 메인 state에 "Error"가 있으나 dep(InputBoxstandard)에는 없음 → 타입 불일치
+    // - checkbox/taptap-checkbox, Checkbox: boolean prop에 "indeterminate" string이 섞이는 props 추출 문제
+    // - Buttonbutton, Buttonsolid: Iconsicons dep이 번들에 포함되지 않는 ReactBundler 버그
     const KNOWN_TYPE_ERROR_FIXTURES = new Set([
       "any/InputBoxotp",
       "checkbox/taptap-checkbox",
