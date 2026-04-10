@@ -56,6 +56,8 @@ export interface MultiComponentResult {
 export type StyleNamingStrategy = "verbose" | "compact" | "minimal";
 
 export interface NamingOptions {
+  /** 컴포넌트명 직접 지정 (설정 시 prefix/suffix 무시) */
+  componentName?: string;
   componentPrefix?: string;
   componentSuffix?: string;
   conflictPropPrefix?: string;

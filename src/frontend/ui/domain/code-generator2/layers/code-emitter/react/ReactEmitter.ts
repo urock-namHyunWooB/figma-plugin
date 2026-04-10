@@ -105,9 +105,8 @@ export class ReactEmitter implements ICodeEmitter {
    * 3. 섹션 조합 및 포맷팅
    */
   async emit(ir: SemanticComponent): Promise<EmittedCode> {
-    const prefix = this.options.naming?.componentPrefix ?? "";
-    const suffix = this.options.naming?.componentSuffix ?? "";
-    const componentName = `${prefix}${ir.name}${suffix}`;
+    const componentName = this.options.naming?.componentName
+      || `${this.options.naming?.componentPrefix ?? ""}${ir.name}${this.options.naming?.componentSuffix ?? ""}`;
     const sections = this.generateAllSections(ir, componentName);
     const code = await this.assembleAndFormat(sections);
 
