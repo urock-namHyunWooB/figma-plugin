@@ -7,6 +7,9 @@
  */
 
 import type { StyleStrategyType } from "../layers/code-emitter/react/ReactEmitter";
+import type { DeclarationStyle, ExportStyle } from "../layers/code-emitter/react/generators/JsxGenerator";
+
+export type { DeclarationStyle, ExportStyle };
 
 // ─── Prop / Slot ────────────────────────────────────────────
 
@@ -64,4 +67,8 @@ export interface GeneratorOptions {
     | { type: StyleStrategyType; tailwind?: TailwindOptions };
   /** 디버그 모드: data-figma-id 속성 추가 */
   debug?: boolean;
+  /** 컴포넌트 선언 스타일 */
+  declarationStyle?: DeclarationStyle;
+  /** export 방식 */
+  exportStyle?: ExportStyle;
 }
