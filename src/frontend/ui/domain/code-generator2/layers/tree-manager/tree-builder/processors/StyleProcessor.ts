@@ -117,6 +117,15 @@ export class StyleProcessor {
     // 스타일 객체 생성 (synthetic 노드는 기존 styles 유지)
     let styles = this.createStyleObject(node) ?? node.styles;
 
+    // 이전 프로세서가 추가한 dynamic style 보존
+    // (createStyleObject가 새 StyleObject를 만들면 기존 node.styles.dynamic이 사라지므로 merge)
+    if (styles && styles !== node.styles && node.styles?.dynamic?.length) {
+      styles = {
+        ...styles,
+        dynamic: [...(styles.dynamic || []), ...node.styles.dynamic],
+      };
+    }
+
     // HORIZONTAL layoutMode 처리: flex-direction: row 명시적 추가
     // (CSS 기본값이므로 styleTree에 포함되지 않는 경우가 있음)
     if (styles && styles.base && styles.base["display"] === "flex") {

@@ -5,6 +5,7 @@ import {
   PropDefinition,
   VariantPropDefinition,
 } from "../../../../types/types";
+import DataManager from "../../../data-manager/DataManager";
 
 /**
  * VisibilityProcessor
@@ -14,13 +15,20 @@ import {
  * 조건부 가시성 판단:
  * 1. 자식 노드가 모든 variant에 존재 → visibleCondition 없음
  * 2. 자식 노드가 일부 variant에만 존재 → visibleCondition 생성
+ * 3. Alpha mask 패턴 감지 → flow 형제에 visibility:hidden 역조건 부여 + mask 제거
  *
  * 예: Icon 노드가 "Icon=true"인 variant에만 존재
  * → visibleCondition: { type: "truthy", prop: "icon" }
  */
 export class VisibilityProcessor {
+  private readonly dataManager: DataManager;
+
   // sourceKey → PropDefinition 매핑 (exact match)
   private propMap: Map<string, PropDefinition> = new Map();
+
+  constructor(dataManager: DataManager) {
+    this.dataManager = dataManager;
+  }
 
   // 루트 variant의 prop별 value 분포: propKey → (value → count)
   private rootValueDistribution: Map<string, Map<string, number>> = new Map();
@@ -56,6 +64,9 @@ export class VisibilityProcessor {
 
     // 루트 variant의 prop별 value 분포 구축
     this.rootValueDistribution = this.buildValueDistribution(root.mergedNodes || []);
+
+    // Alpha mask 패턴 처리: mask 감지 → flow 형제에 visibility:hidden 부여 + mask 제거
+    root = this.processAlphaMasks(root, props);
 
     // 루트 노드는 모든 variant에 존재하므로 null 반환 불가
     return this.applyVisibilityRecursive(root, totalVariants)!;
@@ -666,5 +677,125 @@ export class VisibilityProcessor {
 
     // 기타 타입은 지원하지 않음 (필요시 확장)
     return undefined;
+  }
+
+  // ===========================================================================
+  // Alpha Mask 패턴 처리
+  //
+  // Figma의 alpha mask 트릭(loading overlay 등)을 감지:
+  //   isMask: true + maskType: "ALPHA" + componentPropertyReferences.visible
+  // 감지 시 flow 형제에 visibility:hidden dynamic style 부여, mask 노드 제거.
+  // ===========================================================================
+
+  private processAlphaMasks(node: InternalNode, props: PropDefinition[]): InternalNode {
+    if (node.children.length === 0) return node;
+
+    // children에서 alpha mask 패턴 감지
+    const maskIndices: number[] = [];
+    const maskConditions: ConditionNode[] = [];
+
+    for (let i = 0; i < node.children.length; i++) {
+      const child = node.children[i];
+      const visibleRef = this.detectAlphaMask(child);
+      if (visibleRef) {
+        maskIndices.push(i);
+        const condition = this.extractConditionFromPropertyRef(visibleRef);
+        if (condition) maskConditions.push(condition);
+      }
+    }
+
+    // mask 없으면 children만 재귀
+    if (maskConditions.length === 0) {
+      return {
+        ...node,
+        children: node.children.map((c) => this.processAlphaMasks(c, props)),
+      };
+    }
+
+    // 중복 condition 제거
+    const uniqueConditions = this.deduplicateMaskConditions(maskConditions);
+
+    // mask 제거 + flow 자식에 역조건 부여
+    const maskIndexSet = new Set(maskIndices);
+    const newChildren: InternalNode[] = [];
+
+    for (let i = 0; i < node.children.length; i++) {
+      if (maskIndexSet.has(i)) continue;
+
+      let child = node.children[i];
+
+      // absolute 자식(Loading overlay)은 건드리지 않음
+      if (this.isAbsolutePositioned(child)) {
+        newChildren.push(this.processAlphaMasks(child, props));
+        continue;
+      }
+
+      // flow 자식에 visibility:hidden dynamic style 부여
+      for (const condition of uniqueConditions) {
+        child = this.addVisibilityHiddenStyle(child, condition);
+      }
+
+      newChildren.push(this.processAlphaMasks(child, props));
+    }
+
+    return { ...node, children: newChildren };
+  }
+
+  /**
+   * Alpha mask 패턴 감지: isMask + ALPHA + componentPropertyReferences.visible
+   */
+  private detectAlphaMask(node: InternalNode): string | undefined {
+    const visibleRef = node.componentPropertyReferences?.visible;
+    if (!visibleRef) return undefined;
+
+    const { node: origNode } = this.dataManager.getById(node.id);
+    if (!origNode) return undefined;
+
+    const orig = origNode as any;
+    if (orig.isMask !== true) return undefined;
+    if (orig.maskType !== "ALPHA") return undefined;
+
+    return visibleRef;
+  }
+
+  private isAbsolutePositioned(node: InternalNode): boolean {
+    const { node: orig } = this.dataManager.getById(node.id);
+    if (!orig) return false;
+    return (orig as any).layoutPositioning === "ABSOLUTE";
+  }
+
+  private addVisibilityHiddenStyle(
+    node: InternalNode,
+    condition: ConditionNode
+  ): InternalNode {
+    const dynamicEntry = {
+      condition,
+      style: { visibility: "hidden" } as Record<string, string | number>,
+    };
+
+    if (!node.styles) {
+      return {
+        ...node,
+        styles: { base: {}, dynamic: [dynamicEntry] },
+      };
+    }
+
+    return {
+      ...node,
+      styles: {
+        ...node.styles,
+        dynamic: [...(node.styles.dynamic || []), dynamicEntry],
+      },
+    };
+  }
+
+  private deduplicateMaskConditions(conditions: ConditionNode[]): ConditionNode[] {
+    const seen = new Set<string>();
+    return conditions.filter((c) => {
+      const key = JSON.stringify(c);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 }
