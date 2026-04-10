@@ -4,6 +4,8 @@ import DataManager from "@frontend/ui/domain/code-generator2/layers/data-manager
 import TreeBuilder from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/TreeBuilder";
 import { ReactEmitter, renameNativeProps } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/ReactEmitter";
 import { SemanticIRBuilder } from "@frontend/ui/domain/code-generator2/layers/code-emitter/SemanticIRBuilder";
+import { ReactBundler } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/ReactBundler";
+import type { EmittedCode } from "@frontend/ui/domain/code-generator2/layers/code-emitter/ICodeEmitter";
 import taptapButton from "../fixtures/button/taptapButton.json";
 
 const sampleBody = `  const { size, ...restProps } = props;
@@ -135,5 +137,55 @@ describe("ReactEmitter declaration options", () => {
     const result = await emitter.emit(ir);
     expect(result.code).toContain("function Primary(props: PrimaryProps)");
     expect(result.code).toContain("export default Primary");
+  });
+});
+
+describe("ReactBundler declaration options", () => {
+  const mainFunc: EmittedCode = {
+    code: 'import React from "react";\n\nfunction Main(props: MainProps) {\n  return <Sub />;\n}\n\nexport default Main',
+    componentName: "Main",
+    fileExtension: ".tsx",
+  };
+  const depFunc: EmittedCode = {
+    code: 'import React from "react";\n\ninterface SubProps {\n  label?: string;\n}\n\nfunction Sub(props: SubProps) {\n  return <div>sub</div>;\n}\n\nexport default Sub',
+    componentName: "Sub",
+    fileExtension: ".tsx",
+  };
+
+  it("function style keeps function declaration for deps", () => {
+    const bundler = new ReactBundler({ declarationStyle: "function" });
+    const result = bundler.bundle(mainFunc, [depFunc]);
+    expect(result).toContain("function Sub(");
+    expect(result).not.toContain("=>");
+    // dependency should not have export
+    expect(result).not.toMatch(/export\s+(default\s+)?function Sub/);
+  });
+
+  it("arrow style converts deps to arrow functions", () => {
+    const bundler = new ReactBundler({ declarationStyle: "arrow" });
+    const result = bundler.bundle(mainFunc, [depFunc]);
+    expect(result).toContain("const Sub = (");
+    expect(result).toContain("=>");
+    expect(result).not.toContain("React.FC");
+  });
+
+  it("arrow-fc style converts deps to React.FC arrow", () => {
+    const bundler = new ReactBundler({ declarationStyle: "arrow-fc" });
+    const result = bundler.bundle(mainFunc, [depFunc]);
+    expect(result).toContain("React.FC<SubProps>");
+    expect(result).toContain("=>");
+  });
+
+  it("deps never have export keyword regardless of style", () => {
+    for (const style of ["function", "arrow", "arrow-fc"] as DeclarationStyle[]) {
+      const bundler = new ReactBundler({ declarationStyle: style });
+      const result = bundler.bundle(mainFunc, [depFunc]);
+      // Extract only the Sub component part (before Main)
+      const subSection = result.split("export default function Main")[0];
+      // SubProps interface should not be exported
+      expect(subSection).not.toMatch(/export\s+interface SubProps/);
+      // Sub function/const should not be exported
+      expect(subSection).not.toMatch(/export\s+(default\s+)?(function|const)\s+Sub/);
+    }
   });
 });

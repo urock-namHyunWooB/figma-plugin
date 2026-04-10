@@ -11,8 +11,14 @@
  */
 
 import type { EmittedCode } from "../ICodeEmitter";
+import { type DeclarationStyle } from "./generators/JsxGenerator";
 
 export class ReactBundler {
+  private readonly declarationStyle: DeclarationStyle;
+
+  constructor(options?: { declarationStyle?: DeclarationStyle }) {
+    this.declarationStyle = options?.declarationStyle ?? "function";
+  }
   /**
    * main + deps를 단일 파일로 번들링
    * deps가 없거나 모두 미참조이면 main만 export default로 반환
@@ -108,8 +114,7 @@ export class ReactBundler {
       let code = this.renameCssVariables(dep.code, dep.componentName);
       code = code.replace(/^import .+;?\n/gm, "");
       code = this.removeCnDeclaration(code);
-      code = this.convertToArrowFunction(code, dep.componentName);
-      code = code.replace(/^export default \w+;?\s*$/gm, "");
+      code = this.convertDeclarationStyle(code, dep.componentName);
       code = code.replace(/^export (interface \w+Props)/gm, "$1");
 
       if (renamedName !== dep.componentName) {
@@ -228,35 +233,40 @@ export class ReactBundler {
   }
 
   /**
-   * function declaration → arrow function const (dependency용)
+   * dependency 코드의 선언 형태를 사용자 옵션에 맞춤.
+   * dependency는 파일 내부 헬퍼이므로 export를 제거한다.
    */
-  private convertToArrowFunction(code: string, componentName: string): string {
-    const exportDefaultFuncRegex = new RegExp(
-      `export\\s+default\\s+function\\s+${componentName}\\s*\\(([^)]*)\\)\\s*\\{`
-    );
-    let match = code.match(exportDefaultFuncRegex);
-    if (match) {
-      code = code.replace(
-        exportDefaultFuncRegex,
-        `const ${componentName}: React.FC<${componentName}Props> = (${match[1]}) => {`
-      );
-      code = code.replace(/^export default \w+;?\s*$/gm, "");
-      code = this.replaceLastClosingBrace(code, componentName);
-      return code;
-    }
+  private convertDeclarationStyle(code: string, componentName: string): string {
+    // 먼저 export 관련 키워드 제거 (dependency는 export 불필요)
+    code = code.replace(/^export default \w+;?\s*$/gm, "");
+    code = code.replace(/^export default\s+/gm, "");
+    code = code.replace(/^export\s+(function|const)\s/gm, "$1 ");
 
+    switch (this.declarationStyle) {
+      case "arrow":
+        return this.toArrowFunction(code, componentName, false);
+      case "arrow-fc":
+        return this.toArrowFunction(code, componentName, true);
+      case "function":
+      default:
+        return code;
+    }
+  }
+
+  private toArrowFunction(code: string, componentName: string, withFc: boolean): string {
     const funcRegex = new RegExp(
       `function\\s+${componentName}\\s*\\(([^)]*)\\)\\s*\\{`
     );
-    match = code.match(funcRegex);
-    if (match) {
-      code = code.replace(
-        funcRegex,
-        `const ${componentName}: React.FC<${componentName}Props> = (${match[1]}) => {`
-      );
-      code = this.replaceLastClosingBrace(code, componentName);
-    }
+    const match = code.match(funcRegex);
+    if (!match) return code;
 
+    const params = match[1];
+    const typeAnnotation = withFc
+      ? `const ${componentName}: React.FC<${componentName}Props> = (${params}) => {`
+      : `const ${componentName} = (${params}) => {`;
+
+    code = code.replace(funcRegex, typeAnnotation);
+    code = this.replaceLastClosingBrace(code, componentName);
     return code;
   }
 

@@ -89,7 +89,7 @@ export class ReactEmitter implements ICodeEmitter {
     };
 
     this.styleStrategy = this.createStyleStrategy();
-    this.bundler = new ReactBundler();
+    this.bundler = new ReactBundler({ declarationStyle: this.options.declarationStyle });
   }
 
   /**
