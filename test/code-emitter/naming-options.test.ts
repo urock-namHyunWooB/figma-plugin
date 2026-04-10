@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { EmotionStrategy } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/style-strategy/EmotionStrategy";
-import { renameNativeProps } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/ReactEmitter";
+import { ReactEmitter, renameNativeProps } from "@frontend/ui/domain/code-generator2/layers/code-emitter/react/ReactEmitter";
+import DataManager from "@frontend/ui/domain/code-generator2/layers/data-manager/DataManager";
+import TreeBuilder from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/TreeBuilder";
+import { SemanticIRBuilder } from "@frontend/ui/domain/code-generator2/layers/code-emitter/SemanticIRBuilder";
+import type { NamingOptions } from "@frontend/ui/domain/code-generator2/types/public";
+import taptapButton from "../fixtures/button/taptapButton.json";
 
 describe("EmotionStrategy naming options", () => {
   describe("styleBaseSuffix", () => {
@@ -75,5 +80,34 @@ describe("renameNativeProps conflictPropPrefix", () => {
   it("does not rename when no conflict", () => {
     const result = renameNativeProps(makeTree("size") as any, "fig");
     expect(result.props[0].name).toBe("size");
+  });
+});
+
+describe("component name prefix/suffix", () => {
+  async function emitWithNaming(naming: NamingOptions) {
+    const dm = new DataManager(taptapButton as any);
+    const tb = new TreeBuilder(dm);
+    const uiTree = tb.build((taptapButton as any).info.document);
+    const emitter = new ReactEmitter({ naming });
+    const ir = SemanticIRBuilder.build(renameNativeProps(uiTree));
+    return emitter.emit(ir);
+  }
+
+  it("adds suffix to component name", async () => {
+    const result = await emitWithNaming({ componentSuffix: "Component" });
+    expect(result.componentName).toBe("PrimaryComponent");
+    expect(result.code).toContain("PrimaryComponentProps");
+    expect(result.code).toContain("function PrimaryComponent(");
+  });
+
+  it("adds prefix to component name", async () => {
+    const result = await emitWithNaming({ componentPrefix: "UI" });
+    expect(result.componentName).toBe("UIPrimary");
+    expect(result.code).toContain("UIPrimaryProps");
+  });
+
+  it("no prefix/suffix by default", async () => {
+    const result = await emitWithNaming({});
+    expect(result.componentName).toBe("Primary");
   });
 });
