@@ -1,4 +1,4 @@
-import type { InternalNode } from "../../../../../../types/types";
+import type { InternalNode } from "../../../../../../../types/types";
 import type { MatchSignal, SignalResult, MatchContext } from "../MatchSignal";
 
 /** Shape 계열 타입 — Figma가 같은 도형을 다른 타입으로 표현할 수 있으므로 상호 호환 */

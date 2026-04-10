@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { NormalizedPosition } from "@code-generator2/layers/tree-manager/tree-builder/processors/match-engine/signals/NormalizedPosition";
-import { defaultMatchingPolicy } from "@code-generator2/layers/tree-manager/tree-builder/processors/match-engine/MatchingPolicy";
+import { NormalizedPosition } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/match-engine/signals/NormalizedPosition";
+import { defaultMatchingPolicy } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/match-engine/MatchingPolicy";
 import type { InternalNode } from "@code-generator2/types/types";
 
 function node(id: string): InternalNode {

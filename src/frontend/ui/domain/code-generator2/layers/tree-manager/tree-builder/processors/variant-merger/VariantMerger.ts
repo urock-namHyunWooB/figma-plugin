@@ -3,12 +3,12 @@ import {
   InternalNode,
   VariantGraph,
   PropDiffInfo,
-} from "../../../../types/types";
-import DataManager from "../../../data-manager/DataManager";
+} from "../../../../../types/types";
+import DataManager from "../../../../data-manager/DataManager";
 import { NodeMatcher } from "./NodeMatcher";
 import { LayoutNormalizer } from "./LayoutNormalizer";
 import { VariantGraphBuilder } from "./VariantGraphBuilder";
-import { UpdateSquashByIou } from "./UpdateSquashByIou";
+import { VariantSquasher } from "./VariantSquasher";
 
 /**
  * VariantMerger
@@ -37,7 +37,7 @@ export class VariantMerger {
   /** 노드 매칭 로직 (병합 시점에 생성) */
   private nodeMatcher?: NodeMatcher;
 
-  /** 레이아웃 정규화 (Task 4에서 UpdateSquashByIou에도 전달) */
+  /** 레이아웃 정규화 (Task 4에서 VariantSquasher에도 전달) */
   private layoutNormalizer?: LayoutNormalizer;
 
   constructor(dataManager: DataManager) {
@@ -78,8 +78,8 @@ export class VariantMerger {
     // 3. 병합: 순서대로 트리 병합
     const merged = this.mergeTreesInOrder(graph, mergeOrder);
 
-    // 3.5. IoU 기반 cross-depth squash (v1 UpdateSquashByIou 포팅)
-    const squasher = new UpdateSquashByIou(
+    // 3.5. IoU 기반 cross-depth squash (v1 VariantSquasher 포팅)
+    const squasher = new VariantSquasher(
       this.dataManager,
       this.nodeToVariantRoot,
       this.layoutNormalizer!

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ParentShapeIdentity } from "@code-generator2/layers/tree-manager/tree-builder/processors/match-engine/signals/ParentShapeIdentity";
+import { ParentShapeIdentity } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/match-engine/signals/ParentShapeIdentity";
 import type { InternalNode } from "@code-generator2/types/types";
 
 function nodeWithParent(id: string, parentName: string, parentType: string, parentRefId?: string): InternalNode {

@@ -6,7 +6,7 @@ import {
   ConditionNode,
 } from "../../../types/types";
 import DataManager from "../../data-manager/DataManager";
-import { VariantMerger } from "./processors/VariantMerger";
+import { VariantMerger } from "./processors/variant-merger";
 import { stripInteractionLayers } from "./processors/InteractionLayerStripper";
 import { PropsExtractor } from "./processors/PropsExtractor";
 import { SlotProcessor } from "./processors/SlotProcessor";

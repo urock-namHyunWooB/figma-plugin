@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { IdMatch } from "@code-generator2/layers/tree-manager/tree-builder/processors/match-engine/signals/IdMatch";
+import { IdMatch } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/match-engine/signals/IdMatch";
 import type { InternalNode } from "@code-generator2/types/types";
 
 function node(id: string): InternalNode {

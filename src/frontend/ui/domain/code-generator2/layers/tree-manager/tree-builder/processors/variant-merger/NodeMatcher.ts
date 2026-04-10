@@ -1,5 +1,5 @@
-import { InternalNode } from "../../../../types/types";
-import DataManager from "../../../data-manager/DataManager";
+import { InternalNode } from "../../../../../types/types";
+import DataManager from "../../../../data-manager/DataManager";
 import { LayoutNormalizer } from "./LayoutNormalizer";
 import {
   createDefaultEngine,

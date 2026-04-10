@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { NodeMatcher } from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/processors/NodeMatcher";
-import { LayoutNormalizer } from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/processors/LayoutNormalizer";
+import { NodeMatcher } from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/NodeMatcher";
+import { LayoutNormalizer } from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/LayoutNormalizer";
 import type { InternalNode } from "@frontend/ui/domain/code-generator2/types/types";
 
 // ─── Mock helpers ───

@@ -4,7 +4,7 @@ import {
   VariantGraphNode,
   VariantGraphEdge,
   PropDiffInfo,
-} from "../../../../types/types";
+} from "../../../../../types/types";
 
 /**
  * VariantGraphBuilder

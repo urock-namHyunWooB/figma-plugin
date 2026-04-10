@@ -3,7 +3,7 @@ import type {
   MatchSignal,
   SignalResult,
   MatchContext,
-} from "@code-generator2/layers/tree-manager/tree-builder/processors/match-engine/MatchSignal";
+} from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/match-engine/MatchSignal";
 
 describe("MatchSignal types", () => {
   it("SignalResult veto has kind 'veto' and no score", () => {

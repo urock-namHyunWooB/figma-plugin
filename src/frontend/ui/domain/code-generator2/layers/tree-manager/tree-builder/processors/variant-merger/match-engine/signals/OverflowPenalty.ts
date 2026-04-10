@@ -1,4 +1,4 @@
-import type { InternalNode } from "../../../../../../types/types";
+import type { InternalNode } from "../../../../../../../types/types";
 import type { MatchSignal, SignalResult, MatchContext } from "../MatchSignal";
 
 const CONTAINER_TYPES: ReadonlySet<string> = new Set(["GROUP", "FRAME"]);

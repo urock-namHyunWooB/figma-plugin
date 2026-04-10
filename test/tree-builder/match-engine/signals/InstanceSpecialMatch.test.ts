@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { InstanceSpecialMatch } from "@code-generator2/layers/tree-manager/tree-builder/processors/match-engine/signals/InstanceSpecialMatch";
-import { defaultMatchingPolicy } from "@code-generator2/layers/tree-manager/tree-builder/processors/match-engine/MatchingPolicy";
+import { InstanceSpecialMatch } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/match-engine/signals/InstanceSpecialMatch";
+import { defaultMatchingPolicy } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/match-engine/MatchingPolicy";
 import type { InternalNode } from "@code-generator2/types/types";
 
 function instanceNode(id: string, visibleRef?: string, componentId?: string): InternalNode {

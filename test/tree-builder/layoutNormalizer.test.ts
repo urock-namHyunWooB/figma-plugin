@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { LayoutNormalizer } from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/processors/LayoutNormalizer";
+import { LayoutNormalizer } from "@frontend/ui/domain/code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/LayoutNormalizer";
 
 function makeNode(
   id: string,

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { WrapperRoleDistinction } from "@code-generator2/layers/tree-manager/tree-builder/processors/match-engine/signals/WrapperRoleDistinction";
-import { defaultMatchingPolicy } from "@code-generator2/layers/tree-manager/tree-builder/processors/match-engine/MatchingPolicy";
+import { WrapperRoleDistinction } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/match-engine/signals/WrapperRoleDistinction";
+import { defaultMatchingPolicy } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/match-engine/MatchingPolicy";
 import type { InternalNode } from "@code-generator2/types/types";
 
 function containerWithChildren(id: string, childCount: number): InternalNode {

@@ -1,5 +1,5 @@
-import type { InternalNode } from "../../../../../types/types";
-import type DataManager from "../../../../data-manager/DataManager";
+import type { InternalNode } from "../../../../../../types/types";
+import type DataManager from "../../../../../data-manager/DataManager";
 import type { LayoutNormalizer } from "../LayoutNormalizer";
 import type { MatchingPolicy } from "./MatchingPolicy";
 

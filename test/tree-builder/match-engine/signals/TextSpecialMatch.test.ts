@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { TextSpecialMatch } from "@code-generator2/layers/tree-manager/tree-builder/processors/match-engine/signals/TextSpecialMatch";
-import { defaultMatchingPolicy } from "@code-generator2/layers/tree-manager/tree-builder/processors/match-engine/MatchingPolicy";
+import { TextSpecialMatch } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/match-engine/signals/TextSpecialMatch";
+import { defaultMatchingPolicy } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/match-engine/MatchingPolicy";
 import type { InternalNode } from "@code-generator2/types/types";
 
 function textNode(id: string, name: string, parentType: string | null): InternalNode {

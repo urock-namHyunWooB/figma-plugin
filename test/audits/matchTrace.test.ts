@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import DataManager from "@code-generator2/layers/data-manager/DataManager";
-import { VariantMerger } from "@code-generator2/layers/tree-manager/tree-builder/processors/VariantMerger";
-import { LayoutNormalizer } from "@code-generator2/layers/tree-manager/tree-builder/processors/LayoutNormalizer";
-import { NodeMatcher } from "@code-generator2/layers/tree-manager/tree-builder/processors/NodeMatcher";
+import { VariantMerger } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/VariantMerger";
+import { LayoutNormalizer } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/LayoutNormalizer";
+import { NodeMatcher } from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/NodeMatcher";
 import type { InternalNode, InternalTree } from "@code-generator2/types/types";
 
 const fixtureLoaders = import.meta.glob("../fixtures/**/*.json") as Record<

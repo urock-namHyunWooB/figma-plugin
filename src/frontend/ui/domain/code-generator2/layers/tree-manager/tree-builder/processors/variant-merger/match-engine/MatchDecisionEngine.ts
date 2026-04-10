@@ -1,4 +1,4 @@
-import type { InternalNode } from "../../../../../types/types";
+import type { InternalNode } from "../../../../../../types/types";
 import type {
   MatchSignal,
   MatchContext,

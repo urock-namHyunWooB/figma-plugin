@@ -98,7 +98,7 @@ COMPONENT_SET with multiple variants (e.g., Size=Large/Small, State=Default/Hove
 - **2-Pass + Hungarian Matching**: Pass 1 ID 확정 매칭 → Pass 2 Hungarian algorithm 전역 최적 위치 매칭 (greedy 순서 의존성 제거)
 - **3-Way Position Comparison**: 좌·가운데·우 기준점 비교 (±0.1 threshold)
 - **Auto Layout Context Matching**: 왼쪽 형제 type+size 비교로 위치 시프트 보정 (Stage 5.5)
-- **Cross-Depth Squash**: 병합 후 3-Way 독립 정규화 위치 비교로 다른 depth의 중복 노드 통합 (UpdateSquashByIou)
+- **Cross-Depth Squash**: 병합 후 3-Way 독립 정규화 위치 비교로 다른 depth의 중복 노드 통합 (VariantSquasher)
 
 ### INSTANCE Override IDs
 INSTANCE children have compound IDs like `I704:56;704:29;692:1613`. The last segment (`692:1613`) is the original component's node ID.
@@ -168,7 +168,7 @@ Use these subagents proactively when conditions are met:
 - ✅ 2-Pass + Hungarian Matching (VariantMerger) — ID 확정 + Hungarian 전역 최적 매칭
 - ✅ 3-Way Position Comparison (NodeMatcher)
 - ✅ Auto Layout Context Matching — Stage 5.5 왼쪽 컨텍스트 보정 (NodeMatcher)
-- ✅ Cross-Depth Squash (UpdateSquashByIou) — 3-Way 독립 정규화 위치 비교
+- ✅ Cross-Depth Squash (VariantSquasher) — 3-Way 독립 정규화 위치 비교
 - ✅ VisibilityProcessor Dead Code Elimination — 조상 조건 모순 제거 + OR branch simplification
 - ✅ **SemanticIR 마이그레이션 (Layer 2.5)** — framework-agnostic IR 도입.
   ICodeEmitter가 `SemanticComponent`를 입력으로 받으며, 모든 generator가 IR을 소비.

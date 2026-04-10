@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   defaultMatchingPolicy,
   type MatchingPolicy,
-} from "@code-generator2/layers/tree-manager/tree-builder/processors/match-engine/MatchingPolicy";
+} from "@code-generator2/layers/tree-manager/tree-builder/processors/variant-merger/match-engine/MatchingPolicy";
 
 describe("MatchingPolicy", () => {
   it("defaultMatchingPolicy has Phase 1b values (relaxed size ratio)", () => {

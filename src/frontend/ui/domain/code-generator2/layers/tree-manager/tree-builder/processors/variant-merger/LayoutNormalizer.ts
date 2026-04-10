@@ -1,4 +1,4 @@
-import DataManager from "../../../data-manager/DataManager";
+import DataManager from "../../../../data-manager/DataManager";
 
 export interface NormalizedPosition {
   relCenterX: number;

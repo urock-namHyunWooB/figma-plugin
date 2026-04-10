@@ -1,5 +1,6 @@
-import { InternalNode, VariantOrigin } from "../../../../types/types";
-import DataManager from "../../../data-manager/DataManager";
+// Renamed from UpdateSquashByIou, see docs/superpowers/specs/2026-04-10-variant-merger-engine-consolidation-design.md
+import { InternalNode, VariantOrigin } from "../../../../../types/types";
+import DataManager from "../../../../data-manager/DataManager";
 import { LayoutNormalizer } from "./LayoutNormalizer";
 
 type SiblingEntry = { next: InternalNode | null; prev: InternalNode | null };
@@ -18,7 +19,7 @@ type SiblingGraph = Map<string, SiblingEntry[]>;
  * 4. squashByTopoSort: deep clone으로 양방향 검증, 한쪽만 valid하면 실행
  * 5. performSquash: mergedNodes 합치기 + source 제거
  */
-export class UpdateSquashByIou {
+export class VariantSquasher {
   private static readonly INSTANCE_ID_PREFIX = "I";
 
   private readonly dataManager: DataManager;
@@ -182,8 +183,8 @@ export class UpdateSquashByIou {
     nodeA: InternalNode,
     nodeB: InternalNode
   ): boolean {
-    const isA = nodeA.id.startsWith(UpdateSquashByIou.INSTANCE_ID_PREFIX);
-    const isB = nodeB.id.startsWith(UpdateSquashByIou.INSTANCE_ID_PREFIX);
+    const isA = nodeA.id.startsWith(VariantSquasher.INSTANCE_ID_PREFIX);
+    const isB = nodeB.id.startsWith(VariantSquasher.INSTANCE_ID_PREFIX);
     if (!isA && !isB) return true;
     return isA && isB;
   }
