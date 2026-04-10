@@ -78,6 +78,8 @@ export type {
   GeneratorOptions,
   DeclarationStyle,
   ExportStyle,
+  NamingOptions,
+  StyleNamingStrategy,
 } from "./types/public";
 
 class FigmaCodeGenerator {

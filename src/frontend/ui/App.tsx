@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback, useMemo } from "react"
 import { css } from "@emotion/react";
 import { useNavigate } from "react-router-dom";
 import useMessageHandler from "./useMessageHandler";
-import FigmaCodeGenerator, { type PropDefinition, type FeedbackGroup, type DeclarationStyle, type ExportStyle } from "@code-generator2";
+import FigmaCodeGenerator, { type PropDefinition, type FeedbackGroup, type DeclarationStyle, type ExportStyle, type NamingOptions, type StyleNamingStrategy } from "@code-generator2";
 import { useComponentRenderer } from "./hooks/useComponentRenderer";
 import { PropController } from "./components/PropController";
 import { CodeEditor } from "./components/CodeEditor";
@@ -143,6 +143,20 @@ const optionSelectStyle = css`
   cursor: pointer;
   outline: none;
   &:focus { border-color: #00c2e0; }
+`;
+
+const optionInputStyle = css`
+  padding: 4px 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #ffffff;
+  color: #374151;
+  width: 90px;
+  outline: none;
+  &:focus { border-color: #00c2e0; }
+  &::placeholder { color: #9ca3af; }
 `;
 
 const minimizeButtonStyle = css`
@@ -328,6 +342,12 @@ function App() {
   const [styleStrategy, setStyleStrategy] = useState<"emotion" | "tailwind">("emotion");
   const [declarationStyle, setDeclarationStyle] = useState<DeclarationStyle>("function");
   const [exportStyle, setExportStyle] = useState<ExportStyle>("default");
+  const [styleNamingStrategy, setStyleNamingStrategy] = useState<StyleNamingStrategy>("verbose");
+  const [conflictPropPrefix, setConflictPropPrefix] = useState("custom");
+  const [componentPrefix, setComponentPrefix] = useState("");
+  const [componentSuffix, setComponentSuffix] = useState("");
+  const [styleBaseSuffix, setStyleBaseSuffix] = useState("Css");
+  const [styleVariantSuffix, setStyleVariantSuffix] = useState("Styles");
   const [minimized, setMinimized] = useState(false);
   const [slotMockupEnabled, setSlotMockupEnabled] = useState<Record<string, boolean>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -438,6 +458,14 @@ function App() {
         styleStrategy: { type: styleStrategy },
         declarationStyle,
         exportStyle,
+        naming: {
+          componentPrefix,
+          componentSuffix,
+          conflictPropPrefix,
+          styleBaseSuffix,
+          styleVariantSuffix,
+          styleNamingStrategy,
+        },
       });
       const name = codeGenerator.getComponentName();
       setComponentName(name);
@@ -473,6 +501,14 @@ function App() {
         styleStrategy: { type: otherStrategy },
         declarationStyle,
         exportStyle,
+        naming: {
+          componentPrefix,
+          componentSuffix,
+          conflictPropPrefix,
+          styleBaseSuffix,
+          styleVariantSuffix,
+          styleNamingStrategy,
+        },
       });
       Promise.all([
         codeGenerator.compile(),
@@ -493,7 +529,7 @@ function App() {
       console.error("FigmaCodeGenerator error:", e);
     }
     return () => { cancelled = true; };
-  }, [selectionNodeData, styleStrategy, declarationStyle, exportStyle]);
+  }, [selectionNodeData, styleStrategy, declarationStyle, exportStyle, styleNamingStrategy, conflictPropPrefix, componentPrefix, componentSuffix, styleBaseSuffix, styleVariantSuffix]);
 
   // 동적 컴포넌트 렌더러
   const activeCode = editedCode ?? generatedCode;
@@ -805,6 +841,58 @@ function App() {
                 </option>
                 <option value="named">named export</option>
               </select>
+              <select
+                css={optionSelectStyle}
+                value={styleNamingStrategy}
+                onChange={(e) => setStyleNamingStrategy(e.target.value as StyleNamingStrategy)}
+              >
+                <option value="verbose">Verbose</option>
+                <option value="compact">Compact</option>
+                <option value="minimal">Minimal</option>
+              </select>
+            </div>
+            <div css={codeOptionsBarStyle}>
+              <input
+                css={optionInputStyle}
+                value={componentPrefix}
+                onChange={(e) => setComponentPrefix(e.target.value)}
+                placeholder="comp prefix"
+                title="컴포넌트 prefix"
+              />
+              <input
+                css={optionInputStyle}
+                value={componentSuffix}
+                onChange={(e) => setComponentSuffix(e.target.value)}
+                placeholder="comp suffix"
+                title="컴포넌트 suffix"
+              />
+              <input
+                css={optionInputStyle}
+                value={conflictPropPrefix}
+                onChange={(e) => setConflictPropPrefix(e.target.value)}
+                placeholder="conflict prefix"
+                title="충돌 prop prefix"
+              />
+              <input
+                css={optionInputStyle}
+                value={styleBaseSuffix}
+                onChange={(e) => {
+                  if (e.target.value === styleVariantSuffix) return;
+                  setStyleBaseSuffix(e.target.value);
+                }}
+                placeholder="style suffix"
+                title="스타일 변수 suffix"
+              />
+              <input
+                css={optionInputStyle}
+                value={styleVariantSuffix}
+                onChange={(e) => {
+                  if (e.target.value === styleBaseSuffix) return;
+                  setStyleVariantSuffix(e.target.value);
+                }}
+                placeholder="variant suffix"
+                title="variant 변수 suffix"
+              />
             </div>
             <CodeEditor code={generatedCode} onChange={handleCodeChange} />
           </div>
