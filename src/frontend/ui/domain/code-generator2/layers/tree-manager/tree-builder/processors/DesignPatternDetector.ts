@@ -183,12 +183,16 @@ export class DesignPatternDetector {
     }
     if (variantPropMaps.length < 2) return;
 
-    // 2. Collect variant prop keys (only VARIANT type)
+    // 2. Collect variant prop keys (only VARIANT type) with their known values
     const variantPropKeys: string[] = [];
+    const variantPropValues = new Map<string, string[]>();
     for (const [rawKey, def] of Object.entries(propDefs)) {
       if (def.type !== "VARIANT") continue;
       const cleanKey = rawKey.split("#")[0].trim();
       variantPropKeys.push(cleanKey);
+      if (def.variantOptions?.length) {
+        variantPropValues.set(cleanKey, def.variantOptions);
+      }
     }
 
     // 3. For each container name, collect children names per variant
@@ -239,12 +243,38 @@ export class DesignPatternDetector {
         }
         if (uniqueStructures.size < 2) continue;
 
-        // Build branches: prop value → children names
-        const branches: Record<string, string[]> = {};
+        // All prop values must be represented in the branches
+        // (skip if some values have no container / no children — incomplete branches)
+        const allValues = variantPropValues.get(propKey);
+        if (allValues && allValues.some((v) => !valueToChildrenSets.has(v))) continue;
+
+        // Build raw branches: prop value → children names
+        const rawBranches: Record<string, string[]> = {};
         for (const [val, childKeysForVal] of valueToChildrenSets) {
           const childKey = [...childKeysForVal][0];
-          branches[val] = childKey.split(",");
+          rawBranches[val] = childKey.split(",");
         }
+
+        // Remove common children (intersection) — these are always-visible, not part of the switch.
+        // Only the differing children should be in the branches.
+        const branchSets = Object.values(rawBranches).map((names) => new Set(names));
+        const commonChildren = new Set(
+          [...branchSets[0]].filter((name) => branchSets.every((s) => s.has(name)))
+        );
+
+        const branches: Record<string, string[]> = {};
+        for (const [val, names] of Object.entries(rawBranches)) {
+          branches[val] = names.filter((n) => !commonChildren.has(n));
+        }
+
+        // After removing common children, must still have at least 2 distinct non-empty structures
+        const distinctBranchKeys = new Set(
+          Object.values(branches).map((names) => names.join(","))
+        );
+        if (distinctBranchKeys.size < 2) continue;
+
+        // Skip if any branch has no unique children (implies subset relationship)
+        if (Object.values(branches).some((names) => names.length === 0)) continue;
 
         // Find a representative container nodeId
         const firstVariantChildren = variantChildrenMap.values().next().value;

@@ -141,6 +141,9 @@ class UINodeConverter {
       ...(nodeType === "component" && node.refId ? { refId: node.refId } : {}),
       ...(nodeType === "vector" && finalVectorSvg ? { vectorSvg: finalVectorSvg } : {}),
       ...(nodeType === "text" && textSegments ? { textSegments } : {}),
+      ...(node.metadata?.designPatterns?.length
+        ? { metadata: { designPatterns: node.metadata.designPatterns } }
+        : {}),
     } as UINode;
   }
 

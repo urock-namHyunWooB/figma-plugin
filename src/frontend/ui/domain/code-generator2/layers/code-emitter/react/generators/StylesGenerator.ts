@@ -374,6 +374,15 @@ export class StylesGenerator {
         this.collectStyles(child, styleStrategy, results, nodeStyleMap, currentPath);
       }
     }
+
+    // conditionalGroup branches 내 자식도 순회
+    if (node.branches) {
+      for (const branchChildren of Object.values(node.branches)) {
+        for (const child of branchChildren) {
+          this.collectStyles(child, styleStrategy, results, nodeStyleMap, currentPath);
+        }
+      }
+    }
   }
 
   /**

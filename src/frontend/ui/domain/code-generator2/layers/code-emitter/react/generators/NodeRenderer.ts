@@ -138,12 +138,87 @@ export class NodeRenderer {
       case "vector":
         return NodeRenderer.generateVectorNode(ctx, node, indent);
 
+      case "conditionalGroup":
+        return NodeRenderer.generateConditionalGroupNode(ctx, node, indent);
+
       case "button":
       case "input":
       case "link":
       case "container":
       default:
         return NodeRenderer.generateContainerNode(ctx, node, indent, isRoot);
+    }
+  }
+
+  /**
+   * conditionalGroup 노드 → JSX 분기 렌더링
+   *
+   * 2 branches: ternary  {prop === "A" ? (...) : (...)}
+   * 3+ branches: object map  {{ A: (...), B: (...) }[prop]}
+   */
+  static generateConditionalGroupNode(
+    ctx: NodeRendererContext,
+    node: SemanticNode,
+    indent: number,
+  ): string {
+    const indentStr = " ".repeat(indent);
+    const branches = node.branches;
+    const rawProp = node.prop;
+    if (!branches || !rawProp) return "";
+
+    const prop = NodeRenderer.resolvePropName(ctx, rawProp);
+    const isBooleanProp = ctx.booleanProps.has(rawProp) || ctx.booleanProps.has(prop);
+    const entries = Object.entries(branches);
+    if (entries.length === 0) return "";
+
+    // Render each branch's children into JSX
+    const renderedBranches: Record<string, string> = {};
+    for (const [value, children] of entries) {
+      const childrenJsx = children
+        .map((child) => NodeRenderer.generateNode(ctx, child, indent + 2, false))
+        .filter(Boolean)
+        .join("\n");
+
+      if (children.length === 0) {
+        renderedBranches[value] = "null";
+      } else if (children.length === 1 && !childrenJsx.trimStart().startsWith("{")) {
+        // Single child that is a plain JSX element — no wrapper needed
+        renderedBranches[value] = childrenJsx;
+      } else {
+        // Multiple children or JSX expression children ({condition && ...}) —
+        // wrap in Fragment to ensure valid JSX inside ternary (...)
+        renderedBranches[value] = `${" ".repeat(indent + 2)}<>\n${childrenJsx}\n${" ".repeat(indent + 2)}</>`;
+      }
+    }
+
+    /** Convert a branch key to a JS comparison literal */
+    const toLiteral = (value: string): string => {
+      if (isBooleanProp) {
+        const lower = value.toLowerCase();
+        if (lower === "true") return "true";
+        if (lower === "false") return "false";
+      }
+      return JSON.stringify(value);
+    };
+
+    if (entries.length === 2) {
+      // Ternary pattern
+      const [first, second] = entries;
+      // For boolean props, simplify: active ? (...) : (...)
+      if (isBooleanProp) {
+        const trueBranch = entries.find(([v]) => v.toLowerCase() === "true");
+        const falseBranch = entries.find(([v]) => v.toLowerCase() === "false");
+        if (trueBranch && falseBranch) {
+          return `${indentStr}{${prop} ? (\n${renderedBranches[trueBranch[0]]}\n${indentStr}) : (\n${renderedBranches[falseBranch[0]]}\n${indentStr})}`;
+        }
+      }
+      return `${indentStr}{${prop} === ${toLiteral(first[0])} ? (\n${renderedBranches[first[0]]}\n${indentStr}) : (\n${renderedBranches[second[0]]}\n${indentStr})}`;
+    } else {
+      // Object map pattern
+      const mapEntries = entries
+        .map(([value]) => `${" ".repeat(indent + 2)}${JSON.stringify(value)}: (\n${renderedBranches[value]}\n${" ".repeat(indent + 2)})`)
+        .join(",\n");
+      return `${indentStr}{{\n${mapEntries}\n${indentStr}}[${prop}]}`;
     }
   }
 

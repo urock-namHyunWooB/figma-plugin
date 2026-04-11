@@ -719,6 +719,9 @@ export class VariantMerger {
     for (const p of patterns) {
       if ("nodeId" in p && typeof (p as any).nodeId === "string") {
         nodePatterns.push(p as any);
+      } else if ("containerNodeId" in p && typeof (p as any).containerNodeId === "string") {
+        // layoutModeSwitch: target the container node, not root
+        nodePatterns.push({ ...p, nodeId: (p as any).containerNodeId } as any);
       } else {
         componentPatterns.push(p);
       }
