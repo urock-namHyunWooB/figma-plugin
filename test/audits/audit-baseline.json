@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-04-10T08:16:15.885Z",
+  "generatedAt": "2026-04-11T06:37:32.937Z",
   "totalFixtures": 87,
-  "fixturesWithRegressions": 47,
-  "totalDisjointPairs": 1839,
+  "fixturesWithRegressions": 46,
+  "totalDisjointPairs": 1838,
   "compileErrors": 0,
   "patternTotals": {
     "size-variant-reject": 3,
-    "variant-prop-position": 17,
-    "same-name-same-type": 9,
+    "variant-prop-position": 19,
+    "same-name-same-type": 6,
     "same-name-cross-type": 0,
     "different-type": 890,
     "different-name": 920,
@@ -7205,8 +7205,8 @@
       "disjointCount": 6,
       "patterns": {
         "size-variant-reject": 0,
-        "variant-prop-position": 0,
-        "same-name-same-type": 2,
+        "variant-prop-position": 2,
+        "same-name-same-type": 0,
         "same-name-cross-type": 0,
         "different-type": 4,
         "different-name": 0,
@@ -7282,7 +7282,6 @@
           "variantsB": [
             "Platform=iOS, Size=Medium, Active=False, Disable=False",
             "Platform=iOS, Size=Medium, Active=False, Disable=True",
-            "Platform=iOS, Size=Medium, Active=True, Disable=False",
             "Platform=iOS, Size=Small, Active=False, Disable=False",
             "Platform=iOS, Size=Small, Active=False, Disable=True"
           ],
@@ -7291,7 +7290,7 @@
         {
           "parentId": "16215:34985",
           "a": "I16215:34985;16215:35021",
-          "b": "I16215:34999;1579:9588",
+          "b": "I16215:34995;1579:9588",
           "variantsA": [
             "Platform=Normal, Size=Medium, Active=False, Disable=False",
             "Platform=Normal, Size=Medium, Active=False, Disable=True",
@@ -7303,6 +7302,7 @@
             "Platform=Normal, Size=Small, Active=True, Disable=True"
           ],
           "variantsB": [
+            "Platform=iOS, Size=Medium, Active=True, Disable=False",
             "Platform=iOS, Size=Medium, Active=True, Disable=True",
             "Platform=iOS, Size=Small, Active=True, Disable=False",
             "Platform=iOS, Size=Small, Active=True, Disable=True"
@@ -7312,38 +7312,38 @@
         {
           "parentId": "16215:34985",
           "a": "I16215:34993;1579:9584",
-          "b": "I16215:34999;1579:9588",
+          "b": "I16215:34995;1579:9588",
           "variantsA": [
             "Platform=iOS, Size=Medium, Active=False, Disable=False",
             "Platform=iOS, Size=Medium, Active=False, Disable=True",
-            "Platform=iOS, Size=Medium, Active=True, Disable=False",
             "Platform=iOS, Size=Small, Active=False, Disable=False",
             "Platform=iOS, Size=Small, Active=False, Disable=True"
           ],
           "variantsB": [
+            "Platform=iOS, Size=Medium, Active=True, Disable=False",
             "Platform=iOS, Size=Medium, Active=True, Disable=True",
             "Platform=iOS, Size=Small, Active=True, Disable=False",
             "Platform=iOS, Size=Small, Active=True, Disable=True"
           ],
-          "pattern": "same-name-same-type"
+          "pattern": "variant-prop-position"
         },
         {
           "parentId": "I16215:34985;16215:35021",
           "a": "I16215:34985;16215:35022",
-          "b": "I16215:34991;16215:35031",
+          "b": "I16215:34987;16215:35025",
           "variantsA": [
             "Platform=Normal, Size=Medium, Active=False, Disable=False",
             "Platform=Normal, Size=Medium, Active=False, Disable=True",
-            "Platform=Normal, Size=Medium, Active=True, Disable=False",
             "Platform=Normal, Size=Small, Active=False, Disable=False",
             "Platform=Normal, Size=Small, Active=False, Disable=True"
           ],
           "variantsB": [
+            "Platform=Normal, Size=Medium, Active=True, Disable=False",
             "Platform=Normal, Size=Medium, Active=True, Disable=True",
             "Platform=Normal, Size=Small, Active=True, Disable=False",
             "Platform=Normal, Size=Small, Active=True, Disable=True"
           ],
-          "pattern": "same-name-same-type"
+          "pattern": "variant-prop-position"
         }
       ]
     },
@@ -8707,31 +8707,17 @@
     },
     {
       "fixture": "failing/Switch",
-      "disjointCount": 1,
+      "disjointCount": 0,
       "patterns": {
         "size-variant-reject": 0,
         "variant-prop-position": 0,
-        "same-name-same-type": 1,
+        "same-name-same-type": 0,
         "same-name-cross-type": 0,
         "different-type": 0,
         "different-name": 0,
         "unknown": 0
       },
-      "pairs": [
-        {
-          "parentId": "74:150",
-          "a": "74:157",
-          "b": "74:153",
-          "variantsA": [
-            "states=disabled",
-            "states=hover"
-          ],
-          "variantsB": [
-            "states=enabled"
-          ],
-          "pattern": "same-name-same-type"
-        }
-      ]
+      "pairs": []
     },
     {
       "fixture": "failing/Tagreview",
