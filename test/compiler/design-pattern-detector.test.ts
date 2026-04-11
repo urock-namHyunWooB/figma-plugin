@@ -53,4 +53,30 @@ describe("DesignPatternDetector", () => {
       expect(node.metadata?.designPatterns).toBeUndefined();
     });
   });
+
+  describe("detectInteractionFrames", () => {
+    it("name=Interaction + type=FRAME → interactionFrame annotation", () => {
+      const detector = new DesignPatternDetector(null as any);
+      const node: any = { id: "i1", name: "Interaction", type: "FRAME", children: [] };
+      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [node] };
+      detector.detect(tree);
+      expect(node.metadata?.designPatterns).toEqual([{ type: "interactionFrame" }]);
+    });
+
+    it("name=Interaction + type=INSTANCE → no annotation", () => {
+      const detector = new DesignPatternDetector(null as any);
+      const node: any = { id: "i2", name: "Interaction", type: "INSTANCE", children: [] };
+      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [node] };
+      detector.detect(tree);
+      expect(node.metadata?.designPatterns).toBeUndefined();
+    });
+
+    it("name=Content + type=FRAME → no annotation", () => {
+      const detector = new DesignPatternDetector(null as any);
+      const node: any = { id: "c1", name: "Content", type: "FRAME", children: [] };
+      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [node] };
+      detector.detect(tree);
+      expect(node.metadata?.designPatterns).toBeUndefined();
+    });
+  });
 });

@@ -5,8 +5,7 @@ describe("DesignPattern types", () => {
   it("alphaMask annotation이 metadata.designPatterns에 할당 가능", () => {
     const pattern: DesignPattern = {
       type: "alphaMask",
-      triggerProp: "loading",
-      condition: { type: "truthy", prop: "loading" },
+      visibleRef: "Loading#29474:0",
     };
     const node = { metadata: { designPatterns: [pattern] } } as Partial<InternalNode>;
     expect(node.metadata!.designPatterns![0].type).toBe("alphaMask");
@@ -14,7 +13,7 @@ describe("DesignPattern types", () => {
 
   it("모든 패턴 타입이 할당 가능", () => {
     const patterns: DesignPattern[] = [
-      { type: "alphaMask", triggerProp: "loading", condition: { type: "truthy", prop: "loading" } },
+      { type: "alphaMask", visibleRef: "Loading#29474:0" },
       { type: "interactionFrame" },
       { type: "fullCoverBackground" },
       { type: "statePseudoClass", prop: "state", stateMap: { Hover: ":hover" } },

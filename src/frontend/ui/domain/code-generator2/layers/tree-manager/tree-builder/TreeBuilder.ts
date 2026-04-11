@@ -487,6 +487,7 @@ class TreeBuilder {
     options?: { skipInteractionStripper?: boolean }
   ): InternalTree {
     const tree = this.variantMerger.merge(node);
+    this.designPatternDetector.detect(tree);
     if (!options?.skipInteractionStripper) {
       stripInteractionLayers(tree, this.dataManager);
     }

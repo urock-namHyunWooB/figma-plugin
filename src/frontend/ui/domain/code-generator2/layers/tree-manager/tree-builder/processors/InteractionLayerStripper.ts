@@ -16,9 +16,7 @@ type PseudoStyles = Partial<Record<PseudoClass, Record<string, string | number>>
  * 사라지게 하여 merger 버그를 가린다 (의도된 부수효과).
  */
 export function isInteractionLayer(node: InternalNode): boolean {
-  if (node.type !== "FRAME") return false;
-  if (node.name !== "Interaction") return false;
-  return true;
+  return node.metadata?.designPatterns?.some(p => p.type === "interactionFrame") ?? false;
 }
 
 /**

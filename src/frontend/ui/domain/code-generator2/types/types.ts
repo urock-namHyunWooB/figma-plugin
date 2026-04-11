@@ -53,10 +53,8 @@ export type DesignPattern =
   /** Loading overlay 시 content를 투명 마스크로 가리는 패턴 → visibility:hidden */
   | {
       type: "alphaMask";
-      /** 마스크를 토글하는 prop 이름 (예: "loading") */
-      triggerProp: string;
-      /** Content에 부여할 visibility 조건 */
-      condition: ConditionNode;
+      /** componentPropertyReferences.visible 값 (예: "Loading#29474:0") — condition 추출은 소비자가 수행 */
+      visibleRef: string;
     }
   /** hover/active 등 인터랙션 색상 표현용 Interaction 프레임 */
   | { type: "interactionFrame" }

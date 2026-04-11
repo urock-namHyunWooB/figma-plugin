@@ -15,6 +15,7 @@ export class DesignPatternDetector {
   detect(tree: InternalTree): void {
     this.walk(tree, (node) => {
       this.detectAlphaMask(node);
+      this.detectInteractionFrame(node);
     });
   }
 
@@ -43,5 +44,11 @@ export class DesignPatternDetector {
     if (orig.maskType !== "ALPHA") return;
 
     this.addPattern(node, { type: "alphaMask", visibleRef });
+  }
+
+  private detectInteractionFrame(node: InternalNode): void {
+    if (node.type !== "FRAME") return;
+    if (node.name !== "Interaction") return;
+    this.addPattern(node, { type: "interactionFrame" });
   }
 }

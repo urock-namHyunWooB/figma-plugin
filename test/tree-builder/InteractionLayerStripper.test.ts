@@ -7,7 +7,14 @@ import { stripInteractionLayers } from "@code-generator2/layers/tree-manager/tre
 import type { InternalNode, StyleObject } from "@code-generator2/types/types";
 
 function node(name: string, type: string, children: InternalNode[] = []): InternalNode {
-  return { id: name, name, type, children } as unknown as InternalNode;
+  const n = { id: name, name, type, children } as unknown as InternalNode;
+  // Interaction frame을 auto-annotate (DesignPatternDetector가 detect() 호출 전인 unit test 환경 모의)
+  if (type === "FRAME" && name === "Interaction") {
+    if (!n.metadata) n.metadata = {};
+    if (!n.metadata.designPatterns) n.metadata.designPatterns = [];
+    n.metadata.designPatterns.push({ type: "interactionFrame" });
+  }
+  return n;
 }
 
 describe("isInteractionLayer", () => {
@@ -260,7 +267,7 @@ describe("stripInteractionLayers", () => {
       name: "Button",
       type: "COMPONENT",
       children: [
-        { id: "i", name: "Interaction", type: "FRAME", children: [], parent: null },
+        { id: "i", name: "Interaction", type: "FRAME", children: [], parent: null, metadata: { designPatterns: [{ type: "interactionFrame" }] } },
         { id: "c", name: "Content", type: "FRAME", children: [], parent: null },
       ],
     };
@@ -275,8 +282,9 @@ describe("stripInteractionLayers", () => {
       name: "Interaction",
       type: "FRAME",
       children: [{ id: "leaf", name: "Interaction", type: "INSTANCE", children: [], mergedNodes: [{ id: "r" }] }],
+      metadata: { designPatterns: [{ type: "interactionFrame" }] },
     };
-    const outer: any = { id: "out", name: "Interaction", type: "FRAME", children: [inner] };
+    const outer: any = { id: "out", name: "Interaction", type: "FRAME", children: [inner], metadata: { designPatterns: [{ type: "interactionFrame" }] } };
     const root: any = {
       id: "p",
       name: "Card",
@@ -328,6 +336,9 @@ describe("stripInteractionLayers", () => {
       name: "Interaction",
       type: "FRAME",
       children: [childInst],
+      metadata: {
+        designPatterns: [{ type: "interactionFrame" }],
+      },
     };
     const parent: any = {
       id: "p",
