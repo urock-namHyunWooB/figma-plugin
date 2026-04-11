@@ -45,6 +45,9 @@ export class StylesGenerator {
           const opts = ["true", "false"];
           if ((p as any).extraValues) opts.push(...(p as any).extraValues);
           variantOptions.set(p.name, opts);
+        } else if (p.type === "slot") {
+          // slot prop은 cva에서 !!slot으로 boolean 변환되어 사용됨
+          variantOptions.set(p.name, ["true", "false"]);
         }
       }
       (styleStrategy as { setVariantOptions(m: Map<string, string[]>): void }).setVariantOptions(variantOptions);

@@ -312,6 +312,21 @@ export class TailwindStrategy implements IStyleStrategy {
       declaredVariants.add(propName);
     }
 
+    // compound prop 중 variants에 선언되지 않은 prop을 빈 variant로 등록
+    for (const cp of compoundProps) {
+      if (declaredVariants.has(cp)) continue;
+      const options = this.variantOptions.get(cp);
+      if (!options || options.length === 0) continue;
+      const safeName = cp.replace(/[\x00-\x1f\x7f]/g, "");
+      const propKey = needsQuoting(safeName) ? `"${safeName}"` : safeName;
+      const entries = options.map((opt) => {
+        const key = needsQuoting(opt) ? `"${opt}"` : opt;
+        return `        ${key}: "",`;
+      });
+      variantParts.push(`    ${propKey}: {\n${entries.join("\n")}\n    },`);
+      declaredVariants.add(cp);
+    }
+
     // compoundVariants 코드
     let compoundCode = "";
     if (compoundEntries.length > 0) {
