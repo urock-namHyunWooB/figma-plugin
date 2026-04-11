@@ -24,7 +24,7 @@ describe("DesignPatternDetector", () => {
       const tree: any = { id: "root", name: "Root", type: "FRAME", children: [maskNode] };
       detector.detect(tree);
       expect(maskNode.metadata?.designPatterns).toEqual([
-        { type: "alphaMask", visibleRef: "Loading#29474:0" },
+        { type: "alphaMask", nodeId: "mask-1", visibleRef: "Loading#29474:0" },
       ]);
     });
 
@@ -60,7 +60,7 @@ describe("DesignPatternDetector", () => {
       const node: any = { id: "i1", name: "Interaction", type: "FRAME", children: [] };
       const tree: any = { id: "root", name: "Root", type: "FRAME", children: [node] };
       detector.detect(tree);
-      expect(node.metadata?.designPatterns).toEqual([{ type: "interactionFrame" }]);
+      expect(node.metadata?.designPatterns).toEqual([{ type: "interactionFrame", nodeId: "i1" }]);
     });
 
     it("name=Interaction + type=INSTANCE → no annotation", () => {
@@ -275,7 +275,7 @@ describe("DesignPatternDetector", () => {
 
       detector.detect(tree);
 
-      expect(bgNode.metadata?.designPatterns).toEqual([{ type: "fullCoverBackground" }]);
+      expect(bgNode.metadata?.designPatterns).toEqual([{ type: "fullCoverBackground", nodeId: "bg-1" }]);
     });
   });
 
@@ -284,9 +284,10 @@ describe("DesignPatternDetector", () => {
       const node: any = { id: "n1", name: "Knob", type: "FRAME", children: [] };
       if (!node.metadata) node.metadata = {};
       if (!node.metadata.designPatterns) node.metadata.designPatterns = [];
-      node.metadata.designPatterns.push({ type: "booleanPositionSwap", prop: "active" });
+      node.metadata.designPatterns.push({ type: "booleanPositionSwap", nodeId: "n1", prop: "active" });
       expect(node.metadata.designPatterns).toContainEqual({
         type: "booleanPositionSwap",
+        nodeId: "n1",
         prop: "active",
       });
     });

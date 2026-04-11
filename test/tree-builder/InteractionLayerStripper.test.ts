@@ -12,7 +12,7 @@ function node(name: string, type: string, children: InternalNode[] = []): Intern
   if (type === "FRAME" && name === "Interaction") {
     if (!n.metadata) n.metadata = {};
     if (!n.metadata.designPatterns) n.metadata.designPatterns = [];
-    n.metadata.designPatterns.push({ type: "interactionFrame" });
+    n.metadata.designPatterns.push({ type: "interactionFrame", nodeId: n.id });
   }
   return n;
 }
@@ -267,7 +267,7 @@ describe("stripInteractionLayers", () => {
       name: "Button",
       type: "COMPONENT",
       children: [
-        { id: "i", name: "Interaction", type: "FRAME", children: [], parent: null, metadata: { designPatterns: [{ type: "interactionFrame" }] } },
+        { id: "i", name: "Interaction", type: "FRAME", children: [], parent: null, metadata: { designPatterns: [{ type: "interactionFrame", nodeId: "i" }] } },
         { id: "c", name: "Content", type: "FRAME", children: [], parent: null },
       ],
     };
@@ -282,9 +282,9 @@ describe("stripInteractionLayers", () => {
       name: "Interaction",
       type: "FRAME",
       children: [{ id: "leaf", name: "Interaction", type: "INSTANCE", children: [], mergedNodes: [{ id: "r" }] }],
-      metadata: { designPatterns: [{ type: "interactionFrame" }] },
+      metadata: { designPatterns: [{ type: "interactionFrame", nodeId: "in" }] },
     };
-    const outer: any = { id: "out", name: "Interaction", type: "FRAME", children: [inner], metadata: { designPatterns: [{ type: "interactionFrame" }] } };
+    const outer: any = { id: "out", name: "Interaction", type: "FRAME", children: [inner], metadata: { designPatterns: [{ type: "interactionFrame", nodeId: "out" }] } };
     const root: any = {
       id: "p",
       name: "Card",
@@ -337,7 +337,7 @@ describe("stripInteractionLayers", () => {
       type: "FRAME",
       children: [childInst],
       metadata: {
-        designPatterns: [{ type: "interactionFrame" }],
+        designPatterns: [{ type: "interactionFrame", nodeId: "i" }],
       },
     };
     const parent: any = {

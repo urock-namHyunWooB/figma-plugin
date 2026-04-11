@@ -53,14 +53,16 @@ export type DesignPattern =
   /** Loading overlay 시 content를 투명 마스크로 가리는 패턴 → visibility:hidden */
   | {
       type: "alphaMask";
+      /** 패턴이 감지된 노드의 ID */
+      nodeId: string;
       /** componentPropertyReferences.visible 값 (예: "Loading#29474:0") — condition 추출은 소비자가 수행 */
       visibleRef: string;
     }
   /** hover/active 등 인터랙션 색상 표현용 Interaction 프레임 */
-  | { type: "interactionFrame" }
+  | { type: "interactionFrame"; nodeId: string }
   /** 부모를 99%+ 덮는 ABSOLUTE 배경 노드 — fills를 부모에 흡수 대상 */
-  | { type: "fullCoverBackground" }
-  /** Figma State variant 값 → CSS pseudo-class 변환 대상 */
+  | { type: "fullCoverBackground"; nodeId: string }
+  /** Figma State variant 값 → CSS pseudo-class 변환 대상 (컴포넌트 레벨) */
   | {
       type: "statePseudoClass";
       /** State를 제어하는 prop 이름 (예: "state") */
@@ -68,7 +70,7 @@ export type DesignPattern =
       /** State 값 → CSS pseudo-class 매핑 (예: { "Hover": ":hover" }) */
       stateMap: Record<string, string>;
     }
-  /** Breakpoint variant → CSS @media query 변환 대상 */
+  /** Breakpoint variant → CSS @media query 변환 대상 (컴포넌트 레벨) */
   | {
       type: "breakpointVariant";
       /** Breakpoint를 제어하는 prop 이름 (예: "breakpoint") */
@@ -77,6 +79,8 @@ export type DesignPattern =
   /** Boolean prop에 의해 노드 위치만 좌우 이동 (Switch 노브 등) — 매칭 힌트 */
   | {
       type: "booleanPositionSwap";
+      /** 패턴이 감지된 노드의 ID */
+      nodeId: string;
       /** 위치 이동을 제어하는 prop 이름 (예: "active") */
       prop: string;
     };

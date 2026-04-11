@@ -152,7 +152,7 @@ export class BooleanPositionSwap implements MatchSignal {
       if (!node.metadata.designPatterns) node.metadata.designPatterns = [];
       // 중복 방지
       if (!node.metadata.designPatterns.some(p => p.type === "booleanPositionSwap")) {
-        node.metadata.designPatterns.push({ type: "booleanPositionSwap", prop: propName });
+        node.metadata.designPatterns.push({ type: "booleanPositionSwap", nodeId: node.id, prop: propName });
       }
     }
 

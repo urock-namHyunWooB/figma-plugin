@@ -84,13 +84,13 @@ export class DesignPatternDetector {
     if (orig.isMask !== true) return;
     if (orig.maskType !== "ALPHA") return;
 
-    this.addPattern(node, { type: "alphaMask", visibleRef });
+    this.addPattern(node, { type: "alphaMask", nodeId: node.id, visibleRef });
   }
 
   private detectInteractionFrame(node: InternalNode): void {
     if (node.type !== "FRAME") return;
     if (node.name !== "Interaction") return;
-    this.addPattern(node, { type: "interactionFrame" });
+    this.addPattern(node, { type: "interactionFrame", nodeId: node.id });
   }
 
   private detectFullCoverBackgrounds(node: InternalNode): void {
@@ -104,7 +104,7 @@ export class DesignPatternDetector {
 
     for (const child of siblings) {
       if (isFullCoverStyleOnly(child, node, this.dataManager)) {
-        this.addPattern(child, { type: "fullCoverBackground" });
+        this.addPattern(child, { type: "fullCoverBackground", nodeId: child.id });
       }
     }
   }
