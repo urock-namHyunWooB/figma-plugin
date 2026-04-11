@@ -33,11 +33,18 @@ export class NodeMatcher {
   /** 매칭 결정 엔진 (Phase 2: 모든 매칭 결정의 주체) */
   private readonly engine: MatchDecisionEngine = createDefaultEngine();
 
+  private _nodePresence?: import("./NodePresenceScanner").NodePresence;
+
   constructor(
     private readonly dataManager: DataManager,
     private readonly nodeToVariantRoot: Map<string, string>,
     private readonly layoutNormalizer: LayoutNormalizer,
   ) {}
+
+  /** NodePresence 설정 (VariantMerger가 merge 전에 호출) */
+  setNodePresence(presence: import("./NodePresenceScanner").NodePresence): void {
+    this._nodePresence = presence;
+  }
 
   /**
    * 두 노드가 같은 역할을 하는지 판단. 엔진에 완전 위임.
@@ -104,6 +111,7 @@ export class NodeMatcher {
       layoutNormalizer: this.layoutNormalizer,
       nodeToVariantRoot: this.nodeToVariantRoot,
       policy: defaultMatchingPolicy,
+      nodePresence: this._nodePresence,
     };
   }
 }

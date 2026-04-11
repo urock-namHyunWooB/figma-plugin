@@ -64,18 +64,18 @@ describe("BooleanPositionSwap signal", () => {
     }
   });
 
-  it("returns neutral when variants share at least one identical prop value (not disjoint)", () => {
-    const a = node("a", "LeftIcon=False, State=Default");
-    const b = node("b", "LeftIcon=False, State=Hover");
+  it("matches even with multiple prop diffs (multi-prop swap)", () => {
+    const a = node("a", "Active=False, Disable=False");
+    const b = node("b", "Active=True, Disable=True");
     const r = signal.evaluate(a, b, makeCtx(0.2, 0.8));
-    expect(r.kind).toBe("neutral");
+    expect(r.kind).toBe("decisive-match-with-cost");
   });
 
-  it("returns neutral when diff prop is not boolean", () => {
+  it("matches even with non-boolean prop diffs", () => {
     const a = node("a", "Size=Small");
     const b = node("b", "Size=Large");
     const r = signal.evaluate(a, b, makeCtx(0.2, 0.8));
-    expect(r.kind).toBe("neutral");
+    expect(r.kind).toBe("decisive-match-with-cost");
   });
 
   it("returns neutral when cy also differs (not cx-only)", () => {

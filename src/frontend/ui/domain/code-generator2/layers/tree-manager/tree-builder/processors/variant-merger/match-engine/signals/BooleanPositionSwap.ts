@@ -13,15 +13,17 @@ import type { MatchSignal, SignalResult, MatchContext } from "../MatchSignal";
  *
  * 판정 (모두 만족해야 fire):
  * 1. mergedNodes의 variantName 파싱 가능
- * 2. 두 prop 집합에서 정확히 하나의 prop 값이 다름
- * 3. 그 prop 값이 둘 다 boolean (True/False/true/false)
- * 4. 두 노드의 타입이 일치
- * 5. 두 노드의 절대 크기가 유사 (ratio ≤ 1.2)
- * 6. 두 노드의 정규화 cy 거의 같음 (|Δcy| < 0.05)
- * 7. cx는 명백히 다름 (|Δcx| > 0.1)
- * 8. 두 노드의 name이 일치
- * 9. 두 노드 자체의 자식 개수가 같음
- * 10. 두 직접 부모의 자식 개수가 같음
+ * 2. 모든 variant에 존재하는 노드 (조건부 출현 노드 제외)
+ * 3. 두 노드의 타입이 일치
+ * 4. 두 노드의 절대 크기가 유사 (ratio ≤ 1.2)
+ * 5. 두 노드의 정규화 cy 거의 같음 (|Δcy| < 0.05)
+ * 6. cx는 명백히 다름 (|Δcx| > 0.1)
+ * 7. 두 노드의 name이 일치
+ * 8. 두 노드 자체의 자식 개수가 같음
+ * 9. 두 직접 부모의 자식 개수가 같음
+ *
+ * prop diff 개수/boolean 제한 없음 — multi-prop diff(Active+Disable 등)도 허용.
+ * false positive는 조건부 노드 가드 + 이름+크기+위치 가드로 방지.
  */
 const SIZE_SIMILARITY_RATIO = 1.2;
 /** Position swap이 감지됐을 때 부여하는 고정 cost. 0이 아니라 0.05로 둬서
@@ -50,20 +52,18 @@ export class BooleanPositionSwap implements MatchSignal {
       return { kind: "neutral", reason: "unparseable variantName" };
     }
 
-    const allKeys = new Set([...propsA.keys(), ...propsB.keys()]);
-    const diffKeys: string[] = [];
-    for (const k of allKeys) {
-      if (propsA.get(k) !== propsB.get(k)) diffKeys.push(k);
-    }
-    if (diffKeys.length !== 1) {
-      return { kind: "neutral", reason: `${diffKeys.length} prop diffs (need exactly 1)` };
-    }
-
-    const diffKey = diffKeys[0];
-    const vA = propsA.get(diffKey);
-    const vB = propsB.get(diffKey);
-    if (!isBooleanValue(vA) || !isBooleanValue(vB)) {
-      return { kind: "neutral", reason: `diff prop ${diffKey} not boolean (${vA}/${vB})` };
+    // 조건부 노드 검사 — 모든 variant에 존재하지 않는 노드는 position swap이 아니라
+    // 다른 prop에 의해 출현/소멸하는 별개 노드일 가능성이 높음 (Button Left/Right Icon 등).
+    // merge 전 스캔한 nodePresence로 판단 (merge 순서에 의존하지 않음).
+    if (ctx.nodePresence) {
+      const key = `${a.name}:${a.type}`;
+      const presenceCount = ctx.nodePresence.presenceMap.get(key) ?? 0;
+      if (presenceCount < ctx.nodePresence.totalVariants) {
+        return {
+          kind: "neutral",
+          reason: `conditional node: ${a.name}:${a.type} present in ${presenceCount}/${ctx.nodePresence.totalVariants} variants`,
+        };
+      }
     }
 
     // type 일치 확인 (TypeCompatibility가 먼저 veto 하지만 안전하게 재확인)
@@ -153,7 +153,7 @@ export class BooleanPositionSwap implements MatchSignal {
     return {
       kind: "decisive-match-with-cost",
       cost: VPP_MATCH_COST,
-      reason: `${diffKey} boolean variant drives cx movement (${posA.cx.toFixed(2)} ↔ ${posB.cx.toFixed(2)})`,
+      reason: `position swap detected: cx movement (${posA.cx.toFixed(2)} ↔ ${posB.cx.toFixed(2)})`,
     };
   }
 
@@ -198,11 +198,6 @@ function parseVariantProps(variantName: string): Map<string, string> | null {
   }
   return map.size > 0 ? map : null;
 }
-
-function isBooleanValue(v: string | undefined): boolean {
-  return v === "True" || v === "False" || v === "true" || v === "false";
-}
-
 function findDirectParent(root: any, nodeId: string): any | null {
   if (!root?.children) return null;
   for (const child of root.children) {

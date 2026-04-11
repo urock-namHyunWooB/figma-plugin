@@ -9,6 +9,7 @@ import { NodeMatcher } from "./NodeMatcher";
 import { LayoutNormalizer } from "./LayoutNormalizer";
 import { VariantGraphBuilder } from "./VariantGraphBuilder";
 import { VariantSquasher } from "./VariantSquasher";
+import { NodePresenceScanner } from "./NodePresenceScanner";
 import type { MatchDecision } from "./match-engine/MatchSignal";
 
 /**
@@ -70,8 +71,10 @@ export class VariantMerger {
     document: SceneNode,
     variants: SceneNode[]
   ): InternalTree {
-    // 1. 준비: nodeToVariantRoot 매핑
+    // 1. 준비: nodeToVariantRoot 매핑 + 노드 presence 스캔
     this.prepareVariantMapping(variants);
+    const presence = new NodePresenceScanner().scan(variants as any);
+    this.nodeMatcher!.setNodePresence(presence);
 
     // 2. 그래프: variant 그래프 구축 및 순서 결정
     const { graph, mergeOrder } = this.buildGraphAndOrder(variants);
