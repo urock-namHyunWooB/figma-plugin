@@ -83,6 +83,16 @@ export type DesignPattern =
       nodeId: string;
       /** 위치 이동을 제어하는 prop 이름 (예: "active") */
       prop: string;
+    }
+  /** Variant prop에 의한 레이아웃 모드 전환 — 같은 컨테이너의 자식 구조가 prop 값에 따라 교체 */
+  | {
+      type: "layoutModeSwitch";
+      /** 자식 구조가 바뀌는 컨테이너의 nodeId */
+      containerNodeId: string;
+      /** 모드를 제어하는 variant prop 이름 (정규화된 camelCase) */
+      prop: string;
+      /** prop 값 → 해당 모드에서만 존재하는 자식 이름 목록 */
+      branches: Record<string, string[]>;
     };
 
 /**
@@ -496,6 +506,15 @@ export interface SlotNode extends UINodeBase {
   type: "slot";
 }
 
+/** 조건 분기 노드 — variant prop 값에 따라 다른 자식 렌더링 */
+export interface ConditionalGroupNode extends UINodeBase {
+  type: "conditionalGroup";
+  /** 분기 기준 prop 이름 */
+  prop: string;
+  /** prop 값 → 해당 모드에서 렌더링할 자식들 */
+  branches: Record<string, UINode[]>;
+}
+
 export interface ComponentNode extends UINodeBase {
   type: "component";
   /** 외부 컴포넌트 참조 ID */
@@ -518,7 +537,8 @@ export type UINode =
   | InputNode
   | LinkNode
   | SlotNode
-  | ComponentNode;
+  | ComponentNode
+  | ConditionalGroupNode;
 
 /** 컴포넌트 함수 본문에 삽입할 파생 변수 */
 export interface DerivedVar {

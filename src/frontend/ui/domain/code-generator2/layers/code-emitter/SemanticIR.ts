@@ -31,7 +31,8 @@ export type SemanticNodeKind =
   | "input"
   | "link"
   | "slot"
-  | "component";
+  | "component"
+  | "conditionalGroup";
 
 /**
  * State definition (framework-agnostic).
@@ -91,6 +92,10 @@ export interface SemanticNode {
   loop?: { dataProp: string; keyField?: string };
   childrenSlot?: string;
   semanticType?: string;
+  /** conditionalGroup: 분기 기준 prop */
+  prop?: string;
+  /** conditionalGroup: prop 값 → 자식 배열 */
+  branches?: Record<string, SemanticNode[]>;
 }
 
 /**

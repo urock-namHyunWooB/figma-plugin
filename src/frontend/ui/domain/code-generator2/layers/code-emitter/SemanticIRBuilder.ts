@@ -74,6 +74,16 @@ export class SemanticIRBuilder {
     if (anyN.loop !== undefined) node.loop = anyN.loop;
     if (anyN.childrenSlot !== undefined) node.childrenSlot = anyN.childrenSlot;
 
+    if ("branches" in n && (n as any).branches) {
+      node.branches = {};
+      for (const [key, nodes] of Object.entries((n as any).branches as Record<string, UINode[]>)) {
+        node.branches[key] = nodes.map((child) => this.buildNode(child));
+      }
+    }
+    if ("prop" in n && typeof (n as any).prop === "string" && n.type === "conditionalGroup") {
+      node.prop = (n as any).prop;
+    }
+
     return node;
   }
 
