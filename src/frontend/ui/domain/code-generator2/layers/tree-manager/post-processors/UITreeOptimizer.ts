@@ -36,6 +36,70 @@ export class UITreeOptimizer {
   }
 
   /**
+   * 자식 공통 조건 끌어올리기
+   *
+   * 모든 자식이 동일한 visibleCondition을 공유하면:
+   * 1. 그 조건을 부모의 visibleCondition에 AND로 합성
+   * 2. 자식들에서 visibleCondition 제거
+   *
+   * bottom-up 순회하여 가장 깊은 레벨부터 처리.
+   * 빈 wrapper div 렌더링을 방지한다.
+   */
+  hoistSharedChildConditions(node: UINode): void {
+    if (!("children" in node) || !node.children) return;
+
+    const hoisted = new Set<UINode>();
+    // 루트 노드는 hoisting 대상이 아니므로 자식들만 재귀 처리
+    for (const child of node.children) {
+      this._hoistSharedChildConditionsRecursive(child, hoisted);
+    }
+  }
+
+  private _hoistSharedChildConditionsRecursive(node: UINode, hoisted: Set<UINode>): void {
+    if (!("children" in node) || !node.children || node.children.length === 0) {
+      return;
+    }
+
+    // bottom-up: 자식부터 처리
+    for (const child of node.children) {
+      this._hoistSharedChildConditionsRecursive(child, hoisted);
+    }
+
+    // 이미 hoisting으로 조건을 받은 자식은 재-hoisting 대상에서 제외
+    // 모든 자식이 visibleCondition을 가지는지 확인 (hoisted된 조건은 원래 조건이 아니므로 제외)
+    const allHaveOriginalCondition = node.children.every(
+      (child) => child.visibleCondition != null && !hoisted.has(child)
+    );
+    if (!allHaveOriginalCondition) return;
+
+    // 모든 자식의 조건이 동일한지 확인 (JSON.stringify 비교)
+    const firstCondStr = JSON.stringify(node.children[0].visibleCondition);
+    const allSame = node.children.every(
+      (child) => JSON.stringify(child.visibleCondition) === firstCondStr
+    );
+    if (!allSame) return;
+
+    // 공통 조건을 부모에 합성
+    const sharedCondition = node.children[0].visibleCondition!;
+    if (node.visibleCondition) {
+      node.visibleCondition = {
+        type: "and",
+        conditions: [node.visibleCondition, sharedCondition],
+      };
+    } else {
+      node.visibleCondition = sharedCondition;
+    }
+
+    // 자식에서 조건 제거
+    for (const child of node.children) {
+      delete child.visibleCondition;
+    }
+
+    // 이 노드가 hoisting으로 조건을 받았음을 기록
+    hoisted.add(node);
+  }
+
+  /**
    * 미사용 props 제거 (별도 호출 — 현재 비활성)
    * 활성화 시 variant/boolean props 중 트리에서 참조되지 않는 것을 제거.
    */
