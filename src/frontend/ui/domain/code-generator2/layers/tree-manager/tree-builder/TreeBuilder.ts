@@ -19,6 +19,7 @@ import { ModuleHeuristic } from "./heuristics/module-heuristics/ModuleHeuristic"
 import UINodeConverter from "./UINodeConverter";
 import { detectInstanceOverrides } from "./processors/utils/overrideUtils";
 import { convertStateDynamicToPseudo, rewritePropConditions } from "./processors/utils/rewritePropConditions";
+import { DesignPatternDetector } from "./processors/DesignPatternDetector";
 
 
 /**
@@ -53,6 +54,7 @@ class TreeBuilder {
   private readonly externalRefsProcessor: ExternalRefsProcessor;
   private readonly heuristicsRunner: HeuristicsRunner;
   private readonly nodeConverter: UINodeConverter;
+  private readonly designPatternDetector: DesignPatternDetector;
 
   /** InteractionLayerStripper가 제거한 INSTANCE의 componentId 집합 */
   private _strippedInteractionComponentIds = new Set<string>();
@@ -70,6 +72,7 @@ class TreeBuilder {
     this.externalRefsProcessor = new ExternalRefsProcessor(dataManager);
     this.heuristicsRunner = new HeuristicsRunner();
     this.nodeConverter = new UINodeConverter(dataManager);
+    this.designPatternDetector = new DesignPatternDetector(dataManager);
   }
 
   // ===========================================================================
@@ -87,6 +90,9 @@ class TreeBuilder {
 
     // Step 1: 변형 병합
     let tree = this.variantMerger.merge(node);
+
+    // Step 1.0: 디자인 패턴 감지 (annotation 부착)
+    this.designPatternDetector.detect(tree);
 
     // Step 1.1: Interaction layer 메타데이터 제거 (Phase 3)
     // — Figma의 "Interaction" frame은 디자이너 의도 표현용 메타데이터이므로
