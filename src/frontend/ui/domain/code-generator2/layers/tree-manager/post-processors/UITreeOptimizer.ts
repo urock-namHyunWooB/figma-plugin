@@ -22,6 +22,7 @@ export class UITreeOptimizer {
    */
   optimizeMain(tree: UITree, diagnostics?: VariantInconsistency[]): void {
     this.removeVariantOnlySlots(tree);
+    this.transformLayoutModeSwitches(tree.root);
     this.hoistSharedChildConditions(tree.root);
     this.mergeRedundantDynamicStyles(tree.root);
     this.decomposeDynamicStyles(tree.root, diagnostics);
@@ -31,10 +32,91 @@ export class UITreeOptimizer {
    * 의존 트리 최적화 (dynamic styles 병합 + 루트 유연화 → FD 분해)
    */
   optimizeDependency(tree: UITree, diagnostics?: VariantInconsistency[]): void {
+    this.transformLayoutModeSwitches(tree.root);
     this.hoistSharedChildConditions(tree.root);
     this.mergeRedundantDynamicStyles(tree.root);
     this.makeRootFlexible(tree);
     this.decomposeDynamicStyles(tree.root, diagnostics);
+  }
+
+  // ─── transformLayoutModeSwitches ─────────────────────────
+
+  /**
+   * layoutModeSwitch annotation이 있는 컨테이너의 조건부 자식들을
+   * conditionalGroup 노드로 교체한다.
+   */
+  private transformLayoutModeSwitches(node: UINode): void {
+    if (!("children" in node) || !node.children) return;
+
+    // Recurse children first (bottom-up)
+    for (const child of node.children) {
+      this.transformLayoutModeSwitches(child);
+    }
+
+    // Check for layoutModeSwitch annotation
+    const lms = (node as any).metadata?.designPatterns?.find(
+      (p: any) => p.type === "layoutModeSwitch"
+    );
+    if (!lms) return;
+
+    const { prop, branches } = lms as { prop: string; branches: Record<string, string[]> };
+
+    // Collect all child names that belong to any branch
+    const allBranchChildNames = new Set<string>();
+    for (const names of Object.values(branches)) {
+      for (const name of names) allBranchChildNames.add(name);
+    }
+
+    // Separate: branched children vs common children
+    const branchedChildren: UINode[] = [];
+    for (const child of node.children) {
+      if (allBranchChildNames.has(child.name)) {
+        branchedChildren.push(child);
+      }
+    }
+
+    if (branchedChildren.length === 0) return;
+
+    // Group children into branches
+    const groupedBranches: Record<string, UINode[]> = {};
+    for (const [value, names] of Object.entries(branches)) {
+      groupedBranches[value] = [];
+      for (const name of names) {
+        const child = branchedChildren.find((c) => c.name === name);
+        if (child) {
+          // Remove visibleCondition — the conditionalGroup handles branching
+          delete child.visibleCondition;
+          groupedBranches[value].push(child);
+        }
+      }
+    }
+
+    // Create conditionalGroup node
+    const conditionalGroup: any = {
+      type: "conditionalGroup",
+      id: `${node.id}_cg`,
+      name: `${prop}_switch`,
+      prop,
+      branches: groupedBranches,
+    };
+
+    // Replace children: keep common children, insert conditionalGroup where first branched child was
+    const newChildren: UINode[] = [];
+    let cgInserted = false;
+
+    for (const child of node.children) {
+      if (allBranchChildNames.has(child.name)) {
+        if (!cgInserted) {
+          newChildren.push(conditionalGroup);
+          cgInserted = true;
+        }
+        // Skip — moved into conditionalGroup
+      } else {
+        newChildren.push(child);
+      }
+    }
+
+    node.children = newChildren;
   }
 
   /**
