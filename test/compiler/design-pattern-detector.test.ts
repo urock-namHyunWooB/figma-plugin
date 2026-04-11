@@ -421,7 +421,55 @@ describe("DesignPatternDetector (raw data)", () => {
       expect(patterns.filter(p => p.type === "layoutModeSwitch")).toHaveLength(0);
     });
 
-    it("N분기 감지", () => {
+    it("N분기 감지 — disjoint branches", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "Type": { type: "VARIANT", variantOptions: ["Default", "Basic", "Minimal"] },
+        },
+        children: [
+          {
+            type: "COMPONENT", name: "Type=Default",
+            children: [{
+              id: "h-1", type: "FRAME", name: "Header",
+              children: [
+                { id: "n1", type: "FRAME", name: "NavDefault", children: [] },
+                { id: "t1", type: "TEXT", name: "TitleDefault", children: [] },
+              ],
+            }],
+          },
+          {
+            type: "COMPONENT", name: "Type=Basic",
+            children: [{
+              id: "h-2", type: "FRAME", name: "Header",
+              children: [
+                { id: "n2", type: "FRAME", name: "NavBasic", children: [] },
+                { id: "t2", type: "TEXT", name: "TitleBasic", children: [] },
+              ],
+            }],
+          },
+          {
+            type: "COMPONENT", name: "Type=Minimal",
+            children: [{
+              id: "h-3", type: "FRAME", name: "Header",
+              children: [
+                { id: "n3", type: "FRAME", name: "IconMinimal", children: [] },
+              ],
+            }],
+          },
+        ],
+      } as any;
+
+      const patterns = detector.detect(node);
+      const lms = patterns.find(p => p.type === "layoutModeSwitch");
+      expect(lms).toBeDefined();
+      if (lms && lms.type === "layoutModeSwitch") {
+        expect(Object.keys(lms.branches)).toHaveLength(3);
+      }
+    });
+
+    it("subset branches는 layoutModeSwitch가 아닌 visibility로 처리", () => {
+      // Nav ⊂ [Nav, Title] ⊂ [Nav, Title, Actions] — 부분집합 관계
       const node = {
         type: "COMPONENT_SET",
         componentPropertyDefinitions: {
@@ -462,11 +510,8 @@ describe("DesignPatternDetector (raw data)", () => {
       } as any;
 
       const patterns = detector.detect(node);
-      const lms = patterns.find(p => p.type === "layoutModeSwitch");
-      expect(lms).toBeDefined();
-      if (lms && lms.type === "layoutModeSwitch") {
-        expect(Object.keys(lms.branches)).toHaveLength(3);
-      }
+      const lms = patterns.filter(p => p.type === "layoutModeSwitch");
+      expect(lms).toHaveLength(0);
     });
   });
 

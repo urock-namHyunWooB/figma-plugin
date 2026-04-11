@@ -92,15 +92,17 @@ describe("Tagreview 컴포넌트 코드 생성", () => {
   });
 
   test("아이콘 컴포넌트 맵이 있어야 한다", () => {
-    // state별 아이콘이 component map 패턴으로 렌더링
-    expect(code).toMatch(/const\s+\w+\s*=\s*\{/);
-    expect(code).toMatch(/Approved:\s*\w+/);
-    expect(code).toMatch(/Rejected:\s*\w+/);
+    // state별 아이콘이 conditionalGroup object map 패턴으로 렌더링
+    expect(code).toMatch(/Approved:\s*\(/);
+    expect(code).toMatch(/Rejected:\s*\(/);
+    // state prop으로 분기
+    expect(code).toMatch(/\[state\]/);
   });
 
   test("아이콘이 JSX에서 렌더링되어야 한다", () => {
-    // StateComponent가 JSX에서 사용됨
-    expect(code).toMatch(/<\w+Component/);
+    // 각 branch 안에서 아이콘 컴포넌트가 렌더링됨
+    expect(code).toMatch(/<Forbid\s*\/>/);
+    expect(code).toMatch(/<Success\s*\/>/);
   });
 
   // ========================================
