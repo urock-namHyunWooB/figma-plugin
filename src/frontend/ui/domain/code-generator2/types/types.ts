@@ -46,6 +46,44 @@ export type ConditionNode =
   | { type: 'not'; condition: ConditionNode }
 
 /**
+ * 디자이너가 사용한 시각 기법(디자인 패턴)의 감지 결과.
+ * DesignPatternDetector가 부착하고, 후속 processor가 소비한다.
+ */
+export type DesignPattern =
+  /** Loading overlay 시 content를 투명 마스크로 가리는 패턴 → visibility:hidden */
+  | {
+      type: "alphaMask";
+      /** 마스크를 토글하는 prop 이름 (예: "loading") */
+      triggerProp: string;
+      /** Content에 부여할 visibility 조건 */
+      condition: ConditionNode;
+    }
+  /** hover/active 등 인터랙션 색상 표현용 Interaction 프레임 */
+  | { type: "interactionFrame" }
+  /** 부모를 99%+ 덮는 ABSOLUTE 배경 노드 — fills를 부모에 흡수 대상 */
+  | { type: "fullCoverBackground" }
+  /** Figma State variant 값 → CSS pseudo-class 변환 대상 */
+  | {
+      type: "statePseudoClass";
+      /** State를 제어하는 prop 이름 (예: "state") */
+      prop: string;
+      /** State 값 → CSS pseudo-class 매핑 (예: { "Hover": ":hover" }) */
+      stateMap: Record<string, string>;
+    }
+  /** Breakpoint variant → CSS @media query 변환 대상 */
+  | {
+      type: "breakpointVariant";
+      /** Breakpoint를 제어하는 prop 이름 (예: "breakpoint") */
+      prop: string;
+    }
+  /** Boolean prop에 의해 노드 위치만 좌우 이동 (Switch 노브 등) — 매칭 힌트 */
+  | {
+      type: "booleanPositionSwap";
+      /** 위치 이동을 제어하는 prop 이름 (예: "active") */
+      prop: string;
+    };
+
+/**
  * CSS Pseudo-class
  */
 export type PseudoClass =
@@ -356,6 +394,8 @@ export interface InternalNode extends UINodeBase {
     vectorColorMap?: Record<string, string>;
     /** squash prune 시 제거된 wrapper의 레이아웃 오버라이드 (variantName → CSS property map) */
     layoutOverrides?: Record<string, Record<string, string>>;
+    /** 디자인 패턴 감지 결과 (DesignPatternDetector가 부착) */
+    designPatterns?: DesignPattern[];
   };
   /** 루프 설정 (Heuristic이 설정, UINode로 전달) */
   loop?: { dataProp: string; keyField?: string };
