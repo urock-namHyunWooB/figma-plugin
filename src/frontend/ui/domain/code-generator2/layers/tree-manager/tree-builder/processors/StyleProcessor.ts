@@ -234,11 +234,23 @@ export class StyleProcessor {
       this.applyVariantStyles(child)
     );
 
+    // CONDITIONAL_GROUP branches 재귀 처리
+    let styledBranches = node.branches;
+    if (node.branches) {
+      styledBranches = {};
+      for (const [value, children] of Object.entries(node.branches)) {
+        styledBranches[value] = children.map((child) =>
+          this.applyVariantStyles(child)
+        );
+      }
+    }
+
     return {
       ...node,
       styles,
       ...(correctedBounds ? { bounds: correctedBounds } : {}),
       children: styledChildren,
+      ...(styledBranches ? { branches: styledBranches } : {}),
     };
   }
 
@@ -279,6 +291,17 @@ export class StyleProcessor {
       return processedChild;
     });
 
+    // CONDITIONAL_GROUP branches 재귀 처리
+    let updatedBranches = node.branches;
+    if (node.branches) {
+      updatedBranches = {};
+      for (const [value, children] of Object.entries(node.branches)) {
+        updatedBranches[value] = children.map((child) =>
+          this.applyPositionStyles(child)
+        );
+      }
+    }
+
     // 2단계: absolute 자식이 있으면 부모에 position: relative 적용
     const hasAbsoluteChild = updatedChildren.some(
       (child) => child.styles?.base?.position === "absolute"
@@ -296,12 +319,14 @@ export class StyleProcessor {
           dynamic: node.styles?.dynamic || [],
         },
         children: updatedChildren,
+        ...(updatedBranches ? { branches: updatedBranches } : {}),
       };
     }
 
     return {
       ...node,
       children: updatedChildren,
+      ...(updatedBranches ? { branches: updatedBranches } : {}),
     };
   }
 
@@ -1120,7 +1145,18 @@ export class StyleProcessor {
       this.normalizeVectorFills(child)
     );
 
-    return { ...currentNode, children: newChildren };
+    // CONDITIONAL_GROUP branches 재귀 처리
+    let newBranches = currentNode.branches;
+    if (currentNode.branches) {
+      newBranches = {};
+      for (const [value, children] of Object.entries(currentNode.branches)) {
+        newBranches[value] = children.map((child) =>
+          this.normalizeVectorFills(child)
+        );
+      }
+    }
+
+    return { ...currentNode, children: newChildren, ...(newBranches ? { branches: newBranches } : {}) };
   }
 
   // ===========================================================================

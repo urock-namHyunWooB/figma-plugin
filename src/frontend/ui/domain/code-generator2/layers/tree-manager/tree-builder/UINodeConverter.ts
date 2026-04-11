@@ -1,4 +1,4 @@
-import type { InternalTree, UINode } from "../../../types/types";
+import type { InternalTree, InternalNode, UINode } from "../../../types/types";
 import type DataManager from "../../data-manager/DataManager";
 import { TextProcessor } from "./processors/TextProcessor";
 
@@ -38,6 +38,11 @@ class UINodeConverter {
   // ===========================================================================
 
   private convertRecursive(node: InternalTree): UINode {
+    // CONDITIONAL_GROUP → conditionalGroup UINode 변환
+    if (node.type === "CONDITIONAL_GROUP" && node.branchProp && node.branches) {
+      return this.convertConditionalGroup(node);
+    }
+
     let nodeType = this.mapToUINodeType(node.type);
 
     if (nodeType === "component" && !node.refId) {
@@ -144,6 +149,23 @@ class UINodeConverter {
       ...(node.metadata?.designPatterns?.length
         ? { metadata: { designPatterns: node.metadata.designPatterns } }
         : {}),
+    } as UINode;
+  }
+
+  /**
+   * CONDITIONAL_GROUP InternalNode → conditionalGroup UINode 변환
+   */
+  private convertConditionalGroup(node: InternalNode): UINode {
+    const uiBranches: Record<string, UINode[]> = {};
+    for (const [value, children] of Object.entries(node.branches!)) {
+      uiBranches[value] = children.map((child) => this.convertRecursive(child));
+    }
+    return {
+      type: "conditionalGroup",
+      id: node.id,
+      name: node.name,
+      prop: node.branchProp!,
+      branches: uiBranches,
     } as UINode;
   }
 

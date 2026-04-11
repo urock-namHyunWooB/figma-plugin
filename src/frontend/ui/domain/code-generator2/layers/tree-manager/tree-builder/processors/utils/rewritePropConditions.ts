@@ -53,6 +53,13 @@ function rewriteNode(
   for (const child of node.children || []) {
     rewriteNode(child, removedProp, conditionMap);
   }
+  if (node.branches) {
+    for (const children of Object.values(node.branches)) {
+      for (const child of children) {
+        rewriteNode(child, removedProp, conditionMap);
+      }
+    }
+  }
 }
 
 function rewriteCondition(
@@ -147,6 +154,13 @@ function rewriteDynamicWalk(
   }
   for (const child of node.children || []) {
     rewriteDynamicWalk(child, removedProp, conditionMap);
+  }
+  if (node.branches) {
+    for (const children of Object.values(node.branches)) {
+      for (const child of children) {
+        rewriteDynamicWalk(child, removedProp, conditionMap);
+      }
+    }
   }
 }
 
@@ -378,6 +392,13 @@ function pseudoConvertWalk(
   }
   for (const child of node.children || []) {
     pseudoConvertWalk(child, removedProp, pseudoMap, false);
+  }
+  if (node.branches) {
+    for (const children of Object.values(node.branches)) {
+      for (const child of children) {
+        pseudoConvertWalk(child, removedProp, pseudoMap, false);
+      }
+    }
   }
 }
 
@@ -785,6 +806,13 @@ function renameWalk(
   }
   for (const child of node.children || []) {
     renameWalk(child, oldProp, newProp);
+  }
+  if (node.branches) {
+    for (const children of Object.values(node.branches)) {
+      for (const child of children) {
+        renameWalk(child, oldProp, newProp);
+      }
+    }
   }
 }
 

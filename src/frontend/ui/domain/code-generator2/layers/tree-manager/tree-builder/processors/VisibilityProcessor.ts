@@ -69,7 +69,12 @@ export class VisibilityProcessor {
     root = this.processAlphaMasks(root, props);
 
     // 루트 노드는 모든 variant에 존재하므로 null 반환 불가
-    return this.applyVisibilityRecursive(root, totalVariants)!;
+    let result = this.applyVisibilityRecursive(root, totalVariants)!;
+
+    // layoutModeSwitch → CONDITIONAL_GROUP 변환
+    result = this.transformLayoutModeSwitches(result);
+
+    return result;
   }
 
   /**
@@ -676,6 +681,159 @@ export class VisibilityProcessor {
     }
 
     // 기타 타입은 지원하지 않음 (필요시 확장)
+    return undefined;
+  }
+
+  // ===========================================================================
+  // layoutModeSwitch → CONDITIONAL_GROUP 변환
+  // ===========================================================================
+
+  /**
+   * layoutModeSwitch annotation이 있는 컨테이너의 조건부 자식들을
+   * CONDITIONAL_GROUP InternalNode로 교체한다.
+   */
+  private transformLayoutModeSwitches(node: InternalNode): InternalNode {
+    // Recurse children first (bottom-up)
+    const children = node.children.map((child) => this.transformLayoutModeSwitches(child));
+    node = { ...node, children };
+
+    // Check for layoutModeSwitch annotation
+    const lms = node.metadata?.designPatterns?.find(
+      (p: any) => p.type === "layoutModeSwitch"
+    );
+    if (!lms) return node;
+
+    const { prop, branches } = lms as { prop: string; branches: Record<string, string[]> };
+
+    // Collect all branch child names
+    const allBranchChildNames = new Set<string>();
+    for (const names of Object.values(branches)) {
+      for (const name of names) allBranchChildNames.add(name);
+    }
+
+    // Match InternalNode to branch name — merger가 INSTANCE 이름을 component 이름으로 바꿀 수 있으므로
+    // node.name 뿐 아니라 mergedNodes의 원본 이름도 확인
+    const matchesBranchName = (child: InternalNode, branchName: string): boolean => {
+      if (child.name === branchName) return true;
+      if (Array.isArray(child.mergedNodes)) {
+        return child.mergedNodes.some((m) => m.name === branchName);
+      }
+      return false;
+    };
+
+    const childMatchesBranch = (child: InternalNode): boolean => {
+      for (const name of allBranchChildNames) {
+        if (matchesBranchName(child, name)) return true;
+      }
+      return false;
+    };
+
+    // Separate: branched children vs common children
+    const branchedChildren: InternalNode[] = [];
+    for (const child of node.children) {
+      if (childMatchesBranch(child)) {
+        branchedChildren.push(child);
+      }
+    }
+
+    if (branchedChildren.length === 0) return node;
+
+    // Group children into branches
+    const groupedBranches: Record<string, InternalNode[]> = {};
+    for (const [value, names] of Object.entries(branches)) {
+      groupedBranches[value] = [];
+      for (const name of names) {
+        const child = branchedChildren.find((c) => matchesBranchName(c, name));
+        if (child) {
+          // 분기 prop 관련 조건을 자식과 그 하위 트리에서 재귀적으로 제거
+          this.stripPropFromInternalTree(child, prop);
+          groupedBranches[value].push(child);
+        }
+      }
+    }
+
+    // Create CONDITIONAL_GROUP InternalNode
+    const conditionalGroup: InternalNode = {
+      type: "CONDITIONAL_GROUP",
+      id: `${node.id}_cg`,
+      name: `${prop}_switch`,
+      parent: node,
+      children: [],  // empty — children are in branches
+      branchProp: prop,
+      branches: groupedBranches,
+    };
+
+    // Remove consumed annotation to prevent double-processing
+    if (node.metadata?.designPatterns) {
+      node.metadata.designPatterns = node.metadata.designPatterns.filter(
+        (p: any) => p.type !== "layoutModeSwitch"
+      );
+    }
+
+    // Replace children: keep common children, insert conditionalGroup where first branched child was
+    const newChildren: InternalNode[] = [];
+    let cgInserted = false;
+
+    for (const child of node.children) {
+      if (childMatchesBranch(child)) {
+        if (!cgInserted) {
+          newChildren.push(conditionalGroup);
+          cgInserted = true;
+        }
+        // Skip — moved into conditionalGroup
+      } else {
+        newChildren.push(child);
+      }
+    }
+
+    return { ...node, children: newChildren };
+  }
+
+  /** 노드와 하위 트리에서 특정 prop 관련 visibleCondition을 재귀 제거 */
+  private stripPropFromInternalTree(node: InternalNode, propName: string): void {
+    node.visibleCondition = this.stripPropFromCondition(node.visibleCondition, propName);
+    for (const child of node.children) {
+      this.stripPropFromInternalTree(child, propName);
+    }
+  }
+
+  /**
+   * ConditionNode에서 특정 prop과 관련된 조건만 제거하고 나머지를 반환.
+   */
+  private stripPropFromCondition(
+    condition: ConditionNode | undefined,
+    propName: string,
+  ): ConditionNode | undefined {
+    if (!condition) return undefined;
+
+    const refsProp = (c: ConditionNode): boolean => {
+      if ("prop" in c && c.prop === propName) return true;
+      if (c.type === "not") return refsProp(c.condition);
+      if (c.type === "and") return c.conditions.some(refsProp);
+      if (c.type === "or") return c.conditions.some(refsProp);
+      return false;
+    };
+
+    // prop과 무관하면 그대로 유지
+    if (!refsProp(condition)) return condition;
+
+    // AND 조건이면 prop 관련 부분만 제거
+    if (condition.type === "and") {
+      const remaining = condition.conditions.filter(c => !refsProp(c));
+      if (remaining.length === 0) return undefined;
+      if (remaining.length === 1) return remaining[0];
+      return { type: "and", conditions: remaining };
+    }
+
+    // OR 조건이면 prop 관련 부분만 제거
+    if (condition.type === "or") {
+      const remaining = condition.conditions.filter(c => !refsProp(c));
+      if (remaining.length === 0) return undefined;
+      if (remaining.length === 1) return remaining[0];
+      return { type: "or", conditions: remaining };
+    }
+
+    // 단일 조건이 prop을 참조하면 전체 제거
     return undefined;
   }
 

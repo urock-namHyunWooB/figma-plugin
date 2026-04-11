@@ -50,6 +50,17 @@ export class ExternalRefsProcessor {
       this.resolveStructure(child, false)
     );
 
+    // CONDITIONAL_GROUP branches 재귀 처리
+    let branches = node.branches;
+    if (node.branches) {
+      branches = {};
+      for (const [value, branchChildren] of Object.entries(node.branches)) {
+        branches[value] = branchChildren.map((child) =>
+          this.resolveStructure(child, false)
+        );
+      }
+    }
+
     // 루트 노드이고 children이 비어있으면 merged Vector SVG 확인
     if (isRoot && children.length === 0) {
       const vectorChild = this.createMergedVectorChild(node.id);
@@ -73,6 +84,7 @@ export class ExternalRefsProcessor {
       ...(refId ? { refId } : {}),
       ...(extraMetadata ? { metadata: { ...node.metadata, ...extraMetadata } } : {}),
       children,
+      ...(branches ? { branches } : {}),
     };
   }
 
@@ -87,9 +99,23 @@ export class ExternalRefsProcessor {
   public applyColorStyles(node: InternalNode): InternalNode {
     const children = node.children.map((child) => this.applyColorStyles(child));
 
+    // CONDITIONAL_GROUP branches 재귀 처리
+    let branches = node.branches;
+    let branchesChanged = false;
+    if (node.branches) {
+      branches = {};
+      for (const [value, branchChildren] of Object.entries(node.branches)) {
+        const mapped = branchChildren.map((child) => this.applyColorStyles(child));
+        branches[value] = mapped;
+        if (mapped.some((m, i) => m !== branchChildren[i])) branchesChanged = true;
+      }
+    }
+
     const colorMapData = node.metadata?.vectorColorMap;
     if (!colorMapData) {
-      return children === node.children ? node : { ...node, children };
+      const childrenChanged = children !== node.children;
+      if (!childrenChanged && !branchesChanged) return node;
+      return { ...node, children, ...(branches ? { branches } : {}) };
     }
 
     const colorMap = new Map(Object.entries(colorMapData));

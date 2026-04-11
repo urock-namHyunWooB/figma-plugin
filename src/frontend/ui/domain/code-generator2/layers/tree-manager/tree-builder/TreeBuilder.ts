@@ -525,6 +525,13 @@ class TreeBuilder {
     for (const child of tree.children) {
       this.detectOverrides(child);
     }
+    if (tree.branches) {
+      for (const children of Object.values(tree.branches)) {
+        for (const child of children) {
+          this.detectOverrides(child);
+        }
+      }
+    }
   }
 
   private traverseForTextPropertyBindings(
@@ -546,6 +553,13 @@ class TreeBuilder {
 
     for (const child of node.children) {
       this.traverseForTextPropertyBindings(child, props);
+    }
+    if (node.branches) {
+      for (const children of Object.values(node.branches)) {
+        for (const child of children) {
+          this.traverseForTextPropertyBindings(child, props);
+        }
+      }
     }
   }
 }

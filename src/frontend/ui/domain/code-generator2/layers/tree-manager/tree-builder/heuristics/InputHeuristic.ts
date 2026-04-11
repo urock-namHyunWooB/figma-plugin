@@ -184,9 +184,22 @@ export class InputHeuristic implements IHeuristic {
    * 3. TEXT 노드에 bindings.content 설정
    */
   private detectLabelAndHelperText(ctx: HeuristicContext): void {
-    // 루트 직접 자식 중에서 탐색 (Label FRAME, Characters TEXT 등)
-    for (const child of ctx.tree.children || []) {
-      this.processNodeForLabelHelper(child, ctx);
+    // 루트 직접 자식 + CONDITIONAL_GROUP branches 탐색
+    this.walkDirectChildrenForLabelHelper(ctx.tree, ctx);
+  }
+
+  /** 노드의 직접 자식을 탐색하되, CG 자식은 branches까지 들어감 */
+  private walkDirectChildrenForLabelHelper(node: InternalNode, ctx: HeuristicContext): void {
+    for (const child of node.children || []) {
+      if (child.type === "CONDITIONAL_GROUP" && child.branches) {
+        for (const branchChildren of Object.values(child.branches)) {
+          for (const bc of branchChildren) {
+            this.processNodeForLabelHelper(bc, ctx);
+          }
+        }
+      } else {
+        this.processNodeForLabelHelper(child, ctx);
+      }
     }
   }
 
@@ -414,6 +427,13 @@ export class InputHeuristic implements IHeuristic {
     for (const child of node.children || []) {
       this.removeDynamicStylesForProp(child, propName);
     }
+    if (node.branches) {
+      for (const children of Object.values(node.branches)) {
+        for (const child of children) {
+          this.removeDynamicStylesForProp(child, propName);
+        }
+      }
+    }
   }
 
   /**
@@ -516,6 +536,14 @@ export class InputHeuristic implements IHeuristic {
       const found = this.findNodeBySemantic(child, semanticType);
       if (found) return found;
     }
+    if (node.branches) {
+      for (const children of Object.values(node.branches)) {
+        for (const child of children) {
+          const found = this.findNodeBySemantic(child, semanticType);
+          if (found) return found;
+        }
+      }
+    }
     return null;
   }
 
@@ -526,6 +554,14 @@ export class InputHeuristic implements IHeuristic {
     for (const child of node.children || []) {
       this.applySemanticType(child, ctx);
       this.applyChildSemanticTypes(child, ctx);
+    }
+    if (node.branches) {
+      for (const children of Object.values(node.branches)) {
+        for (const child of children) {
+          this.applySemanticType(child, ctx);
+          this.applyChildSemanticTypes(child, ctx);
+        }
+      }
     }
   }
 
