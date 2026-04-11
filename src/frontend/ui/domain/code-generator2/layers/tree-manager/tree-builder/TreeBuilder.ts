@@ -110,6 +110,9 @@ class TreeBuilder {
     // Step 2: Props 추출/바인딩 (mergedNodes 전달하여 variant props 추출)
     let props = this.propsExtractor.extract(node, tree.mergedNodes);
 
+    // Step 2.5: prop 레벨 디자인 패턴 감지 (statePseudoClass, breakpointVariant)
+    this.designPatternDetector.detect(tree, props);
+
     // Step 3: Slot 처리 (통합: 개별 slot + 배열 slot)
     const slotResult = this.slotProcessor.process(tree, props);
     props = slotResult.props;
@@ -249,9 +252,12 @@ class TreeBuilder {
     tree: InternalTree,
     props: PropDefinition[]
   ): void {
-    const stateIdx = props.findIndex(
-      (p) => p.sourceKey.toLowerCase() === "state" || p.sourceKey.toLowerCase() === "states"
+    const statePattern = tree.metadata?.designPatterns?.find(
+      (p): p is Extract<import("../../../../types/types").DesignPattern, { type: "statePseudoClass" }> =>
+        p.type === "statePseudoClass"
     );
+    if (!statePattern) return;
+    const stateIdx = props.findIndex((p) => p.name === statePattern.prop);
     if (stateIdx === -1) return;
 
     const stateProp = props[stateIdx];

@@ -80,6 +80,97 @@ describe("DesignPatternDetector", () => {
     });
   });
 
+  describe("detectStatePseudoClass", () => {
+    it("State variant prop with CSS-convertible values → statePseudoClass annotation on root", () => {
+      const detector = new DesignPatternDetector(null as any);
+      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
+      const props: any[] = [
+        { name: "state", type: "variant", sourceKey: "State", options: ["Default", "Hover", "Active", "Disabled"] },
+      ];
+      detector.detect(tree, props);
+      expect(tree.metadata?.designPatterns).toContainEqual({
+        type: "statePseudoClass",
+        prop: "state",
+        stateMap: { Hover: ":hover", Active: ":active", Disabled: ":disabled" },
+      });
+    });
+
+    it("no State prop → no annotation", () => {
+      const detector = new DesignPatternDetector(null as any);
+      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
+      const props: any[] = [{ name: "size", type: "variant", sourceKey: "Size", options: ["Large", "Small"] }];
+      detector.detect(tree, props);
+      expect(tree.metadata?.designPatterns).toBeUndefined();
+    });
+
+    it("States (plural) sourceKey → statePseudoClass annotation on root", () => {
+      const detector = new DesignPatternDetector(null as any);
+      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
+      const props: any[] = [
+        { name: "states", type: "variant", sourceKey: "States", options: ["Hover", "Focus"] },
+      ];
+      detector.detect(tree, props);
+      expect(tree.metadata?.designPatterns).toContainEqual({
+        type: "statePseudoClass",
+        prop: "states",
+        stateMap: { Hover: ":hover", Focus: ":focus" },
+      });
+    });
+
+    it("State prop with no CSS-convertible values → no annotation", () => {
+      const detector = new DesignPatternDetector(null as any);
+      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
+      const props: any[] = [
+        { name: "state", type: "variant", sourceKey: "State", options: ["Success", "Error", "Info"] },
+      ];
+      detector.detect(tree, props);
+      expect(tree.metadata?.designPatterns).toBeUndefined();
+    });
+  });
+
+  describe("detectBreakpointVariant", () => {
+    it("breakpoint variant prop → breakpointVariant annotation on root", () => {
+      const detector = new DesignPatternDetector(null as any);
+      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
+      const props: any[] = [
+        { name: "breakpoint", type: "variant", sourceKey: "Breakpoint", options: ["Mobile(xs-sm)", "Desktop(md-lg)"] },
+      ];
+      detector.detect(tree, props);
+      expect(tree.metadata?.designPatterns).toContainEqual({
+        type: "breakpointVariant",
+        prop: "breakpoint",
+      });
+    });
+
+    it("non-breakpoint prop → no annotation", () => {
+      const detector = new DesignPatternDetector(null as any);
+      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
+      const props: any[] = [{ name: "size", type: "variant", sourceKey: "Size", options: ["Large"] }];
+      detector.detect(tree, props);
+      expect(tree.metadata?.designPatterns).toBeUndefined();
+    });
+
+    it("device prop name → breakpointVariant annotation", () => {
+      const detector = new DesignPatternDetector(null as any);
+      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
+      const props: any[] = [
+        { name: "device", type: "variant", sourceKey: "Device", options: ["Mobile", "Desktop"] },
+      ];
+      detector.detect(tree, props);
+      expect(tree.metadata?.designPatterns).toContainEqual({
+        type: "breakpointVariant",
+        prop: "device",
+      });
+    });
+
+    it("no props → no annotation", () => {
+      const detector = new DesignPatternDetector(null as any);
+      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
+      detector.detect(tree, []);
+      expect(tree.metadata?.designPatterns).toBeUndefined();
+    });
+  });
+
   describe("detectFullCoverBackgrounds", () => {
     it("TEXT type child → no annotation", () => {
       const detector = new DesignPatternDetector(null as any);

@@ -1,4 +1,4 @@
-import type { InternalTree, InternalNode, DesignPattern } from "../../../../types/types";
+import type { InternalTree, InternalNode, DesignPattern, PropDefinition } from "../../../../types/types";
 import type DataManager from "../../../data-manager/DataManager";
 import { isFullCoverStyleOnly } from "./RedundantNodeCollapser";
 
@@ -13,12 +13,51 @@ import { isFullCoverStyleOnly } from "./RedundantNodeCollapser";
 export class DesignPatternDetector {
   constructor(private readonly dataManager: DataManager) {}
 
-  detect(tree: InternalTree): void {
+  detect(tree: InternalTree, props?: PropDefinition[]): void {
     this.walk(tree, (node) => {
       this.detectAlphaMask(node);
       this.detectInteractionFrame(node);
     });
     this.detectFullCoverBackgrounds(tree);
+    if (props) {
+      this.detectStatePseudoClass(tree, props);
+      this.detectBreakpointVariant(tree, props);
+    }
+  }
+
+  private static readonly STATE_TO_PSEUDO: Record<string, string> = {
+    Hover: ":hover",     Active: ":active",     Pressed: ":active",
+    hover: ":hover",     active: ":active",     pressed: ":active",
+    Focus: ":focus",     Disabled: ":disabled",  Visited: ":visited",
+    focus: ":focus",     disabled: ":disabled",  visited: ":visited",
+    disable: ":disabled",
+  };
+
+  private detectStatePseudoClass(tree: InternalTree, props: PropDefinition[]): void {
+    const stateProp = props.find(
+      (p) => p.sourceKey.toLowerCase() === "state" || p.sourceKey.toLowerCase() === "states"
+    );
+    if (!stateProp || stateProp.type !== "variant" || !stateProp.options?.length) return;
+
+    const stateMap: Record<string, string> = {};
+    for (const opt of stateProp.options) {
+      const pseudo = DesignPatternDetector.STATE_TO_PSEUDO[opt];
+      if (pseudo) stateMap[opt] = pseudo;
+    }
+    if (Object.keys(stateMap).length === 0) return;
+
+    this.addPattern(tree, { type: "statePseudoClass", prop: stateProp.name, stateMap });
+  }
+
+  private static readonly BP_NAME_RE = /breakpoint|device|screen/i;
+
+  private detectBreakpointVariant(tree: InternalTree, props: PropDefinition[]): void {
+    const bpProp = props.find(
+      (p) => p.type === "variant" && DesignPatternDetector.BP_NAME_RE.test(p.name)
+    );
+    if (!bpProp) return;
+
+    this.addPattern(tree, { type: "breakpointVariant", prop: bpProp.name });
   }
 
   private walk(node: InternalNode, visitor: (n: InternalNode) => void): void {
