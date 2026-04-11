@@ -288,37 +288,11 @@ export class TailwindStrategy implements IStyleStrategy {
         continue;
       }
 
-      // variantOptions에서 빠진 값을 빈 문자열로 채움 (cva 타입 완전성 보장)
-      const allOptions = this.variantOptions.get(propName);
-      if (allOptions) {
-        const existingValues = new Set([...valueMap.keys()]);
-        for (const opt of allOptions) {
-          if (!existingValues.has(opt)) {
-            const key = needsQuoting(opt) ? `"${opt}"` : opt;
-            entries.push(`        ${key}: "",`);
-          }
-        }
-      }
-
       // Figma prop 이름에서 제어 문자 제거 (backspace 등)
       const safePropName = propName.replace(/[\x00-\x1f\x7f]/g, "");
       const propKey = needsQuoting(safePropName) ? `"${safePropName}"` : safePropName;
       variantParts.push(`    ${propKey}: {\n${entries.join("\n")}\n    },`);
       declaredVariants.add(propName);
-    }
-
-    // compoundVariants에서 참조하지만 variants에 없는 prop → 빈 variant 추가
-    for (const p of compoundProps) {
-      if (declaredVariants.has(p)) continue;
-      const allOptions = this.variantOptions.get(p);
-      if (allOptions) {
-        const emptyEntries = [...allOptions].map((opt) => {
-          const key = needsQuoting(opt) ? `"${opt}"` : opt;
-          return `        ${key}: "",`;
-        });
-        const propKey = needsQuoting(p) ? `"${p}"` : p;
-        variantParts.push(`    ${propKey}: {\n${emptyEntries.join("\n")}\n    },`);
-      }
     }
 
     // compoundVariants 코드
