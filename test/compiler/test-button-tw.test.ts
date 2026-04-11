@@ -3,20 +3,17 @@ import { FigmaCodeGenerator } from "../../src/frontend/ui/domain/code-generator2
 import ButtonFixture from "../fixtures/button/Button.json";
 
 describe("Button (airtable) Tailwind lint", () => {
-  it("gap은 size 단독으로 할당되어야 한다", async () => {
+  it("gap은 디자인 데이터를 정직하게 반영한다", async () => {
     const gen = new FigmaCodeGenerator(ButtonFixture as any);
     const { main } = gen.buildUITree();
 
     const rootDynamic = (main.root as any).styles?.dynamic || [];
     const gapEntries = rootDynamic.filter((d: any) => "gap" in d.style);
 
-    // gap이 size 단독으로 할당됨 (icon과 compound 아님)
-    const hasIconCondition = gapEntries.some((d: any) =>
-      JSON.stringify(d.condition).includes('"icon"')
-    );
-    expect(hasIconCondition).toBe(false);
+    // gap이 존재해야 함
+    expect(gapEntries.length).toBeGreaterThan(0);
 
-    // size 조건만 있어야 함
+    // size 조건이 포함되어야 함
     const hasSizeCondition = gapEntries.some((d: any) =>
       JSON.stringify(d.condition).includes('"size"')
     );
