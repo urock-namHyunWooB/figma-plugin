@@ -12221,38 +12221,6 @@ exports[`UITree snapshots > checkbox/taptap-checkbox 1`] = `
   "root": {
     "children": [
       {
-        "children": [],
-        "id": "10:2276",
-        "mergedNodes": [
-          {
-            "id": "10:2279",
-            "variantName": "With label=false, Checked=true, Status=Normal",
-          },
-          {
-            "id": "10:2291",
-            "variantName": "With label=false, Checked=true, Status=Indeterminate",
-          },
-          {
-            "id": "10:2303",
-            "variantName": "With label=false, Checked=true, Status=Disable",
-          },
-          {
-            "id": "10:2276",
-            "variantName": "With label=false, Checked=false, Status=Normal",
-          },
-          {
-            "id": "10:2288",
-            "variantName": "With label=false, Checked=false, Status=Hover",
-          },
-          {
-            "id": "10:2300",
-            "variantName": "With label=false, Checked=false, Status=Disable",
-          },
-        ],
-        "name": "Rectangle 10",
-        "type": "vector",
-      },
-      {
         "children": [
           {
             "children": [],
@@ -15928,10 +15896,11 @@ exports[`UITree snapshots > failing/Btnsicon 1`] = `
   "componentType": "unknown",
   "propNames": [
     "size",
+    "state",
     "style",
     "tone",
   ],
-  "propsCount": 3,
+  "propsCount": 4,
   "root": {
     "children": [
       {
@@ -18789,38 +18758,6 @@ exports[`UITree snapshots > failing/Checkbox 1`] = `
   "propsCount": 4,
   "root": {
     "children": [
-      {
-        "children": [],
-        "id": "46:4307",
-        "mergedNodes": [
-          {
-            "id": "46:4310",
-            "variantName": "With label=false, Checked=true, Status=Normal",
-          },
-          {
-            "id": "46:4322",
-            "variantName": "With label=false, Checked=true, Status=Indeterminate",
-          },
-          {
-            "id": "46:4334",
-            "variantName": "With label=false, Checked=true, Status=Disable",
-          },
-          {
-            "id": "46:4307",
-            "variantName": "With label=false, Checked=false, Status=Normal",
-          },
-          {
-            "id": "46:4319",
-            "variantName": "With label=false, Checked=false, Status=Hover",
-          },
-          {
-            "id": "46:4331",
-            "variantName": "With label=false, Checked=false, Status=Disable",
-          },
-        ],
-        "name": "Rectangle 10",
-        "type": "vector",
-      },
       {
         "children": [
           {
@@ -22133,11 +22070,10 @@ exports[`UITree snapshots > regression/BreakpointdesktopmdlgStatelogin 1`] = `
     "buttonIconNormal",
     "iconNormalListCategory",
     "iconsIcons",
-    "interactionLight",
     "scrolled",
     "state",
   ],
-  "propsCount": 8,
+  "propsCount": 7,
   "root": {
     "children": [
       {
