@@ -71,7 +71,8 @@ function absorbFullCoverChildren(
   const survivors: InternalNode[] = [];
 
   for (const child of children) {
-    if (child.metadata?.designPatterns?.some(p => p.type === "fullCoverBackground")) {
+    const hasAnnotation = child.metadata?.designPatterns?.some(p => p.type === "fullCoverBackground");
+    if (hasAnnotation || isFullCoverStyleOnly(child, node, dataManager)) {
       // child의 fills를 부모의 mergedNodes 원본에 마킹 (StyleProcessor에서 활용)
       absorbFillsIntoParent(child, node, dataManager);
       // child는 survivors에 안 넣음 → 제거
