@@ -235,12 +235,16 @@ export class StyleProcessor {
     );
 
     // CONDITIONAL_GROUP branches 재귀 처리
+    // branch 진입 시 자식의 mergedNodes를 해당 branch 값으로 필터링하여
+    // StyleProcessor가 고정된 prop 차원을 변수로 보지 않도록 함
     let styledBranches = node.branches;
-    if (node.branches) {
+    if (node.branches && node.branchProp) {
       styledBranches = {};
       for (const [value, children] of Object.entries(node.branches)) {
         styledBranches[value] = children.map((child) =>
-          this.applyVariantStyles(child)
+          this.applyVariantStyles(
+            this.filterMergedNodesForBranch(child, node.branchProp!, value)
+          )
         );
       }
     }
@@ -1101,6 +1105,58 @@ export class StyleProcessor {
   /**
    * 동적 fill 스타일이 있는 vector 노드의 SVG fill을 currentColor로 변환 (재귀)
    *
+  /**
+   * branch 진입 시 노드와 하위 트리의 mergedNodes를 필터링.
+   * branchProp=value에 해당하는 variant만 남긴다.
+   * 이렇게 하면 DynamicStyleDecomposer가 고정된 prop을 변수로 보지 않는다.
+   */
+  private filterMergedNodesForBranch(
+    node: InternalNode,
+    branchProp: string,
+    branchValue: string,
+  ): InternalNode {
+    const normKey = (s: string) => s.toLowerCase().replace(/[\s_-]+/g, "");
+    const branchPropNorm = normKey(branchProp);
+    const branchValueNorm = normKey(branchValue);
+
+    const filterVariants = (mergedNodes: typeof node.mergedNodes) => {
+      if (!mergedNodes) return mergedNodes;
+      const filtered = mergedNodes.filter((m) => {
+        const vn = m.variantName || "";
+        for (const part of vn.split(",").map((s) => s.trim())) {
+          const eq = part.indexOf("=");
+          if (eq < 0) continue;
+          const key = part.slice(0, eq).trim();
+          const val = part.slice(eq + 1).trim();
+          if (normKey(key) === branchPropNorm) {
+            return normKey(val) === branchValueNorm;
+          }
+        }
+        return true; // prop이 없으면 포함
+      });
+      return filtered.length > 0 ? filtered : mergedNodes;
+    };
+
+    const walk = (n: InternalNode): InternalNode => {
+      const mergedNodes = filterVariants(n.mergedNodes);
+      const children = n.children.map(walk);
+      const branches = n.branches
+        ? Object.fromEntries(
+            Object.entries(n.branches).map(([k, v]) => [k, v.map(walk)])
+          )
+        : undefined;
+      return {
+        ...n,
+        mergedNodes,
+        children,
+        ...(branches ? { branches } : {}),
+      };
+    };
+
+    return walk(node);
+  }
+
+  /**
    * variant별로 fill 색상이 다른 ELLIPSE/VECTOR 노드에서:
    * - SVG 내부 fill="..." → fill="currentColor"
    * - CSS fill → color (currentColor가 color를 상속)
