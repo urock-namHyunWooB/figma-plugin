@@ -22,7 +22,6 @@ export class UITreeOptimizer {
    */
   optimizeMain(tree: UITree, diagnostics?: VariantInconsistency[]): void {
     this.removeVariantOnlySlots(tree);
-    this.transformLayoutModeSwitches(tree.root);
     this.hoistSharedChildConditions(tree.root);
     this.mergeRedundantDynamicStyles(tree.root);
     this.decomposeDynamicStyles(tree.root, diagnostics);
@@ -32,163 +31,10 @@ export class UITreeOptimizer {
    * 의존 트리 최적화 (dynamic styles 병합 + 루트 유연화 → FD 분해)
    */
   optimizeDependency(tree: UITree, diagnostics?: VariantInconsistency[]): void {
-    this.transformLayoutModeSwitches(tree.root);
     this.hoistSharedChildConditions(tree.root);
     this.mergeRedundantDynamicStyles(tree.root);
     this.makeRootFlexible(tree);
     this.decomposeDynamicStyles(tree.root, diagnostics);
-  }
-
-  // ─── transformLayoutModeSwitches ─────────────────────────
-
-  /**
-   * layoutModeSwitch annotation이 있는 컨테이너의 조건부 자식들을
-   * conditionalGroup 노드로 교체한다.
-   */
-  private transformLayoutModeSwitches(node: UINode): void {
-    if (!("children" in node) || !node.children) return;
-
-    // Recurse children first (bottom-up)
-    for (const child of node.children) {
-      this.transformLayoutModeSwitches(child);
-    }
-
-    // Check for layoutModeSwitch annotation
-    const lms = (node as any).metadata?.designPatterns?.find(
-      (p: any) => p.type === "layoutModeSwitch"
-    );
-    if (!lms) return;
-
-    const { prop, branches } = lms as { prop: string; branches: Record<string, string[]> };
-
-    // Collect all branch child names
-    const allBranchChildNames = new Set<string>();
-    for (const names of Object.values(branches)) {
-      for (const name of names) allBranchChildNames.add(name);
-    }
-
-    // Match UINode to branch name — merger가 INSTANCE 이름을 component 이름으로 바꿀 수 있으므로
-    // node.name 뿐 아니라 mergedNodes의 원본 이름도 확인
-    const matchesBranchName = (child: UINode, branchName: string): boolean => {
-      if (child.name === branchName) return true;
-      // mergedNodes의 원본 이름 확인 (variant merger가 이름을 변경한 경우)
-      const merged = (child as any).mergedNodes;
-      if (Array.isArray(merged)) {
-        return merged.some((m: any) => m.name === branchName);
-      }
-      return false;
-    };
-
-    const childMatchesBranch = (child: UINode): boolean => {
-      for (const name of allBranchChildNames) {
-        if (matchesBranchName(child, name)) return true;
-      }
-      return false;
-    };
-
-    // Separate: branched children vs common children
-    const branchedChildren: UINode[] = [];
-    for (const child of node.children) {
-      if (childMatchesBranch(child)) {
-        branchedChildren.push(child);
-      }
-    }
-
-    if (branchedChildren.length === 0) return;
-
-    // Group children into branches
-    const groupedBranches: Record<string, UINode[]> = {};
-    for (const [value, names] of Object.entries(branches)) {
-      groupedBranches[value] = [];
-      for (const name of names) {
-        const child = branchedChildren.find((c) => matchesBranchName(c, name));
-        if (child) {
-          // 분기 prop 관련 조건을 자식과 그 하위 트리에서 재귀적으로 제거
-          this.stripPropFromTree(child, prop);
-          groupedBranches[value].push(child);
-        }
-      }
-    }
-
-    // Create conditionalGroup node
-    const conditionalGroup: any = {
-      type: "conditionalGroup",
-      id: `${node.id}_cg`,
-      name: `${prop}_switch`,
-      prop,
-      branches: groupedBranches,
-    };
-
-    // Replace children: keep common children, insert conditionalGroup where first branched child was
-    const newChildren: UINode[] = [];
-    let cgInserted = false;
-
-    for (const child of node.children) {
-      if (childMatchesBranch(child)) {
-        if (!cgInserted) {
-          newChildren.push(conditionalGroup);
-          cgInserted = true;
-        }
-        // Skip — moved into conditionalGroup
-      } else {
-        newChildren.push(child);
-      }
-    }
-
-    node.children = newChildren;
-  }
-
-  /** 노드와 하위 트리에서 특정 prop 관련 visibleCondition을 재귀 제거 */
-  private stripPropFromTree(node: UINode, propName: string): void {
-    node.visibleCondition = this.stripPropFromCondition(node.visibleCondition, propName);
-    if ("children" in node && node.children) {
-      for (const child of node.children) {
-        this.stripPropFromTree(child, propName);
-      }
-    }
-  }
-
-  /**
-   * ConditionNode에서 특정 prop과 관련된 조건만 제거하고 나머지를 반환.
-   * - prop과 무관한 조건 → 그대로 반환
-   * - prop과 관련된 단일 조건 → undefined (전체 제거)
-   * - AND 조건에서 prop 관련 부분만 제거 → 나머지 조건 반환
-   */
-  private stripPropFromCondition(
-    condition: import("../../../types/types").ConditionNode | undefined,
-    propName: string,
-  ): import("../../../types/types").ConditionNode | undefined {
-    if (!condition) return undefined;
-
-    const refsProp = (c: import("../../../types/types").ConditionNode): boolean => {
-      if ("prop" in c && c.prop === propName) return true;
-      if (c.type === "not") return refsProp(c.condition);
-      if (c.type === "and") return c.conditions.some(refsProp);
-      if (c.type === "or") return c.conditions.some(refsProp);
-      return false;
-    };
-
-    // prop과 무관하면 그대로 유지
-    if (!refsProp(condition)) return condition;
-
-    // AND 조건이면 prop 관련 부분만 제거
-    if (condition.type === "and") {
-      const remaining = condition.conditions.filter(c => !refsProp(c));
-      if (remaining.length === 0) return undefined;
-      if (remaining.length === 1) return remaining[0];
-      return { type: "and", conditions: remaining };
-    }
-
-    // OR 조건이면 prop 관련 부분만 제거
-    if (condition.type === "or") {
-      const remaining = condition.conditions.filter(c => !refsProp(c));
-      if (remaining.length === 0) return undefined;
-      if (remaining.length === 1) return remaining[0];
-      return { type: "or", conditions: remaining };
-    }
-
-    // 단일 조건이 prop을 참조하면 전체 제거
-    return undefined;
   }
 
   /**
