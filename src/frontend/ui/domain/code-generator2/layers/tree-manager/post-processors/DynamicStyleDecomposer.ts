@@ -446,6 +446,31 @@ export class DynamicStyleDecomposer {
       ...(entry.sourceVariantNodeId && { sourceVariantNodeId: entry.sourceVariantNodeId }),
     }));
 
+    // Step 1.5: 값 종류가 1개뿐인 고정 prop 제거
+    // branch 안에서 branchProp은 모든 entry에서 같은 값 → compound 키에 불필요
+    const propDistinctValues = new Map<string, Set<string>>();
+    for (const entry of matrix) {
+      for (const [propName, propValue] of entry.propValues) {
+        if (!propDistinctValues.has(propName)) {
+          propDistinctValues.set(propName, new Set());
+        }
+        propDistinctValues.get(propName)!.add(propValue);
+      }
+    }
+    const fixedProps: string[] = [];
+    const varyingCount = [...propDistinctValues.values()].filter((v) => v.size > 1).length;
+    // 변하는 prop이 최소 1개 남아야 제거 가능 (전부 고정이면 제거하지 않음)
+    if (varyingCount > 0) {
+      for (const [propName, values] of propDistinctValues) {
+        if (values.size <= 1) {
+          fixedProps.push(propName);
+          for (const entry of matrix) {
+            entry.propValues.delete(propName);
+          }
+        }
+      }
+    }
+
     // Step 2: 모든 prop 이름 수집 (순서 유지)
     const allProps: string[] = [];
     const propSet = new Set<string>();

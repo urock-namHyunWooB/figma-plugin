@@ -59,9 +59,11 @@ describe("Buttonsolid conditionalGroup", () => {
     // iconOnly 삼항 분기가 존재해야 함
     expect(code).toContain("iconOnly ?");
 
-    // iconOnly 삼항 분기 시작점 찾기
-    const ternaryIdx = code!.indexOf("iconOnly ?");
-    expect(ternaryIdx).toBeGreaterThan(-1);
+    // iconOnly 삼항 분기 시작점 찾기 (JSX ternary: "{iconOnly ? (" 패턴)
+    // 템플릿 리터럴 안의 "${iconOnly ?"가 아닌, JSX 분기 삼항을 찾아야 함
+    const ternaryMatch = code!.match(/\{iconOnly \? \(/);
+    expect(ternaryMatch).not.toBeNull();
+    const ternaryIdx = ternaryMatch!.index!;
 
     // 분기 이후 코드에서 compound 스타일 키 추출
     const afterTernary = code!.slice(ternaryIdx);
