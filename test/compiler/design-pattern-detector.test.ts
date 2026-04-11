@@ -1,295 +1,343 @@
 import { describe, it, expect } from "vitest";
 import { DesignPatternDetector } from "@code-generator2/layers/tree-manager/tree-builder/processors/DesignPatternDetector";
 
-describe("DesignPatternDetector", () => {
-  it("detect()가 InternalTree를 받아 에러 없이 실행된다", () => {
-    const detector = new DesignPatternDetector(null as any);
-    const tree = { id: "root", name: "Root", type: "FRAME", children: [] } as any;
-    expect(() => detector.detect(tree)).not.toThrow();
-  });
+const detector = new DesignPatternDetector();
 
-  describe("detectAlphaMasks", () => {
-    it("isMask + ALPHA + visible ref → alphaMask annotation", () => {
-      const mockDataManager = {
-        getById: () => ({
-          node: { id: "mask-1", isMask: true, maskType: "ALPHA" },
-        }),
+describe("DesignPatternDetector (raw data)", () => {
+  describe("alphaMask", () => {
+    it("isMask + ALPHA + visible ref → alphaMask pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [{
+          type: "COMPONENT", name: "Default",
+          children: [{
+            id: "mask-1", type: "RECTANGLE", name: "Mask",
+            isMask: true, maskType: "ALPHA",
+            componentPropertyReferences: { visible: "Loading#29474:0" },
+            children: [],
+          }],
+        }],
       } as any;
+      const patterns = detector.detect(node);
+      expect(patterns).toContainEqual({
+        type: "alphaMask", nodeId: "mask-1", visibleRef: "Loading#29474:0",
+      });
+    });
 
-      const detector = new DesignPatternDetector(mockDataManager);
-      const maskNode: any = {
-        id: "mask-1", name: "Mask", type: "RECTANGLE", children: [],
+    it("isMask=false → no pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [{
+          type: "COMPONENT", name: "Default",
+          children: [{
+            id: "n1", type: "RECTANGLE", name: "N",
+            isMask: false,
+            componentPropertyReferences: { visible: "Loading#29474:0" },
+            children: [],
+          }],
+        }],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns.filter(p => p.type === "alphaMask")).toHaveLength(0);
+    });
+
+    it("no visible ref → no pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [{
+          type: "COMPONENT", name: "Default",
+          children: [{
+            id: "n2", type: "RECTANGLE", name: "N",
+            isMask: true, maskType: "ALPHA",
+            children: [],
+          }],
+        }],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns.filter(p => p.type === "alphaMask")).toHaveLength(0);
+    });
+
+    it("deduplicates across variants", () => {
+      const mask = {
+        id: "mask-1", type: "RECTANGLE", name: "Mask",
+        isMask: true, maskType: "ALPHA",
         componentPropertyReferences: { visible: "Loading#29474:0" },
+        children: [],
       };
-      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [maskNode] };
-      detector.detect(tree);
-      expect(maskNode.metadata?.designPatterns).toEqual([
-        { type: "alphaMask", nodeId: "mask-1", visibleRef: "Loading#29474:0" },
-      ]);
-    });
-
-    it("isMask=false → no annotation", () => {
-      const mockDataManager = {
-        getById: () => ({ node: { isMask: false } }),
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [
+          { type: "COMPONENT", name: "V1", children: [{ ...mask }] },
+          { type: "COMPONENT", name: "V2", children: [{ ...mask }] },
+        ],
       } as any;
-      const detector = new DesignPatternDetector(mockDataManager);
-      const node: any = {
-        id: "n1", name: "N", type: "RECTANGLE", children: [],
-        componentPropertyReferences: { visible: "Loading#29474:0" },
-      };
-      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [node] };
-      detector.detect(tree);
-      expect(node.metadata?.designPatterns).toBeUndefined();
-    });
-
-    it("no componentPropertyReferences.visible → no annotation", () => {
-      const mockDataManager = {
-        getById: () => ({ node: { isMask: true, maskType: "ALPHA" } }),
-      } as any;
-      const detector = new DesignPatternDetector(mockDataManager);
-      const node: any = { id: "n2", name: "N", type: "RECTANGLE", children: [] };
-      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [node] };
-      detector.detect(tree);
-      expect(node.metadata?.designPatterns).toBeUndefined();
+      const patterns = detector.detect(node);
+      expect(patterns.filter(p => p.type === "alphaMask")).toHaveLength(1);
     });
   });
 
-  describe("detectInteractionFrames", () => {
-    it("name=Interaction + type=FRAME → interactionFrame annotation", () => {
-      const detector = new DesignPatternDetector(null as any);
-      const node: any = { id: "i1", name: "Interaction", type: "FRAME", children: [] };
-      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [node] };
-      detector.detect(tree);
-      expect(node.metadata?.designPatterns).toEqual([{ type: "interactionFrame", nodeId: "i1" }]);
+  describe("interactionFrame", () => {
+    it("name=Interaction + type=FRAME → pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [{
+          type: "COMPONENT", name: "Default",
+          children: [{ id: "i-1", type: "FRAME", name: "Interaction", children: [] }],
+        }],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns).toContainEqual({ type: "interactionFrame", nodeId: "i-1" });
     });
 
-    it("name=Interaction + type=INSTANCE → no annotation", () => {
-      const detector = new DesignPatternDetector(null as any);
-      const node: any = { id: "i2", name: "Interaction", type: "INSTANCE", children: [] };
-      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [node] };
-      detector.detect(tree);
-      expect(node.metadata?.designPatterns).toBeUndefined();
+    it("type=INSTANCE → no pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [{
+          type: "COMPONENT", name: "Default",
+          children: [{ id: "i-2", type: "INSTANCE", name: "Interaction", children: [] }],
+        }],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns.filter(p => p.type === "interactionFrame")).toHaveLength(0);
     });
 
-    it("name=Content + type=FRAME → no annotation", () => {
-      const detector = new DesignPatternDetector(null as any);
-      const node: any = { id: "c1", name: "Content", type: "FRAME", children: [] };
-      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [node] };
-      detector.detect(tree);
-      expect(node.metadata?.designPatterns).toBeUndefined();
+    it("wrong name → no pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [{
+          type: "COMPONENT", name: "Default",
+          children: [{ id: "c1", type: "FRAME", name: "Content", children: [] }],
+        }],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns.filter(p => p.type === "interactionFrame")).toHaveLength(0);
     });
   });
 
-  describe("detectStatePseudoClass", () => {
-    it("State variant prop with CSS-convertible values → statePseudoClass annotation on root", () => {
-      const detector = new DesignPatternDetector(null as any);
-      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
-      const props: any[] = [
-        { name: "state", type: "variant", sourceKey: "State", options: ["Default", "Hover", "Active", "Disabled"] },
-      ];
-      detector.detect(tree, props);
-      expect(tree.metadata?.designPatterns).toContainEqual({
-        type: "statePseudoClass",
-        prop: "state",
+  describe("fullCoverBackground", () => {
+    it("fills-only child covering parent 99%+ → pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [{
+          type: "COMPONENT", name: "Default",
+          absoluteBoundingBox: { x: 0, y: 0, width: 100, height: 50 },
+          fills: [],
+          children: [
+            {
+              id: "bg-1", type: "RECTANGLE", name: "BG",
+              absoluteBoundingBox: { x: 0, y: 0, width: 100, height: 50 },
+              fills: [{ type: "SOLID", visible: true }],
+              strokes: [], effects: [], children: [],
+            },
+            { id: "c-1", type: "FRAME", name: "Content", children: [] },
+          ],
+        }],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns).toContainEqual({ type: "fullCoverBackground", nodeId: "bg-1" });
+    });
+
+    it("TEXT node → no pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [{
+          type: "COMPONENT", name: "Default",
+          absoluteBoundingBox: { x: 0, y: 0, width: 100, height: 50 },
+          children: [
+            { id: "t-1", type: "TEXT", name: "Label", children: [] },
+            { id: "c-1", type: "FRAME", name: "Content", children: [] },
+          ],
+        }],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns.filter(p => p.type === "fullCoverBackground")).toHaveLength(0);
+    });
+
+    it("single child → no pattern (not a background, it's content)", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [{
+          type: "COMPONENT", name: "Default",
+          absoluteBoundingBox: { x: 0, y: 0, width: 100, height: 50 },
+          fills: [],
+          children: [
+            {
+              id: "bg-1", type: "RECTANGLE", name: "BG",
+              absoluteBoundingBox: { x: 0, y: 0, width: 100, height: 50 },
+              fills: [{ type: "SOLID", visible: true }],
+              strokes: [], effects: [], children: [],
+            },
+          ],
+        }],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns.filter(p => p.type === "fullCoverBackground")).toHaveLength(0);
+    });
+
+    it("INSTANCE node → no pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [{
+          type: "COMPONENT", name: "Default",
+          absoluteBoundingBox: { x: 0, y: 0, width: 100, height: 50 },
+          children: [
+            {
+              id: "i-1", type: "INSTANCE", name: "Icon",
+              absoluteBoundingBox: { x: 0, y: 0, width: 100, height: 50 },
+              fills: [{ type: "SOLID", visible: true }],
+              strokes: [], effects: [], children: [],
+            },
+            { id: "c-1", type: "FRAME", name: "Content", children: [] },
+          ],
+        }],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns.filter(p => p.type === "fullCoverBackground")).toHaveLength(0);
+    });
+  });
+
+  describe("statePseudoClass", () => {
+    it("State variant → statePseudoClass pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "State": { type: "VARIANT", variantOptions: ["Default", "Hover", "Active", "Disabled"] },
+        },
+        children: [],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns).toContainEqual({
+        type: "statePseudoClass", prop: "state",
         stateMap: { Hover: ":hover", Active: ":active", Disabled: ":disabled" },
       });
     });
 
-    it("no State prop → no annotation", () => {
-      const detector = new DesignPatternDetector(null as any);
-      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
-      const props: any[] = [{ name: "size", type: "variant", sourceKey: "Size", options: ["Large", "Small"] }];
-      detector.detect(tree, props);
-      expect(tree.metadata?.designPatterns).toBeUndefined();
-    });
-
-    it("States (plural) sourceKey → statePseudoClass annotation on root", () => {
-      const detector = new DesignPatternDetector(null as any);
-      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
-      const props: any[] = [
-        { name: "states", type: "variant", sourceKey: "States", options: ["Hover", "Focus"] },
-      ];
-      detector.detect(tree, props);
-      expect(tree.metadata?.designPatterns).toContainEqual({
-        type: "statePseudoClass",
-        prop: "states",
+    it("States (plural) → statePseudoClass pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "States": { type: "VARIANT", variantOptions: ["Hover", "Focus"] },
+        },
+        children: [],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns).toContainEqual({
+        type: "statePseudoClass", prop: "states",
         stateMap: { Hover: ":hover", Focus: ":focus" },
       });
     });
 
-    it("State prop with no CSS-convertible values → no annotation", () => {
-      const detector = new DesignPatternDetector(null as any);
-      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
-      const props: any[] = [
-        { name: "state", type: "variant", sourceKey: "State", options: ["Success", "Error", "Info"] },
-      ];
-      detector.detect(tree, props);
-      expect(tree.metadata?.designPatterns).toBeUndefined();
-    });
-  });
-
-  describe("detectBreakpointVariant", () => {
-    it("breakpoint variant prop → breakpointVariant annotation on root", () => {
-      const detector = new DesignPatternDetector(null as any);
-      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
-      const props: any[] = [
-        { name: "breakpoint", type: "variant", sourceKey: "Breakpoint", options: ["Mobile(xs-sm)", "Desktop(md-lg)"] },
-      ];
-      detector.detect(tree, props);
-      expect(tree.metadata?.designPatterns).toContainEqual({
-        type: "breakpointVariant",
-        prop: "breakpoint",
-      });
-    });
-
-    it("non-breakpoint prop → no annotation", () => {
-      const detector = new DesignPatternDetector(null as any);
-      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
-      const props: any[] = [{ name: "size", type: "variant", sourceKey: "Size", options: ["Large"] }];
-      detector.detect(tree, props);
-      expect(tree.metadata?.designPatterns).toBeUndefined();
-    });
-
-    it("device prop name → breakpointVariant annotation", () => {
-      const detector = new DesignPatternDetector(null as any);
-      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
-      const props: any[] = [
-        { name: "device", type: "variant", sourceKey: "Device", options: ["Mobile", "Desktop"] },
-      ];
-      detector.detect(tree, props);
-      expect(tree.metadata?.designPatterns).toContainEqual({
-        type: "breakpointVariant",
-        prop: "device",
-      });
-    });
-
-    it("no props → no annotation", () => {
-      const detector = new DesignPatternDetector(null as any);
-      const tree: any = { id: "root", name: "Root", type: "FRAME", children: [] };
-      detector.detect(tree, []);
-      expect(tree.metadata?.designPatterns).toBeUndefined();
-    });
-  });
-
-  describe("detectFullCoverBackgrounds", () => {
-    it("TEXT type child → no annotation", () => {
-      const detector = new DesignPatternDetector(null as any);
-      const textNode: any = {
-        id: "t1",
-        name: "Label",
-        type: "TEXT",
-        children: [],
-      };
-      const tree: any = {
-        id: "root",
-        name: "Root",
-        type: "FRAME",
-        children: [textNode, { id: "other", name: "O", type: "FRAME", children: [] }],
-      };
-      detector.detect(tree);
-      expect(textNode.metadata?.designPatterns).toBeUndefined();
-    });
-
-    it("single child → no annotation (not a background, it's content)", () => {
-      const detector = new DesignPatternDetector(null as any);
-      const bgNode: any = {
-        id: "bg-1",
-        name: "Background",
-        type: "RECTANGLE",
-        children: [],
-        mergedNodes: [{ id: "bg-1", variantName: "Default" }],
-      };
-      const tree: any = {
-        id: "root",
-        name: "Root",
-        type: "FRAME",
-        children: [bgNode],
-      };
-      detector.detect(tree);
-      expect(bgNode.metadata?.designPatterns).toBeUndefined();
-    });
-
-    it("INSTANCE type child → no annotation", () => {
-      const detector = new DesignPatternDetector(null as any);
-      const instanceNode: any = {
-        id: "i1",
-        name: "Icon",
-        type: "INSTANCE",
-        children: [],
-      };
-      const tree: any = {
-        id: "root",
-        name: "Root",
-        type: "FRAME",
-        children: [instanceNode, { id: "other", name: "O", type: "FRAME", children: [] }],
-      };
-      detector.detect(tree);
-      expect(instanceNode.metadata?.designPatterns).toBeUndefined();
-    });
-
-    it("fills-only child covering parent 100% → fullCoverBackground annotation", () => {
-      const rawBg = {
-        id: "bg-1",
-        fills: [{ type: "SOLID", visible: true }],
-        strokes: [],
-        effects: [],
-        absoluteBoundingBox: { x: 0, y: 0, width: 100, height: 50 },
-        // parentId points to parent raw node
-        parentId: "parent-1",
-      };
-      const rawParent = {
-        id: "parent-1",
-        fills: [],
-        absoluteBoundingBox: { x: 0, y: 0, width: 100, height: 50 },
-      };
-
-      const mockDataManager = {
-        getById: (id: string) => {
-          if (id === "bg-1") return { node: rawBg, style: {} };
-          if (id === "parent-1") return { node: rawParent, style: {} };
-          return { node: null };
+    it("State with #ID suffix → normalized prop name", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "State#12345:0": { type: "VARIANT", variantOptions: ["Default", "Hover"] },
         },
+        children: [],
       } as any;
+      const patterns = detector.detect(node);
+      expect(patterns).toContainEqual({
+        type: "statePseudoClass", prop: "state",
+        stateMap: { Hover: ":hover" },
+      });
+    });
 
-      const detector = new DesignPatternDetector(mockDataManager);
-      const bgNode: any = {
-        id: "bg-1",
-        name: "Background",
-        type: "RECTANGLE",
+    it("no State prop → no pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "Size": { type: "VARIANT", variantOptions: ["Large", "Small"] },
+        },
         children: [],
-        mergedNodes: [{ id: "bg-1", variantName: "Default" }],
-      };
-      const contentNode: any = {
-        id: "content-1",
-        name: "Content",
-        type: "FRAME",
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns.filter(p => p.type === "statePseudoClass")).toHaveLength(0);
+    });
+
+    it("State with no CSS-convertible values → no pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "State": { type: "VARIANT", variantOptions: ["Success", "Error", "Info"] },
+        },
         children: [],
-      };
-      const tree: any = {
-        id: "parent-1",
-        name: "Parent",
-        type: "FRAME",
-        children: [bgNode, contentNode],
-        mergedNodes: [{ id: "parent-1", variantName: "Default" }],
-      };
-
-      detector.detect(tree);
-
-      expect(bgNode.metadata?.designPatterns).toEqual([{ type: "fullCoverBackground", nodeId: "bg-1" }]);
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns.filter(p => p.type === "statePseudoClass")).toHaveLength(0);
     });
   });
 
-  describe("BooleanPositionSwap annotation", () => {
-    it("annotation shape is correct", () => {
-      const node: any = { id: "n1", name: "Knob", type: "FRAME", children: [] };
-      if (!node.metadata) node.metadata = {};
-      if (!node.metadata.designPatterns) node.metadata.designPatterns = [];
-      node.metadata.designPatterns.push({ type: "booleanPositionSwap", nodeId: "n1", prop: "active" });
-      expect(node.metadata.designPatterns).toContainEqual({
-        type: "booleanPositionSwap",
-        nodeId: "n1",
-        prop: "active",
-      });
+  describe("breakpointVariant", () => {
+    it("Breakpoint variant → pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "Breakpoint": { type: "VARIANT", variantOptions: ["Mobile(xs-sm)", "Desktop(md-lg)"] },
+        },
+        children: [],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns).toContainEqual({ type: "breakpointVariant", prop: "breakpoint" });
+    });
+
+    it("Device prop name → breakpointVariant pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "Device": { type: "VARIANT", variantOptions: ["Mobile", "Desktop"] },
+        },
+        children: [],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns).toContainEqual({ type: "breakpointVariant", prop: "device" });
+    });
+
+    it("Screen prop name → breakpointVariant pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "Screen Size": { type: "VARIANT", variantOptions: ["Small", "Large"] },
+        },
+        children: [],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns).toContainEqual({ type: "breakpointVariant", prop: "screenSize" });
+    });
+
+    it("non-breakpoint prop → no pattern", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "Size": { type: "VARIANT", variantOptions: ["Large"] },
+        },
+        children: [],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns.filter(p => p.type === "breakpointVariant")).toHaveLength(0);
+    });
+  });
+
+  describe("single COMPONENT (not COMPONENT_SET)", () => {
+    it("works on single component", () => {
+      const node = {
+        type: "COMPONENT", name: "SimpleButton",
+        children: [
+          { id: "i-1", type: "FRAME", name: "Interaction", children: [] },
+        ],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns).toContainEqual({ type: "interactionFrame", nodeId: "i-1" });
     });
   });
 });

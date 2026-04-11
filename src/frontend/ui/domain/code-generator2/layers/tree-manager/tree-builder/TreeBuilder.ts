@@ -72,7 +72,7 @@ class TreeBuilder {
     this.externalRefsProcessor = new ExternalRefsProcessor(dataManager);
     this.heuristicsRunner = new HeuristicsRunner();
     this.nodeConverter = new UINodeConverter(dataManager);
-    this.designPatternDetector = new DesignPatternDetector(dataManager);
+    this.designPatternDetector = new DesignPatternDetector();
   }
 
   // ===========================================================================
@@ -88,11 +88,11 @@ class TreeBuilder {
     // Phase 1: 구조 확정 (스타일 미접근)
     // =====================================================================
 
-    // Step 1: 변형 병합
-    let tree = this.variantMerger.merge(node);
+    // Step 0: 디자인 패턴 감지 (merger 이전, 한 번만)
+    const patterns = this.designPatternDetector.detect(node);
 
-    // Step 1.0: 디자인 패턴 감지 (annotation 부착)
-    this.designPatternDetector.detect(tree);
+    // Step 1: 변형 병합 (패턴 annotation 전달)
+    let tree = this.variantMerger.merge(node, patterns);
 
     // Step 1.1: Interaction layer 메타데이터 제거 (Phase 3)
     // — Figma의 "Interaction" frame은 디자이너 의도 표현용 메타데이터이므로
@@ -109,9 +109,6 @@ class TreeBuilder {
 
     // Step 2: Props 추출/바인딩 (mergedNodes 전달하여 variant props 추출)
     let props = this.propsExtractor.extract(node, tree.mergedNodes);
-
-    // Step 2.5: prop 레벨 디자인 패턴 감지 (statePseudoClass, breakpointVariant)
-    this.designPatternDetector.detect(tree, props);
 
     // Step 3: Slot 처리 (통합: 개별 slot + 배열 slot)
     const slotResult = this.slotProcessor.process(tree, props);
@@ -253,7 +250,7 @@ class TreeBuilder {
     props: PropDefinition[]
   ): void {
     const statePattern = tree.metadata?.designPatterns?.find(
-      (p): p is Extract<import("../../../../types/types").DesignPattern, { type: "statePseudoClass" }> =>
+      (p): p is Extract<import("../../../types/types").DesignPattern, { type: "statePseudoClass" }> =>
         p.type === "statePseudoClass"
     );
     if (!statePattern) return;
@@ -492,8 +489,8 @@ class TreeBuilder {
     node: SceneNode,
     options?: { skipInteractionStripper?: boolean }
   ): InternalTree {
-    const tree = this.variantMerger.merge(node);
-    this.designPatternDetector.detect(tree);
+    const patterns = this.designPatternDetector.detect(node);
+    const tree = this.variantMerger.merge(node, patterns);
     if (!options?.skipInteractionStripper) {
       stripInteractionLayers(tree, this.dataManager);
     }
