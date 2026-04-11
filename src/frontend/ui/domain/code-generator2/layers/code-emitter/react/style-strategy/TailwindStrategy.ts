@@ -253,7 +253,7 @@ export class TailwindStrategy implements IStyleStrategy {
         }
       }
 
-      if (entries.length === 0) continue;
+      if (entries.length === 0 && !this.variantOptions.has(propName)) continue;
 
       // compound prop → compoundVariants로 수집
       if (propName.includes("+")) {
@@ -286,6 +286,23 @@ export class TailwindStrategy implements IStyleStrategy {
           compoundEntries.push(`    { ${conditions.join(", ")}, className: ${wrapClassString(classes.join(" "))} },`);
         }
         continue;
+      }
+
+      // variantOptions에 정의된 값 중 누락된 것을 빈 엔트리로 채움
+      const declaredValues = new Set(
+        entries.map((e) => {
+          const match = e.match(/^\s*"?([^":]+)"?\s*:/);
+          return match ? match[1] : "";
+        })
+      );
+      const allOptions = this.variantOptions.get(propName);
+      if (allOptions) {
+        for (const opt of allOptions) {
+          if (!declaredValues.has(opt)) {
+            const key = needsQuoting(opt) ? `"${opt}"` : opt;
+            entries.push(`        ${key}: "",`);
+          }
+        }
       }
 
       // Figma prop 이름에서 제어 문자 제거 (backspace 등)
