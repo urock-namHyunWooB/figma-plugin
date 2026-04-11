@@ -536,11 +536,7 @@ export class StyleProcessor {
       return undefined;
     }
 
-    // 전체 variant 대상 CSS 노이즈 정규화 (원본 스타일 기준)
-    this.normalizeAcrossVariants(node.mergedNodes, variantStyles);
-
     // squash prune으로 제거된 wrapper의 레이아웃 오버라이드 적용
-    // normalizeAcrossVariants 이후에 적용해야 원본 children 수 기반 gap 정리에 영향받지 않음
     if (node.metadata?.layoutOverrides) {
       for (const vs of variantStyles) {
         const overrides = node.metadata.layoutOverrides[vs.variantName];
@@ -658,67 +654,6 @@ export class StyleProcessor {
             delete cssStyle.transform;
           }
         }
-      }
-    }
-  }
-
-  /**
-   * 전체 variant를 비교하여 렌더링에 무의미한 CSS 차이를 정규화한다.
-   *
-   * gap 정규화:
-   *   flex 컨테이너에서 자식이 1개 이하인 variant의 gap은 렌더링에 무의미하다.
-   *   (자식 간 간격이 존재하지 않으므로 어떤 값이든 결과가 같다)
-   *   이런 variant의 gap 값을 자식이 2개 이상인 variant의 gap으로 통일하면,
-   *   불필요한 compound 조건(AND(size, icon))이 생성되지 않는다.
-   */
-  private normalizeAcrossVariants(
-    mergedNodes: VariantOrigin[],
-    variantStyles: Array<{ variantName: string; cssStyle: Record<string, string> }>
-  ): void {
-    // gap이 있는 variant가 하나라도 있는지 확인
-    const hasGap = variantStyles.some((v) => v.cssStyle.gap);
-    if (!hasGap) return;
-
-    // 각 variant의 visible 자식 수 수집
-    const childCounts = new Map<string, number>();
-    for (const merged of mergedNodes) {
-      const { node } = this.dataManager.getById(merged.id);
-      const n = node as Record<string, unknown> | undefined;
-      const children = n?.children as Array<Record<string, unknown>> | undefined;
-      const visibleCount = children
-        ? children.filter((c) => c.visible !== false).length
-        : 0;
-      childCounts.set(merged.variantName || (merged as any).name, visibleCount);
-    }
-
-    // 자식 ≥2인 variant들의 gap 값 수집 (의미 있는 gap)
-    const meaningfulGaps = new Map<string, string>();
-    for (const v of variantStyles) {
-      const count = childCounts.get(v.variantName) ?? 0;
-      if (count >= 2 && v.cssStyle.gap) {
-        meaningfulGaps.set(v.variantName, v.cssStyle.gap);
-      }
-    }
-
-    if (meaningfulGaps.size === 0) {
-      // 모든 variant가 자식 ≤1 → gap 자체가 무의미 → 전부 제거
-      for (const v of variantStyles) {
-        delete v.cssStyle.gap;
-        delete v.cssStyle["row-gap"];
-        delete v.cssStyle["column-gap"];
-      }
-      return;
-    }
-
-    // 자식 ≤1인 variant의 gap 제거 (렌더링에 무의미한 값)
-    // FD 분해의 isGroupConsistent가 absent를 "무관"으로 처리하므로
-    // 삭제해도 present 값끼리만 비교하여 올바른 prop에 할당됨
-    for (const v of variantStyles) {
-      const count = childCounts.get(v.variantName) ?? 0;
-      if (count <= 1) {
-        delete v.cssStyle.gap;
-        delete v.cssStyle["row-gap"];
-        delete v.cssStyle["column-gap"];
       }
     }
   }
