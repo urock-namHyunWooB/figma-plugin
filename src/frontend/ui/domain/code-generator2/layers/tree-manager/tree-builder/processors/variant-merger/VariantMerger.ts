@@ -4,6 +4,7 @@ import {
   VariantGraph,
   PropDiffInfo,
 } from "../../../../../types/types";
+import type { DesignPattern } from "../../../../../types/types";
 import DataManager from "../../../../data-manager/DataManager";
 import { NodeMatcher } from "./NodeMatcher";
 import { LayoutNormalizer } from "./LayoutNormalizer";
@@ -50,18 +51,26 @@ export class VariantMerger {
   /**
    * 파이프라인 진입점
    */
-  public merge(document: SceneNode): InternalTree {
+  public merge(document: SceneNode, patterns?: DesignPattern[]): InternalTree {
+    let tree: InternalTree;
+
     if (document.type === "COMPONENT_SET") {
       const children = (document as any).children as SceneNode[] | undefined;
 
       if (!children || children.length === 0) {
-        return this.convertToInternalTree(document);
+        tree = this.convertToInternalTree(document);
+      } else {
+        tree = this.mergeVariants(document, children);
       }
-
-      return this.mergeVariants(document, children);
     } else {
-      return this.convertToInternalTree(document);
+      tree = this.convertToInternalTree(document);
     }
+
+    if (patterns && patterns.length > 0) {
+      this.applyPatternAnnotations(tree, patterns);
+    }
+
+    return tree;
   }
 
   /**
@@ -692,6 +701,82 @@ export class VariantMerger {
     }
 
     return internalNode;
+  }
+
+  // ===========================================================================
+  // Private: Pattern annotation transfer
+  // ===========================================================================
+
+  /**
+   * DesignPatternDetector가 반환한 패턴을 InternalNode에 복사.
+   * - nodeId가 있는 패턴: 해당 InternalNode의 metadata.designPatterns에 추가
+   * - nodeId가 없는 패턴 (컴포넌트 레벨): root에 추가
+   */
+  private applyPatternAnnotations(root: InternalTree, patterns: DesignPattern[]): void {
+    const nodePatterns: Array<DesignPattern & { nodeId: string }> = [];
+    const componentPatterns: DesignPattern[] = [];
+
+    for (const p of patterns) {
+      if ("nodeId" in p && typeof (p as any).nodeId === "string") {
+        nodePatterns.push(p as any);
+      } else {
+        componentPatterns.push(p);
+      }
+    }
+
+    // Component-level patterns → root
+    if (componentPatterns.length > 0) {
+      if (!root.metadata) root.metadata = {};
+      if (!root.metadata.designPatterns) root.metadata.designPatterns = [];
+      root.metadata.designPatterns.push(...componentPatterns);
+    }
+
+    // Node-level patterns → match by nodeId
+    if (nodePatterns.length > 0) {
+      const patternsByNodeId = new Map<string, DesignPattern[]>();
+      for (const p of nodePatterns) {
+        const id = p.nodeId;
+        if (!patternsByNodeId.has(id)) patternsByNodeId.set(id, []);
+        patternsByNodeId.get(id)!.push(p);
+      }
+      this.walkAndAnnotate(root, patternsByNodeId);
+    }
+  }
+
+  private walkAndAnnotate(
+    node: InternalNode,
+    patternsByNodeId: Map<string, DesignPattern[]>,
+  ): void {
+    // Match by node.id
+    const directMatch = patternsByNodeId.get(node.id);
+    if (directMatch) {
+      if (!node.metadata) node.metadata = {};
+      if (!node.metadata.designPatterns) node.metadata.designPatterns = [];
+      for (const p of directMatch) {
+        if (!node.metadata.designPatterns.some(e => JSON.stringify(e) === JSON.stringify(p))) {
+          node.metadata.designPatterns.push(p);
+        }
+      }
+    }
+
+    // Also match by mergedNodes[].id (variant nodes may have different IDs)
+    for (const merged of node.mergedNodes ?? []) {
+      if (merged.id === node.id) continue;
+      const mergedMatch = patternsByNodeId.get(merged.id);
+      if (mergedMatch) {
+        if (!node.metadata) node.metadata = {};
+        if (!node.metadata.designPatterns) node.metadata.designPatterns = [];
+        for (const p of mergedMatch) {
+          if (!node.metadata.designPatterns.some(e => JSON.stringify(e) === JSON.stringify(p))) {
+            node.metadata.designPatterns.push(p);
+          }
+        }
+      }
+    }
+
+    for (const child of node.children) {
+      this.walkAndAnnotate(child, patternsByNodeId);
+    }
   }
 
   // ===========================================================================
