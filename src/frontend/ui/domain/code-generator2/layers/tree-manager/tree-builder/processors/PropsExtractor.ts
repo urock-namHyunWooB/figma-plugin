@@ -449,9 +449,18 @@ export class PropsExtractor {
 
   /**
    * Slot 패턴인지 확인 (icon, image 등 React.ReactNode를 받을 수 있는 패턴)
+   *
+   * "Leading Icon" → 슬롯 (아이콘 콘텐츠를 받음)
+   * "Icon Only" → 슬롯이 아님 (레이아웃 모드 제어 boolean)
+   * "only", "mode", "type" 등 수식어가 붙으면 콘텐츠 슬롯이 아닌 제어용 prop
    */
   private isSlotPattern(propName: string): boolean {
     const lowerName = propName.toLowerCase();
+
+    // 제어용 수식어가 포함되면 슬롯이 아님
+    const controlModifiers = ["only", "mode", "type", "style", "size", "count", "position", "align"];
+    if (controlModifiers.some((mod) => lowerName.includes(mod))) return false;
+
     // icon, image, avatar 등은 slot으로 변환
     return (
       lowerName.includes("icon") ||

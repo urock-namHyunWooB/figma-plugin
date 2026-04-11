@@ -56,17 +56,18 @@ describe("Buttonsolid conditionalGroup", () => {
     const code = await gen.compile();
     expect(code).toBeDefined();
 
-    // Ternary pattern: iconOnly === "True" ? (...) : (...)
+    // iconOnly는 boolean prop이므로 삼항: iconOnly ? (...) : (...)
     const hasTernary =
+      code!.includes("iconOnly ?") ||
+      code!.includes("iconOnly === true") ||
       code!.includes('iconOnly === "True"') ||
       code!.includes('iconOnly === "False"');
     expect(hasTernary).toBe(true);
 
-    // Should NOT have repeated individual conditions for each child
-    const iconOnlyFalseCount = (
-      code!.match(/iconOnly === "False" &&/g) || []
+    // 개별 !iconOnly && 반복이 아닌 그룹화된 분기여야 함
+    const iconOnlyAndCount = (
+      code!.match(/!iconOnly &&/g) || []
     ).length;
-    // If ternary is used, there should be 0 or at most 1 such pattern (not repeated per child)
-    expect(iconOnlyFalseCount).toBeLessThanOrEqual(1);
+    expect(iconOnlyAndCount).toBeLessThanOrEqual(1);
   });
 });
