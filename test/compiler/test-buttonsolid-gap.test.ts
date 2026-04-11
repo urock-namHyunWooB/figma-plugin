@@ -1,27 +1,23 @@
-import { describe, it } from "vitest";
+import { describe, it, expect } from "vitest";
 import { FigmaCodeGenerator } from "../../src/frontend/ui/domain/code-generator2";
 import ButtonsolidFixture from "../fixtures/failing/Buttonsolid.json";
 
-describe("Buttonsolid gap check", () => {
-  it("trace collectVariantStyles gap", () => {
-    (globalThis as any).__collectTrace = [];
-    (globalThis as any).__styleObjTrace = [];
-
+describe("Buttonsolid gap", () => {
+  it("Content 노드에 gap이 존재해야 한다", () => {
     const gen = new FigmaCodeGenerator(ButtonsolidFixture as any);
-    gen.buildUITree();
+    const { main } = gen.buildUITree();
 
-    const collect = (globalThis as any).__collectTrace;
-    const styleObj = (globalThis as any).__styleObjTrace;
-
-    // Count Content nodes in collect
-    const contentEntries = collect.filter((e: any) => e.name === "Content");
-
-    throw new Error("DIAG:\n" +
-      "collectTrace total: " + collect.length + "\n" +
-      "Content entries: " + contentEntries.length + "\n" +
-      "sample Content: " + JSON.stringify(contentEntries.slice(0, 3), null, 2) + "\n" +
-      "unique names: " + JSON.stringify([...new Set(collect.map((e: any) => e.name))]) + "\n" +
-      "styleObjTrace: " + JSON.stringify(styleObj, null, 2)
+    // Content 노드 찾기 (root의 자식 중)
+    const contentNode = (main.root as any).children?.find(
+      (c: any) => c.name === "Content"
     );
+
+    // Content 노드의 base 또는 dynamic 스타일에 gap이 있어야 함
+    const baseGap = contentNode?.styles?.base?.gap;
+    const dynamicGap = (contentNode?.styles?.dynamic || []).some(
+      (d: any) => "gap" in d.style
+    );
+
+    expect(baseGap || dynamicGap).toBeTruthy();
   });
 });
