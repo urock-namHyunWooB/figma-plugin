@@ -3256,16 +3256,19 @@ exports[`UITree snapshots > any/StateinsertGuideTextfalse 1`] = `
 
 exports[`UITree snapshots > any/Switchswitch 1`] = `
 {
-  "arraySlotNames": [],
+  "arraySlotNames": [
+    "knobs",
+  ],
   "componentType": "toggle",
   "propNames": [
     "active",
     "disable",
+    "knobs",
     "onCheckedChange",
     "platform",
     "size",
   ],
-  "propsCount": 5,
+  "propsCount": 6,
   "root": {
     "children": [
       {
@@ -20594,8 +20597,12 @@ exports[`UITree snapshots > failing/Switch 1`] = `
       },
       {
         "children": [],
-        "id": "74:157",
+        "id": "74:153",
         "mergedNodes": [
+          {
+            "id": "74:153",
+            "variantName": "states=enabled",
+          },
           {
             "id": "74:157",
             "variantName": "states=hover",
@@ -20603,10 +20610,6 @@ exports[`UITree snapshots > failing/Switch 1`] = `
           {
             "id": "74:161",
             "variantName": "states=disabled",
-          },
-          {
-            "id": "74:153",
-            "variantName": "states=enabled",
           },
         ],
         "name": "Rectangle 6575",

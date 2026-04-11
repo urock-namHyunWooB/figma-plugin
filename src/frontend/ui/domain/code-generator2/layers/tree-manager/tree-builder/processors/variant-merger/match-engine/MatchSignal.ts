@@ -2,6 +2,7 @@ import type { InternalNode } from "../../../../../../types/types";
 import type DataManager from "../../../../../data-manager/DataManager";
 import type { LayoutNormalizer } from "../LayoutNormalizer";
 import type { MatchingPolicy } from "./MatchingPolicy";
+import type { NodePresence } from "../NodePresenceScanner";
 
 /**
  * 매칭 컨텍스트. 신호가 평가에 사용하는 모든 외부 의존성을 한 곳에 모음.
@@ -11,6 +12,8 @@ export interface MatchContext {
   readonly layoutNormalizer: LayoutNormalizer;
   readonly nodeToVariantRoot: ReadonlyMap<string, string>;
   readonly policy: MatchingPolicy;
+  /** 노드 presence 정보 (BooleanPositionSwap 조건부 노드 판별용) */
+  readonly nodePresence?: NodePresence;
 }
 
 /**
