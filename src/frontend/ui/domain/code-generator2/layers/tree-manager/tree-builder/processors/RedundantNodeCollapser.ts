@@ -71,7 +71,7 @@ function absorbFullCoverChildren(
   const survivors: InternalNode[] = [];
 
   for (const child of children) {
-    if (isFullCoverStyleOnly(child, node, dataManager)) {
+    if (child.metadata?.designPatterns?.some(p => p.type === "fullCoverBackground")) {
       // child의 fills를 부모의 mergedNodes 원본에 마킹 (StyleProcessor에서 활용)
       absorbFillsIntoParent(child, node, dataManager);
       // child는 survivors에 안 넣음 → 제거
@@ -94,7 +94,7 @@ function absorbFullCoverChildren(
  * 5. fills만 있고 strokes/effects 없음 (순수 배경 역할)
  * 6. 부모에 기존 fills가 없거나, 있더라도 같은 값
  */
-function isFullCoverStyleOnly(
+export function isFullCoverStyleOnly(
   child: InternalNode,
   parent: InternalNode,
   dataManager: DataManager,

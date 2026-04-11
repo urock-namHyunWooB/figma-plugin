@@ -1,5 +1,6 @@
 import type { InternalTree, InternalNode, DesignPattern } from "../../../../types/types";
 import type DataManager from "../../../data-manager/DataManager";
+import { isFullCoverStyleOnly } from "./RedundantNodeCollapser";
 
 /**
  * DesignPatternDetector
@@ -17,6 +18,7 @@ export class DesignPatternDetector {
       this.detectAlphaMask(node);
       this.detectInteractionFrame(node);
     });
+    this.detectFullCoverBackgrounds(tree);
   }
 
   private walk(node: InternalNode, visitor: (n: InternalNode) => void): void {
@@ -50,5 +52,21 @@ export class DesignPatternDetector {
     if (node.type !== "FRAME") return;
     if (node.name !== "Interaction") return;
     this.addPattern(node, { type: "interactionFrame" });
+  }
+
+  private detectFullCoverBackgrounds(node: InternalNode): void {
+    // bottom-up: process children first
+    for (const child of node.children ?? []) {
+      this.detectFullCoverBackgrounds(child);
+    }
+
+    const siblings = node.children ?? [];
+    if (siblings.length < 2) return;
+
+    for (const child of siblings) {
+      if (isFullCoverStyleOnly(child, node, this.dataManager)) {
+        this.addPattern(child, { type: "fullCoverBackground" });
+      }
+    }
   }
 }

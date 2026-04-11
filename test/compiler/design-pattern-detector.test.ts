@@ -79,4 +79,112 @@ describe("DesignPatternDetector", () => {
       expect(node.metadata?.designPatterns).toBeUndefined();
     });
   });
+
+  describe("detectFullCoverBackgrounds", () => {
+    it("TEXT type child → no annotation", () => {
+      const detector = new DesignPatternDetector(null as any);
+      const textNode: any = {
+        id: "t1",
+        name: "Label",
+        type: "TEXT",
+        children: [],
+      };
+      const tree: any = {
+        id: "root",
+        name: "Root",
+        type: "FRAME",
+        children: [textNode, { id: "other", name: "O", type: "FRAME", children: [] }],
+      };
+      detector.detect(tree);
+      expect(textNode.metadata?.designPatterns).toBeUndefined();
+    });
+
+    it("single child → no annotation (not a background, it's content)", () => {
+      const detector = new DesignPatternDetector(null as any);
+      const bgNode: any = {
+        id: "bg-1",
+        name: "Background",
+        type: "RECTANGLE",
+        children: [],
+        mergedNodes: [{ id: "bg-1", variantName: "Default" }],
+      };
+      const tree: any = {
+        id: "root",
+        name: "Root",
+        type: "FRAME",
+        children: [bgNode],
+      };
+      detector.detect(tree);
+      expect(bgNode.metadata?.designPatterns).toBeUndefined();
+    });
+
+    it("INSTANCE type child → no annotation", () => {
+      const detector = new DesignPatternDetector(null as any);
+      const instanceNode: any = {
+        id: "i1",
+        name: "Icon",
+        type: "INSTANCE",
+        children: [],
+      };
+      const tree: any = {
+        id: "root",
+        name: "Root",
+        type: "FRAME",
+        children: [instanceNode, { id: "other", name: "O", type: "FRAME", children: [] }],
+      };
+      detector.detect(tree);
+      expect(instanceNode.metadata?.designPatterns).toBeUndefined();
+    });
+
+    it("fills-only child covering parent 100% → fullCoverBackground annotation", () => {
+      const rawBg = {
+        id: "bg-1",
+        fills: [{ type: "SOLID", visible: true }],
+        strokes: [],
+        effects: [],
+        absoluteBoundingBox: { x: 0, y: 0, width: 100, height: 50 },
+        // parentId points to parent raw node
+        parentId: "parent-1",
+      };
+      const rawParent = {
+        id: "parent-1",
+        fills: [],
+        absoluteBoundingBox: { x: 0, y: 0, width: 100, height: 50 },
+      };
+
+      const mockDataManager = {
+        getById: (id: string) => {
+          if (id === "bg-1") return { node: rawBg, style: {} };
+          if (id === "parent-1") return { node: rawParent, style: {} };
+          return { node: null };
+        },
+      } as any;
+
+      const detector = new DesignPatternDetector(mockDataManager);
+      const bgNode: any = {
+        id: "bg-1",
+        name: "Background",
+        type: "RECTANGLE",
+        children: [],
+        mergedNodes: [{ id: "bg-1", variantName: "Default" }],
+      };
+      const contentNode: any = {
+        id: "content-1",
+        name: "Content",
+        type: "FRAME",
+        children: [],
+      };
+      const tree: any = {
+        id: "parent-1",
+        name: "Parent",
+        type: "FRAME",
+        children: [bgNode, contentNode],
+        mergedNodes: [{ id: "parent-1", variantName: "Default" }],
+      };
+
+      detector.detect(tree);
+
+      expect(bgNode.metadata?.designPatterns).toEqual([{ type: "fullCoverBackground" }]);
+    });
+  });
 });
