@@ -51,6 +51,23 @@ describe("Buttonsolid conditionalGroup", () => {
     expect(iconOnlyCg).toBeDefined();
   });
 
+  it("분기 안 스타일에서 iconOnly 차원이 제거된다", async () => {
+    const gen = new FigmaCodeGenerator(ButtonsolidFixture as any);
+    const code = await gen.compile();
+    expect(code).toBeDefined();
+
+    // Write to file for debugging
+    const fs = await import("fs");
+    const iconOnlyLines = code!.split("\n")
+      .map((l, i) => `${i+1}: ${l}`)
+      .filter(l => l.includes("iconOnly"));
+    fs.writeFileSync("/tmp/buttonsolid-final.txt", iconOnlyLines.join("\n"));
+
+    // Ternary exists
+    const hasTernary = code!.includes("iconOnly ?");
+    expect(hasTernary).toBe(true);
+  });
+
   it("생성 코드에 ternary 분기가 포함된다", async () => {
     const gen = new FigmaCodeGenerator(ButtonsolidFixture as any);
     const code = await gen.compile();
