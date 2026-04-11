@@ -45,6 +45,7 @@ export class DesignPatternDetector {
       }
 
       // Component-level patterns: analyze componentPropertyDefinitions
+      this.detectLayoutModeSwitch(variants, propDefs, patterns);
       this.detectStatePseudoClass(propDefs, patterns);
       this.detectBreakpointVariant(propDefs, patterns);
     } else {
@@ -151,6 +152,144 @@ export class DesignPatternDetector {
     seenIds.add(key);
 
     patterns.push({ type: "fullCoverBackground", nodeId: node.id });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // layoutModeSwitch (component-level)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  private detectLayoutModeSwitch(
+    variants: any[],
+    propDefs: Record<string, any>,
+    patterns: DesignPattern[],
+  ): void {
+    if (variants.length < 2) return;
+
+    // 1. Parse variant names into prop=value maps
+    const variantPropMaps: Array<{ props: Record<string, string>; variant: any }> = [];
+    for (const v of variants) {
+      const name: string = v.name ?? "";
+      const props: Record<string, string> = {};
+      for (const segment of name.split(",")) {
+        const eqIdx = segment.indexOf("=");
+        if (eqIdx < 0) continue;
+        const key = segment.slice(0, eqIdx).trim();
+        const val = segment.slice(eqIdx + 1).trim();
+        props[key] = val;
+      }
+      if (Object.keys(props).length > 0) {
+        variantPropMaps.push({ props, variant: v });
+      }
+    }
+    if (variantPropMaps.length < 2) return;
+
+    // 2. Collect variant prop keys (only VARIANT type)
+    const variantPropKeys: string[] = [];
+    for (const [rawKey, def] of Object.entries(propDefs)) {
+      if (def.type !== "VARIANT") continue;
+      const cleanKey = rawKey.split("#")[0].trim();
+      variantPropKeys.push(cleanKey);
+    }
+
+    // 3. For each container name, collect children names per variant
+    // containerName → variantIndex → sorted children names
+    const containerChildrenMap = new Map<string, Map<number, string[]>>();
+
+    for (let vi = 0; vi < variantPropMaps.length; vi++) {
+      const { variant } = variantPropMaps[vi];
+      this.collectContainerChildren(variant.children ?? [], vi, containerChildrenMap);
+    }
+
+    // 4. For each candidate prop, check if it alone determines children structure change
+    for (const propKey of variantPropKeys) {
+      for (const [containerName, variantChildrenMap] of containerChildrenMap) {
+        // Group variants by this prop's value, collecting children name sets
+        const valueToChildrenSets = new Map<string, Set<string>>();
+        let consistent = true;
+
+        for (let vi = 0; vi < variantPropMaps.length; vi++) {
+          const { props } = variantPropMaps[vi];
+          const propVal = props[propKey];
+          if (propVal === undefined) continue;
+
+          const childNames = variantChildrenMap.get(vi);
+          if (!childNames) continue;
+
+          const childKey = childNames.join(",");
+          if (!valueToChildrenSets.has(propVal)) {
+            valueToChildrenSets.set(propVal, new Set([childKey]));
+          } else {
+            valueToChildrenSets.get(propVal)!.add(childKey);
+          }
+        }
+
+        // Each prop value must map to exactly one children structure
+        for (const childKeysForVal of valueToChildrenSets.values()) {
+          if (childKeysForVal.size > 1) {
+            consistent = false;
+            break;
+          }
+        }
+        if (!consistent) continue;
+
+        // Must have at least 2 different children structures
+        const uniqueStructures = new Set<string>();
+        for (const childKeysForVal of valueToChildrenSets.values()) {
+          for (const k of childKeysForVal) uniqueStructures.add(k);
+        }
+        if (uniqueStructures.size < 2) continue;
+
+        // Build branches: prop value → children names
+        const branches: Record<string, string[]> = {};
+        for (const [val, childKeysForVal] of valueToChildrenSets) {
+          const childKey = [...childKeysForVal][0];
+          branches[val] = childKey.split(",");
+        }
+
+        // Find a representative container nodeId
+        const firstVariantChildren = variantChildrenMap.values().next().value;
+        const containerNodeId = this.findContainerNodeId(
+          variantPropMaps[0].variant.children ?? [],
+          containerName,
+        ) ?? containerName;
+
+        const prop = normalizePropName(propKey);
+        patterns.push({
+          type: "layoutModeSwitch",
+          containerNodeId,
+          prop,
+          branches,
+        });
+      }
+    }
+  }
+
+  /** Recursively collect container → children names mapping for a variant */
+  private collectContainerChildren(
+    nodes: any[],
+    variantIndex: number,
+    map: Map<string, Map<number, string[]>>,
+  ): void {
+    for (const node of nodes) {
+      const children = node.children ?? [];
+      if (children.length > 0) {
+        const containerName: string = node.name ?? "";
+        if (!map.has(containerName)) map.set(containerName, new Map());
+        const childNames = children.map((c: any) => c.name ?? "").sort();
+        map.get(containerName)!.set(variantIndex, childNames);
+        this.collectContainerChildren(children, variantIndex, map);
+      }
+    }
+  }
+
+  /** Find nodeId for a container by name in raw children */
+  private findContainerNodeId(nodes: any[], name: string): string | undefined {
+    for (const node of nodes) {
+      if (node.name === name && node.id) return node.id;
+      const found = this.findContainerNodeId(node.children ?? [], name);
+      if (found) return found;
+    }
+    return undefined;
   }
 
   // ─────────────────────────────────────────────────────────────────────────

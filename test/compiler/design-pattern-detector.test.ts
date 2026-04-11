@@ -328,6 +328,148 @@ describe("DesignPatternDetector (raw data)", () => {
     });
   });
 
+  describe("layoutModeSwitch", () => {
+    it("variant prop에 의해 자식 구조가 바뀌면 감지", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "Icon Only": { type: "VARIANT", variantOptions: ["False", "True"] },
+          "Size": { type: "VARIANT", variantOptions: ["Large", "Small"] },
+        },
+        children: [
+          {
+            type: "COMPONENT", name: "Icon Only=False, Size=Large",
+            children: [{
+              id: "content-1", type: "FRAME", name: "Content",
+              children: [
+                { id: "li-1", type: "FRAME", name: "Leading Icon", children: [] },
+                { id: "txt-1", type: "TEXT", name: "텍스트", children: [] },
+                { id: "ti-1", type: "FRAME", name: "Trailing Icon", children: [] },
+              ],
+            }],
+          },
+          {
+            type: "COMPONENT", name: "Icon Only=False, Size=Small",
+            children: [{
+              id: "content-2", type: "FRAME", name: "Content",
+              children: [
+                { id: "li-2", type: "FRAME", name: "Leading Icon", children: [] },
+                { id: "txt-2", type: "TEXT", name: "텍스트", children: [] },
+                { id: "ti-2", type: "FRAME", name: "Trailing Icon", children: [] },
+              ],
+            }],
+          },
+          {
+            type: "COMPONENT", name: "Icon Only=True, Size=Large",
+            children: [{
+              id: "content-3", type: "FRAME", name: "Content",
+              children: [
+                { id: "icon-1", type: "INSTANCE", name: "Icon", children: [] },
+              ],
+            }],
+          },
+          {
+            type: "COMPONENT", name: "Icon Only=True, Size=Small",
+            children: [{
+              id: "content-4", type: "FRAME", name: "Content",
+              children: [
+                { id: "icon-2", type: "INSTANCE", name: "Icon", children: [] },
+              ],
+            }],
+          },
+        ],
+      } as any;
+
+      const patterns = detector.detect(node);
+      const lms = patterns.find(p => p.type === "layoutModeSwitch");
+      expect(lms).toBeDefined();
+      expect(lms).toMatchObject({
+        type: "layoutModeSwitch",
+        prop: "iconOnly",
+        branches: {
+          "False": expect.arrayContaining(["Leading Icon", "텍스트", "Trailing Icon"]),
+          "True": expect.arrayContaining(["Icon"]),
+        },
+      });
+    });
+
+    it("모든 variant에서 자식 구조가 같으면 감지하지 않음", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "Size": { type: "VARIANT", variantOptions: ["Large", "Small"] },
+        },
+        children: [
+          {
+            type: "COMPONENT", name: "Size=Large",
+            children: [{
+              id: "c-1", type: "FRAME", name: "Content",
+              children: [{ id: "a-1", type: "TEXT", name: "Label", children: [] }],
+            }],
+          },
+          {
+            type: "COMPONENT", name: "Size=Small",
+            children: [{
+              id: "c-2", type: "FRAME", name: "Content",
+              children: [{ id: "a-2", type: "TEXT", name: "Label", children: [] }],
+            }],
+          },
+        ],
+      } as any;
+
+      const patterns = detector.detect(node);
+      expect(patterns.filter(p => p.type === "layoutModeSwitch")).toHaveLength(0);
+    });
+
+    it("N분기 감지", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "Type": { type: "VARIANT", variantOptions: ["Default", "Basic", "Minimal"] },
+        },
+        children: [
+          {
+            type: "COMPONENT", name: "Type=Default",
+            children: [{
+              id: "h-1", type: "FRAME", name: "Header",
+              children: [
+                { id: "n1", type: "FRAME", name: "Nav", children: [] },
+                { id: "t1", type: "TEXT", name: "Title", children: [] },
+                { id: "a1", type: "FRAME", name: "Actions", children: [] },
+              ],
+            }],
+          },
+          {
+            type: "COMPONENT", name: "Type=Basic",
+            children: [{
+              id: "h-2", type: "FRAME", name: "Header",
+              children: [
+                { id: "n2", type: "FRAME", name: "Nav", children: [] },
+                { id: "t2", type: "TEXT", name: "Title", children: [] },
+              ],
+            }],
+          },
+          {
+            type: "COMPONENT", name: "Type=Minimal",
+            children: [{
+              id: "h-3", type: "FRAME", name: "Header",
+              children: [
+                { id: "n3", type: "FRAME", name: "Nav", children: [] },
+              ],
+            }],
+          },
+        ],
+      } as any;
+
+      const patterns = detector.detect(node);
+      const lms = patterns.find(p => p.type === "layoutModeSwitch");
+      expect(lms).toBeDefined();
+      if (lms && lms.type === "layoutModeSwitch") {
+        expect(Object.keys(lms.branches)).toHaveLength(3);
+      }
+    });
+  });
+
   describe("single COMPONENT (not COMPONENT_SET)", () => {
     it("works on single component", () => {
       const node = {
