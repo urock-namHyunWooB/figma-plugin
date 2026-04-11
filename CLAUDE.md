@@ -147,6 +147,13 @@ Detailed technical docs in `docs/guide/`:
 4. **Issue Documentation**: Record resolved issues in markdown (problem, cause, solution, related files)
 5. **Add Regression Tests**: Write tests for the resolved issue
 
+### Snapshot 업데이트 규칙
+
+- `npx vitest run -u` 실행 전 반드시 snapshot diff를 확인할 것
+- 변경된 생성 코드가 **의미적으로 올바른지** 검증 (단순히 "테스트 통과"가 목적이 아님)
+- 특히 코드 생성 결과 snapshot은 prop 타입과 조건 분기가 맞는지 확인
+- subagent가 snapshot을 업데이트할 때도 diff 내용을 리포트에 포함시킬 것
+
 ### Subagent Usage
 
 Use these subagents proactively when conditions are met:
