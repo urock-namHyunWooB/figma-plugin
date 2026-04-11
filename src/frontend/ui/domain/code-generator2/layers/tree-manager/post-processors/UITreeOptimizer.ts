@@ -22,6 +22,7 @@ export class UITreeOptimizer {
    */
   optimizeMain(tree: UITree, diagnostics?: VariantInconsistency[]): void {
     this.removeVariantOnlySlots(tree);
+    this.hoistSharedChildConditions(tree.root);
     this.mergeRedundantDynamicStyles(tree.root);
     this.decomposeDynamicStyles(tree.root, diagnostics);
   }
@@ -30,6 +31,7 @@ export class UITreeOptimizer {
    * 의존 트리 최적화 (dynamic styles 병합 + 루트 유연화 → FD 분해)
    */
   optimizeDependency(tree: UITree, diagnostics?: VariantInconsistency[]): void {
+    this.hoistSharedChildConditions(tree.root);
     this.mergeRedundantDynamicStyles(tree.root);
     this.makeRootFlexible(tree);
     this.decomposeDynamicStyles(tree.root, diagnostics);
