@@ -57,7 +57,62 @@ Wrapper (FRAME)
 
 ---
 
-## 2. 장식/컬러 마스크 (처리 불필요)
+## 2. Variant별 자식 구조 교체 (레이아웃 모드 전환)
+
+### 디자이너 의도
+"버튼에 아이콘 슬롯(Leading/Trailing)을 준비하되, iconOnly 모드에서는 아이콘 하나만 남긴다"
+
+### Figma 표현
+```
+Buttonsolid (COMPONENT_SET)
+├── Icon Only=False
+│   └── Content (FRAME)
+│       ├── Leading Icon (FRAME, visible=false, ref=leadingIcon)  ← boolean 슬롯
+│       ├── 텍스트 (TEXT)
+│       └── Trailing Icon (FRAME, visible=false, ref=trailingIcon) ← boolean 슬롯
+└── Icon Only=True
+    └── Content (FRAME)
+        └── Icon (INSTANCE)  ← 완전히 다른 자식 구성
+```
+
+- `Icon Only`는 VARIANT prop — True/False에서 **Content의 자식 트리 자체가 다름**
+- `visible` 토글이 아니라, variant별로 디자이너가 **다른 노드 구성을 배치**한 것
+- Leading/Trailing Icon은 iconOnly와 무관 — 자기 자신의 boolean prop으로만 토글됨
+
+### 1번 패턴과의 차이
+| | Alpha Mask (1번) | 자식 구조 교체 (2번) |
+|---|---|---|
+| 메커니즘 | 투명 마스크로 간접 가림 | variant별로 다른 자식 트리 배치 |
+| 레이아웃 | 공간 유지 (visibility: hidden) | 구조 자체가 바뀜 (display: none) |
+| 용도 | loading 시 크기 유지 | iconOnly 시 레이아웃 모드 전환 |
+
+### 코드 생성기 처리
+현재 별도 패턴 감지 없음. variant merger가 노드 존재 여부로 기계적으로 `visibleCondition`을 부여하고,
+`hoistSharedChildConditions` 후처리가 공통 조건을 부모로 끌어올린다.
+
+### 생성 코드 예시
+```tsx
+{/* Icon Only=False 모드 */}
+{iconOnly === "False" && (
+  <>
+    {leadingIcon && <div css={leadingIconCss}>{leadingIcon}</div>}
+    <span>{label}</span>
+    {trailingIcon && <div css={trailingIconCss}>{trailingIcon}</div>}
+  </>
+)}
+
+{/* Icon Only=True 모드 */}
+{iconOnly === "True" && <Icon />}
+```
+
+### Fixture 검증
+| 패턴 | Fixture |
+|------|---------|
+| iconOnly 레이아웃 모드 전환 | Buttonsolid |
+
+---
+
+## 3. 장식/컬러 마스크 (처리 불필요)
 
 ### 용도
 아이콘이나 도형에 색을 입히기 위한 정적 마스크. 토글 없이 항상 활성.
@@ -79,7 +134,7 @@ Mono (INSTANCE)
 
 ---
 
-## 3. 셰이프 클리핑 마스크 (처리 불필요)
+## 4. 셰이프 클리핑 마스크 (처리 불필요)
 
 ### 용도
 이미지를 동그랗게 자르거나, 스위치 컴포넌트의 배경을 둥근 사각형으로 잘라내는 전통적 마스크.
