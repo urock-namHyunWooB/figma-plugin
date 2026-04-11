@@ -143,6 +143,19 @@ export class BooleanPositionSwap implements MatchSignal {
       }
     }
 
+    // annotation 기록 — 디자인 패턴 감지 결과
+    const diffProps = this.getDiffProps(propsA, propsB);
+    const propName = diffProps.length > 0 ? diffProps[0] : "unknown";
+
+    for (const node of [a, b]) {
+      if (!node.metadata) node.metadata = {};
+      if (!node.metadata.designPatterns) node.metadata.designPatterns = [];
+      // 중복 방지
+      if (!node.metadata.designPatterns.some(p => p.type === "booleanPositionSwap")) {
+        node.metadata.designPatterns.push({ type: "booleanPositionSwap", prop: propName });
+      }
+    }
+
     // decisive-match-with-cost: position-miss fallback 전용 fallback 매치.
     // cost를 작게 (0.05) 두어 NP success(0~0.1)보다 저렴하게 보이지만,
     // 여러 candidate가 동시에 fire할 때 Hungarian은 이미 다른 signal들의
@@ -155,6 +168,14 @@ export class BooleanPositionSwap implements MatchSignal {
       cost: VPP_MATCH_COST,
       reason: `position swap detected: cx movement (${posA.cx.toFixed(2)} ↔ ${posB.cx.toFixed(2)})`,
     };
+  }
+
+  private getDiffProps(propsA: Map<string, string>, propsB: Map<string, string>): string[] {
+    const diffs: string[] = [];
+    for (const [key, valA] of propsA) {
+      if (propsB.get(key) !== valA) diffs.push(key);
+    }
+    return diffs;
   }
 
   private getDirectParent(node: InternalNode, ctx: MatchContext): any | null {

@@ -278,4 +278,17 @@ describe("DesignPatternDetector", () => {
       expect(bgNode.metadata?.designPatterns).toEqual([{ type: "fullCoverBackground" }]);
     });
   });
+
+  describe("BooleanPositionSwap annotation", () => {
+    it("annotation shape is correct", () => {
+      const node: any = { id: "n1", name: "Knob", type: "FRAME", children: [] };
+      if (!node.metadata) node.metadata = {};
+      if (!node.metadata.designPatterns) node.metadata.designPatterns = [];
+      node.metadata.designPatterns.push({ type: "booleanPositionSwap", prop: "active" });
+      expect(node.metadata.designPatterns).toContainEqual({
+        type: "booleanPositionSwap",
+        prop: "active",
+      });
+    });
+  });
 });
