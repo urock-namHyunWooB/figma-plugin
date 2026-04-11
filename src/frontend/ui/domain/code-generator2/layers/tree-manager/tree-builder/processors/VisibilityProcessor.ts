@@ -696,8 +696,12 @@ export class VisibilityProcessor {
 
     for (let i = 0; i < node.children.length; i++) {
       const child = node.children[i];
-      const visibleRef = this.detectAlphaMask(child);
-      if (visibleRef) {
+      const alphaMask = child.metadata?.designPatterns?.find(
+        (p): p is Extract<import("../../../../types/types").DesignPattern, { type: "alphaMask" }> =>
+          p.type === "alphaMask"
+      );
+      if (alphaMask) {
+        const visibleRef = alphaMask.visibleRef;
         maskIndices.push(i);
         const condition = this.extractConditionFromPropertyRef(visibleRef);
         if (condition) maskConditions.push(condition);
@@ -739,23 +743,6 @@ export class VisibilityProcessor {
     }
 
     return { ...node, children: newChildren };
-  }
-
-  /**
-   * Alpha mask 패턴 감지: isMask + ALPHA + componentPropertyReferences.visible
-   */
-  private detectAlphaMask(node: InternalNode): string | undefined {
-    const visibleRef = node.componentPropertyReferences?.visible;
-    if (!visibleRef) return undefined;
-
-    const { node: origNode } = this.dataManager.getById(node.id);
-    if (!origNode) return undefined;
-
-    const orig = origNode as any;
-    if (orig.isMask !== true) return undefined;
-    if (orig.maskType !== "ALPHA") return undefined;
-
-    return visibleRef;
   }
 
   private isAbsolutePositioned(node: InternalNode): boolean {

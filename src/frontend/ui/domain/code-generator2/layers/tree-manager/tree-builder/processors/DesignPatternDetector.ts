@@ -1,4 +1,4 @@
-import type { InternalTree } from "../../../../types/types";
+import type { InternalTree, InternalNode, DesignPattern } from "../../../../types/types";
 import type DataManager from "../../../data-manager/DataManager";
 
 /**
@@ -13,6 +13,35 @@ export class DesignPatternDetector {
   constructor(private readonly dataManager: DataManager) {}
 
   detect(tree: InternalTree): void {
-    // 패턴별 감지 메서드는 이후 Task에서 추가
+    this.walk(tree, (node) => {
+      this.detectAlphaMask(node);
+    });
+  }
+
+  private walk(node: InternalNode, visitor: (n: InternalNode) => void): void {
+    visitor(node);
+    for (const child of node.children ?? []) {
+      this.walk(child, visitor);
+    }
+  }
+
+  private addPattern(node: InternalNode, pattern: DesignPattern): void {
+    if (!node.metadata) node.metadata = {};
+    if (!node.metadata.designPatterns) node.metadata.designPatterns = [];
+    node.metadata.designPatterns.push(pattern);
+  }
+
+  private detectAlphaMask(node: InternalNode): void {
+    const visibleRef = node.componentPropertyReferences?.visible;
+    if (!visibleRef) return;
+
+    const { node: origNode } = this.dataManager.getById(node.id);
+    if (!origNode) return;
+
+    const orig = origNode as any;
+    if (orig.isMask !== true) return;
+    if (orig.maskType !== "ALPHA") return;
+
+    this.addPattern(node, { type: "alphaMask", visibleRef });
   }
 }
