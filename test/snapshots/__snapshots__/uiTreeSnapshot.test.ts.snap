@@ -20577,26 +20577,6 @@ exports[`UITree snapshots > failing/Switch 1`] = `
     "children": [
       {
         "children": [],
-        "id": "74:152",
-        "mergedNodes": [
-          {
-            "id": "74:152",
-            "variantName": "states=enabled",
-          },
-          {
-            "id": "74:156",
-            "variantName": "states=hover",
-          },
-          {
-            "id": "74:160",
-            "variantName": "states=disabled",
-          },
-        ],
-        "name": "Rectangle 6576",
-        "type": "vector",
-      },
-      {
-        "children": [],
         "id": "74:153",
         "mergedNodes": [
           {
