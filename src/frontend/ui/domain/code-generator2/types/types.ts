@@ -413,6 +413,10 @@ export interface InternalNode extends UINodeBase {
   loop?: { dataProp: string; keyField?: string };
   /** children slot (FrameHeuristic이 설정, 래퍼 컴포넌트의 {children} 렌더링용) */
   childrenSlot?: string;
+  /** CONDITIONAL_GROUP 전용: 분기 기준 prop 이름 */
+  branchProp?: string;
+  /** CONDITIONAL_GROUP 전용: prop 값 → 해당 모드의 자식들 */
+  branches?: Record<string, InternalNode[]>;
 }
 
 /**
