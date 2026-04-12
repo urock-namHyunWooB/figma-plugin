@@ -31,9 +31,8 @@ describe("Dependency 번들링", () => {
       .filter((l) => l.includes('from "./'));
     expect(externalImports).toEqual([]);
 
-    // deps 함수가 번들에 포함됨
+    // deps 함수가 번들에 포함됨 (Iconsicons는 slot 승격으로 dependency에서 제외)
     expect(code).toMatch(/function\s+Circularcircular\s*\(/);
-    expect(code).toMatch(/function\s+Iconsicons\s*\(/);
   });
 
   it("same-name dependency가 dead code로 남지 않음", async () => {
@@ -58,13 +57,11 @@ describe("Dependency 번들링", () => {
     });
     const code = await gen.compile();
 
-    // dependency 함수가 인라인되지 않음
+    // dependency 함수가 인라인되지 않음 (Iconsicons는 slot 승격으로 dependency에서 제외)
     expect(code).not.toMatch(/function\s+Circularcircular\s*\(/);
-    expect(code).not.toMatch(/function\s+Iconsicons\s*\(/);
 
     // import 문이 생성됨
     expect(code).toContain("import { Circularcircular }");
-    expect(code).toContain("import { Iconsicons }");
     expect(code).toContain("@/components/");
   });
 
@@ -77,8 +74,8 @@ describe("Dependency 번들링", () => {
     });
     const code = await gen.compile();
 
+    // Iconsicons는 slot 승격으로 dependency에서 제외
     expect(code).toContain('from "./Circularcircular"');
-    expect(code).toContain('from "./Iconsicons"');
   });
 
   it("bundle 모드 (기본): 기존 동작 유지", async () => {

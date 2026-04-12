@@ -643,4 +643,144 @@ describe("DesignPatternDetector (raw data)", () => {
       expect(patterns.filter(p => p.type === "exposedInstanceSlot")).toHaveLength(1);
     });
   });
+
+  describe("partialExposedInstance (layoutModeSwitch 분기)", () => {
+    it("부분 variant에만 존재하는 exposed INSTANCE → 패턴 감지", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "Icon Only": { type: "VARIANT", variantOptions: ["False", "True"] },
+          "Size": { type: "VARIANT", variantOptions: ["Large", "Small"] },
+        },
+        children: [
+          {
+            type: "COMPONENT", name: "Icon Only=False, Size=Large",
+            children: [{
+              id: "content-1", type: "FRAME", name: "Content",
+              children: [
+                { id: "li-1", type: "FRAME", name: "Leading Icon", children: [] },
+                { id: "txt-1", type: "TEXT", name: "텍스트", children: [] },
+                { id: "ti-1", type: "FRAME", name: "Trailing Icon", children: [] },
+              ],
+            }],
+          },
+          {
+            type: "COMPONENT", name: "Icon Only=False, Size=Small",
+            children: [{
+              id: "content-2", type: "FRAME", name: "Content",
+              children: [
+                { id: "li-2", type: "FRAME", name: "Leading Icon", children: [] },
+                { id: "txt-2", type: "TEXT", name: "텍스트", children: [] },
+                { id: "ti-2", type: "FRAME", name: "Trailing Icon", children: [] },
+              ],
+            }],
+          },
+          {
+            type: "COMPONENT", name: "Icon Only=True, Size=Large",
+            children: [{
+              id: "content-3", type: "FRAME", name: "Content",
+              children: [
+                { id: "icon-1", type: "INSTANCE", name: "Icon", isExposedInstance: true, children: [] },
+              ],
+            }],
+          },
+          {
+            type: "COMPONENT", name: "Icon Only=True, Size=Small",
+            children: [{
+              id: "content-4", type: "FRAME", name: "Content",
+              children: [
+                { id: "icon-2", type: "INSTANCE", name: "Icon", isExposedInstance: true, children: [] },
+              ],
+            }],
+          },
+        ],
+      } as any;
+
+      const patterns = detector.detect(node);
+      const slotPatterns = patterns.filter(p => p.type === "exposedInstanceSlot");
+      expect(slotPatterns).toHaveLength(1);
+      expect(slotPatterns[0]).toMatchObject({
+        type: "exposedInstanceSlot",
+        instanceNodeId: expect.stringMatching(/^icon-/),
+      });
+      // visibleRef가 없어야 함
+      expect((slotPatterns[0] as any).visibleRef).toBeUndefined();
+    });
+
+    it("모든 variant에 존재하는 exposed INSTANCE → 패턴 미감지", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "Size": { type: "VARIANT", variantOptions: ["Large", "Small"] },
+        },
+        children: [
+          {
+            type: "COMPONENT", name: "Size=Large",
+            children: [{
+              id: "content-1", type: "FRAME", name: "Content",
+              children: [
+                { id: "icon-1", type: "INSTANCE", name: "Icon", isExposedInstance: true, children: [] },
+              ],
+            }],
+          },
+          {
+            type: "COMPONENT", name: "Size=Small",
+            children: [{
+              id: "content-2", type: "FRAME", name: "Content",
+              children: [
+                { id: "icon-2", type: "INSTANCE", name: "Icon", isExposedInstance: true, children: [] },
+              ],
+            }],
+          },
+        ],
+      } as any;
+
+      const patterns = detector.detect(node);
+      // layoutModeSwitch가 감지되지 않으므로 partialExposedInstance도 없음
+      const slotPatterns = patterns.filter(
+        p => p.type === "exposedInstanceSlot" && !(p as any).visibleRef
+      );
+      expect(slotPatterns).toHaveLength(0);
+    });
+
+    it("이미 visibility binding으로 감지된 INSTANCE → 중복 감지 없음", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {
+          "Icon Only": { type: "VARIANT", variantOptions: ["False", "True"] },
+        },
+        children: [
+          {
+            type: "COMPONENT", name: "Icon Only=False",
+            children: [{
+              id: "content-1", type: "FRAME", name: "Content",
+              children: [
+                { id: "txt-1", type: "TEXT", name: "Label", children: [] },
+              ],
+            }],
+          },
+          {
+            type: "COMPONENT", name: "Icon Only=True",
+            children: [{
+              id: "content-2", type: "FRAME", name: "Content",
+              children: [
+                {
+                  id: "icon-1", type: "INSTANCE", name: "Icon",
+                  isExposedInstance: true,
+                  componentPropertyReferences: { visible: "ShowIcon#123:0" },
+                  children: [],
+                },
+              ],
+            }],
+          },
+        ],
+      } as any;
+
+      const patterns = detector.detect(node);
+      const slotPatterns = patterns.filter(p => p.type === "exposedInstanceSlot");
+      // visibility binding으로 감지된 것 1개만 있어야 함
+      expect(slotPatterns).toHaveLength(1);
+      expect((slotPatterns[0] as any).visibleRef).toBe("ShowIcon#123:0");
+    });
+  });
 });

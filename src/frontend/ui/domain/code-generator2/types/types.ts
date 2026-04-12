@@ -102,7 +102,7 @@ export type DesignPattern =
       /** exposed INSTANCE의 노드 ID */
       instanceNodeId: string;
       /** componentPropertyReferences.visible 값 (예: "Leading Icon#438:4") */
-      visibleRef: string;
+      visibleRef?: string;
     };
 
 /**
