@@ -79,6 +79,46 @@ export const CSS_TO_TAILWIND: Record<string, Record<string, string>> = {
     "0": "grow-0",
     "1": "grow",
   },
+  visibility: {
+    hidden: "invisible",
+    visible: "visible",
+  },
+  fontWeight: {
+    "100": "font-thin",
+    "200": "font-extralight",
+    "300": "font-light",
+    "400": "font-normal",
+    "500": "font-medium",
+    "600": "font-semibold",
+    "700": "font-bold",
+    "800": "font-extrabold",
+    "900": "font-black",
+  },
+  textDecoration: {
+    underline: "underline",
+    "line-through": "line-through",
+    none: "no-underline",
+  },
+  textTransform: {
+    uppercase: "uppercase",
+    lowercase: "lowercase",
+    capitalize: "capitalize",
+    none: "normal-case",
+  },
+  alignSelf: {
+    auto: "self-auto",
+    "flex-start": "self-start",
+    "flex-end": "self-end",
+    center: "self-center",
+    stretch: "self-stretch",
+    baseline: "self-baseline",
+  },
+  cursor: {
+    pointer: "cursor-pointer",
+    default: "cursor-default",
+    "not-allowed": "cursor-not-allowed",
+    wait: "cursor-wait",
+  },
 };
 
 /**
@@ -228,12 +268,9 @@ export function cssPropertyToTailwind(property: string, value: string): string {
     return `border-[${escapeArbitraryValue(valueStr)}]`;
   }
 
-  // font-family / font-weight: 같은 font- prefix 충돌 방지
+  // font-family: font- prefix 충돌 방지
   if (camelProperty === "fontFamily") {
     return `[font-family:${escapeArbitraryValue(valueStr)}]`;
-  }
-  if (camelProperty === "fontWeight") {
-    return `[font-weight:${escapeArbitraryValue(valueStr)}]`;
   }
 
   // box-shadow → shadow-[...]
