@@ -1,0 +1,890 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Buttonsolid 생성 코드 snapshot > Emotion 전략 1`] = `
+"import React from "react";
+import type { SerializedStyles } from "@emotion/react";
+import { css } from "@emotion/react";
+
+interface CircularcircularProps {
+  animate?: "False"; // default: "False"
+  ratioVertical?: React.ReactNode; // default: null
+  shapeBg?: string; // default: "#E1E2E4"
+  unionBg?: string; // default: "#E1E2E4"
+}
+
+const Circularcircular_circularCss = css\`
+  display: inline-flex;
+  height: 100%;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+\`;
+
+const Circularcircular_circularVerticalCss = css\`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  overflow: hidden;
+\`;
+
+const Circularcircular_circularShapeCss = css\`
+  width: 28px;
+  height: 28px;
+  position: absolute;
+\`;
+
+function Circularcircular(props: CircularcircularProps) {
+  const {
+    animate = "False",
+    ratioVertical = null,
+    shapeBg = "#E1E2E4",
+    unionBg = "#E1E2E4",
+    ...restProps
+  } = props;
+
+  return (
+    <div css={Circularcircular_circularCss} {...restProps}>
+      {ratioVertical && (
+        <div css={Circularcircular_circularVerticalCss}>{ratioVertical}</div>
+      )}
+      <div
+        css={Circularcircular_circularShapeCss}
+        style={{ background: shapeBg }}
+      />
+    </div>
+  );
+}
+
+interface ButtonsolidOwnProps {
+  leadingIcon?: React.ReactNode; // default: null
+  trailingIcon?: React.ReactNode; // default: null
+  label?: string; // default: "텍스트"
+  loading?: boolean; // default: false
+  variant?: "Primary" | "Assistive"; // default: "Primary"
+  size?: "Small" | "Medium" | "Large"; // default: "Large"
+  iconOnly?: boolean; // default: false
+  disable?: boolean; // default: false
+  icon?: React.ReactNode; // default: null
+}
+
+export interface ButtonsolidProps
+  extends Omit<
+      React.ButtonHTMLAttributes<HTMLButtonElement>,
+      keyof ButtonsolidOwnProps
+    >,
+    ButtonsolidOwnProps {}
+
+const solidCss = css\`
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+\`;
+
+const solidCss_sizeStyles: Record<string, SerializedStyles> = {
+  Large: css\`
+    border-radius: 12px;
+  \`,
+  Medium: css\`
+    border-radius: 10px;
+  \`,
+  Small: css\`
+    border-radius: 8px;
+  \`,
+};
+
+const solidCss_variantStyles: Record<string, SerializedStyles> = {
+  Assistive: css\`
+    backdrop-filter: blur(32px);
+  \`,
+};
+
+const solidCss_sizeIconOnlyStyles = [
+  {
+    size: "Large",
+    iconOnly: false,
+    css: css\`
+      padding: 12px 28px;
+    \`,
+  },
+  {
+    size: "Medium",
+    iconOnly: false,
+    css: css\`
+      padding: 9px 20px;
+    \`,
+  },
+  {
+    size: "Small",
+    iconOnly: false,
+    css: css\`
+      padding: 7px 14px;
+    \`,
+  },
+  {
+    size: "Large",
+    iconOnly: true,
+    css: css\`
+      padding: 12px;
+    \`,
+  },
+  {
+    size: "Medium",
+    iconOnly: true,
+    css: css\`
+      padding: 10px;
+    \`,
+  },
+  {
+    size: "Small",
+    iconOnly: true,
+    css: css\`
+      padding: 7px;
+    \`,
+  },
+];
+
+const solidCss_variantDisableStyles = [
+  {
+    variant: "Primary",
+    disable: false,
+    css: css\`
+      background: var(--Primary-Normal, #06f);
+    \`,
+  },
+  {
+    variant: "Primary",
+    disable: true,
+    css: css\`
+      background: var(--Interaction-Disable, #f4f4f5);
+    \`,
+  },
+  {
+    variant: "Assistive",
+    disable: false,
+    css: css\`
+      background: var(--Fill-Normal, rgba(112, 115, 124, 0.08));
+    \`,
+  },
+  {
+    variant: "Assistive",
+    disable: true,
+    css: css\`
+      background: var(--Interaction-Disable, #f4f4f5);
+    \`,
+  },
+];
+
+const solidLoadingCss = css\`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: absolute;
+  flex-direction: row;
+\`;
+
+const solidLoadingCss_sizeIconOnlyStyles = [
+  {
+    size: "Large",
+    iconOnly: false,
+    css: css\`
+      width: 42px;
+      height: 24px;
+      padding: 3px 0;
+    \`,
+  },
+  {
+    size: "Medium",
+    iconOnly: false,
+    css: css\`
+      width: 40px;
+      height: 22px;
+      padding: 3px 0;
+    \`,
+  },
+  {
+    size: "Small",
+    iconOnly: false,
+    css: css\`
+      width: 35px;
+      height: 18px;
+      padding: 2px 0;
+    \`,
+  },
+  {
+    size: "Large",
+    iconOnly: true,
+    css: css\`
+      width: 24px;
+      height: 24px;
+      padding: 3px 0;
+    \`,
+  },
+  {
+    size: "Medium",
+    iconOnly: true,
+    css: css\`
+      width: 20px;
+      height: 20px;
+      padding: 2px 0;
+    \`,
+  },
+  {
+    size: "Small",
+    iconOnly: true,
+    css: css\`
+      width: 18px;
+      height: 18px;
+      padding: 2px 0;
+    \`,
+  },
+];
+
+const circularCircularWrapperCss = css\`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  flex-direction: row;
+\`;
+
+const circularCircularWrapperCss_sizeStyles: Record<string, SerializedStyles> =
+  {
+    Large: css\`
+      height: 18px;
+    \`,
+    Medium: css\`
+      height: 16px;
+    \`,
+    Small: css\`
+      height: 14px;
+    \`,
+  };
+
+const solidContentCss = css\`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+\`;
+
+const solidContentCss_loadingTrue = css\`
+  visibility: hidden;
+\`;
+
+const solidContentCss_loadingFalse = undefined;
+
+const solidContentCss_sizeStyles: Record<string, SerializedStyles> = {
+  Large: css\`
+    gap: 6px;
+  \`,
+  Medium: css\`
+    gap: 5px;
+  \`,
+  Small: css\`
+    gap: 4px;
+  \`,
+};
+
+const contentSwitchIconCss = css\`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  flex-direction: row;
+\`;
+
+const contentSwitchIconCss_sizeStyles: Record<string, SerializedStyles> = {
+  Large: css\`
+    padding: 2px 0;
+    height: 24px;
+  \`,
+  Medium: css\`
+    padding: 2px 0;
+    height: 22px;
+  \`,
+  Small: css\`
+    padding: 1px 0;
+    height: 18px;
+  \`,
+};
+
+const contentSwitchIconCss_2 = css\`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  flex-direction: row;
+\`;
+
+const contentSwitchIconCss_2_sizeStyles: Record<string, SerializedStyles> = {
+  Large: css\`
+    padding: 2px 0;
+    height: 24px;
+  \`,
+  Medium: css\`
+    padding: 2px 0;
+    height: 22px;
+  \`,
+  Small: css\`
+    padding: 1px 0;
+    height: 18px;
+  \`,
+};
+
+const contentSwitchUnnamedCss = css\`
+  font-feature-settings: "ss10" on;
+  font-family: "Pretendard JP";
+  font-style: normal;
+\`;
+
+const contentSwitchUnnamedCss_variantStyles: Record<string, SerializedStyles> =
+  {
+    Primary: css\`
+      font-weight: 600;
+    \`,
+    Assistive: css\`
+      font-weight: 500;
+    \`,
+  };
+
+const contentSwitchUnnamedCss_sizeStyles: Record<string, SerializedStyles> = {
+  Large: css\`
+    font-size: 16px;
+    line-height: 150% /* 24px */;
+    letter-spacing: 0.091px;
+  \`,
+  Medium: css\`
+    font-size: 15px;
+    line-height: 146.7% /* 22.005px */;
+    letter-spacing: 0.144px;
+  \`,
+  Small: css\`
+    font-size: 13px;
+    line-height: 138.5% /* 18.005px */;
+    letter-spacing: 0.252px;
+  \`,
+};
+
+const contentSwitchUnnamedCss_variantDisableStyles = [
+  {
+    variant: "Primary",
+    disable: false,
+    css: css\`
+      color: var(--Semantic-Static-White, var(--Static-White, #fff));
+    \`,
+  },
+  {
+    variant: "Primary",
+    disable: true,
+    css: css\`
+      color: var(
+        --Semantic-Label-Assistive,
+        var(--Label-Assistive, rgba(55, 56, 60, 0.28))
+      );
+    \`,
+  },
+  {
+    variant: "Assistive",
+    disable: false,
+    css: css\`
+      color: var(
+        --Semantic-Label-Neutral,
+        var(--Label-Neutral, rgba(46, 47, 51, 0.88))
+      );
+    \`,
+  },
+  {
+    variant: "Assistive",
+    disable: true,
+    css: css\`
+      color: var(
+        --Semantic-Label-Assistive,
+        var(--Label-Assistive, rgba(55, 56, 60, 0.28))
+      );
+    \`,
+  },
+];
+
+const contentSwitchIconsCss = css\`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+\`;
+
+const contentSwitchIconsCss_sizeStyles: Record<string, SerializedStyles> = {
+  Large: css\`
+    height: 24px;
+  \`,
+  Medium: css\`
+    height: 20px;
+  \`,
+  Small: css\`
+    height: 18px;
+  \`,
+};
+
+export default function Buttonsolid(props: ButtonsolidProps) {
+  const {
+    leadingIcon = null,
+    trailingIcon = null,
+    label = "텍스트",
+    loading = false,
+    variant = "Primary",
+    size = "Large",
+    iconOnly = false,
+    disable = false,
+    icon = null,
+    ...restProps
+  } = props;
+
+  return (
+    <button
+      css={[
+        solidCss,
+        solidCss_sizeStyles?.[size],
+        solidCss_variantStyles?.[variant],
+        solidCss_sizeIconOnlyStyles.find(
+          (v) => v.size === size && v.iconOnly === iconOnly
+        )?.css,
+        solidCss_variantDisableStyles.find(
+          (v) => v.variant === variant && v.disable === disable
+        )?.css,
+      ]}
+      {...restProps}
+    >
+      {loading && !disable && (
+        <div
+          css={[
+            solidLoadingCss,
+            solidLoadingCss_sizeIconOnlyStyles.find(
+              (v) => v.size === size && v.iconOnly === iconOnly
+            )?.css,
+          ]}
+        >
+          <div
+            css={[
+              circularCircularWrapperCss,
+              circularCircularWrapperCss_sizeStyles?.[size],
+            ]}
+          >
+            <Circularcircular shapeBg="#FFFFFF" unionBg="#FFFFFF" />
+          </div>
+        </div>
+      )}
+      <div
+        css={[
+          solidContentCss,
+          loading ? solidContentCss_loadingTrue : solidContentCss_loadingFalse,
+          solidContentCss_sizeStyles?.[size],
+        ]}
+      >
+        {iconOnly ? (
+          <>
+            {icon && (
+              <div
+                css={[
+                  contentSwitchIconsCss,
+                  contentSwitchIconsCss_sizeStyles?.[size],
+                ]}
+              >
+                {icon}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {leadingIcon && (
+              <div
+                css={[
+                  contentSwitchIconCss,
+                  contentSwitchIconCss_sizeStyles?.[size],
+                ]}
+              >
+                {leadingIcon}
+              </div>
+            )}
+            {trailingIcon && (
+              <div
+                css={[
+                  contentSwitchIconCss_2,
+                  contentSwitchIconCss_2_sizeStyles?.[size],
+                ]}
+              >
+                {trailingIcon}
+              </div>
+            )}
+            {label && (
+              <span
+                css={[
+                  contentSwitchUnnamedCss,
+                  contentSwitchUnnamedCss_variantStyles?.[variant],
+                  contentSwitchUnnamedCss_sizeStyles?.[size],
+                  contentSwitchUnnamedCss_variantDisableStyles.find(
+                    (v) => v.variant === variant && v.disable === disable
+                  )?.css,
+                ]}
+              >
+                {label}
+              </span>
+            )}
+          </>
+        )}
+      </div>
+    </button>
+  );
+}
+"
+`;
+
+exports[`Buttonsolid 생성 코드 snapshot > Tailwind 전략 1`] = `
+"import React from "react";
+import { cva } from "class-variance-authority";
+
+interface CircularcircularProps {
+  animate?: "False"; // default: "False"
+  ratioVertical?: React.ReactNode; // default: null
+  shapeBg?: string; // default: "#E1E2E4"
+  unionBg?: string; // default: "#E1E2E4"
+}
+
+const Circularcircular_circularCircularClasses =
+  "inline-flex h-full items-center gap-[10px] relative";
+
+const Circularcircular_circularCircularRatioVerticalClasses =
+  "flex flex-col items-start self-stretch overflow-hidden";
+
+const Circularcircular_circularCircularShapeClasses =
+  "w-[28px] h-[28px] absolute";
+
+function Circularcircular(props: CircularcircularProps) {
+  const {
+    animate = "False",
+    ratioVertical = null,
+    shapeBg = "#E1E2E4",
+    unionBg = "#E1E2E4",
+    ...restProps
+  } = props;
+
+  return (
+    <div className={Circularcircular_circularCircularClasses} {...restProps}>
+      {ratioVertical && (
+        <div className={Circularcircular_circularCircularRatioVerticalClasses}>
+          {ratioVertical}
+        </div>
+      )}
+      <div
+        className={Circularcircular_circularCircularShapeClasses}
+        style={{ background: shapeBg }}
+      />
+    </div>
+  );
+}
+
+interface ButtonsolidOwnProps {
+  leadingIcon?: React.ReactNode; // default: null
+  trailingIcon?: React.ReactNode; // default: null
+  label?: string; // default: "텍스트"
+  loading?: boolean; // default: false
+  variant?: "Primary" | "Assistive"; // default: "Primary"
+  size?: "Small" | "Medium" | "Large"; // default: "Large"
+  iconOnly?: boolean; // default: false
+  disable?: boolean; // default: false
+  icon?: React.ReactNode; // default: null
+}
+
+export interface ButtonsolidProps
+  extends Omit<
+      React.ButtonHTMLAttributes<HTMLButtonElement>,
+      keyof ButtonsolidOwnProps
+    >,
+    ButtonsolidOwnProps {}
+
+const buttonSolidClasses = cva(
+  "inline-flex flex-col justify-center items-center overflow-hidden relative",
+  {
+    variants: {
+      size: {
+        Large: "rounded-[12px]",
+        Medium: "rounded-[10px]",
+        Small: "rounded-[8px]",
+      },
+      variant: {
+        Assistive: "backdrop-blur-[32px]",
+        Primary: "",
+      },
+      iconOnly: {
+        true: "",
+        false: "",
+      },
+      disable: {
+        true: "",
+        false: "",
+      },
+    },
+    compoundVariants: [
+      { size: "Large", iconOnly: false, className: "p-[12px_28px]" },
+      { size: "Medium", iconOnly: false, className: "p-[9px_20px]" },
+      { size: "Small", iconOnly: false, className: "p-[7px_14px]" },
+      { size: "Large", iconOnly: true, className: "p-[12px]" },
+      { size: "Medium", iconOnly: true, className: "p-[10px]" },
+      { size: "Small", iconOnly: true, className: "p-[7px]" },
+      {
+        variant: "Primary",
+        disable: false,
+        className: "[background-color:var(--Primary-Normal,_#06F)]",
+      },
+      {
+        variant: "Primary",
+        disable: true,
+        className: "[background-color:var(--Interaction-Disable,_#F4F4F5)]",
+      },
+      {
+        variant: "Assistive",
+        disable: false,
+        className:
+          "[background-color:var(--Fill-Normal,_rgba(112,_115,_124,_0.08))]",
+      },
+      {
+        variant: "Assistive",
+        disable: true,
+        className: "[background-color:var(--Interaction-Disable,_#F4F4F5)]",
+      },
+    ],
+  }
+);
+
+const buttonSolidLoadingClasses = cva(
+  "flex justify-center items-center absolute flex-row",
+  {
+    variants: {
+      size: {
+        Small: "",
+        Medium: "",
+        Large: "",
+      },
+      iconOnly: {
+        true: "",
+        false: "",
+      },
+    },
+    compoundVariants: [
+      {
+        size: "Large",
+        iconOnly: false,
+        className: "w-[42px] h-[24px] p-[3px_0]",
+      },
+      {
+        size: "Medium",
+        iconOnly: false,
+        className: "w-[40px] h-[22px] p-[3px_0]",
+      },
+      {
+        size: "Small",
+        iconOnly: false,
+        className: "w-[35px] h-[18px] p-[2px_0]",
+      },
+      {
+        size: "Large",
+        iconOnly: true,
+        className: "w-[24px] h-[24px] p-[3px_0]",
+      },
+      {
+        size: "Medium",
+        iconOnly: true,
+        className: "w-[20px] h-[20px] p-[2px_0]",
+      },
+      {
+        size: "Small",
+        iconOnly: true,
+        className: "w-[18px] h-[18px] p-[2px_0]",
+      },
+    ],
+  }
+);
+
+const circularCircularWrapperClasses = cva(
+  "flex items-center gap-[10px] self-stretch flex-row",
+  {
+    variants: {
+      size: {
+        Large: "h-[18px]",
+        Medium: "h-[16px]",
+        Small: "h-[14px]",
+      },
+    },
+  }
+);
+
+const buttonSolidContentClasses = cva(
+  "flex justify-center items-center flex-row",
+  {
+    variants: {
+      loading: {
+        true: "invisible",
+        false: "",
+      },
+      size: {
+        Large: "gap-[6px]",
+        Medium: "gap-[5px]",
+        Small: "gap-[4px]",
+      },
+    },
+  }
+);
+
+const buttonSolidContentIcononlySwitchLeadingIconClasses = cva(
+  "flex justify-center items-center self-stretch flex-row",
+  {
+    variants: {
+      size: {
+        Large: "p-[2px_0] h-[24px]",
+        Medium: "p-[2px_0] h-[22px]",
+        Small: "p-[1px_0] h-[18px]",
+      },
+    },
+  }
+);
+
+const buttonSolidContentIcononlySwitchClasses = cva(
+  "[font-feature-settings:ss10_on] [font-family:Pretendard_JP] not-italic",
+  {
+    variants: {
+      variant: {
+        Primary: "font-semibold",
+        Assistive: "font-medium",
+      },
+      size: {
+        Large: "text-[16px] leading-[150%] tracking-[0.091px]",
+        Medium: "text-[15px] leading-[146.7%] tracking-[0.144px]",
+        Small: "text-[13px] leading-[138.5%] tracking-[0.252px]",
+      },
+      disable: {
+        true: "",
+        false: "",
+      },
+    },
+    compoundVariants: [
+      {
+        variant: "Primary",
+        disable: false,
+        className:
+          "text-[var(--Semantic-Static-White,_var(--Static-White,_#FFF))]",
+      },
+      {
+        variant: "Primary",
+        disable: true,
+        className:
+          "text-[var(--Semantic-Label-Assistive,_var(--Label-Assistive,_rgba(55,_56,_60,_0.28)))]",
+      },
+      {
+        variant: "Assistive",
+        disable: false,
+        className:
+          "text-[var(--Semantic-Label-Neutral,_var(--Label-Neutral,_rgba(46,_47,_51,_0.88)))]",
+      },
+      {
+        variant: "Assistive",
+        disable: true,
+        className:
+          "text-[var(--Semantic-Label-Assistive,_var(--Label-Assistive,_rgba(55,_56,_60,_0.28)))]",
+      },
+    ],
+  }
+);
+
+const buttonSolidContentIcononlySwitchIconsIconsClasses = cva(
+  "flex flex-col justify-center items-center",
+  {
+    variants: {
+      size: {
+        Large: "h-[24px]",
+        Medium: "h-[20px]",
+        Small: "h-[18px]",
+      },
+    },
+  }
+);
+
+export default function Buttonsolid(props: ButtonsolidProps) {
+  const {
+    leadingIcon = null,
+    trailingIcon = null,
+    label = "텍스트",
+    loading = false,
+    variant = "Primary",
+    size = "Large",
+    iconOnly = false,
+    disable = false,
+    icon = null,
+    ...restProps
+  } = props;
+
+  return (
+    <button
+      className={buttonSolidClasses({ size, variant, iconOnly, disable })}
+      {...restProps}
+    >
+      {loading && !disable && (
+        <div className={buttonSolidLoadingClasses({ size, iconOnly })}>
+          <div className={circularCircularWrapperClasses({ size })}>
+            <Circularcircular shapeBg="#FFFFFF" unionBg="#FFFFFF" />
+          </div>
+        </div>
+      )}
+      <div className={buttonSolidContentClasses({ loading, size })}>
+        {iconOnly ? (
+          <>
+            {icon && (
+              <div
+                className={buttonSolidContentIcononlySwitchIconsIconsClasses({
+                  size,
+                })}
+              >
+                {icon}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {leadingIcon && (
+              <div
+                className={buttonSolidContentIcononlySwitchLeadingIconClasses({
+                  size,
+                })}
+              >
+                {leadingIcon}
+              </div>
+            )}
+            {trailingIcon && (
+              <div
+                className={buttonSolidContentIcononlySwitchLeadingIconClasses({
+                  size,
+                })}
+              >
+                {trailingIcon}
+              </div>
+            )}
+            {label && (
+              <span
+                className={buttonSolidContentIcononlySwitchClasses({
+                  variant,
+                  size,
+                  disable,
+                })}
+              >
+                {label}
+              </span>
+            )}
+          </>
+        )}
+      </div>
+    </button>
+  );
+}
+"
+`;
