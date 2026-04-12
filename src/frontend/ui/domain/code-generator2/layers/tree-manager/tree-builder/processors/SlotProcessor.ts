@@ -69,7 +69,7 @@ export class SlotProcessor {
     this.applyVariantSlotBindings(tree, props, slotInfo, nodeToSlotProp);
 
     // 5. boolean prop → slot으로 업그레이드 (컴포넌트 관계 정보 포함)
-    return props.map((prop) => {
+    const updatedProps = props.map((prop) => {
       if (slotInfo.has(prop.name)) {
         const info = slotInfo.get(prop.name)!;
         const representativeNodeId = info.nodeIds.values().next().value!;
@@ -85,6 +85,25 @@ export class SlotProcessor {
       }
       return prop;
     });
+
+    // 6. slotInfo에 있지만 기존 props에 없는 새 slot prop 추가
+    for (const [slotName, info] of slotInfo) {
+      if (!updatedProps.some((p) => p.name === slotName)) {
+        const representativeNodeId = info.nodeIds.values().next().value!;
+        const componentInfo = this.resolveSlotComponentInfo(representativeNodeId);
+        updatedProps.push({
+          type: "slot",
+          name: slotName,
+          defaultValue: null,
+          required: false,
+          sourceKey: "",
+          ...componentInfo,
+          nodeId: representativeNodeId,
+        } as unknown as SlotPropDefinition);
+      }
+    }
+
+    return updatedProps;
   }
 
   private collectFromDesignPatterns(
@@ -98,20 +117,39 @@ export class SlotProcessor {
       for (const pattern of patterns) {
         if (pattern.type !== "exposedInstanceSlot") continue;
 
-        const sourceKey = pattern.visibleRef;
-        const propDef = propMap.get(sourceKey);
-        if (!propDef || propDef.type !== "boolean") continue;
+        if (pattern.visibleRef) {
+          // 기존 경로: boolean prop 승격
+          const sourceKey = pattern.visibleRef;
+          const propDef = propMap.get(sourceKey);
+          if (!propDef || propDef.type !== "boolean") continue;
 
-        const existing = slotInfo.get(propDef.name);
-        if (existing) {
-          existing.nodeIds.add(pattern.instanceNodeId);
+          const existing = slotInfo.get(propDef.name);
+          if (existing) {
+            existing.nodeIds.add(pattern.instanceNodeId);
+          } else {
+            slotInfo.set(propDef.name, {
+              sourceKey,
+              nodeIds: new Set([pattern.instanceNodeId]),
+            });
+          }
+          nodeToSlotProp.set(pattern.instanceNodeId, propDef.name);
         } else {
-          slotInfo.set(propDef.name, {
-            sourceKey,
+          // 신규 경로: visibleRef 없는 부분 variant exposed INSTANCE → 새 slot prop 생성
+          const instanceNode = this.findNodeById(node, pattern.instanceNodeId);
+          if (!instanceNode) continue;
+
+          const slotName = this.toCamelCase(instanceNode.name);
+          if (!slotName) continue;
+
+          // 이미 같은 이름의 slotInfo가 있으면 skip
+          if (slotInfo.has(slotName)) continue;
+
+          slotInfo.set(slotName, {
+            sourceKey: "",
             nodeIds: new Set([pattern.instanceNodeId]),
           });
+          nodeToSlotProp.set(pattern.instanceNodeId, slotName);
         }
-        nodeToSlotProp.set(pattern.instanceNodeId, propDef.name);
       }
     }
 
@@ -273,6 +311,15 @@ export class SlotProcessor {
         this.applyVariantSlotBindings(child, props, slotInfo, nodeToSlotProp);
       }
     }
+  }
+
+  private findNodeById(root: InternalTree, id: string): InternalTree | null {
+    if (root.id === id) return root;
+    for (const child of root.children ?? []) {
+      const found = this.findNodeById(child, id);
+      if (found) return found;
+    }
+    return null;
   }
 
   private isSlotPattern(propName: string): boolean {
