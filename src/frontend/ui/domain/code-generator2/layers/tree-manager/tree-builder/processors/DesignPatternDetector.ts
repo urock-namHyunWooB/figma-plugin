@@ -47,6 +47,7 @@ export class DesignPatternDetector {
 
       // Component-level patterns: analyze componentPropertyDefinitions
       this.detectLayoutModeSwitch(variants, propDefs, patterns);
+      this.detectPartialExposedInstances(variants, seenIds, patterns);
       this.detectStatePseudoClass(propDefs, patterns);
       this.detectBreakpointVariant(propDefs, patterns);
     } else {
@@ -198,6 +199,112 @@ export class DesignPatternDetector {
       instanceNodeId: exposedChild.id,
       visibleRef,
     });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // partialExposedInstances (component-level)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * layoutModeSwitch container의 직계 자식인 exposed INSTANCE를 감지.
+   * visibility binding이 없어 기존 detectExposedInstanceSlot에서 빠지는 케이스.
+   * (예: iconOnly=True 분기에만 존재하는 Icon INSTANCE)
+   *
+   * 제약:
+   * - layoutModeSwitch container의 **직계 자식**이어야 함 (depth 제한)
+   * - branch 자식 이름에 포함되어야 함
+   * - 기존 경로(visibleRef)에서 이미 처리되지 않은 것만
+   */
+  private detectPartialExposedInstances(
+    variants: any[],
+    seenIds: Set<string>,
+    patterns: DesignPattern[],
+  ): void {
+    if (variants.length < 2) return;
+
+    // layoutModeSwitch 패턴에서 containerNodeId → branch child names 수집
+    const containerBranches = new Map<string, Set<string>>();
+    for (const p of patterns) {
+      if (p.type === "layoutModeSwitch") {
+        const names = new Set<string>();
+        for (const branchNames of Object.values(p.branches)) {
+          for (const name of branchNames) names.add(name);
+        }
+        containerBranches.set(p.containerNodeId, names);
+      }
+    }
+    if (containerBranches.size === 0) return;
+
+    // 각 layoutModeSwitch container에 대해, variant별로 직계 자식의 exposed INSTANCE 수집
+    for (const [containerNodeId, branchNames] of containerBranches) {
+      // 첫 번째 variant에서 container 이름 확보 (다른 variant에서는 이름으로 매칭)
+      const firstContainer = this.findNodeByIdRaw(variants[0], containerNodeId);
+      if (!firstContainer) continue;
+      const containerName: string = firstContainer.name ?? "";
+
+      const instanceMap = new Map<
+        string,
+        { count: number; sampleId: string; coveredByExisting: boolean }
+      >();
+
+      for (const variant of variants) {
+        const container =
+          this.findNodeByIdRaw(variant, containerNodeId) ??
+          this.findNodeByNameRaw(variant, containerName);
+        if (!container) continue;
+
+        for (const child of container.children ?? []) {
+          if (child.type !== "INSTANCE" || child.isExposedInstance !== true) continue;
+
+          const name = child.name ?? "";
+          if (!branchNames.has(name)) continue;
+
+          const selfVisibleRef = child.componentPropertyReferences?.visible;
+          const coveredByExisting = !!selfVisibleRef;
+
+          const existing = instanceMap.get(name);
+          if (existing) {
+            existing.count++;
+            if (coveredByExisting) existing.coveredByExisting = true;
+          } else {
+            instanceMap.set(name, {
+              count: 1,
+              sampleId: child.id,
+              coveredByExisting,
+            });
+          }
+        }
+      }
+
+      // 전체 variant보다 적게 나타나고, 기존 경로에서 미처리 → 패턴
+      for (const [, info] of instanceMap) {
+        if (info.count < variants.length && !info.coveredByExisting) {
+          patterns.push({
+            type: "exposedInstanceSlot",
+            nodeId: info.sampleId,
+            instanceNodeId: info.sampleId,
+          });
+        }
+      }
+    }
+  }
+
+  private findNodeByIdRaw(node: any, id: string): any | undefined {
+    if (node.id === id) return node;
+    for (const child of node.children ?? []) {
+      const found = this.findNodeByIdRaw(child, id);
+      if (found) return found;
+    }
+    return undefined;
+  }
+
+  private findNodeByNameRaw(node: any, name: string): any | undefined {
+    if (node.name === name) return node;
+    for (const child of node.children ?? []) {
+      const found = this.findNodeByNameRaw(child, name);
+      if (found) return found;
+    }
+    return undefined;
   }
 
   // ─────────────────────────────────────────────────────────────────────────
