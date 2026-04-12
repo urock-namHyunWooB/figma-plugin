@@ -1100,13 +1100,11 @@ ${indentStr}</${tag}>`;
       const safeName = parts
         .map((p, i) => (i === 0 ? p : p.charAt(0).toUpperCase() + p.slice(1)))
         .join("");
-      // slot/boolean prop은 truthy/falsy → "true"/"false" 문자열로 변환
-      const lookupParts = parts.map((p) =>
-        (ctx.slotProps.has(p) || ctx.booleanProps.has(p))
-          ? `\${${p} ? "true" : "false"}`
-          : `\${${p}}`
-      ).join("+");
-      return `${styleVarName}_${safeName}Styles?.[\`${lookupParts}\`]`;
+      const conditions = parts.map((p) => {
+        const safeProp = p.replace(/[\x00-\x1f\x7f]/g, "");
+        return `v.${safeProp} === ${safeProp}`;
+      });
+      return `${styleVarName}_${safeName}Styles.find(v => ${conditions.join(" && ")})?.css`;
     }
     const safeProp = prop.replace(/[\x00-\x1f\x7f]/g, "");
     const capProp = safeProp.charAt(0).toUpperCase() + safeProp.slice(1);
