@@ -114,12 +114,14 @@ describe("Btnsbtn compound decomposition", () => {
     });
 
     it("default+filled+red 배경은 compound에 있어야 한다 (base가 아님)", () => {
-      // stateStyleToneStyles에 default+filled+red 엔트리가 있어야 함
-      const compound = code.match(/stateStyleToneStyles[^=]*=\s*\{([\s\S]*?)\n\};/);
+      // stateStyleToneStyles가 compoundVariants 배열로 생성되어야 함
+      const compound = code.match(/stateStyleToneStyles[^=]*=\s*\[([\s\S]*?)\n\];/);
       expect(compound).toBeTruthy();
-      expect(compound![1]).toContain("default+filled+red");
+      // filled+red 조합의 엔트리가 있어야 함
+      expect(compound![1]).toMatch(/style:\s*"filled"/);
+      expect(compound![1]).toMatch(/tone:\s*"red"/);
       // 해당 엔트리에 background가 있어야 함
-      const entry = compound![1].match(/"default\+filled\+red":\s*css`([\s\S]*?)`/);
+      const entry = compound![1].match(/state:\s*"default",\s*style:\s*"filled",\s*tone:\s*"red",\s*css:\s*css`([\s\S]*?)`/);
       expect(entry).toBeTruthy();
       expect(entry![1]).toMatch(/background:.*ff8484/i);
     });
