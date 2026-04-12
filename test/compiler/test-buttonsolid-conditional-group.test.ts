@@ -56,16 +56,24 @@ describe("Buttonsolid conditionalGroup", () => {
     const code = await gen.compile();
     expect(code).toBeDefined();
 
-    // Write to file for debugging
-    const fs = await import("fs");
-    const iconOnlyLines = code!.split("\n")
-      .map((l, i) => `${i+1}: ${l}`)
-      .filter(l => l.includes("iconOnly"));
-    fs.writeFileSync("/tmp/buttonsolid-final.txt", iconOnlyLines.join("\n"));
+    // iconOnly 삼항 분기가 존재해야 함
+    expect(code).toContain("iconOnly ?");
 
-    // Ternary exists
-    const hasTernary = code!.includes("iconOnly ?");
-    expect(hasTernary).toBe(true);
+    // iconOnly 삼항 분기 시작점 찾기 (JSX ternary: "{iconOnly ? (" 패턴)
+    // 템플릿 리터럴 안의 "${iconOnly ?"가 아닌, JSX 분기 삼항을 찾아야 함
+    const ternaryMatch = code!.match(/\{iconOnly \? \(/);
+    expect(ternaryMatch).not.toBeNull();
+    const ternaryIdx = ternaryMatch!.index!;
+
+    // 분기 이후 코드에서 compound 스타일 키 추출
+    const afterTernary = code!.slice(ternaryIdx);
+
+    // 분기 안 compound 키에서 iconOnly가 포함된 lookup이 없어야 함
+    // 패턴: `${...iconOnly...}` 형태의 template literal이 스타일 lookup에 사용되면 안 됨
+    // 단, 삼항 조건 자체인 "iconOnly ?" 는 제외
+    const compoundKeyPattern = /\$\{[^}]*iconOnly[^}]*\}\+|\+\$\{[^}]*iconOnly[^}]*\}/g;
+    const compoundKeysInBranch = afterTernary.match(compoundKeyPattern) || [];
+    expect(compoundKeysInBranch).toHaveLength(0);
   });
 
   it("생성 코드에 ternary 분기가 포함된다", async () => {

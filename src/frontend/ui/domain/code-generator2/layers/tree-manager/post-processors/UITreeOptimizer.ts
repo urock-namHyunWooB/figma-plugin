@@ -445,6 +445,15 @@ export class UITreeOptimizer {
         this.decomposeDynamicStyles(child, diagnostics);
       }
     }
+
+    // ConditionalGroupNode의 branches도 순회
+    if (node.type === "conditionalGroup") {
+      for (const branchChildren of Object.values((node as any).branches)) {
+        for (const child of branchChildren as any[]) {
+          this.decomposeDynamicStyles(child, diagnostics);
+        }
+      }
+    }
   }
 
   /**
