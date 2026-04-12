@@ -16733,6 +16733,7 @@ exports[`UITree snapshots > failing/Buttonbutton 1`] = `
   "propNames": [
     "color",
     "disable",
+    "icon",
     "iconOnly",
     "label",
     "leadingIcon",
@@ -16741,7 +16742,7 @@ exports[`UITree snapshots > failing/Buttonbutton 1`] = `
     "trailingIcon",
     "variant",
   ],
-  "propsCount": 9,
+  "propsCount": 10,
   "root": {
     "children": [
       {
@@ -17368,6 +17369,7 @@ exports[`UITree snapshots > failing/Buttonsolid 1`] = `
   "componentType": "button",
   "propNames": [
     "disable",
+    "icon",
     "iconOnly",
     "label",
     "leadingIcon",
@@ -17376,7 +17378,7 @@ exports[`UITree snapshots > failing/Buttonsolid 1`] = `
     "trailingIcon",
     "variant",
   ],
-  "propsCount": 8,
+  "propsCount": 9,
   "root": {
     "children": [
       {

@@ -40,6 +40,15 @@ describe("Buttonsolid slot promotion", () => {
     expect(prop!.type).toBe("string");
   });
 
+  it("icon (iconOnly 분기)은 slot (ReactNode) 타입이어야 한다", () => {
+    const gen = new FigmaCodeGenerator(ButtonsolidFixture as any);
+    const { main } = gen.buildUITree();
+
+    const prop = main.props.find((p: any) => p.name === "icon");
+    expect(prop).toBeDefined();
+    expect(prop!.type).toBe("slot");
+  });
+
   it("DesignPatternDetector가 exposedInstanceSlot을 감지한다", () => {
     const detector = new DesignPatternDetector();
     const patterns = detector.detect((ButtonsolidFixture as any).info.document as any);
