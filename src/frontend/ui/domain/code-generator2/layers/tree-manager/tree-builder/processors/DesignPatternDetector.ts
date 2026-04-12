@@ -12,6 +12,7 @@ import type { DesignPattern } from "../../../../types/types";
  * - fullCoverBackground: fills-only child covering parent 99%+
  * - statePseudoClass: componentPropertyDefinitions의 State variant
  * - breakpointVariant: componentPropertyDefinitions의 Breakpoint variant
+ * - exposedInstanceSlot: BOOLEAN visibility + isExposedInstance INSTANCE → ReactNode 슬롯 승격
  *
  * booleanPositionSwap는 merger에서 별도 감지.
  */
@@ -69,6 +70,7 @@ export class DesignPatternDetector {
     this.detectAlphaMask(node, seenIds, patterns);
     this.detectInteractionFrame(node, seenIds, patterns);
     this.detectFullCoverBackground(node, parent, seenIds, patterns);
+    this.detectExposedInstanceSlot(node, seenIds, patterns);
 
     for (const child of node.children ?? []) {
       this.walkRawNode(child, node, seenIds, patterns);
@@ -152,6 +154,50 @@ export class DesignPatternDetector {
     seenIds.add(key);
 
     patterns.push({ type: "fullCoverBackground", nodeId: node.id });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // exposedInstanceSlot
+  // ─────────────────────────────────────────────────────────────────────────
+
+  private detectExposedInstanceSlot(
+    node: any,
+    seenIds: Set<string>,
+    patterns: DesignPattern[],
+  ): void {
+    const visibleRef = node.componentPropertyReferences?.visible;
+    if (!visibleRef) return;
+
+    // dedup by visibleRef (여러 variant에서 같은 패턴 반복)
+    const key = `exposedInstanceSlot:${visibleRef}`;
+    if (seenIds.has(key)) return;
+
+    // 노드 자체가 exposed INSTANCE인 경우
+    if (node.type === "INSTANCE" && node.isExposedInstance === true) {
+      seenIds.add(key);
+      patterns.push({
+        type: "exposedInstanceSlot",
+        nodeId: node.id,
+        instanceNodeId: node.id,
+        visibleRef,
+      });
+      return;
+    }
+
+    // 직계 자식에서 exposed INSTANCE 탐색
+    const children: any[] = node.children ?? [];
+    const exposedChild = children.find(
+      (c) => c.type === "INSTANCE" && c.isExposedInstance === true,
+    );
+    if (!exposedChild) return;
+
+    seenIds.add(key);
+    patterns.push({
+      type: "exposedInstanceSlot",
+      nodeId: node.id,
+      instanceNodeId: exposedChild.id,
+      visibleRef,
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────────

@@ -93,6 +93,16 @@ export type DesignPattern =
       prop: string;
       /** prop 값 → 해당 모드에서만 존재하는 자식 이름 목록 */
       branches: Record<string, string[]>;
+    }
+  /** BOOLEAN visibility가 제어하는 노드 내 isExposedInstance INSTANCE → ReactNode 슬롯 승격 대상 */
+  | {
+      type: "exposedInstanceSlot";
+      /** visibility가 제어되는 노드 ID (FRAME 또는 INSTANCE) */
+      nodeId: string;
+      /** exposed INSTANCE의 노드 ID */
+      instanceNodeId: string;
+      /** componentPropertyReferences.visible 값 (예: "Leading Icon#438:4") */
+      visibleRef: string;
     };
 
 /**

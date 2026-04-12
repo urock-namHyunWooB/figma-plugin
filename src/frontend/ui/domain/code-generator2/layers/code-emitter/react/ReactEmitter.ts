@@ -404,11 +404,17 @@ export class ReactEmitter implements ICodeEmitter {
     // 메인 구조에서 component 노드로 직접 참조되는 dep은 제거하지 않음
     // (슬롯 + 일반 참조 둘 다 사용되는 경우)
     const referencedIds = new Set<string>();
-    const collectRefs = (node: { kind?: string; refId?: string; children?: any[] }) => {
+    const collectRefs = (node: { kind?: string; refId?: string; children?: any[]; branches?: Record<string, any[]> }) => {
       if (node.kind === "component" && node.refId) {
         referencedIds.add(node.refId);
       }
       for (const child of node.children ?? []) collectRefs(child);
+      // conditionalGroup 분기 내 노드도 탐색
+      if (node.branches) {
+        for (const branchNodes of Object.values(node.branches)) {
+          for (const child of branchNodes) collectRefs(child);
+        }
+      }
     };
     collectRefs(main.structure);
 

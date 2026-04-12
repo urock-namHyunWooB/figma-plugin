@@ -527,4 +527,120 @@ describe("DesignPatternDetector (raw data)", () => {
       expect(patterns).toContainEqual({ type: "interactionFrame", nodeId: "i-1" });
     });
   });
+
+  describe("exposedInstanceSlot", () => {
+    it("BOOLEAN visibility + FRAME > exposed INSTANCE → 패턴 감지", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [{
+          type: "COMPONENT", name: "Default",
+          children: [{
+            id: "frame-1", type: "FRAME", name: "Leading Icon",
+            componentPropertyReferences: { visible: "Leading Icon#438:4" },
+            children: [{
+              id: "inst-1", type: "INSTANCE", name: "Icon",
+              isExposedInstance: true,
+              children: [],
+            }],
+          }],
+        }],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns).toContainEqual({
+        type: "exposedInstanceSlot",
+        nodeId: "frame-1",
+        instanceNodeId: "inst-1",
+        visibleRef: "Leading Icon#438:4",
+      });
+    });
+
+    it("BOOLEAN visibility + INSTANCE 직접 exposed → 패턴 감지", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [{
+          type: "COMPONENT", name: "Default",
+          children: [{
+            id: "inst-1", type: "INSTANCE", name: "Avatar",
+            isExposedInstance: true,
+            componentPropertyReferences: { visible: "Avatar#123:0" },
+            children: [],
+          }],
+        }],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns).toContainEqual({
+        type: "exposedInstanceSlot",
+        nodeId: "inst-1",
+        instanceNodeId: "inst-1",
+        visibleRef: "Avatar#123:0",
+      });
+    });
+
+    it("BOOLEAN visibility + non-exposed INSTANCE → 패턴 없음 (loading 케이스)", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [{
+          type: "COMPONENT", name: "Default",
+          children: [{
+            id: "frame-1", type: "FRAME", name: "Loading",
+            componentPropertyReferences: { visible: "Loading#29474:0" },
+            children: [{
+              id: "inst-1", type: "INSTANCE", name: "Spinner",
+              isExposedInstance: false,
+              children: [],
+            }],
+          }],
+        }],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns.filter(p => p.type === "exposedInstanceSlot")).toHaveLength(0);
+    });
+
+    it("BOOLEAN visibility + FRAME 내 exposed INSTANCE 없음 → 패턴 없음", () => {
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [{
+          type: "COMPONENT", name: "Default",
+          children: [{
+            id: "frame-1", type: "FRAME", name: "Content",
+            componentPropertyReferences: { visible: "Content#100:0" },
+            children: [
+              { id: "txt-1", type: "TEXT", name: "Label", children: [] },
+            ],
+          }],
+        }],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns.filter(p => p.type === "exposedInstanceSlot")).toHaveLength(0);
+    });
+
+    it("여러 variant에서 중복 감지 방지 (dedup)", () => {
+      const makeVariant = (name: string, frameId: string, instId: string) => ({
+        type: "COMPONENT", name,
+        children: [{
+          id: frameId, type: "FRAME", name: "Leading Icon",
+          componentPropertyReferences: { visible: "Leading Icon#438:4" },
+          children: [{
+            id: instId, type: "INSTANCE", name: "Icon",
+            isExposedInstance: true,
+            children: [],
+          }],
+        }],
+      });
+      const node = {
+        type: "COMPONENT_SET",
+        componentPropertyDefinitions: {},
+        children: [
+          makeVariant("Size=Large", "frame-1", "inst-1"),
+          makeVariant("Size=Small", "frame-2", "inst-2"),
+        ],
+      } as any;
+      const patterns = detector.detect(node);
+      expect(patterns.filter(p => p.type === "exposedInstanceSlot")).toHaveLength(1);
+    });
+  });
 });

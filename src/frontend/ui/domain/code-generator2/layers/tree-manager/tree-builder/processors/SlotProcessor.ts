@@ -55,17 +55,20 @@ export class SlotProcessor {
     const slotInfo = new Map<string, { sourceKey: string; nodeIds: Set<string> }>();
     const nodeToSlotProp = new Map<string, string>();
 
-    // 1. componentPropertyReferences.visible 방식
+    // 1. DesignPattern 기반 감지 (exposedInstanceSlot) — FRAME+INSTANCE 구조 커버
+    this.collectFromDesignPatterns(tree, propMap, slotInfo, nodeToSlotProp);
+
+    // 2. componentPropertyReferences.visible 방식 (후방 호환)
     this.collectVisibilityProps(tree, propMap, slotInfo, nodeToSlotProp);
 
-    // 2. VARIANT True/False 패턴 방식
+    // 3. VARIANT True/False 패턴 방식
     this.collectVariantVisibilitySlots(tree, props, slotInfo, nodeToSlotProp);
 
-    // 3. INSTANCE 노드에 bindings 설정
+    // 4. INSTANCE 노드에 bindings 설정
     this.applySlotBindings(tree, propMap, slotInfo, nodeToSlotProp);
     this.applyVariantSlotBindings(tree, props, slotInfo, nodeToSlotProp);
 
-    // 4. boolean prop → slot으로 업그레이드 (컴포넌트 관계 정보 포함)
+    // 5. boolean prop → slot으로 업그레이드 (컴포넌트 관계 정보 포함)
     return props.map((prop) => {
       if (slotInfo.has(prop.name)) {
         const info = slotInfo.get(prop.name)!;
@@ -82,6 +85,41 @@ export class SlotProcessor {
       }
       return prop;
     });
+  }
+
+  private collectFromDesignPatterns(
+    node: InternalTree,
+    propMap: Map<string, PropDefinition>,
+    slotInfo: Map<string, { sourceKey: string; nodeIds: Set<string> }>,
+    nodeToSlotProp: Map<string, string>
+  ): void {
+    const patterns = node.metadata?.designPatterns;
+    if (patterns) {
+      for (const pattern of patterns) {
+        if (pattern.type !== "exposedInstanceSlot") continue;
+
+        const sourceKey = pattern.visibleRef;
+        const propDef = propMap.get(sourceKey);
+        if (!propDef || propDef.type !== "boolean") continue;
+
+        const existing = slotInfo.get(propDef.name);
+        if (existing) {
+          existing.nodeIds.add(pattern.instanceNodeId);
+        } else {
+          slotInfo.set(propDef.name, {
+            sourceKey,
+            nodeIds: new Set([pattern.instanceNodeId]),
+          });
+        }
+        nodeToSlotProp.set(pattern.instanceNodeId, propDef.name);
+      }
+    }
+
+    if (node.children) {
+      for (const child of node.children) {
+        this.collectFromDesignPatterns(child, propMap, slotInfo, nodeToSlotProp);
+      }
+    }
   }
 
   private collectVisibilityProps(
@@ -192,6 +230,17 @@ export class SlotProcessor {
         node.bindings = {
           ...node.bindings,
           content: { prop: propDef.name },
+        };
+      }
+    }
+
+    // DesignPattern에서 감지된 INSTANCE (FRAME wrapper 케이스)
+    if (node.type === "INSTANCE" && !node.bindings?.content) {
+      const propName = nodeToSlotProp.get(node.id);
+      if (propName) {
+        node.bindings = {
+          ...node.bindings,
+          content: { prop: propName },
         };
       }
     }
