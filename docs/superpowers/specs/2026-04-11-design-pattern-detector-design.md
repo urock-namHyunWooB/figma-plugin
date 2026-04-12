@@ -48,6 +48,16 @@ type DesignPattern =
       /** Breakpoint를 제어하는 prop 이름 (예: "breakpoint") */
       prop: string;
     }
+  /** BOOLEAN visibility가 제어하는 노드 내 isExposedInstance INSTANCE → ReactNode 슬롯 승격 대상 */
+  | {
+      type: "exposedInstanceSlot";
+      /** visibility가 제어되는 노드 ID (FRAME 또는 INSTANCE) */
+      nodeId: string;
+      /** exposed INSTANCE의 노드 ID */
+      instanceNodeId: string;
+      /** componentPropertyReferences.visible 값 (예: "Leading Icon#438:4") */
+      visibleRef: string;
+    }
   /** Boolean prop에 의해 노드 위치만 좌우 이동하는 패턴 (Switch 노브 등) */
   | {
       type: "booleanPositionSwap";

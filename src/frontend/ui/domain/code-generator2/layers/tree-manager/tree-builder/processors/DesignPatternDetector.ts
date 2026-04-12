@@ -12,6 +12,7 @@ import type { DesignPattern } from "../../../../types/types";
  * - fullCoverBackground: fills-only child covering parent 99%+
  * - statePseudoClass: componentPropertyDefinitions의 State variant
  * - breakpointVariant: componentPropertyDefinitions의 Breakpoint variant
+ * - exposedInstanceSlot: BOOLEAN visibility + isExposedInstance INSTANCE → ReactNode 슬롯 승격
  *
  * booleanPositionSwap는 merger에서 별도 감지.
  */
