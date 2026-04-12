@@ -187,8 +187,18 @@ export class EmotionStrategy implements IStyleStrategy {
             codeParts.push(`const ${varName} = undefined;`);
           }
         }
+      } else if (propName.includes("+")) {
+        // compound prop → compoundVariants 배열
+        const propParts = propName.split("+").map(p => p.replace(/[\x00-\x1f\x7f]/g, ""));
+        const entries = this.buildCompoundVariantEntries(propParts, valueMap);
+        const varName = `${baseVarName}_${safePropName}${this.variantSuffix}`;
+        if (entries.length > 0) {
+          codeParts.push(`const ${varName} = [\n${entries.join("\n")}\n];`);
+        } else {
+          codeParts.push(`const ${varName}: Array<{ css: SerializedStyles }> = [];`);
+        }
       } else {
-        // variant/compound prop → Record 방식
+        // single variant prop → Record 방식 (기존 유지)
         const entries = this.buildVariantEntries(valueMap);
         const varName = `${baseVarName}_${safePropName}${this.variantSuffix}`;
         if (entries.length > 0) {
@@ -304,6 +314,45 @@ ${pseudoResult.code ? "\n" + pseudoResult.code : ""}
         const keyStr = this.needsQuoting(value) ? `"${value}"` : value;
         entries.push(`  ${keyStr}: css\`\n${this.indent(styleStr, 4)}\n  \`,`);
       }
+    }
+
+    return entries;
+  }
+
+  /**
+   * compound prop에 대한 compoundVariants 배열 엔트리 생성.
+   * 예: [{ size: "Large", iconOnly: true, css: css`...` }]
+   */
+  private buildCompoundVariantEntries(
+    propParts: string[],
+    valueMap: Map<string, DecomposedValue>
+  ): string[] {
+    const entries: string[] = [];
+
+    for (const [compoundValue, { style, pseudo }] of valueMap) {
+      let styleStr = this.objectToStyleString(style);
+
+      if (pseudo) {
+        for (const [selector, pseudoStyle] of Object.entries(pseudo)) {
+          const pStr = this.objectToStyleString(pseudoStyle as Record<string, string | number>);
+          if (pStr) {
+            styleStr += `\n\n&${selector} {\n${this.indent(pStr, 2)}\n}`;
+          }
+        }
+      }
+
+      if (!styleStr) continue;
+
+      const values = compoundValue.split("+");
+      if (values.length !== propParts.length) continue;
+
+      const conditions = propParts.map((prop, i) => {
+        const val = values[i];
+        if (val === "true" || val === "false") return `${prop}: ${val}`;
+        return `${prop}: "${val}"`;
+      });
+
+      entries.push(`  { ${conditions.join(", ")}, css: css\`\n${this.indent(styleStr, 4)}\n  \` },`);
     }
 
     return entries;
