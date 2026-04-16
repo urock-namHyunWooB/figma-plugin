@@ -19744,6 +19744,2303 @@ exports[`UITree snapshots > failing/Tagreview 1`] = `
 }
 `;
 
+exports[`UITree snapshots > failing/Textinputtextfield 1`] = `
+{
+  "arraySlotNames": [
+    "cells",
+  ],
+  "componentType": "input",
+  "propNames": [
+    "active",
+    "button",
+    "cells",
+    "description",
+    "disable",
+    "errorText",
+    "extra",
+    "focus",
+    "heading",
+    "label",
+    "leadingContent",
+    "menu",
+    "placeholder",
+    "required",
+    "status",
+    "successText",
+    "text",
+    "trailingButton",
+    "trailingContent",
+  ],
+  "propsCount": 19,
+  "root": {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "id": "16215:31388",
+            "mergedNodes": [
+              {
+                "id": "16215:31388",
+                "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31408",
+                "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31428",
+                "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31520",
+                "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31610",
+                "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+              },
+              {
+                "id": "16215:31675",
+                "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31450",
+                "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31474",
+                "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31542",
+                "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31654",
+                "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+              },
+              {
+                "id": "16215:31696",
+                "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31564",
+                "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31717",
+                "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31813",
+                "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31631",
+                "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+              },
+              {
+                "id": "16215:31907",
+                "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+              },
+              {
+                "id": "16215:31496",
+                "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31586",
+                "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31740",
+                "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31765",
+                "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31836",
+                "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31929",
+                "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+              },
+              {
+                "id": "16215:31859",
+                "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31951",
+                "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+              },
+              {
+                "id": "16215:31788",
+                "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31882",
+                "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+              },
+            ],
+            "name": "주제",
+            "type": "text",
+          },
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "16215:31390",
+                "mergedNodes": [
+                  {
+                    "id": "16215:31390",
+                    "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31410",
+                    "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31430",
+                    "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31522",
+                    "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31612",
+                    "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31677",
+                    "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31452",
+                    "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31476",
+                    "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31544",
+                    "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31656",
+                    "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31698",
+                    "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31566",
+                    "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31719",
+                    "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31815",
+                    "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31633",
+                    "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31909",
+                    "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31498",
+                    "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31588",
+                    "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31742",
+                    "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31767",
+                    "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31838",
+                    "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31931",
+                    "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31861",
+                    "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31953",
+                    "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31790",
+                    "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31884",
+                    "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                ],
+                "name": "*",
+                "type": "text",
+              },
+            ],
+            "id": "16215:31389",
+            "mergedNodes": [
+              {
+                "id": "16215:31389",
+                "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31409",
+                "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31429",
+                "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31521",
+                "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31611",
+                "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+              },
+              {
+                "id": "16215:31676",
+                "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31451",
+                "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31475",
+                "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31543",
+                "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31655",
+                "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+              },
+              {
+                "id": "16215:31697",
+                "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31565",
+                "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31718",
+                "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31814",
+                "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31632",
+                "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+              },
+              {
+                "id": "16215:31908",
+                "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+              },
+              {
+                "id": "16215:31497",
+                "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31587",
+                "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31741",
+                "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31766",
+                "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31837",
+                "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31930",
+                "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+              },
+              {
+                "id": "16215:31860",
+                "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31952",
+                "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+              },
+              {
+                "id": "16215:31789",
+                "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31883",
+                "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+              },
+            ],
+            "name": "Required",
+            "type": "container",
+          },
+        ],
+        "id": "16215:31387",
+        "mergedNodes": [
+          {
+            "id": "16215:31387",
+            "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31407",
+            "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31427",
+            "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31519",
+            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31609",
+            "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+          },
+          {
+            "id": "16215:31674",
+            "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31449",
+            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31473",
+            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31541",
+            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31653",
+            "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+          },
+          {
+            "id": "16215:31695",
+            "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31563",
+            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31716",
+            "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31812",
+            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31630",
+            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+          },
+          {
+            "id": "16215:31906",
+            "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+          },
+          {
+            "id": "16215:31495",
+            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31585",
+            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31739",
+            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31764",
+            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31835",
+            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31928",
+            "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+          },
+          {
+            "id": "16215:31858",
+            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31950",
+            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+          },
+          {
+            "id": "16215:31787",
+            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31881",
+            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+          },
+        ],
+        "name": "Heading",
+        "type": "container",
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "id": "16712:134101",
+                "mergedNodes": [
+                  {
+                    "id": "16712:134101",
+                    "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16723:133059",
+                    "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16723:133909",
+                    "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16721:132984",
+                    "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16723:135154",
+                    "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16723:134504",
+                    "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16723:133840",
+                    "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16723:134892",
+                    "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16723:135157",
+                    "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16723:134967",
+                    "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16723:135512",
+                    "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16723:135702",
+                    "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16723:134811",
+                    "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16723:135073",
+                    "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16723:135515",
+                    "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16723:135617",
+                    "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16723:135705",
+                    "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16723:135708",
+                    "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16723:135614",
+                    "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16723:135711",
+                    "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                ],
+                "name": "Textinput/Resource/Background",
+                "refId": "16712:134096",
+                "type": "component",
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "16215:31398",
+                        "mergedNodes": [
+                          {
+                            "id": "16215:31398",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31418",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31438",
+                            "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31530",
+                            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31621",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31685",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31460",
+                            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31484",
+                            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31552",
+                            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31665",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31706",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31574",
+                            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31727",
+                            "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31823",
+                            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31642",
+                            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31918",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31506",
+                            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31596",
+                            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31750",
+                            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31775",
+                            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31846",
+                            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31940",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31869",
+                            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31962",
+                            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31798",
+                            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31892",
+                            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                        ],
+                        "name": "Icons/Icons",
+                        "refId": "16215:25200",
+                        "type": "component",
+                      },
+                    ],
+                    "id": "16215:31397",
+                    "mergedNodes": [
+                      {
+                        "id": "16215:31397",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31417",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31437",
+                        "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31529",
+                        "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31620",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31684",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31459",
+                        "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31483",
+                        "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31551",
+                        "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31664",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31705",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31573",
+                        "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31726",
+                        "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31822",
+                        "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31641",
+                        "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31917",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31505",
+                        "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31595",
+                        "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31749",
+                        "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31774",
+                        "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31845",
+                        "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31939",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31868",
+                        "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31961",
+                        "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31797",
+                        "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31891",
+                        "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                    ],
+                    "name": "Icon",
+                    "type": "container",
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "16215:31400",
+                        "mergedNodes": [
+                          {
+                            "id": "16215:31400",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31420",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31440",
+                            "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31532",
+                            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31623",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31687",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31462",
+                            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31486",
+                            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31554",
+                            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31667",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31708",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31576",
+                            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31729",
+                            "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31825",
+                            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31644",
+                            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31920",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31752",
+                            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31777",
+                            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31848",
+                            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31942",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31871",
+                            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31964",
+                            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31800",
+                            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31894",
+                            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                        ],
+                        "name": "텍스트를 입력해 주세요.",
+                        "type": "text",
+                      },
+                      {
+                        "children": [],
+                        "id": "16215:31514",
+                        "mergedNodes": [
+                          {
+                            "id": "16215:31514",
+                            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31604",
+                            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                        ],
+                        "name": "Textinput/Resource/Textfield/Trailing Content",
+                        "refId": "16215:32953",
+                        "type": "component",
+                      },
+                    ],
+                    "id": "16215:31399",
+                    "mergedNodes": [
+                      {
+                        "id": "16215:31399",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31419",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31439",
+                        "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31531",
+                        "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31622",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31686",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31461",
+                        "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31485",
+                        "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31553",
+                        "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31666",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31707",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31575",
+                        "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31728",
+                        "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31824",
+                        "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31643",
+                        "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31919",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31513",
+                        "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31603",
+                        "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31751",
+                        "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31776",
+                        "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31847",
+                        "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31941",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31870",
+                        "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31963",
+                        "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31799",
+                        "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31893",
+                        "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                    ],
+                    "name": "Text",
+                    "type": "container",
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "16215:31508",
+                        "mergedNodes": [
+                          {
+                            "id": "16215:31508",
+                            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31598",
+                            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                        ],
+                        "name": "값",
+                        "type": "text",
+                      },
+                      {
+                        "children": [],
+                        "id": "16215:31648",
+                        "mergedNodes": [
+                          {
+                            "id": "16215:31648",
+                            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                          },
+                        ],
+                        "name": "Textinput/Resource/Textfield/Trailing Content",
+                        "refId": "16215:32953",
+                        "type": "component",
+                      },
+                    ],
+                    "id": "16215:31647",
+                    "mergedNodes": [
+                      {
+                        "id": "16215:31647",
+                        "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31507",
+                        "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31597",
+                        "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                    ],
+                    "name": "Trailing Content 2",
+                    "type": "container",
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "16215:31534",
+                        "mergedNodes": [
+                          {
+                            "id": "16215:31534",
+                            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31468",
+                            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31488",
+                            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31556",
+                            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31582",
+                            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31827",
+                            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31650",
+                            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31758",
+                            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31779",
+                            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31850",
+                            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31873",
+                            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31966",
+                            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31806",
+                            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31900",
+                            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                        ],
+                        "name": "Icon/Normal/Circle Exclamation",
+                        "refId": "16215:14448",
+                        "type": "component",
+                      },
+                    ],
+                    "id": "16215:31533",
+                    "mergedNodes": [
+                      {
+                        "id": "16215:31533",
+                        "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31467",
+                        "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31487",
+                        "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31555",
+                        "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31581",
+                        "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31826",
+                        "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31649",
+                        "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31757",
+                        "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31778",
+                        "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31849",
+                        "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31872",
+                        "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31965",
+                        "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31805",
+                        "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31899",
+                        "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                    ],
+                    "name": "Icon",
+                    "type": "container",
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "16215:31402",
+                        "mergedNodes": [
+                          {
+                            "id": "16215:31402",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31422",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31442",
+                            "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31536",
+                            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31625",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31689",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31464",
+                            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31490",
+                            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31558",
+                            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31669",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31710",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31578",
+                            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31731",
+                            "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31829",
+                            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31922",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31510",
+                            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31600",
+                            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31754",
+                            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31781",
+                            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31852",
+                            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31944",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31875",
+                            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31968",
+                            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31802",
+                            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31896",
+                            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                        ],
+                        "name": "Textinput/Resource/Textfield/Trailing Content",
+                        "refId": "16215:32953",
+                        "type": "component",
+                      },
+                    ],
+                    "id": "16215:31401",
+                    "mergedNodes": [
+                      {
+                        "id": "16215:31401",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31421",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31441",
+                        "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31535",
+                        "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31624",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31688",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31463",
+                        "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31489",
+                        "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31557",
+                        "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31668",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31709",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31577",
+                        "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31730",
+                        "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31828",
+                        "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31921",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31509",
+                        "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31599",
+                        "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31753",
+                        "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31780",
+                        "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31851",
+                        "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31943",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31874",
+                        "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31967",
+                        "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31801",
+                        "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31895",
+                        "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                    ],
+                    "name": "Trailing Content",
+                    "type": "container",
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "16215:31404",
+                        "mergedNodes": [
+                          {
+                            "id": "16215:31404",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31424",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31444",
+                            "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31538",
+                            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31627",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31691",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31466",
+                            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31492",
+                            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31560",
+                            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31671",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31712",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31580",
+                            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31733",
+                            "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31831",
+                            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31924",
+                            "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31512",
+                            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31602",
+                            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                          },
+                          {
+                            "id": "16215:31756",
+                            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31783",
+                            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31854",
+                            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31946",
+                            "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31877",
+                            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31970",
+                            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31804",
+                            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                          {
+                            "id": "16215:31898",
+                            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                          },
+                        ],
+                        "name": "Textinput/Resource/Textfield/Trailing Content",
+                        "refId": "16215:32953",
+                        "type": "component",
+                      },
+                    ],
+                    "id": "16215:31403",
+                    "mergedNodes": [
+                      {
+                        "id": "16215:31403",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31423",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31443",
+                        "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31537",
+                        "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31626",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31690",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31465",
+                        "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31491",
+                        "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31559",
+                        "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31670",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31711",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31579",
+                        "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31732",
+                        "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31830",
+                        "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31923",
+                        "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31511",
+                        "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31601",
+                        "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                      },
+                      {
+                        "id": "16215:31755",
+                        "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31782",
+                        "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31853",
+                        "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31945",
+                        "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31876",
+                        "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31969",
+                        "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31803",
+                        "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                      {
+                        "id": "16215:31897",
+                        "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                      },
+                    ],
+                    "name": "Trailing Content 2",
+                    "type": "container",
+                  },
+                  {
+                    "children": [
+                      {
+                        "children": [],
+                        "id": "16215:31646",
+                        "mergedNodes": [
+                          {
+                            "id": "16215:31646",
+                            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                          },
+                        ],
+                        "name": "Textinput/Resource/Textfield/Trailing Content",
+                        "refId": "16215:32953",
+                        "type": "component",
+                      },
+                    ],
+                    "id": "16215:31645",
+                    "mergedNodes": [
+                      {
+                        "id": "16215:31645",
+                        "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                      },
+                    ],
+                    "name": "Trailing Content",
+                    "type": "container",
+                  },
+                ],
+                "id": "16215:31393",
+                "mergedNodes": [
+                  {
+                    "id": "16215:31393",
+                    "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31413",
+                    "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31433",
+                    "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31525",
+                    "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31615",
+                    "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31680",
+                    "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31455",
+                    "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31479",
+                    "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31547",
+                    "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31659",
+                    "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31701",
+                    "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31569",
+                    "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31722",
+                    "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31818",
+                    "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31636",
+                    "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31912",
+                    "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31501",
+                    "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31591",
+                    "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+                  },
+                  {
+                    "id": "16215:31745",
+                    "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31770",
+                    "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31841",
+                    "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31934",
+                    "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31864",
+                    "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31956",
+                    "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31793",
+                    "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31887",
+                    "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                ],
+                "name": "Container",
+                "type": "container",
+              },
+              {
+                "children": [],
+                "id": "16215:31692",
+                "mergedNodes": [
+                  {
+                    "id": "16215:31692",
+                    "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31713",
+                    "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31734",
+                    "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31832",
+                    "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31925",
+                    "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31759",
+                    "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31784",
+                    "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31855",
+                    "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31947",
+                    "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31878",
+                    "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31971",
+                    "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31807",
+                    "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                  {
+                    "id": "16215:31901",
+                    "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+                  },
+                ],
+                "name": "Textinput/Resource/Textfield/Button",
+                "refId": "16215:32905",
+                "type": "component",
+              },
+            ],
+            "id": "16215:31392",
+            "mergedNodes": [
+              {
+                "id": "16215:31392",
+                "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31412",
+                "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31432",
+                "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31524",
+                "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31614",
+                "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+              },
+              {
+                "id": "16215:31679",
+                "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31454",
+                "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31478",
+                "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31546",
+                "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31658",
+                "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+              },
+              {
+                "id": "16215:31700",
+                "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31568",
+                "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31721",
+                "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31817",
+                "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31635",
+                "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+              },
+              {
+                "id": "16215:31911",
+                "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+              },
+              {
+                "id": "16215:31500",
+                "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31590",
+                "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+              },
+              {
+                "id": "16215:31744",
+                "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31769",
+                "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31840",
+                "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31933",
+                "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+              },
+              {
+                "id": "16215:31863",
+                "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31955",
+                "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+              },
+              {
+                "id": "16215:31792",
+                "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+              },
+              {
+                "id": "16215:31886",
+                "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+              },
+            ],
+            "name": "Wrapper",
+            "type": "container",
+          },
+        ],
+        "id": "16215:31391",
+        "mergedNodes": [
+          {
+            "id": "16215:31391",
+            "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31411",
+            "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31431",
+            "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31523",
+            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31613",
+            "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+          },
+          {
+            "id": "16215:31678",
+            "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31453",
+            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31477",
+            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31545",
+            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31657",
+            "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+          },
+          {
+            "id": "16215:31699",
+            "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31567",
+            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31720",
+            "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31816",
+            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31634",
+            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+          },
+          {
+            "id": "16215:31910",
+            "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+          },
+          {
+            "id": "16215:31499",
+            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31589",
+            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31743",
+            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31768",
+            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31839",
+            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31932",
+            "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+          },
+          {
+            "id": "16215:31862",
+            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31954",
+            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+          },
+          {
+            "id": "16215:31791",
+            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31885",
+            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+          },
+        ],
+        "name": "Input",
+        "type": "container",
+      },
+      {
+        "children": [],
+        "id": "16215:31405",
+        "mergedNodes": [
+          {
+            "id": "16215:31405",
+            "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31425",
+            "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31447",
+            "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31539",
+            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31628",
+            "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+          },
+          {
+            "id": "16215:31693",
+            "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31471",
+            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31493",
+            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31561",
+            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31672",
+            "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+          },
+          {
+            "id": "16215:31714",
+            "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31583",
+            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31737",
+            "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31833",
+            "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31651",
+            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+          },
+          {
+            "id": "16215:31926",
+            "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+          },
+          {
+            "id": "16215:31517",
+            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31607",
+            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+          },
+          {
+            "id": "16215:31762",
+            "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31785",
+            "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31856",
+            "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31948",
+            "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+          },
+          {
+            "id": "16215:31879",
+            "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31972",
+            "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+          },
+          {
+            "id": "16215:31810",
+            "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+          },
+          {
+            "id": "16215:31904",
+            "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+          },
+        ],
+        "name": "메시지에 마침표를 찍어요.",
+        "type": "text",
+      },
+    ],
+    "id": "16215:31386",
+    "mergedNodes": [
+      {
+        "id": "16215:31386",
+        "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=False",
+      },
+      {
+        "id": "16215:31406",
+        "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=False",
+      },
+      {
+        "id": "16215:31426",
+        "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=False",
+      },
+      {
+        "id": "16215:31518",
+        "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=False",
+      },
+      {
+        "id": "16215:31608",
+        "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=False",
+      },
+      {
+        "id": "16215:31673",
+        "variantName": "Status=Normal, Active=False, Focus=False, Disable=False, Trailing Button=True",
+      },
+      {
+        "id": "16215:31448",
+        "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=False",
+      },
+      {
+        "id": "16215:31472",
+        "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=False",
+      },
+      {
+        "id": "16215:31540",
+        "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=False",
+      },
+      {
+        "id": "16215:31652",
+        "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=False",
+      },
+      {
+        "id": "16215:31694",
+        "variantName": "Status=Normal, Active=True, Focus=False, Disable=False, Trailing Button=True",
+      },
+      {
+        "id": "16215:31562",
+        "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=False",
+      },
+      {
+        "id": "16215:31715",
+        "variantName": "Status=Normal, Active=False, Focus=True, Disable=False, Trailing Button=True",
+      },
+      {
+        "id": "16215:31811",
+        "variantName": "Status=Negative, Active=False, Focus=False, Disable=False, Trailing Button=True",
+      },
+      {
+        "id": "16215:31629",
+        "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=False",
+      },
+      {
+        "id": "16215:31905",
+        "variantName": "Status=Normal, Active=False, Focus=False, Disable=True, Trailing Button=True",
+      },
+      {
+        "id": "16215:31494",
+        "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=False",
+      },
+      {
+        "id": "16215:31584",
+        "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=False",
+      },
+      {
+        "id": "16215:31738",
+        "variantName": "Status=Normal, Active=True, Focus=True, Disable=False, Trailing Button=True",
+      },
+      {
+        "id": "16215:31763",
+        "variantName": "Status=Positive, Active=True, Focus=False, Disable=False, Trailing Button=True",
+      },
+      {
+        "id": "16215:31834",
+        "variantName": "Status=Negative, Active=True, Focus=False, Disable=False, Trailing Button=True",
+      },
+      {
+        "id": "16215:31927",
+        "variantName": "Status=Normal, Active=True, Focus=False, Disable=True, Trailing Button=True",
+      },
+      {
+        "id": "16215:31857",
+        "variantName": "Status=Negative, Active=False, Focus=True, Disable=False, Trailing Button=True",
+      },
+      {
+        "id": "16215:31949",
+        "variantName": "Status=Positive, Active=False, Focus=False, Disable=True, Trailing Button=True",
+      },
+      {
+        "id": "16215:31786",
+        "variantName": "Status=Positive, Active=True, Focus=True, Disable=False, Trailing Button=True",
+      },
+      {
+        "id": "16215:31880",
+        "variantName": "Status=Negative, Active=True, Focus=True, Disable=False, Trailing Button=True",
+      },
+    ],
+    "name": "Textinput/Textfield",
+    "type": "input",
+  },
+}
+`;
+
 exports[`UITree snapshots > failing/Toggle 1`] = `
 {
   "arraySlotNames": [],
